@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/counter"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/go-chi/chi/v5"
@@ -40,13 +41,32 @@ func (s *Server) routes() {
 		MaxAge:           300,
 	}))
 
+	queries := db.New(s.Pool)
+	
+	// Initialize Handlers
+	counterHandler := counter.NewHandler(queries)
+	authHandler := auth.NewHandler()
+
+	// Global Middleware
+	s.Router.Use(auth.Middleware())
+
+	// Public Routes
 	s.Router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
-	queries := db.New(s.Pool)
-	counterHandler := counter.NewHandler(queries)
+	// Auth Routes
+	s.Router.Group(func(r chi.Router) {
+		r.Get("/auth/login", authHandler.Login)
+		r.Get("/auth/callback", authHandler.Callback)
+		r.Post("/auth/logout", authHandler.Logout)
+		r.Get("/auth/me", authHandler.Me)
+	})
 
-	s.Router.Route("/counter", counterHandler.RegisterRoutes)
+	// Protected Routes
+	s.Router.Group(func(r chi.Router) {
+		r.Use(auth.RequireAuth)
+		r.Route("/counter", counterHandler.RegisterRoutes)
+	})
 }

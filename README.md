@@ -1,6 +1,6 @@
 # Zeta
 
-Zeta is a minimal Go + Angular starter project.
+Zeta is a minimal Go + Angular starter project with WorkOS Authentication.
 
 ## How to start
 
@@ -8,17 +8,35 @@ Zeta is a minimal Go + Angular starter project.
 - Docker & Docker Compose
 - Go 1.25+
 - Node.js & pnpm (for the dashboard)
-- `migrate` tool (golang-migrate)
-- `sqlc` (optional, for regenerating DB code)
+- WorkOS Account & Project
+
+### Environment Setup
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Update `.env` with your WorkOS credentials:
+   ```dotenv
+   DB_URL=postgres://zeta:zeta@localhost:5432/zeta?sslmode=disable
+   WORKOS_API_KEY=sk_test_...
+   WORKOS_CLIENT_ID=client_...
+   WORKOS_REDIRECT_URI=http://localhost:8080/auth/callback
+   WORKOS_COOKIE_SECRET=supersecret...
+   ```
+
+3. **WorkOS Configuration**:
+   - In WorkOS Dashboard > Configuration > Redirect URIs:
+     - Add `http://localhost:8080/auth/callback`
 
 ### Quick Start
 
-1. **Start Infrastructure** (PostgreSQL):
+1. **Start Infrastructure**:
    ```bash
    make docker-up
    ```
 
-2. **Run Migrations**:
+2. **Run Migrations** (includes Counter and Sessions):
    ```bash
    make migrate-up
    ```
@@ -27,24 +45,21 @@ Zeta is a minimal Go + Angular starter project.
    ```bash
    make run-api
    ```
-   API will be available at `http://localhost:8080`.
-   - Health check: `GET /health`
-   - Counter: `GET /counter`, `POST /counter/increment`
-
+   
 4. **Run Frontend**:
    ```bash
    make dashboard-start
    ```
    Dashboard available at `http://localhost:4200`.
 
+### Auth Flow
+- Public: `/health`
+- Protected: `/counter`, `/counter/increment` (Requires Login)
+- Login: Click "Login via WorkOS" -> Redirects to WorkOS AuthKit -> Callback -> Logged In.
+
 ### API Examples
 
-Get counter:
+Check auth status:
 ```bash
-curl http://localhost:8080/counter
-```
-
-Increment counter:
-```bash
-curl -X POST http://localhost:8080/counter/increment
+curl -b "zeta_session=..." http://localhost:8080/auth/me
 ```
