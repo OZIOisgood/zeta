@@ -1,0 +1,9 @@
+# Infra volumes
+# /infra/pgdata (removed, using named volumes)
+# /infra/minio-data (removed, using named volumes)
+
+# Environment files
+.env
+
+# Binaries
+bin/

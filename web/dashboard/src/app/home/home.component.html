@@ -1,0 +1,23 @@
+<div class="tui-container tui-space_top-4">
+  <h1>Zeta Counter</h1>
+  <p class="tui-text_h3" *ngIf="!loading(); else loader">
+    {{ count() }}
+  </p>
+  <ng-template #loader>
+    <p class="tui-text_h3">...</p>
+  </ng-template>
+
+  <p *ngIf="error()" class="tui-text_body-s tui-space_bottom-4" style="color: red">
+    {{ error() }}
+  </p>
+
+  <button
+    tuiButton
+    type="button"
+    appearance="primary"
+    [disabled]="loading()"
+    (click)="increment()"
+  >
+    Increment
+  </button>
+</div>
