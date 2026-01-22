@@ -62,12 +62,6 @@ type Asset struct {
 	UpdatedAt   pgtype.Timestamptz
 }
 
-type Counter struct {
-	ID        int32
-	Value     int32
-	UpdatedAt pgtype.Timestamptz
-}
-
 type Video struct {
 	ID          pgtype.UUID
 	AssetID     pgtype.UUID

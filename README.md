@@ -39,7 +39,7 @@ Zeta is a minimal Go + Angular starter project with WorkOS Authentication.
    make docker-up
    ```
 
-2. **Run Migrations** (includes Counter and Sessions):
+2. **Run Migrations**:
 
    ```bash
    make migrate-up
@@ -58,7 +58,7 @@ Zeta is a minimal Go + Angular starter project with WorkOS Authentication.
 ### Auth Flow
 
 - Public: `/health`
-- Protected: `/counter`, `/counter/increment` (Requires Login)
+- Protected: `/assets` (Requires Login)
 - Login: Click "Login via WorkOS" -> Redirects to WorkOS AuthKit -> Callback -> Logged In.
 
 ### API Examples
@@ -129,11 +129,6 @@ erDiagram
         string mux_asset_id
         enum status
         timestamp created_at
-        timestamp updated_at
-    }
-    COUNTERS {
-        int id PK
-        int value
         timestamp updated_at
     }
 ```

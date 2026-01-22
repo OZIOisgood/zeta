@@ -6,7 +6,6 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/assets"
 	"github.com/OZIOisgood/zeta/internal/auth"
-	"github.com/OZIOisgood/zeta/internal/counter"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -43,9 +42,8 @@ func (s *Server) routes() {
 	}))
 
 	queries := db.New(s.Pool)
-	
+
 	// Initialize Handlers
-	counterHandler := counter.NewHandler(queries)
 	authHandler := auth.NewHandler()
 	assetsHandler := assets.NewHandler(queries)
 
@@ -69,7 +67,7 @@ func (s *Server) routes() {
 	// Protected Routes
 	s.Router.Group(func(r chi.Router) {
 		r.Use(auth.RequireAuth)
-		r.Route("/counter", counterHandler.RegisterRoutes)
 		r.Route("/assets", assetsHandler.RegisterRoutes)
 	})
 }
+
