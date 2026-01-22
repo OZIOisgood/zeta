@@ -5,11 +5,75 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type VideoStatus string
+
+const (
+	VideoStatusWaitingUpload VideoStatus = "waiting_upload"
+	VideoStatusReady         VideoStatus = "ready"
+	VideoStatusFailed        VideoStatus = "failed"
+)
+
+func (e *VideoStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = VideoStatus(s)
+	case string:
+		*e = VideoStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for VideoStatus: %T", src)
+	}
+	return nil
+}
+
+type NullVideoStatus struct {
+	VideoStatus VideoStatus
+	Valid       bool // Valid is true if VideoStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullVideoStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.VideoStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.VideoStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullVideoStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.VideoStatus), nil
+}
+
+type Asset struct {
+	ID          pgtype.UUID
+	Name        string
+	Description string
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
 
 type Counter struct {
 	ID        int32
 	Value     int32
 	UpdatedAt pgtype.Timestamptz
+}
+
+type Video struct {
+	ID          pgtype.UUID
+	AssetID     pgtype.UUID
+	MuxUploadID string
+	MuxAssetID  pgtype.Text
+	Status      VideoStatus
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }

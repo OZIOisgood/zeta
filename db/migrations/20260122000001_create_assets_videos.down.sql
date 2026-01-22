@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS videos;
+DROP TABLE IF EXISTS assets;
+DROP TYPE IF EXISTS video_status;

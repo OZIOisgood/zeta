@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/OZIOisgood/zeta/internal/assets"
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/counter"
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -46,6 +47,7 @@ func (s *Server) routes() {
 	// Initialize Handlers
 	counterHandler := counter.NewHandler(queries)
 	authHandler := auth.NewHandler()
+	assetsHandler := assets.NewHandler(queries)
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware())
@@ -68,5 +70,6 @@ func (s *Server) routes() {
 	s.Router.Group(func(r chi.Router) {
 		r.Use(auth.RequireAuth)
 		r.Route("/counter", counterHandler.RegisterRoutes)
+		r.Route("/assets", assetsHandler.RegisterRoutes)
 	})
 }

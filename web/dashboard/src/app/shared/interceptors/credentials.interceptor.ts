@@ -1,8 +1,12 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 export const credentialsInterceptor: HttpInterceptorFn = (req, next) => {
-  const authReq = req.clone({
-    withCredentials: true
-  });
-  return next(authReq);
+  if (req.url.startsWith(environment.apiUrl)) {
+    const authReq = req.clone({
+      withCredentials: true,
+    });
+    return next(authReq);
+  }
+  return next(req);
 };
