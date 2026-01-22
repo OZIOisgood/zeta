@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -60,18 +61,24 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	var claims jwt.MapClaims
 	_, _, err = jwt.NewParser().ParseUnverified(resp.AccessToken, &claims)
 	if err != nil {
+		fmt.Printf("Callback: Failed to parse access token: %v\n", err)
 		http.Error(w, "Failed to parse access token: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	sid, _ := claims["sid"].(string)
+	sid, ok := claims["sid"].(string)
+	if !ok || sid == "" {
+		fmt.Printf("Callback: Warning: No SID found in access token claims. Claims: %+v\n", claims)
+	}
 
 	// Create JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":   resp.User.ID,
-		"email": resp.User.Email,
-		"sid":   sid,
-		"exp":   time.Now().Add(24 * time.Hour).Unix(),
+		"sub":     resp.User.ID,
+		"email":   resp.User.Email,
+		"name":    fmt.Sprintf("%s %s", resp.User.FirstName, resp.User.LastName),
+		"picture": resp.User.ProfilePictureURL,
+		"sid":     sid,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
@@ -124,18 +131,29 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 		if token != nil {
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
-				if sid, ok := claims["sid"].(string); ok && sid != "" {
+				fmt.Printf("Logout: Claims found: %+v\n", claims) // Debug log
+				
+				sid, ok := claims["sid"].(string)
+				if !ok || sid == "" {
+					fmt.Println("Logout: Valid SID not found in claims")
+				} else {
 					logoutURL, err := usermanagement.GetLogoutURL(usermanagement.GetLogoutURLOpts{
 						SessionID: sid,
-						// Use default return_to or specify one if needed
-						// ReturnTo: "http://localhost:4200",
+						ReturnTo:  "http://localhost:4200",
 					})
-					if err == nil {
+					if err != nil {
+						fmt.Printf("Logout: Failed to get logout URL: %v\n", err)
+					} else {
 						redirectTarget = logoutURL.String()
+						fmt.Printf("Logout: Redirecting to %s\n", redirectTarget)
 					}
 				}
 			}
+		} else {
+			fmt.Println("Logout: Token parse failed or token is nil")
 		}
+	} else {
+		fmt.Printf("Logout: Cookie error or empty: %v\n", err)
 	}
 
 	// 3. Return the logout URL as JSON instead of redirecting

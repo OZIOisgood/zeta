@@ -4,10 +4,12 @@ import { Injectable, inject, signal } from '@angular/core';
 export interface User {
   id: string;
   email: string;
+  name?: string;
+  profilePictureUrl?: string;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private http = inject(HttpClient);
@@ -30,7 +32,7 @@ export class AuthService {
       error: () => {
         this.user.set(null);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -41,17 +43,15 @@ export class AuthService {
   logout() {
     this.http.post<{ logoutUrl: string }>(`${this.baseUrl}/logout`, {}).subscribe({
       next: (res) => {
-        this.user.set(null);
         if (res.logoutUrl) {
           window.location.href = res.logoutUrl;
         } else {
-          window.location.reload(); 
+          window.location.reload();
         }
       },
       error: () => {
-        this.user.set(null);
         window.location.reload();
-      }
+      },
     });
   }
 }

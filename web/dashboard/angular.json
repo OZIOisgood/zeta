@@ -30,7 +30,7 @@
               },
               {
                 "glob": "**/*",
-                "input": "node_modules/@taiga-ui/icons-material/src",
+                "input": "node_modules/@taiga-ui/icons/src",
                 "output": "assets/taiga-ui/icons"
               }
             ],

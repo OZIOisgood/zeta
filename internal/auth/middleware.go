@@ -14,8 +14,10 @@ type contextKey string
 const UserKey contextKey = "user"
 
 type UserContext struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
+	ID                string `json:"id"`
+	Email             string `json:"email"`
+	Name              string `json:"name"`
+	ProfilePictureUrl string `json:"profilePictureUrl"`
 }
 
 func Middleware() func(http.Handler) http.Handler {
@@ -46,10 +48,14 @@ func Middleware() func(http.Handler) http.Handler {
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
 				userID, _ := claims["sub"].(string)
 				email, _ := claims["email"].(string)
+				name, _ := claims["name"].(string)
+				profilePictureUrl, _ := claims["picture"].(string)
 
 				user := &UserContext{
-					ID:    userID,
-					Email: email,
+					ID:                userID,
+					Email:             email,
+					Name:              name,
+					ProfilePictureUrl: profilePictureUrl,
 				}
 				ctx := context.WithValue(r.Context(), UserKey, user)
 				next.ServeHTTP(w, r.WithContext(ctx))

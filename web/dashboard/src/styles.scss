@@ -1,2 +1,21 @@
 /* You can add global styles to this file, and also import other style files */
-@use '@taiga-ui/core/styles/taiga-ui-local';
+// @use '@taiga-ui/core/styles/taiga-ui-local';
+
+html,
+body,
+app-root,
+tui-root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: hidden; /* Prevent body scroll */
+}
+
+/* Ensure tui-root is a block to accept height */
+tui-root {
+  display: block; 
+}

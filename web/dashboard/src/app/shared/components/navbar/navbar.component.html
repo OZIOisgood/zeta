@@ -1,0 +1,49 @@
+<header class="navbar">
+  <div class="logo-wrapper">
+    <a routerLink="/">
+      <img src="/app-full-icon.svg" alt="App Logo" class="logo" />
+    </a>
+  </div>
+
+  <div class="spacer"></div>
+
+  <tui-tabs [underline]="false">
+    <a tuiTab routerLink="/" routerLinkActive [routerLinkActiveOptions]="{ exact: true }">
+      Home page
+    </a>
+    <a tuiTab routerLink="/upload-video" routerLinkActive> Upload video </a>
+  </tui-tabs>
+
+  <ng-container *ngIf="user() as u">
+    <div class="user-menu" [tuiDropdown]="dropdown" tuiDropdownOpen>
+      <button appearance="icon" tuiIconButton size="s" type="button" class="avatar-button">
+        <tui-avatar
+          size="s"
+          [src]="userAvatar()"
+          [style.background]="u.email | tuiAutoColor"
+        ></tui-avatar>
+      </button>
+    </div>
+
+    <ng-template #dropdown>
+      <tui-data-list>
+        <tui-opt-group>
+          <button tuiOption [disabled]="true" style="opacity: 1">
+            <tui-icon icon="@tui.user-round" [style.height.rem]="1"></tui-icon>
+            {{ u.name }}
+          </button>
+        </tui-opt-group>
+        <tui-opt-group>
+          <button tuiOption>
+            <tui-icon icon="@tui.settings" [style.height.rem]="1"></tui-icon>
+            Preferences
+          </button>
+          <button tuiOption (click)="logout()">
+            <tui-icon icon="@tui.log-out" [style.height.rem]="1"></tui-icon>
+            Sign out
+          </button>
+        </tui-opt-group>
+      </tui-data-list>
+    </ng-template>
+  </ng-container>
+</header>

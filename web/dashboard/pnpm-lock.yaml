@@ -44,9 +44,6 @@ importers:
       '@taiga-ui/icons':
         specifier: ^4.61.0
         version: 4.61.0
-      '@taiga-ui/icons-material':
-        specifier: ^4.61.0
-        version: 4.61.0
       '@taiga-ui/kit':
         specifier: ^4.61.0
         version: 4.61.0(174a8f46739dbf74762416d1cba44f5a)
@@ -1575,9 +1572,6 @@ packages:
       '@angular/core': '>=16.0.0'
       '@ng-web-apis/common': ^4.12.0
       rxjs: '>=7.0.0'
-
-  '@taiga-ui/icons-material@4.61.0':
-    resolution: {integrity: sha512-BmbNtXyeU43dKplY4sozf/UNaHdKjCEqtugmqrMe6n7Bo5clNVr6JRpfHVEvlx1/Yr5rNuYeVhvi2TX4ttQMdw==}
 
   '@taiga-ui/icons@4.61.0':
     resolution: {integrity: sha512-IJbJ+OFSao6/19vv8MDufAXQIkj6OA4QluowMCczClGTiYoBKYqVhLWn12AZKmYw4NrE9ATwN969RZwT/eOh+g==}
@@ -4536,10 +4530,6 @@ snapshots:
       '@angular/core': 21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2)
       '@ng-web-apis/common': 4.12.2(@angular/common@21.0.0(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.0.0(@angular/compiler@21.0.0)(rxjs@7.8.2))(rxjs@7.8.2)
       rxjs: 7.8.2
-      tslib: 2.8.1
-
-  '@taiga-ui/icons-material@4.61.0':
-    dependencies:
       tslib: 2.8.1
 
   '@taiga-ui/icons@4.61.0':
