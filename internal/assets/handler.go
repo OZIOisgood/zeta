@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -50,6 +51,87 @@ type CreateAssetResponse struct {
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/", h.CreateAsset)
+	r.Get("/", h.ListAssets)
+}
+
+type AssetItem struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+	Thumbnail   string `json:"thumbnail,omitempty"`
+}
+
+func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	assets, err := h.q.ListAssets(ctx)
+	if err != nil {
+		fmt.Printf("Error listing assets: %v\n", err)
+		http.Error(w, "Failed to list assets", http.StatusInternalServerError)
+		return
+	}
+
+	resp := make([]AssetItem, len(assets))
+	for i, a := range assets {
+		var thumb string
+		
+		playbackID := a.PlaybackID
+		if playbackID == "" && a.MuxUploadID != "" {
+			// Try to fetch from Mux if we have an upload ID but no playback ID yet
+			log.Printf("Fetching status for upload %s", a.MuxUploadID)
+			pid, err := h.fetchPlaybackIDFromMux(ctx, a.MuxUploadID)
+			if err == nil && pid != "" {
+				playbackID = pid
+				// Update DB so we don't fetch again
+				err = h.q.UpdateVideoStatus(ctx, db.UpdateVideoStatusParams{
+					MuxUploadID: a.MuxUploadID,
+					MuxAssetID:  pgtype.Text{String: "", Valid: false}, 
+					PlaybackID:  pgtype.Text{String: pid, Valid: true},
+				})
+                if err != nil {
+                    // Log error but continue
+                    fmt.Printf("Error updating video status: %v\n", err)
+                }
+			}
+		}
+
+		if playbackID != "" {
+			thumb = fmt.Sprintf("https://image.mux.com/%s/thumbnail.png", playbackID)
+		}
+
+		resp[i] = AssetItem{
+			ID:          toUUIDString(a.ID),
+			Title:       a.Name,
+			Description: a.Description,
+			Status:      string(a.Status),
+			Thumbnail:   thumb,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) fetchPlaybackIDFromMux(ctx context.Context, uploadID string) (string, error) {
+	upload, err := h.muxClient.DirectUploadsApi.GetDirectUpload(uploadID)
+	if err != nil {
+		return "", err
+	}
+
+	if upload.Data.Status == "asset_created" && upload.Data.AssetId != "" {
+		asset, err := h.muxClient.AssetsApi.GetAsset(upload.Data.AssetId)
+		if err != nil {
+			return "", err
+		}
+		
+		for _, pid := range asset.Data.PlaybackIds {
+			if pid.Policy == muxgo.PUBLIC {
+				return pid.Id, nil
+			}
+		}
+	}
+	
+	return "", fmt.Errorf("playback id not found")
 }
 
 func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
@@ -72,6 +154,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		Description: req.Description,
 	})
 	if err != nil {
+		fmt.Printf("Error creating asset: %v\n", err)
 		http.Error(w, "Failed to create asset", http.StatusInternalServerError)
 		return
 	}

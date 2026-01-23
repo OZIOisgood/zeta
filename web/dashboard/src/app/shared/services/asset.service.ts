@@ -14,12 +14,26 @@ export interface CreateAssetResponse {
   videos: VideoResponse[];
 }
 
+export type AssetStatus = 'pending' | 'completed';
+
+export interface Asset {
+  id: string;
+  title: string;
+  description: string;
+  status: AssetStatus;
+  thumbnail?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AssetService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/assets`;
+
+  getAssets(): Observable<Asset[]> {
+    return this.http.get<Asset[]>(this.apiUrl);
+  }
 
   createAsset(
     title: string,

@@ -1,3 +1,9 @@
-<div class="tui-container tui-space_top-4">
-  <p class="tui-text_body-l">Welcome to Zeta.</p>
+<div class="tui-container tui-container_adaptive page-container">
+  <app-asset-list
+    [assets]="(assets$ | async) || []"
+    [showAddTile]="true"
+    [title]="'All my videos'"
+    (addVideo)="onAddVideo()"
+  >
+  </app-asset-list>
 </div>

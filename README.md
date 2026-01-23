@@ -25,11 +25,18 @@ Zeta is a minimal Go + Angular starter project with WorkOS Authentication.
    WORKOS_CLIENT_ID=client_...
    WORKOS_REDIRECT_URI=http://localhost:8080/auth/callback
    WORKOS_COOKIE_SECRET=supersecret...
+
+   # Mux Configuration
+   MUX_TOKEN_ID=...
+   MUX_TOKEN_SECRET=...
    ```
 
 3. **WorkOS Configuration**:
    - In WorkOS Dashboard > Configuration > Redirect URIs:
      - Add `http://localhost:8080/auth/callback`
+
+4. **Mux Configuration**:
+   - Create an Access Token in Mux Dashboard.
 
 ### Quick Start
 
@@ -119,6 +126,7 @@ erDiagram
         uuid id PK
         string name
         string description
+        enum status
         timestamp created_at
         timestamp updated_at
     }
@@ -127,6 +135,7 @@ erDiagram
         uuid asset_id FK
         string mux_upload_id
         string mux_asset_id
+        string playback_id
         enum status
         timestamp created_at
         timestamp updated_at

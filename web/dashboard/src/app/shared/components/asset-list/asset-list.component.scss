@@ -1,0 +1,113 @@
+:host {
+  display: block;
+}
+
+.list-title {
+  margin-bottom: 1.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.add-tile {
+  display: flex;
+  gap: 1rem;
+  // align-items: center;
+  cursor: pointer;
+  aspect-ratio: 1;
+  width: 100%;
+  min-height: 175px;
+
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.plus {
+  background: rgb(66, 139, 250);
+  color: #fff;
+}
+
+.asset-tile {
+  display: flex; /* Helps positioning */
+  flex-direction: column;
+  justify-content: space-between; /* Push content apart if needed */
+  position: relative;
+  padding: 0.75rem;
+  color: #fff;
+  aspect-ratio: 1;
+  width: 100%;
+  min-height: 175px;
+  text-decoration: none;
+  overflow: hidden;
+  background-color: var(--tui-base-02);
+  border-radius: var(--tui-radius-l); /* Ensure radius if not inherited */
+
+  /* The Image */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--asset-bg) center/cover no-repeat;
+    z-index: 0;
+    transition: transform 0.3s ease;
+  }
+
+  /* The Overlay */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.7) 100%);
+    z-index: 1;
+  }
+
+  &:hover::after {
+    transform: scale(1.05);
+  }
+
+  h2 {
+    position: relative;
+    z-index: 2;
+    margin: 0;
+  }
+
+  .title-text {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .subtitle-text {
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+}
+
+.badge {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+}
+
+.status-pending {
+  background: var(--tui-status-warning);
+  color: #000;
+}
+
+.status-completed {
+  background: var(--tui-status-success);
+  color: #fff;
+}

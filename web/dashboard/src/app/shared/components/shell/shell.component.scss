@@ -5,25 +5,22 @@
 }
 
 .shell {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background-color: var(--tui-background-neutral-1);
-    
-    /* Ensure no scroll on the shell wrapper itself */
-    overflow: hidden; 
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--tui-background-neutral-1);
+
+  /* Ensure no scroll on the shell wrapper itself */
+  overflow: hidden;
 }
 
 .content {
-    flex: 1;
-    overflow-y: auto; /* Enable scrolling within the content area */
-    
-    /* CRITICAL: Allows the flex child to shrink below its content size */
-    min-height: 0; 
-    
-    padding: 2rem;
-    box-sizing: border-box;
-    width: 100%;
-    margin: 0 auto;
-    max-width: 1200px;
+  flex: 1;
+  overflow-y: auto; /* Enable scrolling within the content area */
+
+  /* CRITICAL: Allows the flex child to shrink below its content size */
+  min-height: 0;
+
+  box-sizing: border-box;
+  width: 100%;
 }

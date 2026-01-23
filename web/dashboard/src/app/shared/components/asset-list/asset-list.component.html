@@ -1,0 +1,41 @@
+<h1 class="tui-text_h3 list-title" *ngIf="title">{{ title }}</h1>
+
+<div class="grid">
+  <div
+    *ngIf="showAddTile"
+    tuiAppearance="neutral"
+    tuiCardMedium
+    class="add-tile"
+    (click)="addVideo.emit()"
+    (keydown.enter)="addVideo.emit()"
+    role="button"
+    tabindex="0"
+  >
+    <tui-avatar src="@tui.plus" class="plus"></tui-avatar>
+
+    <h2 tuiTitle>
+      Add
+      <span tuiSubtitle>Upload new video</span>
+    </h2>
+  </div>
+
+  <a
+    *ngFor="let asset of assets"
+    [routerLink]="['/asset', asset.id]"
+    tuiCardMedium
+    tuiSurface
+    class="asset-tile"
+    [style.--asset-bg]="getThumbnail(asset.thumbnail)"
+  >
+    <h2 tuiTitle>
+      <span class="title-text">{{ asset.title }}</span>
+      <span tuiSubtitle *ngIf="asset.description" class="subtitle-text">{{
+        asset.description
+      }}</span>
+    </h2>
+
+    <tui-badge class="badge" [ngClass]="'status-' + asset.status">
+      {{ formatStatus(asset.status) | titlecase }}
+    </tui-badge>
+  </a>
+</div>
