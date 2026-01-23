@@ -12,9 +12,7 @@ import (
 )
 
 const createAsset = `-- name: CreateAsset :one
-INSERT INTO assets (name, description)
-VALUES ($1, $2)
-RETURNING id, name, description, status, created_at, updated_at
+INSERT INTO assets (name, description) VALUES ($1, $2) RETURNING id, name, description, status, created_at, updated_at
 `
 
 type CreateAssetParams struct {
@@ -37,9 +35,7 @@ func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset
 }
 
 const createVideo = `-- name: CreateVideo :one
-INSERT INTO videos (asset_id, mux_upload_id, status)
-VALUES ($1, $2, $3)
-RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at
+INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at
 `
 
 type CreateVideoParams struct {
@@ -64,26 +60,81 @@ func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video
 	return i, err
 }
 
+const getAsset = `-- name: GetAsset :one
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true WHERE a.id = $1
+`
+
+type GetAssetRow struct {
+	ID          pgtype.UUID
+	Name        string
+	Description string
+	Status      AssetStatus
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	PlaybackID  string
+	MuxUploadID string
+	MuxAssetID  string
+}
+
+func (q *Queries) GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error) {
+	row := q.db.QueryRow(ctx, getAsset, id)
+	var i GetAssetRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PlaybackID,
+		&i.MuxUploadID,
+		&i.MuxAssetID,
+	)
+	return i, err
+}
+
+const getAssetVideos = `-- name: GetAssetVideos :many
+SELECT id, mux_upload_id, mux_asset_id, playback_id, status, created_at FROM videos WHERE asset_id = $1 ORDER BY created_at ASC
+`
+
+type GetAssetVideosRow struct {
+	ID          pgtype.UUID
+	MuxUploadID string
+	MuxAssetID  pgtype.Text
+	PlaybackID  pgtype.Text
+	Status      VideoStatus
+	CreatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]GetAssetVideosRow, error) {
+	rows, err := q.db.Query(ctx, getAssetVideos, assetID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAssetVideosRow
+	for rows.Next() {
+		var i GetAssetVideosRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.MuxUploadID,
+			&i.MuxAssetID,
+			&i.PlaybackID,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAssets = `-- name: ListAssets :many
-SELECT 
-    a.id, 
-    a.name, 
-    a.description, 
-    a.status, 
-    a.created_at, 
-    a.updated_at,
-    COALESCE(v.playback_id, '') as playback_id,
-    COALESCE(v.mux_upload_id, '') as mux_upload_id,
-    COALESCE(v.mux_asset_id, '') as mux_asset_id
-FROM assets a
-LEFT JOIN LATERAL (
-    SELECT playback_id, mux_upload_id, mux_asset_id
-    FROM videos 
-    WHERE asset_id = a.id 
-    ORDER BY created_at ASC 
-    LIMIT 1
-) v ON true
-ORDER BY a.created_at DESC
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true ORDER BY a.created_at DESC
 `
 
 type ListAssetsRow struct {
@@ -129,9 +180,7 @@ func (q *Queries) ListAssets(ctx context.Context) ([]ListAssetsRow, error) {
 }
 
 const updateVideoMuxAssetID = `-- name: UpdateVideoMuxAssetID :exec
-UPDATE videos
-SET mux_asset_id = $2, status = 'ready', updated_at = NOW()
-WHERE id = $1
+UPDATE videos SET mux_asset_id = $2, status = 'ready', updated_at = NOW() WHERE id = $1
 `
 
 type UpdateVideoMuxAssetIDParams struct {
@@ -145,9 +194,7 @@ func (q *Queries) UpdateVideoMuxAssetID(ctx context.Context, arg UpdateVideoMuxA
 }
 
 const updateVideoStatus = `-- name: UpdateVideoStatus :exec
-UPDATE videos
-SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated_at = NOW()
-WHERE mux_upload_id = $1
+UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated_at = NOW() WHERE mux_upload_id = $1
 `
 
 type UpdateVideoStatusParams struct {
@@ -162,9 +209,7 @@ func (q *Queries) UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusPa
 }
 
 const updateVideoStatusByUploadID = `-- name: UpdateVideoStatusByUploadID :exec
-UPDATE videos
-SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated_at = NOW()
-WHERE mux_upload_id = $1
+UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated_at = NOW() WHERE mux_upload_id = $1
 `
 
 type UpdateVideoStatusByUploadIDParams struct {

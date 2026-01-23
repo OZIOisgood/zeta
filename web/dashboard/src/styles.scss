@@ -17,13 +17,13 @@ body {
 
 /* Ensure tui-root is a block to accept height */
 tui-root {
-  display: block; 
+  display: block;
 }
 
 .page-container {
-  margin: 0 auto;
+  margin: 0 auto 5rem auto;
   max-width: 1200px;
-  padding: 0 1rem;
+  padding: 0.5rem 1rem;
   box-sizing: border-box;
   width: 100%;
 }

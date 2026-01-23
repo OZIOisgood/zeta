@@ -1,0 +1,37 @@
+<div class="tui-container tui-container_adaptive page-container" *ngIf="asset$ | async as asset">
+  <div class="header">
+    <a tuiButton appearance="flat" iconStart="@tui.arrow-left" routerLink="/">Back</a>
+
+    <h1 class="tui-text_h3 desktop-title">{{ asset.title }}</h1>
+
+    <tui-pagination
+      *ngIf="(asset.videos?.length || 0) > 1"
+      [length]="asset.videos!.length"
+      [index]="videoIndex"
+      (indexChange)="onIndexChange($event)"
+      class="pagination"
+    ></tui-pagination>
+    <div *ngIf="(asset.videos?.length || 0) == 1" style="width: 105px"></div>
+  </div>
+
+  <div class="content-body">
+    <div class="media-content">
+      <div class="player-wrapper" *ngIf="getPlaybackId(asset) as pid">
+        <mux-player
+          [attr.playback-id]="pid"
+          [attr.metadata-video-title]="asset.title"
+          stream-type="on-demand"
+        ></mux-player>
+      </div>
+
+      <div *ngIf="!getPlaybackId(asset)" class="tui-space_top-4">
+        <p class="tui-text_body-m">Video is processing or not available.</p>
+      </div>
+
+      <div class="text-content">
+        <h1 class="tui-text_h3 title mobile-title">{{ asset.title }}</h1>
+        <p class="description tui-text_body-l">{{ asset.description }}</p>
+      </div>
+    </div>
+  </div>
+</div>

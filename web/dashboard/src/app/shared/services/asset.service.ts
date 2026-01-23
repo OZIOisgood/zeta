@@ -16,12 +16,20 @@ export interface CreateAssetResponse {
 
 export type AssetStatus = 'pending' | 'completed';
 
+export interface VideoItem {
+  id: string;
+  playback_id: string;
+  status: string;
+}
+
 export interface Asset {
   id: string;
   title: string;
   description: string;
   status: AssetStatus;
   thumbnail?: string;
+  playback_id?: string;
+  videos?: VideoItem[];
 }
 
 @Injectable({
@@ -33,6 +41,10 @@ export class AssetService {
 
   getAssets(): Observable<Asset[]> {
     return this.http.get<Asset[]>(this.apiUrl);
+  }
+
+  getAsset(id: string): Observable<Asset> {
+    return this.http.get<Asset>(`${this.apiUrl}/${id}`);
   }
 
   createAsset(

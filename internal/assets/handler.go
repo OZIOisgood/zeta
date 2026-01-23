@@ -52,14 +52,23 @@ type CreateAssetResponse struct {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/", h.CreateAsset)
 	r.Get("/", h.ListAssets)
+	r.Get("/{id}", h.GetAsset)
 }
 
 type AssetItem struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Status      string `json:"status"`
-	Thumbnail   string `json:"thumbnail,omitempty"`
+	ID          string      `json:"id"`
+	Title       string      `json:"title"`
+	Description string      `json:"description"`
+	Status      string      `json:"status"`
+	Thumbnail   string      `json:"thumbnail,omitempty"`
+	PlaybackID  string      `json:"playback_id,omitempty"`
+	Videos      []VideoItem `json:"videos,omitempty"`
+}
+
+type VideoItem struct {
+	ID         string `json:"id"`
+	PlaybackID string `json:"playback_id"`
+	Status     string `json:"status"`
 }
 
 func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
@@ -105,7 +114,88 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 			Description: a.Description,
 			Status:      string(a.Status),
 			Thumbnail:   thumb,
+			PlaybackID:  playbackID,
 		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+
+	var uuid pgtype.UUID
+	if err := uuid.Scan(idStr); err != nil {
+		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	asset, err := h.q.GetAsset(ctx, uuid)
+	if err != nil {
+		fmt.Printf("Error getting asset: %v\n", err)
+		http.Error(w, "Asset not found", http.StatusNotFound)
+		return
+	}
+
+	// Fetch Videos
+	dbVideos, err := h.q.GetAssetVideos(ctx, uuid)
+	if err != nil {
+		fmt.Printf("Error getting videos: %v\n", err)
+	}
+
+	var videos []VideoItem
+	currentPlaybackID := asset.PlaybackID
+
+	for _, v := range dbVideos {
+		playbackID := ""
+		if v.PlaybackID.Valid {
+			playbackID = v.PlaybackID.String
+		}
+
+		// Handle pending videos
+		if playbackID == "" && v.MuxUploadID != "" {
+			pid, err := h.fetchPlaybackIDFromMux(ctx, v.MuxUploadID)
+			if err == nil && pid != "" {
+				playbackID = pid
+				h.q.UpdateVideoStatusByUploadID(ctx, db.UpdateVideoStatusByUploadIDParams{
+					MuxUploadID: v.MuxUploadID,
+					MuxAssetID:  pgtype.Text{String: "", Valid: false},
+					PlaybackID:  pgtype.Text{String: pid, Valid: true},
+				})
+			}
+		}
+
+		videos = append(videos, VideoItem{
+			ID:         toUUIDString(v.ID),
+			PlaybackID: playbackID,
+			Status:     string(v.Status),
+		})
+	}
+
+	var thumb string
+	if currentPlaybackID == "" && len(videos) > 0 {
+		for _, v := range videos {
+			if v.PlaybackID != "" {
+				currentPlaybackID = v.PlaybackID
+				break
+			}
+		}
+	}
+
+	if currentPlaybackID != "" {
+		thumb = fmt.Sprintf("https://image.mux.com/%s/thumbnail.png", currentPlaybackID)
+	}
+
+	resp := AssetItem{
+		ID:          toUUIDString(asset.ID),
+		Title:       asset.Name,
+		Description: asset.Description,
+		Status:      string(asset.Status),
+		Thumbnail:   thumb,
+		PlaybackID:  currentPlaybackID,
+		Videos:      videos,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
