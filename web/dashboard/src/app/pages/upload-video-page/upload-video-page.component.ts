@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core';
-import { TuiFileLike, TuiFiles, TuiStep, TuiStepper } from '@taiga-ui/kit';
+import { TuiFileLike, TuiFiles, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
 import { forkJoin, Observable, tap } from 'rxjs';
 import {
   AssetService,
@@ -24,6 +24,7 @@ import { VideoSelectorComponent } from './ui/video-selector/video-selector.compo
     TuiStepper,
     TuiStep,
     TuiFiles,
+    TuiSlides,
     VideoSelectorComponent,
     VideoDetailsComponent,
   ],
@@ -36,6 +37,7 @@ export class UploadVideoPageComponent {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  protected slideDirection = 1;
   protected activeIndex = 0;
   protected readonly filesControl = new FormControl<File[]>([]);
   protected readonly detailsForm = new FormGroup({
@@ -50,11 +52,18 @@ export class UploadVideoPageComponent {
   protected isUploadComplete = false;
   protected isUploading = false;
 
+  protected onActiveIndexChange(index: number): void {
+    this.slideDirection = index > this.activeIndex ? 1 : -1;
+    this.activeIndex = index;
+  }
+
   protected get isFilesSelected(): boolean {
     return !!this.filesControl.value?.length;
   }
 
   protected onNext(): void {
+    this.slideDirection = 1;
+
     if (this.activeIndex === 0) {
       this.activeIndex = 1;
     } else if (this.activeIndex === 1) {
@@ -65,6 +74,8 @@ export class UploadVideoPageComponent {
   }
 
   protected onBack(): void {
+    this.slideDirection = -1;
+
     if (this.activeIndex > 0 && !this.isUploading) {
       this.activeIndex--;
     }

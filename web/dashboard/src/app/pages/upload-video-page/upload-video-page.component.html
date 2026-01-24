@@ -1,7 +1,11 @@
 <div class="tui-container tui-container_adaptive page-container">
   <h1 class="tui-text_h3">Upload Video</h1>
 
-  <tui-stepper [(activeItemIndex)]="activeIndex" style="margin-bottom: 2rem">
+  <tui-stepper
+    [activeItemIndex]="activeIndex"
+    (activeItemIndexChange)="onActiveIndexChange($event)"
+    style="margin-bottom: 2rem"
+  >
     <button tuiStep icon="@tui.upload-cloud" [disabled]="isUploading || isUploadComplete">
       Select Video
     </button>
@@ -15,44 +19,73 @@
     <button tuiStep icon="@tui.upload" [disabled]="activeIndex < 2">Upload</button>
   </tui-stepper>
 
-  @switch (activeIndex) {
-    @case (0) {
-      <app-video-selector [control]="filesControl" style="display: block; margin-bottom: 1.5rem" />
-      <div style="display: flex; justify-content: flex-end">
-        <button tuiButton size="m" type="button" [disabled]="!isFilesSelected" (click)="onNext()">
-          Next
-        </button>
-      </div>
-    }
-    @case (1) {
-      <app-video-details [form]="detailsForm" style="display: block; margin-bottom: 1.5rem" />
-      <div style="display: flex; justify-content: flex-end; gap: 0.5rem">
-        <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">Back</button>
-        <button
-          tuiButton
-          size="m"
-          type="button"
-          [disabled]="detailsForm.invalid"
-          (click)="onNext()"
-        >
-          Next
-        </button>
-      </div>
-    }
-    @case (2) {
-      <div style="margin-bottom: 2rem">
-        <tui-files>
-          <tui-file *ngFor="let file of uploadingFiles" state="loading" [file]="file"></tui-file>
-          <tui-file *ngFor="let file of completedFiles" state="normal" [file]="file"></tui-file>
-          <tui-file *ngFor="let file of failedFiles" state="error" [file]="file"></tui-file>
-        </tui-files>
-      </div>
+  <div [tuiSlides]="slideDirection" style="overflow: hidden">
+    @switch (activeIndex) {
+      @case (0) {
+        <div>
+          <app-video-selector
+            [control]="filesControl"
+            style="display: block; margin-bottom: 1.5rem"
+          />
+          <div style="display: flex; justify-content: flex-end">
+            <button
+              tuiButton
+              size="m"
+              type="button"
+              [disabled]="!isFilesSelected"
+              (click)="onNext()"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      }
+      @case (1) {
+        <div>
+          <app-video-details [form]="detailsForm" style="display: block; margin-bottom: 1.5rem" />
+          <div style="display: flex; justify-content: flex-end; gap: 0.5rem">
+            <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+              Back
+            </button>
+            <button
+              tuiButton
+              size="m"
+              type="button"
+              [disabled]="detailsForm.invalid"
+              (click)="onNext()"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      }
+      @case (2) {
+        <div>
+          <div style="margin-bottom: 2rem">
+            <tui-files>
+              <tui-file
+                *ngFor="let file of uploadingFiles"
+                state="loading"
+                [file]="file"
+              ></tui-file>
+              <tui-file *ngFor="let file of completedFiles" state="normal" [file]="file"></tui-file>
+              <tui-file *ngFor="let file of failedFiles" state="error" [file]="file"></tui-file>
+            </tui-files>
+          </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 0.5rem">
-        <button tuiButton size="m" type="button" [disabled]="!isUploadComplete" (click)="onNext()">
-          Finish
-        </button>
-      </div>
+          <div style="display: flex; justify-content: flex-end; gap: 0.5rem">
+            <button
+              tuiButton
+              size="m"
+              type="button"
+              [disabled]="!isUploadComplete"
+              (click)="onNext()"
+            >
+              Finish
+            </button>
+          </div>
+        </div>
+      }
     }
-  }
+  </div>
 </div>
