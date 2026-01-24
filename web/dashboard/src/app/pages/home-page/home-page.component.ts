@@ -1,18 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { AssetListComponent } from '../shared/components/asset-list/asset-list.component';
-import { AssetService } from '../shared/services/asset.service';
-import { AuthService } from '../shared/services/auth.service';
+import { AssetListComponent } from '../../shared/components/asset-list/asset-list.component';
+import { AssetService } from '../../shared/services/asset.service';
+import { AuthService } from '../../shared/services/auth.service';
 
 @Component({
-  selector: 'app-home',
+  selector: 'app-home-page',
   standalone: true,
   imports: [CommonModule, AssetListComponent],
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss'],
+  templateUrl: './home-page.component.html',
+  styleUrls: ['./home-page.component.scss'],
 })
-export class HomeComponent {
+export class HomePageComponent {
   private readonly router = inject(Router);
   public auth = inject(AuthService);
   private readonly assetService = inject(AssetService);

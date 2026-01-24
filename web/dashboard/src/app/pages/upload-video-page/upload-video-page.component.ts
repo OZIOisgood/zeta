@@ -6,12 +6,16 @@ import { Router } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiFileLike, TuiFiles, TuiStep, TuiStepper } from '@taiga-ui/kit';
 import { forkJoin, Observable, tap } from 'rxjs';
-import { AssetService, CreateAssetResponse, VideoResponse } from '../shared/services/asset.service';
+import {
+  AssetService,
+  CreateAssetResponse,
+  VideoResponse,
+} from '../../shared/services/asset.service';
 import { VideoDetailsComponent } from './ui/video-details/video-details.component';
 import { VideoSelectorComponent } from './ui/video-selector/video-selector.component';
 
 @Component({
-  selector: 'app-upload-video',
+  selector: 'app-upload-video-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -23,10 +27,10 @@ import { VideoSelectorComponent } from './ui/video-selector/video-selector.compo
     VideoSelectorComponent,
     VideoDetailsComponent,
   ],
-  templateUrl: './upload-video.component.html',
+  templateUrl: './upload-video-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UploadVideoComponent {
+export class UploadVideoPageComponent {
   private readonly assetService = inject(AssetService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);

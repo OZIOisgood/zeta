@@ -5,17 +5,17 @@ import '@mux/mux-player';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiPagination } from '@taiga-ui/kit';
 import { Observable, switchMap } from 'rxjs';
-import { Asset, AssetService } from '../shared/services/asset.service';
+import { Asset, AssetService } from '../../shared/services/asset.service';
 
 @Component({
-  selector: 'app-asset-details',
+  selector: 'app-asset-details-page',
   standalone: true,
   imports: [CommonModule, RouterLink, TuiButton, TuiPagination],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  templateUrl: './asset-details.component.html',
-  styleUrls: ['./asset-details.component.scss'],
+  templateUrl: './asset-details-page.component.html',
+  styleUrls: ['./asset-details-page.component.scss'],
 })
-export class AssetDetailsComponent implements OnInit {
+export class AssetDetailsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly assetService = inject(AssetService);
