@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TuiAutoColorPipe, TuiButton, TuiDataList, TuiDropdown, TuiIcon } from '@taiga-ui/core';
 import { TuiAvatar, TuiTabs } from '@taiga-ui/kit';
 import { AuthService } from '../../services/auth.service';
+import { FeatureService } from '../../services/feature.service';
 
 @Component({
   selector: 'app-navbar',
@@ -26,6 +27,9 @@ import { AuthService } from '../../services/auth.service';
 })
 export class NavbarComponent {
   private readonly auth = inject(AuthService);
+  private readonly featureService = inject(FeatureService);
+
+  protected readonly showGroups = computed(() => this.featureService.features().includes('groups'));
 
   protected readonly user = this.auth.user;
 
