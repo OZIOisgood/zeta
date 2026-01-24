@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/features"
 	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -17,9 +19,10 @@ import (
 type Handler struct {
 	q         *db.Queries
 	muxClient *muxgo.APIClient
+	features  *features.Handler
 }
 
-func NewHandler(q *db.Queries) *Handler {
+func NewHandler(q *db.Queries, features *features.Handler) *Handler {
 	id := tools.GetEnv("MUX_TOKEN_ID")
 	secret := tools.GetEnv("MUX_TOKEN_SECRET")
 	cfg := muxgo.NewConfiguration(
@@ -29,6 +32,7 @@ func NewHandler(q *db.Queries) *Handler {
 	return &Handler{
 		q:         q,
 		muxClient: muxgo.NewAPIClient(cfg),
+		features:  features,
 	}
 }
 
@@ -225,6 +229,18 @@ func (h *Handler) fetchPlaybackIDFromMux(ctx context.Context, uploadID string) (
 }
 
 func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userCtx := auth.GetUser(ctx)
+	if userCtx == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !h.features.HasFeature(userCtx.ID, "upload-video") {
+		http.Error(w, "Feature not enabled", http.StatusForbidden)
+		return
+	}
+
 	var req CreateAssetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -235,8 +251,6 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Title is required", http.StatusBadRequest)
 		return
 	}
-
-	ctx := r.Context()
 
 	// 1. Create Asset in DB
 	asset, err := h.q.CreateAsset(ctx, db.CreateAssetParams{

@@ -12,7 +12,12 @@ export const routes: Routes = [
     component: ShellComponent,
     children: [
       { path: '', component: HomePageComponent },
-      { path: 'upload-video', component: UploadVideoPageComponent },
+      {
+        path: 'upload-video',
+        component: UploadVideoPageComponent,
+        canActivate: [featureGuard],
+        data: { feature: 'upload-video' },
+      },
       { path: 'asset/:id', component: AssetDetailsPageComponent },
       {
         path: 'groups',

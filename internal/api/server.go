@@ -46,8 +46,8 @@ func (s *Server) routes() {
 
 	// Initialize Handlers
 	authHandler := auth.NewHandler()
-	assetsHandler := assets.NewHandler(queries)
 	featuresHandler := features.NewHandler()
+	assetsHandler := assets.NewHandler(queries, featuresHandler)
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware())

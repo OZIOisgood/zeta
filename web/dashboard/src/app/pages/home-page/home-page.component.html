@@ -1,7 +1,7 @@
 <div class="tui-container tui-container_adaptive page-container">
   <app-asset-list
     [assets]="(assets$ | async) || []"
-    [showAddTile]="true"
+    [showAddTile]="showUploadVideo()"
     [title]="'All my videos'"
     (addVideo)="onAddVideo()"
   >

@@ -10,7 +10,9 @@
   <tui-tabs [underline]="false">
     <a tuiTab routerLink="/" routerLinkActive [routerLinkActiveOptions]="{ exact: true }"> Home </a>
     <a *ngIf="showGroups()" tuiTab routerLink="/groups" routerLinkActive> Groups </a>
-    <a tuiTab routerLink="/upload-video" routerLinkActive> Upload video </a>
+    <a *ngIf="showUploadVideo()" tuiTab routerLink="/upload-video" routerLinkActive>
+      Upload video
+    </a>
   </tui-tabs>
 
   <ng-container *ngIf="user() as u">
