@@ -25,7 +25,9 @@
     tuiCardMedium
     tuiSurface
     class="asset-tile"
-    [style.--asset-bg]="getThumbnail(asset.thumbnail)"
+    [style.--asset-bg]="getThumbnail(asset)"
+    (mouseenter)="onMouseEnter(asset.id)"
+    (mouseleave)="onMouseLeave()"
   >
     <h2 tuiTitle>
       <span class="title-text">{{ asset.title }}</span>

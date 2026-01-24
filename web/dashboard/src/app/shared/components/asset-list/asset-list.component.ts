@@ -20,6 +20,8 @@ export class AssetListComponent {
   @Input() title = 'All my videos';
   @Output() addVideo = new EventEmitter<void>();
 
+  hoveredAssetId: string | null = null;
+
   formatStatus(status: string): string {
     if (status === 'pending') {
       return 'reviewing';
@@ -30,7 +32,23 @@ export class AssetListComponent {
     return status.replace('_', ' ');
   }
 
-  getThumbnail(thumbnail: string | undefined): string | null {
-    return thumbnail ? `url(${thumbnail})` : null;
+  getThumbnail(asset: Asset): string | null {
+    if (!asset.thumbnail) {
+      return null;
+    }
+
+    if (this.hoveredAssetId === asset.id) {
+      return `url(${asset.thumbnail.replace(/\/thumbnail\.[a-z]+/, '/animated.gif')})`;
+    }
+
+    return `url(${asset.thumbnail})`;
+  }
+
+  onMouseEnter(assetId: string): void {
+    this.hoveredAssetId = assetId;
+  }
+
+  onMouseLeave(): void {
+    this.hoveredAssetId = null;
   }
 }
