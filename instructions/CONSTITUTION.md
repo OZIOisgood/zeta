@@ -38,3 +38,10 @@
 ## 7. Cleanup & Refactoring Discipline
 
 - **Final Review**: Before completing any task, review all changed files to identify unnecessary files, dead code, temporary artifacts, or missed refactoring opportunities, and remove or improve them where appropriate.
+
+## 8. Documentation Resources
+
+- **LLM Docs**: Use these `llms-full.txt` resources for comprehensive documentation:
+  - **Taiga UI**: https://taiga-ui.dev/llms-full.txt
+  - **Mux**: https://www.mux.com/llms-full.txt
+  - **WorkOS**: https://workos.com/docs/llms-full.txt
