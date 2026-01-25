@@ -105,6 +105,19 @@ type Asset struct {
 	UpdatedAt   pgtype.Timestamptz
 }
 
+type Group struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type UserGroup struct {
+	UserID    string
+	GroupID   pgtype.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
 type Video struct {
 	ID          pgtype.UUID
 	AssetID     pgtype.UUID

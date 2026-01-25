@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiFileLike, TuiFiles, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
 import { forkJoin, Observable, tap } from 'rxjs';
+import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import {
   AssetService,
   CreateAssetResponse,
@@ -19,6 +20,7 @@ import { VideoSelectorComponent } from './ui/video-selector/video-selector.compo
   standalone: true,
   imports: [
     CommonModule,
+    PageContainerComponent,
     ReactiveFormsModule,
     TuiButton,
     TuiStepper,

@@ -1,2 +1,13 @@
-<h2>Groups</h2>
-<p>Welcome to the groups feature!</p>
+<app-page-container>
+  <ng-container *ngIf="groups$ | async as groups; else loading">
+    <app-groups-list
+      [groups]="groups"
+      [showCreateTile]="showCreateTile()"
+      (createGroup)="onCreateGroup()"
+    ></app-groups-list>
+  </ng-container>
+
+  <ng-template #loading>
+    <p class="tui-text_body-l">Loading groups...</p>
+  </ng-template>
+</app-page-container>

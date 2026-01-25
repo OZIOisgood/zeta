@@ -1,12 +1,27 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { AsyncPipe, CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
+import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { FeatureService } from '../../shared/services/feature.service';
+import { GroupsService } from '../../shared/services/groups.service';
 
 @Component({
   selector: 'app-groups-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PageContainerComponent, GroupsListComponent, AsyncPipe],
   templateUrl: './groups-page.component.html',
   styleUrls: ['./groups-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GroupsPageComponent {}
+export class GroupsPageComponent {
+  private readonly groupsService = inject(GroupsService);
+  private readonly featureService = inject(FeatureService);
+
+  readonly groups$ = this.groupsService.list();
+  readonly showCreateTile = computed(() => this.featureService.hasFeature('create-group'));
+
+  onCreateGroup(): void {
+    // TODO: Implement create group modal/form
+    console.log('Create group clicked');
+  }
+}

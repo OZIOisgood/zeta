@@ -8,6 +8,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 
 - **remote Video Analysis**: Students upload videos of their practice; coaches provide detailed feedback.
 - **Professional Dashboard**: Manage students, videos, and reviews in one place.
+- **Groups Management**: Create and manage user groups.
 - **Seamless Uploads**: Direct high-quality video uploads powered by Mux.
 - **Secure Authentication**: Enterprise-grade auth via WorkOS.
 

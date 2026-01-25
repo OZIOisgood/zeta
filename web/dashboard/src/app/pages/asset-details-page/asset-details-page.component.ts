@@ -5,12 +5,13 @@ import '@mux/mux-player';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiPagination } from '@taiga-ui/kit';
 import { Observable, switchMap } from 'rxjs';
+import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { Asset, AssetService } from '../../shared/services/asset.service';
 
 @Component({
   selector: 'app-asset-details-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, TuiButton, TuiPagination],
+  imports: [CommonModule, RouterLink, TuiButton, TuiPagination, PageContainerComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',
   styleUrls: ['./asset-details-page.component.scss'],

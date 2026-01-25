@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AssetListComponent } from '../../shared/components/asset-list/asset-list.component';
+import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { AssetService } from '../../shared/services/asset.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { FeatureService } from '../../shared/services/feature.service';
@@ -9,7 +10,7 @@ import { FeatureService } from '../../shared/services/feature.service';
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, AssetListComponent],
+  imports: [CommonModule, PageContainerComponent, AssetListComponent],
   templateUrl: './home-page.component.html',
   styleUrls: ['./home-page.component.scss'],
 })

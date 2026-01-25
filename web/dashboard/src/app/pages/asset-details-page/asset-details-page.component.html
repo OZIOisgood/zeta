@@ -1,4 +1,4 @@
-<div class="tui-container tui-container_adaptive page-container" *ngIf="asset$ | async as asset">
+<app-page-container *ngIf="asset$ | async as asset">
   <div class="header">
     <a tuiButton appearance="flat" iconStart="@tui.arrow-left" routerLink="/">Back</a>
 
@@ -34,4 +34,4 @@
       </div>
     </div>
   </div>
-</div>
+</app-page-container>

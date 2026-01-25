@@ -1,0 +1,27 @@
+<h1 class="tui-text_h3 list-title" *ngIf="title">{{ title }}</h1>
+
+<div class="grid">
+  <div
+    *ngIf="showCreateTile"
+    tuiAppearance="neutral"
+    tuiCardMedium
+    class="create-tile"
+    (click)="onCreateClick()"
+    (keydown.enter)="onCreateClick()"
+    role="button"
+    tabindex="0"
+  >
+    <tui-avatar src="@tui.plus" class="plus"></tui-avatar>
+
+    <h2 tuiTitle>
+      Add
+      <span tuiSubtitle>Create a new group</span>
+    </h2>
+  </div>
+
+  <div *ngFor="let group of groups" tuiCardMedium tuiSurface class="group-tile">
+    <h2 tuiTitle>
+      <span class="title-text">{{ group.name }}</span>
+    </h2>
+  </div>
+</div>

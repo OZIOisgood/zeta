@@ -1,4 +1,4 @@
-<div class="tui-container tui-container_adaptive page-container">
+<app-page-container>
   <app-asset-list
     [assets]="(assets$ | async) || []"
     [showAddTile]="showUploadVideo()"
@@ -6,4 +6,4 @@
     (addVideo)="onAddVideo()"
   >
   </app-asset-list>
-</div>
+</app-page-container>
