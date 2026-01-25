@@ -1,6 +1,15 @@
-# Zeta
+# Zeta: Digital Video Coaching Platform
 
-Zeta is a minimal Go + Angular starter project with WorkOS Authentication.
+Zeta is a modern platform designed to revolutionize remote coaching through digital video analysis. Connect with experts, upload your training sessions, and receive precise, time-stamped feedback—anytime, anywhere.
+
+Inspired by the need for efficient remote coaching, Zeta bridges the gap between students and mentors, eliminating travel costs and scheduling conflicts while enabling professional monetization for experts.
+
+## Key Features
+
+- **remote Video Analysis**: Students upload videos of their practice; coaches provide detailed feedback.
+- **Professional Dashboard**: Manage students, videos, and reviews in one place.
+- **Seamless Uploads**: Direct high-quality video uploads powered by Mux.
+- **Secure Authentication**: Enterprise-grade auth via WorkOS.
 
 ## How to start
 
@@ -10,6 +19,7 @@ Zeta is a minimal Go + Angular starter project with WorkOS Authentication.
 - Go 1.25+
 - Node.js & pnpm (for the dashboard)
 - WorkOS Account & Project
+- Mux Account
 
 ### Environment Setup
 
@@ -34,6 +44,9 @@ Zeta is a minimal Go + Angular starter project with WorkOS Authentication.
 3. **WorkOS Configuration**:
    - In WorkOS Dashboard > Configuration > Redirect URIs:
      - Add `http://localhost:8080/auth/callback`
+   - In WorkOS Dashboard > User Management > Feature Flags:
+     - Create `upload-video`
+     - Create `groups`
 
 4. **Mux Configuration**:
    - Create an Access Token in Mux Dashboard.
@@ -77,6 +90,16 @@ curl -b "zeta_session=..." http://localhost:8080/auth/me
 ```
 
 ## Diagrams
+
+### Core User Journey
+
+```mermaid
+graph LR
+    Student[Student] -->|Uploads Video| Zeta[Zeta Platform]
+    Zeta -->|Notifies| Coach[Coach]
+    Coach -->|Analyzes & Annotates| Review[Video Review]
+    Review -->|Feedback| Student
+```
 
 ### System Architecture
 
