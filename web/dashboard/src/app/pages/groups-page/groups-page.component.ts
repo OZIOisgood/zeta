@@ -25,4 +25,8 @@ export class GroupsPageComponent {
   onCreateGroup(): void {
     this.router.navigate(['/create-group']);
   }
+
+  onSelectGroup(groupId: string): void {
+    this.router.navigate(['/groups', groupId]);
+  }
 }

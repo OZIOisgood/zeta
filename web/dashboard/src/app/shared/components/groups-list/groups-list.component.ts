@@ -18,8 +18,13 @@ export class GroupsListComponent {
   @Input() showCreateTile = false;
   @Input() title = 'My Groups';
   @Output() createGroup = new EventEmitter<void>();
+  @Output() selectGroup = new EventEmitter<string>();
 
   onCreateClick(): void {
     this.createGroup.emit();
+  }
+
+  onGroupClick(groupId: string): void {
+    this.selectGroup.emit(groupId);
   }
 }
