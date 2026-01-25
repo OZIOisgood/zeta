@@ -1,0 +1,40 @@
+.create-group-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+
+  h1 {
+    margin-bottom: 2rem;
+  }
+}
+
+.create-group-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 500;
+  }
+}
+
+.error-message {
+  color: #d63031;
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+
+  button {
+    flex: 1;
+  }
+}

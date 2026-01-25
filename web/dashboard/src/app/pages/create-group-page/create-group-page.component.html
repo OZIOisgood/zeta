@@ -1,0 +1,41 @@
+<app-page-container>
+  <div class="create-group-container">
+    <h1 class="tui-text_h2">Create Group</h1>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="create-group-form">
+      <div class="form-field">
+        <tui-textfield>
+          <label tuiLabel>Group Name</label>
+          <input formControlName="name" tuiTextfield type="text" />
+        </tui-textfield>
+
+        <div
+          *ngIf="form.get('name')?.invalid && form.get('name')?.touched"
+          class="tui-text_body-s error-message"
+        >
+          Group name is required
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          (click)="onCancel()"
+          tuiButton
+          appearance="secondary"
+          [disabled]="isSubmitting"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="form.invalid || isSubmitting"
+          tuiButton
+          appearance="primary"
+        >
+          {{ isSubmitting ? 'Creating...' : 'Create Group' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</app-page-container>

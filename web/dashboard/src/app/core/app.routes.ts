@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AssetDetailsPageComponent } from '../pages/asset-details-page/asset-details-page.component';
+import { CreateGroupPageComponent } from '../pages/create-group-page/create-group-page.component';
 import { GroupsPageComponent } from '../pages/groups-page/groups-page.component';
 import { HomePageComponent } from '../pages/home-page/home-page.component';
 import { UploadVideoPageComponent } from '../pages/upload-video-page/upload-video-page.component';
@@ -24,6 +25,12 @@ export const routes: Routes = [
         component: GroupsPageComponent,
         canActivate: [featureGuard],
         data: { feature: 'groups' },
+      },
+      {
+        path: 'create-group',
+        component: CreateGroupPageComponent,
+        canActivate: [featureGuard],
+        data: { feature: 'create-group' },
       },
     ],
   },
