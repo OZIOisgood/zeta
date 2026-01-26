@@ -82,8 +82,9 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	group, err := h.q.CreateGroup(ctx, db.CreateGroupParams{
-		Name:   req.Name,
-		Avatar: avatarData,
+		Name:    req.Name,
+		OwnerID: user.ID,
+		Avatar:  avatarData,
 	})
 	if err != nil {
 		http.Error(w, "Failed to create group", http.StatusInternalServerError)

@@ -42,20 +42,22 @@ func (q *Queries) CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) 
 }
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (name, avatar) VALUES ($1, $2) RETURNING id, name, avatar, created_at, updated_at
+INSERT INTO groups (name, owner_id, avatar) VALUES ($1, $2, $3) RETURNING id, name, owner_id, avatar, created_at, updated_at
 `
 
 type CreateGroupParams struct {
-	Name   string `json:"name"`
-	Avatar []byte `json:"avatar"`
+	Name    string `json:"name"`
+	OwnerID string `json:"owner_id"`
+	Avatar  []byte `json:"avatar"`
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
-	row := q.db.QueryRow(ctx, createGroup, arg.Name, arg.Avatar)
+	row := q.db.QueryRow(ctx, createGroup, arg.Name, arg.OwnerID, arg.Avatar)
 	var i Group
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.OwnerID,
 		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -64,7 +66,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 }
 
 const listUserGroups = `-- name: ListUserGroups :many
-SELECT g.id, g.name, g.avatar, g.created_at, g.updated_at
+SELECT g.id, g.name, g.owner_id, g.avatar, g.created_at, g.updated_at
 FROM groups g
 JOIN user_groups ug ON g.id = ug.group_id
 WHERE ug.user_id = $1
@@ -83,6 +85,7 @@ func (q *Queries) ListUserGroups(ctx context.Context, userID string) ([]Group, e
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.OwnerID,
 			&i.Avatar,
 			&i.CreatedAt,
 			&i.UpdatedAt,

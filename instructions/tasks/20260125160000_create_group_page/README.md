@@ -21,3 +21,7 @@ As a user with the `create-group` feature, I want to be able to create a group. 
 5. The form validates the group name (required field)
 6. On successful creation, the page navigates back to the groups page
 7. Build completes successfully with `make build` and `make dashboard-build`
+
+### Follow-up Tasks
+
+- [Add owner_id to group entity](../20260126193128_add_owner_id_to_group_entity/README.md)

@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 export interface Group {
   id: string;
   name: string;
+  owner_id: string;
   avatar: string | null; // Base64 encoded image data
   created_at: string;
   updated_at: string;
