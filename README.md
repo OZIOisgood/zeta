@@ -156,10 +156,15 @@ sequenceDiagram
 ```mermaid
 erDiagram
     ASSETS ||--|{ VIDEOS : contains
+    GROUPS ||--|{ ASSETS : owns
+    GROUPS ||--|{ USER_GROUPS : members
+
     ASSETS {
         uuid id PK
         string name
         string description
+        string owner_id
+        uuid group_id FK
         enum status
         timestamp created_at
         timestamp updated_at
@@ -173,5 +178,17 @@ erDiagram
         enum status
         timestamp created_at
         timestamp updated_at
+    }
+    GROUPS {
+        uuid id PK
+        string name
+        bytea avatar
+        timestamp created_at
+        timestamp updated_at
+    }
+    USER_GROUPS {
+        string user_id PK
+        uuid group_id PK, FK
+        timestamp created_at
     }
 ```
