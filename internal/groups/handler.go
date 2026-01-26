@@ -1,6 +1,7 @@
 package groups
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 
@@ -30,12 +31,18 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Return empty array instead of null if no groups
+	if groups == nil {
+		groups = []db.Group{}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(groups)
 }
 
 type CreateGroupRequest struct {
-	Name string `json:"name"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"` // Base64 encoded image data, max 300KB
 }
 
 func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +64,27 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, err := h.q.CreateGroup(ctx, req.Name)
+	// Decode avatar from base64 if provided
+	var avatarData []byte
+	if req.Avatar != "" {
+		var err error
+		avatarData, err = base64.StdEncoding.DecodeString(req.Avatar)
+		if err != nil {
+			http.Error(w, "Invalid avatar data", http.StatusBadRequest)
+			return
+		}
+
+		// Validate avatar size (max 300KB)
+		if len(avatarData) > 300*1024 {
+			http.Error(w, "Avatar size exceeds 300KB limit", http.StatusBadRequest)
+			return
+		}
+	}
+
+	group, err := h.q.CreateGroup(ctx, db.CreateGroupParams{
+		Name:   req.Name,
+		Avatar: avatarData,
+	})
 	if err != nil {
 		http.Error(w, "Failed to create group", http.StatusInternalServerError)
 		return

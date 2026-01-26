@@ -30,7 +30,12 @@
     tabindex="0"
   >
     <h2 tuiTitle>
-      <span class="title-text">{{ group.name }}</span>
+      {{ group.name }}
     </h2>
+    <div
+      class="group-avatar"
+      *ngIf="group.avatar"
+      [style.background-image]="'url(data:image/jpeg;base64,' + group.avatar + ')'"
+    ></div>
   </div>
 </div>

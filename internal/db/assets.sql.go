@@ -16,8 +16,8 @@ INSERT INTO assets (name, description) VALUES ($1, $2) RETURNING id, name, descr
 `
 
 type CreateAssetParams struct {
-	Name        string
-	Description string
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error) {
@@ -39,9 +39,9 @@ INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNI
 `
 
 type CreateVideoParams struct {
-	AssetID     pgtype.UUID
-	MuxUploadID string
-	Status      VideoStatus
+	AssetID     pgtype.UUID `json:"asset_id"`
+	MuxUploadID string      `json:"mux_upload_id"`
+	Status      VideoStatus `json:"status"`
 }
 
 func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error) {
@@ -65,15 +65,15 @@ SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, COALES
 `
 
 type GetAssetRow struct {
-	ID          pgtype.UUID
-	Name        string
-	Description string
-	Status      AssetStatus
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-	PlaybackID  string
-	MuxUploadID string
-	MuxAssetID  string
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Status      AssetStatus        `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	PlaybackID  string             `json:"playback_id"`
+	MuxUploadID string             `json:"mux_upload_id"`
+	MuxAssetID  string             `json:"mux_asset_id"`
 }
 
 func (q *Queries) GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error) {
@@ -98,12 +98,12 @@ SELECT id, mux_upload_id, mux_asset_id, playback_id, status, created_at FROM vid
 `
 
 type GetAssetVideosRow struct {
-	ID          pgtype.UUID
-	MuxUploadID string
-	MuxAssetID  pgtype.Text
-	PlaybackID  pgtype.Text
-	Status      VideoStatus
-	CreatedAt   pgtype.Timestamptz
+	ID          pgtype.UUID        `json:"id"`
+	MuxUploadID string             `json:"mux_upload_id"`
+	MuxAssetID  pgtype.Text        `json:"mux_asset_id"`
+	PlaybackID  pgtype.Text        `json:"playback_id"`
+	Status      VideoStatus        `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]GetAssetVideosRow, error) {
@@ -138,15 +138,15 @@ SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, COALES
 `
 
 type ListAssetsRow struct {
-	ID          pgtype.UUID
-	Name        string
-	Description string
-	Status      AssetStatus
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-	PlaybackID  string
-	MuxUploadID string
-	MuxAssetID  string
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Status      AssetStatus        `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	PlaybackID  string             `json:"playback_id"`
+	MuxUploadID string             `json:"mux_upload_id"`
+	MuxAssetID  string             `json:"mux_asset_id"`
 }
 
 func (q *Queries) ListAssets(ctx context.Context) ([]ListAssetsRow, error) {
@@ -184,8 +184,8 @@ UPDATE videos SET mux_asset_id = $2, status = 'ready', updated_at = NOW() WHERE 
 `
 
 type UpdateVideoMuxAssetIDParams struct {
-	ID         pgtype.UUID
-	MuxAssetID pgtype.Text
+	ID         pgtype.UUID `json:"id"`
+	MuxAssetID pgtype.Text `json:"mux_asset_id"`
 }
 
 func (q *Queries) UpdateVideoMuxAssetID(ctx context.Context, arg UpdateVideoMuxAssetIDParams) error {
@@ -198,9 +198,9 @@ UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated
 `
 
 type UpdateVideoStatusParams struct {
-	MuxUploadID string
-	MuxAssetID  pgtype.Text
-	PlaybackID  pgtype.Text
+	MuxUploadID string      `json:"mux_upload_id"`
+	MuxAssetID  pgtype.Text `json:"mux_asset_id"`
+	PlaybackID  pgtype.Text `json:"playback_id"`
 }
 
 func (q *Queries) UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusParams) error {
@@ -213,9 +213,9 @@ UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated
 `
 
 type UpdateVideoStatusByUploadIDParams struct {
-	MuxUploadID string
-	MuxAssetID  pgtype.Text
-	PlaybackID  pgtype.Text
+	MuxUploadID string      `json:"mux_upload_id"`
+	MuxAssetID  pgtype.Text `json:"mux_asset_id"`
+	PlaybackID  pgtype.Text `json:"playback_id"`
 }
 
 func (q *Queries) UpdateVideoStatusByUploadID(ctx context.Context, arg UpdateVideoStatusByUploadIDParams) error {

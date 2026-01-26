@@ -31,8 +31,8 @@ func (e *AssetStatus) Scan(src interface{}) error {
 }
 
 type NullAssetStatus struct {
-	AssetStatus AssetStatus
-	Valid       bool // Valid is true if AssetStatus is not NULL
+	AssetStatus AssetStatus `json:"asset_status"`
+	Valid       bool        `json:"valid"` // Valid is true if AssetStatus is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -74,8 +74,8 @@ func (e *VideoStatus) Scan(src interface{}) error {
 }
 
 type NullVideoStatus struct {
-	VideoStatus VideoStatus
-	Valid       bool // Valid is true if VideoStatus is not NULL
+	VideoStatus VideoStatus `json:"video_status"`
+	Valid       bool        `json:"valid"` // Valid is true if VideoStatus is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -97,34 +97,35 @@ func (ns NullVideoStatus) Value() (driver.Value, error) {
 }
 
 type Asset struct {
-	ID          pgtype.UUID
-	Name        string
-	Description string
-	Status      AssetStatus
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Status      AssetStatus        `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Group struct {
 	ID        pgtype.UUID        `json:"id"`
 	Name      string             `json:"name"`
+	Avatar    []byte             `json:"avatar"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type UserGroup struct {
-	UserID    string
-	GroupID   pgtype.UUID
-	CreatedAt pgtype.Timestamptz
+	UserID    string             `json:"user_id"`
+	GroupID   pgtype.UUID        `json:"group_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Video struct {
-	ID          pgtype.UUID
-	AssetID     pgtype.UUID
-	MuxUploadID string
-	MuxAssetID  pgtype.Text
-	PlaybackID  pgtype.Text
-	Status      VideoStatus
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	ID          pgtype.UUID        `json:"id"`
+	AssetID     pgtype.UUID        `json:"asset_id"`
+	MuxUploadID string             `json:"mux_upload_id"`
+	MuxAssetID  pgtype.Text        `json:"mux_asset_id"`
+	PlaybackID  pgtype.Text        `json:"playback_id"`
+	Status      VideoStatus        `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

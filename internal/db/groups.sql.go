@@ -16,8 +16,8 @@ INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2)
 `
 
 type AddUserToGroupParams struct {
-	UserID  string
-	GroupID pgtype.UUID
+	UserID  string      `json:"user_id"`
+	GroupID pgtype.UUID `json:"group_id"`
 }
 
 func (q *Queries) AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error {
@@ -26,15 +26,21 @@ func (q *Queries) AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) 
 }
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (name) VALUES ($1) RETURNING id, name, created_at, updated_at
+INSERT INTO groups (name, avatar) VALUES ($1, $2) RETURNING id, name, avatar, created_at, updated_at
 `
 
-func (q *Queries) CreateGroup(ctx context.Context, name string) (Group, error) {
-	row := q.db.QueryRow(ctx, createGroup, name)
+type CreateGroupParams struct {
+	Name   string `json:"name"`
+	Avatar []byte `json:"avatar"`
+}
+
+func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
+	row := q.db.QueryRow(ctx, createGroup, arg.Name, arg.Avatar)
 	var i Group
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -42,7 +48,7 @@ func (q *Queries) CreateGroup(ctx context.Context, name string) (Group, error) {
 }
 
 const listUserGroups = `-- name: ListUserGroups :many
-SELECT g.id, g.name, g.created_at, g.updated_at
+SELECT g.id, g.name, g.avatar, g.created_at, g.updated_at
 FROM groups g
 JOIN user_groups ug ON g.id = ug.group_id
 WHERE ug.user_id = $1
@@ -61,6 +67,7 @@ func (q *Queries) ListUserGroups(ctx context.Context, userID string) ([]Group, e
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.Avatar,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

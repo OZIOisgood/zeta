@@ -17,6 +17,35 @@
         </div>
       </div>
 
+      <div class="form-field">
+        <label tuiLabel>Group Avatar</label>
+        <input
+          #fileInput
+          type="file"
+          accept="image/*"
+          hidden
+          (change)="onFileInputChange($event)"
+        />
+        <button
+          type="button"
+          tuiButton
+          appearance="secondary"
+          (click)="fileInput.click()"
+          [disabled]="isSubmitting"
+        >
+          Select Image (max 300KB)
+        </button>
+
+        <div *ngIf="compressionError()" class="tui-text_body-s error-message">
+          {{ compressionError() }}
+        </div>
+
+        <div *ngIf="avatarPreview()" class="avatar-preview-container">
+          <img [src]="avatarPreview()" alt="Avatar preview" class="avatar-preview" />
+          <p class="tui-text_body-xs preview-label">Avatar preview</p>
+        </div>
+      </div>
+
       <div class="form-actions">
         <button
           type="button"
@@ -29,7 +58,7 @@
         </button>
         <button
           type="submit"
-          [disabled]="form.invalid || isSubmitting"
+          [disabled]="form.invalid || isSubmitting || compressionError() !== null"
           tuiButton
           appearance="primary"
         >

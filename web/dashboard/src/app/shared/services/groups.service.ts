@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 export interface Group {
   id: string;
   name: string;
+  avatar: string | null; // Base64 encoded image data
   created_at: string;
   updated_at: string;
 }
@@ -21,7 +22,7 @@ export class GroupsService {
     return this.http.get<Group[]>(this.apiUrl);
   }
 
-  create(name: string): Observable<Group> {
-    return this.http.post<Group>(this.apiUrl, { name });
+  create(name: string, avatar?: string): Observable<Group> {
+    return this.http.post<Group>(this.apiUrl, { name, avatar: avatar || null });
   }
 }
