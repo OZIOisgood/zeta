@@ -6,8 +6,8 @@ This document establishes logging standards for the Zeta project to ensure consi
 
 - **Library**: Go standard library `log/slog` (Go 1.21+)
 - **Format**: JSON to stdout
-- **Default Level**: INFO in production
-- **Handler**: `slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})`
+- **Configuration**: `LOG_LEVEL` environment variable (debug, info, warn, error). Defaults to INFO.
+- **Handler**: `slog.NewJSONHandler` with configurable level.
 
 For comprehensive guide, see [docs/logging.md](../../docs/logging.md)
 

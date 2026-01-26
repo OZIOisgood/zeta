@@ -20,3 +20,11 @@ func GetEnv(key string) string {
 	}
 	return v
 }
+
+func GetEnvOrDefault(key, fallback string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	return v
+}

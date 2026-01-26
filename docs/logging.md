@@ -13,15 +13,25 @@ This application uses Go's standard library `log/slog` (Go 1.21+) for structured
 
 ### 1. Logger Initialization
 
-The base logger is created in `cmd/api/main.go`:
+The base logger is created in `cmd/api/main.go`. It reads the `LOG_LEVEL` environment variable (default: INFO) to determine verbosity:
 
 ```go
-baseLogger := logger.New()
+logLevel := tools.GetEnvOrDefault("LOG_LEVEL", "info")
+baseLogger := logger.NewWithLevel(logger.ParseLevel(logLevel))
 ```
 
 This creates a `*slog.Logger` with `slog.NewJSONHandler` outputting to stdout.
 
-### 2. Request-Scoped Logging
+### 2. Configuration
+
+You can control the log level via the `LOG_LEVEL` environment variable:
+
+- `LOG_LEVEL=debug` - Enable debug logs
+- `LOG_LEVEL=info` - Default production level
+- `LOG_LEVEL=warn` - Warnings and errors only
+- `LOG_LEVEL=error` - Errors only
+
+### 3. Request-Scoped Logging
 
 The HTTP middleware (`internal/logger/middleware.go`) automatically:
 

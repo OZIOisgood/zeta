@@ -27,6 +27,16 @@ func NewWithLevel(level slog.Level) *slog.Logger {
 	return slog.New(handler)
 }
 
+// ParseLevel converts a string level to slog.Level.
+// Defaults to LevelInfo if parsing fails.
+func ParseLevel(s string) slog.Level {
+	var level slog.Level
+	if err := level.UnmarshalText([]byte(s)); err != nil {
+		return slog.LevelInfo
+	}
+	return level
+}
+
 // With attaches a logger to the context with optional attributes.
 func With(ctx context.Context, log *slog.Logger, attrs ...slog.Attr) context.Context {
 	if len(attrs) > 0 {

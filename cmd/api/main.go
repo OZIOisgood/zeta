@@ -17,7 +17,8 @@ func main() {
 	tools.LoadEnv()
 
 	// Initialize structured logger
-	baseLogger := logger.New()
+	logLevel := tools.GetEnvOrDefault("LOG_LEVEL", "info")
+	baseLogger := logger.NewWithLevel(logger.ParseLevel(logLevel))
 
 	dbURL := tools.GetEnv("DB_URL")
 
