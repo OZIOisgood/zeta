@@ -105,6 +105,7 @@ type Asset struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	GroupID     pgtype.UUID        `json:"group_id"`
+	OwnerID     string             `json:"owner_id"`
 }
 
 type Group struct {

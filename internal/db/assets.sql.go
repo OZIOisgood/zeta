@@ -12,17 +12,23 @@ import (
 )
 
 const createAsset = `-- name: CreateAsset :one
-INSERT INTO assets (name, description, group_id) VALUES ($1, $2, $3) RETURNING id, name, description, status, created_at, updated_at, group_id
+INSERT INTO assets (name, description, group_id, owner_id) VALUES ($1, $2, $3, $4) RETURNING id, name, description, status, created_at, updated_at, group_id, owner_id
 `
 
 type CreateAssetParams struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
 	GroupID     pgtype.UUID `json:"group_id"`
+	OwnerID     string      `json:"owner_id"`
 }
 
 func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error) {
-	row := q.db.QueryRow(ctx, createAsset, arg.Name, arg.Description, arg.GroupID)
+	row := q.db.QueryRow(ctx, createAsset,
+		arg.Name,
+		arg.Description,
+		arg.GroupID,
+		arg.OwnerID,
+	)
 	var i Asset
 	err := row.Scan(
 		&i.ID,
@@ -32,6 +38,7 @@ func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.GroupID,
+		&i.OwnerID,
 	)
 	return i, err
 }
@@ -63,7 +70,7 @@ func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video
 }
 
 const getAsset = `-- name: GetAsset :one
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true WHERE a.id = $1
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true WHERE a.id = $1
 `
 
 type GetAssetRow struct {
@@ -73,6 +80,7 @@ type GetAssetRow struct {
 	Status      AssetStatus        `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	OwnerID     string             `json:"owner_id"`
 	PlaybackID  string             `json:"playback_id"`
 	MuxUploadID string             `json:"mux_upload_id"`
 	MuxAssetID  string             `json:"mux_asset_id"`
@@ -88,6 +96,7 @@ func (q *Queries) GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, er
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.OwnerID,
 		&i.PlaybackID,
 		&i.MuxUploadID,
 		&i.MuxAssetID,
@@ -136,7 +145,7 @@ func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]Ge
 }
 
 const listAssets = `-- name: ListAssets :many
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true WHERE a.status != 'waiting_upload' ORDER BY a.created_at DESC
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true WHERE a.status != 'waiting_upload' ORDER BY a.created_at DESC
 `
 
 type ListAssetsRow struct {
@@ -146,6 +155,7 @@ type ListAssetsRow struct {
 	Status      AssetStatus        `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	OwnerID     string             `json:"owner_id"`
 	PlaybackID  string             `json:"playback_id"`
 	MuxUploadID string             `json:"mux_upload_id"`
 	MuxAssetID  string             `json:"mux_asset_id"`
@@ -167,6 +177,7 @@ func (q *Queries) ListAssets(ctx context.Context) ([]ListAssetsRow, error) {
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.OwnerID,
 			&i.PlaybackID,
 			&i.MuxUploadID,
 			&i.MuxAssetID,

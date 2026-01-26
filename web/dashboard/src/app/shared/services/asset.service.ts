@@ -26,6 +26,7 @@ export interface Asset {
   id: string;
   title: string;
   description: string;
+  owner_id: string;
   status: AssetStatus;
   thumbnail?: string;
   playback_id?: string;

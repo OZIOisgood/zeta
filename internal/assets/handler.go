@@ -88,6 +88,7 @@ type AssetItem struct {
 	ID          string      `json:"id"`
 	Title       string      `json:"title"`
 	Description string      `json:"description"`
+	OwnerID     string      `json:"owner_id"`
 	Status      string      `json:"status"`
 	Thumbnail   string      `json:"thumbnail,omitempty"`
 	PlaybackID  string      `json:"playback_id,omitempty"`
@@ -141,6 +142,7 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 			ID:          toUUIDString(a.ID),
 			Title:       a.Name,
 			Description: a.Description,
+			OwnerID:     a.OwnerID,
 			Status:      string(a.Status),
 			Thumbnail:   thumb,
 			PlaybackID:  playbackID,
@@ -221,6 +223,7 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 		ID:          toUUIDString(asset.ID),
 		Title:       asset.Name,
 		Description: asset.Description,
+		OwnerID:     asset.OwnerID,
 		Status:      string(asset.Status),
 		Thumbnail:   thumb,
 		PlaybackID:  currentPlaybackID,
@@ -308,6 +311,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		Name:        req.Title,
 		Description: req.Description,
 		GroupID:     groupID,
+		OwnerID:     userCtx.ID,
 	})
 	if err != nil {
 		fmt.Printf("Error creating asset: %v\n", err)
