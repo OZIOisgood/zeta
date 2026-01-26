@@ -18,3 +18,7 @@ As a user with `upload-video` feature I go to the `upload-video` page. I expect 
 - [x] Backend API Updates
 - [x] Frontend Service Updates
 - [x] Frontend Component Updates
+
+## Follow-up
+
+- [20260126185950_rename_upload_video_feature_to_create_asset](../20260126185950_rename_upload_video_feature_to_create_asset/README.md)

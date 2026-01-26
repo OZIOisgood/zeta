@@ -264,7 +264,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.features.HasFeature(userCtx.ID, "upload-video") {
+	if !h.features.HasFeature(userCtx.ID, "create-asset") {
 		http.Error(w, "Feature not enabled", http.StatusForbidden)
 		return
 	}

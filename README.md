@@ -46,8 +46,9 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - In WorkOS Dashboard > Configuration > Redirect URIs:
      - Add `http://localhost:8080/auth/callback`
    - In WorkOS Dashboard > User Management > Feature Flags:
-     - Create `upload-video`
+     - Create `create-asset`
      - Create `groups`
+     - Create `create-group`
 
 4. **Mux Configuration**:
    - Create an Access Token in Mux Dashboard.

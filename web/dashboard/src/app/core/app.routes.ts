@@ -18,7 +18,7 @@ export const routes: Routes = [
         path: 'upload-video',
         component: UploadVideoPageComponent,
         canActivate: [featureGuard],
-        data: { feature: 'upload-video' },
+        data: { feature: 'create-asset' },
       },
       { path: 'asset/:id', component: AssetDetailsPageComponent },
       {

@@ -31,7 +31,7 @@ export class NavbarComponent {
 
   protected readonly showGroups = computed(() => this.featureService.features().includes('groups'));
   protected readonly showUploadVideo = computed(() =>
-    this.featureService.features().includes('upload-video'),
+    this.featureService.features().includes('create-asset'),
   );
 
   protected readonly user = this.auth.user;
