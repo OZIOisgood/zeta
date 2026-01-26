@@ -65,6 +65,25 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 	return i, err
 }
 
+const getGroup = `-- name: GetGroup :one
+SELECT id, name, owner_id, avatar, created_at, updated_at FROM groups
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetGroup(ctx context.Context, id pgtype.UUID) (Group, error) {
+	row := q.db.QueryRow(ctx, getGroup, id)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.OwnerID,
+		&i.Avatar,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listUserGroups = `-- name: ListUserGroups :many
 SELECT g.id, g.name, g.owner_id, g.avatar, g.created_at, g.updated_at
 FROM groups g

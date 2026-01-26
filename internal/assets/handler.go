@@ -9,20 +9,23 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/features"
 	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	muxgo "github.com/muxinc/mux-go"
+	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
 type Handler struct {
 	q         *db.Queries
 	muxClient *muxgo.APIClient
 	features  *features.Handler
+	email     *email.Service
 }
 
-func NewHandler(q *db.Queries, features *features.Handler) *Handler {
+func NewHandler(q *db.Queries, features *features.Handler, email *email.Service) *Handler {
 	id := tools.GetEnv("MUX_TOKEN_ID")
 	secret := tools.GetEnv("MUX_TOKEN_SECRET")
 	cfg := muxgo.NewConfiguration(
@@ -33,6 +36,7 @@ func NewHandler(q *db.Queries, features *features.Handler) *Handler {
 		q:         q,
 		muxClient: muxgo.NewAPIClient(cfg),
 		features:  features,
+		email:     email,
 	}
 }
 
@@ -318,6 +322,63 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create asset", http.StatusInternalServerError)
 		return
 	}
+
+	// Notify Group Owner
+	go func() {
+		fmt.Printf("[Email Notification] Starting notification process for asset %v\n", asset.ID)
+		
+		// Fetch group to find owner
+		group, err := h.q.GetGroup(context.Background(), asset.GroupID)
+		if err != nil {
+			fmt.Printf("[Email Notification] Error fetching group for email notification: %v\n", err)
+			return
+		}
+		fmt.Printf("[Email Notification] Group: %s, Owner: %s\n", group.Name, group.OwnerID)
+
+		// Don't notify if the uploader is the owner
+		if group.OwnerID == userCtx.ID {
+			fmt.Println("[Email Notification] Uploader is the owner, skipping.")
+			return
+		}
+
+		// Check feature flags on Owner
+		hasBaseFeature := h.features.HasFeature(group.OwnerID, "receive-email-notifications")
+		if !hasBaseFeature {
+			fmt.Printf("[Email Notification] Owner %s does not have 'receive-email-notifications' enabled\n", group.OwnerID)
+			return
+		}
+		
+		hasSpecificFeature := h.features.HasFeature(group.OwnerID, "receive-email-notifications--new-asset-in-group")
+		if !hasSpecificFeature {
+			fmt.Printf("[Email Notification] Owner %s does not have 'receive-email-notifications--new-asset-in-group' enabled\n", group.OwnerID)
+			return
+		}
+
+		// Fetch Owner Email from WorkOS
+		owner, err := usermanagement.GetUser(context.Background(), usermanagement.GetUserOpts{
+			User: group.OwnerID,
+		})
+		if err != nil {
+			fmt.Printf("[Email Notification] Error fetching owner from WorkOS: %v\n", err)
+			return
+		}
+
+		emailAddr := owner.Email
+		if emailAddr == "" {
+			fmt.Printf("[Email Notification] Owner has no email address\n")
+			return
+		}
+		fmt.Printf("[Email Notification] sending email to %s\n", emailAddr)
+
+		// Send Email
+		msg := fmt.Sprintf("User %s uploaded a new video '%s' to group '%s'.", userCtx.Name, asset.Name, group.Name)
+		err = h.email.Send([]string{emailAddr}, "New Asset Uploaded", msg)
+		if err != nil {
+			fmt.Printf("[Email Notification] Error sending email: %v\n", err)
+		} else {
+			fmt.Printf("[Email Notification] Email sent successfully\n")
+		}
+	}()
 
 	var videos []VideoResponse
 

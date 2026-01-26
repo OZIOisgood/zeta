@@ -7,6 +7,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/assets"
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/features"
 	"github.com/OZIOisgood/zeta/internal/groups"
 	"github.com/go-chi/chi/v5"
@@ -47,8 +48,9 @@ func (s *Server) routes() {
 
 	// Initialize Handlers
 	authHandler := auth.NewHandler()
+	emailService := email.NewService()
 	featuresHandler := features.NewHandler()
-	assetsHandler := assets.NewHandler(queries, featuresHandler)
+	assetsHandler := assets.NewHandler(queries, featuresHandler, emailService)
 	groupsHandler := groups.NewHandler(queries)
 
 	// Global Middleware

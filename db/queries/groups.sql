@@ -13,3 +13,7 @@ ORDER BY g.created_at DESC;
 
 -- name: CheckUserGroup :one
 SELECT EXISTS(SELECT 1 FROM user_groups WHERE user_id = $1 AND group_id = $2);
+
+-- name: GetGroup :one
+SELECT * FROM groups
+WHERE id = $1 LIMIT 1;

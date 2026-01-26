@@ -40,6 +40,9 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    # Mux Configuration
    MUX_TOKEN_ID=...
    MUX_TOKEN_SECRET=...
+
+   # Resend Configuration
+   RESEND_API_KEY=re_...
    ```
 
 3. **WorkOS Configuration**:
@@ -49,6 +52,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
      - Create `create-asset`
      - Create `groups`
      - Create `create-group`
+     - Create `receive-email-notifications`
+     - Create `receive-email-notifications--new-asset-in-group`
 
 4. **Mux Configuration**:
    - Create an Access Token in Mux Dashboard.

@@ -45,3 +45,4 @@
   - **Taiga UI**: https://taiga-ui.dev/llms-full.txt
   - **Mux**: https://www.mux.com/llms-full.txt
   - **WorkOS**: https://workos.com/docs/llms-full.txt
+  - **Resend**: https://resend.com/docs/llms-full.txt
