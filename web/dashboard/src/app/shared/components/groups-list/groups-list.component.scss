@@ -61,10 +61,10 @@
   background-color: #fff;
   cursor: pointer;
 
-  transition: transform 0.2s;
-
   &:hover {
-    transform: translateY(-2px);
+    .group-avatar {
+      transform: scale(1.1);
+    }
   }
 
   .group-avatar {
@@ -79,5 +79,6 @@
     pointer-events: none;
     border-radius: 50%;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
   }
 }
