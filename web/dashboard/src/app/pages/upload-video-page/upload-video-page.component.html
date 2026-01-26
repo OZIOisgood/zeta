@@ -43,6 +43,39 @@
       @case (1) {
         <div>
           <app-video-details [form]="detailsForm" style="display: block; margin-bottom: 1.5rem" />
+
+          <tui-textfield
+            tuiChevron
+            [content]="detailsForm.controls.group.value && content"
+            [stringify]="groupStringify"
+            style="margin-bottom: 1.5rem"
+          >
+            <label tuiLabel>Group</label>
+            <input
+              placeholder="Choose a group"
+              tuiSelect
+              [formControl]="detailsForm.controls.group"
+            />
+
+            <tui-data-list-wrapper
+              *tuiTextfieldDropdown
+              new
+              [itemContent]="content"
+              [items]="groups"
+            />
+          </tui-textfield>
+
+          <ng-template #content let-group>
+            <div style="display: flex; align-items: center; gap: 0.5rem">
+              <!-- Using a simple img or div if tui-avatar is not behaving inside template context without proper imports or binding issues, but tui-avatar is standard -->
+              <tui-avatar
+                [src]="group.avatar ? 'data:image/png;base64,' + group.avatar : '@tui.users'"
+                size="xs"
+              ></tui-avatar>
+              {{ group.name }}
+            </div>
+          </ng-template>
+
           <div style="display: flex; justify-content: flex-end; gap: 0.5rem">
             <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
               Back

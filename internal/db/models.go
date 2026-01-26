@@ -103,6 +103,7 @@ type Asset struct {
 	Status      AssetStatus        `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	GroupID     pgtype.UUID        `json:"group_id"`
 }
 
 type Group struct {

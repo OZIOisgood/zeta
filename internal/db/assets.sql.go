@@ -12,16 +12,17 @@ import (
 )
 
 const createAsset = `-- name: CreateAsset :one
-INSERT INTO assets (name, description) VALUES ($1, $2) RETURNING id, name, description, status, created_at, updated_at
+INSERT INTO assets (name, description, group_id) VALUES ($1, $2, $3) RETURNING id, name, description, status, created_at, updated_at, group_id
 `
 
 type CreateAssetParams struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	GroupID     pgtype.UUID `json:"group_id"`
 }
 
 func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error) {
-	row := q.db.QueryRow(ctx, createAsset, arg.Name, arg.Description)
+	row := q.db.QueryRow(ctx, createAsset, arg.Name, arg.Description, arg.GroupID)
 	var i Asset
 	err := row.Scan(
 		&i.ID,
@@ -30,6 +31,7 @@ func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.GroupID,
 	)
 	return i, err
 }

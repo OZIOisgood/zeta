@@ -1,10 +1,33 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpEventType } from '@angular/common/http';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
+import {
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
-import { TuiButton } from '@taiga-ui/core';
-import { TuiFileLike, TuiFiles, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
+import { TuiStringHandler } from '@taiga-ui/cdk';
+import { TuiButton, TuiTextfield } from '@taiga-ui/core';
+import {
+  TuiAvatar,
+  TuiChevron,
+  TuiDataListWrapper,
+  TuiFileLike,
+  TuiFiles,
+  TuiSelect,
+  TuiSlides,
+  TuiStep,
+  TuiStepper,
+} from '@taiga-ui/kit';
 import { forkJoin, Observable, tap } from 'rxjs';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import {
@@ -12,6 +35,7 @@ import {
   CreateAssetResponse,
   VideoResponse,
 } from '../../shared/services/asset.service';
+import { Group, GroupsService } from '../../shared/services/groups.service';
 import { VideoDetailsComponent } from './ui/video-details/video-details.component';
 import { VideoSelectorComponent } from './ui/video-selector/video-selector.component';
 
@@ -22,19 +46,26 @@ import { VideoSelectorComponent } from './ui/video-selector/video-selector.compo
     CommonModule,
     PageContainerComponent,
     ReactiveFormsModule,
+    FormsModule,
     TuiButton,
     TuiStepper,
     TuiStep,
     TuiFiles,
     TuiSlides,
+    TuiSelect,
+    TuiDataListWrapper,
+    TuiTextfield,
+    TuiChevron,
+    TuiAvatar,
     VideoSelectorComponent,
     VideoDetailsComponent,
   ],
   templateUrl: './upload-video-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UploadVideoPageComponent {
+export class UploadVideoPageComponent implements OnInit {
   private readonly assetService = inject(AssetService);
+  private readonly groupsService = inject(GroupsService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -45,7 +76,18 @@ export class UploadVideoPageComponent {
   protected readonly detailsForm = new FormGroup({
     title: new FormControl('', Validators.required),
     description: new FormControl(''),
+    group: new FormControl<Group | null>(null),
   });
+
+  protected groups: Group[] = [];
+  protected readonly groupStringify: TuiStringHandler<Group> = (item: Group) => item.name;
+
+  ngOnInit(): void {
+    this.groupsService.list().subscribe((groups) => {
+      this.groups = groups;
+      this.cdr.markForCheck();
+    });
+  }
 
   protected uploadingFiles: TuiFileLike[] = [];
   protected completedFiles: TuiFileLike[] = [];
@@ -85,7 +127,7 @@ export class UploadVideoPageComponent {
 
   private startUpload(): void {
     const files = this.filesControl.value;
-    const { title, description } = this.detailsForm.value;
+    const { title, description, group } = this.detailsForm.value;
 
     if (!files || !files.length || !title) return;
 
@@ -99,7 +141,7 @@ export class UploadVideoPageComponent {
 
     const filenames = files.map((f) => f.name);
 
-    this.assetService.createAsset(title, description || '', filenames).subscribe({
+    this.assetService.createAsset(title, description || '', filenames, group?.id).subscribe({
       next: (response: CreateAssetResponse) => {
         const uploads = response.videos
           .map((video: VideoResponse) => {

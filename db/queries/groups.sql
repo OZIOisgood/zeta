@@ -10,3 +10,6 @@ FROM groups g
 JOIN user_groups ug ON g.id = ug.group_id
 WHERE ug.user_id = $1
 ORDER BY g.created_at DESC;
+
+-- name: CheckUserGroup :one
+SELECT EXISTS(SELECT 1 FROM user_groups WHERE user_id = $1 AND group_id = $2);

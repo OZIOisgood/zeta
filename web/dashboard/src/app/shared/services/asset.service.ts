@@ -51,11 +51,13 @@ export class AssetService {
     title: string,
     description: string,
     filenames: string[],
+    group_id?: string,
   ): Observable<CreateAssetResponse> {
     return this.http.post<CreateAssetResponse>(this.apiUrl, {
       title,
       description,
       filenames,
+      group_id,
     });
   }
 }

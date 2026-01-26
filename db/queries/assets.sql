@@ -1,5 +1,5 @@
 -- name: CreateAsset :one
-INSERT INTO assets (name, description) VALUES ($1, $2) RETURNING *;
+INSERT INTO assets (name, description, group_id) VALUES ($1, $2, $3) RETURNING *;
 -- name: CreateVideo :one
 INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNING *;
 -- name: UpdateVideoMuxAssetID :exec
