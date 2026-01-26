@@ -116,6 +116,13 @@ graph TD
 
 ### Video Upload Flow
 
+The upload process is designed to ensure data consistency and clean user experience:
+
+1. **Initiation**: Client requests upload URLs. Asset created in DB with status `waiting_upload`.
+2. **Direct Upload**: Client uploads files directly to Mux storage (bypassing our API server for performance).
+3. **Completion**: Client notifies API that uploads are finished via `POST /assets/{id}/complete`.
+4. **Visibility**: Asset status updates to `pending` and becomes visible in the dashboard.
+
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -127,17 +134,19 @@ sequenceDiagram
     U->>W: Select Videos & Enter Details
     U->>W: Click Upload
     W->>A: POST /assets (Metadata)
-    A->>D: Create Asset
+    A->>D: Create Asset (status: waiting_upload)
     loop For each file
         A->>M: Create Direct Upload
         M-->>A: Upload URL
-        A->>D: Create Video (waiting_upload)
+        A->>D: Create Video (status: waiting_upload)
     end
     A-->>W: Return Upload URLs
     loop For each file
         W->>M: PUT File (Direct Upload)
         M-->>W: 200 OK
     end
+    W->>A: POST /assets/{id}/complete
+    A->>D: Update Asset (status: pending)
     W-->>U: Show Completion
 ```
 

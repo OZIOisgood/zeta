@@ -153,10 +153,19 @@ export class UploadVideoPageComponent implements OnInit {
 
         forkJoin(uploads).subscribe({
           next: () => {
-            this.isUploadComplete = true;
-            this.isUploading = false;
-            this.uploadingFiles = [];
-            this.cdr.markForCheck();
+            this.assetService.completeUpload(response.asset_id).subscribe({
+              next: () => {
+                this.isUploadComplete = true;
+                this.isUploading = false;
+                this.uploadingFiles = [];
+                this.cdr.markForCheck();
+              },
+              error: (err) => {
+                console.error('Failed to complete upload workflow', err);
+                this.isUploading = false;
+                this.cdr.markForCheck();
+              },
+            });
           },
           error: (err: unknown) => {
             console.error('Upload failed', err);

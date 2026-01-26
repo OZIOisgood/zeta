@@ -60,4 +60,8 @@ export class AssetService {
       group_id,
     });
   }
+
+  completeUpload(id: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/complete`, {});
+  }
 }

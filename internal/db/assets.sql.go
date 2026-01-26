@@ -136,7 +136,7 @@ func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]Ge
 }
 
 const listAssets = `-- name: ListAssets :many
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true ORDER BY a.created_at DESC
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true WHERE a.status != 'waiting_upload' ORDER BY a.created_at DESC
 `
 
 type ListAssetsRow struct {
@@ -179,6 +179,20 @@ func (q *Queries) ListAssets(ctx context.Context) ([]ListAssetsRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateAssetStatus = `-- name: UpdateAssetStatus :exec
+UPDATE assets SET status = $2, updated_at = NOW() WHERE id = $1
+`
+
+type UpdateAssetStatusParams struct {
+	ID     pgtype.UUID `json:"id"`
+	Status AssetStatus `json:"status"`
+}
+
+func (q *Queries) UpdateAssetStatus(ctx context.Context, arg UpdateAssetStatusParams) error {
+	_, err := q.db.Exec(ctx, updateAssetStatus, arg.ID, arg.Status)
+	return err
 }
 
 const updateVideoMuxAssetID = `-- name: UpdateVideoMuxAssetID :exec

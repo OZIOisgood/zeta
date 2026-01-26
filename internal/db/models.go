@@ -14,8 +14,9 @@ import (
 type AssetStatus string
 
 const (
-	AssetStatusPending   AssetStatus = "pending"
-	AssetStatusCompleted AssetStatus = "completed"
+	AssetStatusWaitingUpload AssetStatus = "waiting_upload"
+	AssetStatusPending       AssetStatus = "pending"
+	AssetStatusCompleted     AssetStatus = "completed"
 )
 
 func (e *AssetStatus) Scan(src interface{}) error {

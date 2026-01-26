@@ -58,6 +58,30 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/", h.CreateAsset)
 	r.Get("/", h.ListAssets)
 	r.Get("/{id}", h.GetAsset)
+	r.Post("/{id}/complete", h.CompleteUpload)
+}
+
+func (h *Handler) CompleteUpload(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	var uuid pgtype.UUID
+	if err := uuid.Scan(idStr); err != nil {
+		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	err := h.q.UpdateAssetStatus(ctx, db.UpdateAssetStatusParams{
+		ID:     uuid,
+		Status: db.AssetStatusPending,
+	})
+	if err != nil {
+		fmt.Printf("Error updating asset status: %v\n", err)
+		http.Error(w, "Failed to update asset status", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 type AssetItem struct {
