@@ -1,51 +1,51 @@
 include .env
 export
 
-fmt:
+api\:fmt:
 	go fmt ./...
 
-build:
+api\:build:
 	@mkdir -p bin
 	go build -o bin/api ./cmd/api
 
-run-api:
+api\:start:
 	go run ./cmd/api
 
-dashboard-build:
+web\:build:
 	cd web/dashboard && pnpm install && pnpm run build
 
-dashboard-start:
+web\:start:
 	cd web/dashboard && pnpm install && pnpm run start
 
-docker-up:
+infra\:up:
 	docker-compose -f ./infra/docker-compose.yml up -d --build
 
-docker-down:
+infra\:down:
 	docker-compose -f ./infra/docker-compose.yml down
 
-docker-clean:
+infra\:clean:
 	docker-compose -f ./infra/docker-compose.yml down -v
 
-docker-restart:
-	$(MAKE) docker-clean
-	$(MAKE) docker-up
+infra\:restart:
+	$(MAKE) infra:clean
+	$(MAKE) infra:up
 	@echo "Waiting for database to be ready..."
 	@sleep 5
-	$(MAKE) migrate-up
+	$(MAKE) db:migrate:up
 
-sqlc:
+db\:sqlc:
 	sqlc generate
 
-migrate-create:
+db\:migrate\:create:
 	@read -p "Enter migration name: " name; \
 	migrate create -ext sql -dir db/migrations -seq $$name
 
-migrate-up:
+db\:migrate\:up:
 	migrate -path db/migrations -database "$(DB_URL)" up
 
-migrate-down:
+db\:migrate\:down:
 	migrate -path db/migrations -database "$(DB_URL)" down 1
 
-migrate-reset:
+db\:migrate\:reset:
 	migrate -path db/migrations -database "$(DB_URL)" down
 

@@ -56,7 +56,7 @@ Fill out `README.md` with:
 Fill out `RESOLUTION.md` with:
 
 - **Summary**: What was changed.
-- **Verification**: How it was tested (e.g., "Ran `make dashboard-build`", "Checked UI").
+- **Verification**: How it was tested (e.g., "Ran `make web:build`", "Checked UI").
 - **Next Steps**: Any follow-up tasks.
 
 ### 5. Completion

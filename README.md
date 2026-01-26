@@ -57,22 +57,22 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 1. **Start Infrastructure**:
 
    ```bash
-   make docker-up
+   make infra:up
    ```
 
 2. **Run Migrations**:
 
    ```bash
-   make migrate-up
+   make db:migrate:up
    ```
 
 3. **Run Backend**:
    ```bash
-   make run-api
+   make api:start
    ```
 4. **Run Frontend**:
    ```bash
-   make dashboard-start
+   make web:start
    ```
    Dashboard available at `http://localhost:4200`.
 

@@ -8,7 +8,7 @@
 ## 2. Database & Infrastructure
 
 - **Migrations**: Since data is not yet valuable, prefer **editing existing migrations** to refine the schema rather than creating new ones.
-- **Environment**: We frequently restart the Docker environment (`make docker-restart`).
+- **Environment**: We frequently restart the Docker environment (`make infra:restart`).
 
 ## 3. Frontend & Design (Dashboard)
 
@@ -18,7 +18,7 @@
 
 ## 4. Quality Assurance
 
-- **Build Check**: Always run a build (`make build` or `make dashboard-build`) before marking a task as complete.
+- **Build Check**: Always run a build (`make api:build` or `make web:build`) before marking a task as complete.
 - **Verification**: Ensure no regressions are introduced.
 
 ## 5. Task Management
