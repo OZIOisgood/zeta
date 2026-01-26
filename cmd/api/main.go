@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/OZIOisgood/zeta/internal/api"
+	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/fatih/color"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,19 +16,24 @@ func main() {
 	tools.PrintBanner("assets/api-banner.txt", color.FgHiCyan)
 	tools.LoadEnv()
 
+	// Initialize structured logger
+	baseLogger := logger.New()
+
 	dbURL := tools.GetEnv("DB_URL")
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		baseLogger.ErrorContext(ctx, "failed_to_connect_database", slog.Any("err", err))
+		panic(err)
 	}
 	defer pool.Close()
 
-	srv := api.NewServer(pool)
+	srv := api.NewServer(pool, baseLogger)
 
-	log.Println("Zeta API listening on :8080")
+	baseLogger.InfoContext(ctx, "api_starting", slog.String("port", "8080"))
 	if err := http.ListenAndServe(":8080", srv.Router); err != nil {
-		log.Fatal(err)
+		baseLogger.ErrorContext(ctx, "api_listen_failed", slog.Any("err", err))
+		panic(err)
 	}
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/OZIOisgood/zeta/internal/assets"
@@ -10,6 +11,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/features"
 	"github.com/OZIOisgood/zeta/internal/groups"
+	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -19,19 +21,22 @@ import (
 type Server struct {
 	Router *chi.Mux
 	Pool   *pgxpool.Pool
+	Logger *slog.Logger
 }
 
-func NewServer(pool *pgxpool.Pool) *Server {
+func NewServer(pool *pgxpool.Pool, baseLogger *slog.Logger) *Server {
 	s := &Server{
 		Router: chi.NewRouter(),
 		Pool:   pool,
+		Logger: baseLogger,
 	}
 	s.routes()
 	return s
 }
 
 func (s *Server) routes() {
-	s.Router.Use(middleware.Logger)
+	// Structured logging middleware replaces middleware.Logger
+	s.Router.Use(logger.Middleware(s.Logger))
 	s.Router.Use(middleware.Recoverer)
 	s.Router.Use(middleware.StripSlashes)
 
@@ -47,14 +52,14 @@ func (s *Server) routes() {
 	queries := db.New(s.Pool)
 
 	// Initialize Handlers
-	authHandler := auth.NewHandler()
-	emailService := email.NewService()
-	featuresHandler := features.NewHandler()
-	assetsHandler := assets.NewHandler(queries, featuresHandler, emailService)
-	groupsHandler := groups.NewHandler(queries)
+	authHandler := auth.NewHandler(s.Logger)
+	emailService := email.NewService(s.Logger)
+	featuresHandler := features.NewHandler(s.Logger)
+	assetsHandler := assets.NewHandler(queries, featuresHandler, emailService, s.Logger)
+	groupsHandler := groups.NewHandler(queries, s.Logger)
 
 	// Global Middleware
-	s.Router.Use(auth.Middleware())
+	s.Router.Use(auth.Middleware(s.Logger))
 
 	// Public Routes
 	s.Router.Get("/health", func(w http.ResponseWriter, r *http.Request) {

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -20,7 +21,7 @@ type UserContext struct {
 	ProfilePictureUrl string `json:"profilePictureUrl"`
 }
 
-func Middleware() func(http.Handler) http.Handler {
+func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie(CookieName)
@@ -41,6 +42,10 @@ func Middleware() func(http.Handler) http.Handler {
 
 			if err != nil || !token.Valid {
 				// Invalid token, just continue as unauthenticated
+				logger.DebugContext(r.Context(), "auth_token_invalid",
+					slog.String("component", "auth"),
+					slog.Any("err", err),
+				)
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -58,6 +63,10 @@ func Middleware() func(http.Handler) http.Handler {
 					ProfilePictureUrl: profilePictureUrl,
 				}
 				ctx := context.WithValue(r.Context(), UserKey, user)
+				logger.DebugContext(ctx, "user_authenticated",
+					slog.String("component", "auth"),
+					slog.String("user_id", userID),
+				)
 				next.ServeHTTP(w, r.WithContext(ctx))
 			} else {
 				next.ServeHTTP(w, r)

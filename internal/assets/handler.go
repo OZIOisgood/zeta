@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/features"
+	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -23,9 +24,10 @@ type Handler struct {
 	muxClient *muxgo.APIClient
 	features  *features.Handler
 	email     *email.Service
+	logger    *slog.Logger
 }
 
-func NewHandler(q *db.Queries, features *features.Handler, email *email.Service) *Handler {
+func NewHandler(q *db.Queries, features *features.Handler, email *email.Service, logger *slog.Logger) *Handler {
 	id := tools.GetEnv("MUX_TOKEN_ID")
 	secret := tools.GetEnv("MUX_TOKEN_SECRET")
 	cfg := muxgo.NewConfiguration(
@@ -37,6 +39,7 @@ func NewHandler(q *db.Queries, features *features.Handler, email *email.Service)
 		muxClient: muxgo.NewAPIClient(cfg),
 		features:  features,
 		email:     email,
+		logger:    logger,
 	}
 }
 
@@ -74,16 +77,25 @@ func (h *Handler) CompleteUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
 	err := h.q.UpdateAssetStatus(ctx, db.UpdateAssetStatusParams{
 		ID:     uuid,
 		Status: db.AssetStatusPending,
 	})
 	if err != nil {
-		fmt.Printf("Error updating asset status: %v\n", err)
+		log.ErrorContext(ctx, "asset_complete_upload_failed",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.Any("err", err),
+		)
 		http.Error(w, "Failed to update asset status", http.StatusInternalServerError)
 		return
 	}
 
+	log.InfoContext(ctx, "asset_complete_upload_succeeded",
+		slog.String("component", "assets"),
+		slog.String("asset_id", idStr),
+	)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
@@ -107,9 +119,13 @@ type VideoItem struct {
 
 func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
 	assets, err := h.q.ListAssets(ctx)
 	if err != nil {
-		fmt.Printf("Error listing assets: %v\n", err)
+		log.ErrorContext(ctx, "asset_list_failed",
+			slog.String("component", "assets"),
+			slog.Any("err", err),
+		)
 		http.Error(w, "Failed to list assets", http.StatusInternalServerError)
 		return
 	}
@@ -121,7 +137,10 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 		playbackID := a.PlaybackID
 		if playbackID == "" && a.MuxUploadID != "" {
 			// Try to fetch from Mux if we have an upload ID but no playback ID yet
-			log.Printf("Fetching status for upload %s", a.MuxUploadID)
+			log.DebugContext(ctx, "asset_fetching_playback_id",
+				slog.String("component", "assets"),
+				slog.String("mux_upload_id", a.MuxUploadID),
+			)
 			pid, err := h.fetchPlaybackIDFromMux(ctx, a.MuxUploadID)
 			if err == nil && pid != "" {
 				playbackID = pid
@@ -133,7 +152,11 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 				})
                 if err != nil {
                     // Log error but continue
-                    fmt.Printf("Error updating video status: %v\n", err)
+                    log.ErrorContext(ctx, "asset_video_status_update_failed",
+                    	slog.String("component", "assets"),
+                    	slog.String("mux_upload_id", a.MuxUploadID),
+                    	slog.Any("err", err),
+                    )
                 }
 			}
 		}
@@ -167,9 +190,14 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
 	asset, err := h.q.GetAsset(ctx, uuid)
 	if err != nil {
-		fmt.Printf("Error getting asset: %v\n", err)
+		log.ErrorContext(ctx, "asset_get_failed",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.Any("err", err),
+		)
 		http.Error(w, "Asset not found", http.StatusNotFound)
 		return
 	}
@@ -177,7 +205,11 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 	// Fetch Videos
 	dbVideos, err := h.q.GetAssetVideos(ctx, uuid)
 	if err != nil {
-		fmt.Printf("Error getting videos: %v\n", err)
+		log.ErrorContext(ctx, "asset_videos_get_failed",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.Any("err", err),
+		)
 	}
 
 	var videos []VideoItem
@@ -262,6 +294,7 @@ func (h *Handler) fetchPlaybackIDFromMux(ctx context.Context, uploadID string) (
 
 func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
 	userCtx := auth.GetUser(ctx)
 	if userCtx == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -269,6 +302,10 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !h.features.HasFeature(userCtx.ID, "create-asset") {
+		log.WarnContext(ctx, "asset_create_feature_disabled",
+			slog.String("component", "assets"),
+			slog.String("user_id", userCtx.ID),
+		)
 		http.Error(w, "Feature not enabled", http.StatusForbidden)
 		return
 	}
@@ -301,11 +338,21 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		GroupID: groupID,
 	})
 	if err != nil {
-		fmt.Printf("Error checking group membership: %v\n", err)
+		log.ErrorContext(ctx, "asset_group_check_failed",
+			slog.String("component", "assets"),
+			slog.String("user_id", userCtx.ID),
+			slog.String("group_id", req.GroupID),
+			slog.Any("err", err),
+		)
 		http.Error(w, "Error checking group membership", http.StatusInternalServerError)
 		return
 	}
 	if !isMember {
+		log.WarnContext(ctx, "asset_create_not_member",
+			slog.String("component", "assets"),
+			slog.String("user_id", userCtx.ID),
+			slog.String("group_id", req.GroupID),
+		)
 		http.Error(w, "User is not a member of the group", http.StatusForbidden)
 		return
 	}
@@ -318,65 +365,98 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		OwnerID:     userCtx.ID,
 	})
 	if err != nil {
-		fmt.Printf("Error creating asset: %v\n", err)
+		log.ErrorContext(ctx, "asset_create_failed",
+			slog.String("component", "assets"),
+			slog.String("user_id", userCtx.ID),
+			slog.String("group_id", req.GroupID),
+			slog.Any("err", err),
+		)
 		http.Error(w, "Failed to create asset", http.StatusInternalServerError)
 		return
 	}
 
+	log.InfoContext(ctx, "asset_created",
+		slog.String("component", "assets"),
+		slog.String("user_id", userCtx.ID),
+		slog.String("asset_id", toUUIDString(asset.ID)),
+		slog.String("group_id", req.GroupID),
+	)
+
 	// Notify Group Owner
 	go func() {
-		fmt.Printf("[Email Notification] Starting notification process for asset %v\n", asset.ID)
+		// Create background context for async operation
+		bgCtx := context.Background()
+		bgLog := h.logger.With(
+			slog.String("component", "assets"),
+			slog.String("asset_id", toUUIDString(asset.ID)),
+		)
 		
 		// Fetch group to find owner
-		group, err := h.q.GetGroup(context.Background(), asset.GroupID)
+		group, err := h.q.GetGroup(bgCtx, asset.GroupID)
 		if err != nil {
-			fmt.Printf("[Email Notification] Error fetching group for email notification: %v\n", err)
+			bgLog.ErrorContext(bgCtx, "asset_group_fetch_failed",
+				slog.Any("err", err),
+			)
 			return
 		}
-		fmt.Printf("[Email Notification] Group: %s, Owner: %s\n", group.Name, group.OwnerID)
 
 		// Don't notify if the uploader is the owner
 		if group.OwnerID == userCtx.ID {
-			fmt.Println("[Email Notification] Uploader is the owner, skipping.")
+			bgLog.DebugContext(bgCtx, "asset_uploader_is_owner_skip_notification",
+				slog.String("owner_id", group.OwnerID),
+			)
 			return
 		}
 
 		// Check feature flags on Owner
 		hasBaseFeature := h.features.HasFeature(group.OwnerID, "receive-email-notifications")
 		if !hasBaseFeature {
-			fmt.Printf("[Email Notification] Owner %s does not have 'receive-email-notifications' enabled\n", group.OwnerID)
+			bgLog.DebugContext(bgCtx, "asset_notification_base_feature_disabled",
+				slog.String("owner_id", group.OwnerID),
+			)
 			return
 		}
 		
 		hasSpecificFeature := h.features.HasFeature(group.OwnerID, "receive-email-notifications--new-asset-in-group")
 		if !hasSpecificFeature {
-			fmt.Printf("[Email Notification] Owner %s does not have 'receive-email-notifications--new-asset-in-group' enabled\n", group.OwnerID)
+			bgLog.DebugContext(bgCtx, "asset_notification_specific_feature_disabled",
+				slog.String("owner_id", group.OwnerID),
+			)
 			return
 		}
 
 		// Fetch Owner Email from WorkOS
-		owner, err := usermanagement.GetUser(context.Background(), usermanagement.GetUserOpts{
+		owner, err := usermanagement.GetUser(bgCtx, usermanagement.GetUserOpts{
 			User: group.OwnerID,
 		})
 		if err != nil {
-			fmt.Printf("[Email Notification] Error fetching owner from WorkOS: %v\n", err)
+			bgLog.ErrorContext(bgCtx, "asset_notification_owner_fetch_failed",
+				slog.String("owner_id", group.OwnerID),
+				slog.Any("err", err),
+			)
 			return
 		}
 
 		emailAddr := owner.Email
 		if emailAddr == "" {
-			fmt.Printf("[Email Notification] Owner has no email address\n")
+			bgLog.WarnContext(bgCtx, "asset_notification_owner_no_email",
+				slog.String("owner_id", group.OwnerID),
+			)
 			return
 		}
-		fmt.Printf("[Email Notification] sending email to %s\n", emailAddr)
 
 		// Send Email
 		msg := fmt.Sprintf("User %s uploaded a new video '%s' to group '%s'.", userCtx.Name, asset.Name, group.Name)
 		err = h.email.Send([]string{emailAddr}, "New Asset Uploaded", msg)
 		if err != nil {
-			fmt.Printf("[Email Notification] Error sending email: %v\n", err)
+			bgLog.ErrorContext(bgCtx, "asset_notification_send_failed",
+				slog.String("owner_id", group.OwnerID),
+				slog.Any("err", err),
+			)
 		} else {
-			fmt.Printf("[Email Notification] Email sent successfully\n")
+			bgLog.InfoContext(bgCtx, "asset_notification_sent",
+				slog.String("owner_id", group.OwnerID),
+			)
 		}
 	}()
 
@@ -388,28 +468,32 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		upload, err := h.createMuxUpload(ctx)
 		if err != nil {
 			// In a real app, we might want to cleanup the asset or handle partial failures
+			log.ErrorContext(ctx, "asset_mux_upload_failed",
+				slog.String("component", "assets"),
+				slog.String("asset_id", toUUIDString(asset.ID)),
+				slog.String("filename", filename),
+				slog.Any("err", err),
+			)
 			http.Error(w, "Failed to initiate upload with Mux", http.StatusInternalServerError)
 			return
 		}
 
 		// Save video metadata to DB
-		// Convert uuid from pgtype if needed, but sqlc generates pgtype.UUID usually unless configured otherwise.
-		// Let's check db/models.go to see what types are used.
-		// Assuming generic uuid handling for now, or string if using text.
-		// Migration used UUID.
-		
 		video, err := h.q.CreateVideo(ctx, db.CreateVideoParams{
 			AssetID:     asset.ID,
 			MuxUploadID: upload.Data.Id,
 			Status:      db.VideoStatusWaitingUpload,
 		})
 		if err != nil {
+			log.ErrorContext(ctx, "asset_video_create_failed",
+				slog.String("component", "assets"),
+				slog.String("asset_id", toUUIDString(asset.ID)),
+				slog.String("filename", filename),
+				slog.Any("err", err),
+			)
 			http.Error(w, "Failed to create video record", http.StatusInternalServerError)
 			return
 		}
-		
-		// Convert pgtype.UUID to string if necessary.
-		// I'll need to check the generated types.
 
 		videos = append(videos, VideoResponse{
 			ID:        toUUIDString(video.ID),

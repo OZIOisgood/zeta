@@ -26,7 +26,19 @@
 - **Protocol**: Follow the guidelines in [TASK_CONSTITUTION.md](TASK_CONSTITUTION.md).
 - **Issues**: Check `ISSUES.md` for the roadmap and task status.
 
-## 6. Troubleshooting & Knowledge Base
+## 6. Logging Standards
+
+- **Framework**: Structured logging using Go `log/slog` with JSON output
+- **Guidelines**: Follow [LOGGING_CONSTITUTION.md](LOGGING_CONSTITUTION.md) for consistent logging practices
+- **Key Points**:
+  - Dependency inject `*slog.Logger` to all services
+  - Use request-scoped loggers via `logger.From(ctx, h.logger)`
+  - Stable event names in snake_case
+  - Always log errors with `err` field
+  - Never log sensitive data (tokens, passwords, full emails)
+- **Reference**: Comprehensive guide in [docs/logging.md](../../docs/logging.md)
+
+## 7. Troubleshooting & Knowledge Base
 
 - **Common Issues**: Before debugging complex problems, check `instructions/common_issues/` for known solutions.
 - **Documentation**: If you solve a non-trivial recurring issue, document it in `instructions/common_issues/` following the existing pattern. Use the helper script to generate a new task:
@@ -35,11 +47,11 @@
 ./instructions/scripts/create_task.sh "my task name"
 ```
 
-## 7. Cleanup & Refactoring Discipline
+## 8. Cleanup & Refactoring Discipline
 
 - **Final Review**: Before completing any task, review all changed files to identify unnecessary files, dead code, temporary artifacts, or missed refactoring opportunities, and remove or improve them where appropriate.
 
-## 8. Documentation Resources
+## 9. Documentation Resources
 
 - **LLM Docs**: Use these `llms-full.txt` resources for comprehensive documentation:
   - **Taiga UI**: https://taiga-ui.dev/llms-full.txt

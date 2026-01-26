@@ -3,22 +3,29 @@ package groups
 import (
 	"encoding/base64"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/logger"
 )
 
 type Handler struct {
-	q *db.Queries
+	q      *db.Queries
+	logger *slog.Logger
 }
 
-func NewHandler(q *db.Queries) *Handler {
-	return &Handler{q: q}
+func NewHandler(q *db.Queries, logger *slog.Logger) *Handler {
+	return &Handler{
+		q:      q,
+		logger: logger,
+	}
 }
 
 func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
 	user := auth.GetUser(ctx)
 	if user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -27,6 +34,11 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 
 	groups, err := h.q.ListUserGroups(ctx, user.ID)
 	if err != nil {
+		log.ErrorContext(ctx, "group_list_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", err),
+		)
 		http.Error(w, "Failed to list groups: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -47,6 +59,7 @@ type CreateGroupRequest struct {
 
 func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
 	user := auth.GetUser(ctx)
 	if user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -87,6 +100,12 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		Avatar:  avatarData,
 	})
 	if err != nil {
+		log.ErrorContext(ctx, "group_create_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_name", req.Name),
+			slog.Any("err", err),
+		)
 		http.Error(w, "Failed to create group", http.StatusInternalServerError)
 		return
 	}
@@ -96,9 +115,22 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		GroupID: group.ID,
 	})
 	if err != nil {
+		log.ErrorContext(ctx, "group_user_add_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", group.ID.String()),
+			slog.Any("err", err),
+		)
 		http.Error(w, "Failed to link user to group", http.StatusInternalServerError)
 		return
 	}
+
+	log.InfoContext(ctx, "group_created",
+		slog.String("component", "groups"),
+		slog.String("user_id", user.ID),
+		slog.String("group_id", group.ID.String()),
+		slog.String("group_name", req.Name),
+	)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(group)

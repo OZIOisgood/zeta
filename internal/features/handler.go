@@ -4,19 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
+	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
-type Handler struct{}
+type Handler struct {
+	logger *slog.Logger
+}
 
-func NewHandler() *Handler {
+func NewHandler(logger *slog.Logger) *Handler {
 	usermanagement.SetAPIKey(os.Getenv("WORKOS_API_KEY"))
-	return &Handler{}
+	return &Handler{
+		logger: logger,
+	}
 }
 
 // GetFeatures fetches feature flags for a given user from WorkOS
@@ -24,11 +30,18 @@ func (h *Handler) GetFeatures(userID string) ([]string, error) {
 	// 1. Fetch feature flags directly from WorkOS API
 	features, err := h.fetchFromAPI(userID)
 	if err != nil {
-		// Log error if needed, but for now continue or return
-		// If API fails, we might still want to try metadata?
-		// But let's stick to returning error if API call fails generally.
-		// Or maybe log and try metadata?
-		// Let's return error for now to be safe.
+		// Log error but continue with fallback
+		h.logger.DebugContext(context.Background(), "features_api_fetch_failed",
+			slog.String("component", "features"),
+			slog.String("user_id", userID),
+			slog.Any("err", err),
+		)
+		// If API fails, try metadata fallback
+		metaFeatures, fallbackErr := h.fetchFromMetadata(userID)
+		if fallbackErr == nil && len(metaFeatures) > 0 {
+			return metaFeatures, nil
+		}
+		// Return original API error if both fail
 		return nil, err
 	}
 
@@ -118,8 +131,10 @@ func (h *Handler) fetchFromMetadata(userID string) ([]string, error) {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
 	// Get current user from context (set by auth middleware)
-	userCtx := auth.GetUser(r.Context())
+	userCtx := auth.GetUser(ctx)
 	if userCtx == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -127,6 +142,11 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 	features, err := h.GetFeatures(userCtx.ID)
 	if err != nil {
+		log.ErrorContext(ctx, "features_list_failed",
+			slog.String("component", "features"),
+			slog.String("user_id", userCtx.ID),
+			slog.Any("err", err),
+		)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -143,6 +163,12 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) HasFeature(userID, feature string) bool {
 	features, err := h.GetFeatures(userID)
 	if err != nil {
+		h.logger.DebugContext(context.Background(), "features_check_failed",
+			slog.String("component", "features"),
+			slog.String("user_id", userID),
+			slog.String("feature", feature),
+			slog.Any("err", err),
+		)
 		return false
 	}
 	for _, f := range features {
