@@ -76,7 +76,7 @@ export class UploadVideoPageComponent implements OnInit {
   protected readonly detailsForm = new FormGroup({
     title: new FormControl('', Validators.required),
     description: new FormControl(''),
-    group: new FormControl<Group | null>(null),
+    group: new FormControl<Group | null>(null, Validators.required),
   });
 
   protected groups: Group[] = [];

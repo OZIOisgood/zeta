@@ -277,29 +277,30 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate Group if provided
-	var groupID pgtype.UUID
-	if req.GroupID != "" {
-		if err := groupID.Scan(req.GroupID); err != nil {
-			http.Error(w, "Invalid group ID", http.StatusBadRequest)
-			return
-		}
+	// Validate Group
+	if req.GroupID == "" {
+		http.Error(w, "Group ID is required", http.StatusBadRequest)
+		return
+	}
 
-		isMember, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{
-			UserID:  userCtx.ID,
-			GroupID: groupID,
-		})
-		if err != nil {
-			fmt.Printf("Error checking group membership: %v\n", err)
-			http.Error(w, "Error checking group membership", http.StatusInternalServerError)
-			return
-		}
-		if !isMember {
-			http.Error(w, "User is not a member of the group", http.StatusForbidden)
-			return
-		}
-	} else {
-		groupID.Valid = false
+	var groupID pgtype.UUID
+	if err := groupID.Scan(req.GroupID); err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	isMember, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{
+		UserID:  userCtx.ID,
+		GroupID: groupID,
+	})
+	if err != nil {
+		fmt.Printf("Error checking group membership: %v\n", err)
+		http.Error(w, "Error checking group membership", http.StatusInternalServerError)
+		return
+	}
+	if !isMember {
+		http.Error(w, "User is not a member of the group", http.StatusForbidden)
+		return
 	}
 
 	// 1. Create Asset in DB
