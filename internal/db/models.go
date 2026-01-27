@@ -117,6 +117,17 @@ type Group struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type User struct {
+	ID        string           `json:"id"`
+	FirstName string           `json:"first_name"`
+	LastName  string           `json:"last_name"`
+	Email     string           `json:"email"`
+	Language  string           `json:"language"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	Avatar    []byte           `json:"avatar"`
+}
+
 type UserGroup struct {
 	UserID    string             `json:"user_id"`
 	GroupID   pgtype.UUID        `json:"group_id"`

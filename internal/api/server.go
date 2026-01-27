@@ -52,7 +52,7 @@ func (s *Server) routes() {
 	queries := db.New(s.Pool)
 
 	// Initialize Handlers
-	authHandler := auth.NewHandler(s.Logger)
+	authHandler := auth.NewHandler(s.Logger, queries)
 	emailService := email.NewService(s.Logger)
 	featuresHandler := features.NewHandler(s.Logger)
 	assetsHandler := assets.NewHandler(queries, featuresHandler, emailService, s.Logger)

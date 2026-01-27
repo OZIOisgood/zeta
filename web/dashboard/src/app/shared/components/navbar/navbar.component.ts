@@ -42,18 +42,12 @@ export class NavbarComponent {
       return '';
     }
 
-    if (user.profilePictureUrl) {
-      return user.profilePictureUrl;
+    if (user.avatar) {
+      return `data:image/png;base64,${user.avatar}`;
     }
 
-    if (user.name) {
-      const parts = user.name.split(' ').filter((part) => part.length > 0);
-      if (parts.length > 1) {
-        return (parts[0][0] + parts[1][0]).toUpperCase();
-      }
-      if (parts.length === 1) {
-        return parts[0][0].toUpperCase();
-      }
+    if (user.first_name && user.last_name) {
+      return (user.first_name[0] + user.last_name[0]).toUpperCase();
     }
 
     return user.email.slice(0, 2).toUpperCase();

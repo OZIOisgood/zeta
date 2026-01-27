@@ -5,8 +5,10 @@ import { FeatureService } from './feature.service';
 export interface User {
   id: string;
   email: string;
-  name?: string;
-  profilePictureUrl?: string;
+  first_name: string;
+  last_name: string;
+  language: string;
+  avatar?: string;
 }
 
 @Injectable({

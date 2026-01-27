@@ -446,7 +446,8 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Send Email
-		msg := fmt.Sprintf("User %s uploaded a new video '%s' to group '%s'.", userCtx.Name, asset.Name, group.Name)
+		userName := fmt.Sprintf("%s %s", userCtx.FirstName, userCtx.LastName)
+		msg := fmt.Sprintf("User %s uploaded a new video '%s' to group '%s'.", userName, asset.Name, group.Name)
 		err = h.email.Send([]string{emailAddr}, "New Asset Uploaded", msg)
 		if err != nil {
 			bgLog.ErrorContext(bgCtx, "asset_notification_send_failed",

@@ -17,7 +17,8 @@ const UserKey contextKey = "user"
 type UserContext struct {
 	ID                string `json:"id"`
 	Email             string `json:"email"`
-	Name              string `json:"name"`
+	FirstName         string `json:"firstName"`
+	LastName          string `json:"lastName"`
 	ProfilePictureUrl string `json:"profilePictureUrl"`
 }
 
@@ -53,13 +54,15 @@ func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
 				userID, _ := claims["sub"].(string)
 				email, _ := claims["email"].(string)
-				name, _ := claims["name"].(string)
+				firstName, _ := claims["first_name"].(string)
+				lastName, _ := claims["last_name"].(string)
 				profilePictureUrl, _ := claims["picture"].(string)
 
 				user := &UserContext{
 					ID:                userID,
 					Email:             email,
-					Name:              name,
+					FirstName:         firstName,
+					LastName:          lastName,
 					ProfilePictureUrl: profilePictureUrl,
 				}
 				ctx := context.WithValue(r.Context(), UserKey, user)

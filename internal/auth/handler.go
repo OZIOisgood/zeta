@@ -2,13 +2,16 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
@@ -16,12 +19,14 @@ const CookieName = "zeta_session"
 
 type Handler struct {
 	logger *slog.Logger
+	q      *db.Queries
 }
 
-func NewHandler(logger *slog.Logger) *Handler {
+func NewHandler(logger *slog.Logger, q *db.Queries) *Handler {
 	usermanagement.SetAPIKey(os.Getenv("WORKOS_API_KEY"))
 	return &Handler{
 		logger: logger,
+		q:      q,
 	}
 }
 
@@ -98,12 +103,13 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	// Create JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":     resp.User.ID,
-		"email":   resp.User.Email,
-		"name":    fmt.Sprintf("%s %s", resp.User.FirstName, resp.User.LastName),
-		"picture": resp.User.ProfilePictureURL,
-		"sid":     sid,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+		"sub":        resp.User.ID,
+		"email":      resp.User.Email,
+		"first_name": resp.User.FirstName,
+		"last_name":  resp.User.LastName,
+		"picture":    resp.User.ProfilePictureURL,
+		"sid":        sid,
+		"exp":        time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
@@ -211,5 +217,68 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(user)
+	// Check if user exists in DB
+	dbUser, err := h.q.GetUser(ctx, user.ID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			// User does not exist, create new user
+			lang := tools.NegotiateLanguage(r.Header.Get("Accept-Language"))
+
+			var avatarData []byte
+			if user.ProfilePictureUrl != "" {
+				resp, err := http.Get(user.ProfilePictureUrl)
+				if err != nil {
+					h.logger.WarnContext(ctx, "auth_avatar_fetch_failed",
+						slog.String("component", "auth"),
+						slog.String("url", user.ProfilePictureUrl),
+						slog.Any("err", err),
+					)
+				} else {
+					defer resp.Body.Close()
+					if resp.StatusCode == http.StatusOK {
+						data, err := io.ReadAll(resp.Body)
+						if err != nil {
+							h.logger.WarnContext(ctx, "auth_avatar_read_failed",
+								slog.String("component", "auth"),
+								slog.Any("err", err),
+							)
+						} else {
+							avatarData = data
+						}
+					}
+				}
+			}
+
+			dbUser, err = h.q.CreateUser(ctx, db.CreateUserParams{
+				ID:        user.ID,
+				FirstName: user.FirstName,
+				LastName:  user.LastName,
+				Email:     user.Email,
+				Language:  lang,
+				Avatar:    avatarData,
+			})
+			if err != nil {
+				h.logger.ErrorContext(ctx, "auth_create_user_failed",
+					slog.String("component", "auth"),
+					slog.Any("err", err),
+				)
+				http.Error(w, "Failed to create user", http.StatusInternalServerError)
+				return
+			}
+			h.logger.InfoContext(ctx, "auth_user_created",
+				slog.String("component", "auth"),
+				slog.String("user_id", user.ID),
+			)
+		} else {
+			h.logger.ErrorContext(ctx, "auth_get_user_failed",
+				slog.String("component", "auth"),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to get user", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(dbUser)
 }
