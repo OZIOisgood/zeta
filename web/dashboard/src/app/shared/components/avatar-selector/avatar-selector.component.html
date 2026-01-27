@@ -1,0 +1,27 @@
+<div class="avatar-selector-container">
+  <label tuiLabel>Avatar</label>
+  <input #fileInput type="file" accept="image/*" hidden (change)="onFileInputChange($event)" />
+
+  <div class="actions">
+    <button
+      type="button"
+      tuiButton
+      appearance="secondary"
+      size="m"
+      (click)="fileInput.click()"
+      [disabled]="disabled"
+      class="select-image-button"
+    >
+      Select Image (max 300KB)
+    </button>
+  </div>
+
+  <div *ngIf="compressionError()" class="tui-text_body-s error-message">
+    {{ compressionError() }}
+  </div>
+
+  <div *ngIf="avatarPreview()" class="avatar-preview-container">
+    <img [src]="avatarPreview()" alt="Avatar preview" class="avatar-preview" />
+    <p class="tui-text_body-xs preview-label">Preview</p>
+  </div>
+</div>

@@ -1,0 +1,10 @@
+<form [formGroup]="form" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem">
+  <tui-textfield>
+    <label tuiLabel>Title</label>
+    <input tuiTextfield formControlName="title" />
+  </tui-textfield>
+  <tui-textfield>
+    <label tuiLabel>Description</label>
+    <textarea tuiTextarea formControlName="description" [min]="10" [max]="100"></textarea>
+  </tui-textfield>
+</form>

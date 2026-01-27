@@ -73,6 +73,7 @@ func (s *Server) routes() {
 		r.Get("/auth/callback", authHandler.Callback)
 		r.Post("/auth/logout", authHandler.Logout)
 		r.Get("/auth/me", authHandler.Me)
+		r.Put("/auth/me", authHandler.UpdateMe)
 	})
 
 	// Protected Routes

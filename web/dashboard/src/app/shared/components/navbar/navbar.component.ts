@@ -1,10 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TuiAutoColorPipe, TuiButton, TuiDataList, TuiDropdown, TuiIcon } from '@taiga-ui/core';
+import {
+  TuiAutoColorPipe,
+  TuiButton,
+  TuiDataList,
+  TuiDialogService,
+  TuiDropdown,
+  TuiIcon,
+} from '@taiga-ui/core';
 import { TuiAvatar, TuiTabs } from '@taiga-ui/kit';
+import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
+import { take } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { FeatureService } from '../../services/feature.service';
+import { PreferencesDialogComponent } from '../preferences-dialog/preferences-dialog.component';
 
 @Component({
   selector: 'app-navbar',
@@ -28,6 +38,7 @@ import { FeatureService } from '../../services/feature.service';
 export class NavbarComponent {
   private readonly auth = inject(AuthService);
   private readonly featureService = inject(FeatureService);
+  private readonly dialogs = inject(TuiDialogService);
 
   protected readonly showGroups = computed(() => this.featureService.features().includes('groups'));
   protected readonly showUploadVideo = computed(() =>
@@ -52,6 +63,16 @@ export class NavbarComponent {
 
     return user.email.slice(0, 2).toUpperCase();
   });
+
+  protected openPreferences(): void {
+    this.dialogs
+      .open(new PolymorpheusComponent(PreferencesDialogComponent), {
+        label: 'Preferences',
+        size: 'm',
+      })
+      .pipe(take(1))
+      .subscribe();
+  }
 
   protected logout(): void {
     this.auth.logout();

@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -281,4 +283,78 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dbUser)
+}
+
+type UpdateUserRequest struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Language  string `json:"language"`
+	Avatar    string `json:"avatar"`
+}
+
+func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user := GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req UpdateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	var avatarData []byte
+	if req.Avatar != "" {
+		var err error
+		avatarData, err = base64.StdEncoding.DecodeString(req.Avatar)
+		if err != nil {
+			http.Error(w, "Invalid avatar data", http.StatusBadRequest)
+			return
+		}
+	}
+
+	updatedUser, err := h.q.UpdateUser(ctx, db.UpdateUserParams{
+		ID:        user.ID,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Language:  req.Language,
+		Avatar:    avatarData,
+	})
+	if err != nil {
+		h.logger.ErrorContext(ctx, "auth_update_user_failed",
+			slog.String("component", "auth"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to update user", http.StatusInternalServerError)
+		return
+	}
+
+	// Try to update WorkOS user
+	go func() {
+		// Update WorkOS user
+		_, err := usermanagement.UpdateUser(context.Background(), usermanagement.UpdateUserOpts{
+			User:      user.ID,
+			FirstName: req.FirstName,
+			LastName:  req.LastName,
+		})
+		if err != nil {
+			h.logger.ErrorContext(context.Background(), "auth_workos_update_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+		}
+	}()
+
+	h.logger.InfoContext(ctx, "auth_user_updated",
+		slog.String("component", "auth"),
+		slog.String("user_id", user.ID),
+	)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedUser)
 }

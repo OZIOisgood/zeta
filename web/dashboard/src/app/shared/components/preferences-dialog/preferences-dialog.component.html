@@ -1,0 +1,48 @@
+<div class="preferences-container">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="preferences-form">
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>First Name</label>
+        <input formControlName="first_name" tuiTextfield type="text" />
+      </tui-textfield>
+    </div>
+
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Last Name</label>
+        <input formControlName="last_name" tuiTextfield type="text" />
+      </tui-textfield>
+    </div>
+
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Language</label>
+        <input tuiSelect formControlName="language" />
+        <tui-data-list-wrapper
+          *tuiTextfieldDropdown
+          new
+          [items]="languages"
+        ></tui-data-list-wrapper>
+      </tui-textfield>
+    </div>
+
+    <app-avatar-selector
+      [initialAvatar]="getInitialAvatar()"
+      [disabled]="isSubmitting"
+      (avatarChange)="onAvatarChange($event)"
+    ></app-avatar-selector>
+
+    <div class="form-actions">
+      <button tuiButton type="submit" [disabled]="form.invalid || isSubmitting">Save</button>
+      <button
+        tuiButton
+        type="button"
+        appearance="flat"
+        (click)="onCancel()"
+        [disabled]="isSubmitting"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

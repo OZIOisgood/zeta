@@ -1,5 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { FeatureService } from './feature.service';
 
 export interface User {
@@ -60,5 +62,14 @@ export class AuthService {
         window.location.reload();
       },
     });
+  }
+
+  updateUser(data: {
+    first_name: string;
+    last_name: string;
+    language: string;
+    avatar?: string;
+  }): Observable<User> {
+    return this.http.put<User>(`${this.baseUrl}/me`, data).pipe(tap((user) => this.user.set(user)));
   }
 }
