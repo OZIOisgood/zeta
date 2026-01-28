@@ -118,6 +118,7 @@ graph TD
     User[User] -->|Browser| Web[Angular Dashboard]
     Web -->|HTTP API| API[Go API Server]
     API -->|SQL| DB[(PostgreSQL)]
+    API -->|Email| Resend[Resend]
     API -->|Auth| WorkOS[WorkOS]
     API -->|Video API| Mux[Mux]
     Web -->|Direct Upload| Mux
