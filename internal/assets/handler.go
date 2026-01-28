@@ -409,7 +409,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Check feature flags on Owner
-		hasBaseFeature := h.features.HasFeature(group.OwnerID, "receive-email-notifications")
+		hasBaseFeature := h.features.HasFeature(group.OwnerID, "emails--receive")
 		if !hasBaseFeature {
 			bgLog.DebugContext(bgCtx, "asset_notification_base_feature_disabled",
 				slog.String("owner_id", group.OwnerID),
@@ -417,7 +417,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		
-		hasSpecificFeature := h.features.HasFeature(group.OwnerID, "receive-email-notifications--new-asset-in-group")
+		hasSpecificFeature := h.features.HasFeature(group.OwnerID, "emails--new-asset-to-review")
 		if !hasSpecificFeature {
 			bgLog.DebugContext(bgCtx, "asset_notification_specific_feature_disabled",
 				slog.String("owner_id", group.OwnerID),

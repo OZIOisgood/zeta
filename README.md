@@ -59,8 +59,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
      - Create `reviews`
      - Create `reviews--read`
      - Create `reviews--create`
-     - Create `receive-email-notifications`
-     - Create `receive-email-notifications--new-asset-in-group`
+     - Create `emails--receive`
+     - Create `emails--new-asset-to-review`
 
 4. **Mux Configuration**:
    - Create an Access Token in Mux Dashboard.
