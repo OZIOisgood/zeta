@@ -73,7 +73,7 @@ return fmt.Errorf("create asset: %w", err)
 ```go
 log.WarnContext(ctx, "feature_disabled",
     slog.String("component", "assets"),
-    slog.String("feature", "create-asset"),
+    slog.String("feature", "assets--create"),
 )
 ```
 

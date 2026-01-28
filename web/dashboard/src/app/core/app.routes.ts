@@ -18,7 +18,7 @@ export const routes: Routes = [
         path: 'upload-video',
         component: UploadVideoPageComponent,
         canActivate: [featureGuard],
-        data: { feature: 'create-asset' },
+        data: { feature: 'assets--create' },
       },
       { path: 'asset/:id', component: AssetDetailsPageComponent },
       {
@@ -31,7 +31,7 @@ export const routes: Routes = [
         path: 'create-group',
         component: CreateGroupPageComponent,
         canActivate: [featureGuard],
-        data: { feature: 'create-group' },
+        data: { feature: 'groups--create' },
       },
       {
         path: 'groups/:id',

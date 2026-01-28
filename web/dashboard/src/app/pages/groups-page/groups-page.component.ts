@@ -20,7 +20,7 @@ export class GroupsPageComponent {
   private readonly router = inject(Router);
 
   readonly groups$ = this.groupsService.list();
-  readonly showCreateTile = computed(() => this.featureService.hasFeature('create-group'));
+  readonly showCreateTile = computed(() => this.featureService.hasFeature('groups--create'));
 
   onCreateGroup(): void {
     this.router.navigate(['/create-group']);

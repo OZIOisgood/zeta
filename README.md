@@ -11,6 +11,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Groups Management**: Create and manage user groups.
 - **Seamless Uploads**: Direct high-quality video uploads powered by Mux.
 - **Secure Authentication**: Enterprise-grade auth via WorkOS.
+- **Video Reviews**: Add comments and feedback directly to video clips.
 
 ## How to start
 
@@ -52,9 +53,12 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - In WorkOS Dashboard > Configuration > Redirect URIs:
      - Add `http://localhost:8080/auth/callback`
    - In WorkOS Dashboard > User Management > Feature Flags:
-     - Create `create-asset`
+     - Create `assets--create`
      - Create `groups`
-     - Create `create-group`
+     - Create `groups--create`
+     - Create `reviews`
+     - Create `reviews--read`
+     - Create `reviews--create`
      - Create `receive-email-notifications`
      - Create `receive-email-notifications--new-asset-in-group`
 
@@ -160,28 +164,56 @@ sequenceDiagram
     W-->>U: Show Completion
 ```
 
-### Database Schema
+## Database Schema
 
 ```mermaid
 erDiagram
-    ASSETS ||--|{ VIDEOS : contains
-    GROUPS ||--|{ ASSETS : owns
-    GROUPS ||--|{ USER_GROUPS : members
-    USERS ||--|{ USER_GROUPS : "is member"
-    USERS ||--|{ GROUPS : "owns"
-    USERS ||--|{ ASSETS : "owns"
+    users ||--o{ groups : owns
+    users ||--o{ user_groups : "member of"
+    groups ||--o{ user_groups : has
+    users ||--o{ assets : owns
+    groups ||--o{ assets : contains
+    assets ||--|{ videos : contains
+    videos ||--o{ video_reviews : has
 
-    ASSETS {
-        uuid id PK
-        string name
-        string description
-        string owner_id FK
-        uuid group_id FK
-        enum status
+    users {
+        string id PK
+        string first_name
+        string last_name
+        string email
+        string language
+        bytea avatar
         timestamp created_at
         timestamp updated_at
     }
-    VIDEOS {
+
+    groups {
+        uuid id PK
+        string name
+        string owner_id FK
+        bytea avatar
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    user_groups {
+        string user_id PK, FK
+        uuid group_id PK, FK
+        timestamp created_at
+    }
+
+    assets {
+        uuid id PK
+        string name
+        string description
+        enum status
+        uuid group_id FK
+        string owner_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    videos {
         uuid id PK
         uuid asset_id FK
         string mux_upload_id
@@ -191,26 +223,11 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
-    GROUPS {
+
+    video_reviews {
         uuid id PK
-        string name
-        string owner_id FK
-        bytea avatar
-        timestamp created_at
-        timestamp updated_at
-    }
-    USER_GROUPS {
-        string user_id PK, FK
-        uuid group_id PK, FK
-        timestamp created_at
-    }
-    USERS {
-        string id PK
-        string first_name
-        string last_name
-        string email
-        string language
-        bytea avatar
+        uuid video_id FK
+        string content
         timestamp created_at
         timestamp updated_at
     }

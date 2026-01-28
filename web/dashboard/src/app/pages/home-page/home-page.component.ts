@@ -21,7 +21,9 @@ export class HomePageComponent {
   private readonly featureService = inject(FeatureService);
 
   public assets$ = this.assetService.getAssets();
-  public showUploadVideo = computed(() => this.featureService.features().includes('create-asset'));
+  public showUploadVideo = computed(() =>
+    this.featureService.features().includes('assets--create'),
+  );
 
   onAddVideo() {
     this.router.navigate(['/upload-video']);

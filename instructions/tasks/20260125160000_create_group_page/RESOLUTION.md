@@ -19,7 +19,7 @@
 - **Changes**: Added `/create-group` route with:
   - `CreateGroupPageComponent`
   - `featureGuard` protection
-  - `data: { feature: 'create-group' }` for feature flag checking
+  - `data: { feature: 'groups--create' }` for feature flag checking
 
 ### 3. Updated Groups Page Component
 

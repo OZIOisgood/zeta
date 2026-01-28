@@ -12,6 +12,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/features"
 	"github.com/OZIOisgood/zeta/internal/groups"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/reviews"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -57,6 +58,7 @@ func (s *Server) routes() {
 	featuresHandler := features.NewHandler(s.Logger)
 	assetsHandler := assets.NewHandler(queries, featuresHandler, emailService, s.Logger)
 	groupsHandler := groups.NewHandler(queries, s.Logger)
+	reviewsHandler := reviews.NewHandler(queries, featuresHandler, s.Logger)
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware(s.Logger))
@@ -80,6 +82,7 @@ func (s *Server) routes() {
 	s.Router.Group(func(r chi.Router) {
 		r.Use(auth.RequireAuth)
 		r.Route("/assets", assetsHandler.RegisterRoutes)
+		r.Route("/assets/videos", reviewsHandler.RegisterRoutes)
 		r.Get("/features", featuresHandler.List)
 		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", groupsHandler.ListGroups)

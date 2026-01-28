@@ -2,7 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { tap } from 'rxjs';
 
-export type Feature = 'groups' | 'create-asset' | 'create-group';
+export type Feature =
+  | 'assets--create'
+  | 'groups'
+  | 'groups--create'
+  | 'reviews'
+  | 'reviews--read'
+  | 'reviews--create';
 
 @Injectable({
   providedIn: 'root',

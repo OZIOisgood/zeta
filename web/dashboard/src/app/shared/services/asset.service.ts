@@ -33,6 +33,12 @@ export interface Asset {
   videos?: VideoItem[];
 }
 
+export interface Review {
+  id: string;
+  content: string;
+  created_at: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -64,5 +70,13 @@ export class AssetService {
 
   completeUpload(id: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/complete`, {});
+  }
+
+  getReviews(videoId: string): Observable<Review[]> {
+    return this.http.get<Review[]>(`${this.apiUrl}/videos/${videoId}/reviews`);
+  }
+
+  createReview(videoId: string, content: string): Observable<Review> {
+    return this.http.post<Review>(`${this.apiUrl}/videos/${videoId}/reviews`, { content });
   }
 }

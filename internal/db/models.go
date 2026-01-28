@@ -144,3 +144,11 @@ type Video struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
+
+type VideoReview struct {
+	ID        pgtype.UUID        `json:"id"`
+	VideoID   pgtype.UUID        `json:"video_id"`
+	Content   string             `json:"content"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}

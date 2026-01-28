@@ -301,7 +301,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.features.HasFeature(userCtx.ID, "create-asset") {
+	if !h.features.HasFeature(userCtx.ID, "assets--create") {
 		log.WarnContext(ctx, "asset_create_feature_disabled",
 			slog.String("component", "assets"),
 			slog.String("user_id", userCtx.ID),

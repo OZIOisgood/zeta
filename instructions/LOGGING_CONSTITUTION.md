@@ -173,7 +173,7 @@ log.WarnContext(ctx, "asset_create_invalid_group",
 ```go
 log.DebugContext(ctx, "feature_disabled",
     slog.String("component", "features"),
-    slog.String("feature", "create-asset"),
+    slog.String("feature", "assets--create"),
 )
 ```
 
