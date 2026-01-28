@@ -123,9 +123,9 @@ type User struct {
 	LastName  string           `json:"last_name"`
 	Email     string           `json:"email"`
 	Language  string           `json:"language"`
+	Avatar    []byte           `json:"avatar"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
-	Avatar    []byte           `json:"avatar"`
 }
 
 type UserGroup struct {

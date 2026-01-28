@@ -20,7 +20,7 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4, $5, $6
 )
-RETURNING id, first_name, last_name, email, language, created_at, updated_at, avatar
+RETURNING id, first_name, last_name, email, language, avatar, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -48,15 +48,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.LastName,
 		&i.Email,
 		&i.Language,
+		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Avatar,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, first_name, last_name, email, language, created_at, updated_at, avatar FROM users
+SELECT id, first_name, last_name, email, language, avatar, created_at, updated_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -69,9 +69,9 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 		&i.LastName,
 		&i.Email,
 		&i.Language,
+		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Avatar,
 	)
 	return i, err
 }
@@ -85,7 +85,7 @@ SET
     avatar = COALESCE($4::bytea, avatar),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $5
-RETURNING id, first_name, last_name, email, language, created_at, updated_at, avatar
+RETURNING id, first_name, last_name, email, language, avatar, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -111,9 +111,9 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.LastName,
 		&i.Email,
 		&i.Language,
+		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Avatar,
 	)
 	return i, err
 }

@@ -1,1 +1,5 @@
+ALTER TABLE user_groups DROP CONSTRAINT IF EXISTS fk_user_groups_user;
+ALTER TABLE assets DROP CONSTRAINT IF EXISTS fk_assets_owner;
+ALTER TABLE groups DROP CONSTRAINT IF EXISTS fk_groups_owner;
+
 DROP TABLE IF EXISTS users;

@@ -166,12 +166,15 @@ erDiagram
     ASSETS ||--|{ VIDEOS : contains
     GROUPS ||--|{ ASSETS : owns
     GROUPS ||--|{ USER_GROUPS : members
+    USERS ||--|{ USER_GROUPS : "is member"
+    USERS ||--|{ GROUPS : "owns"
+    USERS ||--|{ ASSETS : "owns"
 
     ASSETS {
         uuid id PK
         string name
         string description
-        string owner_id
+        string owner_id FK
         uuid group_id FK
         enum status
         timestamp created_at
@@ -190,13 +193,24 @@ erDiagram
     GROUPS {
         uuid id PK
         string name
+        string owner_id FK
         bytea avatar
         timestamp created_at
         timestamp updated_at
     }
     USER_GROUPS {
-        string user_id PK
+        string user_id PK, FK
         uuid group_id PK, FK
         timestamp created_at
+    }
+    USERS {
+        string id PK
+        string first_name
+        string last_name
+        string email
+        string language
+        bytea avatar
+        timestamp created_at
+        timestamp updated_at
     }
 ```
