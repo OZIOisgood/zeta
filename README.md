@@ -46,8 +46,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    # Resend Configuration
    RESEND_API_KEY=re_...
 
-    # I18n Configuration
-    SUPPORTED_LANGUAGES="en,fr"
+   # I18n Configuration
+   DEFAULT_LANGUAGE=en
    ```
 
 3. **WorkOS Configuration**:

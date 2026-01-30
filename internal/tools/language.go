@@ -6,32 +6,20 @@ import (
 )
 
 // NegotiateLanguage selects the best match language from the Accept-Language header
-// based on the SUPPORTED_LANGUAGES environment variable.
-// Defaults to "en" if no match is found or if SUPPORTED_LANGUAGES is not set.
+// based on the supported languages defined in the database enum (en, de, fr).
+// Defaults to DEFAULT_LANGUAGE env var or "en" if no match is found.
 func NegotiateLanguage(acceptLanguageHeader string) string {
-	supportedEnv := os.Getenv("SUPPORTED_LANGUAGES")
-	if supportedEnv == "" {
-		supportedEnv = "en"
-	}
-
-	supportedList := strings.Split(supportedEnv, ",")
+	// Supported languages match the database LanguageCode enum
+	supportedLanguages := []string{"en", "de", "fr"}
 	supportedMap := make(map[string]bool)
-	var firstSupported string
-
-	for _, lang := range supportedList {
-		// Clean up the language string: trim spaces and quotes
-		cleanLang := strings.TrimSpace(lang)
-		cleanLang = strings.Trim(cleanLang, `"'`)
-		cleanLang = strings.ToLower(cleanLang)
-
-		if cleanLang == "" {
-			continue
-		}
-
-		if firstSupported == "" {
-			firstSupported = cleanLang
-		}
-		supportedMap[cleanLang] = true
+	
+	for _, lang := range supportedLanguages {
+		supportedMap[lang] = true
+	}
+	
+	defaultLang := os.Getenv("DEFAULT_LANGUAGE")
+	if defaultLang == "" {
+		defaultLang = "en"
 	}
 
 	// Accept-Language format: en-US,en;q=0.9,ru;q=0.8
@@ -64,9 +52,6 @@ func NegotiateLanguage(acceptLanguageHeader string) string {
 		}
 	}
 
-	// Fallback to first supported language or "en"
-	if firstSupported != "" {
-		return firstSupported
-	}
-	return "en"
+	// Fallback to default language
+	return defaultLang
 }
