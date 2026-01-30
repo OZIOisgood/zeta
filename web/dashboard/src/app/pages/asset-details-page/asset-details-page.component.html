@@ -46,7 +46,7 @@
         >
           <section *ngFor="let review of reviews$ | async" tuiCardLarge="compact">
             <div style="display: flex; justify-content: space-between; align-items: flex-start">
-              <div class="review-content tui-text_body-m" style="flex: 1">
+              <div class="review-content tui-text_body-m" style="flex: 1; white-space: pre-wrap">
                 {{ review.content }}
               </div>
 
