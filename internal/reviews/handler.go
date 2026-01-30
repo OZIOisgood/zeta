@@ -30,6 +30,7 @@ func NewHandler(q *db.Queries, logger *slog.Logger) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/{id}/reviews", h.ListReviews)
 	r.Post("/{id}/reviews", h.CreateReview)
+	r.Put("/{id}/reviews/{reviewId}", h.UpdateReview)
 	r.Delete("/{id}/reviews/{reviewId}", h.DeleteReview)
 }
 
@@ -40,6 +41,10 @@ type ReviewResponse struct {
 }
 
 type CreateReviewRequest struct {
+	Content string `json:"content"`
+}
+
+type UpdateReviewRequest struct {
 	Content string `json:"content"`
 }
 
@@ -149,6 +154,62 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		createdAt = review.CreatedAt.Time
 	}
 
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"id":         toUUIDString(review.ID),
+		"content":    review.Content,
+		"created_at": createdAt,
+	})
+}
+
+func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+
+	userInfo := auth.GetUser(ctx)
+	if userInfo == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsEdit) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	reviewIdStr := chi.URLParam(r, "reviewId")
+	var reviewID pgtype.UUID
+	if err := reviewID.Scan(reviewIdStr); err != nil {
+		http.Error(w, "Invalid review ID", http.StatusBadRequest)
+		return
+	}
+
+	var req UpdateReviewRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Content == "" {
+		http.Error(w, "Content is required", http.StatusBadRequest)
+		return
+	}
+
+	review, err := h.q.UpdateVideoReview(ctx, db.UpdateVideoReviewParams{
+		ID:      reviewID,
+		Content: req.Content,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "update_review_failed",
+			slog.String("component", "reviews"),
+			slog.String("review_id", reviewIdStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to update review", http.StatusInternalServerError)
+		return
+	}
+
+	createdAt := review.CreatedAt.Time
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"id":         toUUIDString(review.ID),
 		"content":    review.Content,

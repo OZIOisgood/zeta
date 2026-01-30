@@ -4,17 +4,19 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import '@mux/mux-player';
 import { TuiResponsiveDialogService } from '@taiga-ui/addon-mobile';
+import { TuiAutoFocus } from '@taiga-ui/cdk';
 import {
   TuiAlertService,
   TuiButton,
   TuiDataList,
+  TuiDialog,
   TuiDropdown,
   TuiIcon,
   TuiTextfield,
 } from '@taiga-ui/core';
 import { TUI_CONFIRM, TuiPagination, TuiTextarea, type TuiConfirmData } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
-import { BehaviorSubject, Observable, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, switchMap, tap, type Observer } from 'rxjs';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { Asset, AssetService, Review } from '../../shared/services/asset.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
@@ -35,6 +37,8 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiDropdown,
     TuiDataList,
     TuiIcon,
+    TuiDialog,
+    TuiAutoFocus,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',
@@ -59,6 +63,12 @@ export class AssetDetailsPageComponent implements OnInit {
   readonly canDeleteReviews = computed(() =>
     this.permissionsService.hasPermission('reviews:delete'),
   );
+  readonly canEditReviews = computed(() => this.permissionsService.hasPermission('reviews:edit'));
+
+  protected editReviewControl = new FormControl('');
+  protected editDialogOpen = false;
+  protected editingReviewId: string | null = null;
+
   asset: Asset | null = null;
   private reviewsLoaded = false;
 
@@ -196,5 +206,29 @@ export class AssetDetailsPageComponent implements OnInit {
       return asset.videos[this.videoIndex]?.playback_id;
     }
     return asset.playback_id;
+  }
+
+  showEditDialog(review: Review): void {
+    this.editingReviewId = review.id;
+    this.editReviewControl.setValue(review.content);
+    this.editDialogOpen = true;
+  }
+
+  saveEditedReview(observer: Observer<void>): void {
+    const video = this.getCurrentVideo();
+    if (!video || !this.editingReviewId || !this.editReviewControl.value) return;
+
+    this.assetService
+      .updateReview(video.id, this.editingReviewId, this.editReviewControl.value)
+      .subscribe({
+        next: () => {
+          this.loadReviews(video.id);
+          observer.complete();
+        },
+        error: (err) => {
+          console.error('Failed to update review', err);
+          this.alerts.open('Failed to update review', { appearance: 'error' }).subscribe();
+        },
+      });
   }
 }

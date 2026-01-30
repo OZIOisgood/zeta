@@ -51,7 +51,7 @@
               </div>
 
               <div
-                *ngIf="canDeleteReviews()"
+                *ngIf="canDeleteReviews() || canEditReviews()"
                 [tuiDropdown]="dropdown"
                 tuiDropdownOpen
                 tuiDropdownAlign="right"
@@ -68,7 +68,11 @@
 
               <ng-template #dropdown>
                 <tui-data-list>
-                  <button tuiOption (click)="deleteReview(review.id)">
+                  <button *ngIf="canEditReviews()" tuiOption (click)="showEditDialog(review)">
+                    <tui-icon icon="@tui.pencil" [style.height.rem]="1"></tui-icon>
+                    Edit
+                  </button>
+                  <button *ngIf="canDeleteReviews()" tuiOption (click)="deleteReview(review.id)">
                     <tui-icon icon="@tui.trash" [style.height.rem]="1"></tui-icon>
                     Delete
                   </button>
@@ -126,3 +130,25 @@
     ></button>
   </div>
 </div>
+
+<ng-template
+  let-observer
+  [tuiDialogOptions]="{ label: 'Edit comment', size: 'm' }"
+  [(tuiDialog)]="editDialogOpen"
+>
+  <form (submit)="$event.preventDefault(); saveEditedReview(observer)">
+    <tui-textfield>
+      <textarea
+        tuiTextarea
+        [formControl]="editReviewControl"
+        tuiAutoFocus
+        placeholder="Comment"
+        [min]="10"
+        [max]="25"
+      ></textarea>
+    </tui-textfield>
+    <div style="display: flex; justify-content: flex-end; margin-top: 1rem">
+      <button tuiButton type="submit">Save</button>
+    </div>
+  </form>
+</ng-template>

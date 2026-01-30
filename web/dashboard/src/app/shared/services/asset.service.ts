@@ -80,6 +80,12 @@ export class AssetService {
     return this.http.post<Review>(`${this.apiUrl}/videos/${videoId}/reviews`, { content });
   }
 
+  updateReview(videoId: string, reviewId: string, content: string): Observable<Review> {
+    return this.http.put<Review>(`${this.apiUrl}/videos/${videoId}/reviews/${reviewId}`, {
+      content,
+    });
+  }
+
   deleteReview(videoId: string, reviewId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/videos/${videoId}/reviews/${reviewId}`);
   }

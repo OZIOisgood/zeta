@@ -85,3 +85,28 @@ func (q *Queries) ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]
 	}
 	return items, nil
 }
+
+const updateVideoReview = `-- name: UpdateVideoReview :one
+UPDATE video_reviews
+SET content = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING id, video_id, content, created_at, updated_at
+`
+
+type UpdateVideoReviewParams struct {
+	ID      pgtype.UUID `json:"id"`
+	Content string      `json:"content"`
+}
+
+func (q *Queries) UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewParams) (VideoReview, error) {
+	row := q.db.QueryRow(ctx, updateVideoReview, arg.ID, arg.Content)
+	var i VideoReview
+	err := row.Scan(
+		&i.ID,
+		&i.VideoID,
+		&i.Content,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
