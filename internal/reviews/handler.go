@@ -30,6 +30,7 @@ func NewHandler(q *db.Queries, logger *slog.Logger) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/{id}/reviews", h.ListReviews)
 	r.Post("/{id}/reviews", h.CreateReview)
+	r.Delete("/{id}/reviews/{reviewId}", h.DeleteReview)
 }
 
 type ReviewResponse struct {
@@ -153,6 +154,42 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		"content":    review.Content,
 		"created_at": createdAt,
 	})
+}
+
+func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+
+	userInfo := auth.GetUser(ctx)
+	if userInfo == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsDelete) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	reviewIdStr := chi.URLParam(r, "reviewId")
+	var reviewID pgtype.UUID
+	if err := reviewID.Scan(reviewIdStr); err != nil {
+		http.Error(w, "Invalid review ID", http.StatusBadRequest)
+		return
+	}
+
+	err := h.q.DeleteVideoReview(ctx, reviewID)
+	if err != nil {
+		log.ErrorContext(ctx, "delete_review_failed",
+			slog.String("component", "reviews"),
+			slog.String("review_id", reviewIdStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to delete review", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func toUUIDString(u pgtype.UUID) string {

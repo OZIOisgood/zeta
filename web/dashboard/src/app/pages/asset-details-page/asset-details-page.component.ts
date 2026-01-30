@@ -3,8 +3,16 @@ import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit } from '@an
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import '@mux/mux-player';
-import { TuiButton, TuiTextfield } from '@taiga-ui/core';
-import { TuiPagination, TuiTextarea } from '@taiga-ui/kit';
+import { TuiResponsiveDialogService } from '@taiga-ui/addon-mobile';
+import {
+  TuiAlertService,
+  TuiButton,
+  TuiDataList,
+  TuiDropdown,
+  TuiIcon,
+  TuiTextfield,
+} from '@taiga-ui/core';
+import { TUI_CONFIRM, TuiPagination, TuiTextarea, type TuiConfirmData } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { BehaviorSubject, Observable, switchMap, tap } from 'rxjs';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -24,6 +32,9 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiCardLarge,
     TuiTextarea,
     TuiTextfield,
+    TuiDropdown,
+    TuiDataList,
+    TuiIcon,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',
@@ -34,6 +45,8 @@ export class AssetDetailsPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly assetService = inject(AssetService);
   private readonly permissionsService = inject(PermissionsService);
+  private readonly alerts = inject(TuiAlertService);
+  private readonly dialogs = inject(TuiResponsiveDialogService);
 
   asset$!: Observable<Asset>;
   reviews$ = new BehaviorSubject<Review[]>([]);
@@ -43,6 +56,9 @@ export class AssetDetailsPageComponent implements OnInit {
 
   readonly canReadReviews = computed(() => this.permissionsService.hasPermission('reviews:read'));
   readonly canAddReviews = computed(() => this.permissionsService.hasPermission('reviews:create'));
+  readonly canDeleteReviews = computed(() =>
+    this.permissionsService.hasPermission('reviews:delete'),
+  );
   asset: Asset | null = null;
 
   ngOnInit() {
@@ -107,6 +123,44 @@ export class AssetDetailsPageComponent implements OnInit {
       },
       error: (err) => console.error('Failed to post review', err),
     });
+  }
+
+  deleteReview(reviewId: string) {
+    const video = this.getCurrentVideo();
+    if (!video || !this.canDeleteReviews()) return;
+
+    const data: TuiConfirmData = {
+      content: 'Are you sure you want to delete this comment? This action cannot be undone.',
+      yes: 'Delete',
+      no: 'Cancel',
+    };
+
+    this.dialogs
+      .open<boolean>(TUI_CONFIRM, {
+        label: 'Delete Comment',
+        size: 's',
+        data,
+      })
+      .pipe(
+        switchMap((response) => {
+          if (response) {
+            return this.assetService.deleteReview(video.id, reviewId);
+          }
+          throw new Error('Cancelled');
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.loadReviews(video.id);
+          this.alerts.open('Comment deleted successfully').subscribe();
+        },
+        error: (err: Error) => {
+          if (err.message !== 'Cancelled') {
+            console.error('Failed to delete review', err);
+            this.alerts.open('Failed to delete comment', { appearance: 'error' }).subscribe();
+          }
+        },
+      });
   }
 
   onIndexChange(index: number) {

@@ -79,4 +79,8 @@ export class AssetService {
   createReview(videoId: string, content: string): Observable<Review> {
     return this.http.post<Review>(`${this.apiUrl}/videos/${videoId}/reviews`, { content });
   }
+
+  deleteReview(videoId: string, reviewId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/videos/${videoId}/reviews/${reviewId}`);
+  }
 }

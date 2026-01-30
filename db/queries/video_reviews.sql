@@ -16,3 +16,7 @@ SELECT
 FROM video_reviews
 WHERE video_id = $1
 ORDER BY created_at DESC;
+
+-- name: DeleteVideoReview :exec
+DELETE FROM video_reviews
+WHERE id = $1;

@@ -6,7 +6,8 @@ export type Permission =
   | 'groups:create'
   | 'groups:read'
   | 'reviews:create'
-  | 'reviews:read';
+  | 'reviews:read'
+  | 'reviews:delete';
 
 @Injectable({
   providedIn: 'root',
@@ -15,8 +16,15 @@ export class PermissionsService {
   private auth = inject(AuthService);
 
   private rolePermissions: Record<string, Permission[]> = {
-    admin: ['assets:create', 'groups:create', 'groups:read', 'reviews:create', 'reviews:read'],
-    expert: ['groups:create', 'groups:read', 'reviews:create', 'reviews:read'],
+    admin: [
+      'assets:create',
+      'groups:create',
+      'groups:read',
+      'reviews:create',
+      'reviews:read',
+      'reviews:delete',
+    ],
+    expert: ['groups:create', 'groups:read', 'reviews:create', 'reviews:read', 'reviews:delete'],
     student: ['assets:create', 'groups:read', 'reviews:read'],
   };
 

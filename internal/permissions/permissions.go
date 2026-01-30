@@ -7,6 +7,7 @@ const (
 	GroupsRead    = "groups:read"
 	ReviewsCreate = "reviews:create"
 	ReviewsRead   = "reviews:read"
+	ReviewsDelete = "reviews:delete"
 )
 
 // Roles
@@ -24,12 +25,14 @@ var rolePermissions = map[string][]string{
 		GroupsRead,
 		ReviewsCreate,
 		ReviewsRead,
+		ReviewsDelete,
 	},
 	RoleExpert: {
 		GroupsCreate,
 		GroupsRead,
 		ReviewsCreate,
 		ReviewsRead,
+		ReviewsDelete,
 	},
 	RoleStudent: {
 		AssetsCreate,

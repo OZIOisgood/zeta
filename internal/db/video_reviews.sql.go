@@ -38,6 +38,16 @@ func (q *Queries) CreateVideoReview(ctx context.Context, arg CreateVideoReviewPa
 	return i, err
 }
 
+const deleteVideoReview = `-- name: DeleteVideoReview :exec
+DELETE FROM video_reviews
+WHERE id = $1
+`
+
+func (q *Queries) DeleteVideoReview(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteVideoReview, id)
+	return err
+}
+
 const listVideoReviews = `-- name: ListVideoReviews :many
 SELECT 
     id,

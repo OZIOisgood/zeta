@@ -45,8 +45,35 @@
           style="display: flex; flex-direction: column; gap: 1rem"
         >
           <section *ngFor="let review of reviews$ | async" tuiCardLarge="compact">
-            <div class="review-content tui-text_body-m">
-              {{ review.content }}
+            <div style="display: flex; justify-content: space-between; align-items: flex-start">
+              <div class="review-content tui-text_body-m" style="flex: 1">
+                {{ review.content }}
+              </div>
+
+              <div
+                *ngIf="canDeleteReviews()"
+                [tuiDropdown]="dropdown"
+                tuiDropdownOpen
+                tuiDropdownAlign="right"
+              >
+                <button
+                  appearance="flat"
+                  iconStart="@tui.ellipsis"
+                  tuiIconButton
+                  type="button"
+                  size="s"
+                  style="margin-left: 0.5rem"
+                ></button>
+              </div>
+
+              <ng-template #dropdown>
+                <tui-data-list>
+                  <button tuiOption (click)="deleteReview(review.id)">
+                    <tui-icon icon="@tui.trash" [style.height.rem]="1"></tui-icon>
+                    Delete
+                  </button>
+                </tui-data-list>
+              </ng-template>
             </div>
           </section>
 
