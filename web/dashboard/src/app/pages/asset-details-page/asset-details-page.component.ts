@@ -12,9 +12,16 @@ import {
   TuiDialog,
   TuiDropdown,
   TuiIcon,
+  TuiLink,
   TuiTextfield,
 } from '@taiga-ui/core';
-import { TUI_CONFIRM, TuiPagination, TuiTextarea, type TuiConfirmData } from '@taiga-ui/kit';
+import {
+  TUI_CONFIRM,
+  TuiElasticContainer,
+  TuiPagination,
+  TuiTextarea,
+  type TuiConfirmData,
+} from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { BehaviorSubject, Observable, switchMap, tap, type Observer } from 'rxjs';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -39,6 +46,8 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiIcon,
     TuiDialog,
     TuiAutoFocus,
+    TuiElasticContainer,
+    TuiLink,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',
@@ -71,6 +80,9 @@ export class AssetDetailsPageComponent implements OnInit {
 
   asset: Asset | null = null;
   private reviewsLoaded = false;
+
+  protected descriptionExpanded = false;
+  protected readonly descriptionCharLimit = 200;
 
   constructor() {
     // Use effect to load reviews when user permissions become available
@@ -230,5 +242,21 @@ export class AssetDetailsPageComponent implements OnInit {
           this.alerts.open('Failed to update review', { appearance: 'error' }).subscribe();
         },
       });
+  }
+
+  getDisplayDescription(): string {
+    if (!this.asset?.description) return '';
+    if (this.descriptionExpanded || this.asset.description.length <= this.descriptionCharLimit) {
+      return this.asset.description;
+    }
+    return this.asset.description.slice(0, this.descriptionCharLimit) + '...';
+  }
+
+  toggleDescription(): void {
+    this.descriptionExpanded = !this.descriptionExpanded;
+  }
+
+  shouldShowToggle(): boolean {
+    return (this.asset?.description?.length || 0) > this.descriptionCharLimit;
   }
 }

@@ -30,7 +30,14 @@
 
       <div class="text-content">
         <h1 class="tui-text_h3 title mobile-title">{{ asset.title }}</h1>
-        <p class="description tui-text_body-l">{{ asset.description }}</p>
+        <section tuiCardLarge="compact">
+          <tui-elastic-container class="description tui-text_body-m" style="white-space: pre-wrap">
+            {{ getDisplayDescription() }}
+            <button *ngIf="shouldShowToggle()" tuiLink type="button" (click)="toggleDescription()">
+              Show {{ descriptionExpanded ? 'less' : 'more' }}
+            </button>
+          </tui-elastic-container>
+        </section>
       </div>
 
       <div
