@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, OnInit } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import '@mux/mux-player';
@@ -60,6 +60,20 @@ export class AssetDetailsPageComponent implements OnInit {
     this.permissionsService.hasPermission('reviews:delete'),
   );
   asset: Asset | null = null;
+  private reviewsLoaded = false;
+
+  constructor() {
+    // Use effect to load reviews when user permissions become available
+    effect(() => {
+      const canRead = this.canReadReviews();
+      if (canRead && this.asset && !this.reviewsLoaded) {
+        const video = this.getCurrentVideo();
+        if (video) {
+          this.loadReviews(video.id);
+        }
+      }
+    });
+  }
 
   ngOnInit() {
     this.asset$ = this.route.paramMap.pipe(
@@ -69,9 +83,13 @@ export class AssetDetailsPageComponent implements OnInit {
       }),
       tap((asset) => {
         this.asset = asset;
-        const video = this.getCurrentVideo();
-        if (this.canReadReviews() && video) {
-          this.loadReviews(video.id);
+        this.reviewsLoaded = false;
+        // Try loading reviews - will work if permissions are ready
+        if (this.canReadReviews()) {
+          const video = this.getCurrentVideo();
+          if (video) {
+            this.loadReviews(video.id);
+          }
         }
       }),
     );
@@ -91,6 +109,7 @@ export class AssetDetailsPageComponent implements OnInit {
 
         // Reload reviews if video changed
         if (prevIndex !== this.videoIndex && this.asset && this.canReadReviews()) {
+          this.reviewsLoaded = false;
           const video = this.getCurrentVideo();
           if (video) {
             this.loadReviews(video.id);
@@ -106,6 +125,7 @@ export class AssetDetailsPageComponent implements OnInit {
   }
 
   loadReviews(videoId: string) {
+    this.reviewsLoaded = true;
     this.assetService.getReviews(videoId).subscribe({
       next: (reviews) => this.reviews$.next(reviews),
       error: (err) => console.error('Failed to load reviews', err),
