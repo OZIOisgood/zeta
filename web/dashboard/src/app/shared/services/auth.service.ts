@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { FeatureService } from './feature.service';
 
 export interface User {
   id: string;
@@ -10,7 +9,8 @@ export interface User {
   first_name: string;
   last_name: string;
   language: string;
-  avatar?: string;
+  profile_picture_url?: string;
+  role: string;
 }
 
 @Injectable({
@@ -18,7 +18,6 @@ export interface User {
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private featureService = inject(FeatureService);
   private baseUrl = 'http://localhost:8080/auth';
 
   user = signal<User | null>(null);
@@ -33,10 +32,7 @@ export class AuthService {
     this.http.get<User>(`${this.baseUrl}/me`).subscribe({
       next: (u) => {
         this.user.set(u);
-        this.featureService.loadFeatures().subscribe({
-          next: () => this.loading.set(false),
-          error: () => this.loading.set(false),
-        });
+        this.loading.set(false);
       },
       error: () => {
         this.user.set(null);

@@ -20,6 +20,8 @@ type UserContext struct {
 	FirstName         string `json:"firstName"`
 	LastName          string `json:"lastName"`
 	ProfilePictureUrl string `json:"profilePictureUrl"`
+	Role              string `json:"role"`
+	SID               string `json:"sid"`
 }
 
 func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
@@ -57,6 +59,8 @@ func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				firstName, _ := claims["first_name"].(string)
 				lastName, _ := claims["last_name"].(string)
 				profilePictureUrl, _ := claims["picture"].(string)
+				role, _ := claims["role"].(string)
+				sid, _ := claims["sid"].(string)
 
 				user := &UserContext{
 					ID:                userID,
@@ -64,6 +68,8 @@ func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
 					FirstName:         firstName,
 					LastName:          lastName,
 					ProfilePictureUrl: profilePictureUrl,
+					Role:              role,
+					SID:               sid,
 				}
 				ctx := context.WithValue(r.Context(), UserKey, user)
 				logger.DebugContext(ctx, "user_authenticated",

@@ -28,7 +28,7 @@ export class PreferencesDialogComponent {
   private readonly auth = inject(AuthService);
   private readonly context = injectContext<TuiDialogContext<void>>();
 
-  protected readonly languages = ['en', 'de'];
+  protected readonly languages = ['en', 'de', 'fr'];
 
   protected readonly form = new FormGroup({
     first_name: new FormControl(this.auth.user()?.first_name || '', [Validators.required]),
@@ -41,7 +41,7 @@ export class PreferencesDialogComponent {
 
   protected getInitialAvatar(): string | null {
     const user = this.auth.user();
-    if (user?.avatar) return `data:image/png;base64,${user.avatar}`;
+    if (user?.profile_picture_url) return user.profile_picture_url;
     return null;
   }
 

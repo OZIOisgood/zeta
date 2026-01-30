@@ -54,6 +54,49 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
+type LanguageCode string
+
+const (
+	LanguageCodeEn LanguageCode = "en"
+	LanguageCodeDe LanguageCode = "de"
+	LanguageCodeFr LanguageCode = "fr"
+)
+
+func (e *LanguageCode) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = LanguageCode(s)
+	case string:
+		*e = LanguageCode(s)
+	default:
+		return fmt.Errorf("unsupported scan type for LanguageCode: %T", src)
+	}
+	return nil
+}
+
+type NullLanguageCode struct {
+	LanguageCode LanguageCode `json:"language_code"`
+	Valid        bool         `json:"valid"` // Valid is true if LanguageCode is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullLanguageCode) Scan(value interface{}) error {
+	if value == nil {
+		ns.LanguageCode, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.LanguageCode.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullLanguageCode) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.LanguageCode), nil
+}
+
 type VideoStatus string
 
 const (
@@ -117,21 +160,17 @@ type Group struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
-type User struct {
-	ID        string           `json:"id"`
-	FirstName string           `json:"first_name"`
-	LastName  string           `json:"last_name"`
-	Email     string           `json:"email"`
-	Language  string           `json:"language"`
-	Avatar    []byte           `json:"avatar"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
-}
-
 type UserGroup struct {
 	UserID    string             `json:"user_id"`
 	GroupID   pgtype.UUID        `json:"group_id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type UserPreference struct {
+	UserID    string           `json:"user_id"`
+	Language  LanguageCode     `json:"language"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
 
 type Video struct {

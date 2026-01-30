@@ -5,7 +5,7 @@ import { AssetListComponent } from '../../shared/components/asset-list/asset-lis
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { AssetService } from '../../shared/services/asset.service';
 import { AuthService } from '../../shared/services/auth.service';
-import { FeatureService } from '../../shared/services/feature.service';
+import { PermissionsService } from '../../shared/services/permissions.service';
 
 @Component({
   selector: 'app-home-page',
@@ -18,12 +18,10 @@ export class HomePageComponent {
   private readonly router = inject(Router);
   public auth = inject(AuthService);
   private readonly assetService = inject(AssetService);
-  private readonly featureService = inject(FeatureService);
+  private readonly permissionsService = inject(PermissionsService);
 
   public assets$ = this.assetService.getAssets();
-  public showUploadVideo = computed(() =>
-    this.featureService.features().includes('assets--create'),
-  );
+  public showUploadVideo = computed(() => this.permissionsService.hasPermission('assets:create'));
 
   onAddVideo() {
     this.router.navigate(['/upload-video']);

@@ -9,109 +9,42 @@ import (
 	"context"
 )
 
-const createUser = `-- name: CreateUser :one
-INSERT INTO users (
-    id,
-    first_name,
-    last_name,
-    email,
-    language,
-    avatar
-) VALUES (
-    $1, $2, $3, $4, $5, $6
-)
-RETURNING id, first_name, last_name, email, language, avatar, created_at, updated_at
+const getUserPreferences = `-- name: GetUserPreferences :one
+SELECT user_id, language, created_at, updated_at FROM user_preferences WHERE user_id = $1
 `
 
-type CreateUserParams struct {
-	ID        string `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Language  string `json:"language"`
-	Avatar    []byte `json:"avatar"`
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser,
-		arg.ID,
-		arg.FirstName,
-		arg.LastName,
-		arg.Email,
-		arg.Language,
-		arg.Avatar,
-	)
-	var i User
+func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPreference, error) {
+	row := q.db.QueryRow(ctx, getUserPreferences, userID)
+	var i UserPreference
 	err := row.Scan(
-		&i.ID,
-		&i.FirstName,
-		&i.LastName,
-		&i.Email,
+		&i.UserID,
 		&i.Language,
-		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const getUser = `-- name: GetUser :one
-SELECT id, first_name, last_name, email, language, avatar, created_at, updated_at FROM users
-WHERE id = $1 LIMIT 1
+const upsertUserPreferences = `-- name: UpsertUserPreferences :one
+INSERT INTO user_preferences (user_id, language)
+VALUES ($1, $2)
+ON CONFLICT (user_id) DO UPDATE
+SET language = EXCLUDED.language,
+    updated_at = NOW()
+RETURNING user_id, language, created_at, updated_at
 `
 
-func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
-	row := q.db.QueryRow(ctx, getUser, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.FirstName,
-		&i.LastName,
-		&i.Email,
-		&i.Language,
-		&i.Avatar,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+type UpsertUserPreferencesParams struct {
+	UserID   string       `json:"user_id"`
+	Language LanguageCode `json:"language"`
 }
 
-const updateUser = `-- name: UpdateUser :one
-UPDATE users
-SET
-    first_name = COALESCE(NULLIF($1::text, ''), first_name),
-    last_name = COALESCE(NULLIF($2::text, ''), last_name),
-    language = COALESCE(NULLIF($3::text, ''), language),
-    avatar = COALESCE($4::bytea, avatar),
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $5
-RETURNING id, first_name, last_name, email, language, avatar, created_at, updated_at
-`
-
-type UpdateUserParams struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Language  string `json:"language"`
-	Avatar    []byte `json:"avatar"`
-	ID        string `json:"id"`
-}
-
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUser,
-		arg.FirstName,
-		arg.LastName,
-		arg.Language,
-		arg.Avatar,
-		arg.ID,
-	)
-	var i User
+func (q *Queries) UpsertUserPreferences(ctx context.Context, arg UpsertUserPreferencesParams) (UserPreference, error) {
+	row := q.db.QueryRow(ctx, upsertUserPreferences, arg.UserID, arg.Language)
+	var i UserPreference
 	err := row.Scan(
-		&i.ID,
-		&i.FirstName,
-		&i.LastName,
-		&i.Email,
+		&i.UserID,
 		&i.Language,
-		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

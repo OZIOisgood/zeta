@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, OnInit } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import '@mux/mux-player';
@@ -9,7 +9,7 @@ import { TuiCardLarge } from '@taiga-ui/layout';
 import { BehaviorSubject, Observable, switchMap, tap } from 'rxjs';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { Asset, AssetService, Review } from '../../shared/services/asset.service';
-import { FeatureService } from '../../shared/services/feature.service';
+import { PermissionsService } from '../../shared/services/permissions.service';
 
 @Component({
   selector: 'app-asset-details-page',
@@ -33,7 +33,7 @@ export class AssetDetailsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly assetService = inject(AssetService);
-  private readonly featureService = inject(FeatureService);
+  private readonly permissionsService = inject(PermissionsService);
 
   asset$!: Observable<Asset>;
   reviews$ = new BehaviorSubject<Review[]>([]);
@@ -41,14 +41,11 @@ export class AssetDetailsPageComponent implements OnInit {
 
   reviewControl = new FormControl('');
 
-  canReadReviews = false;
-  canAddReviews = false;
+  readonly canReadReviews = computed(() => this.permissionsService.hasPermission('reviews:read'));
+  readonly canAddReviews = computed(() => this.permissionsService.hasPermission('reviews:create'));
   asset: Asset | null = null;
 
   ngOnInit() {
-    this.canReadReviews = this.featureService.hasFeature('reviews--read');
-    this.canAddReviews = this.featureService.hasFeature('reviews--create');
-
     this.asset$ = this.route.paramMap.pipe(
       switchMap((params) => {
         const id = params.get('id')!;
@@ -57,7 +54,7 @@ export class AssetDetailsPageComponent implements OnInit {
       tap((asset) => {
         this.asset = asset;
         const video = this.getCurrentVideo();
-        if (this.canReadReviews && video) {
+        if (this.canReadReviews() && video) {
           this.loadReviews(video.id);
         }
       }),
@@ -77,7 +74,7 @@ export class AssetDetailsPageComponent implements OnInit {
         this.videoIndex = Number(index);
 
         // Reload reviews if video changed
-        if (prevIndex !== this.videoIndex && this.asset && this.canReadReviews) {
+        if (prevIndex !== this.videoIndex && this.asset && this.canReadReviews()) {
           const video = this.getCurrentVideo();
           if (video) {
             this.loadReviews(video.id);
@@ -101,7 +98,7 @@ export class AssetDetailsPageComponent implements OnInit {
 
   postReview() {
     const video = this.getCurrentVideo();
-    if (!video || !this.canAddReviews || !this.reviewControl.value) return;
+    if (!video || !this.canAddReviews() || !this.reviewControl.value) return;
 
     this.assetService.createReview(video.id, this.reviewControl.value).subscribe({
       next: () => {

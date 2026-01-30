@@ -34,7 +34,7 @@
       </div>
 
       <div
-        *ngIf="canReadReviews"
+        *ngIf="canReadReviews()"
         class="comments-section tui-space_top-6"
         style="padding-bottom: 80px"
       >
@@ -60,7 +60,7 @@
 </app-page-container>
 
 <div
-  *ngIf="canAddReviews"
+  *ngIf="canAddReviews()"
   class="comment-input-container"
   style="
     position: fixed;

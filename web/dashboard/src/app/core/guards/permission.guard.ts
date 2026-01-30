@@ -1,27 +1,26 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
-import { Feature, FeatureService } from '../../shared/services/feature.service';
+import { Permission, PermissionsService } from '../../shared/services/permissions.service';
 
-export const featureGuard: CanActivateFn = async (route) => {
-  const featureService = inject(FeatureService);
+export const permissionGuard: CanActivateFn = async (route) => {
+  const permissionsService = inject(PermissionsService);
   const authService = inject(AuthService);
   const router = inject(Router);
-  const feature = route.data['feature'] as Feature;
+  const permission = route.data['permission'] as Permission;
 
-  if (!feature) {
+  if (!permission) {
     return true;
   }
 
-  // Wait for features to load if they haven't yet
+  // Wait for auth to load if it hasn't yet
   if (authService.loading()) {
-    // Wait for loading to complete by checking the signal periodically
     while (authService.loading()) {
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
   }
 
-  if (featureService.hasFeature(feature)) {
+  if (permissionsService.hasPermission(permission)) {
     return true;
   }
 

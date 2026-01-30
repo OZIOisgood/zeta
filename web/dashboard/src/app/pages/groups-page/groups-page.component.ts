@@ -3,8 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { Router } from '@angular/router';
 import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
-import { FeatureService } from '../../shared/services/feature.service';
 import { GroupsService } from '../../shared/services/groups.service';
+import { PermissionsService } from '../../shared/services/permissions.service';
 
 @Component({
   selector: 'app-groups-page',
@@ -16,11 +16,11 @@ import { GroupsService } from '../../shared/services/groups.service';
 })
 export class GroupsPageComponent {
   private readonly groupsService = inject(GroupsService);
-  private readonly featureService = inject(FeatureService);
+  private readonly permissionsService = inject(PermissionsService);
   private readonly router = inject(Router);
 
   readonly groups$ = this.groupsService.list();
-  readonly showCreateTile = computed(() => this.featureService.hasFeature('groups--create'));
+  readonly showCreateTile = computed(() => this.permissionsService.hasPermission('groups:create'));
 
   onCreateGroup(): void {
     this.router.navigate(['/create-group']);

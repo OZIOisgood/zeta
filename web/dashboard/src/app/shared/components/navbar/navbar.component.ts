@@ -13,7 +13,7 @@ import { TuiAvatar, TuiTabs } from '@taiga-ui/kit';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { take } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { FeatureService } from '../../services/feature.service';
+import { PermissionsService } from '../../services/permissions.service';
 import { PreferencesDialogComponent } from '../preferences-dialog/preferences-dialog.component';
 
 @Component({
@@ -37,12 +37,14 @@ import { PreferencesDialogComponent } from '../preferences-dialog/preferences-di
 })
 export class NavbarComponent {
   private readonly auth = inject(AuthService);
-  private readonly featureService = inject(FeatureService);
+  private readonly permissionsService = inject(PermissionsService);
   private readonly dialogs = inject(TuiDialogService);
 
-  protected readonly showGroups = computed(() => this.featureService.features().includes('groups'));
+  protected readonly showGroups = computed(() =>
+    this.permissionsService.hasPermission('groups:read'),
+  );
   protected readonly showUploadVideo = computed(() =>
-    this.featureService.features().includes('assets--create'),
+    this.permissionsService.hasPermission('assets:create'),
   );
 
   protected readonly user = this.auth.user;
@@ -53,8 +55,8 @@ export class NavbarComponent {
       return '';
     }
 
-    if (user.avatar) {
-      return `data:image/png;base64,${user.avatar}`;
+    if (user.profile_picture_url) {
+      return user.profile_picture_url;
     }
 
     if (user.first_name && user.last_name) {

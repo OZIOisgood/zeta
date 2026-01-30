@@ -10,8 +10,8 @@ import (
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
-	"github.com/OZIOisgood/zeta/internal/features"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -22,12 +22,11 @@ import (
 type Handler struct {
 	q         *db.Queries
 	muxClient *muxgo.APIClient
-	features  *features.Handler
 	email     *email.Service
 	logger    *slog.Logger
 }
 
-func NewHandler(q *db.Queries, features *features.Handler, email *email.Service, logger *slog.Logger) *Handler {
+func NewHandler(q *db.Queries, email *email.Service, logger *slog.Logger) *Handler {
 	id := tools.GetEnv("MUX_TOKEN_ID")
 	secret := tools.GetEnv("MUX_TOKEN_SECRET")
 	cfg := muxgo.NewConfiguration(
@@ -37,7 +36,6 @@ func NewHandler(q *db.Queries, features *features.Handler, email *email.Service,
 	return &Handler{
 		q:         q,
 		muxClient: muxgo.NewAPIClient(cfg),
-		features:  features,
 		email:     email,
 		logger:    logger,
 	}
@@ -301,12 +299,13 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.features.HasFeature(userCtx.ID, "assets--create") {
-		log.WarnContext(ctx, "asset_create_feature_disabled",
+	if !permissions.HasPermission(userCtx.Role, permissions.AssetsCreate) {
+		log.WarnContext(ctx, "asset_create_permission_denied",
 			slog.String("component", "assets"),
 			slog.String("user_id", userCtx.ID),
+			slog.String("role", userCtx.Role),
 		)
-		http.Error(w, "Feature not enabled", http.StatusForbidden)
+		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
 
@@ -408,22 +407,8 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Check feature flags on Owner
-		hasBaseFeature := h.features.HasFeature(group.OwnerID, "emails--receive")
-		if !hasBaseFeature {
-			bgLog.DebugContext(bgCtx, "asset_notification_base_feature_disabled",
-				slog.String("owner_id", group.OwnerID),
-			)
-			return
-		}
-		
-		hasSpecificFeature := h.features.HasFeature(group.OwnerID, "emails--new-asset-to-review")
-		if !hasSpecificFeature {
-			bgLog.DebugContext(bgCtx, "asset_notification_specific_feature_disabled",
-				slog.String("owner_id", group.OwnerID),
-			)
-			return
-		}
+		// Check feature flags on Owner - Removed as per requirements, emails sent always
+
 
 		// Fetch Owner Email from WorkOS
 		owner, err := usermanagement.GetUser(bgCtx, usermanagement.GetUserOpts{

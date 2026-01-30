@@ -9,6 +9,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/permissions"
 )
 
 type Handler struct {
@@ -29,6 +30,16 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetUser(ctx)
 	if user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Role, permissions.GroupsRead) {
+		log.WarnContext(ctx, "group_read_permission_denied",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("role", user.Role),
+		)
+		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
 
@@ -63,6 +74,16 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetUser(ctx)
 	if user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Role, permissions.GroupsCreate) {
+		log.WarnContext(ctx, "group_create_permission_denied",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("role", user.Role),
+		)
+		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
 

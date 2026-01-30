@@ -9,23 +9,21 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
-	"github.com/OZIOisgood/zeta/internal/features"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Handler struct {
-	q        *db.Queries
-	features *features.Handler
-	logger   *slog.Logger
+	q      *db.Queries
+	logger *slog.Logger
 }
 
-func NewHandler(q *db.Queries, features *features.Handler, logger *slog.Logger) *Handler {
+func NewHandler(q *db.Queries, logger *slog.Logger) *Handler {
 	return &Handler{
-		q:        q,
-		features: features,
-		logger:   logger,
+		q:      q,
+		logger: logger,
 	}
 }
 
@@ -54,27 +52,8 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feats, err := h.features.GetFeatures(userInfo.ID)
-	if err != nil {
-		log.ErrorContext(ctx, "list_reviews_features_check_failed",
-			slog.String("component", "reviews"),
-			slog.String("user_id", userInfo.ID),
-			slog.Any("err", err),
-		)
-		http.Error(w, "Failed to check permissions", http.StatusInternalServerError)
-		return
-	}
-
-	canRead := false
-	for _, f := range feats {
-		if f == "reviews--read" {
-			canRead = true
-			break
-		}
-	}
-
-	if !canRead {
-		http.Error(w, "Permission denied: requires reviews--read", http.StatusForbidden)
+	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsRead) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
 
@@ -124,27 +103,8 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feats, err := h.features.GetFeatures(userInfo.ID)
-	if err != nil {
-		log.ErrorContext(ctx, "create_review_features_check_failed",
-			slog.String("component", "reviews"),
-			slog.String("user_id", userInfo.ID),
-			slog.Any("err", err),
-		)
-		http.Error(w, "Failed to check permissions", http.StatusInternalServerError)
-		return
-	}
-
-	canAdd := false
-	for _, f := range feats {
-		if f == "reviews--create" {
-			canAdd = true
-			break
-		}
-	}
-
-	if !canAdd {
-		http.Error(w, "Permission denied: requires reviews--create", http.StatusForbidden)
+	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsCreate) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
 

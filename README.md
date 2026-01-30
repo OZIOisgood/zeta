@@ -37,6 +37,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    WORKOS_CLIENT_ID=client_...
    WORKOS_REDIRECT_URI=http://localhost:8080/auth/callback
    WORKOS_COOKIE_SECRET=supersecret...
+   DEFAULT_ORG_ID=org_...
 
    # Mux Configuration
    MUX_TOKEN_ID=...
@@ -52,15 +53,12 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 3. **WorkOS Configuration**:
    - In WorkOS Dashboard > Configuration > Redirect URIs:
      - Add `http://localhost:8080/auth/callback`
-   - In WorkOS Dashboard > User Management > Feature Flags:
-     - Create `assets--create`
-     - Create `groups`
-     - Create `groups--create`
-     - Create `reviews`
-     - Create `reviews--read`
-     - Create `reviews--create`
-     - Create `emails--receive`
-     - Create `emails--new-asset-to-review`
+   - In WorkOS Dashboard > Organization:
+     - Ensure you have an Organization created (use its ID for `DEFAULT_ORG_ID`).
+   - In WorkOS Dashboard > User Management > Roles:
+     - Create Role `admin`
+     - Create Role `expert`
+     - Create Role `student` (Default)
 
 4. **Mux Configuration**:
    - Create an Access Token in Mux Dashboard.
@@ -176,28 +174,33 @@ erDiagram
     assets ||--|{ videos : contains
     videos ||--o{ video_reviews : has
 
-    users {
-        string id PK
+    users["User Identity (WorkOS)"] {
+        string id PK "WorkOS User ID"
+        string email
         string first_name
         string last_name
-        string email
-        string language
-        bytea avatar
+    }
+
+    user_preferences {
+        string user_id PK, FK "WorkOS User ID ref"
+        enum language "en, de, fr"
         timestamp created_at
         timestamp updated_at
     }
 
+    users ||--|| user_preferences : "has settings"
+
     groups {
         uuid id PK
         string name
-        string owner_id FK
+        string owner_id FK "WorkOS User ID ref"
         bytea avatar
         timestamp created_at
         timestamp updated_at
     }
 
     user_groups {
-        string user_id PK, FK
+        string user_id PK, FK "WorkOS User ID ref"
         uuid group_id PK, FK
         timestamp created_at
     }
@@ -208,7 +211,7 @@ erDiagram
         string description
         enum status
         uuid group_id FK
-        string owner_id FK
+        string owner_id FK "WorkOS User ID ref"
         timestamp created_at
         timestamp updated_at
     }

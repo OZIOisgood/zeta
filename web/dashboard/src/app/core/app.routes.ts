@@ -6,7 +6,7 @@ import { GroupsPageComponent } from '../pages/groups-page/groups-page.component'
 import { HomePageComponent } from '../pages/home-page/home-page.component';
 import { UploadVideoPageComponent } from '../pages/upload-video-page/upload-video-page.component';
 import { ShellComponent } from '../shared/components/shell/shell.component';
-import { featureGuard } from './guards/feature.guard';
+import { permissionGuard } from './guards/permission.guard';
 
 export const routes: Routes = [
   {
@@ -17,27 +17,27 @@ export const routes: Routes = [
       {
         path: 'upload-video',
         component: UploadVideoPageComponent,
-        canActivate: [featureGuard],
-        data: { feature: 'assets--create' },
+        canActivate: [permissionGuard],
+        data: { permission: 'assets:create' },
       },
       { path: 'asset/:id', component: AssetDetailsPageComponent },
       {
         path: 'groups',
         component: GroupsPageComponent,
-        canActivate: [featureGuard],
-        data: { feature: 'groups' },
+        canActivate: [permissionGuard],
+        data: { permission: 'groups:read' },
       },
       {
         path: 'create-group',
         component: CreateGroupPageComponent,
-        canActivate: [featureGuard],
-        data: { feature: 'groups--create' },
+        canActivate: [permissionGuard],
+        data: { permission: 'groups:create' },
       },
       {
         path: 'groups/:id',
         component: GroupDetailsPageComponent,
-        canActivate: [featureGuard],
-        data: { feature: 'groups' },
+        canActivate: [permissionGuard],
+        data: { permission: 'groups:read' },
       },
     ],
   },
