@@ -554,6 +554,43 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch asset details to notify owner
+	asset, err := h.q.GetAsset(ctx, assetID)
+	if err != nil {
+		log.ErrorContext(ctx, "finalize_asset_fetch_failed",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.Any("err", err),
+		)
+	} else {
+		// Only send email if the person finalizing is not the owner
+		if asset.OwnerID != userInfo.ID {
+			owner, err := usermanagement.GetUser(ctx, usermanagement.GetUserOpts{
+				User: asset.OwnerID,
+			})
+			if err != nil {
+				log.ErrorContext(ctx, "finalize_asset_owner_fetch_failed",
+					slog.String("component", "assets"),
+					slog.String("asset_id", idStr),
+					slog.String("owner_id", asset.OwnerID),
+					slog.Any("err", err),
+				)
+			} else {
+				subject := "Your video has been reviewed"
+				text := fmt.Sprintf("Your video %s has been reviewed and is now finalized.", asset.Name)
+				err = h.email.Send([]string{owner.Email}, subject, text)
+				if err != nil {
+					log.ErrorContext(ctx, "finalize_asset_email_send_failed",
+						slog.String("component", "assets"),
+						slog.String("asset_id", idStr),
+						slog.String("to", owner.Email),
+						slog.Any("err", err),
+					)
+				}
+			}
+		}
+	}
+
 	log.InfoContext(ctx, "finalize_asset_succeeded",
 		slog.String("component", "assets"),
 		slog.String("asset_id", idStr),
