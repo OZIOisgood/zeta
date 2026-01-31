@@ -36,7 +36,7 @@ Implemented functionality to finalize/mark assets as reviewed. This feature allo
 
 ### UI/UX
 
-- Status displays as "Reviewing" (yellow badge) when pending
+- Status displays as "In review" (yellow badge) when pending
 - Status displays as "Reviewed" (green badge) when completed
 - Confirmation dialog: "Are you sure you want to mark this video as reviewed? No more comments can be added, edited, or deleted."
 - Success message: "Video marked as reviewed successfully"

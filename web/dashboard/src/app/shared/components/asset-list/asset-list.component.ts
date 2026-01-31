@@ -24,10 +24,10 @@ export class AssetListComponent {
 
   formatStatus(status: string): string {
     if (status === 'pending') {
-      return 'reviewing';
+      return 'In review';
     }
     if (status === 'completed') {
-      return 'reviewed';
+      return 'Reviewed';
     }
     return status.replace('_', ' ');
   }

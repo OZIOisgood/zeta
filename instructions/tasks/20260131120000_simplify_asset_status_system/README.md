@@ -35,14 +35,14 @@ Simplified the asset status system from 5 values to 3 essential states. The old 
 - Updated [asset.service.ts](../../../../web/dashboard/src/app/shared/services/asset.service.ts): AssetStatus type now includes only valid states
 - Updated [asset-details-page.component.ts](../../../../web/dashboard/src/app/pages/asset-details-page/asset-details-page.component.ts):
   - `isFinalized()` checks for `completed` status
-  - `formatStatus()` displays "Reviewing" for `pending` and "Reviewed" for `completed`
+  - `formatStatus()` displays "In review" for `pending` and "Reviewed" for `completed`
   - Dialog and messages updated to reflect "Mark as Reviewed" terminology
 - UI now uses consistent TuiBadge component on both home page and asset details page
 
 ### User-Facing Changes
 
 - Status display on asset tiles and details page now shows user-friendly labels:
-  - `pending` → "Reviewing" (yellow badge)
+  - `pending` → "In review" (yellow badge)
   - `completed` → "Reviewed" (green badge)
 - Button changed from "Finish Review" to "Mark as Reviewed"
 - Dialog updated to say "Mark Video as Reviewed" with corresponding confirmation message
@@ -55,7 +55,7 @@ Simplified the asset status system from 5 values to 3 essential states. The old 
 - [x] Frontend builds without errors
 - [x] Status displayed consistently across home page and asset details
 - [x] Both pending and completed statuses have appropriate styling
-- [x] User terminology matches system status (e.g., "Reviewing" for pending)
+- [x] User terminology matches system status (e.g., "In review" for pending)
 
 ## Technical Details
 

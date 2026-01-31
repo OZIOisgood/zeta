@@ -23,7 +23,7 @@ Simplified the asset status enum and flow to better match the user experience an
 - Updated `AssetStatus` type definition.
 - Updated `AssetDetailsPageComponent` to:
   - Treat `completed` as the finalized state.
-  - Display "Reviewing" for `pending` status (Yellow/Warning badge).
+  - Display "In review" for `pending` status (Yellow/Warning badge).
   - Display "Reviewed" for `completed` status (Green/Success badge).
 - Updated `AssetListComponent` (Home Page) to match the same badge logic and styling.
 
@@ -32,4 +32,4 @@ Simplified the asset status enum and flow to better match the user experience an
 - [x] Database migration applied successfully (`make infra:restart`).
 - [x] Backend build passed.
 - [x] Frontend build passed.
-- [x] UI displays correct labels ("Reviewing", "Reviewed") and colors (Yellow, Green).
+- [x] UI displays correct labels ("In review", "Reviewed") and colors (Yellow, Green).

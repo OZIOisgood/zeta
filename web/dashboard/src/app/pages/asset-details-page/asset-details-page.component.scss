@@ -66,12 +66,12 @@ button[tuiOption] {
 
 .badge {
   &.status-pending {
-    background: var(--tui-warning-fill, #fb8);
+    background: #ffc700;
     color: #000;
   }
 
   &.status-completed {
-    background: var(--tui-success-fill, #4aac5b);
+    background: #4aac5b;
     color: #fff;
   }
 }
