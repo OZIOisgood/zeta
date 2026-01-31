@@ -26,3 +26,9 @@ UPDATE video_reviews
 SET content = $2, updated_at = NOW()
 WHERE id = $1
 RETURNING *;
+
+-- name: GetAssetStatusByVideoID :one
+SELECT a.status
+FROM assets a
+INNER JOIN videos v ON v.asset_id = a.id
+WHERE v.id = $1;

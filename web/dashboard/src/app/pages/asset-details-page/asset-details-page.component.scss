@@ -63,3 +63,15 @@ button[tuiOption] {
   justify-content: flex-start !important;
   gap: 0.75rem;
 }
+
+.badge {
+  &.status-pending {
+    background: var(--tui-warning-fill, #fb8);
+    color: #000;
+  }
+
+  &.status-completed {
+    background: var(--tui-success-fill, #4aac5b);
+    color: #fff;
+  }
+}

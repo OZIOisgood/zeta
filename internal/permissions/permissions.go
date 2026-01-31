@@ -2,13 +2,14 @@ package permissions
 
 // Permissions
 const (
-	AssetsCreate  = "assets:create"
-	GroupsCreate  = "groups:create"
-	GroupsRead    = "groups:read"
-	ReviewsCreate = "reviews:create"
-	ReviewsRead   = "reviews:read"
-	ReviewsEdit   = "reviews:edit"
-	ReviewsDelete = "reviews:delete"
+	AssetsCreate    = "assets:create"
+	GroupsCreate    = "groups:create"
+	GroupsRead      = "groups:read"
+	ReviewsCreate   = "reviews:create"
+	ReviewsRead     = "reviews:read"
+	ReviewsEdit     = "reviews:edit"
+	ReviewsDelete   = "reviews:delete"
+	VideoFinalize   = "video:finalize"
 )
 
 // Roles
@@ -28,6 +29,7 @@ var rolePermissions = map[string][]string{
 		ReviewsRead,
 		ReviewsEdit,
 		ReviewsDelete,
+		VideoFinalize,
 	},
 	RoleExpert: {
 		GroupsCreate,
@@ -36,6 +38,7 @@ var rolePermissions = map[string][]string{
 		ReviewsRead,
 		ReviewsEdit,
 		ReviewsDelete,
+		VideoFinalize,
 	},
 	RoleStudent: {
 		AssetsCreate,

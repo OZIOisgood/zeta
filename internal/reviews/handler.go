@@ -121,6 +121,23 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if asset is completed
+	assetStatus, err := h.q.GetAssetStatusByVideoID(ctx, videoID)
+	if err != nil {
+		log.ErrorContext(ctx, "get_asset_status_failed",
+			slog.String("component", "reviews"),
+			slog.String("video_id", idStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to check asset status", http.StatusInternalServerError)
+		return
+	}
+
+	if assetStatus == db.AssetStatusCompleted {
+		http.Error(w, "Cannot add reviews to completed asset", http.StatusForbidden)
+		return
+	}
+
 	var req CreateReviewRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -173,6 +190,30 @@ func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 
 	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsEdit) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	var videoID pgtype.UUID
+	if err := videoID.Scan(idStr); err != nil {
+		http.Error(w, "Invalid video ID", http.StatusBadRequest)
+		return
+	}
+
+	// Check if asset is completed
+	assetStatus, err := h.q.GetAssetStatusByVideoID(ctx, videoID)
+	if err != nil {
+		log.ErrorContext(ctx, "get_asset_status_failed",
+			slog.String("component", "reviews"),
+			slog.String("video_id", idStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to check asset status", http.StatusInternalServerError)
+		return
+	}
+
+	if assetStatus == db.AssetStatusCompleted {
+		http.Error(w, "Cannot edit reviews on completed asset", http.StatusForbidden)
 		return
 	}
 
@@ -232,6 +273,30 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	idStr := chi.URLParam(r, "id")
+	var videoID pgtype.UUID
+	if err := videoID.Scan(idStr); err != nil {
+		http.Error(w, "Invalid video ID", http.StatusBadRequest)
+		return
+	}
+
+	// Check if asset is completed
+	assetStatus, err := h.q.GetAssetStatusByVideoID(ctx, videoID)
+	if err != nil {
+		log.ErrorContext(ctx, "get_asset_status_failed",
+			slog.String("component", "reviews"),
+			slog.String("video_id", idStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to check asset status", http.StatusInternalServerError)
+		return
+	}
+
+	if assetStatus == db.AssetStatusCompleted {
+		http.Error(w, "Cannot delete reviews from completed asset", http.StatusForbidden)
+		return
+	}
+
 	reviewIdStr := chi.URLParam(r, "reviewId")
 	var reviewID pgtype.UUID
 	if err := reviewID.Scan(reviewIdStr); err != nil {
@@ -239,7 +304,7 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.q.DeleteVideoReview(ctx, reviewID)
+	err = h.q.DeleteVideoReview(ctx, reviewID)
 	if err != nil {
 		log.ErrorContext(ctx, "delete_review_failed",
 			slog.String("component", "reviews"),

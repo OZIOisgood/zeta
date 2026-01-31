@@ -17,13 +17,22 @@ import {
 } from '@taiga-ui/core';
 import {
   TUI_CONFIRM,
+  TuiBadge,
   TuiElasticContainer,
   TuiPagination,
   TuiTextarea,
   type TuiConfirmData,
 } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
-import { BehaviorSubject, Observable, switchMap, tap, type Observer } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  map,
+  Observable,
+  switchMap,
+  tap,
+  type Observer,
+} from 'rxjs';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { Asset, AssetService, Review } from '../../shared/services/asset.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
@@ -48,6 +57,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiAutoFocus,
     TuiElasticContainer,
     TuiLink,
+    TuiBadge,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',
@@ -65,6 +75,8 @@ export class AssetDetailsPageComponent implements OnInit {
   reviews$ = new BehaviorSubject<Review[]>([]);
   videoIndex = 0;
 
+  private readonly refresh$ = new BehaviorSubject<void>(void 0);
+
   reviewControl = new FormControl('');
 
   readonly canReadReviews = computed(() => this.permissionsService.hasPermission('reviews:read'));
@@ -73,6 +85,9 @@ export class AssetDetailsPageComponent implements OnInit {
     this.permissionsService.hasPermission('reviews:delete'),
   );
   readonly canEditReviews = computed(() => this.permissionsService.hasPermission('reviews:edit'));
+  readonly canFinalizeReviews = computed(() =>
+    this.permissionsService.hasPermission('video:finalize'),
+  );
 
   protected editReviewControl = new FormControl('');
   protected editDialogOpen = false;
@@ -98,11 +113,9 @@ export class AssetDetailsPageComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.asset$ = this.route.paramMap.pipe(
-      switchMap((params) => {
-        const id = params.get('id')!;
-        return this.assetService.getAsset(id);
-      }),
+    this.asset$ = combineLatest([this.route.paramMap, this.refresh$]).pipe(
+      map(([params]) => params.get('id')!),
+      switchMap((id) => this.assetService.getAsset(id)),
       tap((asset) => {
         this.asset = asset;
         this.reviewsLoaded = false;
@@ -258,5 +271,70 @@ export class AssetDetailsPageComponent implements OnInit {
 
   shouldShowToggle(): boolean {
     return (this.asset?.description?.length || 0) > this.descriptionCharLimit;
+  }
+
+  isFinalized(): boolean {
+    return this.asset?.status === 'completed';
+  }
+
+  finalizeVideo(): void {
+    if (!this.asset) return;
+
+    const data: TuiConfirmData = {
+      content:
+        'Are you sure you want to mark this video as reviewed? No more comments can be added, edited, or deleted.',
+      yes: 'Mark as Reviewed',
+      no: 'Cancel',
+    };
+
+    this.dialogs
+      .open<boolean>(TUI_CONFIRM, {
+        label: 'Mark Video as Reviewed',
+        size: 's',
+        data,
+      })
+      .pipe(
+        switchMap((response) => {
+          if (response) {
+            return this.assetService.finalizeVideo(this.asset!.id);
+          }
+          throw new Error('Cancelled');
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.refresh$.next();
+          this.alerts.open('Video marked as reviewed successfully').subscribe();
+        },
+        error: (err: Error) => {
+          if (err.message !== 'Cancelled') {
+            console.error('Failed to mark video as reviewed', err);
+            this.alerts
+              .open('Failed to mark video as reviewed', { appearance: 'error' })
+              .subscribe();
+          }
+        },
+      });
+  }
+
+  getStatusAppearance(status: string): string {
+    switch (status) {
+      case 'completed':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      default:
+        return 'neutral';
+    }
+  }
+
+  formatStatus(status: string): string {
+    if (status === 'pending') {
+      return 'reviewing';
+    }
+    if (status === 'completed') {
+      return 'reviewed';
+    }
+    return status.replace('_', ' ');
   }
 }

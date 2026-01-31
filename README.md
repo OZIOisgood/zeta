@@ -126,6 +126,14 @@ graph TD
     Web -->|Direct Upload| Mux
 ```
 
+### Asset Lifecycle
+
+Assets go through a simple three-state lifecycle:
+
+1. **Waiting Upload** (`waiting_upload`): Files are being uploaded to Mux
+2. **Pending Review** (`pending`): Files are uploaded and ready for expert review
+3. **Reviewed** (`completed`): Expert has reviewed and the asset is finalized
+
 ### Video Upload Flow
 
 The upload process is designed to ensure data consistency and clean user experience:
@@ -133,7 +141,9 @@ The upload process is designed to ensure data consistency and clean user experie
 1. **Initiation**: Client requests upload URLs. Asset created in DB with status `waiting_upload`.
 2. **Direct Upload**: Client uploads files directly to Mux storage (bypassing our API server for performance).
 3. **Completion**: Client notifies API that uploads are finished via `POST /assets/{id}/complete`.
-4. **Visibility**: Asset status updates to `pending` and becomes visible in the dashboard.
+4. **Visibility**: Asset status updates to `pending` (awaiting review) and becomes visible in the dashboard.
+5. **Review**: Expert adds reviews/comments to the asset.
+6. **Finalization**: Expert marks asset as reviewed via `POST /assets/{id}/finalize`, status changes to `completed`.
 
 ```mermaid
 sequenceDiagram
@@ -160,6 +170,16 @@ sequenceDiagram
     W->>A: POST /assets/{id}/complete
     A->>D: Update Asset (status: pending)
     W-->>U: Show Completion
+
+    Note over U,W: Expert Reviews Phase
+    U->>W: Add review comments
+    W->>A: POST /assets/{id}/videos/{videoId}/reviews
+    A->>D: Create Review
+
+    U->>W: Mark as Reviewed
+    W->>A: POST /assets/{id}/finalize
+    A->>D: Update Asset (status: completed)
+    W-->>U: Asset Finalized
 ```
 
 ## Database Schema

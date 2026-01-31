@@ -64,6 +64,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/", h.ListAssets)
 	r.Get("/{id}", h.GetAsset)
 	r.Post("/{id}/complete", h.CompleteUpload)
+	r.Post("/{id}/finalize", h.FinalizeAsset)
 }
 
 func (h *Handler) CompleteUpload(w http.ResponseWriter, r *http.Request) {
@@ -515,4 +516,49 @@ func toUUIDString(u pgtype.UUID) string {
 	}
 	src := u.Bytes
 	return fmt.Sprintf("%x-%x-%x-%x-%x", src[0:4], src[4:6], src[6:8], src[8:10], src[10:16])
+}
+
+func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+
+	userInfo := auth.GetUser(ctx)
+	if userInfo == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(userInfo.Role, permissions.VideoFinalize) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	var assetID pgtype.UUID
+	if err := assetID.Scan(idStr); err != nil {
+		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		return
+	}
+
+	err := h.q.UpdateAssetStatus(ctx, db.UpdateAssetStatusParams{
+		ID:     assetID,
+		Status: db.AssetStatusCompleted,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "finalize_asset_failed",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to finalize asset", http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoContext(ctx, "finalize_asset_succeeded",
+		slog.String("component", "assets"),
+		slog.String("asset_id", idStr),
+	)
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "completed"})
 }

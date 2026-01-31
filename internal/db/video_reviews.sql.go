@@ -48,6 +48,20 @@ func (q *Queries) DeleteVideoReview(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const getAssetStatusByVideoID = `-- name: GetAssetStatusByVideoID :one
+SELECT a.status
+FROM assets a
+INNER JOIN videos v ON v.asset_id = a.id
+WHERE v.id = $1
+`
+
+func (q *Queries) GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (AssetStatus, error) {
+	row := q.db.QueryRow(ctx, getAssetStatusByVideoID, id)
+	var status AssetStatus
+	err := row.Scan(&status)
+	return status, err
+}
+
 const listVideoReviews = `-- name: ListVideoReviews :many
 SELECT 
     id,

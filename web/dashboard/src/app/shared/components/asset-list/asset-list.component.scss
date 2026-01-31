@@ -103,11 +103,11 @@
 }
 
 .status-pending {
-  background: var(--tui-status-warning);
+  background: var(--tui-warning-fill, #fb8);
   color: #000;
 }
 
 .status-completed {
-  background: var(--tui-status-success);
+  background: var(--tui-success-fill, #4aac5b);
   color: #fff;
 }

@@ -30,7 +30,27 @@
 
       <div class="text-content">
         <h1 class="tui-text_h3 title mobile-title">{{ asset.title }}</h1>
-        <section tuiCardLarge="compact">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+          "
+        >
+          <tui-badge class="badge" [ngClass]="'status-' + asset.status">
+            {{ formatStatus(asset.status) | titlecase }}
+          </tui-badge>
+          <button
+            *ngIf="canFinalizeReviews() && !isFinalized()"
+            tuiButton
+            size="m"
+            (click)="finalizeVideo()"
+          >
+            Mark as Reviewed
+          </button>
+        </div>
+        <section tuiCardLarge="compact" *ngIf="asset.description">
           <tui-elastic-container class="description tui-text_body-m" style="white-space: pre-wrap">
             {{ getDisplayDescription() }}
             <button *ngIf="shouldShowToggle()" tuiLink type="button" (click)="toggleDescription()">
@@ -45,7 +65,7 @@
         class="comments-section tui-space_top-6"
         style="padding-bottom: 80px"
       >
-        <h2 class="tui-text_h3">Comments</h2>
+        <h2 class="tui-text_h3" style="margin-bottom: 1rem">Comments</h2>
 
         <div
           class="reviews-list tui-space_top-4"
@@ -58,7 +78,7 @@
               </div>
 
               <div
-                *ngIf="canDeleteReviews() || canEditReviews()"
+                *ngIf="(canDeleteReviews() || canEditReviews()) && !isFinalized()"
                 [tuiDropdown]="dropdown"
                 tuiDropdownOpen
                 tuiDropdownAlign="right"
@@ -98,7 +118,7 @@
 </app-page-container>
 
 <div
-  *ngIf="canAddReviews()"
+  *ngIf="canAddReviews() && !isFinalized()"
   class="comment-input-container"
   style="
     position: fixed;

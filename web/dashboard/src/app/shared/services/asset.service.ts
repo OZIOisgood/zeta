@@ -14,7 +14,7 @@ export interface CreateAssetResponse {
   videos: VideoResponse[];
 }
 
-export type AssetStatus = 'pending' | 'completed';
+export type AssetStatus = 'waiting_upload' | 'pending' | 'completed';
 
 export interface VideoItem {
   id: string;
@@ -88,5 +88,9 @@ export class AssetService {
 
   deleteReview(videoId: string, reviewId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/videos/${videoId}/reviews/${reviewId}`);
+  }
+
+  finalizeVideo(assetId: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${assetId}/finalize`, {});
   }
 }
