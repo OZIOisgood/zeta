@@ -9,6 +9,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/go-chi/chi/v5"
@@ -16,14 +17,16 @@ import (
 )
 
 type Handler struct {
-	q      *db.Queries
-	logger *slog.Logger
+	q         *db.Queries
+	logger    *slog.Logger
+	llmService *llm.Service
 }
 
-func NewHandler(q *db.Queries, logger *slog.Logger) *Handler {
+func NewHandler(q *db.Queries, logger *slog.Logger, llmService *llm.Service) *Handler {
 	return &Handler{
-		q:      q,
-		logger: logger,
+		q:         q,
+		logger:    logger,
+		llmService: llmService,
 	}
 }
 
@@ -316,6 +319,65 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+type EnhanceTextRequest struct {
+	Text string `json:"text"`
+}
+
+type EnhanceTextResponse struct {
+	EnhancedText string `json:"enhanced_text"`
+}
+
+func (h *Handler) EnhanceText(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+
+	userInfo := auth.GetUser(ctx)
+	if userInfo == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsEdit) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	var req EnhanceTextRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Text == "" {
+		http.Error(w, "Text is required", http.StatusBadRequest)
+		return
+	}
+
+	enhancedText, err := h.llmService.EnhanceReviewText(ctx, req.Text)
+	if err != nil {
+		log.ErrorContext(ctx, "enhance_text_failed",
+			slog.String("component", "reviews"),
+			slog.Int("text_length", len(req.Text)),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to enhance text", http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoContext(ctx, "text_enhanced_successfully",
+		slog.String("component", "reviews"),
+		slog.Int("original_length", len(req.Text)),
+		slog.Int("enhanced_length", len(enhancedText)),
+	)
+
+	response := EnhanceTextResponse{
+		EnhancedText: enhancedText,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func toUUIDString(u pgtype.UUID) string {

@@ -92,6 +92,7 @@ export class AssetDetailsPageComponent implements OnInit {
   protected editReviewControl = new FormControl('');
   protected editDialogOpen = false;
   protected editingReviewId: string | null = null;
+  protected enhancingText = false;
 
   asset: Asset | null = null;
   private reviewsLoaded = false;
@@ -269,6 +270,28 @@ export class AssetDetailsPageComponent implements OnInit {
           this.alerts.open('Failed to update review', { appearance: 'error' }).subscribe();
         },
       });
+  }
+
+  enhanceReviewText(): void {
+    const currentText = this.editReviewControl.value;
+    if (!currentText || this.enhancingText) return;
+
+    this.enhancingText = true;
+
+    this.assetService.enhanceReviewText(currentText).subscribe({
+      next: (response) => {
+        this.editReviewControl.setValue(response.enhanced_text);
+        this.enhancingText = false;
+        this.alerts.open('Text enhanced successfully', { appearance: 'positive' }).subscribe();
+      },
+      error: (err) => {
+        console.error('Failed to enhance text', err);
+        this.enhancingText = false;
+        this.alerts
+          .open('Failed to enhance text. Please try again.', { appearance: 'error' })
+          .subscribe();
+      },
+    });
   }
 
   getDisplayDescription(): string {

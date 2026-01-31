@@ -164,18 +164,46 @@
   [(tuiDialog)]="editDialogOpen"
 >
   <form (submit)="$event.preventDefault(); saveEditedReview(observer)">
-    <tui-textfield>
-      <textarea
-        tuiTextarea
-        [formControl]="editReviewControl"
-        tuiAutoFocus
-        placeholder="Comment"
-        [min]="10"
-        [max]="25"
-      ></textarea>
-    </tui-textfield>
-    <div style="display: flex; justify-content: flex-end; margin-top: 1rem">
-      <button tuiButton type="submit">Save</button>
+    <div style="position: relative">
+      <tui-textfield [tuiTextfieldCleaner]="false">
+        <textarea
+          tuiTextarea
+          [formControl]="editReviewControl"
+          tuiAutoFocus
+          placeholder="Comment"
+          [min]="10"
+          [max]="25"
+        ></textarea>
+      </tui-textfield>
+      <button
+        type="button"
+        tuiIconButton
+        appearance="flat"
+        size="s"
+        iconStart="@tui.star"
+        [disabled]="!editReviewControl.value || enhancingText"
+        [style.position]="'absolute'"
+        [style.top]="'0.5rem'"
+        [style.right]="'0.5rem'"
+        [style.z-index]="'10'"
+        (click)="enhanceReviewText()"
+        title="Enhance text with AI"
+      >
+        {{ enhancingText ? 'Enhancing...' : '' }}
+      </button>
+    </div>
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem"
+    >
+      <small style="color: #666; font-style: italic" *ngIf="enhancingText">
+        AI is enhancing your text...
+      </small>
+      <div style="display: flex; gap: 0.5rem; margin-left: auto">
+        <button tuiButton appearance="flat" type="button" (click)="editDialogOpen = false">
+          Cancel
+        </button>
+        <button tuiButton type="submit" [disabled]="enhancingText">Save</button>
+      </div>
     </div>
   </form>
 </ng-template>

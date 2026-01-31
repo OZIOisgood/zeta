@@ -29,26 +29,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    ```bash
    cp .env.example .env
    ```
-2. Update `.env` with your WorkOS credentials:
-
-   ```dotenv
-   DB_URL=postgres://zeta:zeta@localhost:5432/zeta?sslmode=disable
-   WORKOS_API_KEY=sk_test_...
-   WORKOS_CLIENT_ID=client_...
-   WORKOS_REDIRECT_URI=http://localhost:8080/auth/callback
-   WORKOS_COOKIE_SECRET=supersecret...
-   DEFAULT_ORG_ID=org_...
-
-   # Mux Configuration
-   MUX_TOKEN_ID=...
-   MUX_TOKEN_SECRET=...
-
-   # Resend Configuration
-   RESEND_API_KEY=re_...
-
-   # I18n Configuration
-   DEFAULT_LANGUAGE=en
-   ```
+2. Update `.env` with your WorkOS credentials.
 
 3. **WorkOS Configuration**:
    - In WorkOS Dashboard > Configuration > Redirect URIs:

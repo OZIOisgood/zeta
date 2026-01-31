@@ -91,6 +91,12 @@ export class AssetService {
     return this.http.delete<void>(`${this.apiUrl}/videos/${videoId}/reviews/${reviewId}`);
   }
 
+  enhanceReviewText(text: string): Observable<{ enhanced_text: string }> {
+    return this.http.post<{ enhanced_text: string }>(`${environment.apiUrl}/reviews/enhance`, {
+      text,
+    });
+  }
+
   finalizeVideo(assetId: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${assetId}/finalize`, {});
   }
