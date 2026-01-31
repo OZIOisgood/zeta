@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TuiButton, TuiDialogContext, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
 import { injectContext } from '@taiga-ui/polymorpheus';
@@ -28,12 +29,23 @@ export class PreferencesDialogComponent {
   private readonly auth = inject(AuthService);
   private readonly context = injectContext<TuiDialogContext<void>>();
 
-  protected readonly languages = ['en', 'de', 'fr'];
+  protected readonly languages = [
+    { code: 'en', name: 'English' },
+    { code: 'de', name: 'German' },
+    { code: 'fr', name: 'French' },
+  ];
+
+  protected readonly stringifyLanguage: TuiStringHandler<{ code: string; name: string }> = (item) =>
+    item.name;
 
   protected readonly form = new FormGroup({
     first_name: new FormControl(this.auth.user()?.first_name || '', [Validators.required]),
     last_name: new FormControl(this.auth.user()?.last_name || '', [Validators.required]),
-    language: new FormControl(this.auth.user()?.language || 'en', [Validators.required]),
+    language: new FormControl(
+      this.languages.find((l) => l.code === (this.auth.user()?.language || 'en')) ||
+        this.languages[0],
+      [Validators.required],
+    ),
   });
 
   protected isSubmitting = false;
@@ -61,7 +73,8 @@ export class PreferencesDialogComponent {
 
     const first_name = this.form.get('first_name')?.value;
     const last_name = this.form.get('last_name')?.value;
-    const language = this.form.get('language')?.value;
+    const languageObj = this.form.get('language')?.value as { code: string; name: string } | null;
+    const language = languageObj?.code;
 
     if (!first_name || !last_name || !language) {
       return;

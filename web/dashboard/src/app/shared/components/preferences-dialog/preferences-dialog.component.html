@@ -15,15 +15,19 @@
     </div>
 
     <div class="form-field">
-      <tui-textfield>
+      <tui-textfield [stringify]="stringifyLanguage">
         <label tuiLabel>Language</label>
         <input tuiSelect formControlName="language" />
         <tui-data-list-wrapper
           *tuiTextfieldDropdown
           new
           [items]="languages"
+          [itemContent]="languageContent"
         ></tui-data-list-wrapper>
       </tui-textfield>
+      <ng-template #languageContent let-data>
+        {{ data.name }}
+      </ng-template>
     </div>
 
     <app-avatar-selector
