@@ -528,7 +528,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userInfo.Role, permissions.VideoFinalize) {
+	if !permissions.HasPermission(userInfo.Role, permissions.AssetsFinalize) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}

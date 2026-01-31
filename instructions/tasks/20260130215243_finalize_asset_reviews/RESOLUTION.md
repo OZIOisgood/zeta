@@ -9,7 +9,7 @@ Implemented the "Mark as Reviewed" functionality that allows experts and admins 
 ### Backend
 
 - Added `POST /assets/{id}/finalize` endpoint in `internal/assets/handler.go`.
-- Added `VideoFinalize` permission (`video:finalize`) in `internal/permissions/permissions.go`.
+- Added `AssetsFinalize` permission (`assets:finalize`) in `internal/permissions/permissions.go`.
 - Updated Review handlers to check for `completed` asset status and forbid `create`, `edit`, or `delete` operations.
 
 ### Frontend

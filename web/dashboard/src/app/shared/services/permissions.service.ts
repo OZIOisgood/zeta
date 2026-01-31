@@ -9,7 +9,7 @@ export type Permission =
   | 'reviews:read'
   | 'reviews:edit'
   | 'reviews:delete'
-  | 'video:finalize';
+  | 'assets:finalize';
 
 @Injectable({
   providedIn: 'root',
@@ -26,7 +26,7 @@ export class PermissionsService {
       'reviews:read',
       'reviews:edit',
       'reviews:delete',
-      'video:finalize',
+      'assets:finalize',
     ],
     expert: [
       'groups:create',
@@ -35,7 +35,7 @@ export class PermissionsService {
       'reviews:read',
       'reviews:edit',
       'reviews:delete',
-      'video:finalize',
+      'assets:finalize',
     ],
     student: ['assets:create', 'groups:read', 'reviews:read'],
   };

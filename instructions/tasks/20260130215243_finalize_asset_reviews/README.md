@@ -12,7 +12,7 @@ Implemented functionality to finalize/mark assets as reviewed. This feature allo
 
 ## Context
 
-- **Permission**: `video:finalize` (admin and expert roles)
+- **Permission**: `assets:finalize` (admin and expert roles)
 - **Endpoint**: `POST /assets/{id}/finalize`
 - **UI Component**: "Mark as Reviewed" button on asset details page
 - **Status Change**: `pending` → `completed`
@@ -22,7 +22,7 @@ Implemented functionality to finalize/mark assets as reviewed. This feature allo
 ### Backend Changes
 
 - Added `FinalizeAsset` handler in [internal/assets/handler.go](../../../../internal/assets/handler.go)
-- Uses `video:finalize` permission for authorization
+- Uses `assets:finalize` permission for authorization
 - Updates asset status to `completed`
 - Review handlers check for completed status and prevent modifications
 
@@ -43,7 +43,7 @@ Implemented functionality to finalize/mark assets as reviewed. This feature allo
 
 ## Acceptance Criteria
 
-- [x] Only admin and expert can finalize assets (`video:finalize` permission)
+- [x] Only admin and expert can finalize assets (`assets:finalize` permission)
 - [x] Confirmation dialog appears before finalizing
 - [x] Asset status changes to `completed` on finalization
 - [x] Cannot add comments to completed assets
@@ -55,10 +55,10 @@ Implemented functionality to finalize/mark assets as reviewed. This feature allo
 
 ## Files Modified
 
-- [internal/permissions/permissions.go](../../../../internal/permissions/permissions.go) - Added VideoFinalize constant
+- [internal/permissions/permissions.go](../../../../internal/permissions/permissions.go) - Added AssetsFinalize constant
 - [internal/assets/handler.go](../../../../internal/assets/handler.go) - Added FinalizeAsset handler
 - [internal/reviews/handler.go](../../../../internal/reviews/handler.go) - Added status validation for all operations
-- [web/dashboard/src/app/shared/services/permissions.service.ts](../../../../web/dashboard/src/app/shared/services/permissions.service.ts) - Added video:finalize permission
+- [web/dashboard/src/app/shared/services/permissions.service.ts](../../../../web/dashboard/src/app/shared/services/permissions.service.ts) - Added assets:finalize permission
 - [web/dashboard/src/app/shared/services/asset.service.ts](../../../../web/dashboard/src/app/shared/services/asset.service.ts) - Added finalizeVideo method
 - [web/dashboard/src/app/pages/asset-details-page/](../../../../web/dashboard/src/app/pages/asset-details-page/) - Implemented UI components
 

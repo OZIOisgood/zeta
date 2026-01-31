@@ -86,7 +86,7 @@ export class AssetDetailsPageComponent implements OnInit {
   );
   readonly canEditReviews = computed(() => this.permissionsService.hasPermission('reviews:edit'));
   readonly canFinalizeReviews = computed(() =>
-    this.permissionsService.hasPermission('video:finalize'),
+    this.permissionsService.hasPermission('assets:finalize'),
   );
 
   protected editReviewControl = new FormControl('');
