@@ -95,6 +95,7 @@ export class UploadVideoPageComponent implements OnInit {
 
   protected isUploadComplete = false;
   protected isUploading = false;
+  private createdAssetId: string | null = null;
 
   protected onActiveIndexChange(index: number): void {
     this.slideDirection = index > this.activeIndex ? 1 : -1;
@@ -113,7 +114,11 @@ export class UploadVideoPageComponent implements OnInit {
     } else if (this.activeIndex === 1) {
       this.startUpload();
     } else if (this.activeIndex === 2 && this.isUploadComplete) {
-      this.router.navigate(['/']);
+      if (this.createdAssetId) {
+        this.router.navigate(['/asset', this.createdAssetId]);
+      } else {
+        this.router.navigate(['/']);
+      }
     }
   }
 
@@ -143,6 +148,7 @@ export class UploadVideoPageComponent implements OnInit {
 
     this.assetService.createAsset(title, description || '', filenames, group?.id).subscribe({
       next: (response: CreateAssetResponse) => {
+        this.createdAssetId = response.asset_id;
         const uploads = response.videos
           .map((video: VideoResponse) => {
             const file = files.find((f) => f.name === video.filename);
