@@ -20,6 +20,7 @@ export interface VideoItem {
   id: string;
   playback_id: string;
   status: string;
+  review_count: number;
 }
 
 export interface Asset {

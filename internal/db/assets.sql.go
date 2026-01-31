@@ -105,7 +105,12 @@ func (q *Queries) GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, er
 }
 
 const getAssetVideos = `-- name: GetAssetVideos :many
-SELECT id, mux_upload_id, mux_asset_id, playback_id, status, created_at FROM videos WHERE asset_id = $1 ORDER BY created_at ASC
+SELECT v.id, v.mux_upload_id, v.mux_asset_id, v.playback_id, v.status, v.created_at, COUNT(r.id) as review_count
+FROM videos v
+LEFT JOIN video_reviews r ON v.id = r.video_id
+WHERE v.asset_id = $1
+GROUP BY v.id
+ORDER BY v.created_at ASC
 `
 
 type GetAssetVideosRow struct {
@@ -115,6 +120,7 @@ type GetAssetVideosRow struct {
 	PlaybackID  pgtype.Text        `json:"playback_id"`
 	Status      VideoStatus        `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ReviewCount int64              `json:"review_count"`
 }
 
 func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]GetAssetVideosRow, error) {
@@ -133,6 +139,7 @@ func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]Ge
 			&i.PlaybackID,
 			&i.Status,
 			&i.CreatedAt,
+			&i.ReviewCount,
 		); err != nil {
 			return nil, err
 		}

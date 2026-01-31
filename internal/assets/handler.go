@@ -111,9 +111,10 @@ type AssetItem struct {
 }
 
 type VideoItem struct {
-	ID         string `json:"id"`
-	PlaybackID string `json:"playback_id"`
-	Status     string `json:"status"`
+	ID          string `json:"id"`
+	PlaybackID  string `json:"playback_id"`
+	Status      string `json:"status"`
+	ReviewCount int64  `json:"review_count"`
 }
 
 func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
@@ -234,9 +235,10 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		videos = append(videos, VideoItem{
-			ID:         toUUIDString(v.ID),
-			PlaybackID: playbackID,
-			Status:     string(v.Status),
+			ID:          toUUIDString(v.ID),
+			PlaybackID:  playbackID,
+			Status:      string(v.Status),
+			ReviewCount: v.ReviewCount,
 		})
 	}
 
@@ -540,7 +542,28 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.q.UpdateAssetStatus(ctx, db.UpdateAssetStatusParams{
+	// Check if all videos have at least one review
+	hasUnreviewed, err := h.q.HasVideosWithoutReviews(ctx, assetID)
+	if err != nil {
+		log.ErrorContext(ctx, "finalize_asset_check_reviews_failed",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to check reviews", http.StatusInternalServerError)
+		return
+	}
+
+	if hasUnreviewed {
+		log.WarnContext(ctx, "finalize_asset_rejected_no_reviews",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+		)
+		http.Error(w, "Cannot finalize asset: all videos must have at least one review", http.StatusBadRequest)
+		return
+	}
+
+	err = h.q.UpdateAssetStatus(ctx, db.UpdateAssetStatusParams{
 		ID:     assetID,
 		Status: db.AssetStatusCompleted,
 	})

@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countVideosWithoutReviews = `-- name: CountVideosWithoutReviews :one
+SELECT COUNT(*) as count
+FROM videos v
+LEFT JOIN video_reviews r ON v.id = r.video_id
+WHERE v.asset_id = $1
+GROUP BY v.asset_id
+HAVING COUNT(r.id) = 0
+   OR COUNT(DISTINCT v.id) > COUNT(DISTINCT r.video_id)
+`
+
+func (q *Queries) CountVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countVideosWithoutReviews, assetID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createVideoReview = `-- name: CreateVideoReview :one
 INSERT INTO video_reviews (
     video_id,
@@ -60,6 +77,24 @@ func (q *Queries) GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (
 	var status AssetStatus
 	err := row.Scan(&status)
 	return status, err
+}
+
+const hasVideosWithoutReviews = `-- name: HasVideosWithoutReviews :one
+SELECT EXISTS (
+    SELECT 1
+    FROM videos v
+    LEFT JOIN video_reviews r ON v.id = r.video_id
+    WHERE v.asset_id = $1
+    GROUP BY v.id
+    HAVING COUNT(r.id) = 0
+) as has_unreviewed
+`
+
+func (q *Queries) HasVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, hasVideosWithoutReviews, assetID)
+	var has_unreviewed bool
+	err := row.Scan(&has_unreviewed)
+	return has_unreviewed, err
 }
 
 const listVideoReviews = `-- name: ListVideoReviews :many

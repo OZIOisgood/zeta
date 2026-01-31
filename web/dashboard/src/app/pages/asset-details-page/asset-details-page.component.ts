@@ -96,6 +96,9 @@ export class AssetDetailsPageComponent implements OnInit {
   asset: Asset | null = null;
   private reviewsLoaded = false;
 
+  // Track review counts per video ID for real-time updates
+  videoReviewCounts: Map<string, number> = new Map();
+
   protected descriptionExpanded = false;
   protected readonly descriptionCharLimit = 200;
 
@@ -119,6 +122,11 @@ export class AssetDetailsPageComponent implements OnInit {
       tap((asset) => {
         this.asset = asset;
         this.reviewsLoaded = false;
+        // Initialize review counts from asset data
+        this.videoReviewCounts.clear();
+        asset.videos?.forEach((v) => {
+          this.videoReviewCounts.set(v.id, v.review_count || 0);
+        });
         // Try loading reviews - will work if permissions are ready
         if (this.canReadReviews()) {
           const video = this.getCurrentVideo();
@@ -174,6 +182,9 @@ export class AssetDetailsPageComponent implements OnInit {
     this.assetService.createReview(video.id, this.reviewControl.value).subscribe({
       next: () => {
         this.reviewControl.setValue('');
+        // Increment review count for this video
+        const currentCount = this.videoReviewCounts.get(video.id) || 0;
+        this.videoReviewCounts.set(video.id, currentCount + 1);
         this.loadReviews(video.id);
       },
       error: (err) => console.error('Failed to post review', err),
@@ -206,6 +217,9 @@ export class AssetDetailsPageComponent implements OnInit {
       )
       .subscribe({
         next: () => {
+          // Decrement review count for this video
+          const currentCount = this.videoReviewCounts.get(video.id) || 0;
+          this.videoReviewCounts.set(video.id, Math.max(0, currentCount - 1));
           this.loadReviews(video.id);
           this.alerts.open('Comment deleted successfully').subscribe();
         },
@@ -280,6 +294,26 @@ export class AssetDetailsPageComponent implements OnInit {
   finalizeVideo(): void {
     if (!this.asset) return;
 
+    // Check for unreviewed videos using the tracked review counts
+    const hasUnreviewedVideos = this.asset.videos?.some(
+      (v) => (this.videoReviewCounts.get(v.id) || 0) === 0,
+    );
+
+    if (hasUnreviewedVideos) {
+      // Show error dialog - cannot proceed
+      this.dialogs
+        .open<boolean>(
+          'Cannot mark as reviewed: All videos must have at least one review before finalizing.',
+          {
+            label: 'Cannot Mark as Reviewed',
+            size: 'm',
+          },
+        )
+        .subscribe();
+      return;
+    }
+
+    // Show confirmation dialog - can proceed
     const data: TuiConfirmData = {
       content:
         'Are you sure you want to mark this video as reviewed? No more comments can be added, edited, or deleted.',
@@ -290,7 +324,7 @@ export class AssetDetailsPageComponent implements OnInit {
     this.dialogs
       .open<boolean>(TUI_CONFIRM, {
         label: 'Mark Video as Reviewed',
-        size: 's',
+        size: 'm',
         data,
       })
       .pipe(
