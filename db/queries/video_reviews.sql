@@ -1,9 +1,10 @@
 -- name: CreateVideoReview :one
 INSERT INTO video_reviews (
     video_id,
-    content
+    content,
+    timestamp_seconds
 ) VALUES (
-    $1, $2
+    $1, $2, $3
 ) RETURNING *;
 
 -- name: ListVideoReviews :many
@@ -11,6 +12,7 @@ SELECT
     id,
     video_id,
     content,
+    timestamp_seconds,
     created_at,
     updated_at
 FROM video_reviews

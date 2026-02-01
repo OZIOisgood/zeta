@@ -1,5 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  CUSTOM_ELEMENTS_SCHEMA,
+  effect,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import '@mux/mux-player';
@@ -63,13 +74,15 @@ import { PermissionsService } from '../../shared/services/permissions.service';
   templateUrl: './asset-details-page.component.html',
   styleUrls: ['./asset-details-page.component.scss'],
 })
-export class AssetDetailsPageComponent implements OnInit {
+export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly assetService = inject(AssetService);
   private readonly permissionsService = inject(PermissionsService);
   private readonly alerts = inject(TuiAlertService);
   private readonly dialogs = inject(TuiResponsiveDialogService);
+
+  @ViewChild('muxPlayer') muxPlayerRef!: ElementRef;
 
   asset$!: Observable<Asset>;
   reviews$ = new BehaviorSubject<Review[]>([]);
@@ -78,6 +91,7 @@ export class AssetDetailsPageComponent implements OnInit {
   private readonly refresh$ = new BehaviorSubject<void>(void 0);
 
   reviewControl = new FormControl('');
+  currentTimestamp = signal<number>(0);
 
   readonly canReadReviews = computed(() => this.permissionsService.hasPermission('reviews:read'));
   readonly canAddReviews = computed(() => this.permissionsService.hasPermission('reviews:create'));
@@ -102,6 +116,8 @@ export class AssetDetailsPageComponent implements OnInit {
 
   protected descriptionExpanded = false;
   protected readonly descriptionCharLimit = 200;
+
+  private timeUpdateListener?: () => void;
 
   constructor() {
     // Use effect to load reviews when user permissions become available
@@ -135,6 +151,8 @@ export class AssetDetailsPageComponent implements OnInit {
             this.loadReviews(video.id);
           }
         }
+        // Setup player time tracking after asset loads
+        setTimeout(() => this.setupPlayerTimeTracking(), 100);
       }),
     );
 
@@ -163,6 +181,35 @@ export class AssetDetailsPageComponent implements OnInit {
     });
   }
 
+  ngAfterViewInit() {
+    this.setupPlayerTimeTracking();
+  }
+
+  private setupPlayerTimeTracking() {
+    // Clean up any existing listener
+    if (this.timeUpdateListener && this.muxPlayerRef?.nativeElement) {
+      this.muxPlayerRef.nativeElement.removeEventListener('timeupdate', this.timeUpdateListener);
+    }
+
+    // Try to get the player element
+    const player = document.querySelector('mux-player');
+    if (player) {
+      this.timeUpdateListener = () => {
+        const currentTime = (player as HTMLMediaElement).currentTime;
+        if (typeof currentTime === 'number' && !isNaN(currentTime)) {
+          this.currentTimestamp.set(Math.floor(currentTime));
+        }
+      };
+      player.addEventListener('timeupdate', this.timeUpdateListener);
+    }
+  }
+
+  formatTimestamp(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
   getCurrentVideo() {
     if (!this.asset || !this.asset.videos) return null;
     return this.asset.videos[this.videoIndex];
@@ -180,7 +227,8 @@ export class AssetDetailsPageComponent implements OnInit {
     const video = this.getCurrentVideo();
     if (!video || !this.canAddReviews() || !this.reviewControl.value) return;
 
-    this.assetService.createReview(video.id, this.reviewControl.value).subscribe({
+    const timestamp = this.currentTimestamp();
+    this.assetService.createReview(video.id, this.reviewControl.value, timestamp).subscribe({
       next: () => {
         this.reviewControl.setValue('');
         // Increment review count for this video
@@ -393,5 +441,11 @@ export class AssetDetailsPageComponent implements OnInit {
       return 'Reviewed';
     }
     return status.replace('_', ' ');
+  }
+
+  getThumbnailUrl(timestampSeconds: number): string {
+    const playbackId = this.getPlaybackId(this.asset!);
+    if (!playbackId) return '';
+    return `https://image.mux.com/${playbackId}/thumbnail.png?width=214&height=121&time=${timestampSeconds}`;
   }
 }

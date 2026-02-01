@@ -31,24 +31,27 @@ func (q *Queries) CountVideosWithoutReviews(ctx context.Context, assetID pgtype.
 const createVideoReview = `-- name: CreateVideoReview :one
 INSERT INTO video_reviews (
     video_id,
-    content
+    content,
+    timestamp_seconds
 ) VALUES (
-    $1, $2
-) RETURNING id, video_id, content, created_at, updated_at
+    $1, $2, $3
+) RETURNING id, video_id, content, timestamp_seconds, created_at, updated_at
 `
 
 type CreateVideoReviewParams struct {
-	VideoID pgtype.UUID `json:"video_id"`
-	Content string      `json:"content"`
+	VideoID          pgtype.UUID `json:"video_id"`
+	Content          string      `json:"content"`
+	TimestampSeconds pgtype.Int4 `json:"timestamp_seconds"`
 }
 
 func (q *Queries) CreateVideoReview(ctx context.Context, arg CreateVideoReviewParams) (VideoReview, error) {
-	row := q.db.QueryRow(ctx, createVideoReview, arg.VideoID, arg.Content)
+	row := q.db.QueryRow(ctx, createVideoReview, arg.VideoID, arg.Content, arg.TimestampSeconds)
 	var i VideoReview
 	err := row.Scan(
 		&i.ID,
 		&i.VideoID,
 		&i.Content,
+		&i.TimestampSeconds,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -102,6 +105,7 @@ SELECT
     id,
     video_id,
     content,
+    timestamp_seconds,
     created_at,
     updated_at
 FROM video_reviews
@@ -122,6 +126,7 @@ func (q *Queries) ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]
 			&i.ID,
 			&i.VideoID,
 			&i.Content,
+			&i.TimestampSeconds,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -139,7 +144,7 @@ const updateVideoReview = `-- name: UpdateVideoReview :one
 UPDATE video_reviews
 SET content = $2, updated_at = NOW()
 WHERE id = $1
-RETURNING id, video_id, content, created_at, updated_at
+RETURNING id, video_id, content, timestamp_seconds, created_at, updated_at
 `
 
 type UpdateVideoReviewParams struct {
@@ -154,6 +159,7 @@ func (q *Queries) UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewPa
 		&i.ID,
 		&i.VideoID,
 		&i.Content,
+		&i.TimestampSeconds,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

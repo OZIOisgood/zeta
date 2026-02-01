@@ -38,13 +38,15 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 }
 
 type ReviewResponse struct {
-	ID        string    `json:"id"`
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"created_at"`
+	ID               string    `json:"id"`
+	Content          string    `json:"content"`
+	TimestampSeconds *int32    `json:"timestamp_seconds,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
 }
 
 type CreateReviewRequest struct {
-	Content string `json:"content"`
+	Content          string `json:"content"`
+	TimestampSeconds *int32 `json:"timestamp_seconds,omitempty"`
 }
 
 type UpdateReviewRequest struct {
@@ -91,10 +93,16 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 			createdAt = review.CreatedAt.Time
 		}
 
+		var timestampSeconds *int32
+		if review.TimestampSeconds.Valid {
+			timestampSeconds = &review.TimestampSeconds.Int32
+		}
+
 		response[i] = ReviewResponse{
-			ID:        toUUIDString(review.ID),
-			Content:   review.Content,
-			CreatedAt: createdAt,
+			ID:               toUUIDString(review.ID),
+			Content:          review.Content,
+			TimestampSeconds: timestampSeconds,
+			CreatedAt:        createdAt,
 		}
 	}
 
@@ -152,9 +160,15 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var timestampSeconds pgtype.Int4
+	if req.TimestampSeconds != nil {
+		timestampSeconds = pgtype.Int4{Int32: *req.TimestampSeconds, Valid: true}
+	}
+
 	review, err := h.q.CreateVideoReview(ctx, db.CreateVideoReviewParams{
-		VideoID: videoID,
-		Content: req.Content,
+		VideoID:          videoID,
+		Content:          req.Content,
+		TimestampSeconds: timestampSeconds,
 	})
 	if err != nil {
 		log.ErrorContext(ctx, "create_review_failed",
@@ -174,11 +188,16 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		createdAt = review.CreatedAt.Time
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	responseData := map[string]interface{}{
 		"id":         toUUIDString(review.ID),
 		"content":    review.Content,
 		"created_at": createdAt,
-	})
+	}
+	if review.TimestampSeconds.Valid {
+		responseData["timestamp_seconds"] = review.TimestampSeconds.Int32
+	}
+
+	json.NewEncoder(w).Encode(responseData)
 }
 
 func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {

@@ -37,6 +37,7 @@ export interface Asset {
 export interface Review {
   id: string;
   content: string;
+  timestamp_seconds?: number;
   created_at: string;
 }
 
@@ -77,8 +78,12 @@ export class AssetService {
     return this.http.get<Review[]>(`${this.apiUrl}/videos/${videoId}/reviews`);
   }
 
-  createReview(videoId: string, content: string): Observable<Review> {
-    return this.http.post<Review>(`${this.apiUrl}/videos/${videoId}/reviews`, { content });
+  createReview(videoId: string, content: string, timestampSeconds?: number): Observable<Review> {
+    const body: { content: string; timestamp_seconds?: number } = { content };
+    if (timestampSeconds !== undefined) {
+      body.timestamp_seconds = timestampSeconds;
+    }
+    return this.http.post<Review>(`${this.apiUrl}/videos/${videoId}/reviews`, body);
   }
 
   updateReview(videoId: string, reviewId: string, content: string): Observable<Review> {

@@ -71,26 +71,46 @@
           class="reviews-list tui-space_top-4"
           style="display: flex; flex-direction: column; gap: 1rem"
         >
-          <section *ngFor="let review of reviews$ | async" tuiCardLarge="compact">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start">
-              <div class="review-content tui-text_body-m" style="flex: 1; white-space: pre-wrap">
-                {{ review.content }}
+          <section
+            *ngFor="let review of reviews$ | async"
+            tuiCardLarge="compact"
+            class="review-card"
+          >
+            <div class="review-card-content">
+              <div class="review-text-content">
+                <div class="review-content tui-text_body-m" style="white-space: pre-wrap">
+                  {{ review.content }}
+                </div>
+
+                <div
+                  *ngIf="(canDeleteReviews() || canEditReviews()) && !isFinalized()"
+                  class="review-actions"
+                  [tuiDropdown]="dropdown"
+                  tuiDropdownOpen
+                  tuiDropdownAlign="right"
+                >
+                  <button
+                    appearance="flat"
+                    iconStart="@tui.ellipsis"
+                    tuiIconButton
+                    type="button"
+                    size="s"
+                  ></button>
+                </div>
               </div>
 
               <div
-                *ngIf="(canDeleteReviews() || canEditReviews()) && !isFinalized()"
-                [tuiDropdown]="dropdown"
-                tuiDropdownOpen
-                tuiDropdownAlign="right"
+                *ngIf="review.timestamp_seconds !== undefined && review.timestamp_seconds !== null"
+                class="review-thumbnail-container"
               >
-                <button
-                  appearance="flat"
-                  iconStart="@tui.ellipsis"
-                  tuiIconButton
-                  type="button"
-                  size="s"
-                  style="margin-left: 0.5rem"
-                ></button>
+                <img
+                  [src]="getThumbnailUrl(review.timestamp_seconds)"
+                  alt="Video thumbnail at timestamp"
+                  class="review-thumbnail"
+                />
+                <span class="thumbnail-timestamp">{{
+                  formatTimestamp(review.timestamp_seconds)
+                }}</span>
               </div>
 
               <ng-template #dropdown>
@@ -139,6 +159,10 @@
   "
 >
   <div style="width: 100%; display: flex; gap: 1rem; align-items: flex-end">
+    <div class="timestamp-indicator">
+      <tui-icon icon="@tui.clock"></tui-icon>
+      <span>{{ formatTimestamp(currentTimestamp()) }}</span>
+    </div>
     <tui-textfield style="flex: 1">
       <textarea
         tuiTextarea
