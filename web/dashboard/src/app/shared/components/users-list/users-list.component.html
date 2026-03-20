@@ -1,0 +1,67 @@
+<ng-container *ngIf="users$ | async as users; else loading">
+  <section tuiCardLarge *ngIf="users.length; else empty">
+    <table tuiTable [size]="size" [style.width.%]="100">
+      <thead>
+        <tr>
+          <th tuiTh>User</th>
+          <th tuiTh>Role</th>
+          <th tuiTh [style.width.rem]="3">Actions</th>
+        </tr>
+      </thead>
+      <tbody tuiTbody>
+        <tr *ngFor="let item of users">
+          <td tuiTd>
+            <div [tuiCell]="size">
+              <tui-avatar
+                [src]="item.profile_picture_url || (item.name | tuiInitials)"
+                [style.background]="item.name | tuiAutoColor"
+              />
+              <span tuiTitle>
+                {{ item.name }}
+                <span tuiSubtitle>{{ item.email }}</span>
+              </span>
+            </div>
+          </td>
+          <td tuiTd>
+            <span tuiStatus [style.color]="getRoleColor(item.role)">
+              <tui-icon [icon]="getRoleIcon(item.role)" [style.height.rem]="1" />
+              {{ formatRole(item.role) }}
+            </span>
+          </td>
+          <td tuiTd>
+            <div [tuiDropdown]="dropdown" tuiDropdownAlign="right">
+              <button
+                appearance="flat"
+                iconStart="@tui.ellipsis"
+                size="s"
+                tuiIconButton
+                type="button"
+              ></button>
+              <ng-template #dropdown>
+                <tui-data-list>
+                  <button tuiOption [disabled]="true">
+                    <tui-icon icon="@tui.trash" [style.height.rem]="1"></tui-icon>
+                    Delete
+                  </button>
+                </tui-data-list>
+              </ng-template>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <ng-template #empty>
+    <p
+      class="tui-text_body-l"
+      style="text-align: center; padding: 2rem 0; color: var(--tui-text-secondary)"
+    >
+      No members in this group yet.
+    </p>
+  </ng-template>
+</ng-container>
+
+<ng-template #loading>
+  <p class="tui-text_body-l">Loading users...</p>
+</ng-template>

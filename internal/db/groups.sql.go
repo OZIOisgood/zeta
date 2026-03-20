@@ -84,6 +84,31 @@ func (q *Queries) GetGroup(ctx context.Context, id pgtype.UUID) (Group, error) {
 	return i, err
 }
 
+const listGroupMembers = `-- name: ListGroupMembers :many
+SELECT user_id FROM user_groups
+WHERE group_id = $1
+`
+
+func (q *Queries) ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, listGroupMembers, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var user_id string
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUserGroups = `-- name: ListUserGroups :many
 SELECT g.id, g.name, g.owner_id, g.avatar, g.created_at, g.updated_at
 FROM groups g

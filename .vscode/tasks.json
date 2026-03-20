@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run SQLC",
+			"type": "shell",
+			"command": "make sqlc",
+			"args": [],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}
