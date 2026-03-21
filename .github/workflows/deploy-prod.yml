@@ -1,0 +1,53 @@
+name: Deploy — Prod
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  REGION: europe-west1
+  SERVICE: zeta-api
+  IMAGE: europe-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/zeta/api
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy to Prod
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push image
+        run: |
+          IMAGE_TAG="${{ env.IMAGE }}:${{ github.ref_name }}"
+          docker build -t "$IMAGE_TAG" -t "${{ env.IMAGE }}:stable" .
+          docker push "$IMAGE_TAG"
+          docker push "${{ env.IMAGE }}:stable"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE }} \
+            --image "${{ env.IMAGE }}:${{ github.ref_name }}" \
+            --region ${{ env.REGION }} \
+            --project ${{ vars.GCP_PROJECT_ID }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-secrets="DB_URL=zeta-prod-db-url:latest,WORKOS_API_KEY=zeta-prod-workos-api-key:latest,WORKOS_CLIENT_ID=zeta-prod-workos-client-id:latest,WORKOS_COOKIE_SECRET=zeta-prod-workos-cookie-secret:latest,MUX_TOKEN_ID=zeta-prod-mux-token-id:latest,MUX_TOKEN_SECRET=zeta-prod-mux-token-secret:latest,RESEND_API_KEY=zeta-prod-resend-api-key:latest,OPENROUTER_API_KEY=zeta-prod-openrouter-api-key:latest" \
+            --set-env-vars="ENV=prod,LOG_LEVEL=info,DEFAULT_LANGUAGE=en,WORKOS_REDIRECT_URI=https://${{ vars.CLOUD_RUN_PROD_URL }}/auth/callback,DEFAULT_ORG_ID=${{ vars.WORKOS_PROD_DEFAULT_ORG_ID }}"
