@@ -6,22 +6,22 @@ This document describes the CI/CD pipeline and infrastructure-as-code setup for 
 
 ## Environments
 
-| Environment | Purpose | Deployment trigger |
-|-------------|---------|-------------------|
-| `local`     | Developer laptop, Docker Compose | `make infra:restart` |
-| `dev`       | Shared dev/staging, Cloud Run | Push to `main` branch |
-| `prod`      | Production, Cloud Run | Push of a `v*` tag |
+| Environment | Purpose                          | Deployment trigger    |
+| ----------- | -------------------------------- | --------------------- |
+| `local`     | Developer laptop, Docker Compose | `make infra:restart`  |
+| `dev`       | Shared dev/staging, Cloud Run    | Push to `main` branch |
+| `prod`      | Production, Cloud Run            | Push of a `v*` tag    |
 
 ---
 
 ## GitHub Actions Workflows
 
-| Workflow | File | Trigger | Purpose |
-|----------|------|---------|---------|
-| CI | `.github/workflows/ci.yml` | Pull request → `main` | Lint & build check (API + Dashboard) |
-| Deploy Dev | `.github/workflows/deploy-dev.yml` | Push to `main` | Build & deploy API + Dashboard to dev Cloud Run |
-| Deploy Prod | `.github/workflows/deploy-prod.yml` | Push of `v*` tag | Build & deploy API + Dashboard to prod Cloud Run |
-| Infra | `.github/workflows/infra.yml` | Manual (`workflow_dispatch`) | Terraform plan / apply for dev or prod |
+| Workflow    | File                                | Trigger                      | Purpose                                          |
+| ----------- | ----------------------------------- | ---------------------------- | ------------------------------------------------ |
+| CI          | `.github/workflows/ci.yml`          | Pull request → `main`        | Lint & build check (API + Dashboard)             |
+| Deploy Dev  | `.github/workflows/deploy-dev.yml`  | Push to `main`               | Build & deploy API + Dashboard to dev Cloud Run  |
+| Deploy Prod | `.github/workflows/deploy-prod.yml` | Push of `v*` tag             | Build & deploy API + Dashboard to prod Cloud Run |
+| Infra       | `.github/workflows/infra.yml`       | Manual (`workflow_dispatch`) | Terraform plan / apply for dev or prod           |
 
 ---
 
@@ -31,26 +31,26 @@ All workflows authenticate to GCP using **Workload Identity Federation (WIF)** �
 
 ### Why WIF over a JSON key?
 
-- JSON keys are long-lived credentials that can leak.  
-- WIF uses short-lived OIDC tokens issued by GitHub for each run.  
+- JSON keys are long-lived credentials that can leak.
+- WIF uses short-lived OIDC tokens issued by GitHub for each run.
 - This is the current GCP-recommended approach for CI/CD.
 
 ### Infrastructure via Terraform
 
 WIF pools, OIDC providers, deploy service accounts, and all IAM bindings are managed by Terraform modules:
 
-| Module | Path | Resources |
-|--------|------|-----------|
+| Module       | Path                                  | Resources                                                                                                                                                                                     |
+| ------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `github-wif` | `infra/terraform/modules/github-wif/` | WIF pool & OIDC provider, deploy SA, IAM roles (`run.admin`, `artifactregistry.writer`, `secretmanager.secretAccessor`, `iam.serviceAccountUser`), actAs binding on default Compute Engine SA |
-| `cloud-run` | `infra/terraform/modules/cloud-run/` | Cloud Run service (reusable for API + Dashboard), public IAM policy |
-| `cloud-sql` | `infra/terraform/modules/cloud-sql/` | Cloud SQL PostgreSQL instance, database, user, DB_URL secret, `cloudsql.client` IAM |
+| `cloud-run`  | `infra/terraform/modules/cloud-run/`  | Cloud Run service (reusable for API + Dashboard), public IAM policy                                                                                                                           |
+| `cloud-sql`  | `infra/terraform/modules/cloud-sql/`  | Cloud SQL PostgreSQL instance, database, user, DB_URL secret, `cloudsql.client` IAM                                                                                                           |
 
 ### Cloud Run Services
 
-| Service | Image | Port | Purpose |
-|---------|-------|------|---------|
-| `zeta-api` | `zeta/api` | 8080 | Go REST API with Cloud SQL Auth Proxy |
-| `zeta-dashboard` | `zeta/dashboard` | 8080 | Angular SPA served by Nginx |
+| Service          | Image            | Port | Purpose                               |
+| ---------------- | ---------------- | ---- | ------------------------------------- |
+| `zeta-api`       | `zeta/api`       | 8080 | Go REST API with Cloud SQL Auth Proxy |
+| `zeta-dashboard` | `zeta/dashboard` | 8080 | Angular SPA served by Nginx           |
 
 The dashboard uses runtime env substitution: the `__API_URL__` placeholder in the compiled JS is replaced with the `API_URL` env var at container startup via `sed`.
 
@@ -79,27 +79,27 @@ After applying, get the WIF provider and service account email from the Terrafor
 
 ## GitHub Environments & Secrets
 
-Create two **GitHub Environments** (`dev` and `prod`) in *Settings → Environments*.  
+Create two **GitHub Environments** (`dev` and `prod`) in _Settings → Environments_.  
 Add a **Required reviewer** to `prod` to enforce a manual approval gate.
 
 ### Secrets (per environment)
 
-| Secret | Description |
-|--------|-------------|
-| `GCP_WIF_PROVIDER` | Workload Identity provider resource name, e.g. `projects/123/locations/global/workloadIdentityPools/github/providers/github-provider` |
-| `GCP_SERVICE_ACCOUNT` | Service account email, e.g. `zeta-github-actions@PROJECT.iam.gserviceaccount.com` |
+| Secret                | Description                                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `GCP_WIF_PROVIDER`    | Workload Identity provider resource name, e.g. `projects/123/locations/global/workloadIdentityPools/github/providers/github-provider` |
+| `GCP_SERVICE_ACCOUNT` | Service account email, e.g. `zeta-github-actions@PROJECT.iam.gserviceaccount.com`                                                     |
 
 ### Variables (per environment)
 
-| Variable | Example |
-|----------|---------|
-| `GCP_PROJECT_ID` | `my-gcp-project` |
-| `CLOUD_RUN_DEV_URL` | `zeta-api-abc123-ew.a.run.app` (API service URL, no `https://`) |
-| `CLOUD_RUN_DEV_DASHBOARD_URL` | `zeta-dashboard-abc123-ew.a.run.app` (Dashboard URL, no `https://`) |
-| `CLOUD_RUN_PROD_URL` | `zeta-api-xyz789-ew.a.run.app` (prod API URL) |
-| `CLOUD_RUN_PROD_DASHBOARD_URL` | `zeta-dashboard-xyz789-ew.a.run.app` (prod Dashboard URL) |
-| `WORKOS_DEV_DEFAULT_ORG_ID` | `org_...` |
-| `WORKOS_PROD_DEFAULT_ORG_ID` | `org_...` |
+| Variable                       | Example                                                             |
+| ------------------------------ | ------------------------------------------------------------------- |
+| `GCP_PROJECT_ID`               | `my-gcp-project`                                                    |
+| `CLOUD_RUN_DEV_URL`            | `zeta-api-abc123-ew.a.run.app` (API service URL, no `https://`)     |
+| `CLOUD_RUN_DEV_DASHBOARD_URL`  | `zeta-dashboard-abc123-ew.a.run.app` (Dashboard URL, no `https://`) |
+| `CLOUD_RUN_PROD_URL`           | `zeta-api-xyz789-ew.a.run.app` (prod API URL)                       |
+| `CLOUD_RUN_PROD_DASHBOARD_URL` | `zeta-dashboard-xyz789-ew.a.run.app` (prod Dashboard URL)           |
+| `WORKOS_DEV_DEFAULT_ORG_ID`    | `org_...`                                                           |
+| `WORKOS_PROD_DEFAULT_ORG_ID`   | `org_...`                                                           |
 
 ---
 
@@ -115,12 +115,12 @@ zeta-{env}-{secret-name}
 
 Examples:
 
-| Secret Manager name | Maps to env var | Managed by |
-|--------------------|-----------------|------------|
-| `zeta-dev-db-url` | `DB_URL` | Terraform (cloud-sql module) |
-| `zeta-dev-workos-api-key` | `WORKOS_API_KEY` | Manual |
-| `zeta-prod-db-url` | `DB_URL` | Terraform (cloud-sql module) |
-| `zeta-prod-workos-api-key` | `WORKOS_API_KEY` | Manual |
+| Secret Manager name        | Maps to env var  | Managed by                   |
+| -------------------------- | ---------------- | ---------------------------- |
+| `zeta-dev-db-url`          | `DB_URL`         | Terraform (cloud-sql module) |
+| `zeta-dev-workos-api-key`  | `WORKOS_API_KEY` | Manual                       |
+| `zeta-prod-db-url`         | `DB_URL`         | Terraform (cloud-sql module) |
+| `zeta-prod-workos-api-key` | `WORKOS_API_KEY` | Manual                       |
 
 The `DB_URL` secret is automatically created and updated by the `cloud-sql` Terraform module. Other secrets must be created manually:
 
@@ -137,13 +137,13 @@ Each environment has a Cloud SQL PostgreSQL 16 instance managed by the `cloud-sq
 
 ### Architecture
 
-| Component | Dev | Prod |
-|-----------|-----|------|
-| Instance | `zeta-dev` | `zeta-prod` |
-| Tier | `db-f1-micro` | `db-f1-micro` |
-| Availability | `ZONAL` | `REGIONAL` (automatic failover) |
-| Database | `zeta` | `zeta` |
-| User | `zeta` | `zeta` |
+| Component    | Dev           | Prod                            |
+| ------------ | ------------- | ------------------------------- |
+| Instance     | `zeta-dev`    | `zeta-prod`                     |
+| Tier         | `db-f1-micro` | `db-f1-micro`                   |
+| Availability | `ZONAL`       | `REGIONAL` (automatic failover) |
+| Database     | `zeta`        | `zeta`                          |
+| User         | `zeta`        | `zeta`                          |
 
 ### Connectivity — Cloud SQL Auth Proxy
 
@@ -188,12 +188,12 @@ make db:migrate:up
 
 ## Image Tagging & Versioning
 
-| Tag | When set | Meaning |
-|-----|----------|---------|
-| `<git-sha>` | Every deploy | Exact immutable reference |
-| `latest` | Every push to `main` | Latest dev build |
-| `v1.2.3` (semver) | Tag push | Production release |
-| `stable` | Every tag push | Current prod image |
+| Tag               | When set             | Meaning                   |
+| ----------------- | -------------------- | ------------------------- |
+| `<git-sha>`       | Every deploy         | Exact immutable reference |
+| `latest`          | Every push to `main` | Latest dev build          |
+| `v1.2.3` (semver) | Tag push             | Production release        |
+| `stable`          | Every tag push       | Current prod image        |
 
 ### Rollback
 
@@ -221,11 +221,11 @@ Terraform manages Cloud Run services, Artifact Registry, Workload Identity Feder
 
 ### Terraform modules
 
-| Module | Purpose |
-|--------|---------|
-| `cloud-run` | Cloud Run v2 service definition, public IAM (used for both API and Dashboard) |
-| `github-wif` | WIF pool/provider, deploy SA, IAM roles |
-| `cloud-sql` | Cloud SQL instance, database, user, DB_URL secret, `cloudsql.client` IAM |
+| Module       | Purpose                                                                       |
+| ------------ | ----------------------------------------------------------------------------- |
+| `cloud-run`  | Cloud Run v2 service definition, public IAM (used for both API and Dashboard) |
+| `github-wif` | WIF pool/provider, deploy SA, IAM roles                                       |
+| `cloud-sql`  | Cloud SQL instance, database, user, DB_URL secret, `cloudsql.client` IAM      |
 
 ### First-time setup
 
@@ -245,13 +245,13 @@ terraform apply -var="project_id=YOUR_PROJECT_ID"
 
 ## What is Automated vs Manual
 
-| Task | Automation |
-|------|-----------|
-| Build & lint check on PR | ✅ Automatic (CI workflow) |
-| Deploy to dev | ✅ Automatic (push to `main`) |
-| Deploy to prod | ✅ Automatic + manual approval gate (push `v*` tag) |
-| Terraform infra changes | 🔵 Manual trigger (workflow_dispatch) |
-| Database migrations | 🔵 Manual (`migrate` via Cloud SQL Auth Proxy) |
-| Create GCP secrets | 🔵 Manual (one-time, via gcloud CLI — except `DB_URL` which is Terraform-managed) |
-| WIF & IAM setup | ✅ Automated via Terraform (`github-wif` module) |
-| Cloud SQL provisioning | ✅ Automated via Terraform (`cloud-sql` module) |
+| Task                     | Automation                                                                        |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| Build & lint check on PR | ✅ Automatic (CI workflow)                                                        |
+| Deploy to dev            | ✅ Automatic (push to `main`)                                                     |
+| Deploy to prod           | ✅ Automatic + manual approval gate (push `v*` tag)                               |
+| Terraform infra changes  | 🔵 Manual trigger (workflow_dispatch)                                             |
+| Database migrations      | 🔵 Manual (`migrate` via Cloud SQL Auth Proxy)                                    |
+| Create GCP secrets       | 🔵 Manual (one-time, via gcloud CLI — except `DB_URL` which is Terraform-managed) |
+| WIF & IAM setup          | ✅ Automated via Terraform (`github-wif` module)                                  |
+| Cloud SQL provisioning   | ✅ Automated via Terraform (`cloud-sql` module)                                   |
