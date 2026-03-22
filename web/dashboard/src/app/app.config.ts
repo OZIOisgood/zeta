@@ -10,8 +10,7 @@ import { NG_EVENT_PLUGINS } from '@taiga-ui/event-plugins';
 
 import { routes } from './app.routes';
 import { credentialsInterceptor } from './shared/interceptors/credentials.interceptor';
-import { AuthService } from './shared/services/auth.service';
-import { EnvService } from './shared/services/env.service';
+import { loadEnv } from './shared/services/env.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -22,9 +21,7 @@ export const appConfig: ApplicationConfig = {
     NG_EVENT_PLUGINS,
     {
       provide: APP_INITIALIZER,
-      useFactory: (env: EnvService, auth: AuthService) => () =>
-        env.load().then(() => auth.checkSession()),
-      deps: [EnvService, AuthService],
+      useFactory: () => () => loadEnv(),
       multi: true,
     },
   ],

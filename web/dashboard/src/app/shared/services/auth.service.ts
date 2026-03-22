@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, firstValueFrom } from 'rxjs';
+import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { EnvService } from './env.service';
 
@@ -26,21 +26,26 @@ export class AuthService {
   loading = signal(true);
   unauthenticated = signal(false);
 
-  checkSession(): Promise<void> {
+  constructor() {
+    this.checkSession();
+  }
+
+  checkSession() {
     this.loading.set(true);
-    return firstValueFrom(this.http.get<User>(`${this.baseUrl}/me`))
-      .then((u) => {
+    this.http.get<User>(`${this.baseUrl}/me`).subscribe({
+      next: (u) => {
         this.user.set(u);
         this.unauthenticated.set(false);
         this.loading.set(false);
-      })
-      .catch((err: HttpErrorResponse) => {
+      },
+      error: (err: HttpErrorResponse) => {
         if (err.status === 401) {
           this.unauthenticated.set(true);
         }
         this.user.set(null);
         this.loading.set(false);
-      });
+      },
+    });
   }
 
   login() {
