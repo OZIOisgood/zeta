@@ -52,7 +52,7 @@ WIF pools, OIDC providers, deploy service accounts, and all IAM bindings are man
 | `zeta-api`       | `zeta/api`       | 8080 | Go REST API with Cloud SQL Auth Proxy |
 | `zeta-dashboard` | `zeta/dashboard` | 8080 | Angular SPA served by Nginx           |
 
-The dashboard uses runtime env substitution: the `__API_URL__` placeholder in the compiled JS is replaced with the `API_URL` env var at container startup via `sed`.
+The dashboard uses runtime env injection: at container startup the Dockerfile CMD writes a `env.js` file from the `API_URL` env var (`window.__env={apiUrl:"<URL>"}`). This script is loaded synchronously via a `<script src="env.js">` tag in `index.html` before Angular bootstraps, so the API URL is available immediately. `EnvService` reads `window.__env.apiUrl` — no `APP_INITIALIZER` or async loading required.
 
 ### One-time manual prerequisites
 

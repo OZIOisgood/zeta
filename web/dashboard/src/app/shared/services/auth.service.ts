@@ -20,7 +20,9 @@ export interface User {
 export class AuthService {
   private http = inject(HttpClient);
   private env = inject(EnvService);
-  private get baseUrl() { return `${this.env.apiUrl}/auth`; }
+  private get baseUrl() {
+    return `${this.env.apiUrl}/auth`;
+  }
 
   user = signal<User | null>(null);
   loading = signal(true);

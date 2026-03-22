@@ -10,3 +10,6 @@ bin/
 
 # Terraform
 **/.terraform/
+
+# Log files
+log*.txt

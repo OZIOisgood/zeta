@@ -17,7 +17,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 ENV API_URL=http://localhost:8080
 
-# Write runtime config from environment variables before starting Nginx.
-CMD ["/bin/sh", "-c", "echo \"{\\\"apiUrl\\\":\\\"${API_URL}\\\"}\" > /usr/share/nginx/html/env.json && nginx -g 'daemon off;'"]
+# Write runtime config before starting Nginx.
+CMD ["/bin/sh", "-c", "echo \"window.__env={apiUrl:\\\"${API_URL}\\\"}\" > /usr/share/nginx/html/env.js && nginx -g 'daemon off;'"]
 
 EXPOSE 8080
