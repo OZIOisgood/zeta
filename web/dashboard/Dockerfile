@@ -15,4 +15,9 @@ FROM nginx:alpine
 COPY --from=build /app/dist/dashboard/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+ENV API_URL=http://localhost:8080
+
+# Replace __API_URL__ placeholder in compiled JS with the actual API_URL at container start.
+CMD ["/bin/sh", "-c", "find /usr/share/nginx/html -name '*.js' -exec sed -i \"s|__API_URL__|${API_URL}|g\" {} + && nginx -g 'daemon off;'"]
+
+EXPOSE 8080

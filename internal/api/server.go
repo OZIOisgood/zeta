@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/OZIOisgood/zeta/internal/assets"
 	"github.com/OZIOisgood/zeta/internal/auth"
@@ -44,7 +46,7 @@ func (s *Server) routes() {
 	s.Router.Use(middleware.StripSlashes)
 
 	s.Router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:4200", "http://localhost:3000"},
+		AllowedOrigins:   allowedOrigins(),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -99,5 +101,19 @@ func (s *Server) routes() {
 			r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)
 		})
 	})
+}
+
+// allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)
+// plus the default local development origins.
+func allowedOrigins() []string {
+	origins := []string{"http://localhost:4200", "http://localhost:3000"}
+	if extra := os.Getenv("ALLOWED_ORIGINS"); extra != "" {
+		for _, o := range strings.Split(extra, ",") {
+			if o = strings.TrimSpace(o); o != "" {
+				origins = append(origins, o)
+			}
+		}
+	}
+	return origins
 }
 

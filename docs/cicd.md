@@ -18,9 +18,9 @@ This document describes the CI/CD pipeline and infrastructure-as-code setup for 
 
 | Workflow | File | Trigger | Purpose |
 |----------|------|---------|---------|
-| CI | `.github/workflows/ci.yml` | Pull request → `main` | Lint & build check |
-| Deploy Dev | `.github/workflows/deploy-dev.yml` | Push to `main` | Build image, deploy to dev Cloud Run |
-| Deploy Prod | `.github/workflows/deploy-prod.yml` | Push of `v*` tag | Build image, deploy to prod Cloud Run |
+| CI | `.github/workflows/ci.yml` | Pull request → `main` | Lint & build check (API + Dashboard) |
+| Deploy Dev | `.github/workflows/deploy-dev.yml` | Push to `main` | Build & deploy API + Dashboard to dev Cloud Run |
+| Deploy Prod | `.github/workflows/deploy-prod.yml` | Push of `v*` tag | Build & deploy API + Dashboard to prod Cloud Run |
 | Infra | `.github/workflows/infra.yml` | Manual (`workflow_dispatch`) | Terraform plan / apply for dev or prod |
 
 ---
@@ -42,8 +42,17 @@ WIF pools, OIDC providers, deploy service accounts, and all IAM bindings are man
 | Module | Path | Resources |
 |--------|------|-----------|
 | `github-wif` | `infra/terraform/modules/github-wif/` | WIF pool & OIDC provider, deploy SA, IAM roles (`run.admin`, `artifactregistry.writer`, `secretmanager.secretAccessor`, `iam.serviceAccountUser`), actAs binding on default Compute Engine SA |
-| `cloud-run` | `infra/terraform/modules/cloud-run/` | Cloud Run service, public IAM policy |
+| `cloud-run` | `infra/terraform/modules/cloud-run/` | Cloud Run service (reusable for API + Dashboard), public IAM policy |
 | `cloud-sql` | `infra/terraform/modules/cloud-sql/` | Cloud SQL PostgreSQL instance, database, user, DB_URL secret, `cloudsql.client` IAM |
+
+### Cloud Run Services
+
+| Service | Image | Port | Purpose |
+|---------|-------|------|---------|
+| `zeta-api` | `zeta/api` | 8080 | Go REST API with Cloud SQL Auth Proxy |
+| `zeta-dashboard` | `zeta/dashboard` | 8080 | Angular SPA served by Nginx |
+
+The dashboard uses runtime env substitution: the `__API_URL__` placeholder in the compiled JS is replaced with the `API_URL` env var at container startup via `sed`.
 
 ### One-time manual prerequisites
 
@@ -85,8 +94,10 @@ Add a **Required reviewer** to `prod` to enforce a manual approval gate.
 | Variable | Example |
 |----------|---------|
 | `GCP_PROJECT_ID` | `my-gcp-project` |
-| `CLOUD_RUN_DEV_URL` | `zeta-api-abc123-ew.a.run.app` (dev service URL, no `https://`) |
-| `CLOUD_RUN_PROD_URL` | `zeta-api-xyz789-ew.a.run.app` (prod service URL) |
+| `CLOUD_RUN_DEV_URL` | `zeta-api-abc123-ew.a.run.app` (API service URL, no `https://`) |
+| `CLOUD_RUN_DEV_DASHBOARD_URL` | `zeta-dashboard-abc123-ew.a.run.app` (Dashboard URL, no `https://`) |
+| `CLOUD_RUN_PROD_URL` | `zeta-api-xyz789-ew.a.run.app` (prod API URL) |
+| `CLOUD_RUN_PROD_DASHBOARD_URL` | `zeta-dashboard-xyz789-ew.a.run.app` (prod Dashboard URL) |
 | `WORKOS_DEV_DEFAULT_ORG_ID` | `org_...` |
 | `WORKOS_PROD_DEFAULT_ORG_ID` | `org_...` |
 
@@ -212,7 +223,7 @@ Terraform manages Cloud Run services, Artifact Registry, Workload Identity Feder
 
 | Module | Purpose |
 |--------|---------|
-| `cloud-run` | Cloud Run v2 service definition, public IAM |
+| `cloud-run` | Cloud Run v2 service definition, public IAM (used for both API and Dashboard) |
 | `github-wif` | WIF pool/provider, deploy SA, IAM roles |
 | `cloud-sql` | Cloud SQL instance, database, user, DB_URL secret, `cloudsql.client` IAM |
 

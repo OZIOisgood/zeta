@@ -3,6 +3,12 @@ variable "project_id" {
   description = "GCP project ID"
 }
 
+variable "service_name" {
+  type        = string
+  description = "Cloud Run service name"
+  default     = "zeta-api"
+}
+
 variable "region" {
   type        = string
   description = "GCP region"

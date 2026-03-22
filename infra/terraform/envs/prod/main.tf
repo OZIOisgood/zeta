@@ -33,11 +33,26 @@ module "cloud_run" {
 
   project_id    = var.project_id
   region        = var.region
+  service_name  = "zeta-api"
   environment   = "prod"
   image         = "${var.region}-docker.pkg.dev/${var.project_id}/zeta/api:stable"
   min_instances = 1
   max_instances = 10
   memory        = "1Gi"
+  cpu           = "1"
+}
+
+module "cloud_run_dashboard" {
+  source = "../../modules/cloud-run"
+
+  project_id    = var.project_id
+  region        = var.region
+  service_name  = "zeta-dashboard"
+  environment   = "prod"
+  image         = "${var.region}-docker.pkg.dev/${var.project_id}/zeta/dashboard:stable"
+  min_instances = 1
+  max_instances = 5
+  memory        = "256Mi"
   cpu           = "1"
 }
 
@@ -79,4 +94,8 @@ output "db_instance" {
 
 output "db_public_ip" {
   value = module.cloud_sql.public_ip
+}
+
+output "dashboard_url" {
+  value = module.cloud_run_dashboard.service_url
 }
