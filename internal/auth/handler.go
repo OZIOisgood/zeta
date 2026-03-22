@@ -163,7 +163,11 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		slog.String("user_id", resp.User.ID),
 	)
 
-	http.Redirect(w, r, "http://localhost:4200", http.StatusSeeOther)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:4200"
+	}
+	http.Redirect(w, r, frontendURL, http.StatusSeeOther)
 }
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -180,7 +184,11 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 2. Determine redirect URL
-	redirectTarget := "http://localhost:4200" // Default fallback
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:4200"
+	}
+	redirectTarget := frontendURL
 
 	if err == nil && cookie.Value != "" {
 		tokenString := cookie.Value
@@ -200,7 +208,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 				} else {
 					logoutURL, err := usermanagement.GetLogoutURL(usermanagement.GetLogoutURLOpts{
 						SessionID: sid,
-						ReturnTo:  "http://localhost:4200",
+						ReturnTo:  frontendURL,
 					})
 					if err != nil {
 						h.logger.ErrorContext(ctx, "auth_logout_url_failed",

@@ -52,7 +52,7 @@ jobs:
             --allow-unauthenticated \
             --add-cloudsql-instances=${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:zeta-prod \
             --set-secrets="DB_URL=zeta-prod-db-url:latest,WORKOS_API_KEY=zeta-prod-workos-api-key:latest,WORKOS_CLIENT_ID=zeta-prod-workos-client-id:latest,WORKOS_COOKIE_SECRET=zeta-prod-workos-cookie-secret:latest,MUX_TOKEN_ID=zeta-prod-mux-token-id:latest,MUX_TOKEN_SECRET=zeta-prod-mux-token-secret:latest,RESEND_API_KEY=zeta-prod-resend-api-key:latest,OPENROUTER_API_KEY=zeta-prod-openrouter-api-key:latest" \
-            --set-env-vars="ENV=prod,LOG_LEVEL=info,DEFAULT_LANGUAGE=en,ALLOWED_ORIGINS=https://${{ vars.CLOUD_RUN_PROD_DASHBOARD_URL }},WORKOS_REDIRECT_URI=https://${{ vars.CLOUD_RUN_PROD_URL }}/auth/callback,DEFAULT_ORG_ID=${{ vars.WORKOS_PROD_DEFAULT_ORG_ID }}"
+            --set-env-vars="ENV=prod,LOG_LEVEL=info,DEFAULT_LANGUAGE=en,ALLOWED_ORIGINS=https://${{ vars.CLOUD_RUN_PROD_DASHBOARD_URL }},FRONTEND_URL=https://${{ vars.CLOUD_RUN_PROD_DASHBOARD_URL }},WORKOS_REDIRECT_URI=https://${{ vars.CLOUD_RUN_PROD_URL }}/auth/callback,DEFAULT_ORG_ID=${{ vars.WORKOS_PROD_DEFAULT_ORG_ID }}"
 
   build-and-deploy-dashboard:
     name: Build & Deploy Dashboard to Prod
