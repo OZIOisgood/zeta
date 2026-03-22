@@ -21,3 +21,14 @@ WHERE id = $1 LIMIT 1;
 -- name: ListGroupMembers :many
 SELECT user_id FROM user_groups
 WHERE group_id = $1;
+
+-- name: CreateGroupInvitation :one
+INSERT INTO group_invitations (group_id, inviter_id, email, code)
+VALUES ($1, $2, $3, $4) RETURNING *;
+
+-- name: GetGroupInvitationByCode :one
+SELECT * FROM group_invitations
+WHERE code = $1 LIMIT 1;
+
+-- name: UpdateGroupInvitationStatus :exec
+UPDATE group_invitations SET status = @status WHERE id = @id;

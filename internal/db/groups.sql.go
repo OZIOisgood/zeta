@@ -65,6 +65,38 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 	return i, err
 }
 
+const createGroupInvitation = `-- name: CreateGroupInvitation :one
+INSERT INTO group_invitations (group_id, inviter_id, email, code)
+VALUES ($1, $2, $3, $4) RETURNING id, group_id, inviter_id, email, code, status, created_at
+`
+
+type CreateGroupInvitationParams struct {
+	GroupID   pgtype.UUID `json:"group_id"`
+	InviterID string      `json:"inviter_id"`
+	Email     string      `json:"email"`
+	Code      string      `json:"code"`
+}
+
+func (q *Queries) CreateGroupInvitation(ctx context.Context, arg CreateGroupInvitationParams) (GroupInvitation, error) {
+	row := q.db.QueryRow(ctx, createGroupInvitation,
+		arg.GroupID,
+		arg.InviterID,
+		arg.Email,
+		arg.Code,
+	)
+	var i GroupInvitation
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.InviterID,
+		&i.Email,
+		&i.Code,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getGroup = `-- name: GetGroup :one
 SELECT id, name, owner_id, avatar, created_at, updated_at FROM groups
 WHERE id = $1 LIMIT 1
@@ -80,6 +112,26 @@ func (q *Queries) GetGroup(ctx context.Context, id pgtype.UUID) (Group, error) {
 		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getGroupInvitationByCode = `-- name: GetGroupInvitationByCode :one
+SELECT id, group_id, inviter_id, email, code, status, created_at FROM group_invitations
+WHERE code = $1 LIMIT 1
+`
+
+func (q *Queries) GetGroupInvitationByCode(ctx context.Context, code string) (GroupInvitation, error) {
+	row := q.db.QueryRow(ctx, getGroupInvitationByCode, code)
+	var i GroupInvitation
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.InviterID,
+		&i.Email,
+		&i.Code,
+		&i.Status,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -142,4 +194,18 @@ func (q *Queries) ListUserGroups(ctx context.Context, userID string) ([]Group, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateGroupInvitationStatus = `-- name: UpdateGroupInvitationStatus :exec
+UPDATE group_invitations SET status = $1 WHERE id = $2
+`
+
+type UpdateGroupInvitationStatusParams struct {
+	Status InvitationStatus `json:"status"`
+	ID     pgtype.UUID      `json:"id"`
+}
+
+func (q *Queries) UpdateGroupInvitationStatus(ctx context.Context, arg UpdateGroupInvitationStatusParams) error {
+	_, err := q.db.Exec(ctx, updateGroupInvitationStatus, arg.Status, arg.ID)
+	return err
 }

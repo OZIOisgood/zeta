@@ -54,6 +54,48 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
+type InvitationStatus string
+
+const (
+	InvitationStatusPending  InvitationStatus = "pending"
+	InvitationStatusAccepted InvitationStatus = "accepted"
+)
+
+func (e *InvitationStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = InvitationStatus(s)
+	case string:
+		*e = InvitationStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for InvitationStatus: %T", src)
+	}
+	return nil
+}
+
+type NullInvitationStatus struct {
+	InvitationStatus InvitationStatus `json:"invitation_status"`
+	Valid            bool             `json:"valid"` // Valid is true if InvitationStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullInvitationStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.InvitationStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.InvitationStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullInvitationStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.InvitationStatus), nil
+}
+
 type LanguageCode string
 
 const (
@@ -158,6 +200,16 @@ type Group struct {
 	Avatar    []byte             `json:"avatar"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type GroupInvitation struct {
+	ID        pgtype.UUID        `json:"id"`
+	GroupID   pgtype.UUID        `json:"group_id"`
+	InviterID string             `json:"inviter_id"`
+	Email     string             `json:"email"`
+	Code      string             `json:"code"`
+	Status    InvitationStatus   `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type UserGroup struct {

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -22,6 +22,7 @@ export class AuthService {
 
   user = signal<User | null>(null);
   loading = signal(true);
+  unauthenticated = signal(false);
 
   constructor() {
     this.checkSession();
@@ -32,9 +33,13 @@ export class AuthService {
     this.http.get<User>(`${this.baseUrl}/me`).subscribe({
       next: (u) => {
         this.user.set(u);
+        this.unauthenticated.set(false);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
+        if (err.status === 401) {
+          this.unauthenticated.set(true);
+        }
         this.user.set(null);
         this.loading.set(false);
       },
@@ -43,6 +48,27 @@ export class AuthService {
 
   login() {
     window.location.href = `${this.baseUrl}/login`;
+  }
+
+  consumeRedirectPath(): string | null {
+    const raw = localStorage.getItem('zeta_redirect_after_login');
+    if (!raw) {
+      return null;
+    }
+    localStorage.removeItem('zeta_redirect_after_login');
+    try {
+      const entry = JSON.parse(raw) as { path: string; expiresAt: number };
+      if (Date.now() > entry.expiresAt) {
+        return null;
+      }
+      const currentPath = window.location.pathname + window.location.search;
+      if (entry.path === currentPath) {
+        return null;
+      }
+      return entry.path;
+    } catch {
+      return null;
+    }
   }
 
   logout() {

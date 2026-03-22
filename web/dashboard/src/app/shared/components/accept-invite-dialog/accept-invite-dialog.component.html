@@ -1,0 +1,23 @@
+<div class="accept-invite-container">
+  <div class="group-info">
+    <tui-avatar
+      [src]="
+        info.group_avatar
+          ? 'data:image/png;base64,' + info.group_avatar
+          : (info.group_name | tuiInitials)
+      "
+      [style.background]="info.group_name | tuiAutoColor"
+      size="xl"
+    />
+    <p class="tui-text_body-l">
+      You've been invited to join <strong>{{ info.group_name }}</strong>
+    </p>
+  </div>
+
+  <div class="form-actions">
+    <button tuiButton (click)="onAccept()" [disabled]="isSubmitting">Join Group</button>
+    <button tuiButton appearance="flat" (click)="onDecline()" [disabled]="isSubmitting">
+      Decline
+    </button>
+  </div>
+</div>

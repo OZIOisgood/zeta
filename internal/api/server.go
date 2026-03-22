@@ -10,6 +10,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/groups"
+	"github.com/OZIOisgood/zeta/internal/invitations"
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/reviews"
@@ -59,6 +60,7 @@ func (s *Server) routes() {
 	llmService := llm.NewService(s.Logger)
 	assetsHandler := assets.NewHandler(queries, emailService, s.Logger)
 	groupsHandler := groups.NewHandler(queries, s.Logger)
+	invitationsHandler := invitations.NewHandler(queries, emailService, s.Logger)
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries)
 
@@ -92,6 +94,9 @@ func (s *Server) routes() {
 			r.Get("/", groupsHandler.ListGroups)
 			r.Post("/", groupsHandler.CreateGroup)
 			r.Get("/{groupID}/users", usersHandler.ListGroupUsers)
+			r.Post("/{groupID}/invitations", invitationsHandler.CreateInvitation)
+			r.Get("/invitations/{code}", invitationsHandler.GetInvitationInfo)
+			r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)
 		})
 	})
 }

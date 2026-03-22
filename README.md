@@ -9,6 +9,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **remote Video Analysis**: Students upload videos of their practice; coaches provide detailed feedback.
 - **Professional Dashboard**: Manage students, videos, and reviews in one place.
 - **Groups Management**: Create and manage user groups.
+- **Group Invitations**: Invite users to groups via email with a unique invite link and confirmation flow.
 - **Seamless Uploads**: Direct high-quality video uploads powered by Mux.
 - **Secure Authentication**: Enterprise-grade auth via WorkOS.
 - **Video Reviews**: Add comments and feedback directly to video clips.
@@ -73,6 +74,15 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - Public: `/health`
 - Protected: `/assets` (Requires Login)
 - Login: Click "Login via WorkOS" -> Redirects to WorkOS AuthKit -> Callback -> Logged In.
+- **Redirect Preservation**: When an unauthenticated user accesses a deep link (e.g., an invite URL), the initial path is captured to `localStorage` (with a 5-minute expiry) in `main.ts` before Angular bootstraps—ensuring route guards cannot redirect away before the path is saved. After successful authentication, the shell component reads and consumes the saved path, navigating the user back to the intended page.
+
+### Group Invitation Flow
+
+1. An admin or expert opens the group details page and clicks "Invite User".
+2. A dialog prompts for the invitee's email address.
+3. The backend generates a unique 6-character code and sends an email with the invite link (`/groups?invite=<CODE>`).
+4. When the recipient opens the link, a confirmation dialog shows the group name and avatar.
+5. On acceptance, the user is added to the group and redirected to the group details page.
 
 ### API Examples
 
@@ -88,10 +98,25 @@ curl -b "zeta_session=..." http://localhost:8080/auth/me
 
 ```mermaid
 graph LR
-    Student[Student] -->|Uploads Video| Zeta[Zeta Platform]
-    Zeta -->|Notifies| Coach[Coach]
+    Student[Student] -->|Receives Invite| Invite[Group Invitation]
+    Invite -->|Joins Group| Group[Group]
+    Student -->|Uploads Video| Zeta[Zeta Platform]
+    Zeta -->|Notifies| Coach[Coach/Expert]
     Coach -->|Analyzes & Annotates| Review[Video Review]
     Review -->|Feedback| Student
+```
+
+### Core Expert Journey
+
+```mermaid
+graph LR
+    Expert[Expert] -->|Creates| Group[Group]
+    Expert -->|Sends Invite| Invite[Email Invitation]
+    Invite -->|User Joins| Group
+    Group -->|Contains| Assets[Assets/Videos]
+    Expert -->|Reviews| Assets
+    Expert -->|Provides| Feedback[Timestamped Feedback]
+    Feedback -->|Notifies| Student[Student]
 ```
 
 ### System Architecture
@@ -198,6 +223,18 @@ erDiagram
         bytea avatar
         timestamp created_at
         timestamp updated_at
+    }
+
+    groups ||--o{ group_invitations : has
+
+    group_invitations {
+        uuid id PK
+        uuid group_id FK
+        string inviter_id "WorkOS User ID ref"
+        string email
+        string code "unique"
+        enum status "pending, accepted"
+        timestamp created_at
     }
 
     user_groups {

@@ -7,3 +7,14 @@
     margin-bottom: 1rem;
   }
 }
+
+.users-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+  }
+}

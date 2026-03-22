@@ -4,7 +4,20 @@
     <p class="tui-text_body-m">Group details page coming soon...</p>
 
     <div *ngIf="showUsersList() && (groupId$ | async) as groupId" class="tui-space_top-6">
-      <h2 class="tui-text_h3 tui-space_bottom-4">Users</h2>
+      <div class="users-header">
+        <h2 class="tui-text_h3">Users</h2>
+        @if (showInviteButton()) {
+          <button
+            tuiButton
+            appearance="flat"
+            size="s"
+            iconStart="@tui.mail"
+            (click)="openInviteDialog(groupId)"
+          >
+            Invite User
+          </button>
+        }
+      </div>
       <app-users-list [groupId]="groupId"></app-users-list>
     </div>
   </div>
