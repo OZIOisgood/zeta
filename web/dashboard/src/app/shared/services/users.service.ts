@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { EnvService } from './env.service';
 
 export interface User {
   id: string;
@@ -22,7 +22,8 @@ interface ListUsersResponse {
 })
 export class UsersService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/groups`;
+  private env = inject(EnvService);
+  private get apiUrl() { return `${this.env.apiUrl}/groups`; }
 
   list(groupId: string): Observable<User[]> {
     return this.http.get<ListUsersResponse>(`${this.apiUrl}/${groupId}/users`).pipe(

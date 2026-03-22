@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { EnvService } from './env.service';
 
 export interface VideoResponse {
   id: string;
@@ -46,7 +46,8 @@ export interface Review {
 })
 export class AssetService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/assets`;
+  private readonly env = inject(EnvService);
+  private get apiUrl() { return `${this.env.apiUrl}/assets`; }
 
   getAssets(): Observable<Asset[]> {
     return this.http.get<Asset[]>(this.apiUrl);
@@ -97,7 +98,7 @@ export class AssetService {
   }
 
   enhanceReviewText(text: string): Observable<{ enhanced_text: string }> {
-    return this.http.post<{ enhanced_text: string }>(`${environment.apiUrl}/reviews/enhance`, {
+    return this.http.post<{ enhanced_text: string }>(`${this.env.apiUrl}/reviews/enhance`, {
       text,
     });
   }
