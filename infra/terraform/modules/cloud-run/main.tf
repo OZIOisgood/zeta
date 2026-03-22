@@ -1,7 +1,8 @@
 resource "google_cloud_run_v2_service" "app" {
-  name     = "zeta-api"
-  location = var.region
-  project  = var.project_id
+  name                = "zeta-api"
+  location            = var.region
+  project             = var.project_id
+  deletion_protection = false
 
   template {
     scaling {
@@ -10,7 +11,8 @@ resource "google_cloud_run_v2_service" "app" {
     }
 
     containers {
-      image = var.image
+      # Initial placeholder; the deploy workflow overrides the image via gcloud.
+      image = "us-docker.pkg.dev/cloudrun/container/hello"
 
       resources {
         limits = {

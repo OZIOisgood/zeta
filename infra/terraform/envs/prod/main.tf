@@ -41,6 +41,22 @@ module "cloud_run" {
   cpu           = "1"
 }
 
+module "github_wif" {
+  source = "../../modules/github-wif"
+
+  project_id  = var.project_id
+  github_repo = "OZIOisgood/zeta"
+  environment = "prod"
+}
+
 output "service_url" {
   value = module.cloud_run.service_url
+}
+
+output "wif_provider" {
+  value = module.github_wif.workload_identity_provider
+}
+
+output "deploy_service_account" {
+  value = module.github_wif.service_account_email
 }

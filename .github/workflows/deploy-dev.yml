@@ -6,6 +6,7 @@ on:
       - main
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   REGION: europe-west1
   SERVICE: zeta-api
   IMAGE: europe-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/zeta/api
