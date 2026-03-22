@@ -35,55 +35,36 @@ All workflows authenticate to GCP using **Workload Identity Federation (WIF)** �
 - WIF uses short-lived OIDC tokens issued by GitHub for each run.  
 - This is the current GCP-recommended approach for CI/CD.
 
-### One-time GCP setup
+### Infrastructure via Terraform
+
+WIF pools, OIDC providers, deploy service accounts, and all IAM bindings are managed by Terraform modules:
+
+| Module | Path | Resources |
+|--------|------|-----------|
+| `github-wif` | `infra/terraform/modules/github-wif/` | WIF pool & OIDC provider, deploy SA, IAM roles (`run.admin`, `artifactregistry.writer`, `secretmanager.secretAccessor`, `iam.serviceAccountUser`), actAs binding on default Compute Engine SA |
+| `cloud-run` | `infra/terraform/modules/cloud-run/` | Cloud Run service, public IAM policy |
+| `cloud-sql` | `infra/terraform/modules/cloud-sql/` | Cloud SQL PostgreSQL instance, database, user, DB_URL secret, `cloudsql.client` IAM |
+
+### One-time manual prerequisites
 
 ```bash
 PROJECT_ID=your-gcp-project-id
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-SA_NAME=zeta-github-actions
 
-# 1. Create a service account
-gcloud iam service-accounts create $SA_NAME \
-  --display-name="Zeta GitHub Actions" \
-  --project=$PROJECT_ID
-
-# 2. Grant required roles
-for ROLE in \
-  roles/run.admin \
-  roles/artifactregistry.writer \
-  roles/secretmanager.secretAccessor \
-  roles/iam.serviceAccountUser \
-  roles/storage.objectAdmin; do
-  gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
-    --role="$ROLE"
-done
-
-# 3. Create a Workload Identity Pool
-gcloud iam workload-identity-pools create github \
-  --location=global \
-  --display-name="GitHub Actions Pool" \
-  --project=$PROJECT_ID
-
-# 4. Create a provider in the pool
-gcloud iam workload-identity-pools providers create-oidc github-provider \
-  --location=global \
-  --workload-identity-pool=github \
-  --issuer-uri="https://token.actions.githubusercontent.com" \
-  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
-  --project=$PROJECT_ID
-
-# 5. Bind the service account to the provider (replace ORG/REPO)
-gcloud iam service-accounts add-iam-policy-binding \
-  "${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/github/attribute.repository/OZIOisgood/zeta" \
-  --project=$PROJECT_ID
-
-# 6. Create the Terraform state bucket
+# 1. Create the Terraform state bucket
 gsutil mb -p $PROJECT_ID -l europe-west1 gs://zeta-terraform-state
 gsutil versioning set on gs://zeta-terraform-state
+
+# 2. Apply Terraform for each environment
+cd infra/terraform/envs/dev
+terraform init
+terraform apply -var="project_id=$PROJECT_ID"
+
+cd ../prod
+terraform init
+terraform apply -var="project_id=$PROJECT_ID"
 ```
+
+After applying, get the WIF provider and service account email from the Terraform outputs and add them as GitHub environment secrets (see below).
 
 ---
 
@@ -123,24 +104,73 @@ zeta-{env}-{secret-name}
 
 Examples:
 
-| Secret Manager name | Maps to env var |
-|--------------------|-----------------|
-| `zeta-dev-db-url` | `DB_URL` |
-| `zeta-dev-workos-api-key` | `WORKOS_API_KEY` |
-| `zeta-prod-db-url` | `DB_URL` |
-| `zeta-prod-workos-api-key` | `WORKOS_API_KEY` |
+| Secret Manager name | Maps to env var | Managed by |
+|--------------------|-----------------|------------|
+| `zeta-dev-db-url` | `DB_URL` | Terraform (cloud-sql module) |
+| `zeta-dev-workos-api-key` | `WORKOS_API_KEY` | Manual |
+| `zeta-prod-db-url` | `DB_URL` | Terraform (cloud-sql module) |
+| `zeta-prod-workos-api-key` | `WORKOS_API_KEY` | Manual |
 
-Create secrets:
+The `DB_URL` secret is automatically created and updated by the `cloud-sql` Terraform module. Other secrets must be created manually:
 
 ```bash
-echo -n "postgres://..." | gcloud secrets create zeta-dev-db-url \
+echo -n "sk-..." | gcloud secrets create zeta-dev-workos-api-key \
   --data-file=- --project=$PROJECT_ID
+```
 
-# Grant the Cloud Run service account access
-gcloud secrets add-iam-policy-binding zeta-dev-db-url \
-  --member="serviceAccount:${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor" \
-  --project=$PROJECT_ID
+---
+
+## Cloud SQL — PostgreSQL
+
+Each environment has a Cloud SQL PostgreSQL 16 instance managed by the `cloud-sql` Terraform module.
+
+### Architecture
+
+| Component | Dev | Prod |
+|-----------|-----|------|
+| Instance | `zeta-dev` | `zeta-prod` |
+| Tier | `db-f1-micro` | `db-f1-micro` |
+| Availability | `ZONAL` | `REGIONAL` (automatic failover) |
+| Database | `zeta` | `zeta` |
+| User | `zeta` | `zeta` |
+
+### Connectivity — Cloud SQL Auth Proxy
+
+Cloud Run connects to Cloud SQL via the **built-in Cloud SQL Auth Proxy** (`--add-cloudsql-instances` flag in the deploy workflow). This creates a secure tunnel using IAM — no public IP authorization or VPC connector needed.
+
+The connection string uses a Unix socket path:
+
+```
+postgres://zeta:<password>@/zeta?host=/cloudsql/<connection_name>&sslmode=disable
+```
+
+The default Compute Engine service account (Cloud Run runtime identity) is granted `roles/cloudsql.client` by the `cloud-sql` Terraform module.
+
+### Running Migrations
+
+Migrations use [golang-migrate](https://github.com/golang-migrate/migrate) and are in `db/migrations/`.
+
+**Against Cloud SQL (dev):**
+
+```bash
+# 1. Start the Cloud SQL Auth Proxy locally
+cloud-sql-proxy zeta-491012:europe-west1:zeta-dev --port=15432 &
+
+# 2. Get the password (from Secret Manager or Terraform state)
+gcloud secrets versions access latest --secret=zeta-dev-db-url --project=zeta-491012
+
+# 3. Run migrations
+migrate -path db/migrations \
+  -database "postgres://zeta:<password>@localhost:15432/zeta?sslmode=disable" up
+
+# 4. Stop the proxy
+kill %1
+```
+
+**Against local Docker Compose:**
+
+```bash
+make db:migrate:up
 ```
 
 ---
@@ -176,7 +206,15 @@ gcloud run deploy zeta-api \
 
 ## Infrastructure Deployment
 
-Terraform manages the Cloud Run service configuration and the Artifact Registry repository. Application secrets are managed separately in Secret Manager (see above).
+Terraform manages Cloud Run services, Artifact Registry, Workload Identity Federation, Cloud SQL, and all IAM bindings. Application secrets (except `DB_URL`) are managed separately in Secret Manager.
+
+### Terraform modules
+
+| Module | Purpose |
+|--------|---------|
+| `cloud-run` | Cloud Run v2 service definition, public IAM |
+| `github-wif` | WIF pool/provider, deploy SA, IAM roles |
+| `cloud-sql` | Cloud SQL instance, database, user, DB_URL secret, `cloudsql.client` IAM |
 
 ### First-time setup
 
@@ -202,6 +240,7 @@ terraform apply -var="project_id=YOUR_PROJECT_ID"
 | Deploy to dev | ✅ Automatic (push to `main`) |
 | Deploy to prod | ✅ Automatic + manual approval gate (push `v*` tag) |
 | Terraform infra changes | 🔵 Manual trigger (workflow_dispatch) |
-| Database migrations | 🔵 Manual (`make db:migrate:up` against Cloud SQL) |
-| Create GCP secrets | 🔵 Manual (one-time, via gcloud CLI) |
-| WIF & IAM setup | 🔵 Manual (one-time, see setup above) |
+| Database migrations | 🔵 Manual (`migrate` via Cloud SQL Auth Proxy) |
+| Create GCP secrets | 🔵 Manual (one-time, via gcloud CLI — except `DB_URL` which is Terraform-managed) |
+| WIF & IAM setup | ✅ Automated via Terraform (`github-wif` module) |
+| Cloud SQL provisioning | ✅ Automated via Terraform (`cloud-sql` module) |

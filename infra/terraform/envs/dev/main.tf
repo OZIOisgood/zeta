@@ -58,6 +58,18 @@ module "github_wif" {
   environment = "dev"
 }
 
+module "cloud_sql" {
+  source = "../../modules/cloud-sql"
+
+  project_id          = var.project_id
+  region              = var.region
+  environment         = "dev"
+  tier                = "db-f1-micro"
+  disk_size_gb        = 10
+  availability_type   = "ZONAL"
+  deletion_protection = false
+}
+
 output "service_url" {
   value = module.cloud_run.service_url
 }
@@ -68,4 +80,12 @@ output "wif_provider" {
 
 output "deploy_service_account" {
   value = module.github_wif.service_account_email
+}
+
+output "db_instance" {
+  value = module.cloud_sql.instance_connection_name
+}
+
+output "db_public_ip" {
+  value = module.cloud_sql.public_ip
 }
