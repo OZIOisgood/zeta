@@ -1,7 +1,8 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { EnvService } from './env.service';
 
 export interface User {
   id: string;
@@ -18,32 +19,28 @@ export interface User {
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private baseUrl = 'http://localhost:8080/auth';
+  private env = inject(EnvService);
+  private get baseUrl() { return `${this.env.apiUrl}/auth`; }
 
   user = signal<User | null>(null);
   loading = signal(true);
   unauthenticated = signal(false);
 
-  constructor() {
-    this.checkSession();
-  }
-
-  checkSession() {
+  checkSession(): Promise<void> {
     this.loading.set(true);
-    this.http.get<User>(`${this.baseUrl}/me`).subscribe({
-      next: (u) => {
+    return firstValueFrom(this.http.get<User>(`${this.baseUrl}/me`))
+      .then((u) => {
         this.user.set(u);
         this.unauthenticated.set(false);
         this.loading.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
+      })
+      .catch((err: HttpErrorResponse) => {
         if (err.status === 401) {
           this.unauthenticated.set(true);
         }
         this.user.set(null);
         this.loading.set(false);
-      },
-    });
+      });
   }
 
   login() {

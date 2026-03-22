@@ -15,7 +15,9 @@ export interface InvitationInfo {
 export class InvitationsService {
   private http = inject(HttpClient);
   private env = inject(EnvService);
-  private get apiUrl() { return `${this.env.apiUrl}/groups`; }
+  private get apiUrl() {
+    return `${this.env.apiUrl}/groups`;
+  }
 
   create(groupId: string, email: string): Observable<{ id: string; code: string }> {
     return this.http.post<{ id: string; code: string }>(`${this.apiUrl}/${groupId}/invitations`, {

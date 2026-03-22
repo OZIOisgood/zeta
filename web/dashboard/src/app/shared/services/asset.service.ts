@@ -47,7 +47,9 @@ export interface Review {
 export class AssetService {
   private readonly http = inject(HttpClient);
   private readonly env = inject(EnvService);
-  private get apiUrl() { return `${this.env.apiUrl}/assets`; }
+  private get apiUrl() {
+    return `${this.env.apiUrl}/assets`;
+  }
 
   getAssets(): Observable<Asset[]> {
     return this.http.get<Asset[]>(this.apiUrl);

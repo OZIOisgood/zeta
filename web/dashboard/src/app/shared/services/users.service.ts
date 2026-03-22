@@ -23,7 +23,9 @@ interface ListUsersResponse {
 export class UsersService {
   private http = inject(HttpClient);
   private env = inject(EnvService);
-  private get apiUrl() { return `${this.env.apiUrl}/groups`; }
+  private get apiUrl() {
+    return `${this.env.apiUrl}/groups`;
+  }
 
   list(groupId: string): Observable<User[]> {
     return this.http.get<ListUsersResponse>(`${this.apiUrl}/${groupId}/users`).pipe(

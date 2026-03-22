@@ -18,7 +18,9 @@ export interface Group {
 export class GroupsService {
   private http = inject(HttpClient);
   private env = inject(EnvService);
-  private get apiUrl() { return `${this.env.apiUrl}/groups`; }
+  private get apiUrl() {
+    return `${this.env.apiUrl}/groups`;
+  }
 
   list(): Observable<Group[]> {
     return this.http.get<Group[]>(this.apiUrl);
