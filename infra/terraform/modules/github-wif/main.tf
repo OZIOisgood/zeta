@@ -19,6 +19,17 @@ resource "google_service_account_iam_member" "act_as" {
   member             = "serviceAccount:${google_service_account.deploy.email}"
 }
 
+# Allow the deploy SA to act as the default Compute Engine SA (Cloud Run runtime identity).
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
+resource "google_service_account_iam_member" "act_as_compute" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.deploy.email}"
+}
+
 # Allow the deploy SA to push images to Artifact Registry.
 resource "google_project_iam_member" "artifact_writer" {
   project = var.project_id
