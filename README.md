@@ -1,3 +1,5 @@
+<img src="assets/github-page-poster.png" width="100%" alt="Zeta Poster" />
+
 # Zeta: Digital Video Coaching Platform
 
 Zeta is a modern platform designed to revolutionize remote coaching through digital video analysis. Connect with experts, upload your training sessions, and receive precise, time-stamped feedback—anytime, anywhere.
