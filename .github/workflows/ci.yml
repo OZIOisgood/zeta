@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-and-build-api:
+    name: Lint & Build API
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Lint (go vet)
+        run: go vet ./...
+
+      - name: Build API
+        run: go build -o /dev/null ./cmd/api
+
+  lint-and-build-web:
+    name: Lint & Build Web
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/dashboard/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: web/dashboard
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Web
+        working-directory: web/dashboard
+        run: pnpm run build
