@@ -29,7 +29,12 @@
             </span>
           </td>
           <td tuiTd>
-            <div *ngIf="canDeleteUsers() && !isCurrentUser(item.id)" [tuiDropdown]="dropdown" tuiDropdownAlign="right">
+            <div
+              *ngIf="canDeleteUsers() && !isCurrentUser(item.id)"
+              [tuiDropdown]="dropdown"
+              tuiDropdownOpen
+              tuiDropdownAlign="right"
+            >
               <button
                 appearance="flat"
                 iconStart="@tui.ellipsis"

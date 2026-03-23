@@ -1,5 +1,5 @@
 import { AsyncPipe, CommonModule, NgForOf, NgIf } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, Input, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, Input } from '@angular/core';
 import { TuiTable } from '@taiga-ui/addon-table';
 import {
   TuiAlertService,
