@@ -1,17 +1,19 @@
+import { CommonModule } from '@angular/common';
 import { Component, effect, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
+import { TuiIcon } from '@taiga-ui/core';
 import { AuthService } from '../../services/auth.service';
 import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent],
+  imports: [CommonModule, RouterOutlet, NavbarComponent, TuiIcon],
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.scss'],
 })
 export class ShellComponent {
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
   constructor() {

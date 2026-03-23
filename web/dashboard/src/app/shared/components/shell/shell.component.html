@@ -1,4 +1,9 @@
-<div class="shell">
+<div class="loading-screen" *ngIf="auth.loading()">
+  <img src="/app-icon.png" alt="Zeta" class="loading-logo" />
+  <tui-icon icon="@tui.loader-circle" class="loading-spinner"></tui-icon>
+</div>
+
+<div class="shell" *ngIf="!auth.loading()">
   <app-navbar></app-navbar>
   <main class="content">
     <router-outlet></router-outlet>
