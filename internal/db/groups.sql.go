@@ -196,6 +196,20 @@ func (q *Queries) ListUserGroups(ctx context.Context, userID string) ([]Group, e
 	return items, nil
 }
 
+const removeUserFromGroup = `-- name: RemoveUserFromGroup :exec
+DELETE FROM user_groups WHERE user_id = $1 AND group_id = $2
+`
+
+type RemoveUserFromGroupParams struct {
+	UserID  string      `json:"user_id"`
+	GroupID pgtype.UUID `json:"group_id"`
+}
+
+func (q *Queries) RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error {
+	_, err := q.db.Exec(ctx, removeUserFromGroup, arg.UserID, arg.GroupID)
+	return err
+}
+
 const updateGroupInvitationStatus = `-- name: UpdateGroupInvitationStatus :exec
 UPDATE group_invitations SET status = $1 WHERE id = $2
 `

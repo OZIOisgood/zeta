@@ -37,4 +37,8 @@ export class UsersService {
       ),
     );
   }
+
+  remove(groupId: string, userId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${groupId}/users/${userId}`);
+  }
 }

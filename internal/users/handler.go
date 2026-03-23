@@ -159,3 +159,74 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 		"data": users,
 	})
 }
+
+func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := h.logger
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	groupIDStr := chi.URLParam(r, "groupID")
+	groupID, err := uuid.Parse(groupIDStr)
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	targetUserID := chi.URLParam(r, "userID")
+	if targetUserID == "" {
+		http.Error(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	if !permissions.HasPermission(user.Role, permissions.GroupsUserListDelete) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	pgGroupID := pgtype.UUID{Bytes: groupID, Valid: true}
+
+	// Prevent removing the group owner
+	group, err := h.q.GetGroup(ctx, pgGroupID)
+	if err != nil {
+		log.ErrorContext(ctx, "users_remove_get_group_failed",
+			slog.String("component", "users"),
+			slog.String("group_id", groupID.String()),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	if group.OwnerID == targetUserID {
+		http.Error(w, "Cannot remove the group owner", http.StatusBadRequest)
+		return
+	}
+
+	err = h.q.RemoveUserFromGroup(ctx, db.RemoveUserFromGroupParams{
+		UserID:  targetUserID,
+		GroupID: pgGroupID,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "users_remove_from_group_failed",
+			slog.String("component", "users"),
+			slog.String("group_id", groupID.String()),
+			slog.String("target_user_id", targetUserID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to remove user from group", http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoContext(ctx, "user_removed_from_group",
+		slog.String("component", "users"),
+		slog.String("user_id", user.ID),
+		slog.String("target_user_id", targetUserID),
+		slog.String("group_id", groupID.String()),
+	)
+
+	w.WriteHeader(http.StatusNoContent)
+}

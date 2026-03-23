@@ -30,5 +30,8 @@ VALUES ($1, $2, $3, $4) RETURNING *;
 SELECT * FROM group_invitations
 WHERE code = $1 LIMIT 1;
 
+-- name: RemoveUserFromGroup :exec
+DELETE FROM user_groups WHERE user_id = $1 AND group_id = $2;
+
 -- name: UpdateGroupInvitationStatus :exec
 UPDATE group_invitations SET status = @status WHERE id = @id;

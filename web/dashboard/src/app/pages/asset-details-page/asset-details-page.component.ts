@@ -35,7 +35,7 @@ import {
   TuiTextarea,
   type TuiConfirmData,
 } from '@taiga-ui/kit';
-import { TuiCardLarge, TuiBlockStatus } from '@taiga-ui/layout';
+import { TuiBlockStatus, TuiCardLarge } from '@taiga-ui/layout';
 import {
   BehaviorSubject,
   combineLatest,
