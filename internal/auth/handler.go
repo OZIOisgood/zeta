@@ -155,7 +155,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	h.logger.InfoContext(ctx, "auth_login_succeeded",
