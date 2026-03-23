@@ -246,11 +246,22 @@
 
         <div class="text-content">
           <h1 class="tui-text_h3 title mobile-title" [tuiSkeleton]="true">Loading title...</h1>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem">
-            <span [tuiSkeleton]="true" style="width: 80px; height: 24px; display: inline-block">Status</span>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 1rem;
+            "
+          >
+            <span [tuiSkeleton]="true" style="width: 80px; height: 24px; display: inline-block"
+              >Status</span
+            >
           </div>
           <section tuiCardLarge="compact">
-            <p class="tui-text_body-m" [tuiSkeleton]="true">Loading description text that spans across multiple lines to simulate real content...</p>
+            <p class="tui-text_body-m" [tuiSkeleton]="true">
+              Loading description text that spans across multiple lines to simulate real content...
+            </p>
           </section>
         </div>
       </div>
