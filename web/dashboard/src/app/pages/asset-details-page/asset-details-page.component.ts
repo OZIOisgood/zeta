@@ -35,7 +35,7 @@ import {
   TuiTextarea,
   type TuiConfirmData,
 } from '@taiga-ui/kit';
-import { TuiCardLarge } from '@taiga-ui/layout';
+import { TuiCardLarge, TuiBlockStatus } from '@taiga-ui/layout';
 import {
   BehaviorSubject,
   combineLatest,
@@ -47,6 +47,7 @@ import {
 } from 'rxjs';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { Asset, AssetService, Review } from '../../shared/services/asset.service';
+import { AuthService } from '../../shared/services/auth.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
 
 @Component({
@@ -71,6 +72,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiLink,
     TuiBadge,
     TuiSkeleton,
+    TuiBlockStatus,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',
@@ -81,6 +83,7 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly assetService = inject(AssetService);
   private readonly permissionsService = inject(PermissionsService);
+  readonly auth = inject(AuthService);
   private readonly alerts = inject(TuiAlertService);
   private readonly dialogs = inject(TuiResponsiveDialogService);
 
