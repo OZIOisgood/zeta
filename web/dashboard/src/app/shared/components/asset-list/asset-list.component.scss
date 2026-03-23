@@ -11,6 +11,12 @@
   height: auto;
 }
 
+.skeleton-tile {
+  aspect-ratio: 1;
+  width: 100%;
+  min-height: 175px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));

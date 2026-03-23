@@ -1,6 +1,16 @@
-<h1 class="tui-text_h3 list-title" *ngIf="title">{{ title }}</h1>
+<h1 class="tui-text_h3 list-title" *ngIf="title" [tuiSkeleton]="loading">{{ title }}</h1>
 
-<tui-block-status *ngIf="groups.length === 0 && !showCreateTile">
+<div class="grid" *ngIf="loading">
+  <div
+    *ngFor="let _ of [1, 2, 3, 4]"
+    tuiAppearance="neutral"
+    tuiCardMedium
+    class="skeleton-tile"
+    [tuiSkeleton]="true"
+  ></div>
+</div>
+
+<tui-block-status *ngIf="!loading && groups.length === 0 && !showCreateTile">
   <img
     alt="No groups yet"
     src="/illustrations/lonely-horse.png"
@@ -11,7 +21,7 @@
   <span>You haven't joined any groups yet.</span>
 </tui-block-status>
 
-<tui-block-status *ngIf="groups.length === 0 && showCreateTile">
+<tui-block-status *ngIf="!loading && groups.length === 0 && showCreateTile">
   <img
     alt="No groups yet"
     src="/illustrations/lonely-horse.png"
@@ -25,7 +35,7 @@
   </button>
 </tui-block-status>
 
-<div class="grid" *ngIf="groups.length > 0">
+<div class="grid" *ngIf="!loading && groups.length > 0">
   <div
     *ngIf="showCreateTile"
     tuiAppearance="neutral"

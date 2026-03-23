@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { tap } from 'rxjs';
 import { AssetListComponent } from '../../shared/components/asset-list/asset-list.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { AssetService } from '../../shared/services/asset.service';
@@ -20,7 +21,8 @@ export class HomePageComponent {
   private readonly assetService = inject(AssetService);
   private readonly permissionsService = inject(PermissionsService);
 
-  public assets$ = this.assetService.getAssets();
+  public loading = signal(true);
+  public assets$ = this.assetService.getAssets().pipe(tap(() => this.loading.set(false)));
   public showUploadVideo = computed(() => this.permissionsService.hasPermission('assets:create'));
 
   onAddVideo() {

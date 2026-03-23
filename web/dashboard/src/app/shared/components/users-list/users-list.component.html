@@ -63,5 +63,27 @@
 </ng-container>
 
 <ng-template #loading>
-  <p class="tui-text_body-l">Loading users...</p>
+  <section tuiCardLarge>
+    <table tuiTable [size]="size" [style.width.%]="100">
+      <thead>
+        <tr>
+          <th tuiTh>User</th>
+          <th tuiTh>Role</th>
+          <th tuiTh [style.width.rem]="3">Actions</th>
+        </tr>
+      </thead>
+      <tbody tuiTbody>
+        <tr *ngFor="let _ of [1, 2, 3]">
+          <td tuiTd>
+            <div [tuiCell]="size">
+              <tui-avatar src="" [tuiSkeleton]="true" />
+              <span tuiTitle [tuiSkeleton]="true">Loading name<span tuiSubtitle [tuiSkeleton]="true">loading@email.com</span></span>
+            </div>
+          </td>
+          <td tuiTd><span [tuiSkeleton]="true">Loading role</span></td>
+          <td tuiTd><span [tuiSkeleton]="true">...</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 </ng-template>

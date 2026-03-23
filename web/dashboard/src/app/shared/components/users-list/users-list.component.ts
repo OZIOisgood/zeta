@@ -10,7 +10,7 @@ import {
   TuiInitialsPipe,
   TuiTitle,
 } from '@taiga-ui/core';
-import { TuiAvatar, TuiStatus } from '@taiga-ui/kit';
+import { TuiAvatar, TuiSkeleton, TuiStatus } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiCell } from '@taiga-ui/layout';
 import { BehaviorSubject, of, switchMap } from 'rxjs';
 import { UsersService } from '../../services/users.service';
@@ -35,6 +35,7 @@ import { UsersService } from '../../services/users.service';
     TuiTable,
     TuiCardLarge,
     TuiTitle,
+    TuiSkeleton,
   ],
   templateUrl: './users-list.component.html',
   styleUrls: ['./users-list.component.scss'],

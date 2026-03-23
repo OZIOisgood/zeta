@@ -31,6 +31,7 @@ import {
   TuiBadge,
   TuiElasticContainer,
   TuiPagination,
+  TuiSkeleton,
   TuiTextarea,
   type TuiConfirmData,
 } from '@taiga-ui/kit';
@@ -69,6 +70,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiElasticContainer,
     TuiLink,
     TuiBadge,
+    TuiSkeleton,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',

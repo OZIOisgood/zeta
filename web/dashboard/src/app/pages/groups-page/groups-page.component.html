@@ -1,15 +1,9 @@
 <app-page-container>
-  <ng-container *ngIf="groups$ | async as groups; else loading">
-    <app-groups-list
-      [groups]="groups"
-      [showCreateTile]="showCreateTile()"
-      (createGroup)="onCreateGroup()"
-      (selectGroup)="onSelectGroup($event)"
-    ></app-groups-list>
-  </ng-container>
-
-  <ng-template #loading>
-    <!-- TODO: Replace with a proper loader -->
-    <p class="tui-text_body-l">Loading groups...</p>
-  </ng-template>
+  <app-groups-list
+    [groups]="(groups$ | async) || []"
+    [loading]="loading()"
+    [showCreateTile]="showCreateTile()"
+    (createGroup)="onCreateGroup()"
+    (selectGroup)="onSelectGroup($event)"
+  ></app-groups-list>
 </app-page-container>

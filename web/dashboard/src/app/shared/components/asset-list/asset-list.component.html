@@ -1,6 +1,16 @@
-<h1 class="tui-text_h3 list-title" *ngIf="title">{{ title }}</h1>
+<h1 class="tui-text_h3 list-title" *ngIf="title" [tuiSkeleton]="loading">{{ title }}</h1>
 
-<tui-block-status *ngIf="assets.length === 0 && !showAddTile">
+<div class="grid" *ngIf="loading">
+  <div
+    *ngFor="let _ of [1, 2, 3, 4, 5, 6]"
+    tuiAppearance="neutral"
+    tuiCardMedium
+    class="skeleton-tile"
+    [tuiSkeleton]="true"
+  ></div>
+</div>
+
+<tui-block-status *ngIf="!loading && assets.length === 0 && !showAddTile">
   <img
     alt="No videos yet"
     src="/illustrations/bored-horse.png"
@@ -12,7 +22,7 @@
   <span *ngIf="role !== 'expert'">There are no videos here yet.</span>
 </tui-block-status>
 
-<tui-block-status *ngIf="assets.length === 0 && showAddTile">
+<tui-block-status *ngIf="!loading && assets.length === 0 && showAddTile">
   <img
     alt="No videos yet"
     src="/illustrations/bored-horse.png"
@@ -26,7 +36,7 @@
   </button>
 </tui-block-status>
 
-<div class="grid" *ngIf="assets.length > 0">
+<div class="grid" *ngIf="!loading && assets.length > 0">
   <div
     *ngIf="showAddTile"
     tuiAppearance="neutral"

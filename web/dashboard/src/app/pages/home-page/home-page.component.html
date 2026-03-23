@@ -1,6 +1,7 @@
 <app-page-container>
   <app-asset-list
     [assets]="(assets$ | async) || []"
+    [loading]="loading()"
     [showAddTile]="showUploadVideo()"
     [role]="auth.user()?.role"
     [title]="'All my videos'"

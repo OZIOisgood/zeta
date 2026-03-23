@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TuiButton, TuiSurface, TuiTitle } from '@taiga-ui/core';
-import { TuiAvatar, TuiBadge } from '@taiga-ui/kit';
+import { TuiAppearance, TuiButton, TuiSurface, TuiTitle } from '@taiga-ui/core';
+import { TuiAvatar, TuiBadge, TuiSkeleton } from '@taiga-ui/kit';
 import { TuiBlockStatus, TuiCardMedium } from '@taiga-ui/layout';
 import { Asset } from '../../services/asset.service';
 
@@ -19,6 +19,8 @@ import { Asset } from '../../services/asset.service';
     TuiAvatar,
     TuiBlockStatus,
     TuiButton,
+    TuiSkeleton,
+    TuiAppearance,
   ],
   templateUrl: './asset-list.component.html',
   styleUrls: ['./asset-list.component.scss'],
@@ -27,6 +29,7 @@ import { Asset } from '../../services/asset.service';
 export class AssetListComponent {
   @Input() assets: Asset[] = [];
   @Input() showAddTile = false;
+  @Input() loading = false;
   @Input() title = 'All my videos';
   @Input() role: string | undefined;
   @Output() addVideo = new EventEmitter<void>();

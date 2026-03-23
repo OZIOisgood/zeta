@@ -1,9 +1,9 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
-import { switchMap, take } from 'rxjs';
+import { switchMap, take, tap } from 'rxjs';
 import { AcceptInviteDialogComponent } from '../../shared/components/accept-invite-dialog/accept-invite-dialog.component';
 import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -27,7 +27,8 @@ export class GroupsPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  readonly groups$ = this.groupsService.list();
+  readonly groups$ = this.groupsService.list().pipe(tap(() => this.loading.set(false)));
+  readonly loading = signal(true);
   readonly showCreateTile = computed(() => this.permissionsService.hasPermission('groups:create'));
 
   ngOnInit(): void {
