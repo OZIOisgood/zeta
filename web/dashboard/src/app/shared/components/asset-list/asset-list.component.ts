@@ -9,7 +9,17 @@ import { Asset } from '../../services/asset.service';
 @Component({
   selector: 'app-asset-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TuiCardMedium, TuiSurface, TuiTitle, TuiBadge, TuiAvatar, TuiBlockStatus, TuiButton],
+  imports: [
+    CommonModule,
+    RouterLink,
+    TuiCardMedium,
+    TuiSurface,
+    TuiTitle,
+    TuiBadge,
+    TuiAvatar,
+    TuiBlockStatus,
+    TuiButton,
+  ],
   templateUrl: './asset-list.component.html',
   styleUrls: ['./asset-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

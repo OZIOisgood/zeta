@@ -8,7 +8,15 @@ import { Group } from '../../services/groups.service';
 @Component({
   selector: 'app-groups-list',
   standalone: true,
-  imports: [CommonModule, TuiCardMedium, TuiSurface, TuiTitle, TuiAvatar, TuiBlockStatus, TuiButton],
+  imports: [
+    CommonModule,
+    TuiCardMedium,
+    TuiSurface,
+    TuiTitle,
+    TuiAvatar,
+    TuiBlockStatus,
+    TuiButton,
+  ],
   templateUrl: './groups-list.component.html',
   styleUrls: ['./groups-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
