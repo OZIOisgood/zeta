@@ -181,6 +181,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	// 2. Determine redirect URL
@@ -189,6 +190,17 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		frontendURL = "http://localhost:4200"
 	}
 	redirectTarget := frontendURL
+
+	if err != nil {
+		h.logger.WarnContext(ctx, "auth_logout_no_cookie",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+	} else if cookie.Value == "" {
+		h.logger.WarnContext(ctx, "auth_logout_empty_cookie",
+			slog.String("component", "auth"),
+		)
+	}
 
 	if err == nil && cookie.Value != "" {
 		tokenString := cookie.Value
