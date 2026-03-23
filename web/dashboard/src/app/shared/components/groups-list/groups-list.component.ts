@@ -1,14 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { TuiSurface, TuiTitle } from '@taiga-ui/core';
+import { TuiButton, TuiSurface, TuiTitle } from '@taiga-ui/core';
 import { TuiAvatar } from '@taiga-ui/kit';
-import { TuiCardMedium } from '@taiga-ui/layout';
+import { TuiBlockStatus, TuiCardMedium } from '@taiga-ui/layout';
 import { Group } from '../../services/groups.service';
 
 @Component({
   selector: 'app-groups-list',
   standalone: true,
-  imports: [CommonModule, TuiCardMedium, TuiSurface, TuiTitle, TuiAvatar],
+  imports: [CommonModule, TuiCardMedium, TuiSurface, TuiTitle, TuiAvatar, TuiBlockStatus, TuiButton],
   templateUrl: './groups-list.component.html',
   styleUrls: ['./groups-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

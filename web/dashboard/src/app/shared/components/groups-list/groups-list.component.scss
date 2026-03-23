@@ -6,6 +6,11 @@
   margin-bottom: 1.5rem;
 }
 
+.empty-illustration {
+  width: 200px;
+  height: auto;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));

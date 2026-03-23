@@ -2,6 +2,7 @@
   <app-asset-list
     [assets]="(assets$ | async) || []"
     [showAddTile]="showUploadVideo()"
+    [role]="auth.user()?.role"
     [title]="'All my videos'"
     (addVideo)="onAddVideo()"
   >
