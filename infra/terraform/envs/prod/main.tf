@@ -96,6 +96,34 @@ output "db_public_ip" {
   value = module.cloud_sql.public_ip
 }
 
+# /* --------------------------------- DOMAIN MAPPING --------------------------------- */
+
+module "domain_mapping_dashboard" {
+  source = "../../modules/domain-mapping"
+
+  project_id   = var.project_id
+  region       = var.region
+  domain       = "zeta.m4xon.com"
+  service_name = "zeta-dashboard"
+}
+
+module "domain_mapping_api" {
+  source = "../../modules/domain-mapping"
+
+  project_id   = var.project_id
+  region       = var.region
+  domain       = "api.zeta.m4xon.com"
+  service_name = "zeta-api"
+}
+
 output "dashboard_url" {
   value = module.cloud_run_dashboard.service_url
+}
+
+output "dashboard_domain" {
+  value = "zeta.m4xon.com"
+}
+
+output "api_domain" {
+  value = "api.zeta.m4xon.com"
 }
