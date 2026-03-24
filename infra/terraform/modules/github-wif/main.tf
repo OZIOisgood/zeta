@@ -72,6 +72,13 @@ resource "google_project_iam_member" "project_iam_admin" {
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
+# Allow the deploy SA to manage Workload Identity Pools via Terraform.
+resource "google_project_iam_member" "wif_admin" {
+  project = var.project_id
+  role    = "roles/iam.workloadIdentityPoolAdmin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
 # Allow the deploy SA to read/write Terraform state in GCS.
 resource "google_storage_bucket_iam_member" "tf_state" {
   bucket = var.tf_state_bucket
