@@ -28,8 +28,14 @@ resource "google_cloud_run_v2_service" "app" {
   }
 
   lifecycle {
-    # Prevent Terraform from overwriting the image set by the deploy workflow.
-    ignore_changes = [template[0].containers[0].image]
+    # The deploy workflow sets the image, env vars, secrets, volumes, and client
+    # metadata via gcloud. Terraform only manages the service skeleton + scaling.
+    ignore_changes = [
+      template[0].containers,
+      template[0].volumes,
+      client,
+      client_version,
+    ]
   }
 }
 

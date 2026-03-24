@@ -79,10 +79,10 @@ resource "google_project_iam_member" "wif_admin" {
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
-# Allow the deploy SA to read/write Terraform state in GCS.
+# Allow the deploy SA to manage Terraform state bucket (read/write objects + manage bucket IAM).
 resource "google_storage_bucket_iam_member" "tf_state" {
   bucket = var.tf_state_bucket
-  role   = "roles/storage.objectUser"
+  role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.deploy.email}"
 }
 
