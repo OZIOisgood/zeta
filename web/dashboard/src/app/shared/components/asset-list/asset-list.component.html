@@ -1,4 +1,4 @@
-<h1 class="tui-text_h3 list-title" *ngIf="title" [tuiSkeleton]="loading">{{ title }}</h1>
+<h1 class="tui-text_h3 list-title" *ngIf="title" [tuiSkeleton]="loading ? title : ''">{{ loading ? '' : title }}</h1>
 
 <div class="grid" *ngIf="loading">
   <div
