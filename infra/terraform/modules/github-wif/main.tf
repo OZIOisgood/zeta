@@ -37,10 +37,38 @@ resource "google_project_iam_member" "artifact_writer" {
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
-# Allow the deploy SA to access secrets.
+# Allow the deploy SA to access secrets (runtime read access for Cloud Run).
 resource "google_project_iam_member" "secret_accessor" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# Allow the deploy SA to manage secrets via Terraform (create/update/delete).
+resource "google_project_iam_member" "secret_admin" {
+  project = var.project_id
+  role    = "roles/secretmanager.admin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# Allow the deploy SA to manage Cloud SQL instances via Terraform.
+resource "google_project_iam_member" "cloudsql_admin" {
+  project = var.project_id
+  role    = "roles/cloudsql.admin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# Allow the deploy SA to manage IAM on service accounts via Terraform.
+resource "google_project_iam_member" "sa_admin" {
+  project = var.project_id
+  role    = "roles/iam.serviceAccountAdmin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# Allow the deploy SA to manage project-level IAM bindings via Terraform.
+resource "google_project_iam_member" "project_iam_admin" {
+  project = var.project_id
+  role    = "roles/resourcemanager.projectIamAdmin"
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
