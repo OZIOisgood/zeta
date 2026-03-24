@@ -12,3 +12,9 @@ variable "environment" {
   type        = string
   description = "Deployment environment (dev or prod)"
 }
+
+variable "tf_state_bucket" {
+  type        = string
+  description = "GCS bucket name that holds Terraform state"
+  default     = "zeta-terraform-state"
+}

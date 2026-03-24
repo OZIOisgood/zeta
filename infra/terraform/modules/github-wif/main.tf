@@ -44,6 +44,13 @@ resource "google_project_iam_member" "secret_accessor" {
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
+# Allow the deploy SA to read/write Terraform state in GCS.
+resource "google_storage_bucket_iam_member" "tf_state" {
+  bucket = var.tf_state_bucket
+  role   = "roles/storage.objectUser"
+  member = "serviceAccount:${google_service_account.deploy.email}"
+}
+
 # Workload Identity Pool — one per environment.
 resource "google_iam_workload_identity_pool" "github" {
   project                   = var.project_id
