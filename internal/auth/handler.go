@@ -292,67 +292,60 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	// We check if Role is missing in context, or if we want to enforce it.
 	// Since user might have been added out of band, or we just want to be sure.
 	currentRole := user.Role
-	
-	// If the user has no role in the token, or we want to double check memberships:
-	// But double checking on every Me call is an API call.
-	// Requirement: "automatically add user to organization on `auth/me/` and he is not in org"
-	
-	// We optimize: Only check if role is empty (which means Callback didn't find one)
-	// OR if we suspect it might be wrong? 
-	// The prompt implies we should do it here. If we do it unconditionally it is safer but slower.
-	// Let's do it if role is empty. If they leave org, they will have empty role on next login.
-	
-	newRole, err := h.ensureUserInOrg(ctx, user.ID)
-	if err != nil {
-		h.logger.ErrorContext(ctx, "auth_ensure_org_failed", 
-			slog.String("user_id", user.ID),
-			slog.Any("err", err),
-		)
-		// We could fail hard, or continue without role (but permissions will fail)
-		// Let's log and continue, assuming maybe downstream permissions check will catch it.
-	} else if newRole != currentRole {
-		// Role changed. Update Cookie with new role and re-use existing SID.
-		
-		// Create new JWT
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub":        user.ID,
-			"email":      user.Email,
-			"first_name": user.FirstName,
-			"last_name":  user.LastName,
-			"picture":    user.ProfilePictureUrl,
-			"sid":        user.SID,
-			"role":       newRole,
-			"exp":        time.Now().Add(24 * time.Hour).Unix(),
-		})
 
-		secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
-		if len(secret) > 0 {
-			tokenString, err := token.SignedString(secret)
-			if err != nil {
-				h.logger.ErrorContext(ctx, "auth_token_refresh_failed",
-					slog.String("component", "auth"),
-					slog.Any("err", err),
-				)
-			} else {
-				http.SetCookie(w, &http.Cookie{
-					Name:     CookieName,
-					Value:    tokenString,
-					Path:     "/",
-					Expires:  time.Now().Add(24 * time.Hour),
-					HttpOnly: true,
-					Secure:   true,
-					SameSite: http.SameSiteLaxMode,
-				})
-				h.logger.InfoContext(ctx, "auth_role_updated_in_cookie",
-					slog.String("component", "auth"),
-					slog.String("user_id", user.ID),
-					slog.String("new_role", newRole),
-				)
+	// Only call ensureUserInOrg when the JWT has no role yet (first login or role not persisted).
+	// Calling it on every /auth/me request would incur a WorkOS API call each time.
+	if currentRole == "" {
+		newRole, err := h.ensureUserInOrg(ctx, user.ID)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_ensure_org_failed",
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+		} else if newRole != currentRole {
+			// Role changed. Update Cookie with new role and re-use existing SID.
+
+			// Create new JWT
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"sub":        user.ID,
+				"email":      user.Email,
+				"first_name": user.FirstName,
+				"last_name":  user.LastName,
+				"picture":    user.ProfilePictureUrl,
+				"sid":        user.SID,
+				"role":       newRole,
+				"exp":        time.Now().Add(24 * time.Hour).Unix(),
+			})
+
+			secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
+			if len(secret) > 0 {
+				tokenString, err := token.SignedString(secret)
+				if err != nil {
+					h.logger.ErrorContext(ctx, "auth_token_refresh_failed",
+						slog.String("component", "auth"),
+						slog.Any("err", err),
+					)
+				} else {
+					http.SetCookie(w, &http.Cookie{
+						Name:     CookieName,
+						Value:    tokenString,
+						Path:     "/",
+						Expires:  time.Now().Add(24 * time.Hour),
+						HttpOnly: true,
+						Secure:   true,
+						SameSite: http.SameSiteNoneMode,
+					})
+					h.logger.InfoContext(ctx, "auth_role_updated_in_cookie",
+						slog.String("component", "auth"),
+						slog.String("user_id", user.ID),
+						slog.String("new_role", newRole),
+					)
+				}
 			}
-		}
 
-		// Update the local user object for the response
-		user.Role = newRole
+			// Update the local user object for the response
+			user.Role = newRole
+		}
 	}
 
 	// Fetch user preferences (language) (REMAINING CODE)
@@ -371,7 +364,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 					slog.String("user_id", user.ID),
 					slog.Any("err", err),
 				)
-				// Continue with default language if DB write fails? 
+				// Continue with default language if DB write fails?
 				// Better to error out or return default structure without saving
 				prefs = db.UserPreference{
 					UserID:   user.ID,
