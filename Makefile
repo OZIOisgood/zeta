@@ -49,3 +49,15 @@ db\:migrate\:down:
 db\:migrate\:reset:
 	migrate -path db/migrations -database "$(DB_URL)" down
 
+mobile\:build:
+	cd mobile && ./gradlew build
+
+mobile\:android\:build:
+	cd mobile && ./gradlew :androidApp:assembleDebug
+
+mobile\:shared\:test:
+	cd mobile && ./gradlew :shared:allTests
+
+mobile\:clean:
+	cd mobile && ./gradlew clean
+
