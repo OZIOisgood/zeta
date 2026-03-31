@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose handles all theming; just suppress the system ActionBar -->
+    <style name="Theme.Zeta" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

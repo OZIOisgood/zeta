@@ -78,6 +78,8 @@ func (s *Server) routes() {
 	// Auth Routes
 	s.Router.Group(func(r chi.Router) {
 		r.Get("/auth/login", authHandler.Login)
+		r.Get("/auth/login/mobile", authHandler.MobileLogin)
+		r.Post("/auth/token/mobile", authHandler.MobileToken)
 		r.Get("/auth/callback", authHandler.Callback)
 		r.Post("/auth/logout", authHandler.Logout)
 		r.Get("/auth/me", authHandler.Me)
@@ -117,4 +119,3 @@ func allowedOrigins() []string {
 	}
 	return origins
 }
-

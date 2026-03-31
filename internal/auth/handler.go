@@ -292,67 +292,60 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	// We check if Role is missing in context, or if we want to enforce it.
 	// Since user might have been added out of band, or we just want to be sure.
 	currentRole := user.Role
-	
-	// If the user has no role in the token, or we want to double check memberships:
-	// But double checking on every Me call is an API call.
-	// Requirement: "automatically add user to organization on `auth/me/` and he is not in org"
-	
-	// We optimize: Only check if role is empty (which means Callback didn't find one)
-	// OR if we suspect it might be wrong? 
-	// The prompt implies we should do it here. If we do it unconditionally it is safer but slower.
-	// Let's do it if role is empty. If they leave org, they will have empty role on next login.
-	
-	newRole, err := h.ensureUserInOrg(ctx, user.ID)
-	if err != nil {
-		h.logger.ErrorContext(ctx, "auth_ensure_org_failed", 
-			slog.String("user_id", user.ID),
-			slog.Any("err", err),
-		)
-		// We could fail hard, or continue without role (but permissions will fail)
-		// Let's log and continue, assuming maybe downstream permissions check will catch it.
-	} else if newRole != currentRole {
-		// Role changed. Update Cookie with new role and re-use existing SID.
-		
-		// Create new JWT
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub":        user.ID,
-			"email":      user.Email,
-			"first_name": user.FirstName,
-			"last_name":  user.LastName,
-			"picture":    user.ProfilePictureUrl,
-			"sid":        user.SID,
-			"role":       newRole,
-			"exp":        time.Now().Add(24 * time.Hour).Unix(),
-		})
 
-		secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
-		if len(secret) > 0 {
-			tokenString, err := token.SignedString(secret)
-			if err != nil {
-				h.logger.ErrorContext(ctx, "auth_token_refresh_failed",
-					slog.String("component", "auth"),
-					slog.Any("err", err),
-				)
-			} else {
-				http.SetCookie(w, &http.Cookie{
-					Name:     CookieName,
-					Value:    tokenString,
-					Path:     "/",
-					Expires:  time.Now().Add(24 * time.Hour),
-					HttpOnly: true,
-					Secure:   true,
-					SameSite: http.SameSiteLaxMode,
-				})
-				h.logger.InfoContext(ctx, "auth_role_updated_in_cookie",
-					slog.String("component", "auth"),
-					slog.String("user_id", user.ID),
-					slog.String("new_role", newRole),
-				)
+	// Only call ensureUserInOrg when the JWT has no role yet (first login or role not persisted).
+	// Calling it on every /auth/me request would incur a WorkOS API call each time.
+	if currentRole == "" {
+		newRole, err := h.ensureUserInOrg(ctx, user.ID)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_ensure_org_failed",
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+		} else if newRole != currentRole {
+			// Role changed. Update Cookie with new role and re-use existing SID.
+
+			// Create new JWT
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"sub":        user.ID,
+				"email":      user.Email,
+				"first_name": user.FirstName,
+				"last_name":  user.LastName,
+				"picture":    user.ProfilePictureUrl,
+				"sid":        user.SID,
+				"role":       newRole,
+				"exp":        time.Now().Add(24 * time.Hour).Unix(),
+			})
+
+			secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
+			if len(secret) > 0 {
+				tokenString, err := token.SignedString(secret)
+				if err != nil {
+					h.logger.ErrorContext(ctx, "auth_token_refresh_failed",
+						slog.String("component", "auth"),
+						slog.Any("err", err),
+					)
+				} else {
+					http.SetCookie(w, &http.Cookie{
+						Name:     CookieName,
+						Value:    tokenString,
+						Path:     "/",
+						Expires:  time.Now().Add(24 * time.Hour),
+						HttpOnly: true,
+						Secure:   true,
+						SameSite: http.SameSiteNoneMode,
+					})
+					h.logger.InfoContext(ctx, "auth_role_updated_in_cookie",
+						slog.String("component", "auth"),
+						slog.String("user_id", user.ID),
+						slog.String("new_role", newRole),
+					)
+				}
 			}
-		}
 
-		// Update the local user object for the response
-		user.Role = newRole
+			// Update the local user object for the response
+			user.Role = newRole
+		}
 	}
 
 	// Fetch user preferences (language) (REMAINING CODE)
@@ -371,7 +364,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 					slog.String("user_id", user.ID),
 					slog.Any("err", err),
 				)
-				// Continue with default language if DB write fails? 
+				// Continue with default language if DB write fails?
 				// Better to error out or return default structure without saving
 				prefs = db.UserPreference{
 					UserID:   user.ID,
@@ -407,6 +400,133 @@ type UpdateUserRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Language  string `json:"language"`
+}
+
+// MobileLogin redirects to WorkOS login with a mobile deep-link redirect URI.
+func (h *Handler) MobileLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	h.logger.InfoContext(ctx, "auth_mobile_login_initiated",
+		slog.String("component", "auth"),
+	)
+
+	clientID := os.Getenv("WORKOS_CLIENT_ID")
+	mobileRedirectURI := os.Getenv("WORKOS_MOBILE_REDIRECT_URI")
+	if mobileRedirectURI == "" {
+		mobileRedirectURI = "zeta://auth/callback"
+	}
+
+	url, err := usermanagement.GetAuthorizationURL(usermanagement.GetAuthorizationURLOpts{
+		ClientID:    clientID,
+		RedirectURI: mobileRedirectURI,
+		Provider:    "authkit",
+	})
+	if err != nil {
+		h.logger.ErrorContext(ctx, "auth_mobile_get_url_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
+}
+
+type MobileTokenRequest struct {
+	Code string `json:"code"`
+}
+
+type MobileTokenResponse struct {
+	Token string `json:"token"`
+	User  struct {
+		ID                string `json:"id"`
+		Email             string `json:"email"`
+		FirstName         string `json:"first_name"`
+		LastName          string `json:"last_name"`
+		ProfilePictureURL string `json:"profile_picture_url"`
+		Role              string `json:"role"`
+	} `json:"user"`
+}
+
+// MobileToken exchanges an OAuth code for a JWT returned in the response body (for mobile clients).
+func (h *Handler) MobileToken(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req MobileTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Code == "" {
+		http.Error(w, "Invalid request body: code is required", http.StatusBadRequest)
+		return
+	}
+
+	clientID := os.Getenv("WORKOS_CLIENT_ID")
+
+	resp, err := usermanagement.AuthenticateWithCode(ctx, usermanagement.AuthenticateWithCodeOpts{
+		ClientID: clientID,
+		Code:     req.Code,
+	})
+	if err != nil {
+		h.logger.ErrorContext(ctx, "auth_mobile_token_authenticate_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Authentication failed", http.StatusUnauthorized)
+		return
+	}
+
+	// Extract Session ID from WorkOS Access Token
+	var claims jwt.MapClaims
+	_, _, _ = jwt.NewParser().ParseUnverified(resp.AccessToken, &claims)
+	sid, _ := claims["sid"].(string)
+
+	// Fetch Role
+	role := ""
+	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
+		UserID: resp.User.ID,
+	})
+	if err == nil && len(memberships.Data) > 0 {
+		role = memberships.Data[0].Role.Slug
+	}
+
+	// Create JWT
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":        resp.User.ID,
+		"email":      resp.User.Email,
+		"first_name": resp.User.FirstName,
+		"last_name":  resp.User.LastName,
+		"picture":    resp.User.ProfilePictureURL,
+		"sid":        sid,
+		"role":       role,
+		"exp":        time.Now().Add(24 * time.Hour).Unix(),
+	})
+
+	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
+	if len(secret) == 0 {
+		http.Error(w, "Server misconfiguration", http.StatusInternalServerError)
+		return
+	}
+
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		http.Error(w, "Failed to sign token", http.StatusInternalServerError)
+		return
+	}
+
+	h.logger.InfoContext(ctx, "auth_mobile_token_issued",
+		slog.String("component", "auth"),
+		slog.String("user_id", resp.User.ID),
+	)
+
+	var tokenResp MobileTokenResponse
+	tokenResp.Token = tokenString
+	tokenResp.User.ID = resp.User.ID
+	tokenResp.User.Email = resp.User.Email
+	tokenResp.User.FirstName = resp.User.FirstName
+	tokenResp.User.LastName = resp.User.LastName
+	tokenResp.User.ProfilePictureURL = resp.User.ProfilePictureURL
+	tokenResp.User.Role = role
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tokenResp)
 }
 
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {

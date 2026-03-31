@@ -16,3 +16,18 @@ google-cloud-sdk/
 
 # Log files
 log*.txt
+
+# Gradle / Android Studio
+.gradle/
+build/
+mobile/.gradle-home/
+mobile/.kotlin/
+mobile/kotlin/
+mobile/local.properties
+mobile/.idea/
+
+# Android
+*.apk
+*.aab
+*.keystore
+!debug.keystore
