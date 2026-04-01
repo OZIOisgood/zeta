@@ -10,6 +10,8 @@ env:
   REGION: europe-west1
   IMAGE_API: europe-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/zeta/api
   IMAGE_DASHBOARD: europe-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/zeta/dashboard
+  CLOUD_SQL_PROXY_VERSION: "2.14.2"
+  MIGRATE_VERSION: "4.18.1"
 
 jobs:
   build-and-deploy-api:
@@ -34,6 +36,55 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Run database migrations
+        env:
+          CLOUD_SQL_INSTANCE: ${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:zeta-prod
+          SECRET_ID: zeta-prod-db-url
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+
+          # Install Cloud SQL Auth Proxy
+          curl -fsSL "https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v${CLOUD_SQL_PROXY_VERSION}/cloud-sql-proxy.linux.amd64" \
+            -o /tmp/cloud-sql-proxy && chmod +x /tmp/cloud-sql-proxy
+
+          # Install golang-migrate
+          curl -fsSL "https://github.com/golang-migrate/migrate/releases/download/v${MIGRATE_VERSION}/migrate.linux-amd64.tar.gz" \
+            | tar xz -C /tmp migrate && chmod +x /tmp/migrate
+
+          # Start proxy and ensure it is killed on exit
+          /tmp/cloud-sql-proxy --port=5432 "${CLOUD_SQL_INSTANCE}" &
+          PROXY_PID=$!
+          trap 'kill "$PROXY_PID" 2>/dev/null || true' EXIT
+
+          # Wait for proxy to be ready (up to 15 s)
+          echo "Waiting for Cloud SQL Auth Proxy..."
+          for i in $(seq 1 15); do
+            if nc -z 127.0.0.1 5432 2>/dev/null; then
+              echo "Proxy is ready."
+              break
+            fi
+            if [ "$i" -eq 15 ]; then
+              echo "Proxy failed to start in time." && exit 1
+            fi
+            sleep 1
+          done
+
+          # Retrieve DB URL from Secret Manager and mask it in logs
+          DB_URL_SOCKET=$(gcloud secrets versions access latest \
+            --secret="${SECRET_ID}" --project="${GCP_PROJECT_ID}")
+          echo "::add-mask::$DB_URL_SOCKET"
+
+          # Transform Unix socket URL → TCP URL for the proxy
+          # From: postgres://user:pass@/dbname?host=/cloudsql/instance&sslmode=disable
+          # To:   postgres://user:pass@localhost:5432/dbname?sslmode=disable
+          MIGRATION_URL=$(echo "$DB_URL_SOCKET" \
+            | sed 's|@/|@localhost:5432/|; s|?host=[^&]*&|?|')
+          echo "::add-mask::$MIGRATION_URL"
+
+          # Run pending migrations
+          /tmp/migrate -path db/migrations -database "$MIGRATION_URL" up
 
       - name: Build and push image
         run: |
