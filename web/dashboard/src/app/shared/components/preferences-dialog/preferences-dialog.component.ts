@@ -87,6 +87,7 @@ export class PreferencesDialogComponent {
         first_name,
         last_name,
         language,
+        ...(this.newAvatarBase64 ? { avatar: this.newAvatarBase64 } : {}),
       })
       .subscribe({
         next: () => {

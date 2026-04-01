@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -127,13 +129,54 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
+	// Seed avatar from WorkOS only on first sign-in (no preferences row yet).
+	// If a row already exists, the DB avatar is the source of truth.
+	go func() {
+		_, err := h.q.GetUserPreferences(context.Background(), resp.User.ID)
+		if err == nil {
+			// Row exists — keep the DB avatar as-is
+			return
+		}
+		if err != pgx.ErrNoRows {
+			h.logger.WarnContext(context.Background(), "auth_seed_avatar_check_failed",
+				slog.String("user_id", resp.User.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
+		// No preferences row yet — seed avatar from WorkOS if available
+		avatar := ""
+		if resp.User.ProfilePictureURL != "" {
+			avatarB64, err := h.fetchURLAsBase64(resp.User.ProfilePictureURL)
+			if err != nil {
+				h.logger.WarnContext(context.Background(), "auth_seed_avatar_failed",
+					slog.String("user_id", resp.User.ID),
+					slog.Any("err", err),
+				)
+			} else {
+				avatar = avatarB64
+			}
+		}
+		if avatar != "" {
+			_, err = h.q.UpsertUserAvatar(context.Background(), db.UpsertUserAvatarParams{
+				UserID: resp.User.ID,
+				Avatar: avatar,
+			})
+			if err != nil {
+				h.logger.WarnContext(context.Background(), "auth_seed_avatar_save_failed",
+					slog.String("user_id", resp.User.ID),
+					slog.Any("err", err),
+				)
+			}
+		}
+	}()
+
 	// Create JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":         resp.User.ID,
 		"email":       resp.User.Email,
 		"first_name":  resp.User.FirstName,
 		"last_name":   resp.User.LastName,
-		"picture":     resp.User.ProfilePictureURL,
 		"sid":         sid,
 		"role":        role,
 		"permissions": userPermissions,
@@ -375,7 +418,6 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"email":       user.Email,
 		"first_name":  user.FirstName,
 		"last_name":   user.LastName,
-		"picture":     user.ProfilePictureUrl,
 		"sid":         user.SID,
 		"role":        newRole,
 		"permissions": newPermissions,
@@ -403,7 +445,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Fetch user preferences (language) (REMAINING CODE)
+	// Fetch user preferences (language + avatar)
 	prefs, err := h.q.GetUserPreferences(ctx, user.ID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -419,8 +461,6 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 					slog.String("user_id", user.ID),
 					slog.Any("err", err),
 				)
-				// Continue with default language if DB write fails? 
-				// Better to error out or return default structure without saving
 				prefs = db.UserPreference{
 					UserID:   user.ID,
 					Language: db.LanguageCode(lang),
@@ -443,7 +483,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"last_name":           user.LastName,
 		"email":               user.Email,
 		"language":            prefs.Language,
-		"profile_picture_url": user.ProfilePictureUrl,
+		"profile_picture_url": prefs.Avatar,
 		"role":                user.Role,
 		"permissions":         user.Permissions,
 	}
@@ -456,6 +496,7 @@ type UpdateUserRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Language  string `json:"language"`
+	Avatar    string `json:"avatar"`
 }
 
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
@@ -487,6 +528,24 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Update avatar if provided
+	if req.Avatar != "" {
+		updated, err := h.q.UpdateUserAvatar(ctx, db.UpdateUserAvatarParams{
+			UserID: user.ID,
+			Avatar: req.Avatar,
+		})
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_update_avatar_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to update avatar", http.StatusInternalServerError)
+			return
+		}
+		prefs = updated
+	}
+
 	// Try to update WorkOS user
 	go func() {
 		// Update WorkOS user
@@ -516,7 +575,6 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		"email":       user.Email,
 		"first_name":  req.FirstName,
 		"last_name":   req.LastName,
-		"picture":     user.ProfilePictureUrl,
 		"sid":         user.SID,
 		"role":        user.Role,
 		"permissions": user.Permissions,
@@ -543,11 +601,28 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		"last_name":           req.LastName,
 		"email":               user.Email,
 		"language":            prefs.Language,
-		"profile_picture_url": user.ProfilePictureUrl,
+		"profile_picture_url": prefs.Avatar,
 		"role":                user.Role,
 		"permissions":         user.Permissions,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+// fetchURLAsBase64 downloads the content at url and returns it as a base64-encoded string.
+func (h *Handler) fetchURLAsBase64(url string) (string, error) {
+	resp, err := http.Get(url) // #nosec G107 — URL comes from WorkOS API response
+	if err != nil {
+		return "", fmt.Errorf("fetch avatar: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("fetch avatar: unexpected status %d", resp.StatusCode)
+	}
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("fetch avatar: read body: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
 }

@@ -223,6 +223,7 @@ type UserPreference struct {
 	Language  LanguageCode     `json:"language"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	Avatar    string           `json:"avatar"`
 }
 
 type Video struct {

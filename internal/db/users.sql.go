@@ -10,7 +10,7 @@ import (
 )
 
 const getUserPreferences = `-- name: GetUserPreferences :one
-SELECT user_id, language, created_at, updated_at FROM user_preferences WHERE user_id = $1
+SELECT user_id, language, created_at, updated_at, avatar FROM user_preferences WHERE user_id = $1
 `
 
 func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPreference, error) {
@@ -21,6 +21,60 @@ func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPr
 		&i.Language,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Avatar,
+	)
+	return i, err
+}
+
+const updateUserAvatar = `-- name: UpdateUserAvatar :one
+UPDATE user_preferences
+SET avatar     = $2,
+    updated_at = NOW()
+WHERE user_id = $1
+RETURNING user_id, language, created_at, updated_at, avatar
+`
+
+type UpdateUserAvatarParams struct {
+	UserID string `json:"user_id"`
+	Avatar string `json:"avatar"`
+}
+
+func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error) {
+	row := q.db.QueryRow(ctx, updateUserAvatar, arg.UserID, arg.Avatar)
+	var i UserPreference
+	err := row.Scan(
+		&i.UserID,
+		&i.Language,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Avatar,
+	)
+	return i, err
+}
+
+const upsertUserAvatar = `-- name: UpsertUserAvatar :one
+INSERT INTO user_preferences (user_id, language, avatar)
+VALUES ($1, 'en', $2)
+ON CONFLICT (user_id) DO UPDATE
+SET avatar     = EXCLUDED.avatar,
+    updated_at = NOW()
+RETURNING user_id, language, created_at, updated_at, avatar
+`
+
+type UpsertUserAvatarParams struct {
+	UserID string `json:"user_id"`
+	Avatar string `json:"avatar"`
+}
+
+func (q *Queries) UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarParams) (UserPreference, error) {
+	row := q.db.QueryRow(ctx, upsertUserAvatar, arg.UserID, arg.Avatar)
+	var i UserPreference
+	err := row.Scan(
+		&i.UserID,
+		&i.Language,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Avatar,
 	)
 	return i, err
 }
@@ -31,7 +85,7 @@ VALUES ($1, $2)
 ON CONFLICT (user_id) DO UPDATE
 SET language = EXCLUDED.language,
     updated_at = NOW()
-RETURNING user_id, language, created_at, updated_at
+RETURNING user_id, language, created_at, updated_at, avatar
 `
 
 type UpsertUserPreferencesParams struct {
@@ -47,6 +101,7 @@ func (q *Queries) UpsertUserPreferences(ctx context.Context, arg UpsertUserPrefe
 		&i.Language,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Avatar,
 	)
 	return i, err
 }
