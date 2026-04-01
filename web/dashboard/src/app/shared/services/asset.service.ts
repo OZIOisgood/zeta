@@ -23,6 +23,12 @@ export interface VideoItem {
   review_count: number;
 }
 
+export interface AssetGroup {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
 export interface Asset {
   id: string;
   title: string;
@@ -32,6 +38,7 @@ export interface Asset {
   thumbnail?: string;
   playback_id?: string;
   videos?: VideoItem[];
+  group?: AssetGroup;
 }
 
 export interface Review {

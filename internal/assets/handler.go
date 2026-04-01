@@ -2,6 +2,7 @@ package assets
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -99,6 +100,12 @@ func (h *Handler) CompleteUpload(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
+type GroupInfo struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar,omitempty"`
+}
+
 type AssetItem struct {
 	ID          string      `json:"id"`
 	Title       string      `json:"title"`
@@ -108,6 +115,7 @@ type AssetItem struct {
 	Thumbnail   string      `json:"thumbnail,omitempty"`
 	PlaybackID  string      `json:"playback_id,omitempty"`
 	Videos      []VideoItem `json:"videos,omitempty"`
+	Group       *GroupInfo  `json:"group,omitempty"`
 }
 
 type VideoItem struct {
@@ -256,6 +264,19 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 		thumb = fmt.Sprintf("https://image.mux.com/%s/thumbnail.png", currentPlaybackID)
 	}
 
+	var group *GroupInfo
+	if asset.GroupID.Valid && asset.GroupName.Valid {
+		groupAvatar := ""
+		if len(asset.GroupAvatar) > 0 {
+			groupAvatar = base64.StdEncoding.EncodeToString(asset.GroupAvatar)
+		}
+		group = &GroupInfo{
+			ID:     toUUIDString(asset.GroupID),
+			Name:   asset.GroupName.String,
+			Avatar: groupAvatar,
+		}
+	}
+
 	resp := AssetItem{
 		ID:          toUUIDString(asset.ID),
 		Title:       asset.Name,
@@ -265,6 +286,7 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 		Thumbnail:   thumb,
 		PlaybackID:  currentPlaybackID,
 		Videos:      videos,
+		Group:       group,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

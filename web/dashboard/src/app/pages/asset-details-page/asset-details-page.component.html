@@ -30,14 +30,20 @@
 
       <div class="text-content">
         <h1 class="tui-text_h3 title mobile-title">{{ asset.title }}</h1>
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-          "
-        >
+        <div class="meta-row">
+          <div *ngIf="asset.group" class="group-info">
+            <div
+              class="group-avatar"
+              *ngIf="asset.group.avatar; else groupInitial"
+              [style.background-image]="'url(data:image/jpeg;base64,' + asset.group.avatar + ')'"
+            ></div>
+            <ng-template #groupInitial>
+              <div class="group-avatar group-avatar--initials">
+                {{ asset.group.name.charAt(0).toUpperCase() }}
+              </div>
+            </ng-template>
+            <span class="tui-text_body-m group-name">{{ asset.group.name }}</span>
+          </div>
           <tui-badge class="badge" [ngClass]="'status-' + asset.status">
             {{ formatStatus(asset.status) }}
           </tui-badge>
