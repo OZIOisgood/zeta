@@ -95,7 +95,6 @@ export class AuthService {
     first_name: string;
     last_name: string;
     language: string;
-    avatar?: string;
   }): Observable<User> {
     return this.http.put<User>(`${this.baseUrl}/me`, data).pipe(tap((user) => this.user.set(user)));
   }
