@@ -86,9 +86,6 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch org memberships to get roles (single API call)
 	orgID := os.Getenv("DEFAULT_ORG_ID")
-	if orgID == "" {
-		orgID = "org_01KFQFSEEVTCBYCV85D12DZ35M"
-	}
 
 	roleByUserID := make(map[string]string, len(memberIDs))
 	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{

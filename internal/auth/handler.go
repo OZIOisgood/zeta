@@ -301,11 +301,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getDefaultOrgID() string {
-	orgID := os.Getenv("DEFAULT_ORG_ID")
-	if orgID == "" {
-		orgID = "org_01KFQFSEEVTCBYCV85D12DZ35M"
-	}
-	return orgID
+	return os.Getenv("DEFAULT_ORG_ID")
 }
 
 // getPermissionsForRole fetches the permissions for a given role slug from WorkOS.
