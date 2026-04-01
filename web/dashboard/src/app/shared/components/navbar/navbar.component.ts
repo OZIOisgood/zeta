@@ -56,7 +56,10 @@ export class NavbarComponent {
     }
 
     if (user.profile_picture_url) {
-      return user.profile_picture_url;
+      const url = user.profile_picture_url;
+      return url.startsWith('http') || url.startsWith('data:')
+        ? url
+        : `data:image/jpeg;base64,${url}`;
     }
 
     if (user.first_name && user.last_name) {

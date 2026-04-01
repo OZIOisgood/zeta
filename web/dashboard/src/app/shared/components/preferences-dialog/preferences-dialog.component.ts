@@ -53,7 +53,12 @@ export class PreferencesDialogComponent {
 
   protected getInitialAvatar(): string | null {
     const user = this.auth.user();
-    if (user?.profile_picture_url) return user.profile_picture_url;
+    if (user?.profile_picture_url) {
+      const url = user.profile_picture_url;
+      return url.startsWith('http') || url.startsWith('data:')
+        ? url
+        : `data:image/jpeg;base64,${url}`;
+    }
     return null;
   }
 
