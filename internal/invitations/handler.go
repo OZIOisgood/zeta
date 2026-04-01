@@ -45,7 +45,7 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(user.Role, permissions.GroupsInvitesCreate) {
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsInvitesCreate) {
 		log.WarnContext(ctx, "invitation_create_permission_denied",
 			slog.String("component", "invitations"),
 			slog.String("user_id", user.ID),

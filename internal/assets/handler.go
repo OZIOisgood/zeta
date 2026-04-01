@@ -302,7 +302,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userCtx.Role, permissions.AssetsCreate) {
+    if !permissions.HasPermission(userCtx.Permissions, permissions.AssetsCreate) {
 		log.WarnContext(ctx, "asset_create_permission_denied",
 			slog.String("component", "assets"),
 			slog.String("user_id", userCtx.ID),
@@ -530,7 +530,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userInfo.Role, permissions.AssetsFinalize) {
+	if !permissions.HasPermission(userInfo.Permissions, permissions.AssetsFinalize) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}

@@ -22,47 +22,9 @@ const (
 	RoleStudent = "student"
 )
 
-// RolePermissions maps roles to their specific permissions
-var rolePermissions = map[string][]string{
-	RoleAdmin: {
-		AssetsCreate,
-		GroupsCreate,
-		GroupsRead,
-		ReviewsCreate,
-		ReviewsRead,
-		ReviewsEdit,
-		ReviewsDelete,
-		AssetsFinalize,
-		GroupsUserListRead,
-		GroupsUserListDelete,
-		GroupsInvitesCreate,
-	},
-	RoleExpert: {
-		GroupsCreate,
-		GroupsRead,
-		ReviewsCreate,
-		ReviewsRead,
-		ReviewsEdit,
-		ReviewsDelete,
-		AssetsFinalize,
-		GroupsUserListRead,
-		GroupsUserListDelete,
-		GroupsInvitesCreate,
-	},
-	RoleStudent: {
-		AssetsCreate,
-		GroupsRead,
-		ReviewsRead,
-	},
-}
-
-// HasPermission checks if a given role string has the requested permission
-func HasPermission(role, permission string) bool {
-	perms, ok := rolePermissions[role]
-	if !ok {
-		return false
-	}
-	for _, p := range perms {
+// HasPermission checks if the given permissions slice contains the requested permission
+func HasPermission(userPermissions []string, permission string) bool {
+	for _, p := range userPermissions {
 		if p == permission {
 			return true
 		}

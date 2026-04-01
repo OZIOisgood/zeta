@@ -53,7 +53,7 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(user.Role, permissions.GroupsUserListRead) {
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsUserListRead) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
@@ -182,7 +182,7 @@ func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(user.Role, permissions.GroupsUserListDelete) {
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsUserListDelete) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

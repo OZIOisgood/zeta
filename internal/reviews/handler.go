@@ -63,7 +63,7 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsRead) {
+	if !permissions.HasPermission(userInfo.Permissions, permissions.ReviewsRead) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
@@ -120,7 +120,7 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsCreate) {
+	if !permissions.HasPermission(userInfo.Permissions, permissions.ReviewsCreate) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
@@ -210,7 +210,7 @@ func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsEdit) {
+	if !permissions.HasPermission(userInfo.Permissions, permissions.ReviewsEdit) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
@@ -290,7 +290,7 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsDelete) {
+	if !permissions.HasPermission(userInfo.Permissions, permissions.ReviewsDelete) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
@@ -358,7 +358,7 @@ func (h *Handler) EnhanceText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userInfo.Role, permissions.ReviewsEdit) {
+	if !permissions.HasPermission(userInfo.Permissions, permissions.ReviewsEdit) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}

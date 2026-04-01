@@ -12,6 +12,7 @@ export interface User {
   language: string;
   profile_picture_url?: string;
   role: string;
+  permissions: string[];
 }
 
 @Injectable({

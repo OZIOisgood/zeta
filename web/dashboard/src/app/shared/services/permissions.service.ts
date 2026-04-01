@@ -20,39 +20,9 @@ export type Permission =
 export class PermissionsService {
   private auth = inject(AuthService);
 
-  private rolePermissions: Record<string, Permission[]> = {
-    admin: [
-      'assets:create',
-      'groups:create',
-      'groups:read',
-      'reviews:create',
-      'reviews:read',
-      'reviews:edit',
-      'reviews:delete',
-      'assets:finalize',
-      'groups:user-list:read',
-      'groups:user-list:delete',
-      'groups:invites:create',
-    ],
-    expert: [
-      'groups:create',
-      'groups:read',
-      'reviews:create',
-      'reviews:read',
-      'reviews:edit',
-      'reviews:delete',
-      'assets:finalize',
-      'groups:user-list:read',
-      'groups:user-list:delete',
-      'groups:invites:create',
-    ],
-    student: ['assets:create', 'groups:read', 'reviews:read'],
-  };
-
   hasPermission(permission: Permission): boolean {
     const user = this.auth.user();
     if (!user) return false;
-    const perms = this.rolePermissions[user.role] || [];
-    return perms.includes(permission);
+    return user.permissions.includes(permission);
   }
 }

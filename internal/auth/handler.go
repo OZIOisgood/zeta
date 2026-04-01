@@ -103,13 +103,23 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	// Fetch Role from WorkOS
+	// Fetch Role and Permissions from WorkOS
 	role := ""
+	var userPermissions []string
 	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
 		UserID: resp.User.ID,
 	})
 	if err == nil && len(memberships.Data) > 0 {
 		role = memberships.Data[0].Role.Slug
+		userPermissions, err = h.getPermissionsForRole(ctx, role)
+		if err != nil {
+			h.logger.WarnContext(ctx, "auth_fetch_permissions_failed",
+				slog.String("user_id", resp.User.ID),
+				slog.String("role", role),
+				slog.Any("err", err),
+			)
+			userPermissions = []string{}
+		}
 	} else if err != nil {
 		h.logger.WarnContext(ctx, "auth_fetch_role_failed",
 			slog.String("user_id", resp.User.ID),
@@ -119,14 +129,15 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	// Create JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":        resp.User.ID,
-		"email":      resp.User.Email,
-		"first_name": resp.User.FirstName,
-		"last_name":  resp.User.LastName,
-		"picture":    resp.User.ProfilePictureURL,
-		"sid":        sid,
-		"role":       role,
-		"exp":        time.Now().Add(24 * time.Hour).Unix(),
+		"sub":         resp.User.ID,
+		"email":       resp.User.Email,
+		"first_name":  resp.User.FirstName,
+		"last_name":   resp.User.LastName,
+		"picture":     resp.User.ProfilePictureURL,
+		"sid":         sid,
+		"role":        role,
+		"permissions": userPermissions,
+		"exp":         time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
@@ -246,26 +257,77 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) ensureUserInOrg(ctx context.Context, userID string) (string, error) {
+func (h *Handler) getDefaultOrgID() string {
+	orgID := os.Getenv("DEFAULT_ORG_ID")
+	if orgID == "" {
+		orgID = "org_01KFQFSEEVTCBYCV85D12DZ35M"
+	}
+	return orgID
+}
+
+// getPermissionsForRole fetches the permissions for a given role slug from WorkOS.
+// The Go SDK's roles.Role struct does not include Permissions, so we call the
+// WorkOS REST API directly and decode into a custom response struct.
+func (h *Handler) getPermissionsForRole(ctx context.Context, roleSlug string) ([]string, error) {
+	orgID := h.getDefaultOrgID()
+	apiKey := os.Getenv("WORKOS_API_KEY")
+
+	url := fmt.Sprintf("https://api.workos.com/organizations/%s/roles", orgID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch organization roles: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("WorkOS API returned status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Data []struct {
+			Slug        string   `json:"slug"`
+			Permissions []string `json:"permissions"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode roles response: %w", err)
+	}
+
+	for _, role := range result.Data {
+		if role.Slug == roleSlug {
+			return role.Permissions, nil
+		}
+	}
+
+	return []string{}, nil
+}
+
+func (h *Handler) ensureUserInOrg(ctx context.Context, userID string) (string, []string, error) {
 	// 1. Check existing memberships
 	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
 		UserID: userID,
 	})
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	if len(memberships.Data) > 0 {
-		return memberships.Data[0].Role.Slug, nil
+		roleSlug := memberships.Data[0].Role.Slug
+		perms, err := h.getPermissionsForRole(ctx, roleSlug)
+		if err != nil {
+			return roleSlug, nil, fmt.Errorf("failed to fetch permissions: %w", err)
+		}
+		return roleSlug, perms, nil
 	}
 
 	// 2. Add to Default Org
-	defaultOrgID := os.Getenv("DEFAULT_ORG_ID")
-	if defaultOrgID == "" {
-		defaultOrgID = "org_01KFQFSEEVTCBYCV85D12DZ35M"
-	}
-
-	// Use permission constant implicitly or role constant
+	defaultOrgID := h.getDefaultOrgID()
 	role := permissions.RoleStudent
 
 	_, err = usermanagement.CreateOrganizationMembership(ctx, usermanagement.CreateOrganizationMembershipOpts{
@@ -274,10 +336,14 @@ func (h *Handler) ensureUserInOrg(ctx context.Context, userID string) (string, e
 		RoleSlug:       role,
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to add user to org: %w", err)
+		return "", nil, fmt.Errorf("failed to add user to org: %w", err)
 	}
 
-	return role, nil
+	perms, err := h.getPermissionsForRole(ctx, role)
+	if err != nil {
+		return role, nil, fmt.Errorf("failed to fetch permissions: %w", err)
+	}
+	return role, perms, nil
 }
 
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
@@ -288,71 +354,53 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ensure User is in Organization (and get Role)
-	// We check if Role is missing in context, or if we want to enforce it.
-	// Since user might have been added out of band, or we just want to be sure.
-	currentRole := user.Role
-	
-	// If the user has no role in the token, or we want to double check memberships:
-	// But double checking on every Me call is an API call.
-	// Requirement: "automatically add user to organization on `auth/me/` and he is not in org"
-	
-	// We optimize: Only check if role is empty (which means Callback didn't find one)
-	// OR if we suspect it might be wrong? 
-	// The prompt implies we should do it here. If we do it unconditionally it is safer but slower.
-	// Let's do it if role is empty. If they leave org, they will have empty role on next login.
-	
-	newRole, err := h.ensureUserInOrg(ctx, user.ID)
+	// Ensure User is in Organization and get Role + Permissions from WorkOS
+	newRole, newPermissions, err := h.ensureUserInOrg(ctx, user.ID)
 	if err != nil {
-		h.logger.ErrorContext(ctx, "auth_ensure_org_failed", 
+		h.logger.ErrorContext(ctx, "auth_ensure_org_failed",
 			slog.String("user_id", user.ID),
 			slog.Any("err", err),
 		)
-		// We could fail hard, or continue without role (but permissions will fail)
-		// Let's log and continue, assuming maybe downstream permissions check will catch it.
-	} else if newRole != currentRole {
-		// Role changed. Update Cookie with new role and re-use existing SID.
-		
-		// Create new JWT
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub":        user.ID,
-			"email":      user.Email,
-			"first_name": user.FirstName,
-			"last_name":  user.LastName,
-			"picture":    user.ProfilePictureUrl,
-			"sid":        user.SID,
-			"role":       newRole,
-			"exp":        time.Now().Add(24 * time.Hour).Unix(),
-		})
+	}
 
-		secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
-		if len(secret) > 0 {
-			tokenString, err := token.SignedString(secret)
-			if err != nil {
-				h.logger.ErrorContext(ctx, "auth_token_refresh_failed",
-					slog.String("component", "auth"),
-					slog.Any("err", err),
-				)
-			} else {
-				http.SetCookie(w, &http.Cookie{
-					Name:     CookieName,
-					Value:    tokenString,
-					Path:     "/",
-					Expires:  time.Now().Add(24 * time.Hour),
-					HttpOnly: true,
-					Secure:   true,
-					SameSite: http.SameSiteLaxMode,
-				})
-				h.logger.InfoContext(ctx, "auth_role_updated_in_cookie",
-					slog.String("component", "auth"),
-					slog.String("user_id", user.ID),
-					slog.String("new_role", newRole),
-				)
-			}
+	// Always refresh the cookie with latest role and permissions from WorkOS
+	if newPermissions == nil {
+		newPermissions = []string{}
+	}
+	user.Role = newRole
+	user.Permissions = newPermissions
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":         user.ID,
+		"email":       user.Email,
+		"first_name":  user.FirstName,
+		"last_name":   user.LastName,
+		"picture":     user.ProfilePictureUrl,
+		"sid":         user.SID,
+		"role":        newRole,
+		"permissions": newPermissions,
+		"exp":         time.Now().Add(24 * time.Hour).Unix(),
+	})
+
+	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
+	if len(secret) > 0 {
+		tokenString, err := token.SignedString(secret)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_token_refresh_failed",
+				slog.String("component", "auth"),
+				slog.Any("err", err),
+			)
+		} else {
+			http.SetCookie(w, &http.Cookie{
+				Name:     CookieName,
+				Value:    tokenString,
+				Path:     "/",
+				Expires:  time.Now().Add(24 * time.Hour),
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteLaxMode,
+			})
 		}
-
-		// Update the local user object for the response
-		user.Role = newRole
 	}
 
 	// Fetch user preferences (language) (REMAINING CODE)
@@ -397,6 +445,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"language":            prefs.Language,
 		"profile_picture_url": user.ProfilePictureUrl,
 		"role":                user.Role,
+		"permissions":         user.Permissions,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

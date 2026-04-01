@@ -33,7 +33,7 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(user.Role, permissions.GroupsRead) {
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsRead) {
 		log.WarnContext(ctx, "group_read_permission_denied",
 			slog.String("component", "groups"),
 			slog.String("user_id", user.ID),
@@ -77,7 +77,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(user.Role, permissions.GroupsCreate) {
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsCreate) {
 		log.WarnContext(ctx, "group_create_permission_denied",
 			slog.String("component", "groups"),
 			slog.String("user_id", user.ID),

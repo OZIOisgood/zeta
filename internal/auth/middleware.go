@@ -15,13 +15,14 @@ type contextKey string
 const UserKey contextKey = "user"
 
 type UserContext struct {
-	ID                string `json:"id"`
-	Email             string `json:"email"`
-	FirstName         string `json:"firstName"`
-	LastName          string `json:"lastName"`
-	ProfilePictureUrl string `json:"profilePictureUrl"`
-	Role              string `json:"role"`
-	SID               string `json:"sid"`
+	ID                string   `json:"id"`
+	Email             string   `json:"email"`
+	FirstName         string   `json:"firstName"`
+	LastName          string   `json:"lastName"`
+	ProfilePictureUrl string   `json:"profilePictureUrl"`
+	Role              string   `json:"role"`
+	SID               string   `json:"sid"`
+	Permissions       []string `json:"permissions"`
 }
 
 func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
@@ -62,6 +63,18 @@ func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				role, _ := claims["role"].(string)
 				sid, _ := claims["sid"].(string)
 
+				// Parse permissions from JWT claims
+				var userPermissions []string
+				if permsRaw, ok := claims["permissions"]; ok {
+					if permsSlice, ok := permsRaw.([]interface{}); ok {
+						for _, p := range permsSlice {
+							if s, ok := p.(string); ok {
+								userPermissions = append(userPermissions, s)
+							}
+						}
+					}
+				}
+
 				user := &UserContext{
 					ID:                userID,
 					Email:             email,
@@ -70,6 +83,7 @@ func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
 					ProfilePictureUrl: profilePictureUrl,
 					Role:              role,
 					SID:               sid,
+					Permissions:       userPermissions,
 				}
 				ctx := context.WithValue(r.Context(), UserKey, user)
 				logger.DebugContext(ctx, "user_authenticated",
