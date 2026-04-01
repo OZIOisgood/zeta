@@ -509,6 +509,34 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		slog.String("user_id", user.ID),
 	)
 
+	// Refresh the session cookie so that a page reload reflects the new name immediately.
+	// The JWT stores first_name/last_name and is the source of truth for GET /auth/me.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":         user.ID,
+		"email":       user.Email,
+		"first_name":  req.FirstName,
+		"last_name":   req.LastName,
+		"picture":     user.ProfilePictureUrl,
+		"sid":         user.SID,
+		"role":        user.Role,
+		"permissions": user.Permissions,
+		"exp":         time.Now().Add(24 * time.Hour).Unix(),
+	})
+	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
+	if len(secret) > 0 {
+		if tokenString, err := token.SignedString(secret); err == nil {
+			http.SetCookie(w, &http.Cookie{
+				Name:     CookieName,
+				Value:    tokenString,
+				Path:     "/",
+				Expires:  time.Now().Add(24 * time.Hour),
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteLaxMode,
+			})
+		}
+	}
+
 	resp := map[string]interface{}{
 		"id":                  user.ID,
 		"first_name":          req.FirstName,
