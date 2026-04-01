@@ -516,6 +516,8 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		"email":               user.Email,
 		"language":            prefs.Language,
 		"profile_picture_url": user.ProfilePictureUrl,
+		"role":                user.Role,
+		"permissions":         user.Permissions,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
