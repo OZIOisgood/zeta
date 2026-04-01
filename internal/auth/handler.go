@@ -478,14 +478,14 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 
 	// Construct response combining WorkOS data (from JWT) and Local Preferences
 	resp := map[string]interface{}{
-		"id":                  user.ID,
-		"first_name":          user.FirstName,
-		"last_name":           user.LastName,
-		"email":               user.Email,
-		"language":            prefs.Language,
-		"profile_picture_url": prefs.Avatar,
-		"role":                user.Role,
-		"permissions":         user.Permissions,
+		"id":          user.ID,
+		"first_name":  user.FirstName,
+		"last_name":   user.LastName,
+		"email":       user.Email,
+		"language":    prefs.Language,
+		"avatar":      prefs.Avatar,
+		"role":        user.Role,
+		"permissions": user.Permissions,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -596,14 +596,14 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := map[string]interface{}{
-		"id":                  user.ID,
-		"first_name":          req.FirstName,
-		"last_name":           req.LastName,
-		"email":               user.Email,
-		"language":            prefs.Language,
-		"profile_picture_url": prefs.Avatar,
-		"role":                user.Role,
-		"permissions":         user.Permissions,
+		"id":          user.ID,
+		"first_name":  req.FirstName,
+		"last_name":   req.LastName,
+		"email":       user.Email,
+		"language":    prefs.Language,
+		"avatar":      prefs.Avatar,
+		"role":        user.Role,
+		"permissions": user.Permissions,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

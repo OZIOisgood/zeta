@@ -10,7 +10,7 @@ export interface User {
   first_name: string;
   last_name: string;
   language: string;
-  profile_picture_url?: string;
+  avatar: string;
   role: string;
   permissions: string[];
 }
