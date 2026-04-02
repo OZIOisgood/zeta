@@ -1,7 +1,7 @@
 <app-page-container>
   <div class="group-details-container">
     @if (group$ | async; as group) {
-      <div class="group-header">
+      <div class="group-header" [style.background]="headerGradient$ | async">
         @if (getAvatarSrc(group.avatar); as avatarSrc) {
           <img [src]="avatarSrc" alt="Group Avatar" class="avatar-image" />
         } @else {
