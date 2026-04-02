@@ -122,7 +122,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		Name:        req.Name,
 		OwnerID:     user.ID,
 		Avatar:      avatarData,
-		Description: pgtype.Text{String: req.Description, Valid: req.Description != ""},
+		Description: req.Description,
 	})
 	if err != nil {
 		log.ErrorContext(ctx, "group_create_failed",
@@ -282,7 +282,7 @@ func (h *Handler) UpdateGroupPreferences(w http.ResponseWriter, r *http.Request)
 	group, err := h.q.UpdateGroup(ctx, db.UpdateGroupParams{
 		ID:          groupID,
 		Name:        req.Name,
-		Description: pgtype.Text{String: req.Description, Valid: req.Description != ""},
+		Description: req.Description,
 		Avatar:      avatarData,
 	})
 	if err != nil {

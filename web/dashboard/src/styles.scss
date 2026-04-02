@@ -18,6 +18,7 @@ body {
 /* Ensure tui-root is a block to accept height */
 tui-root {
   display: block;
+  overflow: hidden;
 }
 
 .page-container {

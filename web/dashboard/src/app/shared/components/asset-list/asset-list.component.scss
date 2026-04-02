@@ -32,6 +32,7 @@
   aspect-ratio: 1;
   width: 100%;
   min-height: 175px;
+  overscroll-behavior: auto;
 
   transition: transform 0.2s;
 
@@ -57,6 +58,7 @@
   min-height: 175px;
   text-decoration: none;
   overflow: hidden;
+  overscroll-behavior: auto;
   background-color: #000;
   border-radius: var(--tui-radius-l); /* Ensure radius if not inherited */
 
