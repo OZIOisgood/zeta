@@ -9,7 +9,7 @@
 }
 
 .group-banner {
-  border-radius: var(--tui-radius-l) var(--tui-radius-l) 0 0;
+  border-radius: var(--tui-radius-l);
   height: 140px;
 }
 
@@ -17,7 +17,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0 1.25rem 0.75rem;
+  padding: 0.75rem 0 0.75rem;
 }
 
 .avatar-image {
@@ -59,9 +59,6 @@
 
 .group-name {
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .prefs-button {
