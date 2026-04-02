@@ -8,6 +8,7 @@ export interface Group {
   name: string;
   owner_id: string;
   avatar: string | null; // Base64 encoded image data
+  description: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -26,7 +27,22 @@ export class GroupsService {
     return this.http.get<Group[]>(this.apiUrl);
   }
 
-  create(name: string, avatar?: string): Observable<Group> {
-    return this.http.post<Group>(this.apiUrl, { name, avatar: avatar || null });
+  get(id: string): Observable<Group> {
+    return this.http.get<Group>(`${this.apiUrl}/${id}`);
+  }
+
+  create(name: string, description?: string, avatar?: string): Observable<Group> {
+    return this.http.post<Group>(this.apiUrl, {
+      name,
+      description: description || null,
+      avatar: avatar || null,
+    });
+  }
+
+  update(
+    id: string,
+    data: { name: string; description?: string; avatar?: string },
+  ): Observable<Group> {
+    return this.http.put<Group>(`${this.apiUrl}/${id}`, data);
   }
 }

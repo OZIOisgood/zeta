@@ -12,7 +12,8 @@ export type Permission =
   | 'assets:finalize'
   | 'groups:user-list:read'
   | 'groups:user-list:delete'
-  | 'groups:invites:create';
+  | 'groups:invites:create'
+  | 'groups:preferences:edit';
 
 @Injectable({
   providedIn: 'root',

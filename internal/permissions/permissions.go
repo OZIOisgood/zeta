@@ -10,9 +10,10 @@ const (
 	ReviewsEdit     = "reviews:edit"
 	ReviewsDelete   = "reviews:delete"
 	AssetsFinalize   = "assets:finalize"
-	GroupsUserListRead   = "groups:user-list:read"
-	GroupsUserListDelete = "groups:user-list:delete"
-	GroupsInvitesCreate  = "groups:invites:create"
+	GroupsUserListRead    = "groups:user-list:read"
+	GroupsUserListDelete  = "groups:user-list:delete"
+	GroupsInvitesCreate   = "groups:invites:create"
+	GroupsPreferencesEdit = "groups:preferences:edit"
 )
 
 // Roles

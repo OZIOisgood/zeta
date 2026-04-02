@@ -194,12 +194,13 @@ type Asset struct {
 }
 
 type Group struct {
-	ID        pgtype.UUID        `json:"id"`
-	Name      string             `json:"name"`
-	OwnerID   string             `json:"owner_id"`
-	Avatar    []byte             `json:"avatar"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	OwnerID     string             `json:"owner_id"`
+	Avatar      []byte             `json:"avatar"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	Description pgtype.Text        `json:"description"`
 }
 
 type GroupInvitation struct {

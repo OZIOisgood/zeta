@@ -1,24 +1,60 @@
 <app-page-container>
   <div class="group-details-container">
-    <h1 class="tui-text_h2">Group Details</h1>
-    <p class="tui-text_body-m">Group details page coming soon...</p>
-
-    <div *ngIf="showUsersList() && (groupId$ | async) as groupId" class="tui-space_top-6">
-      <div class="users-header">
-        <h2 class="tui-text_h3">Users</h2>
-        @if (showInviteButton()) {
+    @if (group$ | async; as group) {
+      <div class="group-header">
+        @if (getAvatarSrc(group.avatar); as avatarSrc) {
+          <img [src]="avatarSrc" alt="Group Avatar" class="avatar-image" />
+        } @else {
+          <div class="avatar-placeholder">
+            <span>{{ group.name[0] | uppercase }}</span>
+          </div>
+        }
+        <h1 class="tui-text_h2 group-name">{{ group.name }}</h1>
+        @if (showPrefsButton()) {
           <button
             tuiButton
-            appearance="flat"
+            appearance="outline"
             size="s"
-            iconStart="@tui.mail"
-            (click)="openInviteDialog(groupId)"
+            iconStart="@tui.settings"
+            class="prefs-button"
+            (click)="openPreferencesDialog(group)"
           >
-            Invite User
+            Preferences
           </button>
         }
       </div>
-      <app-users-list [groupId]="groupId"></app-users-list>
-    </div>
+
+      <section tuiCardLarge="compact" *ngIf="group.description" class="description-section">
+        <tui-elastic-container class="tui-text_body-m" style="white-space: pre-wrap">
+          {{ getDisplayDescription(group) }}
+          <button
+            *ngIf="shouldShowToggle(group)"
+            tuiLink
+            type="button"
+            (click)="toggleDescription()"
+          >
+            Show {{ descriptionExpanded ? 'less' : 'more' }}
+          </button>
+        </tui-elastic-container>
+      </section>
+
+      <div *ngIf="showUsersList()" class="users-section">
+        <div class="users-header">
+          <h2 class="tui-text_h3">Users</h2>
+          @if (showInviteButton()) {
+            <button
+              tuiButton
+              appearance="flat"
+              size="s"
+              iconStart="@tui.mail"
+              (click)="openInviteDialog(group.id)"
+            >
+              Invite User
+            </button>
+          }
+        </div>
+        <app-users-list [groupId]="group.id"></app-users-list>
+      </div>
+    }
   </div>
 </app-page-container>

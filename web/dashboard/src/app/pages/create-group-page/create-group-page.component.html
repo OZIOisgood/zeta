@@ -17,6 +17,13 @@
         </div>
       </div>
 
+      <div class="form-field">
+        <tui-textfield>
+          <label tuiLabel>Description</label>
+          <textarea tuiTextarea formControlName="description" [min]="3" [max]="10"></textarea>
+        </tui-textfield>
+      </div>
+
       <app-avatar-selector
         [disabled]="isSubmitting"
         (avatarChange)="onAvatarChange($event)"

@@ -1,0 +1,36 @@
+<div class="preferences-container">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="preferences-form">
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Name</label>
+        <input formControlName="name" tuiTextfield type="text" />
+      </tui-textfield>
+    </div>
+
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Description</label>
+        <textarea tuiTextarea formControlName="description" [min]="3" [max]="10"></textarea>
+      </tui-textfield>
+    </div>
+
+    <app-avatar-selector
+      [initialAvatar]="getInitialAvatar()"
+      [disabled]="isSubmitting"
+      (avatarChange)="onAvatarChange($event)"
+    ></app-avatar-selector>
+
+    <div class="form-actions">
+      <button tuiButton type="submit" [disabled]="form.invalid || isSubmitting">Save</button>
+      <button
+        tuiButton
+        type="button"
+        appearance="flat"
+        (click)="onCancel()"
+        [disabled]="isSubmitting"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

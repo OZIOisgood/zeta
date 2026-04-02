@@ -10,6 +10,8 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Handler struct {
@@ -56,7 +58,7 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 
 	// Return empty array instead of null if no groups
 	if groups == nil {
-		groups = []db.Group{}
+		groups = []db.ListUserGroupsRow{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -64,8 +66,9 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 }
 
 type CreateGroupRequest struct {
-	Name   string `json:"name"`
-	Avatar string `json:"avatar"` // Base64 encoded image data, max 300KB
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Avatar      string `json:"avatar"` // Base64 encoded image data, max 300KB
 }
 
 func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
@@ -116,9 +119,10 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	group, err := h.q.CreateGroup(ctx, db.CreateGroupParams{
-		Name:    req.Name,
-		OwnerID: user.ID,
-		Avatar:  avatarData,
+		Name:        req.Name,
+		OwnerID:     user.ID,
+		Avatar:      avatarData,
+		Description: pgtype.Text{String: req.Description, Valid: req.Description != ""},
 	})
 	if err != nil {
 		log.ErrorContext(ctx, "group_create_failed",
@@ -151,6 +155,151 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		slog.String("user_id", user.ID),
 		slog.String("group_id", group.ID.String()),
 		slog.String("group_name", req.Name),
+	)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(group)
+}
+
+func (h *Handler) GetGroupByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsRead) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	groupIDStr := chi.URLParam(r, "groupID")
+	var groupID pgtype.UUID
+	if err := groupID.Scan(groupIDStr); err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	inGroup, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{
+		UserID:  user.ID,
+		GroupID: groupID,
+	})
+	if err != nil || !inGroup {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	group, err := h.q.GetGroup(ctx, groupID)
+	if err != nil {
+		log.ErrorContext(ctx, "group_get_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(group)
+}
+
+type UpdateGroupRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Avatar      string `json:"avatar"` // Base64 encoded, optional
+}
+
+func (h *Handler) UpdateGroupPreferences(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsPreferencesEdit) {
+		log.WarnContext(ctx, "group_preferences_edit_permission_denied",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+		)
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	groupIDStr := chi.URLParam(r, "groupID")
+	var groupID pgtype.UUID
+	if err := groupID.Scan(groupIDStr); err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	inGroup, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{
+		UserID:  user.ID,
+		GroupID: groupID,
+	})
+	if err != nil || !inGroup {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	var req UpdateGroupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch existing avatar to keep it if none provided
+	existing, err := h.q.GetGroup(ctx, groupID)
+	if err != nil {
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	avatarData := existing.Avatar
+	if req.Avatar != "" {
+		decoded, err := base64.StdEncoding.DecodeString(req.Avatar)
+		if err != nil {
+			http.Error(w, "Invalid avatar data", http.StatusBadRequest)
+			return
+		}
+		if len(decoded) > 300*1024 {
+			http.Error(w, "Avatar size exceeds 300KB limit", http.StatusBadRequest)
+			return
+		}
+		avatarData = decoded
+	}
+
+	group, err := h.q.UpdateGroup(ctx, db.UpdateGroupParams{
+		ID:          groupID,
+		Name:        req.Name,
+		Description: pgtype.Text{String: req.Description, Valid: req.Description != ""},
+		Avatar:      avatarData,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "group_update_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to update group", http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoContext(ctx, "group_updated",
+		slog.String("component", "groups"),
+		slog.String("user_id", user.ID),
+		slog.String("group_id", groupIDStr),
 	)
 
 	w.Header().Set("Content-Type", "application/json")

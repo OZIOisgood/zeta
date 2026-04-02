@@ -95,6 +95,8 @@ func (s *Server) routes() {
 		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", groupsHandler.ListGroups)
 			r.Post("/", groupsHandler.CreateGroup)
+			r.Get("/{groupID}", groupsHandler.GetGroupByID)
+			r.Put("/{groupID}", groupsHandler.UpdateGroupPreferences)
 			r.Get("/{groupID}/users", usersHandler.ListGroupUsers)
 			r.Delete("/{groupID}/users/{userID}", usersHandler.RemoveGroupUser)
 			r.Post("/{groupID}/invitations", invitationsHandler.CreateInvitation)

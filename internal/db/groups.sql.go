@@ -42,17 +42,23 @@ func (q *Queries) CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) 
 }
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (name, owner_id, avatar) VALUES ($1, $2, $3) RETURNING id, name, owner_id, avatar, created_at, updated_at
+INSERT INTO groups (name, owner_id, avatar, description) VALUES ($1, $2, $3, $4) RETURNING id, name, owner_id, avatar, created_at, updated_at, description
 `
 
 type CreateGroupParams struct {
-	Name    string `json:"name"`
-	OwnerID string `json:"owner_id"`
-	Avatar  []byte `json:"avatar"`
+	Name        string      `json:"name"`
+	OwnerID     string      `json:"owner_id"`
+	Avatar      []byte      `json:"avatar"`
+	Description pgtype.Text `json:"description"`
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
-	row := q.db.QueryRow(ctx, createGroup, arg.Name, arg.OwnerID, arg.Avatar)
+	row := q.db.QueryRow(ctx, createGroup,
+		arg.Name,
+		arg.OwnerID,
+		arg.Avatar,
+		arg.Description,
+	)
 	var i Group
 	err := row.Scan(
 		&i.ID,
@@ -61,6 +67,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Description,
 	)
 	return i, err
 }
@@ -98,7 +105,7 @@ func (q *Queries) CreateGroupInvitation(ctx context.Context, arg CreateGroupInvi
 }
 
 const getGroup = `-- name: GetGroup :one
-SELECT id, name, owner_id, avatar, created_at, updated_at FROM groups
+SELECT id, name, owner_id, avatar, created_at, updated_at, description FROM groups
 WHERE id = $1 LIMIT 1
 `
 
@@ -112,6 +119,7 @@ func (q *Queries) GetGroup(ctx context.Context, id pgtype.UUID) (Group, error) {
 		&i.Avatar,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Description,
 	)
 	return i, err
 }
@@ -162,27 +170,38 @@ func (q *Queries) ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]
 }
 
 const listUserGroups = `-- name: ListUserGroups :many
-SELECT g.id, g.name, g.owner_id, g.avatar, g.created_at, g.updated_at
+SELECT g.id, g.name, g.owner_id, g.avatar, g.description, g.created_at, g.updated_at
 FROM groups g
 JOIN user_groups ug ON g.id = ug.group_id
 WHERE ug.user_id = $1
 ORDER BY g.created_at DESC
 `
 
-func (q *Queries) ListUserGroups(ctx context.Context, userID string) ([]Group, error) {
+type ListUserGroupsRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	OwnerID     string             `json:"owner_id"`
+	Avatar      []byte             `json:"avatar"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListUserGroups(ctx context.Context, userID string) ([]ListUserGroupsRow, error) {
 	rows, err := q.db.Query(ctx, listUserGroups, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Group
+	var items []ListUserGroupsRow
 	for rows.Next() {
-		var i Group
+		var i ListUserGroupsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.OwnerID,
 			&i.Avatar,
+			&i.Description,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -208,6 +227,37 @@ type RemoveUserFromGroupParams struct {
 func (q *Queries) RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error {
 	_, err := q.db.Exec(ctx, removeUserFromGroup, arg.UserID, arg.GroupID)
 	return err
+}
+
+const updateGroup = `-- name: UpdateGroup :one
+UPDATE groups SET name = $2, description = $3, avatar = $4, updated_at = NOW() WHERE id = $1 RETURNING id, name, owner_id, avatar, created_at, updated_at, description
+`
+
+type UpdateGroupParams struct {
+	ID          pgtype.UUID `json:"id"`
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+	Avatar      []byte      `json:"avatar"`
+}
+
+func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error) {
+	row := q.db.QueryRow(ctx, updateGroup,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.Avatar,
+	)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.OwnerID,
+		&i.Avatar,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Description,
+	)
+	return i, err
 }
 
 const updateGroupInvitationStatus = `-- name: UpdateGroupInvitationStatus :exec

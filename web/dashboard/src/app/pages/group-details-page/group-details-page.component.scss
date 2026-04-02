@@ -1,11 +1,68 @@
 .group-details-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding-bottom: 2rem;
+}
 
-  h1 {
-    margin-bottom: 1rem;
+.group-header {
+  background: linear-gradient(160deg, #2e2e2e 0%, #5c5c5c 50%, #b0b0b0 100%);
+  border-radius: var(--tui-radius-l);
+  min-height: 200px;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.avatar-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  span {
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
   }
+}
+
+.group-name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.prefs-button {
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  flex-shrink: 0;
+}
+
+.description-section {
+  margin-bottom: 1.5rem;
+}
+
+.users-section {
+  margin-top: 0.5rem;
 }
 
 .users-header {

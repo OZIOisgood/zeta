@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiButton, TuiLabel, TuiTextfield } from '@taiga-ui/core';
+import { TuiTextarea } from '@taiga-ui/kit';
 import { AvatarSelectorComponent } from '../../shared/components/avatar-selector/avatar-selector.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { GroupsService } from '../../shared/services/groups.service';
@@ -17,6 +18,7 @@ import { GroupsService } from '../../shared/services/groups.service';
     TuiButton,
     TuiLabel,
     TuiTextfield,
+    TuiTextarea,
     AvatarSelectorComponent,
   ],
   templateUrl: './create-group-page.component.html',
@@ -29,6 +31,7 @@ export class CreateGroupPageComponent {
 
   protected readonly form = new FormGroup({
     name: new FormControl('', [Validators.required, Validators.minLength(1)]),
+    description: new FormControl(''),
   });
 
   protected isSubmitting = false;
@@ -48,21 +51,24 @@ export class CreateGroupPageComponent {
     }
 
     const name = this.form.get('name')?.value;
+    const description = this.form.get('description')?.value;
     if (!name) {
       return;
     }
 
     this.isSubmitting = true;
 
-    this.groupsService.create(name, this.avatarBase64 || undefined).subscribe({
-      next: () => {
-        this.router.navigate(['/groups']);
-      },
-      error: (error) => {
-        console.error('Failed to create group:', error);
-        this.isSubmitting = false;
-      },
-    });
+    this.groupsService
+      .create(name, description || undefined, this.avatarBase64 || undefined)
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/groups']);
+        },
+        error: (error) => {
+          console.error('Failed to create group:', error);
+          this.isSubmitting = false;
+        },
+      });
   }
 
   protected onCancel(): void {
