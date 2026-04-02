@@ -17,11 +17,19 @@
   display: flex;
   flex-direction: column;
   animation: slideIn 0.3s ease-out;
+
+  @media (max-width: 47.9375em) {
+    width: 85%;
+  }
 }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .drawer-header {

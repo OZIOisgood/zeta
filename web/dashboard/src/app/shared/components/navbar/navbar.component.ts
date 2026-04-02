@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   TuiAutoColorPipe,
@@ -14,6 +14,7 @@ import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { take } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
+import { DrawerComponent } from '../drawer/drawer.component';
 import { PreferencesDialogComponent } from '../preferences-dialog/preferences-dialog.component';
 
 @Component({
@@ -30,6 +31,7 @@ import { PreferencesDialogComponent } from '../preferences-dialog/preferences-di
     TuiIcon,
     TuiAutoColorPipe,
     TuiTabs,
+    DrawerComponent,
   ],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
@@ -39,6 +41,8 @@ export class NavbarComponent {
   private readonly auth = inject(AuthService);
   private readonly permissionsService = inject(PermissionsService);
   private readonly dialogs = inject(TuiDialogService);
+
+  protected readonly mobileMenuOpen = signal(false);
 
   protected readonly showGroups = computed(() =>
     this.permissionsService.hasPermission('groups:read'),
@@ -62,6 +66,7 @@ export class NavbarComponent {
   });
 
   protected openPreferences(): void {
+    this.mobileMenuOpen.set(false);
     this.dialogs
       .open(new PolymorpheusComponent(PreferencesDialogComponent), {
         label: 'Preferences',

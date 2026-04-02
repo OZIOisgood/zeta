@@ -65,3 +65,78 @@ button[tuiOption] {
   justify-content: flex-start !important;
   gap: 0.75rem;
 }
+
+// Mobile responsive
+
+.burger-btn {
+  display: none;
+
+  @media (max-width: 47.9375em) {
+    display: flex;
+  }
+}
+
+.desktop-tabs,
+.desktop-user-menu {
+  @media (max-width: 47.9375em) {
+    display: none;
+  }
+}
+
+// Mobile nav drawer content
+
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.mobile-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--tui-radius-m);
+  text-decoration: none;
+  color: var(--tui-text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  box-sizing: border-box;
+
+  &:hover {
+    background-color: var(--tui-background-neutral-1-hover);
+  }
+
+  &.active {
+    color: var(--tui-text-action);
+    background-color: var(--tui-background-neutral-1);
+  }
+}
+
+.mobile-user-section {
+  padding-top: 1rem;
+  border-top: 1px solid var(--tui-border-normal);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobile-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.mobile-user-name {
+  font-weight: 600;
+  font-size: 1rem;
+}

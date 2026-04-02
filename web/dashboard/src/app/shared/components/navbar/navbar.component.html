@@ -7,7 +7,7 @@
 
   <div class="spacer"></div>
 
-  <tui-tabs [underline]="false">
+  <tui-tabs [underline]="false" class="desktop-tabs">
     <a tuiTab routerLink="/" routerLinkActive [routerLinkActiveOptions]="{ exact: true }"> Home </a>
     <a *ngIf="showGroups()" tuiTab routerLink="/groups" routerLinkActive> Groups </a>
     <a *ngIf="showUploadVideo()" tuiTab routerLink="/upload-video" routerLinkActive>
@@ -16,7 +16,7 @@
   </tui-tabs>
 
   <ng-container *ngIf="user() as u">
-    <div class="user-menu" [tuiDropdown]="dropdown" tuiDropdownOpen>
+    <div class="user-menu desktop-user-menu" [tuiDropdown]="dropdown" tuiDropdownOpen>
       <button appearance="icon" tuiIconButton size="s" type="button" class="avatar-button">
         <tui-avatar
           size="s"
@@ -47,4 +47,70 @@
       </tui-data-list>
     </ng-template>
   </ng-container>
+
+  <button
+    tuiIconButton
+    appearance="flat"
+    iconStart="@tui.menu"
+    size="m"
+    type="button"
+    class="burger-btn"
+    (click)="mobileMenuOpen.set(true)"
+  ></button>
 </header>
+
+<app-drawer [isOpen]="mobileMenuOpen()" title="Menu" (close)="mobileMenuOpen.set(false)">
+  <nav class="mobile-nav">
+    <a
+      class="mobile-nav-item"
+      routerLink="/"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      (click)="mobileMenuOpen.set(false)"
+    >
+      <tui-icon icon="@tui.home" [style.height.rem]="1.25"></tui-icon>
+      Home
+    </a>
+    <a
+      *ngIf="showGroups()"
+      class="mobile-nav-item"
+      routerLink="/groups"
+      routerLinkActive="active"
+      (click)="mobileMenuOpen.set(false)"
+    >
+      <tui-icon icon="@tui.users" [style.height.rem]="1.25"></tui-icon>
+      Groups
+    </a>
+    <a
+      *ngIf="showUploadVideo()"
+      class="mobile-nav-item"
+      routerLink="/upload-video"
+      routerLinkActive="active"
+      (click)="mobileMenuOpen.set(false)"
+    >
+      <tui-icon icon="@tui.upload-cloud" [style.height.rem]="1.25"></tui-icon>
+      Upload video
+    </a>
+  </nav>
+
+  <ng-container *ngIf="user() as u">
+    <div class="mobile-user-section">
+      <div class="mobile-user-info">
+        <tui-avatar
+          size="m"
+          [src]="userAvatar()"
+          [style.background]="u.email | tuiAutoColor"
+        ></tui-avatar>
+        <span class="mobile-user-name">{{ u.first_name }} {{ u.last_name }}</span>
+      </div>
+      <button class="mobile-nav-item" type="button" (click)="openPreferences()">
+        <tui-icon icon="@tui.settings" [style.height.rem]="1.25"></tui-icon>
+        Preferences
+      </button>
+      <button class="mobile-nav-item" type="button" (click)="logout()">
+        <tui-icon icon="@tui.log-out" [style.height.rem]="1.25"></tui-icon>
+        Sign out
+      </button>
+    </div>
+  </ng-container>
+</app-drawer>
