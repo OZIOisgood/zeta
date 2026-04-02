@@ -34,6 +34,12 @@ SELECT a.status
 FROM assets a
 INNER JOIN videos v ON v.asset_id = a.id
 WHERE v.id = $1;
+
+-- name: GetAssetOwnerByVideoID :one
+SELECT a.owner_id, a.name
+FROM assets a
+INNER JOIN videos v ON v.asset_id = a.id
+WHERE v.id = $1;
 -- name: CountVideosWithoutReviews :one
 SELECT COUNT(*) as count
 FROM videos v

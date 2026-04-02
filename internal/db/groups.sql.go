@@ -46,10 +46,10 @@ INSERT INTO groups (name, owner_id, avatar, description) VALUES ($1, $2, $3, $4)
 `
 
 type CreateGroupParams struct {
-	Name        string      `json:"name"`
-	OwnerID     string      `json:"owner_id"`
-	Avatar      []byte      `json:"avatar"`
-	Description pgtype.Text `json:"description"`
+	Name        string `json:"name"`
+	OwnerID     string `json:"owner_id"`
+	Avatar      []byte `json:"avatar"`
+	Description string `json:"description"`
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
@@ -182,7 +182,7 @@ type ListUserGroupsRow struct {
 	Name        string             `json:"name"`
 	OwnerID     string             `json:"owner_id"`
 	Avatar      []byte             `json:"avatar"`
-	Description pgtype.Text        `json:"description"`
+	Description string             `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
@@ -236,7 +236,7 @@ UPDATE groups SET name = $2, description = $3, avatar = $4, updated_at = NOW() W
 type UpdateGroupParams struct {
 	ID          pgtype.UUID `json:"id"`
 	Name        string      `json:"name"`
-	Description pgtype.Text `json:"description"`
+	Description string      `json:"description"`
 	Avatar      []byte      `json:"avatar"`
 }
 

@@ -64,7 +64,7 @@ func (s *Server) routes() {
 	groupsHandler := groups.NewHandler(queries, s.Logger)
 	invitationsHandler := invitations.NewHandler(queries, emailService, s.Logger)
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
-	usersHandler := users.NewHandler(s.Logger, queries)
+	usersHandler := users.NewHandler(s.Logger, queries, emailService)
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware(s.Logger))

@@ -1,7 +1,9 @@
 package users
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -29,12 +32,14 @@ type groupUser struct {
 type Handler struct {
 	logger *slog.Logger
 	q      *db.Queries
+	email  *email.Service
 }
 
-func NewHandler(logger *slog.Logger, q *db.Queries) *Handler {
+func NewHandler(logger *slog.Logger, q *db.Queries, emailService *email.Service) *Handler {
 	return &Handler{
 		logger: logger,
 		q:      q,
+		email:  emailService,
 	}
 }
 
@@ -224,6 +229,40 @@ func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {
 		slog.String("target_user_id", targetUserID),
 		slog.String("group_id", groupID.String()),
 	)
+
+	// Notify removed user
+	go func() {
+		bgCtx := context.Background()
+		bgLog := h.logger.With(
+			slog.String("component", "users"),
+			slog.String("target_user_id", targetUserID),
+		)
+
+		removedUser, err := usermanagement.GetUser(bgCtx, usermanagement.GetUserOpts{
+			User: targetUserID,
+		})
+		if err != nil {
+			bgLog.ErrorContext(bgCtx, "users_remove_notification_fetch_failed",
+				slog.Any("err", err),
+			)
+			return
+		}
+
+		if removedUser.Email == "" {
+			bgLog.WarnContext(bgCtx, "users_remove_notification_no_email")
+			return
+		}
+
+		subject := fmt.Sprintf("You have been removed from group '%s'", group.Name)
+		text := fmt.Sprintf("You have been removed from the group '%s'.", group.Name)
+		if err := h.email.Send([]string{removedUser.Email}, subject, text); err != nil {
+			bgLog.ErrorContext(bgCtx, "users_remove_notification_send_failed",
+				slog.Any("err", err),
+			)
+		} else {
+			bgLog.InfoContext(bgCtx, "users_remove_notification_sent")
+		}
+	}()
 
 	w.WriteHeader(http.StatusNoContent)
 }

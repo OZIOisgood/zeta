@@ -1,6 +1,7 @@
 package invitations
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
 type Handler struct {
@@ -271,6 +273,49 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 	// Get group ID for redirect
 	groupIDBytes := invitation.GroupID.Bytes
 	groupIDStr := fmt.Sprintf("%x-%x-%x-%x-%x", groupIDBytes[0:4], groupIDBytes[4:6], groupIDBytes[6:8], groupIDBytes[8:10], groupIDBytes[10:16])
+
+	// Notify inviter that their invitation was accepted
+	go func() {
+		bgCtx := context.Background()
+		bgLog := h.logger.With(
+			slog.String("component", "invitations"),
+			slog.String("inviter_id", invitation.InviterID),
+		)
+
+		inviter, err := usermanagement.GetUser(bgCtx, usermanagement.GetUserOpts{
+			User: invitation.InviterID,
+		})
+		if err != nil {
+			bgLog.ErrorContext(bgCtx, "invitation_accepted_inviter_fetch_failed",
+				slog.Any("err", err),
+			)
+			return
+		}
+
+		if inviter.Email == "" {
+			bgLog.WarnContext(bgCtx, "invitation_accepted_inviter_no_email")
+			return
+		}
+
+		group, err := h.q.GetGroup(bgCtx, invitation.GroupID)
+		if err != nil {
+			bgLog.ErrorContext(bgCtx, "invitation_accepted_group_fetch_failed",
+				slog.Any("err", err),
+			)
+			return
+		}
+
+		joinerName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+		subject := "Your invitation was accepted"
+		text := fmt.Sprintf("%s accepted your invitation and joined the group '%s'.", joinerName, group.Name)
+		if err := h.email.Send([]string{inviter.Email}, subject, text); err != nil {
+			bgLog.ErrorContext(bgCtx, "invitation_accepted_notification_send_failed",
+				slog.Any("err", err),
+			)
+		} else {
+			bgLog.InfoContext(bgCtx, "invitation_accepted_notification_sent")
+		}
+	}()
 
 	log.InfoContext(ctx, "invitation_accepted",
 		slog.String("component", "invitations"),

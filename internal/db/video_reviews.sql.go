@@ -68,6 +68,25 @@ func (q *Queries) DeleteVideoReview(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const getAssetOwnerByVideoID = `-- name: GetAssetOwnerByVideoID :one
+SELECT a.owner_id, a.name
+FROM assets a
+INNER JOIN videos v ON v.asset_id = a.id
+WHERE v.id = $1
+`
+
+type GetAssetOwnerByVideoIDRow struct {
+	OwnerID string `json:"owner_id"`
+	Name    string `json:"name"`
+}
+
+func (q *Queries) GetAssetOwnerByVideoID(ctx context.Context, id pgtype.UUID) (GetAssetOwnerByVideoIDRow, error) {
+	row := q.db.QueryRow(ctx, getAssetOwnerByVideoID, id)
+	var i GetAssetOwnerByVideoIDRow
+	err := row.Scan(&i.OwnerID, &i.Name)
+	return i, err
+}
+
 const getAssetStatusByVideoID = `-- name: GetAssetStatusByVideoID :one
 SELECT a.status
 FROM assets a
