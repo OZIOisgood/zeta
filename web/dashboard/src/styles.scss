@@ -26,4 +26,18 @@ tui-root {
   padding: 0.5rem 1rem;
   box-sizing: border-box;
   width: 100%;
+  overflow: hidden;
+}
+
+tui-file {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+
+  .t-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
 }
