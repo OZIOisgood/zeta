@@ -30,8 +30,7 @@
 
       <div class="text-content">
         <h1 class="tui-text_h3 title mobile-title">{{ asset.title }}</h1>
-        <div class="meta-row">
-          <a *ngIf="asset.group" class="group-info" [routerLink]="['/groups', asset.group.id]">
+        <div class="meta-row">          <a *ngIf="asset.group" class="group-info" [routerLink]="['/groups', asset.group.id]">
             <div
               class="group-avatar"
               *ngIf="asset.group.avatar; else groupInitial"

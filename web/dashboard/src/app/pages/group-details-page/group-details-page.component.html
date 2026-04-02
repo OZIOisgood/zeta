@@ -1,27 +1,32 @@
 <app-page-container>
   <div class="group-details-container">
     @if (group$ | async; as group) {
-      <div class="group-header" [style.background]="headerGradient$ | async">
-        @if (getAvatarSrc(group.avatar); as avatarSrc) {
-          <img [src]="avatarSrc" alt="Group Avatar" class="avatar-image" />
-        } @else {
-          <div class="avatar-placeholder">
-            <span>{{ group.name[0] | uppercase }}</span>
+      <div class="group-hero">
+        <div class="group-banner" [style.background]="headerGradient$ | async"></div>
+        <div class="group-identity">
+          @if (getAvatarSrc(group.avatar); as avatarSrc) {
+            <img [src]="avatarSrc" alt="Group Avatar" class="avatar-image" />
+          } @else {
+            <div class="avatar-placeholder">
+              <span>{{ group.name[0] | uppercase }}</span>
+            </div>
+          }
+          <div class="group-meta">
+            <h1 class="tui-text_h2 group-name">{{ group.name }}</h1>
           </div>
-        }
-        <h1 class="tui-text_h2 group-name">{{ group.name }}</h1>
-        @if (showPrefsButton()) {
-          <button
-            tuiButton
-            appearance="outline"
-            size="s"
-            iconStart="@tui.settings"
-            class="prefs-button"
-            (click)="openPreferencesDialog(group)"
-          >
-            Preferences
-          </button>
-        }
+          @if (showPrefsButton()) {
+            <button
+              tuiButton
+              appearance="outline"
+              size="s"
+              iconStart="@tui.settings"
+              class="prefs-button"
+              (click)="openPreferencesDialog(group)"
+            >
+              Preferences
+            </button>
+          }
+        </div>
       </div>
 
       <section tuiCardLarge="compact" *ngIf="group.description" class="description-section">
