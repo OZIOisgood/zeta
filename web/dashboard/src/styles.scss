@@ -29,15 +29,14 @@ tui-root {
   overflow: hidden;
 }
 
-tui-file {
+/* Prevent grid children from overflowing the slides container */
+[tuiSlides] > * {
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
+}
 
-  .t-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-  }
+tui-file {
+  max-width: 100%;
+  min-width: 0;
 }
