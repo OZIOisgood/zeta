@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpEventType } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -28,7 +27,8 @@ import {
   TuiStep,
   TuiStepper,
 } from '@taiga-ui/kit';
-import { forkJoin, Observable, tap } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import {
   AssetService,
@@ -36,6 +36,7 @@ import {
   VideoResponse,
 } from '../../shared/services/asset.service';
 import { Group, GroupsService } from '../../shared/services/groups.service';
+import { SurgeEvent, SurgeService } from '../../shared/services/surge.service';
 import { VideoDetailsComponent } from './ui/video-details/video-details.component';
 import { VideoSelectorComponent } from './ui/video-selector/video-selector.component';
 
@@ -66,7 +67,7 @@ import { VideoSelectorComponent } from './ui/video-selector/video-selector.compo
 export class UploadVideoPageComponent implements OnInit {
   private readonly assetService = inject(AssetService);
   private readonly groupsService = inject(GroupsService);
-  private readonly http = inject(HttpClient);
+  private readonly surgeService = inject(SurgeService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -92,6 +93,9 @@ export class UploadVideoPageComponent implements OnInit {
   protected uploadingFiles: TuiFileLike[] = [];
   protected completedFiles: TuiFileLike[] = [];
   protected failedFiles: TuiFileLike[] = [];
+
+  // Progress tracking — available for future UI use, not currently displayed
+  protected readonly fileProgressMap = new Map<string, number>();
 
   protected isUploadComplete = false;
   protected isUploading = false;
@@ -190,33 +194,22 @@ export class UploadVideoPageComponent implements OnInit {
     });
   }
 
-  private uploadFile(file: File, url: string): Observable<any> {
-    return this.http
-      .put(url, file, {
-        reportProgress: true,
-        observe: 'events',
-      })
-      .pipe(
-        tap((event) => {
-          if (event.type === HttpEventType.UploadProgress && event.total) {
-            const progress = Math.round((100 * event.loaded) / event.total);
-            this.updateFileProgress(file.name, progress);
-          }
-        }),
-        tap((event) => {
-          if (event.type === HttpEventType.Response) {
-            this.markAsCompleted(file.name);
-          }
-        }),
-      );
+  private uploadFile(file: File, url: string): Observable<SurgeEvent> {
+    return this.surgeService.upload({ file, url }).pipe(
+      tap((event) => {
+        if (event.type === 'progress') {
+          this.updateFileProgress(file.name, event.percentage);
+        } else if (event.type === 'complete') {
+          this.markAsCompleted(file.name);
+        }
+      }),
+    );
   }
 
-  private updateFileProgress(filename: string, progress: number): void {
-    const index = this.uploadingFiles.findIndex((f) => f.name === filename);
-    if (index !== -1) {
-      // We don't want to show progress text, so just trigger change detection if needed
-      this.cdr.markForCheck();
-    }
+  private updateFileProgress(filename: string, percentage: number): void {
+    // Store progress for future use — not currently rendered in the template
+    this.fileProgressMap.set(filename, percentage);
+    this.cdr.markForCheck();
   }
 
   private markAsCompleted(filename: string): void {
