@@ -195,15 +195,21 @@ export class UploadVideoPageComponent implements OnInit {
   }
 
   private uploadFile(file: File, url: string): Observable<SurgeEvent> {
-    return this.surgeService.upload({ file, url }).pipe(
-      tap((event) => {
-        if (event.type === 'progress') {
-          this.updateFileProgress(file.name, event.percentage);
-        } else if (event.type === 'complete') {
-          this.markAsCompleted(file.name);
-        }
-      }),
-    );
+    return this.surgeService
+      .upload({
+        file,
+        url,
+        options: { chunkSize: 8 * 1024 * 1024 },
+      })
+      .pipe(
+        tap((event) => {
+          if (event.type === 'progress') {
+            this.updateFileProgress(file.name, event.percentage);
+          } else if (event.type === 'complete') {
+            this.markAsCompleted(file.name);
+          }
+        }),
+      );
   }
 
   private updateFileProgress(filename: string, percentage: number): void {
