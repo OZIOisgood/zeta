@@ -8,7 +8,9 @@
 # Binaries
 bin/
 
-# Google Cloud SDK (local install, not for VCS)
+# Tools and temporary files
+tools/
+tmp/
 google-cloud-sdk/
 
 # Terraform
