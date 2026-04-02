@@ -31,7 +31,7 @@
       <div class="text-content">
         <h1 class="tui-text_h3 title mobile-title">{{ asset.title }}</h1>
         <div class="meta-row">
-          <div *ngIf="asset.group" class="group-info">
+          <a *ngIf="asset.group" class="group-info" [routerLink]="['/groups', asset.group.id]">
             <div
               class="group-avatar"
               *ngIf="asset.group.avatar; else groupInitial"
@@ -43,7 +43,7 @@
               </div>
             </ng-template>
             <span class="tui-text_body-m group-name">{{ asset.group.name }}</span>
-          </div>
+          </a>
           <tui-badge class="badge" [ngClass]="'status-' + asset.status">
             {{ formatStatus(asset.status) }}
           </tui-badge>

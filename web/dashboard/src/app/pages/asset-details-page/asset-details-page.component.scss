@@ -74,6 +74,11 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
+  text-decoration: none;
+
+  &:hover .group-name {
+    text-decoration: underline;
+  }
 }
 
 .group-avatar {
