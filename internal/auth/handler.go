@@ -394,12 +394,24 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ensure User is in Organization and get Role + Permissions from WorkOS
-	newRole, newPermissions, err := h.ensureUserInOrg(ctx, user.ID)
-	if err != nil {
-		h.logger.ErrorContext(ctx, "auth_ensure_org_failed",
-			slog.String("user_id", user.ID),
-			slog.Any("err", err),
-		)
+	// Only call ensureUserInOrg when the JWT has no role yet (first login or role not persisted).
+	// Calling it on every /auth/me request would incur a WorkOS API call each time.
+	currentRole := user.Role
+	var newRole string
+	var newPermissions []string
+
+	if currentRole == "" {
+		var err error
+		newRole, newPermissions, err = h.ensureUserInOrg(ctx, user.ID)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_ensure_org_failed",
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+		}
+	} else {
+		newRole = currentRole
+		newPermissions = user.Permissions
 	}
 
 	// Always refresh the cookie with latest role and permissions from WorkOS
@@ -436,7 +448,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 				Expires:  time.Now().Add(24 * time.Hour),
 				HttpOnly: true,
 				Secure:   true,
-				SameSite: http.SameSiteLaxMode,
+				SameSite: http.SameSiteNoneMode,
 			})
 		}
 	}
