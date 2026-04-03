@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -25,7 +24,7 @@ type UserContext struct {
 	Permissions       []string `json:"permissions"`
 }
 
-func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
+func Middleware(logger *slog.Logger, jwks *JWKSCache) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var tokenString string
@@ -39,17 +38,16 @@ func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
 
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 				}
-				return secret, nil
+				kid, _ := token.Header["kid"].(string)
+				return jwks.GetKey(kid)
 			})
 
 			if err != nil || !token.Valid {
-				// Invalid token, just continue as unauthenticated
 				logger.DebugContext(r.Context(), "auth_token_invalid",
 					slog.String("component", "auth"),
 					slog.Any("err", err),

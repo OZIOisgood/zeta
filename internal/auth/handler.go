@@ -86,7 +86,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract Session ID from WorkOS Access Token
+	// Extract Session ID from WorkOS Access Token (needed for logout URL later)
 	var claims jwt.MapClaims
 	_, _, err = jwt.NewParser().ParseUnverified(resp.AccessToken, &claims)
 	if err != nil {
@@ -102,30 +102,6 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	if !ok || sid == "" {
 		h.logger.WarnContext(ctx, "auth_sid_missing",
 			slog.String("component", "auth"),
-		)
-	}
-
-	// Fetch Role and Permissions from WorkOS
-	role := ""
-	var userPermissions []string
-	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
-		UserID: resp.User.ID,
-	})
-	if err == nil && len(memberships.Data) > 0 {
-		role = memberships.Data[0].Role.Slug
-		userPermissions, err = h.getPermissionsForRole(ctx, role)
-		if err != nil {
-			h.logger.WarnContext(ctx, "auth_fetch_permissions_failed",
-				slog.String("user_id", resp.User.ID),
-				slog.String("role", role),
-				slog.Any("err", err),
-			)
-			userPermissions = []string{}
-		}
-	} else if err != nil {
-		h.logger.WarnContext(ctx, "auth_fetch_role_failed",
-			slog.String("user_id", resp.User.ID),
-			slog.Any("err", err),
 		)
 	}
 
@@ -171,42 +147,12 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Create JWT
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":         resp.User.ID,
-		"email":       resp.User.Email,
-		"first_name":  resp.User.FirstName,
-		"last_name":   resp.User.LastName,
-		"sid":         sid,
-		"role":        role,
-		"permissions": userPermissions,
-		"exp":         time.Now().Add(24 * time.Hour).Unix(),
-	})
-
-	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
-	if len(secret) == 0 {
-		h.logger.ErrorContext(ctx, "auth_secret_missing",
-			slog.String("component", "auth"),
-		)
-		http.Error(w, "WORKOS_COOKIE_SECRET is not set", http.StatusInternalServerError)
-		return
-	}
-
-	tokenString, err := token.SignedString(secret)
-	if err != nil {
-		h.logger.ErrorContext(ctx, "auth_token_sign_failed",
-			slog.String("component", "auth"),
-			slog.Any("err", err),
-		)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	// Set WorkOS Access Token directly as the session cookie.
+	// The middleware validates it via JWKS — no local signing needed.
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
-		Value:    tokenString,
+		Value:    resp.AccessToken,
 		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
@@ -258,33 +204,22 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil && cookie.Value != "" {
 		tokenString := cookie.Value
-		secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
 
-		token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return secret, nil
-		})
+		var logoutClaims jwt.MapClaims
+		_, _, _ = jwt.NewParser().ParseUnverified(tokenString, &logoutClaims)
 
-		if token != nil {
-			if claims, ok := token.Claims.(jwt.MapClaims); ok {
-				sid, ok := claims["sid"].(string)
-				if !ok || sid == "" {
-					h.logger.DebugContext(ctx, "auth_logout_no_sid",
-						slog.String("component", "auth"),
-					)
-				} else {
-					logoutURL, err := usermanagement.GetLogoutURL(usermanagement.GetLogoutURLOpts{
-						SessionID: sid,
-						ReturnTo:  frontendURL,
-					})
-					if err != nil {
-						h.logger.ErrorContext(ctx, "auth_logout_url_failed",
-							slog.String("component", "auth"),
-							slog.Any("err", err),
-						)
-					} else {
-						redirectTarget = logoutURL.String()
-					}
-				}
+		if sid, ok := logoutClaims["sid"].(string); ok && sid != "" {
+			logoutURL, err := usermanagement.GetLogoutURL(usermanagement.GetLogoutURLOpts{
+				SessionID: sid,
+				ReturnTo:  frontendURL,
+			})
+			if err != nil {
+				h.logger.ErrorContext(ctx, "auth_logout_url_failed",
+					slog.String("component", "auth"),
+					slog.Any("err", err),
+				)
+			} else {
+				redirectTarget = logoutURL.String()
 			}
 		}
 	}
@@ -414,44 +349,12 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		newPermissions = user.Permissions
 	}
 
-	// Always refresh the cookie with latest role and permissions from WorkOS
+	// Always use latest role and permissions from JWT (validated by JWKS middleware)
 	if newPermissions == nil {
 		newPermissions = []string{}
 	}
 	user.Role = newRole
 	user.Permissions = newPermissions
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":         user.ID,
-		"email":       user.Email,
-		"first_name":  user.FirstName,
-		"last_name":   user.LastName,
-		"sid":         user.SID,
-		"role":        newRole,
-		"permissions": newPermissions,
-		"exp":         time.Now().Add(24 * time.Hour).Unix(),
-	})
-
-	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
-	if len(secret) > 0 {
-		tokenString, err := token.SignedString(secret)
-		if err != nil {
-			h.logger.ErrorContext(ctx, "auth_token_refresh_failed",
-				slog.String("component", "auth"),
-				slog.Any("err", err),
-			)
-		} else {
-			http.SetCookie(w, &http.Cookie{
-				Name:     CookieName,
-				Value:    tokenString,
-				Path:     "/",
-				Expires:  time.Now().Add(24 * time.Hour),
-				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteNoneMode,
-			})
-		}
-	}
 
 	// Fetch user preferences (language + avatar)
 	prefs, err := h.q.GetUserPreferences(ctx, user.ID)
@@ -576,32 +479,9 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		slog.String("user_id", user.ID),
 	)
 
-	// Refresh the session cookie so that a page reload reflects the new name immediately.
-	// The JWT stores first_name/last_name and is the source of truth for GET /auth/me.
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":         user.ID,
-		"email":       user.Email,
-		"first_name":  req.FirstName,
-		"last_name":   req.LastName,
-		"sid":         user.SID,
-		"role":        user.Role,
-		"permissions": user.Permissions,
-		"exp":         time.Now().Add(24 * time.Hour).Unix(),
-	})
-	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
-	if len(secret) > 0 {
-		if tokenString, err := token.SignedString(secret); err == nil {
-			http.SetCookie(w, &http.Cookie{
-				Name:     CookieName,
-				Value:    tokenString,
-				Path:     "/",
-				Expires:  time.Now().Add(24 * time.Hour),
-				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteLaxMode,
-			})
-		}
-	}
+	// Note: The session cookie holds the WorkOS AccessToken (RS256), which we cannot
+	// re-sign after a name update. The new name will be reflected on the next WorkOS login.
+	// The response body below returns the updated values immediately for the current session.
 
 	resp := map[string]interface{}{
 		"id":          user.ID,
@@ -618,9 +498,9 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-// DevToken issues a Zeta JWT for a given email/password via WorkOS Password Auth.
-// This endpoint is only available when DEV_AUTH_ENABLED=true and must never be
-// enabled in production.
+// DevToken issues a WorkOS RS256 access token for a given email/password via WorkOS Password Auth.
+// The returned token can be used directly as a Bearer token — the middleware validates it via JWKS.
+// This endpoint is only available when DEV_AUTH_ENABLED=true and must never be enabled in production.
 func (h *Handler) DevToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -652,51 +532,8 @@ func (h *Handler) DevToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract SID from WorkOS access token
-	var woClaims jwt.MapClaims
-	jwt.NewParser().ParseUnverified(resp.AccessToken, &woClaims)
-	sid, _ := woClaims["sid"].(string)
-
-	// Fetch role and permissions from WorkOS
-	role := ""
-	var userPermissions []string
-	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
-		UserID: resp.User.ID,
-	})
-	if err == nil && len(memberships.Data) > 0 {
-		role = memberships.Data[0].Role.Slug
-		userPermissions, _ = h.getPermissionsForRole(ctx, role)
-	}
-	if userPermissions == nil {
-		userPermissions = []string{}
-	}
-
-	// Build Zeta JWT (identical to /auth/callback)
-	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
-	if len(secret) == 0 {
-		http.Error(w, "WORKOS_COOKIE_SECRET is not set", http.StatusInternalServerError)
-		return
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":         resp.User.ID,
-		"email":       resp.User.Email,
-		"first_name":  resp.User.FirstName,
-		"last_name":   resp.User.LastName,
-		"sid":         sid,
-		"role":        role,
-		"permissions": userPermissions,
-		"exp":         time.Now().Add(24 * time.Hour).Unix(),
-	})
-
-	tokenString, err := token.SignedString(secret)
-	if err != nil {
-		http.Error(w, "Failed to sign token", http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+	json.NewEncoder(w).Encode(map[string]string{"token": resp.AccessToken})
 }
 
 // fetchURLAsBase64 downloads the content at url and returns it as a base64-encoded string.
