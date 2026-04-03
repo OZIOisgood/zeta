@@ -82,6 +82,10 @@ func (s *Server) routes() {
 		r.Post("/auth/logout", authHandler.Logout)
 		r.Get("/auth/me", authHandler.Me)
 		r.Put("/auth/me", authHandler.UpdateMe)
+		// Dev-only: issues a Zeta JWT via password auth — never enable in production
+		if os.Getenv("DEV_AUTH_ENABLED") == "true" {
+			r.Post("/auth/token", authHandler.DevToken)
+		}
 	})
 
 	// Protected Routes
@@ -119,4 +123,3 @@ func allowedOrigins() []string {
 	}
 	return origins
 }
-

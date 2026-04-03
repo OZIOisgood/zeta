@@ -1,0 +1,29 @@
+meta {
+  name: Update Group
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/groups/{{groupId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+body:json {
+  {
+    "name": "Test Group Updated",
+    "description": "Updated by Bruno tests"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body.id).to.equal(bru.getVar("groupId"));
+  expect(res.body.name).to.equal("Test Group Updated");
+  expect(res.body.updated_at).to.be.a("string");
+}

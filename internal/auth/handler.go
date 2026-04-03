@@ -618,6 +618,87 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+// DevToken issues a Zeta JWT for a given email/password via WorkOS Password Auth.
+// This endpoint is only available when DEV_AUTH_ENABLED=true and must never be
+// enabled in production.
+func (h *Handler) DevToken(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.Email == "" || req.Password == "" {
+		http.Error(w, "email and password are required", http.StatusBadRequest)
+		return
+	}
+
+	clientID := os.Getenv("WORKOS_CLIENT_ID")
+	resp, err := usermanagement.AuthenticateWithPassword(ctx, usermanagement.AuthenticateWithPasswordOpts{
+		ClientID: clientID,
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		h.logger.ErrorContext(ctx, "dev_token_auth_failed",
+			slog.String("email", req.Email),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Authentication failed: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// Extract SID from WorkOS access token
+	var woClaims jwt.MapClaims
+	jwt.NewParser().ParseUnverified(resp.AccessToken, &woClaims)
+	sid, _ := woClaims["sid"].(string)
+
+	// Fetch role and permissions from WorkOS
+	role := ""
+	var userPermissions []string
+	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
+		UserID: resp.User.ID,
+	})
+	if err == nil && len(memberships.Data) > 0 {
+		role = memberships.Data[0].Role.Slug
+		userPermissions, _ = h.getPermissionsForRole(ctx, role)
+	}
+	if userPermissions == nil {
+		userPermissions = []string{}
+	}
+
+	// Build Zeta JWT (identical to /auth/callback)
+	secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
+	if len(secret) == 0 {
+		http.Error(w, "WORKOS_COOKIE_SECRET is not set", http.StatusInternalServerError)
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":         resp.User.ID,
+		"email":       resp.User.Email,
+		"first_name":  resp.User.FirstName,
+		"last_name":   resp.User.LastName,
+		"sid":         sid,
+		"role":        role,
+		"permissions": userPermissions,
+		"exp":         time.Now().Add(24 * time.Hour).Unix(),
+	})
+
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		http.Error(w, "Failed to sign token", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+}
+
 // fetchURLAsBase64 downloads the content at url and returns it as a base64-encoded string.
 func (h *Handler) fetchURLAsBase64(url string) (string, error) {
 	resp, err := http.Get(url) // #nosec G107 — URL comes from WorkOS API response

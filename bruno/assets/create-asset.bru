@@ -1,0 +1,37 @@
+meta {
+  name: Create Asset
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/assets
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+body:json {
+  {
+    "title": "Test Asset",
+    "description": "Created by Bruno tests",
+    "filenames": ["test-video.mp4"],
+    "group_id": "{{groupId}}"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body.asset_id).to.be.a("string");
+  expect(res.body.videos).to.be.an("array");
+  expect(res.body.videos.length).to.equal(1);
+  expect(res.body.videos[0].id).to.be.a("string");
+  expect(res.body.videos[0].upload_url).to.be.a("string");
+  expect(res.body.videos[0].filename).to.equal("test-video.mp4");
+
+  bru.setVar("assetId", res.body.asset_id);
+  bru.setVar("videoId", res.body.videos[0].id);
+}

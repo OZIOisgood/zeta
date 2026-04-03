@@ -1,0 +1,32 @@
+meta {
+  name: Create Review
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/assets/videos/{{videoId}}/reviews
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+body:json {
+  {
+    "content": "This is a test review created by Bruno",
+    "timestamp_seconds": 42
+  }
+}
+
+tests {
+  expect(res.status).to.equal(201);
+  expect(res.body.id).to.be.a("string");
+  expect(res.body.content).to.equal("This is a test review created by Bruno");
+  expect(res.body.timestamp_seconds).to.equal(42);
+  expect(res.body.created_at).to.be.a("string");
+
+  bru.setVar("reviewId", res.body.id);
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Accept Invitation
+  type: http
+  seq: 3
+}
+
+// NOTE: This request consumes the invitation code (one-time use).
+// Run manually with a fresh code from create-invitation.bru.
+// Do NOT include in automated collection runs.
+
+post {
+  url: {{baseUrl}}/groups/invitations/accept
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+body:json {
+  {
+    "code": "{{inviteCode}}"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body.group_id).to.be.a("string");
+}
