@@ -1,0 +1,19 @@
+meta {
+  name: Delete Review
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/assets/videos/{{videoId}}/reviews/{{reviewId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+tests {
+  expect(res.status).to.equal(204);
+}

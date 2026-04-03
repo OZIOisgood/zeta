@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/OZIOisgood/zeta/internal/assets"
 	"github.com/OZIOisgood/zeta/internal/auth"
@@ -54,6 +55,11 @@ func (s *Server) routes() {
 		MaxAge:           300,
 	}))
 
+	// JWKS cache — WorkOS public keys, refreshed every hour
+	clientID := os.Getenv("WORKOS_CLIENT_ID")
+	jwksURL := "https://api.workos.com/sso/jwks/" + clientID
+	jwksCache := auth.NewJWKSCache(jwksURL, time.Hour)
+
 	queries := db.New(s.Pool)
 
 	// Initialize Handlers
@@ -67,7 +73,7 @@ func (s *Server) routes() {
 	usersHandler := users.NewHandler(s.Logger, queries, emailService)
 
 	// Global Middleware
-	s.Router.Use(auth.Middleware(s.Logger))
+	s.Router.Use(auth.Middleware(s.Logger, jwksCache))
 
 	// Public Routes
 	s.Router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +88,10 @@ func (s *Server) routes() {
 		r.Post("/auth/logout", authHandler.Logout)
 		r.Get("/auth/me", authHandler.Me)
 		r.Put("/auth/me", authHandler.UpdateMe)
+		// Dev-only: issues a Zeta JWT via password auth — never enable in production
+		if os.Getenv("DEV_AUTH_ENABLED") == "true" {
+			r.Post("/auth/token", authHandler.DevToken)
+		}
 	})
 
 	// Protected Routes
@@ -119,4 +129,3 @@ func allowedOrigins() []string {
 	}
 	return origins
 }
-

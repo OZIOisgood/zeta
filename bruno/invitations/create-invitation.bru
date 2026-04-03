@@ -1,0 +1,30 @@
+meta {
+  name: Create Invitation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/groups/{{groupId}}/invitations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+body:json {
+  {
+    "email": "invite-test@example.com"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(201);
+  expect(res.body.id).to.be.a("string");
+  expect(res.body.code).to.be.a("string");
+  expect(res.body.code).to.have.lengthOf(6);
+
+  bru.setVar("inviteCode", res.body.code);
+}

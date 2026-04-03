@@ -1,0 +1,24 @@
+meta {
+  name: List Reviews
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/assets/videos/{{videoId}}/reviews
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body).to.be.an("array");
+  expect(res.body.length).to.be.above(0);
+  expect(res.body[0].id).to.be.a("string");
+  expect(res.body[0].content).to.be.a("string");
+  expect(res.body[0].created_at).to.be.a("string");
+}
