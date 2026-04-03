@@ -3,8 +3,10 @@ package groups
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -13,6 +15,40 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+// groupResponse is a JSON-safe DTO for db.Group.
+type groupResponse struct {
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	OwnerID   string  `json:"owner_id"`
+	Avatar    *string `json:"avatar"`
+	CreatedAt string  `json:"created_at"`
+	UpdatedAt string  `json:"updated_at"`
+}
+
+func toGroupResponse(g db.Group) groupResponse {
+	var avatar *string
+	if len(g.Avatar) > 0 {
+		enc := fmt.Sprintf("data:image/jpeg;base64,%s", base64.StdEncoding.EncodeToString(g.Avatar))
+		avatar = &enc
+	}
+	return groupResponse{
+		ID:        toUUIDString(g.ID),
+		Name:      g.Name,
+		OwnerID:   g.OwnerID,
+		Avatar:    avatar,
+		CreatedAt: g.CreatedAt.Time.Format(time.RFC3339),
+		UpdatedAt: g.UpdatedAt.Time.Format(time.RFC3339),
+	}
+}
+
+func toUUIDString(u pgtype.UUID) string {
+	if !u.Valid {
+		return ""
+	}
+	src := u.Bytes
+	return fmt.Sprintf("%x-%x-%x-%x-%x", src[0:4], src[4:6], src[6:8], src[8:10], src[10:16])
+}
 
 type Handler struct {
 	q      *db.Queries
@@ -56,13 +92,21 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return empty array instead of null if no groups
-	if groups == nil {
-		groups = []db.ListUserGroupsRow{}
+	// Map to DTO to ensure JSON-safe serialization
+	dtos := make([]groupResponse, len(groups))
+	for i, g := range groups {
+		dtos[i] = toGroupResponse(db.Group{
+			ID:        g.ID,
+			Name:      g.Name,
+			OwnerID:   g.OwnerID,
+			Avatar:    g.Avatar,
+			CreatedAt: g.CreatedAt,
+			UpdatedAt: g.UpdatedAt,
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(groups)
+	json.NewEncoder(w).Encode(dtos)
 }
 
 type CreateGroupRequest struct {
@@ -158,7 +202,7 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(group)
+	json.NewEncoder(w).Encode(toGroupResponse(group))
 }
 
 func (h *Handler) GetGroupByID(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +248,7 @@ func (h *Handler) GetGroupByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(group)
+	json.NewEncoder(w).Encode(toGroupResponse(group))
 }
 
 type UpdateGroupRequest struct {
@@ -303,5 +347,5 @@ func (h *Handler) UpdateGroupPreferences(w http.ResponseWriter, r *http.Request)
 	)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(group)
+	json.NewEncoder(w).Encode(toGroupResponse(group))
 }

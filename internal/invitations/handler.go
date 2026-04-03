@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"math/big"
 	"net/http"
+	"os"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -125,7 +126,11 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send invitation email
-	inviteLink := fmt.Sprintf("http://localhost:4200/groups?invite=%s", code)
+	mobileBase := os.Getenv("MOBILE_INVITE_BASE_URL")
+	if mobileBase == "" {
+		mobileBase = "zeta://invite/"
+	}
+	inviteLink := fmt.Sprintf("%s%s", mobileBase, code)
 	inviterName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	subject := "You've been invited to join a group on Zeta"
 	text := fmt.Sprintf("%s has invited you to join a group.\n\nClick the link below to accept:\n%s", inviterName, inviteLink)
@@ -156,7 +161,7 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":   invitation.ID,
+		"id":   toUUIDString(invitation.ID),
 		"code": invitation.Code,
 	})
 }
@@ -330,6 +335,14 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 }
 
 const codeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+
+func toUUIDString(u pgtype.UUID) string {
+	if !u.Valid {
+		return ""
+	}
+	src := u.Bytes
+	return fmt.Sprintf("%x-%x-%x-%x-%x", src[0:4], src[4:6], src[6:8], src[8:10], src[10:16])
+}
 
 func generateCode(length int) (string, error) {
 	b := make([]byte, length)
