@@ -28,13 +28,17 @@ type UserContext struct {
 func Middleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cookie, err := r.Cookie(CookieName)
-			if err != nil {
+			var tokenString string
+
+			// Prefer Authorization: Bearer header (mobile clients), fall back to cookie (web)
+			if authHeader := r.Header.Get("Authorization"); len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+				tokenString = authHeader[7:]
+			} else if cookie, err := r.Cookie(CookieName); err == nil {
+				tokenString = cookie.Value
+			} else {
 				next.ServeHTTP(w, r)
 				return
 			}
-
-			tokenString := cookie.Value
 			secret := []byte(os.Getenv("WORKOS_COOKIE_SECRET"))
 
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
