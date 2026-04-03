@@ -20,6 +20,7 @@ import (
 )
 
 const CookieName = "zeta_session"
+const RefreshCookieName = "zeta_refresh"
 
 type Handler struct {
 	logger *slog.Logger
@@ -158,6 +159,16 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteNoneMode,
 	})
 
+	// Store the refresh token in a separate HttpOnly cookie for token rotation on profile updates.
+	http.SetCookie(w, &http.Cookie{
+		Name:     RefreshCookieName,
+		Value:    resp.RefreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
+
 	h.logger.InfoContext(ctx, "auth_login_succeeded",
 		slog.String("component", "auth"),
 		slog.String("user_id", resp.User.ID),
@@ -172,10 +183,19 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	// 1. Clear local cookie
+	// 1. Clear local cookies
 	cookie, err := r.Cookie(CookieName)
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name:     RefreshCookieName,
 		Value:    "",
 		Path:     "/",
 		Expires:  time.Now().Add(-1 * time.Hour),
@@ -479,9 +499,39 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		slog.String("user_id", user.ID),
 	)
 
-	// Note: The session cookie holds the WorkOS AccessToken (RS256), which we cannot
-	// re-sign after a name update. The new name will be reflected on the next WorkOS login.
-	// The response body below returns the updated values immediately for the current session.
+	// Refresh the session cookie so that the updated name is reflected immediately.
+	// We use the stored refresh token to obtain a new WorkOS AccessToken (RS256).
+	if refreshCookie, err := r.Cookie(RefreshCookieName); err == nil && refreshCookie.Value != "" {
+		clientID := os.Getenv("WORKOS_CLIENT_ID")
+		refreshResp, err := usermanagement.AuthenticateWithRefreshToken(ctx, usermanagement.AuthenticateWithRefreshTokenOpts{
+			ClientID:     clientID,
+			RefreshToken: refreshCookie.Value,
+		})
+		if err != nil {
+			h.logger.WarnContext(ctx, "auth_token_refresh_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+		} else {
+			http.SetCookie(w, &http.Cookie{
+				Name:     CookieName,
+				Value:    refreshResp.AccessToken,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteNoneMode,
+			})
+			http.SetCookie(w, &http.Cookie{
+				Name:     RefreshCookieName,
+				Value:    refreshResp.RefreshToken,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteNoneMode,
+			})
+		}
+	}
 
 	resp := map[string]interface{}{
 		"id":          user.ID,
