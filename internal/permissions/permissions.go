@@ -14,6 +14,12 @@ const (
 	GroupsUserListDelete  = "groups:user-list:delete"
 	GroupsInvitesCreate   = "groups:invites:create"
 	GroupsPreferencesEdit = "groups:preferences:edit"
+
+	CoachingAvailabilityManage = "coaching:availability:manage"
+	CoachingSlotsRead          = "coaching:slots:read"
+	CoachingBook               = "coaching:book"
+	CoachingBookingsRead       = "coaching:bookings:read"
+	CoachingBookingsManage     = "coaching:bookings:manage"
 )
 
 // Roles

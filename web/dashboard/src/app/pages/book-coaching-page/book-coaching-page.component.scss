@@ -1,0 +1,146 @@
+.step-description {
+  color: var(--tui-text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.experts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.expert-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  background: var(--tui-background-neutral-1);
+  border: 1px solid var(--tui-border-normal);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--tui-border-focus);
+  }
+}
+
+.expert-name {
+  text-align: center;
+  font-weight: 500;
+}
+
+.slot-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.slot-day {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.slot-date {
+  color: var(--tui-text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.slot-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.slot-chip {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--tui-border-normal);
+  border-radius: 2rem;
+  background: var(--tui-background-base);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: var(--tui-background-neutral-1);
+    border-color: var(--tui-border-focus);
+  }
+}
+
+.booking-with-note {
+  color: var(--tui-text-secondary);
+  margin-bottom: 1rem;
+}
+
+.confirmation-card {
+  background: var(--tui-background-neutral-1);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.confirm-detail {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.confirm-label {
+  min-width: 90px;
+  color: var(--tui-text-secondary);
+}
+
+.notes-input {
+  width: 100%;
+  border: 1px solid var(--tui-border-normal);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  background: var(--tui-background-base);
+  color: var(--tui-text-primary);
+  resize: vertical;
+  font-family: inherit;
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.success-message {
+  padding: 2rem;
+  text-align: center;
+  color: var(--tui-text-positive);
+}
+
+.empty-text {
+  color: var(--tui-text-secondary);
+  padding: 1rem 0;
+}
+
+@media (max-width: 47.9375em) {
+  .experts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .slot-chips {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.5rem;
+  }
+
+  .confirm-detail {
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+}

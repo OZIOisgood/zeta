@@ -1,0 +1,254 @@
+<app-page-container>
+  <div class="availability-page">
+    <div class="page-header">
+      <button tuiButton appearance="flat" size="s" iconStart="@tui.arrow-left" (click)="goBack()">
+        Back to group
+      </button>
+      <h1 class="tui-text_h3">Manage My Availability</h1>
+    </div>
+
+    @if (loading()) {
+      <p class="tui-text_body-m">Loading...</p>
+    } @else {
+      <!-- Weekly Schedule -->
+      <section class="section">
+        <div class="section-header">
+          <div>
+            <h2 class="tui-text_h4">Weekly Schedule</h2>
+            <p class="tui-text_body-s timezone-label">
+              Times are in your timezone (<strong>{{ userTimezone() }}</strong
+              >)
+            </p>
+          </div>
+          <button
+            tuiButton
+            appearance="flat"
+            size="s"
+            iconStart="@tui.plus"
+            (click)="showAddForm = !showAddForm"
+          >
+            Add Availability
+          </button>
+        </div>
+
+        @if (showAddForm) {
+          <div class="form-card">
+            <div class="form-row">
+              <div class="form-field">
+                <label class="tui-text_body-s field-label">Day</label>
+                <select class="native-select" [(ngModel)]="newDayOfWeek">
+                  @for (day of dayNames; track $index) {
+                    <option [ngValue]="$index">{{ day }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="tui-text_body-s field-label">Start time</label>
+                <input type="time" class="time-input" [(ngModel)]="newStartTime" />
+              </div>
+              <div class="form-field">
+                <label class="tui-text_body-s field-label">End time</label>
+                <input type="time" class="time-input" [(ngModel)]="newEndTime" />
+              </div>
+              <div class="form-field">
+                <label class="tui-text_body-s field-label">Slot duration</label>
+                <select class="native-select" [(ngModel)]="newDuration">
+                  @for (d of durationOptions; track d) {
+                    <option [ngValue]="d">{{ d }} min</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button tuiButton size="s" type="button" (click)="addAvailability()">Save</button>
+              <button
+                tuiButton
+                appearance="flat"
+                size="s"
+                type="button"
+                (click)="showAddForm = false"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (availability().length === 0 && !showAddForm) {
+          <p class="tui-text_body-m empty-text">
+            No availability blocks yet. Add one to start accepting bookings.
+          </p>
+        }
+
+        @for (a of availability(); track a.id) {
+          <div class="availability-row">
+            @if (editingId === a.id) {
+              <div class="form-card">
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="tui-text_body-s field-label">Day</label>
+                    <select class="native-select" [(ngModel)]="editDayOfWeek">
+                      @for (day of dayNames; track $index) {
+                        <option [ngValue]="$index">{{ day }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label class="tui-text_body-s field-label">Start time</label>
+                    <input type="time" class="time-input" [(ngModel)]="editStartTime" />
+                  </div>
+                  <div class="form-field">
+                    <label class="tui-text_body-s field-label">End time</label>
+                    <input type="time" class="time-input" [(ngModel)]="editEndTime" />
+                  </div>
+                  <div class="form-field">
+                    <label class="tui-text_body-s field-label">Slot duration</label>
+                    <select class="native-select" [(ngModel)]="editDuration">
+                      @for (d of durationOptions; track d) {
+                        <option [ngValue]="d">{{ d }} min</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button tuiButton size="s" type="button" (click)="saveEdit()">Save</button>
+                  <button tuiButton appearance="flat" size="s" type="button" (click)="cancelEdit()">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="availability-item">
+                <span class="tui-text_body-m availability-label">
+                  {{ dayName(a.day_of_week) }} &nbsp;&bull;&nbsp; {{ a.start_time }} –
+                  {{ a.end_time }} &nbsp;&bull;&nbsp; {{ a.slot_duration_minutes }} min slots
+                </span>
+                <div class="item-actions">
+                  <button
+                    tuiButton
+                    appearance="flat"
+                    size="xs"
+                    iconStart="@tui.pencil"
+                    (click)="startEdit(a)"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    tuiButton
+                    appearance="flat"
+                    size="xs"
+                    iconStart="@tui.trash-2"
+                    (click)="deleteAvailability(a.id)"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Blocked Dates -->
+      <section class="section">
+        <div class="section-header">
+          <h2 class="tui-text_h4">Blocked Dates</h2>
+          <button
+            tuiButton
+            appearance="flat"
+            size="s"
+            iconStart="@tui.ban"
+            (click)="showBlockForm = !showBlockForm"
+          >
+            Block Time
+          </button>
+        </div>
+
+        @if (showBlockForm) {
+          <div class="form-card">
+            <div class="form-row">
+              <div class="form-field">
+                <label class="tui-text_body-s field-label">Date</label>
+                <input type="date" class="time-input" [(ngModel)]="newBlockDate" />
+              </div>
+              <div class="form-field form-field--checkbox">
+                <label class="tui-text_body-s">
+                  <input type="checkbox" [(ngModel)]="newBlockFullDay" />
+                  Full day
+                </label>
+              </div>
+              @if (!newBlockFullDay) {
+                <div class="form-field">
+                  <label class="tui-text_body-s field-label">Start time</label>
+                  <input type="time" class="time-input" [(ngModel)]="newBlockStartTime" />
+                </div>
+                <div class="form-field">
+                  <label class="tui-text_body-s field-label">End time</label>
+                  <input type="time" class="time-input" [(ngModel)]="newBlockEndTime" />
+                </div>
+              }
+              <div class="form-field form-field--wide">
+                <label class="tui-text_body-s field-label">Reason (optional)</label>
+                <input
+                  type="text"
+                  class="time-input"
+                  [(ngModel)]="newBlockReason"
+                  placeholder="e.g. Holiday"
+                />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button
+                tuiButton
+                size="s"
+                type="button"
+                [disabled]="!newBlockDate"
+                (click)="addBlockedSlot()"
+              >
+                Block
+              </button>
+              <button
+                tuiButton
+                appearance="flat"
+                size="s"
+                type="button"
+                (click)="showBlockForm = false"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (blockedSlots().length === 0 && !showBlockForm) {
+          <p class="tui-text_body-m empty-text">No blocked dates.</p>
+        }
+
+        @for (slot of blockedSlots(); track slot.id) {
+          <div class="availability-item">
+            <span class="tui-text_body-m availability-label">
+              {{ formatBlockedDate(slot.blocked_date) }}
+              @if (!slot.start_time) {
+                &nbsp;&bull;&nbsp;Full day
+              } @else {
+                &nbsp;&bull;&nbsp;{{ slot.start_time }} – {{ slot.end_time }}
+              }
+              @if (slot.reason) {
+                &nbsp;&bull;&nbsp;<em>{{ slot.reason }}</em>
+              }
+            </span>
+            <button
+              tuiButton
+              appearance="flat"
+              size="xs"
+              iconStart="@tui.trash-2"
+              (click)="deleteBlockedSlot(slot.id)"
+            >
+              Remove
+            </button>
+          </div>
+        }
+      </section>
+    }
+  </div>
+</app-page-container>

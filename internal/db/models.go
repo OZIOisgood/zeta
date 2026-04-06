@@ -54,6 +54,50 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
+type CoachingBookingStatus string
+
+const (
+	CoachingBookingStatusConfirmed CoachingBookingStatus = "confirmed"
+	CoachingBookingStatusCancelled CoachingBookingStatus = "cancelled"
+	CoachingBookingStatusCompleted CoachingBookingStatus = "completed"
+	CoachingBookingStatusNoShow    CoachingBookingStatus = "no_show"
+)
+
+func (e *CoachingBookingStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CoachingBookingStatus(s)
+	case string:
+		*e = CoachingBookingStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CoachingBookingStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCoachingBookingStatus struct {
+	CoachingBookingStatus CoachingBookingStatus `json:"coaching_booking_status"`
+	Valid                 bool                  `json:"valid"` // Valid is true if CoachingBookingStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCoachingBookingStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CoachingBookingStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CoachingBookingStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCoachingBookingStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CoachingBookingStatus), nil
+}
+
 type InvitationStatus string
 
 const (
@@ -193,6 +237,44 @@ type Asset struct {
 	OwnerID     string             `json:"owner_id"`
 }
 
+type CoachingAvailability struct {
+	ID                  pgtype.UUID        `json:"id"`
+	ExpertID            string             `json:"expert_id"`
+	GroupID             pgtype.UUID        `json:"group_id"`
+	DayOfWeek           int16              `json:"day_of_week"`
+	StartTime           pgtype.Time        `json:"start_time"`
+	EndTime             pgtype.Time        `json:"end_time"`
+	SlotDurationMinutes int32              `json:"slot_duration_minutes"`
+	IsActive            bool               `json:"is_active"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+}
+
+type CoachingBlockedSlot struct {
+	ID          pgtype.UUID        `json:"id"`
+	ExpertID    string             `json:"expert_id"`
+	BlockedDate pgtype.Date        `json:"blocked_date"`
+	StartTime   pgtype.Time        `json:"start_time"`
+	EndTime     pgtype.Time        `json:"end_time"`
+	Reason      pgtype.Text        `json:"reason"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type CoachingBooking struct {
+	ID                 pgtype.UUID           `json:"id"`
+	ExpertID           string                `json:"expert_id"`
+	StudentID          string                `json:"student_id"`
+	GroupID            pgtype.UUID           `json:"group_id"`
+	ScheduledAt        pgtype.Timestamptz    `json:"scheduled_at"`
+	DurationMinutes    int32                 `json:"duration_minutes"`
+	Status             CoachingBookingStatus `json:"status"`
+	CancellationReason pgtype.Text           `json:"cancellation_reason"`
+	CancelledBy        pgtype.Text           `json:"cancelled_by"`
+	Notes              pgtype.Text           `json:"notes"`
+	CreatedAt          pgtype.Timestamptz    `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz    `json:"updated_at"`
+}
+
 type Group struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
@@ -225,6 +307,7 @@ type UserPreference struct {
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 	Avatar    string           `json:"avatar"`
+	Timezone  string           `json:"timezone"`
 }
 
 type Video struct {

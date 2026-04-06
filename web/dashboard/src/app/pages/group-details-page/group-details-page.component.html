@@ -60,6 +60,57 @@
         </div>
         <app-users-list [groupId]="group.id"></app-users-list>
       </div>
+
+      <div *ngIf="showCoachingSessions()" class="coaching-section">
+        <div class="section-header">
+          <h2 class="tui-text_h3">Coaching Sessions</h2>
+          @if (showManageAvailability()) {
+            <a
+              tuiButton
+              appearance="flat"
+              size="s"
+              iconStart="@tui.calendar-plus"
+              [routerLink]="['/groups', group.id, 'coaching', 'availability']"
+            >
+              Manage My Availability
+            </a>
+          }
+        </div>
+        @if (sessionsLoading()) {
+          <p class="tui-text_body-m sessions-empty">Loading sessions…</p>
+        } @else if (groupSessions().length === 0) {
+          <p class="tui-text_body-m sessions-empty">No coaching sessions in this group yet.</p>
+        } @else {
+          <div class="sessions-table">
+            <div class="sessions-table__header">
+              <span>Expert</span>
+              <span>Student</span>
+              <span>Date &amp; Time</span>
+              <span>Duration</span>
+              <span>Status</span>
+            </div>
+            @for (session of groupSessions(); track session.id) {
+              <div class="sessions-table__row">
+                <span class="sessions-table__cell">{{
+                  session.expert_name || session.expert_id
+                }}</span>
+                <span class="sessions-table__cell">{{
+                  session.student_name || session.student_id
+                }}</span>
+                <span class="sessions-table__cell">{{
+                  formatSessionDateTime(session.scheduled_at)
+                }}</span>
+                <span class="sessions-table__cell">{{ session.duration_minutes }} min</span>
+                <span class="sessions-table__cell">
+                  <span class="status-badge status-badge--{{ session.status }}">{{
+                    session.status
+                  }}</span>
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
     }
   </div>
 </app-page-container>
