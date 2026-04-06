@@ -10,7 +10,7 @@ import (
 )
 
 const getUserPreferences = `-- name: GetUserPreferences :one
-SELECT user_id, language, created_at, updated_at, avatar FROM user_preferences WHERE user_id = $1
+SELECT user_id, language, created_at, updated_at, avatar, timezone FROM user_preferences WHERE user_id = $1
 `
 
 func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPreference, error) {
@@ -22,6 +22,7 @@ func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPr
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Avatar,
+		&i.Timezone,
 	)
 	return i, err
 }
@@ -31,7 +32,7 @@ UPDATE user_preferences
 SET avatar     = $2,
     updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, language, created_at, updated_at, avatar
+RETURNING user_id, language, created_at, updated_at, avatar, timezone
 `
 
 type UpdateUserAvatarParams struct {
@@ -48,6 +49,7 @@ func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Avatar,
+		&i.Timezone,
 	)
 	return i, err
 }
@@ -58,7 +60,7 @@ VALUES ($1, 'en', $2)
 ON CONFLICT (user_id) DO UPDATE
 SET avatar     = EXCLUDED.avatar,
     updated_at = NOW()
-RETURNING user_id, language, created_at, updated_at, avatar
+RETURNING user_id, language, created_at, updated_at, avatar, timezone
 `
 
 type UpsertUserAvatarParams struct {
@@ -75,6 +77,7 @@ func (q *Queries) UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Avatar,
+		&i.Timezone,
 	)
 	return i, err
 }
@@ -85,7 +88,7 @@ VALUES ($1, $2)
 ON CONFLICT (user_id) DO UPDATE
 SET language = EXCLUDED.language,
     updated_at = NOW()
-RETURNING user_id, language, created_at, updated_at, avatar
+RETURNING user_id, language, created_at, updated_at, avatar, timezone
 `
 
 type UpsertUserPreferencesParams struct {
@@ -102,6 +105,7 @@ func (q *Queries) UpsertUserPreferences(ctx context.Context, arg UpsertUserPrefe
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Avatar,
+		&i.Timezone,
 	)
 	return i, err
 }

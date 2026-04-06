@@ -1,0 +1,177 @@
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--tui-border-normal);
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--tui-text-secondary);
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  margin-bottom: -1px;
+
+  &:hover {
+    color: var(--tui-text-primary);
+  }
+}
+
+.tab--active {
+  color: var(--tui-text-primary);
+  border-bottom-color: var(--tui-text-action);
+  font-weight: 500;
+}
+
+.loading-text,
+.empty-text {
+  color: var(--tui-text-secondary);
+  padding: 1rem 0;
+}
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--tui-background-neutral-1);
+  border-radius: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.session-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.session-party {
+  font-weight: 500;
+}
+
+.session-party-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+}
+
+.session-role {
+  color: var(--tui-text-secondary);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.session-meta {
+  color: var(--tui-text-secondary);
+}
+
+.session-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  background: var(--tui-background-neutral-2);
+  color: var(--tui-text-secondary);
+
+  &--confirmed {
+    background: rgba(34, 197, 94, 0.15);
+    color: #16a34a;
+  }
+
+  &--completed {
+    background: rgba(59, 130, 246, 0.15);
+    color: #2563eb;
+  }
+
+  &--cancelled {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+  }
+
+  &--no-show {
+    background: rgba(234, 179, 8, 0.15);
+    color: #ca8a04;
+  }
+}
+
+@media (max-width: 47.9375em) {
+  .session-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .session-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+}
+
+// Cancel dialog
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog-card {
+  background: var(--tui-background-base);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 440px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dialog-desc {
+  color: var(--tui-text-secondary);
+}
+
+.dialog-label {
+  color: var(--tui-text-secondary);
+}
+
+.dialog-textarea {
+  width: 100%;
+  border: 1px solid var(--tui-border-normal);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  background: var(--tui-background-base);
+  color: var(--tui-text-primary);
+  resize: vertical;
+  font-family: inherit;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

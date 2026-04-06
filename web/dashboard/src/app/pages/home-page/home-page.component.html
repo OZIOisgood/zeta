@@ -1,4 +1,42 @@
 <app-page-container>
+  @if (showCoachingWidget()) {
+    <div class="coaching-widget">
+      <div class="coaching-widget__header">
+        <h2 class="tui-text_h3">Upcoming Coaching Sessions</h2>
+        <a tuiButton appearance="flat" size="s" routerLink="/my-sessions">View all</a>
+      </div>
+      @if (bookingsLoading()) {
+        <p class="tui-text_body-m widget-empty">Loading…</p>
+      } @else if (upcomingBookings().length === 0) {
+        <div class="widget-empty-state">
+          <p class="tui-text_body-m">No upcoming coaching sessions.</p>
+          @if (canBook()) {
+            <a tuiButton appearance="outline" size="s" routerLink="/book-coaching">
+              Book Live Coaching
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="sessions-list">
+          @for (session of upcomingBookings(); track session.id) {
+            <div class="session-row">
+              <span class="session-row__party">{{
+                session.expert_name || session.student_name
+              }}</span>
+              <span class="session-row__date">{{
+                formatSessionDateTime(session.scheduled_at)
+              }}</span>
+              <span class="session-row__duration">{{ session.duration_minutes }} min</span>
+              <span class="status-badge status-badge--{{ session.status }}">{{
+                session.status
+              }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
   <app-asset-list
     [assets]="(assets$ | async) || []"
     [loading]="loading()"

@@ -1,0 +1,149 @@
+<app-page-container>
+  <h1 class="tui-text_h3">My Sessions</h1>
+
+  <div class="tabs">
+    <button
+      class="tab"
+      [class.tab--active]="activeTab() === 'upcoming'"
+      (click)="setTab('upcoming')"
+    >
+      Upcoming ({{ upcoming().length }})
+    </button>
+    <button class="tab" [class.tab--active]="activeTab() === 'past'" (click)="setTab('past')">
+      Past ({{ past().length }})
+    </button>
+    <button
+      class="tab"
+      [class.tab--active]="activeTab() === 'cancelled'"
+      (click)="setTab('cancelled')"
+    >
+      Cancelled ({{ cancelled().length }})
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p class="tui-text_body-m loading-text">Loading sessions...</p>
+  } @else {
+    @if (activeTab() === 'upcoming') {
+      @if (upcoming().length === 0) {
+        <p class="tui-text_body-m empty-text">No upcoming sessions.</p>
+      } @else {
+        <div class="session-list">
+          @for (booking of upcoming(); track booking.id) {
+            <div class="session-card">
+              <div class="session-info">
+                <div class="session-party-info">
+                  <span class="tui-text_body-m session-party">{{ otherParty(booking) }}</span>
+                  <span class="tui-text_body-s session-role">{{ otherPartyRole(booking) }}</span>
+                </div>
+                <span class="tui-text_body-s session-meta">{{
+                  formatDateTime(booking.scheduled_at)
+                }}</span>
+                <span class="tui-text_body-s session-meta">{{ booking.duration_minutes }} min</span>
+                <span class="status-badge status-badge--confirmed">{{ booking.status }}</span>
+              </div>
+              <div class="session-actions">
+                @if (isExpertForBooking(booking)) {
+                  <button tuiButton appearance="flat" size="s" (click)="completeBooking(booking)">
+                    Mark Completed
+                  </button>
+                }
+                @if (canCancel(booking)) {
+                  <button tuiButton appearance="flat" size="s" (click)="openCancelDialog(booking)">
+                    Cancel
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab() === 'past') {
+      @if (past().length === 0) {
+        <p class="tui-text_body-m empty-text">No past sessions.</p>
+      } @else {
+        <div class="session-list">
+          @for (booking of past(); track booking.id) {
+            <div class="session-card">
+              <div class="session-info">
+                <div class="session-party-info">
+                  <span class="tui-text_body-m session-party">{{ otherParty(booking) }}</span>
+                  <span class="tui-text_body-s session-role">{{ otherPartyRole(booking) }}</span>
+                </div>
+                <span class="tui-text_body-s session-meta">{{
+                  formatDateTime(booking.scheduled_at)
+                }}</span>
+                <span class="tui-text_body-s session-meta">{{ booking.duration_minutes }} min</span>
+                <span
+                  class="status-badge"
+                  [class.status-badge--completed]="booking.status === 'completed'"
+                  [class.status-badge--no-show]="booking.status === 'no_show'"
+                >
+                  {{ booking.status }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab() === 'cancelled') {
+      @if (cancelled().length === 0) {
+        <p class="tui-text_body-m empty-text">No cancelled sessions.</p>
+      } @else {
+        <div class="session-list">
+          @for (booking of cancelled(); track booking.id) {
+            <div class="session-card">
+              <div class="session-info">
+                <div class="session-party-info">
+                  <span class="tui-text_body-m session-party">{{ otherParty(booking) }}</span>
+                  <span class="tui-text_body-s session-role">{{ otherPartyRole(booking) }}</span>
+                </div>
+                <span class="tui-text_body-s session-meta">{{
+                  formatDateTime(booking.scheduled_at)
+                }}</span>
+                @if (booking.cancellation_reason) {
+                  <span class="tui-text_body-s session-meta"
+                    >Reason: {{ booking.cancellation_reason }}</span
+                  >
+                }
+                <span class="status-badge status-badge--cancelled">cancelled</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+</app-page-container>
+
+@if (cancelDialogOpen && cancelTarget) {
+  <div class="dialog-overlay" (click)="closeCancelDialog()">
+    <div class="dialog-card" (click)="$event.stopPropagation()">
+      <h3 class="tui-text_h4">Cancel Session</h3>
+      <p class="tui-text_body-m dialog-desc">
+        Are you sure you want to cancel your session with
+        <strong>{{ otherParty(cancelTarget) }}</strong>
+        on {{ formatDateTime(cancelTarget.scheduled_at) }}?
+      </p>
+      <label class="tui-text_body-s dialog-label">Reason (optional)</label>
+      <textarea
+        class="dialog-textarea"
+        rows="3"
+        placeholder="Let them know why you're cancelling..."
+        [(ngModel)]="cancelReason"
+      ></textarea>
+      <div class="dialog-actions">
+        <button tuiButton appearance="destructive" size="m" (click)="confirmCancel()">
+          Cancel Session
+        </button>
+        <button tuiButton appearance="flat" size="m" (click)="closeCancelDialog()">
+          Keep Session
+        </button>
+      </div>
+    </div>
+  </div>
+}

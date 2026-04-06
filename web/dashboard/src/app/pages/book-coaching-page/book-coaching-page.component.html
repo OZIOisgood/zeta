@@ -1,0 +1,186 @@
+<app-page-container>
+  <h1 class="tui-text_h3">Book Live Coaching</h1>
+
+  <tui-stepper [activeItemIndex]="activeIndex" style="margin-bottom: 2rem">
+    <button tuiStep icon="@tui.users">Select Group</button>
+    <button tuiStep icon="@tui.user" [disabled]="activeIndex < 1">Select Expert</button>
+    <button tuiStep icon="@tui.calendar" [disabled]="activeIndex < 2">Select Time</button>
+    <button tuiStep icon="@tui.check" [disabled]="activeIndex < 3">Confirm</button>
+  </tui-stepper>
+
+  <div [tuiSlides]="slideDirection" style="overflow: hidden">
+    @switch (activeIndex) {
+      <!-- Step 1: Select Group -->
+      @case (0) {
+        <div>
+          <p class="tui-text_body-m step-description">
+            Choose a group to book a coaching session for.
+          </p>
+
+          <tui-textfield
+            tuiChevron
+            [content]="selectedGroup && groupTemplate"
+            [stringify]="groupStringify"
+            style="margin-bottom: 1.5rem"
+          >
+            <label tuiLabel>Group</label>
+            <input placeholder="Choose a group" tuiSelect [(ngModel)]="selectedGroup" />
+            <tui-data-list-wrapper
+              *tuiTextfieldDropdown
+              new
+              [itemContent]="groupTemplate"
+              [items]="groups()"
+            />
+          </tui-textfield>
+
+          <ng-template #groupTemplate let-group>
+            <div style="display: flex; align-items: center; gap: 0.5rem">
+              <tui-avatar [src]="groupAvatarSrc(group)" size="xs"></tui-avatar>
+              {{ group.name }}
+            </div>
+          </ng-template>
+
+          <div style="display: flex; justify-content: flex-end">
+            <button
+              tuiButton
+              size="m"
+              type="button"
+              [disabled]="!selectedGroup"
+              (click)="selectGroup()"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Step 2: Select Expert -->
+      @case (1) {
+        <div>
+          @if (experts().length === 0) {
+            <p class="tui-text_body-m empty-text">
+              No experts have availability in this group yet.
+            </p>
+          } @else {
+            <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
+            <div class="experts-grid">
+              @for (expert of experts(); track expert.expert_id) {
+                <button class="expert-card" type="button" (click)="selectExpert(expert)">
+                  <tui-avatar [src]="expertAvatarSrc(expert)" size="l"></tui-avatar>
+                  <span class="tui-text_body-m expert-name"
+                    >{{ expert.first_name }} {{ expert.last_name }}</span
+                  >
+                </button>
+              }
+            </div>
+          }
+          <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem">
+            <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+              Back
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Step 3: Select Slot -->
+      @case (2) {
+        <div>
+          @if (expertSkipped && selectedExpert) {
+            <p class="tui-text_body-m booking-with-note">
+              Booking with: <strong>{{ selectedExpertName }}</strong>
+            </p>
+          }
+
+          @if (slots().length === 0) {
+            <p class="tui-text_body-m empty-text">No available slots for this expert.</p>
+          } @else {
+            <p class="tui-text_body-m step-description">All times are in your local timezone.</p>
+            <div class="slot-picker">
+              @for (date of slotDates; track date) {
+                <div class="slot-day">
+                  <h3 class="tui-text_body-m slot-date">{{ date }}</h3>
+                  <div class="slot-chips">
+                    @for (slot of slotsByDate().get(date) || []; track slot.starts_at) {
+                      <button class="slot-chip" type="button" (click)="selectSlot(slot)">
+                        {{ formatTime(slot.starts_at) }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem">
+            <button
+              tuiButton
+              appearance="flat"
+              size="m"
+              type="button"
+              (click)="expertSkipped ? (activeIndex = 0) : onBack()"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Step 4: Confirm -->
+      @case (3) {
+        <div>
+          @if (booked) {
+            <div class="success-message">
+              <span class="tui-text_h4">✓ Session booked! Redirecting to My Sessions...</span>
+            </div>
+          } @else if (selectedSlot) {
+            <div class="confirmation-card">
+              <h2 class="tui-text_h4">Confirm your booking</h2>
+
+              <div class="confirm-detail">
+                <span class="confirm-label tui-text_body-s">Expert</span>
+                <span class="tui-text_body-m">{{ selectedExpertName }}</span>
+              </div>
+              <div class="confirm-detail">
+                <span class="confirm-label tui-text_body-s">Group</span>
+                <span class="tui-text_body-m">{{ selectedGroup?.name }}</span>
+              </div>
+              <div class="confirm-detail">
+                <span class="confirm-label tui-text_body-s">Date & Time</span>
+                <span class="tui-text_body-m">{{ formatSlotDateTime(selectedSlot) }}</span>
+              </div>
+              <div class="confirm-detail">
+                <span class="confirm-label tui-text_body-s">Duration</span>
+                <span class="tui-text_body-m">{{ selectedSlot.duration_minutes }} minutes</span>
+              </div>
+
+              <div style="margin-top: 1.5rem">
+                <label class="tui-text_body-s confirm-label">Notes (optional)</label>
+                <textarea
+                  class="notes-input"
+                  rows="3"
+                  placeholder="Anything you'd like to share with the expert..."
+                  [(ngModel)]="notes"
+                ></textarea>
+              </div>
+
+              <div class="form-actions" style="margin-top: 1.5rem">
+                <button
+                  tuiButton
+                  size="m"
+                  type="button"
+                  [disabled]="booking"
+                  (click)="confirmBooking()"
+                >
+                  {{ booking ? 'Booking...' : 'Book Session' }}
+                </button>
+                <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+                  Back
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</app-page-container>
