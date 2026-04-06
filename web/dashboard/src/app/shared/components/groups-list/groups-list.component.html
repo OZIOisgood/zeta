@@ -1,4 +1,6 @@
-<h1 class="tui-text_h3 list-title" *ngIf="title" [tuiSkeleton]="loading ? title : ''">{{ loading ? '' : title }}</h1>
+<h1 class="tui-text_h3 list-title" *ngIf="title" [tuiSkeleton]="loading ? title : ''">
+  {{ loading ? '' : title }}
+</h1>
 
 <div class="grid" *ngIf="loading">
   <div
@@ -70,7 +72,7 @@
     <div
       class="group-avatar"
       *ngIf="group.avatar"
-      [style.background-image]="'url(data:image/jpeg;base64,' + group.avatar + ')'"
+      [style.background-image]="'url(' + group.avatar + ')'"
     ></div>
   </div>
 </div>

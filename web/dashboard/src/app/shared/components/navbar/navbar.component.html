@@ -10,6 +10,7 @@
   <tui-tabs [underline]="false" class="desktop-tabs">
     <a tuiTab routerLink="/" routerLinkActive [routerLinkActiveOptions]="{ exact: true }"> Home </a>
     <a *ngIf="showGroups()" tuiTab routerLink="/groups" routerLinkActive> Groups </a>
+    <a *ngIf="showCoaching()" tuiTab routerLink="/coaching" routerLinkActive> Coaching </a>
     <a *ngIf="showUploadVideo()" tuiTab routerLink="/upload-video" routerLinkActive>
       Upload video
     </a>
@@ -80,6 +81,16 @@
     >
       <tui-icon icon="@tui.users" [style.height.rem]="1.25"></tui-icon>
       Groups
+    </a>
+    <a
+      *ngIf="showCoaching()"
+      class="mobile-nav-item"
+      routerLink="/coaching"
+      routerLinkActive="active"
+      (click)="mobileMenuOpen.set(false)"
+    >
+      <tui-icon icon="@tui.video" [style.height.rem]="1.25"></tui-icon>
+      Coaching
     </a>
     <a
       *ngIf="showUploadVideo()"

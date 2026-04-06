@@ -1,0 +1,56 @@
+<div class="video-call-container">
+  <!-- Connecting State -->
+  <div *ngIf="connecting()" class="connecting-state">
+    <p>Connecting to {{ sessionTitle() || 'session' }}...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="error-state">
+    <p>{{ error() }}</p>
+    <button tuiButton appearance="primary" (click)="onLeave()">Back to Sessions</button>
+  </div>
+
+  <!-- Video Area -->
+  <div *ngIf="!connecting() && !error()" class="video-area">
+    <div class="session-title">{{ sessionTitle() }}</div>
+
+    <!-- Remote Video (Main) -->
+    <div class="remote-video-container">
+      <div #remoteVideo class="remote-video"></div>
+      <div *ngIf="!remoteUser()" class="waiting-overlay">
+        <p>Waiting for the other participant to join...</p>
+      </div>
+    </div>
+
+    <!-- Local Video (PiP) -->
+    <div class="local-video-container">
+      <div #localVideo class="local-video"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+      <button
+        tuiButton
+        [appearance]="agora.micEnabled() ? 'secondary' : 'destructive'"
+        size="m"
+        (click)="onToggleMic()"
+      >
+        <tui-icon [icon]="agora.micEnabled() ? '@tui.mic' : '@tui.mic-off'"></tui-icon>
+      </button>
+
+      <button
+        tuiButton
+        [appearance]="agora.cameraEnabled() ? 'secondary' : 'destructive'"
+        size="m"
+        (click)="onToggleCamera()"
+      >
+        <tui-icon [icon]="agora.cameraEnabled() ? '@tui.video' : '@tui.video-off'"></tui-icon>
+      </button>
+
+      <button tuiButton appearance="destructive" size="m" (click)="onLeave()">
+        <tui-icon icon="@tui.phone-off"></tui-icon>
+        Leave
+      </button>
+    </div>
+  </div>
+</div>

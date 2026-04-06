@@ -9,6 +9,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/assets"
 	"github.com/OZIOisgood/zeta/internal/auth"
+	"github.com/OZIOisgood/zeta/internal/coaching"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/groups"
@@ -65,6 +66,8 @@ func (s *Server) routes() {
 	invitationsHandler := invitations.NewHandler(queries, emailService, s.Logger)
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService)
+	coachingHandler := coaching.NewHandler(queries, emailService, s.Logger)
+	reminderHandler := coaching.NewReminderHandler(queries, emailService, s.Logger)
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware(s.Logger))
@@ -103,7 +106,11 @@ func (s *Server) routes() {
 			r.Get("/invitations/{code}", invitationsHandler.GetInvitationInfo)
 			r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)
 		})
+		r.Route("/coaching/sessions", coachingHandler.RegisterRoutes)
 	})
+
+	// Internal Routes (no auth middleware — uses secret header)
+	s.Router.Post("/internal/coaching/reminders", reminderHandler.ProcessReminders)
 }
 
 // allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)

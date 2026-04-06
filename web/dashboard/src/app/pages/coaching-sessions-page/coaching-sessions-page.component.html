@@ -1,0 +1,144 @@
+<app-page-container>
+  <div class="page-header">
+    <h1 class="tui-text_h3 list-title" [tuiSkeleton]="loading() ? 'Coaching Sessions' : ''">
+      {{ loading() ? '' : 'Coaching Sessions' }}
+    </h1>
+    <button
+      *ngIf="canCreate() && !loading()"
+      tuiButton
+      appearance="primary"
+      (click)="onCreateSession()"
+    >
+      New Session
+    </button>
+  </div>
+
+  <div *ngIf="loading()" class="skeleton-rows">
+    <div *ngFor="let _ of [1, 2, 3]" class="skeleton-row" [tuiSkeleton]="true"></div>
+  </div>
+
+  <ng-container *ngIf="!loading()">
+    <tui-tabs [(activeItemIndex)]="activeTab">
+      <button tuiTab>Upcoming</button>
+      <button tuiTab>Past</button>
+    </tui-tabs>
+
+    <div class="tab-content">
+      <!-- Upcoming Tab -->
+      <div *ngIf="activeTab() === 0">
+        <tui-block-status *ngIf="upcomingSessions().length === 0">
+          <img
+            alt="No upcoming sessions"
+            src="/illustrations/no-sessions-horse.png"
+            tuiSlot="top"
+            class="empty-illustration"
+          />
+          <h4>No upcoming coaching sessions</h4>
+          <span>You don't have any coaching sessions scheduled.</span>
+          <button
+            *ngIf="canCreate()"
+            tuiButton
+            appearance="primary"
+            type="button"
+            (click)="onCreateSession()"
+          >
+            Book a Session
+          </button>
+        </tui-block-status>
+
+        <div *ngIf="upcomingSessions().length > 0" class="sessions-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Partner</th>
+                <th>Group</th>
+                <th>Date &amp; Time</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let session of upcomingSessions()">
+                <td class="title-cell">{{ session.title }}</td>
+                <td>{{ getPartnerName(session) }}</td>
+                <td>{{ session.group_name }}</td>
+                <td>{{ session.scheduled_at | date: 'medium' }}</td>
+                <td>{{ session.duration_minutes }} min</td>
+                <td>
+                  <tui-badge [appearance]="getStatusAppearance(session.status)">{{
+                    formatStatus(session.status)
+                  }}</tui-badge>
+                </td>
+                <td class="actions-cell">
+                  <button
+                    tuiButton
+                    appearance="primary"
+                    size="s"
+                    [disabled]="!isJoinable(session)"
+                    (click)="onJoin(session)"
+                  >
+                    Join
+                  </button>
+                  <button
+                    *ngIf="session.status === 'scheduled'"
+                    tuiButton
+                    appearance="flat"
+                    size="s"
+                    (click)="onCancel(session)"
+                  >
+                    Cancel
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Past Tab -->
+      <div *ngIf="activeTab() === 1">
+        <tui-block-status *ngIf="pastSessions().length === 0">
+          <img
+            alt="No past sessions"
+            src="/illustrations/no-sessions-horse.png"
+            tuiSlot="top"
+            class="empty-illustration"
+          />
+          <h4>No past coaching sessions</h4>
+          <span>You haven't completed any coaching sessions yet.</span>
+        </tui-block-status>
+
+        <div *ngIf="pastSessions().length > 0" class="sessions-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Partner</th>
+                <th>Group</th>
+                <th>Date &amp; Time</th>
+                <th>Duration</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let session of pastSessions()">
+                <td class="title-cell">{{ session.title }}</td>
+                <td>{{ getPartnerName(session) }}</td>
+                <td>{{ session.group_name }}</td>
+                <td>{{ session.scheduled_at | date: 'medium' }}</td>
+                <td>{{ session.duration_minutes }} min</td>
+                <td>
+                  <tui-badge [appearance]="getStatusAppearance(session.status)">{{
+                    formatStatus(session.status)
+                  }}</tui-badge>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</app-page-container>

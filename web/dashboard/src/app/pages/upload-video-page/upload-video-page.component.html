@@ -68,10 +68,7 @@
           <ng-template #content let-group>
             <div style="display: flex; align-items: center; gap: 0.5rem">
               <!-- Using a simple img or div if tui-avatar is not behaving inside template context without proper imports or binding issues, but tui-avatar is standard -->
-              <tui-avatar
-                [src]="group.avatar ? 'data:image/png;base64,' + group.avatar : '@tui.users'"
-                size="xs"
-              ></tui-avatar>
+              <tui-avatar [src]="group.avatar || '@tui.users'" size="xs"></tui-avatar>
               {{ group.name }}
             </div>
           </ng-template>

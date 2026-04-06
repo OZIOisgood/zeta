@@ -16,7 +16,7 @@ As an admin, I want full visibility into all live coaching sessions across the p
 
 ### Feature Overview
 
-Live Coaching enables real-time video sessions between students and experts within groups. Students create bookings (appointments) by selecting a group, providing a title and description, and choosing a date/time slot. Both parties receive email reminders before the session. At the scheduled time, both participants join an Agora-powered 1-on-1 video call directly from the dashboard.
+Live Coaching enables real-time video sessions between students and the group owner (who serves as the expert/coach). Students create bookings by selecting a group, providing a title and description, and choosing a date/time slot. The group owner is automatically assigned as the expert — no manual expert selection is required. Both parties receive email reminders before the session. At the scheduled time, both participants join an Agora-powered 1-on-1 video call directly from the dashboard.
 
 **Explicit scope exclusions for this iteration:**
 
@@ -53,6 +53,7 @@ sequenceDiagram
 
     S->>W: Create Booking (title, desc, group, datetime)
     W->>A: POST /coaching/sessions
+    A->>D: Fetch group, use owner_id as expert_id
     A->>D: Insert coaching_session (status: scheduled)
     A-->>W: 201 Created (session)
 
@@ -208,13 +209,13 @@ token, err := rtctokenbuilder.BuildTokenWithUid(
 | `coaching:edit`   | ✓     | ✗            | ✓ (own only) |
 | `coaching:cancel` | ✓     | ✓ (own only) | ✓ (own only) |
 
-- **Students** can create sessions (selecting an expert from the group), view their own sessions, edit/cancel their own.
+- **Students** can create sessions (the group owner is auto-assigned as expert), view their own sessions, edit/cancel their own.
 - **Experts** can view sessions where they are the assigned expert, cancel their own.
 - **Admins** can view all sessions and cancel any session.
 
 ### Backend Authorization Logic
 
-- `POST /coaching/sessions` — Require `coaching:create`. Validate that the student is a member of the specified group.
+- `POST /coaching/sessions` — Require `coaching:create`. Validate that the student is a member of the specified group. The group's `owner_id` is automatically used as `expert_id` — the request body does not include `expert_id`.
 - `GET /coaching/sessions` — Require `coaching:read`. Filter by role: admin sees all, expert sees sessions where `expert_id = user.id`, student sees sessions where `student_id = user.id`.
 - `GET /coaching/sessions/{id}/connect` — Require `coaching:read`. Validate the user is either the student or expert for the session. Only allow connection if session status is `scheduled` and current time is within 15 minutes before `scheduled_at` through `scheduled_at + duration_minutes`.
 
@@ -334,7 +335,6 @@ A form page where the student creates a new booking:
 - **Title** — `TuiTextfield` (required, 5–75 chars)
 - **Description** — `TuiTextarea` (optional)
 - **Group** — `TuiSelect` dropdown populated from the user's groups
-- **Expert** — `TuiSelect` dropdown populated from group members with `expert` role (loaded after group is selected)
 - **Date & Time** — `TuiInputDateTime` for selecting the appointment date and time
 - **Duration** — `TuiSelect` with preset options (30 min, 45 min, 60 min)
 - **Submit** button → calls `POST /coaching/sessions`
@@ -560,7 +560,7 @@ SCHEDULER_SECRET=<random_secret_for_cloud_scheduler>
 - [ ] Late-created sessions have past reminder tiers pre-marked as sent (e.g., session in 30 min → only 15min reminder fires).
 - [ ] Reminder processing is idempotent (duplicate scheduler invocations do not send duplicate emails).
 - [ ] Reminder emails are sent to both the student and the expert.
-- [ ] Create Coaching Session page has a form with title, description, group, expert, date/time, and duration.
+- [ ] Create Coaching Session page has a form with title, description, group, date/time, and duration (expert is auto-assigned as group owner).
 - [ ] My Coaching Sessions page displays sessions in a table with Upcoming and Past tabs.
 - [ ] "Join" button is enabled only within the connectable time window (15 min before start through session end).
 - [ ] Video Call page establishes a 1-on-1 Agora RTC connection with mic/camera controls.

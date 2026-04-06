@@ -13,7 +13,11 @@ export type Permission =
   | 'groups:user-list:read'
   | 'groups:user-list:delete'
   | 'groups:invites:create'
-  | 'groups:preferences:edit';
+  | 'groups:preferences:edit'
+  | 'coaching:create'
+  | 'coaching:read'
+  | 'coaching:edit'
+  | 'coaching:cancel';
 
 @Injectable({
   providedIn: 'root',

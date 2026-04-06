@@ -1,0 +1,36 @@
+<section class="coaching-widget" *ngIf="!loading() && sessions().length > 0">
+  <h2 class="widget-title">Upcoming Coaching Sessions</h2>
+
+  <table class="widget-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Partner</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let session of sessions()">
+        <td>{{ session.title }}</td>
+        <td>{{ getPartnerName(session) }}</td>
+        <td>{{ session.scheduled_at | date: 'medium' }}</td>
+        <td>
+          <button
+            tuiButton
+            appearance="primary"
+            size="s"
+            [disabled]="!isJoinable(session)"
+            (click)="onJoin(session)"
+          >
+            Join
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="widget-footer">
+    <button tuiButton appearance="flat" size="s" (click)="onViewAll()">View All</button>
+  </div>
+</section>

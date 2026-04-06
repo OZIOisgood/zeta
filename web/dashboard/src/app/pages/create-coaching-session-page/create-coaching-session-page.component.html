@@ -1,0 +1,58 @@
+<app-page-container>
+  <h1 class="tui-text_h3">Book a Coaching Session</h1>
+
+  <form class="session-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <tui-textfield>
+      <label tuiLabel>Title</label>
+      <input tuiTextfield formControlName="title" />
+    </tui-textfield>
+
+    <tui-textfield>
+      <label tuiLabel>Description</label>
+      <textarea tuiTextarea formControlName="description" [min]="3" [max]="10"></textarea>
+    </tui-textfield>
+
+    <tui-textfield tuiChevron [stringify]="groupStringify">
+      <label tuiLabel>Group</label>
+      <input placeholder="Choose a group" tuiSelect [formControl]="form.controls.group" />
+      <tui-data-list-wrapper *tuiTextfieldDropdown new [itemContent]="content" [items]="groups" />
+    </tui-textfield>
+
+    <ng-template #content let-group>
+      <div style="display: flex; align-items: center; gap: 0.5rem">
+        <!-- Using a simple img or div if tui-avatar is not behaving inside template context without proper imports or binding issues, but tui-avatar is standard -->
+        <tui-avatar [src]="group.avatar || '@tui.users'" size="xs"></tui-avatar>
+        {{ group.name }}
+      </div>
+    </ng-template>
+
+    <div class="form-row">
+      <tui-textfield>
+        <label tuiLabel>Date</label>
+        <input tuiTextfield type="date" formControlName="scheduledDate" />
+      </tui-textfield>
+
+      <tui-textfield>
+        <label tuiLabel>Time</label>
+        <input tuiTextfield type="time" formControlName="scheduledTime" />
+      </tui-textfield>
+    </div>
+
+    <tui-textfield tuiChevron [stringify]="durationStringify">
+      <label tuiLabel>Duration</label>
+      <input placeholder="Select duration" tuiSelect [formControl]="form.controls.duration" />
+      <tui-data-list-wrapper *tuiTextfieldDropdown new [items]="durations" />
+    </tui-textfield>
+
+    <div class="form-actions">
+      <button
+        tuiButton
+        type="submit"
+        appearance="primary"
+        [disabled]="form.invalid || submitting()"
+      >
+        {{ submitting() ? 'Creating...' : 'Create Session' }}
+      </button>
+    </div>
+  </form>
+</app-page-container>

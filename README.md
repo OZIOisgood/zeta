@@ -8,7 +8,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 
 ## Key Features
 
-- **remote Video Analysis**: Students upload videos of their practice; coaches provide detailed feedback.
+- **Remote Video Analysis**: Students upload videos of their practice; coaches provide detailed feedback.
+- **Live Coaching**: Book and join 1-on-1 video coaching sessions via Agora RTC. Sessions are automatically assigned to the group owner as the expert. Includes session scheduling, email reminders (24h, 1h, 15min), and in-browser video calls with mic/camera controls.
 - **Professional Dashboard**: Manage students, videos, and reviews in one place.
 - **Groups Management**: Create and manage user groups.
 - **Group Invitations**: Invite users to groups via email with a unique invite link and confirmation flow.
@@ -46,6 +47,13 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 
 4. **Mux Configuration**:
    - Create an Access Token in Mux Dashboard.
+
+5. **Agora Configuration** (for Live Coaching):
+   - Create a project at [Agora Console](https://console.agora.io/).
+   - Set `AGORA_APP_ID` and `AGORA_APP_CERTIFICATE` in `.env`.
+
+6. **Scheduler Secret** (for coaching reminders):
+   - Set `SCHEDULER_SECRET` to a random string in `.env`. Use the same value when configuring Cloud Scheduler to call `/internal/coaching/reminders`.
 
 ### Quick Start
 

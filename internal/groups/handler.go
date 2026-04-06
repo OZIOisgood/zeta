@@ -18,12 +18,13 @@ import (
 
 // groupResponse is a JSON-safe DTO for db.Group.
 type groupResponse struct {
-	ID        string  `json:"id"`
-	Name      string  `json:"name"`
-	OwnerID   string  `json:"owner_id"`
-	Avatar    *string `json:"avatar"`
-	CreatedAt string  `json:"created_at"`
-	UpdatedAt string  `json:"updated_at"`
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	OwnerID     string  `json:"owner_id"`
+	Avatar      *string `json:"avatar"`
+	Description string  `json:"description"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
 }
 
 func toGroupResponse(g db.Group) groupResponse {
@@ -33,12 +34,13 @@ func toGroupResponse(g db.Group) groupResponse {
 		avatar = &enc
 	}
 	return groupResponse{
-		ID:        toUUIDString(g.ID),
-		Name:      g.Name,
-		OwnerID:   g.OwnerID,
-		Avatar:    avatar,
-		CreatedAt: g.CreatedAt.Time.Format(time.RFC3339),
-		UpdatedAt: g.UpdatedAt.Time.Format(time.RFC3339),
+		ID:          toUUIDString(g.ID),
+		Name:        g.Name,
+		OwnerID:     g.OwnerID,
+		Avatar:      avatar,
+		Description: g.Description,
+		CreatedAt:   g.CreatedAt.Time.Format(time.RFC3339),
+		UpdatedAt:   g.UpdatedAt.Time.Format(time.RFC3339),
 	}
 }
 

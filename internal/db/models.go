@@ -54,6 +54,50 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
+type CoachingSessionStatus string
+
+const (
+	CoachingSessionStatusScheduled  CoachingSessionStatus = "scheduled"
+	CoachingSessionStatusInProgress CoachingSessionStatus = "in_progress"
+	CoachingSessionStatusCompleted  CoachingSessionStatus = "completed"
+	CoachingSessionStatusCancelled  CoachingSessionStatus = "cancelled"
+)
+
+func (e *CoachingSessionStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CoachingSessionStatus(s)
+	case string:
+		*e = CoachingSessionStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CoachingSessionStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCoachingSessionStatus struct {
+	CoachingSessionStatus CoachingSessionStatus `json:"coaching_session_status"`
+	Valid                 bool                  `json:"valid"` // Valid is true if CoachingSessionStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCoachingSessionStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CoachingSessionStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CoachingSessionStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCoachingSessionStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CoachingSessionStatus), nil
+}
+
 type InvitationStatus string
 
 const (
@@ -191,6 +235,28 @@ type Asset struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	GroupID     pgtype.UUID        `json:"group_id"`
 	OwnerID     string             `json:"owner_id"`
+}
+
+type CoachingSession struct {
+	ID              pgtype.UUID           `json:"id"`
+	Title           string                `json:"title"`
+	Description     string                `json:"description"`
+	GroupID         pgtype.UUID           `json:"group_id"`
+	StudentID       string                `json:"student_id"`
+	ExpertID        string                `json:"expert_id"`
+	Status          CoachingSessionStatus `json:"status"`
+	ScheduledAt     pgtype.Timestamptz    `json:"scheduled_at"`
+	DurationMinutes int32                 `json:"duration_minutes"`
+	CreatedAt       pgtype.Timestamptz    `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz    `json:"updated_at"`
+}
+
+type CoachingSessionReminder struct {
+	ID              pgtype.UUID `json:"id"`
+	SessionID       pgtype.UUID `json:"session_id"`
+	Reminder24hSent bool        `json:"reminder_24h_sent"`
+	Reminder1hSent  bool        `json:"reminder_1h_sent"`
+	Reminder15mSent bool        `json:"reminder_15m_sent"`
 }
 
 type Group struct {
