@@ -1,0 +1,27 @@
+meta {
+  name: Accept Invitation
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/groups/invitations/accept
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+body:json {
+  {
+    "code": "{{inviteCode}}"
+  }
+}
+
+docs {
+  Manuell ausführen: Erfordert einen zweiten User der noch nicht Gruppenmitglied ist.
+  Der Testuser (test@zeta.dev) ist bereits Mitglied der Gruppe und kann die eigene Einladung nicht annehmen.
+}
+

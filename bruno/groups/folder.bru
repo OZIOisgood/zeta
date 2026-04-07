@@ -1,0 +1,13 @@
+meta {
+  seq: 2
+}
+
+script:pre-request {
+  // Auto-fetch a bearer token if not already set (enables running individual requests in the GUI)
+  if (!bru.getVar("bearerToken")) {
+    const res = await bru.runRequest("auth/get-token");
+    if (res.status === 200 && res.body.token) {
+      bru.setVar("bearerToken", res.body.token);
+    }
+  }
+}
