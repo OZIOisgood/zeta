@@ -1,0 +1,31 @@
+meta {
+  name: Create Blocked Slot
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/blocked-slots
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+body:json {
+  {
+    "blocked_date": "2026-12-25",
+    "reason": "Christmas holiday"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(201);
+  expect(res.body.id).to.be.a("string");
+  expect(res.body.blocked_date).to.equal("2026-12-25");
+  expect(res.body.reason).to.equal("Christmas holiday");
+
+  bru.setVar("blockedSlotId", res.body.id);
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Get Student Token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/token
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{studentEmail}}",
+    "password": "{{studentPassword}}"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body.token).to.be.a("string");
+  expect(res.body.token).to.have.length.above(10);
+
+  bru.setVar("studentBearerToken", res.body.token);
+}

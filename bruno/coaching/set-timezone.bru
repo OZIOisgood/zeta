@@ -1,0 +1,26 @@
+meta {
+  name: Set My Timezone
+  type: http
+  seq: 12
+}
+
+put {
+  url: {{baseUrl}}/coaching/timezone
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+body:json {
+  {
+    "timezone": "Europe/Berlin"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body.timezone).to.equal("Europe/Berlin");
+}

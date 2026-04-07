@@ -1,0 +1,19 @@
+meta {
+  name: Delete Availability
+  type: http
+  seq: 16
+}
+
+delete {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/availability/{{availabilityId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+tests {
+  expect(res.status).to.equal(204);
+}

@@ -41,6 +41,12 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Get("/sessions", h.ListGroupSessions)
 		r.Get("/experts", h.ListExpertsInGroup)
 
+		// Session types (experts)
+		r.Get("/session-types", h.ListSessionTypes)
+		r.Post("/session-types", h.CreateSessionType)
+		r.Put("/session-types/{sessionTypeID}", h.UpdateSessionType)
+		r.Delete("/session-types/{sessionTypeID}", h.DeactivateSessionType)
+
 		// Availability management (experts)
 		r.Get("/availability", h.ListMyAvailability)
 		r.Post("/availability", h.CreateAvailability)
@@ -176,31 +182,269 @@ func (h *Handler) SetMyTimezone(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"timezone": req.Timezone})
 }
 
+// --- Session Types ---
+
+type sessionTypeResponse struct {
+	ID              string    `json:"id"`
+	ExpertID        string    `json:"expert_id"`
+	GroupID         string    `json:"group_id"`
+	Name            string    `json:"name"`
+	Description     string    `json:"description"`
+	DurationMinutes int32     `json:"duration_minutes"`
+	IsActive        bool      `json:"is_active"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+func toSessionTypeResponse(st db.CoachingSessionType) sessionTypeResponse {
+	return sessionTypeResponse{
+		ID:              uuidToString(st.ID),
+		ExpertID:        st.ExpertID,
+		GroupID:         uuidToString(st.GroupID),
+		Name:            st.Name,
+		Description:     st.Description,
+		DurationMinutes: st.DurationMinutes,
+		IsActive:        st.IsActive,
+		CreatedAt:       st.CreatedAt.Time,
+	}
+}
+
+// ListSessionTypes lists session types.
+// Experts see only their own; others see all active types in the group.
+func (h *Handler) ListSessionTypes(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	groupID, err := parseUUID(chi.URLParam(r, "groupID"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	var types []db.CoachingSessionType
+
+	if permissions.HasPermission(user.Permissions, permissions.CoachingAvailabilityManage) {
+		// Expert: list own session types
+		types, err = h.q.ListSessionTypesByExpertGroup(ctx, db.ListSessionTypesByExpertGroupParams{
+			ExpertID: user.ID,
+			GroupID:  groupID,
+		})
+	} else if permissions.HasPermission(user.Permissions, permissions.CoachingSlotsRead) {
+		// Student or viewer: list all active session types in group
+		types, err = h.q.ListSessionTypesByGroup(ctx, groupID)
+	} else {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	if err != nil {
+		log.ErrorContext(ctx, "list_session_types_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to list session types", http.StatusInternalServerError)
+		return
+	}
+
+	if types == nil {
+		types = []db.CoachingSessionType{}
+	}
+
+	resp := make([]sessionTypeResponse, len(types))
+	for i, st := range types {
+		resp[i] = toSessionTypeResponse(st)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+type createSessionTypeRequest struct {
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	DurationMinutes int32  `json:"duration_minutes"`
+}
+
+func (h *Handler) CreateSessionType(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Permissions, permissions.CoachingAvailabilityManage) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	groupID, err := parseUUID(chi.URLParam(r, "groupID"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	var req createSessionTypeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		http.Error(w, "name is required", http.StatusBadRequest)
+		return
+	}
+	if req.DurationMinutes < 15 || req.DurationMinutes > 120 {
+		http.Error(w, "duration_minutes must be between 15 and 120", http.StatusBadRequest)
+		return
+	}
+
+	st, err := h.q.CreateSessionType(ctx, db.CreateSessionTypeParams{
+		ExpertID:        user.ID,
+		GroupID:         groupID,
+		Name:            req.Name,
+		Description:     req.Description,
+		DurationMinutes: req.DurationMinutes,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "create_session_type_failed",
+			slog.String("component", "coaching"),
+			slog.String("expert_id", user.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to create session type", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(toSessionTypeResponse(st))
+}
+
+type updateSessionTypeRequest struct {
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	DurationMinutes int32  `json:"duration_minutes"`
+}
+
+func (h *Handler) UpdateSessionType(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Permissions, permissions.CoachingAvailabilityManage) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	sessionTypeID, err := parseUUID(chi.URLParam(r, "sessionTypeID"))
+	if err != nil {
+		http.Error(w, "Invalid session type ID", http.StatusBadRequest)
+		return
+	}
+
+	var req updateSessionTypeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		http.Error(w, "name is required", http.StatusBadRequest)
+		return
+	}
+	if req.DurationMinutes < 15 || req.DurationMinutes > 120 {
+		http.Error(w, "duration_minutes must be between 15 and 120", http.StatusBadRequest)
+		return
+	}
+
+	st, err := h.q.UpdateSessionType(ctx, db.UpdateSessionTypeParams{
+		ID:              sessionTypeID,
+		Name:            req.Name,
+		Description:     req.Description,
+		DurationMinutes: req.DurationMinutes,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "update_session_type_failed",
+			slog.String("component", "coaching"),
+			slog.String("session_type_id", chi.URLParam(r, "sessionTypeID")),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to update session type", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(toSessionTypeResponse(st))
+}
+
+func (h *Handler) DeactivateSessionType(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Permissions, permissions.CoachingAvailabilityManage) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	sessionTypeID, err := parseUUID(chi.URLParam(r, "sessionTypeID"))
+	if err != nil {
+		http.Error(w, "Invalid session type ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.q.DeactivateSessionType(ctx, db.DeactivateSessionTypeParams{
+		ID:       sessionTypeID,
+		ExpertID: user.ID,
+	}); err != nil {
+		log.ErrorContext(ctx, "deactivate_session_type_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to deactivate session type", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // --- Availability ---
 
 type availabilityResponse struct {
-	ID                  string    `json:"id"`
-	ExpertID            string    `json:"expert_id"`
-	GroupID             string    `json:"group_id"`
-	DayOfWeek           int16     `json:"day_of_week"`
-	StartTime           string    `json:"start_time"`
-	EndTime             string    `json:"end_time"`
-	SlotDurationMinutes int32     `json:"slot_duration_minutes"`
-	IsActive            bool      `json:"is_active"`
-	CreatedAt           time.Time `json:"created_at"`
+	ID        string    `json:"id"`
+	ExpertID  string    `json:"expert_id"`
+	GroupID   string    `json:"group_id"`
+	DayOfWeek int16     `json:"day_of_week"`
+	StartTime string    `json:"start_time"`
+	EndTime   string    `json:"end_time"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func toAvailabilityResponse(a db.CoachingAvailability) availabilityResponse {
 	return availabilityResponse{
-		ID:                  uuidToString(a.ID),
-		ExpertID:            a.ExpertID,
-		GroupID:             uuidToString(a.GroupID),
-		DayOfWeek:           a.DayOfWeek,
-		StartTime:           pgTimeToString(a.StartTime),
-		EndTime:             pgTimeToString(a.EndTime),
-		SlotDurationMinutes: a.SlotDurationMinutes,
-		IsActive:            a.IsActive,
-		CreatedAt:           a.CreatedAt.Time,
+		ID:        uuidToString(a.ID),
+		ExpertID:  a.ExpertID,
+		GroupID:   uuidToString(a.GroupID),
+		DayOfWeek: a.DayOfWeek,
+		StartTime: pgTimeToString(a.StartTime),
+		EndTime:   pgTimeToString(a.EndTime),
+		IsActive:  a.IsActive,
+		CreatedAt: a.CreatedAt.Time,
 	}
 }
 
@@ -248,10 +492,9 @@ func (h *Handler) ListMyAvailability(w http.ResponseWriter, r *http.Request) {
 }
 
 type CreateAvailabilityRequest struct {
-	DayOfWeek           int16  `json:"day_of_week"`
-	StartTime           string `json:"start_time"`
-	EndTime             string `json:"end_time"`
-	SlotDurationMinutes int32  `json:"slot_duration_minutes"`
+	DayOfWeek int16  `json:"day_of_week"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
 }
 
 func (h *Handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
@@ -284,11 +527,6 @@ func (h *Handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "day_of_week must be 0–6", http.StatusBadRequest)
 		return
 	}
-	valid := map[int32]bool{15: true, 30: true, 45: true, 60: true}
-	if !valid[req.SlotDurationMinutes] {
-		http.Error(w, "slot_duration_minutes must be 15, 30, 45, or 60", http.StatusBadRequest)
-		return
-	}
 
 	startTime, err := parseTime(req.StartTime)
 	if err != nil {
@@ -302,12 +540,11 @@ func (h *Handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 	}
 
 	avail, err := h.q.CreateAvailability(ctx, db.CreateAvailabilityParams{
-		ExpertID:            user.ID,
-		GroupID:             groupID,
-		DayOfWeek:           req.DayOfWeek,
-		StartTime:           startTime,
-		EndTime:             endTime,
-		SlotDurationMinutes: req.SlotDurationMinutes,
+		ExpertID:  user.ID,
+		GroupID:   groupID,
+		DayOfWeek: req.DayOfWeek,
+		StartTime: startTime,
+		EndTime:   endTime,
 	})
 	if err != nil {
 		log.ErrorContext(ctx, "create_availability_failed",
@@ -362,11 +599,10 @@ func (h *Handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
 	}
 
 	avail, err := h.q.UpdateAvailability(ctx, db.UpdateAvailabilityParams{
-		ID:                  availabilityID,
-		DayOfWeek:           req.DayOfWeek,
-		StartTime:           startTime,
-		EndTime:             endTime,
-		SlotDurationMinutes: req.SlotDurationMinutes,
+		ID:        availabilityID,
+		DayOfWeek: req.DayOfWeek,
+		StartTime: startTime,
+		EndTime:   endTime,
 	})
 	if err != nil {
 		log.ErrorContext(ctx, "update_availability_failed",
@@ -420,13 +656,13 @@ func (h *Handler) DeleteAvailability(w http.ResponseWriter, r *http.Request) {
 // --- Blocked Slots ---
 
 type blockedSlotResponse struct {
-	ID          string     `json:"id"`
-	ExpertID    string     `json:"expert_id"`
-	BlockedDate string     `json:"blocked_date"`
-	StartTime   *string    `json:"start_time,omitempty"`
-	EndTime     *string    `json:"end_time,omitempty"`
-	Reason      *string    `json:"reason,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID          string    `json:"id"`
+	ExpertID    string    `json:"expert_id"`
+	BlockedDate string    `json:"blocked_date"`
+	StartTime   *string   `json:"start_time,omitempty"`
+	EndTime     *string   `json:"end_time,omitempty"`
+	Reason      *string   `json:"reason,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func toBlockedSlotResponse(b db.CoachingBlockedSlot) blockedSlotResponse {
@@ -670,10 +906,10 @@ func (h *Handler) ListExpertsInGroup(w http.ResponseWriter, r *http.Request) {
 // --- Slot Computation ---
 
 type SlotResponse struct {
-	ExpertID  string    `json:"expert_id"`
-	StartsAt  time.Time `json:"starts_at"`
-	EndsAt    time.Time `json:"ends_at"`
-	Duration  int32     `json:"duration_minutes"`
+	ExpertID string    `json:"expert_id"`
+	StartsAt time.Time `json:"starts_at"`
+	EndsAt   time.Time `json:"ends_at"`
+	Duration int32     `json:"duration_minutes"`
 }
 
 func (h *Handler) ListAvailableSlots(w http.ResponseWriter, r *http.Request) {
@@ -699,6 +935,32 @@ func (h *Handler) ListAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	expertID := r.URL.Query().Get("expert_id")
 	if expertID == "" {
 		http.Error(w, "expert_id query param required", http.StatusBadRequest)
+		return
+	}
+
+	sessionTypeIDStr := r.URL.Query().Get("session_type_id")
+	if sessionTypeIDStr == "" {
+		http.Error(w, "session_type_id query param required", http.StatusBadRequest)
+		return
+	}
+	sessionTypeID, err := parseUUID(sessionTypeIDStr)
+	if err != nil {
+		http.Error(w, "Invalid session_type_id", http.StatusBadRequest)
+		return
+	}
+
+	// Load session type to get duration
+	sessionType, err := h.q.GetSessionType(ctx, sessionTypeID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Session type not found", http.StatusNotFound)
+			return
+		}
+		log.ErrorContext(ctx, "get_session_type_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to get session type", http.StatusInternalServerError)
 		return
 	}
 
@@ -778,22 +1040,25 @@ func (h *Handler) ListAvailableSlots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5. Compute slots
+	// 5. Compute slots using the session type's duration
 	minNotice := now.Add(2 * time.Hour)
-	slots := computeSlots(avail, blocked, bookings, loc, rangeStart, rangeEnd, minNotice)
+	slots := computeSlots(avail, blocked, bookings, loc, rangeStart, rangeEnd, minNotice, sessionType.DurationMinutes)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(slots)
 }
 
-// computeSlots generates available slot windows for an expert.
+// computeSlots generates available slot windows for an expert given a specific session duration.
 func computeSlots(
 	avail []db.CoachingAvailability,
 	blocked []db.CoachingBlockedSlot,
 	bookings []db.CoachingBooking,
 	loc *time.Location,
 	rangeStart, rangeEnd, minNotice time.Time,
+	durationMinutes int32,
 ) []SlotResponse {
+	duration := time.Duration(durationMinutes) * time.Minute
+
 	// Index availability by day_of_week
 	byDay := make(map[int16][]db.CoachingAvailability)
 	for _, a := range avail {
@@ -820,8 +1085,6 @@ func computeSlots(
 		blockedToday := blockedByDate[dateKey]
 
 		for _, a := range dayAvail {
-			duration := time.Duration(a.SlotDurationMinutes) * time.Minute
-
 			// Build slot start/end in expert's timezone for this date
 			startH := int(a.StartTime.Microseconds / int64(time.Hour/time.Microsecond))
 			startM := int((a.StartTime.Microseconds % int64(time.Hour/time.Microsecond)) / int64(time.Minute/time.Microsecond))
@@ -853,7 +1116,7 @@ func computeSlots(
 					ExpertID: a.ExpertID,
 					StartsAt: slotStart,
 					EndsAt:   slotEnd,
-					Duration: a.SlotDurationMinutes,
+					Duration: durationMinutes,
 				})
 			}
 		}
@@ -905,6 +1168,8 @@ type bookingResponse struct {
 	StudentID          string    `json:"student_id"`
 	StudentName        string    `json:"student_name"`
 	GroupID            string    `json:"group_id"`
+	SessionTypeID      string    `json:"session_type_id"`
+	SessionTypeName    string    `json:"session_type_name,omitempty"`
 	ScheduledAt        time.Time `json:"scheduled_at"`
 	DurationMinutes    int32     `json:"duration_minutes"`
 	Status             string    `json:"status"`
@@ -914,7 +1179,7 @@ type bookingResponse struct {
 	CreatedAt          time.Time `json:"created_at"`
 }
 
-func toBookingResponse(b db.CoachingBooking, users map[string]userInfo) bookingResponse {
+func toBookingResponse(b db.CoachingBooking, users map[string]userInfo, sessionTypeName string) bookingResponse {
 	expertUser := users[b.ExpertID]
 	studentUser := users[b.StudentID]
 	expertName := (expertUser.FirstName + " " + expertUser.LastName)
@@ -927,6 +1192,68 @@ func toBookingResponse(b db.CoachingBooking, users map[string]userInfo) bookingR
 		StudentID:       b.StudentID,
 		StudentName:     studentName,
 		GroupID:         uuidToString(b.GroupID),
+		SessionTypeID:   uuidToString(b.SessionTypeID),
+		SessionTypeName: sessionTypeName,
+		ScheduledAt:     b.ScheduledAt.Time,
+		DurationMinutes: b.DurationMinutes,
+		Status:          string(b.Status),
+		CreatedAt:       b.CreatedAt.Time,
+	}
+	if b.CancellationReason.Valid {
+		resp.CancellationReason = &b.CancellationReason.String
+	}
+	if b.CancelledBy.Valid {
+		resp.CancelledBy = &b.CancelledBy.String
+	}
+	if b.Notes.Valid {
+		resp.Notes = &b.Notes.String
+	}
+	return resp
+}
+
+func toBookingResponseFromRow(b db.ListMyBookingsRow, users map[string]userInfo) bookingResponse {
+	expertUser := users[b.ExpertID]
+	studentUser := users[b.StudentID]
+
+	resp := bookingResponse{
+		ID:              uuidToString(b.ID),
+		ExpertID:        b.ExpertID,
+		ExpertName:      expertUser.FirstName + " " + expertUser.LastName,
+		StudentID:       b.StudentID,
+		StudentName:     studentUser.FirstName + " " + studentUser.LastName,
+		GroupID:         uuidToString(b.GroupID),
+		SessionTypeID:   uuidToString(b.SessionTypeID),
+		SessionTypeName: b.SessionTypeName,
+		ScheduledAt:     b.ScheduledAt.Time,
+		DurationMinutes: b.DurationMinutes,
+		Status:          string(b.Status),
+		CreatedAt:       b.CreatedAt.Time,
+	}
+	if b.CancellationReason.Valid {
+		resp.CancellationReason = &b.CancellationReason.String
+	}
+	if b.CancelledBy.Valid {
+		resp.CancelledBy = &b.CancelledBy.String
+	}
+	if b.Notes.Valid {
+		resp.Notes = &b.Notes.String
+	}
+	return resp
+}
+
+func toBookingResponseFromGroupRow(b db.ListGroupBookingsRow, users map[string]userInfo) bookingResponse {
+	expertUser := users[b.ExpertID]
+	studentUser := users[b.StudentID]
+
+	resp := bookingResponse{
+		ID:              uuidToString(b.ID),
+		ExpertID:        b.ExpertID,
+		ExpertName:      expertUser.FirstName + " " + expertUser.LastName,
+		StudentID:       b.StudentID,
+		StudentName:     studentUser.FirstName + " " + studentUser.LastName,
+		GroupID:         uuidToString(b.GroupID),
+		SessionTypeID:   uuidToString(b.SessionTypeID),
+		SessionTypeName: b.SessionTypeName,
 		ScheduledAt:     b.ScheduledAt.Time,
 		DurationMinutes: b.DurationMinutes,
 		Status:          string(b.Status),
@@ -945,10 +1272,10 @@ func toBookingResponse(b db.CoachingBooking, users map[string]userInfo) bookingR
 }
 
 type CreateBookingRequest struct {
-	ExpertID    string  `json:"expert_id"`
-	ScheduledAt string  `json:"scheduled_at"` // RFC3339
-	Duration    int32   `json:"duration_minutes"`
-	Notes       *string `json:"notes,omitempty"`
+	ExpertID      string  `json:"expert_id"`
+	SessionTypeID string  `json:"session_type_id"`
+	ScheduledAt   string  `json:"scheduled_at"` // RFC3339
+	Notes         *string `json:"notes,omitempty"`
 }
 
 func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
@@ -977,6 +1304,27 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sessionTypeID, err := parseUUID(req.SessionTypeID)
+	if err != nil {
+		http.Error(w, "Invalid session_type_id", http.StatusBadRequest)
+		return
+	}
+
+	// Load session type to get duration
+	sessionType, err := h.q.GetSessionType(ctx, sessionTypeID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Session type not found", http.StatusNotFound)
+			return
+		}
+		log.ErrorContext(ctx, "get_session_type_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to get session type", http.StatusInternalServerError)
+		return
+	}
+
 	scheduledAt, err := time.Parse(time.RFC3339, req.ScheduledAt)
 	if err != nil {
 		http.Error(w, "Invalid scheduled_at (use RFC3339)", http.StatusBadRequest)
@@ -992,7 +1340,7 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	slotStart := pgtype.Timestamptz{}
 	_ = slotStart.Scan(scheduledAt)
 	slotEnd := pgtype.Timestamptz{}
-	_ = slotEnd.Scan(scheduledAt.Add(time.Duration(req.Duration) * time.Minute))
+	_ = slotEnd.Scan(scheduledAt.Add(time.Duration(sessionType.DurationMinutes) * time.Minute))
 
 	// Check for conflicts (race-condition safe)
 	conflicts, err := h.q.CountConflictingBookings(ctx, db.CountConflictingBookingsParams{
@@ -1022,8 +1370,9 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		ExpertID:        req.ExpertID,
 		StudentID:       user.ID,
 		GroupID:         groupID,
+		SessionTypeID:   sessionTypeID,
 		ScheduledAt:     slotStart,
-		DurationMinutes: req.Duration,
+		DurationMinutes: sessionType.DurationMinutes,
 		Notes:           notes,
 	})
 	if err != nil {
@@ -1042,7 +1391,7 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(toBookingResponse(booking, users))
+	json.NewEncoder(w).Encode(toBookingResponse(booking, users, sessionType.Name))
 }
 
 func (h *Handler) ListMyBookings(w http.ResponseWriter, r *http.Request) {
@@ -1071,7 +1420,7 @@ func (h *Handler) ListMyBookings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if bookings == nil {
-		bookings = []db.CoachingBooking{}
+		bookings = []db.ListMyBookingsRow{}
 	}
 
 	// Collect unique user IDs for name resolution
@@ -1088,7 +1437,7 @@ func (h *Handler) ListMyBookings(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]bookingResponse, len(bookings))
 	for i, b := range bookings {
-		resp[i] = toBookingResponse(b, users)
+		resp[i] = toBookingResponseFromRow(b, users)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1126,7 +1475,7 @@ func (h *Handler) ListGroupSessions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if bookings == nil {
-		bookings = []db.CoachingBooking{}
+		bookings = []db.ListGroupBookingsRow{}
 	}
 
 	// Collect unique user IDs for name resolution
@@ -1143,7 +1492,7 @@ func (h *Handler) ListGroupSessions(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]bookingResponse, len(bookings))
 	for i, b := range bookings {
-		resp[i] = toBookingResponse(b, users)
+		resp[i] = toBookingResponseFromGroupRow(b, users)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1256,7 +1605,7 @@ func (h *Handler) UpdateBookingStatus(w http.ResponseWriter, r *http.Request) {
 	users := h.resolveUsers(ctx, []string{updated.ExpertID, updated.StudentID})
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(toBookingResponse(updated, users))
+	json.NewEncoder(w).Encode(toBookingResponse(updated, users, ""))
 }
 
 // --- Email helpers ---

@@ -1,0 +1,19 @@
+meta {
+  name: Delete Blocked Slot
+  type: http
+  seq: 15
+}
+
+delete {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/blocked-slots/{{blockedSlotId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+tests {
+  expect(res.status).to.equal(204);
+}

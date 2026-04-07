@@ -1,0 +1,38 @@
+meta {
+  name: List Available Slots
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/slots?expert_id={{expertId}}&session_type_id={{sessionTypeId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+script:pre-request {
+  // Derive expertId from the JWT sub claim
+  const token = bru.getVar("bearerToken");
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      bru.setVar("expertId", payload.sub);
+    } catch(e) {}
+  }
+  // Fetch a session type ID if not already set
+  if (!bru.getVar("sessionTypeId")) {
+    const res = await bru.runRequest("coaching/list-session-types");
+    if (res.status === 200 && res.body && res.body.length > 0) {
+      bru.setVar("sessionTypeId", res.body[0].id);
+    }
+  }
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body).to.be.an("array");
+}

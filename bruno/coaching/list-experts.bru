@@ -1,0 +1,20 @@
+meta {
+  name: List Experts In Group
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/experts
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{bearerToken}}
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body).to.be.an("array");
+}

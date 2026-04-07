@@ -238,16 +238,15 @@ type Asset struct {
 }
 
 type CoachingAvailability struct {
-	ID                  pgtype.UUID        `json:"id"`
-	ExpertID            string             `json:"expert_id"`
-	GroupID             pgtype.UUID        `json:"group_id"`
-	DayOfWeek           int16              `json:"day_of_week"`
-	StartTime           pgtype.Time        `json:"start_time"`
-	EndTime             pgtype.Time        `json:"end_time"`
-	SlotDurationMinutes int32              `json:"slot_duration_minutes"`
-	IsActive            bool               `json:"is_active"`
-	CreatedAt           pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+	ID        pgtype.UUID        `json:"id"`
+	ExpertID  string             `json:"expert_id"`
+	GroupID   pgtype.UUID        `json:"group_id"`
+	DayOfWeek int16              `json:"day_of_week"`
+	StartTime pgtype.Time        `json:"start_time"`
+	EndTime   pgtype.Time        `json:"end_time"`
+	IsActive  bool               `json:"is_active"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type CoachingBlockedSlot struct {
@@ -265,6 +264,7 @@ type CoachingBooking struct {
 	ExpertID           string                `json:"expert_id"`
 	StudentID          string                `json:"student_id"`
 	GroupID            pgtype.UUID           `json:"group_id"`
+	SessionTypeID      pgtype.UUID           `json:"session_type_id"`
 	ScheduledAt        pgtype.Timestamptz    `json:"scheduled_at"`
 	DurationMinutes    int32                 `json:"duration_minutes"`
 	Status             CoachingBookingStatus `json:"status"`
@@ -273,6 +273,18 @@ type CoachingBooking struct {
 	Notes              pgtype.Text           `json:"notes"`
 	CreatedAt          pgtype.Timestamptz    `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz    `json:"updated_at"`
+}
+
+type CoachingSessionType struct {
+	ID              pgtype.UUID        `json:"id"`
+	ExpertID        string             `json:"expert_id"`
+	GroupID         pgtype.UUID        `json:"group_id"`
+	Name            string             `json:"name"`
+	Description     string             `json:"description"`
+	DurationMinutes int32              `json:"duration_minutes"`
+	IsActive        bool               `json:"is_active"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Group struct {

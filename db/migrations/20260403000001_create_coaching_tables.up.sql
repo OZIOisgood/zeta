@@ -7,6 +7,20 @@ CREATE TYPE coaching_booking_status AS ENUM (
 
 ALTER TABLE user_preferences ADD COLUMN timezone TEXT NOT NULL DEFAULT 'UTC';
 
+CREATE TABLE coaching_session_types (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    expert_id TEXT NOT NULL,
+    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    duration_minutes INTEGER NOT NULL CHECK (duration_minutes >= 15 AND duration_minutes <= 120),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_coaching_session_types_expert_group ON coaching_session_types(expert_id, group_id);
+
 CREATE TABLE coaching_availability (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     expert_id TEXT NOT NULL,
@@ -14,7 +28,6 @@ CREATE TABLE coaching_availability (
     day_of_week SMALLINT NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    slot_duration_minutes INTEGER NOT NULL CHECK (slot_duration_minutes IN (15, 30, 45, 60)),
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -39,6 +52,7 @@ CREATE TABLE coaching_bookings (
     expert_id TEXT NOT NULL,
     student_id TEXT NOT NULL,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    session_type_id UUID NOT NULL REFERENCES coaching_session_types(id),
     scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
     duration_minutes INTEGER NOT NULL,
     status coaching_booking_status NOT NULL DEFAULT 'confirmed',
