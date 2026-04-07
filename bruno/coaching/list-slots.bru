@@ -11,12 +11,12 @@ get {
 }
 
 auth:bearer {
-  token: {{bearerToken}}
+  token: {{adminBearerToken}}
 }
 
 script:pre-request {
   // Derive expertId from the JWT sub claim
-  const token = bru.getVar("bearerToken");
+  const token = bru.getVar("adminBearerToken");
   if (token) {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));

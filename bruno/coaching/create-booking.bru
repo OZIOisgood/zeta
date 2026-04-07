@@ -24,7 +24,7 @@ script:pre-request {
   }
 
   // Derive expertId from the admin bearer token (admin is the expert)
-  const adminToken = bru.getVar("bearerToken");
+  const adminToken = bru.getVar("adminBearerToken");
   if (adminToken) {
     try {
       const payload = JSON.parse(atob(adminToken.split(".")[1]));
