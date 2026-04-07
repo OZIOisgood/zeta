@@ -17,6 +17,10 @@ type jwksKey struct {
 	publicKey *rsa.PublicKey
 }
 
+// jwksHTTPClient is used for all JWKS fetches. A short timeout prevents a slow
+// or unresponsive WorkOS endpoint from stalling all in-flight auth requests.
+var jwksHTTPClient = &http.Client{Timeout: 5 * time.Second}
+
 // JWKSCache fetches and caches RSA public keys from a JWKS endpoint.
 // Keys are refreshed after ttl. On fetch failure the last known keys are kept
 // (fail-open for availability), but if no keys have ever been loaded the
@@ -79,7 +83,7 @@ func (c *JWKSCache) GetKey(kid string) (*rsa.PublicKey, error) {
 
 // fetch downloads and parses the JWKS. Must be called with write lock held.
 func (c *JWKSCache) fetch() error {
-	resp, err := http.Get(c.url) // #nosec G107 — URL is a compile-time constant from env
+	resp, err := jwksHTTPClient.Get(c.url) // #nosec G107 — URL is a compile-time constant from env
 	if err != nil {
 		return fmt.Errorf("jwks: http get: %w", err)
 	}

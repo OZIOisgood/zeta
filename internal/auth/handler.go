@@ -150,20 +150,24 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	// Set WorkOS Access Token directly as the session cookie.
 	// The middleware validates it via JWKS — no local signing needed.
+	// Expires matches the WorkOS access token duration (1 day).
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    resp.AccessToken,
 		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
 	})
 
 	// Store the refresh token in a separate HttpOnly cookie for token rotation on profile updates.
+	// Expires matches the WorkOS maximum session length (7 days).
 	http.SetCookie(w, &http.Cookie{
 		Name:     RefreshCookieName,
 		Value:    resp.RefreshToken,
 		Path:     "/",
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
