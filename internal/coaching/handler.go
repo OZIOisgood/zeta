@@ -17,27 +17,43 @@ import (
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
+)
+
+// Booking business-rule constants.
+const (
+	MinBookingNotice      = 2 * time.Hour
+	CancellationNotice    = 1 * time.Hour
+	SlotLookaheadDays     = 28
+	BlockedSlotRangeMonths = 3
+	MinSessionDuration    = int32(15)
+	MaxSessionDuration    = int32(120)
 )
 
 type Handler struct {
 	q            *db.Queries
+	pool         *pgxpool.Pool
 	logger       *slog.Logger
 	emailService *email.Service
 }
 
-func NewHandler(q *db.Queries, emailService *email.Service, logger *slog.Logger) *Handler {
+func NewHandler(q *db.Queries, pool *pgxpool.Pool, emailService *email.Service, logger *slog.Logger) *Handler {
 	return &Handler{
 		q:            q,
+		pool:         pool,
 		logger:       logger,
 		emailService: emailService,
 	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	// Per-group endpoints
+	// Per-group endpoints — guarded by group membership
 	r.Route("/groups/{groupID}/coaching", func(r chi.Router) {
+		r.Use(auth.RequireGroupMembership(h.q, h.logger))
+
 		r.Get("/sessions", h.ListGroupSessions)
 		r.Get("/experts", h.ListExpertsInGroup)
 
@@ -63,11 +79,11 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 		// Bookings
 		r.Post("/bookings", h.CreateBooking)
+		r.Get("/bookings", h.ListMyBookings)
+		r.Put("/bookings/{bookingID}/status", h.UpdateBookingStatus)
 	})
 
 	// Cross-group endpoints
-	r.Get("/coaching/bookings", h.ListMyBookings)
-	r.Put("/coaching/bookings/{bookingID}/status", h.UpdateBookingStatus)
 	r.Get("/coaching/timezone", h.GetMyTimezone)
 	r.Put("/coaching/timezone", h.SetMyTimezone)
 }
@@ -299,7 +315,7 @@ func (h *Handler) CreateSessionType(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "name is required", http.StatusBadRequest)
 		return
 	}
-	if req.DurationMinutes < 15 || req.DurationMinutes > 120 {
+	if req.DurationMinutes < MinSessionDuration || req.DurationMinutes > MaxSessionDuration {
 		http.Error(w, "duration_minutes must be between 15 and 120", http.StatusBadRequest)
 		return
 	}
@@ -352,6 +368,12 @@ func (h *Handler) UpdateSessionType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	groupID, err := parseUUID(chi.URLParam(r, "groupID"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
 	var req updateSessionTypeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -362,7 +384,7 @@ func (h *Handler) UpdateSessionType(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "name is required", http.StatusBadRequest)
 		return
 	}
-	if req.DurationMinutes < 15 || req.DurationMinutes > 120 {
+	if req.DurationMinutes < MinSessionDuration || req.DurationMinutes > MaxSessionDuration {
 		http.Error(w, "duration_minutes must be between 15 and 120", http.StatusBadRequest)
 		return
 	}
@@ -372,8 +394,14 @@ func (h *Handler) UpdateSessionType(w http.ResponseWriter, r *http.Request) {
 		Name:            req.Name,
 		Description:     req.Description,
 		DurationMinutes: req.DurationMinutes,
+		ExpertID:        user.ID,
+		GroupID:         groupID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Session type not found", http.StatusNotFound)
+			return
+		}
 		log.ErrorContext(ctx, "update_session_type_failed",
 			slog.String("component", "coaching"),
 			slog.String("session_type_id", chi.URLParam(r, "sessionTypeID")),
@@ -407,15 +435,20 @@ func (h *Handler) DeactivateSessionType(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := h.q.DeactivateSessionType(ctx, db.DeactivateSessionTypeParams{
+	n, err := h.q.DeactivateSessionType(ctx, db.DeactivateSessionTypeParams{
 		ID:       sessionTypeID,
 		ExpertID: user.ID,
-	}); err != nil {
+	})
+	if err != nil {
 		log.ErrorContext(ctx, "deactivate_session_type_failed",
 			slog.String("component", "coaching"),
 			slog.Any("err", err),
 		)
 		http.Error(w, "Failed to deactivate session type", http.StatusInternalServerError)
+		return
+	}
+	if n == 0 {
+		http.Error(w, "Session type not found", http.StatusNotFound)
 		return
 	}
 
@@ -538,6 +571,10 @@ func (h *Handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid end_time format (use HH:MM)", http.StatusBadRequest)
 		return
 	}
+	if startTime.Microseconds >= endTime.Microseconds {
+		http.Error(w, "start_time must be before end_time", http.StatusBadRequest)
+		return
+	}
 
 	avail, err := h.q.CreateAvailability(ctx, db.CreateAvailabilityParams{
 		ExpertID:  user.ID,
@@ -581,6 +618,12 @@ func (h *Handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	groupID, err := parseUUID(chi.URLParam(r, "groupID"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
 	var req CreateAvailabilityRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -597,14 +640,24 @@ func (h *Handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid end_time format (use HH:MM)", http.StatusBadRequest)
 		return
 	}
+	if startTime.Microseconds >= endTime.Microseconds {
+		http.Error(w, "start_time must be before end_time", http.StatusBadRequest)
+		return
+	}
 
 	avail, err := h.q.UpdateAvailability(ctx, db.UpdateAvailabilityParams{
 		ID:        availabilityID,
 		DayOfWeek: req.DayOfWeek,
 		StartTime: startTime,
 		EndTime:   endTime,
+		ExpertID:  user.ID,
+		GroupID:   groupID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Availability not found", http.StatusNotFound)
+			return
+		}
 		log.ErrorContext(ctx, "update_availability_failed",
 			slog.String("component", "coaching"),
 			slog.String("availability_id", chi.URLParam(r, "availabilityID")),
@@ -638,15 +691,20 @@ func (h *Handler) DeleteAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.q.DeleteAvailability(ctx, db.DeleteAvailabilityParams{
+	n, err := h.q.DeleteAvailability(ctx, db.DeleteAvailabilityParams{
 		ID:       availabilityID,
 		ExpertID: user.ID,
-	}); err != nil {
+	})
+	if err != nil {
 		log.ErrorContext(ctx, "delete_availability_failed",
 			slog.String("component", "coaching"),
 			slog.Any("err", err),
 		)
 		http.Error(w, "Failed to delete availability", http.StatusInternalServerError)
+		return
+	}
+	if n == 0 {
+		http.Error(w, "Availability not found", http.StatusNotFound)
 		return
 	}
 
@@ -782,6 +840,16 @@ func (h *Handler) CreateBlockedSlot(w http.ResponseWriter, r *http.Request) {
 		endTime = t
 	}
 
+	// start_time and end_time must be either both provided or both absent
+	if startTime.Valid != endTime.Valid {
+		http.Error(w, "start_time and end_time must both be provided or both omitted", http.StatusBadRequest)
+		return
+	}
+	if startTime.Valid && startTime.Microseconds >= endTime.Microseconds {
+		http.Error(w, "start_time must be before end_time", http.StatusBadRequest)
+		return
+	}
+
 	var reason pgtype.Text
 	if req.Reason != nil {
 		reason = pgtype.Text{String: *req.Reason, Valid: true}
@@ -828,15 +896,20 @@ func (h *Handler) DeleteBlockedSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.q.DeleteBlockedSlot(ctx, db.DeleteBlockedSlotParams{
+	n, err := h.q.DeleteBlockedSlot(ctx, db.DeleteBlockedSlotParams{
 		ID:       slotID,
 		ExpertID: user.ID,
-	}); err != nil {
+	})
+	if err != nil {
 		log.ErrorContext(ctx, "delete_blocked_slot_failed",
 			slog.String("component", "coaching"),
 			slog.Any("err", err),
 		)
 		http.Error(w, "Failed to delete blocked slot", http.StatusInternalServerError)
+		return
+	}
+	if n == 0 {
+		http.Error(w, "Blocked slot not found", http.StatusNotFound)
 		return
 	}
 
@@ -950,7 +1023,10 @@ func (h *Handler) ListAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load session type to get duration
-	sessionType, err := h.q.GetSessionType(ctx, sessionTypeID)
+	sessionType, err := h.q.GetSessionType(ctx, db.GetSessionTypeParams{
+		ID:      sessionTypeID,
+		GroupID: groupID,
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Session type not found", http.StatusNotFound)
@@ -1041,8 +1117,11 @@ func (h *Handler) ListAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 5. Compute slots using the session type's duration
-	minNotice := now.Add(2 * time.Hour)
+	minNotice := now.Add(MinBookingNotice)
 	slots := computeSlots(avail, blocked, bookings, loc, rangeStart, rangeEnd, minNotice, sessionType.DurationMinutes)
+	if slots == nil {
+		slots = []SlotResponse{}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(slots)
@@ -1304,6 +1383,11 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.ExpertID == "" {
+		http.Error(w, "expert_id is required", http.StatusBadRequest)
+		return
+	}
+
 	sessionTypeID, err := parseUUID(req.SessionTypeID)
 	if err != nil {
 		http.Error(w, "Invalid session_type_id", http.StatusBadRequest)
@@ -1311,7 +1395,10 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load session type to get duration
-	sessionType, err := h.q.GetSessionType(ctx, sessionTypeID)
+	sessionType, err := h.q.GetSessionType(ctx, db.GetSessionTypeParams{
+		ID:      sessionTypeID,
+		GroupID: groupID,
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Session type not found", http.StatusNotFound)
@@ -1332,7 +1419,7 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Enforce minimum booking notice
-	if time.Until(scheduledAt) < 2*time.Hour {
+	if time.Until(scheduledAt) < MinBookingNotice {
 		http.Error(w, "Sessions must be booked at least 2 hours in advance", http.StatusBadRequest)
 		return
 	}
@@ -1342,46 +1429,77 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	slotEnd := pgtype.Timestamptz{}
 	_ = slotEnd.Scan(scheduledAt.Add(time.Duration(sessionType.DurationMinutes) * time.Minute))
 
-	// Check for conflicts (race-condition safe)
-	conflicts, err := h.q.CountConflictingBookings(ctx, db.CountConflictingBookingsParams{
-		ExpertID:      req.ExpertID,
-		ScheduledAt:   slotStart,
-		ScheduledAt_2: slotEnd,
-	})
-	if err != nil {
-		log.ErrorContext(ctx, "count_conflicts_failed",
-			slog.String("component", "coaching"),
-			slog.Any("err", err),
-		)
-		http.Error(w, "Failed to check conflicts", http.StatusInternalServerError)
-		return
-	}
-	if conflicts > 0 {
-		http.Error(w, "Time slot is no longer available", http.StatusConflict)
-		return
-	}
-
 	var notes pgtype.Text
 	if req.Notes != nil {
 		notes = pgtype.Text{String: *req.Notes, Valid: true}
 	}
 
-	booking, err := h.q.CreateBooking(ctx, db.CreateBookingParams{
-		ExpertID:        req.ExpertID,
-		StudentID:       user.ID,
-		GroupID:         groupID,
-		SessionTypeID:   sessionTypeID,
-		ScheduledAt:     slotStart,
-		DurationMinutes: sessionType.DurationMinutes,
-		Notes:           notes,
-	})
-	if err != nil {
-		log.ErrorContext(ctx, "create_booking_failed",
-			slog.String("component", "coaching"),
-			slog.Any("err", err),
-		)
-		http.Error(w, "Failed to create booking", http.StatusInternalServerError)
-		return
+	// TOCTOU-safe booking: use a SERIALIZABLE transaction so that concurrent
+	// check-then-insert sequences are serialized at the DB level. On serialization
+	// failure (pgconn error code 40001) we retry up to 3 times.
+	var booking db.CoachingBooking
+	const maxRetries = 3
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		tx, err := h.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+		if err != nil {
+			log.ErrorContext(ctx, "begin_tx_failed", slog.String("component", "coaching"), slog.Any("err", err))
+			http.Error(w, "Failed to create booking", http.StatusInternalServerError)
+			return
+		}
+
+		qtx := h.q.WithTx(tx)
+
+		conflicts, err := qtx.CountConflictingBookings(ctx, db.CountConflictingBookingsParams{
+			ExpertID:      req.ExpertID,
+			ScheduledAt:   slotStart,
+			ScheduledAt_2: slotEnd,
+		})
+		if err != nil {
+			_ = tx.Rollback(ctx)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "40001" && attempt < maxRetries-1 {
+				continue
+			}
+			log.ErrorContext(ctx, "count_conflicts_failed", slog.String("component", "coaching"), slog.Any("err", err))
+			http.Error(w, "Failed to check conflicts", http.StatusInternalServerError)
+			return
+		}
+		if conflicts > 0 {
+			_ = tx.Rollback(ctx)
+			http.Error(w, "Time slot is no longer available", http.StatusConflict)
+			return
+		}
+
+		booking, err = qtx.CreateBooking(ctx, db.CreateBookingParams{
+			ExpertID:        req.ExpertID,
+			StudentID:       user.ID,
+			GroupID:         groupID,
+			SessionTypeID:   sessionTypeID,
+			ScheduledAt:     slotStart,
+			DurationMinutes: sessionType.DurationMinutes,
+			Notes:           notes,
+		})
+		if err != nil {
+			_ = tx.Rollback(ctx)
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "40001" && attempt < maxRetries-1 {
+				continue
+			}
+			log.ErrorContext(ctx, "create_booking_failed", slog.String("component", "coaching"), slog.Any("err", err))
+			http.Error(w, "Failed to create booking", http.StatusInternalServerError)
+			return
+		}
+
+		if err = tx.Commit(ctx); err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "40001" && attempt < maxRetries-1 {
+				continue
+			}
+			log.ErrorContext(ctx, "commit_booking_failed", slog.String("component", "coaching"), slog.Any("err", err))
+			http.Error(w, "Failed to create booking", http.StatusInternalServerError)
+			return
+		}
+		break
 	}
 
 	// Send email notifications (best effort)
@@ -1408,7 +1526,16 @@ func (h *Handler) ListMyBookings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bookings, err := h.q.ListMyBookings(ctx, user.ID)
+	groupID, err := parseUUID(chi.URLParam(r, "groupID"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	bookings, err := h.q.ListMyBookings(ctx, db.ListMyBookingsParams{
+		ExpertID: user.ID,
+		GroupID:  groupID,
+	})
 	if err != nil {
 		log.ErrorContext(ctx, "list_bookings_failed",
 			slog.String("component", "coaching"),
@@ -1513,7 +1640,7 @@ func (h *Handler) UpdateBookingStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(user.Permissions, permissions.CoachingBookingsRead) {
+	if !permissions.HasPermission(user.Permissions, permissions.CoachingBookingsManage) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
@@ -1539,8 +1666,12 @@ func (h *Handler) UpdateBookingStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch the booking to verify ownership and timing
-	existing, err := h.q.GetBooking(ctx, bookingID)
+	// Fetch the booking to verify ownership and timing.
+	// GetBooking is scoped to expert_id OR student_id, ensuring the caller is a participant.
+	existing, err := h.q.GetBooking(ctx, db.GetBookingParams{
+		ID:       bookingID,
+		ExpertID: user.ID,
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.Error(w, "Booking not found", http.StatusNotFound)
@@ -1562,7 +1693,7 @@ func (h *Handler) UpdateBookingStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Enforce cancellation notice
 	if req.Status == "cancelled" {
-		if time.Until(existing.ScheduledAt.Time) < time.Hour {
+		if time.Until(existing.ScheduledAt.Time) < CancellationNotice {
 			http.Error(w, "Cancellations must be made at least 1 hour before the session", http.StatusBadRequest)
 			return
 		}
@@ -1588,6 +1719,7 @@ func (h *Handler) UpdateBookingStatus(w http.ResponseWriter, r *http.Request) {
 		Status:             db.CoachingBookingStatus(req.Status),
 		CancellationReason: cancelReason,
 		CancelledBy:        cancelledBy,
+		ExpertID:           user.ID,
 	})
 	if err != nil {
 		log.ErrorContext(ctx, "update_booking_status_failed",

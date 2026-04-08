@@ -29,5 +29,5 @@ tests {
   expect(res.body.created_at).to.be.a("string");
   expect(res.body.updated_at).to.be.a("string");
 
-  bru.setVar("groupId", res.body.id);
+  bru.setVar("newGroupId", res.body.id);
 }

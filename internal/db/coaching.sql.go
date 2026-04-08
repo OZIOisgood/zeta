@@ -192,7 +192,7 @@ func (q *Queries) CreateSessionType(ctx context.Context, arg CreateSessionTypePa
 	return i, err
 }
 
-const deactivateSessionType = `-- name: DeactivateSessionType :exec
+const deactivateSessionType = `-- name: DeactivateSessionType :execrows
 UPDATE coaching_session_types
 SET is_active = false, updated_at = NOW()
 WHERE id = $1 AND expert_id = $2
@@ -203,12 +203,15 @@ type DeactivateSessionTypeParams struct {
 	ExpertID string      `json:"expert_id"`
 }
 
-func (q *Queries) DeactivateSessionType(ctx context.Context, arg DeactivateSessionTypeParams) error {
-	_, err := q.db.Exec(ctx, deactivateSessionType, arg.ID, arg.ExpertID)
-	return err
+func (q *Queries) DeactivateSessionType(ctx context.Context, arg DeactivateSessionTypeParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deactivateSessionType, arg.ID, arg.ExpertID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const deleteAvailability = `-- name: DeleteAvailability :exec
+const deleteAvailability = `-- name: DeleteAvailability :execrows
 DELETE FROM coaching_availability WHERE id = $1 AND expert_id = $2
 `
 
@@ -217,12 +220,15 @@ type DeleteAvailabilityParams struct {
 	ExpertID string      `json:"expert_id"`
 }
 
-func (q *Queries) DeleteAvailability(ctx context.Context, arg DeleteAvailabilityParams) error {
-	_, err := q.db.Exec(ctx, deleteAvailability, arg.ID, arg.ExpertID)
-	return err
+func (q *Queries) DeleteAvailability(ctx context.Context, arg DeleteAvailabilityParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteAvailability, arg.ID, arg.ExpertID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const deleteBlockedSlot = `-- name: DeleteBlockedSlot :exec
+const deleteBlockedSlot = `-- name: DeleteBlockedSlot :execrows
 DELETE FROM coaching_blocked_slots WHERE id = $1 AND expert_id = $2
 `
 
@@ -231,17 +237,25 @@ type DeleteBlockedSlotParams struct {
 	ExpertID string      `json:"expert_id"`
 }
 
-func (q *Queries) DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotParams) error {
-	_, err := q.db.Exec(ctx, deleteBlockedSlot, arg.ID, arg.ExpertID)
-	return err
+func (q *Queries) DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteBlockedSlot, arg.ID, arg.ExpertID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getBooking = `-- name: GetBooking :one
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, status, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings WHERE id = $1
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, status, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
 `
 
-func (q *Queries) GetBooking(ctx context.Context, id pgtype.UUID) (CoachingBooking, error) {
-	row := q.db.QueryRow(ctx, getBooking, id)
+type GetBookingParams struct {
+	ID       pgtype.UUID `json:"id"`
+	ExpertID string      `json:"expert_id"`
+}
+
+func (q *Queries) GetBooking(ctx context.Context, arg GetBookingParams) (CoachingBooking, error) {
+	row := q.db.QueryRow(ctx, getBooking, arg.ID, arg.ExpertID)
 	var i CoachingBooking
 	err := row.Scan(
 		&i.ID,
@@ -262,11 +276,16 @@ func (q *Queries) GetBooking(ctx context.Context, id pgtype.UUID) (CoachingBooki
 }
 
 const getSessionType = `-- name: GetSessionType :one
-SELECT id, expert_id, group_id, name, description, duration_minutes, is_active, created_at, updated_at FROM coaching_session_types WHERE id = $1
+SELECT id, expert_id, group_id, name, description, duration_minutes, is_active, created_at, updated_at FROM coaching_session_types WHERE id = $1 AND group_id = $2
 `
 
-func (q *Queries) GetSessionType(ctx context.Context, id pgtype.UUID) (CoachingSessionType, error) {
-	row := q.db.QueryRow(ctx, getSessionType, id)
+type GetSessionTypeParams struct {
+	ID      pgtype.UUID `json:"id"`
+	GroupID pgtype.UUID `json:"group_id"`
+}
+
+func (q *Queries) GetSessionType(ctx context.Context, arg GetSessionTypeParams) (CoachingSessionType, error) {
+	row := q.db.QueryRow(ctx, getSessionType, arg.ID, arg.GroupID)
 	var i CoachingSessionType
 	err := row.Scan(
 		&i.ID,
@@ -552,9 +571,14 @@ const listMyBookings = `-- name: ListMyBookings :many
 SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.status, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
-WHERE cb.expert_id = $1 OR cb.student_id = $1
+WHERE (cb.expert_id = $1 OR cb.student_id = $1) AND cb.group_id = $2
 ORDER BY cb.scheduled_at DESC
 `
+
+type ListMyBookingsParams struct {
+	ExpertID string      `json:"expert_id"`
+	GroupID  pgtype.UUID `json:"group_id"`
+}
 
 type ListMyBookingsRow struct {
 	ID                 pgtype.UUID           `json:"id"`
@@ -573,8 +597,8 @@ type ListMyBookingsRow struct {
 	SessionTypeName    string                `json:"session_type_name"`
 }
 
-func (q *Queries) ListMyBookings(ctx context.Context, expertID string) ([]ListMyBookingsRow, error) {
-	rows, err := q.db.Query(ctx, listMyBookings, expertID)
+func (q *Queries) ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error) {
+	rows, err := q.db.Query(ctx, listMyBookings, arg.ExpertID, arg.GroupID)
 	if err != nil {
 		return nil, err
 	}
@@ -688,7 +712,7 @@ func (q *Queries) ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UU
 const updateAvailability = `-- name: UpdateAvailability :one
 UPDATE coaching_availability
 SET day_of_week = $2, start_time = $3, end_time = $4, updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND expert_id = $5 AND group_id = $6
 RETURNING id, expert_id, group_id, day_of_week, start_time, end_time, is_active, created_at, updated_at
 `
 
@@ -697,6 +721,8 @@ type UpdateAvailabilityParams struct {
 	DayOfWeek int16       `json:"day_of_week"`
 	StartTime pgtype.Time `json:"start_time"`
 	EndTime   pgtype.Time `json:"end_time"`
+	ExpertID  string      `json:"expert_id"`
+	GroupID   pgtype.UUID `json:"group_id"`
 }
 
 func (q *Queries) UpdateAvailability(ctx context.Context, arg UpdateAvailabilityParams) (CoachingAvailability, error) {
@@ -705,6 +731,8 @@ func (q *Queries) UpdateAvailability(ctx context.Context, arg UpdateAvailability
 		arg.DayOfWeek,
 		arg.StartTime,
 		arg.EndTime,
+		arg.ExpertID,
+		arg.GroupID,
 	)
 	var i CoachingAvailability
 	err := row.Scan(
@@ -727,7 +755,7 @@ SET status = $2,
     cancellation_reason = CASE WHEN $2 = 'cancelled' THEN $3 ELSE cancellation_reason END,
     cancelled_by = CASE WHEN $2 = 'cancelled' THEN $4 ELSE cancelled_by END,
     updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND (expert_id = $5 OR student_id = $5)
 RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, status, cancellation_reason, cancelled_by, notes, created_at, updated_at
 `
 
@@ -736,6 +764,7 @@ type UpdateBookingStatusParams struct {
 	Status             CoachingBookingStatus `json:"status"`
 	CancellationReason pgtype.Text           `json:"cancellation_reason"`
 	CancelledBy        pgtype.Text           `json:"cancelled_by"`
+	ExpertID           string                `json:"expert_id"`
 }
 
 func (q *Queries) UpdateBookingStatus(ctx context.Context, arg UpdateBookingStatusParams) (CoachingBooking, error) {
@@ -744,6 +773,7 @@ func (q *Queries) UpdateBookingStatus(ctx context.Context, arg UpdateBookingStat
 		arg.Status,
 		arg.CancellationReason,
 		arg.CancelledBy,
+		arg.ExpertID,
 	)
 	var i CoachingBooking
 	err := row.Scan(
@@ -767,7 +797,7 @@ func (q *Queries) UpdateBookingStatus(ctx context.Context, arg UpdateBookingStat
 const updateSessionType = `-- name: UpdateSessionType :one
 UPDATE coaching_session_types
 SET name = $2, description = $3, duration_minutes = $4, updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND expert_id = $5 AND group_id = $6
 RETURNING id, expert_id, group_id, name, description, duration_minutes, is_active, created_at, updated_at
 `
 
@@ -776,6 +806,8 @@ type UpdateSessionTypeParams struct {
 	Name            string      `json:"name"`
 	Description     string      `json:"description"`
 	DurationMinutes int32       `json:"duration_minutes"`
+	ExpertID        string      `json:"expert_id"`
+	GroupID         pgtype.UUID `json:"group_id"`
 }
 
 func (q *Queries) UpdateSessionType(ctx context.Context, arg UpdateSessionTypeParams) (CoachingSessionType, error) {
@@ -784,6 +816,8 @@ func (q *Queries) UpdateSessionType(ctx context.Context, arg UpdateSessionTypePa
 		arg.Name,
 		arg.Description,
 		arg.DurationMinutes,
+		arg.ExpertID,
+		arg.GroupID,
 	)
 	var i CoachingSessionType
 	err := row.Scan(

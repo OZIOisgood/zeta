@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/groups/{{groupId}}
+  url: {{baseUrl}}/groups/{{newGroupId}}
   body: none
   auth: bearer
 }
@@ -16,7 +16,7 @@ auth:bearer {
 
 tests {
   expect(res.status).to.equal(200);
-  expect(res.body.id).to.equal(bru.getVar("groupId"));
+  expect(res.body.id).to.equal(bru.getVar("newGroupId"));
   expect(res.body.name).to.be.a("string");
   expect(res.body.owner_id).to.be.a("string");
   expect(res.body.created_at).to.be.a("string");

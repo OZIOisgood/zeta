@@ -5,7 +5,7 @@ meta {
 }
 
 put {
-  url: {{baseUrl}}/groups/{{groupId}}
+  url: {{baseUrl}}/groups/{{newGroupId}}
   body: json
   auth: bearer
 }
@@ -23,7 +23,7 @@ body:json {
 
 tests {
   expect(res.status).to.equal(200);
-  expect(res.body.id).to.equal(bru.getVar("groupId"));
+  expect(res.body.id).to.equal(bru.getVar("newGroupId"));
   expect(res.body.name).to.equal("Test Group Updated");
   expect(res.body.updated_at).to.be.a("string");
 }

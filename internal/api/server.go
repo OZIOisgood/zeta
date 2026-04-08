@@ -72,7 +72,7 @@ func (s *Server) routes() {
 	invitationsHandler := invitations.NewHandler(queries, emailService, s.Logger)
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService)
-	coachingHandler := coaching.NewHandler(queries, emailService, s.Logger)
+	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, s.Logger)
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware(s.Logger, jwksCache))

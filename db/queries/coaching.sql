@@ -26,15 +26,15 @@ WHERE group_id = $1 AND is_active = true
 ORDER BY expert_id, duration_minutes;
 
 -- name: GetSessionType :one
-SELECT * FROM coaching_session_types WHERE id = $1;
+SELECT * FROM coaching_session_types WHERE id = $1 AND group_id = $2;
 
 -- name: UpdateSessionType :one
 UPDATE coaching_session_types
 SET name = $2, description = $3, duration_minutes = $4, updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND expert_id = $5 AND group_id = $6
 RETURNING *;
 
--- name: DeactivateSessionType :exec
+-- name: DeactivateSessionType :execrows
 UPDATE coaching_session_types
 SET is_active = false, updated_at = NOW()
 WHERE id = $1 AND expert_id = $2;
@@ -58,10 +58,10 @@ WHERE group_id = $1 AND is_active = true;
 -- name: UpdateAvailability :one
 UPDATE coaching_availability
 SET day_of_week = $2, start_time = $3, end_time = $4, updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND expert_id = $5 AND group_id = $6
 RETURNING *;
 
--- name: DeleteAvailability :exec
+-- name: DeleteAvailability :execrows
 DELETE FROM coaching_availability WHERE id = $1 AND expert_id = $2;
 
 -- name: ListAvailabilityByGroup :many
@@ -81,7 +81,7 @@ SELECT * FROM coaching_blocked_slots
 WHERE expert_id = $1 AND blocked_date >= @from_date AND blocked_date <= @to_date
 ORDER BY blocked_date, start_time;
 
--- name: DeleteBlockedSlot :exec
+-- name: DeleteBlockedSlot :execrows
 DELETE FROM coaching_blocked_slots WHERE id = $1 AND expert_id = $2;
 
 -- === Bookings ===
@@ -100,13 +100,13 @@ VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: GetBooking :one
-SELECT * FROM coaching_bookings WHERE id = $1;
+SELECT * FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2);
 
 -- name: ListMyBookings :many
 SELECT cb.*, cst.name AS session_type_name
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
-WHERE cb.expert_id = $1 OR cb.student_id = $1
+WHERE (cb.expert_id = $1 OR cb.student_id = $1) AND cb.group_id = $2
 ORDER BY cb.scheduled_at DESC;
 
 -- name: ListGroupBookings :many
@@ -122,7 +122,7 @@ SET status = $2,
     cancellation_reason = CASE WHEN $2 = 'cancelled' THEN $3 ELSE cancellation_reason END,
     cancelled_by = CASE WHEN $2 = 'cancelled' THEN $4 ELSE cancelled_by END,
     updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND (expert_id = $5 OR student_id = $5)
 RETURNING *;
 
 -- name: CountConflictingBookings :one
