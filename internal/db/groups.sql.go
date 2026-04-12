@@ -104,6 +104,20 @@ func (q *Queries) CreateGroupInvitation(ctx context.Context, arg CreateGroupInvi
 	return i, err
 }
 
+const deleteGroup = `-- name: DeleteGroup :exec
+DELETE FROM groups WHERE id = $1 AND owner_id = $2
+`
+
+type DeleteGroupParams struct {
+	ID      pgtype.UUID `json:"id"`
+	OwnerID string      `json:"owner_id"`
+}
+
+func (q *Queries) DeleteGroup(ctx context.Context, arg DeleteGroupParams) error {
+	_, err := q.db.Exec(ctx, deleteGroup, arg.ID, arg.OwnerID)
+	return err
+}
+
 const getGroup = `-- name: GetGroup :one
 SELECT id, name, owner_id, avatar, created_at, updated_at, description FROM groups
 WHERE id = $1 LIMIT 1

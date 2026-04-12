@@ -33,4 +33,26 @@
       </button>
     </div>
   </form>
+
+  @if (isOwner()) {
+    <div class="danger-zone">
+      <h4 class="danger-zone__title">Danger Zone</h4>
+      <div class="danger-zone__row">
+        <div class="danger-zone__description">
+          <strong>Delete this group</strong>
+          <p>Permanently delete this group and all its members, invitations, and content.</p>
+        </div>
+        <button
+          tuiButton
+          type="button"
+          appearance="destructive"
+          size="s"
+          [disabled]="isDeleting"
+          (click)="onDeleteGroup()"
+        >
+          Delete Group
+        </button>
+      </div>
+    </div>
+  }
 </div>

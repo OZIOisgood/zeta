@@ -250,14 +250,20 @@ export class GroupDetailsPageComponent {
 
   openPreferencesDialog(group: Group): void {
     this.dialogs
-      .open<Group>(new PolymorpheusComponent(GroupPreferencesDialogComponent), {
+      .open<Group | null>(new PolymorpheusComponent(GroupPreferencesDialogComponent), {
         label: 'Group Preferences',
         size: 's',
         data: group,
       })
-      .pipe(take(1), filter(Boolean))
-      .subscribe(() => {
-        this.alerts.open('Group updated', { appearance: 'positive' }).subscribe();
+      .pipe(take(1))
+      .subscribe((result) => {
+        if (result === null) {
+          // Group was deleted — navigate back to groups list
+          this.alerts.open('Group deleted', { appearance: 'positive' }).subscribe();
+          this.router.navigate(['/groups']);
+        } else if (result) {
+          this.alerts.open('Group updated', { appearance: 'positive' }).subscribe();
+        }
       });
   }
 }

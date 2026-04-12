@@ -349,3 +349,52 @@ func (h *Handler) UpdateGroupPreferences(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(toGroupResponse(group))
 }
+
+func (h *Handler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsDelete) {
+		log.WarnContext(ctx, "group_delete_permission_denied",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+		)
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	groupIDStr := chi.URLParam(r, "groupID")
+	var groupID pgtype.UUID
+	if err := groupID.Scan(groupIDStr); err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	err := h.q.DeleteGroup(ctx, db.DeleteGroupParams{
+		ID:      groupID,
+		OwnerID: user.ID,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "group_delete_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to delete group", http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoContext(ctx, "group_deleted",
+		slog.String("component", "groups"),
+		slog.String("user_id", user.ID),
+		slog.String("group_id", groupIDStr),
+	)
+
+	w.WriteHeader(http.StatusNoContent)
+}
