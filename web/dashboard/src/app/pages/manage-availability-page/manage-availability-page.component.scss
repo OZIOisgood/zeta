@@ -10,6 +10,17 @@
   flex-wrap: wrap;
 }
 
+.group-select-section {
+  margin-bottom: 2rem;
+}
+
+.group-select-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
 .section {
   margin-bottom: 2.5rem;
 }
@@ -110,6 +121,37 @@
 .empty-text {
   color: var(--tui-text-secondary);
   padding: 1rem 0;
+}
+
+.timezone-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.timezone-input {
+  width: 200px;
+}
+
+.session-type-desc {
+  color: var(--tui-text-secondary);
+  margin-top: 0.125rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+
+  &--inactive {
+    background: var(--tui-background-neutral-2);
+    color: var(--tui-text-secondary);
+  }
 }
 
 @media (max-width: 47.9375em) {

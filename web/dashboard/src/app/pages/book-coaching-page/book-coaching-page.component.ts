@@ -20,7 +20,12 @@ import {
   TuiStepper,
 } from '@taiga-ui/kit';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
-import { CoachingService, CoachingSlot, ExpertInfo } from '../../shared/services/coaching.service';
+import {
+  CoachingService,
+  CoachingSlot,
+  ExpertInfo,
+  SessionType,
+} from '../../shared/services/coaching.service';
 import { Group, GroupsService } from '../../shared/services/groups.service';
 
 @Component({
@@ -52,6 +57,7 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected activeIndex = 0;
   protected slideDirection = 1;
+  protected loading = signal(false);
 
   // Step 1
   protected groups = signal<Group[]>([]);
@@ -62,12 +68,16 @@ export class BookCoachingPageComponent implements OnInit {
   protected selectedExpert: ExpertInfo | null = null;
   protected expertSkipped = false;
 
-  // Step 3
+  // Step 3 (Session Type)
+  protected sessionTypes = signal<SessionType[]>([]);
+  protected selectedSessionType: SessionType | null = null;
+
+  // Step 4 (Slot)
   protected slots = signal<CoachingSlot[]>([]);
   protected slotsByDate = signal<Map<string, CoachingSlot[]>>(new Map());
   protected selectedSlot: CoachingSlot | null = null;
 
-  // Step 4
+  // Step 5 (Confirm)
   protected notes = '';
   protected booking = false;
   protected booked = false;
@@ -97,23 +107,26 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected selectGroup(): void {
     if (!this.selectedGroup) return;
+    this.loading.set(true);
+    this.cdr.markForCheck();
     this.coachingService.listExperts(this.selectedGroup.id).subscribe({
       next: (experts) => {
+        this.loading.set(false);
         this.experts.set(experts ?? []);
         if (experts.length === 1) {
           // Auto-skip expert selection
           this.selectedExpert = experts[0];
           this.expertSkipped = true;
-          this.loadSlots();
-          this.slideDirection = 1;
-          this.activeIndex = 2; // jump to slot picker
+          this.loadSessionTypes();
         } else {
           this.expertSkipped = false;
-          this.onNext(); // go to expert selection
+          this.onNext(); // go to expert selection (step 1)
         }
         this.cdr.markForCheck();
       },
       error: () => {
+        this.loading.set(false);
+        this.cdr.markForCheck();
         this.alerts.open('Failed to load experts', { appearance: 'negative' }).subscribe();
       },
     });
@@ -121,21 +134,58 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected selectExpert(expert: ExpertInfo): void {
     this.selectedExpert = expert;
+    this.loadSessionTypes();
+  }
+
+  private loadSessionTypes(): void {
+    if (!this.selectedGroup) return;
+    this.loading.set(true);
+    this.cdr.markForCheck();
+    this.coachingService.listSessionTypes(this.selectedGroup.id).subscribe({
+      next: (types) => {
+        this.loading.set(false);
+        this.sessionTypes.set((types ?? []).filter((t) => t.is_active));
+        this.slideDirection = 1;
+        this.activeIndex = 2; // jump to session type step
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.loading.set(false);
+        this.cdr.markForCheck();
+        this.alerts
+          .open('Failed to load session types', { appearance: 'negative' })
+          .subscribe();
+      },
+    });
+  }
+
+  protected selectSessionType(type: SessionType): void {
+    this.selectedSessionType = type;
     this.loadSlots();
-    this.onNext();
   }
 
   private loadSlots(): void {
-    if (!this.selectedGroup || !this.selectedExpert) return;
+    if (!this.selectedGroup || !this.selectedExpert || !this.selectedSessionType) return;
+    this.loading.set(true);
+    this.cdr.markForCheck();
     this.coachingService
-      .listAvailableSlots(this.selectedGroup.id, this.selectedExpert.expert_id)
+      .listAvailableSlots(
+        this.selectedGroup.id,
+        this.selectedExpert.expert_id,
+        this.selectedSessionType.id,
+      )
       .subscribe({
         next: (slots) => {
+          this.loading.set(false);
           this.slots.set(slots ?? []);
           this.slotsByDate.set(this.groupSlotsByDate(slots ?? []));
+          this.slideDirection = 1;
+          this.activeIndex = 3; // jump to slot step
           this.cdr.markForCheck();
         },
         error: () => {
+          this.loading.set(false);
+          this.cdr.markForCheck();
           this.alerts
             .open('Failed to load available slots', { appearance: 'negative' })
             .subscribe();
@@ -160,7 +210,7 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected selectSlot(slot: CoachingSlot): void {
     this.selectedSlot = slot;
-    this.onNext();
+    this.onNext(); // go to confirm (step 4)
   }
 
   protected formatTime(isoString: string): string {
@@ -203,15 +253,15 @@ export class BookCoachingPageComponent implements OnInit {
   }
 
   protected confirmBooking(): void {
-    if (!this.selectedGroup || !this.selectedExpert || !this.selectedSlot) return;
+    if (!this.selectedGroup || !this.selectedExpert || !this.selectedSlot || !this.selectedSessionType) return;
     this.booking = true;
     this.cdr.markForCheck();
 
     this.coachingService
       .createBooking(this.selectedGroup.id, {
         expert_id: this.selectedExpert.expert_id,
+        session_type_id: this.selectedSessionType.id,
         scheduled_at: this.selectedSlot.starts_at,
-        duration_minutes: this.selectedSlot.duration_minutes,
         notes: this.notes || undefined,
       })
       .subscribe({
@@ -219,7 +269,7 @@ export class BookCoachingPageComponent implements OnInit {
           this.booked = true;
           this.booking = false;
           this.cdr.markForCheck();
-          setTimeout(() => this.router.navigate(['/my-sessions']), 1500);
+          setTimeout(() => this.router.navigate(['/sessions']), 1500);
         },
         error: (err) => {
           this.booking = false;
@@ -232,8 +282,6 @@ export class BookCoachingPageComponent implements OnInit {
           if (err.status === 409) {
             // Refresh slots
             this.loadSlots();
-            this.slideDirection = -1;
-            this.activeIndex = 2;
             this.selectedSlot = null;
             this.cdr.markForCheck();
           }

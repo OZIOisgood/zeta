@@ -13,10 +13,7 @@
     <a *ngIf="showUploadVideo()" tuiTab routerLink="/upload-video" routerLinkActive>
       Upload video
     </a>
-    <a *ngIf="showBookCoaching()" tuiTab routerLink="/book-coaching" routerLinkActive>
-      Book Live Coaching
-    </a>
-    <a *ngIf="showMySessions()" tuiTab routerLink="/my-sessions" routerLinkActive> My Sessions </a>
+    <a *ngIf="showSessions()" tuiTab routerLink="/sessions" routerLinkActive> Sessions </a>
   </tui-tabs>
 
   <ng-container *ngIf="user() as u">
@@ -96,24 +93,14 @@
       Upload video
     </a>
     <a
-      *ngIf="showBookCoaching()"
+      *ngIf="showSessions()"
       class="mobile-nav-item"
-      routerLink="/book-coaching"
-      routerLinkActive="active"
-      (click)="mobileMenuOpen.set(false)"
-    >
-      <tui-icon icon="@tui.calendar-plus" [style.height.rem]="1.25"></tui-icon>
-      Book Live Coaching
-    </a>
-    <a
-      *ngIf="showMySessions()"
-      class="mobile-nav-item"
-      routerLink="/my-sessions"
+      routerLink="/sessions"
       routerLinkActive="active"
       (click)="mobileMenuOpen.set(false)"
     >
       <tui-icon icon="@tui.calendar-check" [style.height.rem]="1.25"></tui-icon>
-      My Sessions
+      Sessions
     </a>
   </nav>
 

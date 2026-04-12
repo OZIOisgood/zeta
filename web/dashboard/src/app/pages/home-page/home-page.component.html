@@ -3,7 +3,7 @@
     <div class="coaching-widget">
       <div class="coaching-widget__header">
         <h2 class="tui-text_h3">Upcoming Coaching Sessions</h2>
-        <a tuiButton appearance="flat" size="s" routerLink="/my-sessions">View all</a>
+        <a tuiButton appearance="flat" size="s" routerLink="/sessions">View all</a>
       </div>
       @if (bookingsLoading()) {
         <p class="tui-text_body-m widget-empty">Loading…</p>
@@ -11,7 +11,7 @@
         <div class="widget-empty-state">
           <p class="tui-text_body-m">No upcoming coaching sessions.</p>
           @if (canBook()) {
-            <a tuiButton appearance="outline" size="s" routerLink="/book-coaching">
+            <a tuiButton appearance="outline" size="s" routerLink="/sessions/book">
               Book Live Coaching
             </a>
           }

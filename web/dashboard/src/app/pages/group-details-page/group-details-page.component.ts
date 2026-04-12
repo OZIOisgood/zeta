@@ -1,13 +1,11 @@
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   computed,
   inject,
-  signal,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiDialogService, TuiLink } from '@taiga-ui/core';
 import { TuiElasticContainer } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
@@ -17,7 +15,6 @@ import { GroupPreferencesDialogComponent } from '../../shared/components/group-p
 import { InviteDialogComponent } from '../../shared/components/invite-dialog/invite-dialog.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { UsersListComponent } from '../../shared/components/users-list/users-list.component';
-import { CoachingBooking, CoachingService } from '../../shared/services/coaching.service';
 import { Group, GroupsService } from '../../shared/services/groups.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
 
@@ -26,7 +23,6 @@ import { PermissionsService } from '../../shared/services/permissions.service';
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     PageContainerComponent,
     UsersListComponent,
     TuiButton,
@@ -43,25 +39,16 @@ export class GroupDetailsPageComponent {
   private readonly router = inject(Router);
   private readonly permissionsService = inject(PermissionsService);
   private readonly groupsService = inject(GroupsService);
-  private readonly coachingService = inject(CoachingService);
   private readonly dialogs = inject(TuiDialogService);
   private readonly alerts = inject(TuiAlertService);
-  private readonly cdr = inject(ChangeDetectorRef);
+
+  constructor() {}
 
   readonly groupId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
   readonly group$ = this.groupId$.pipe(
     filter((id): id is string => !!id),
     switchMap((id) => this.groupsService.get(id)),
   );
-
-  protected groupSessions = signal<CoachingBooking[]>([]);
-  protected sessionsLoading = signal(false);
-
-  constructor() {
-    this.groupId$.pipe(filter((id): id is string => !!id)).subscribe((id) => {
-      this.loadGroupSessions(id);
-    });
-  }
 
   private readonly defaultGradient =
     'linear-gradient(160deg, #2e2e2e 0%, #5c5c5c 50%, #b0b0b0 100%)';
@@ -84,12 +71,6 @@ export class GroupDetailsPageComponent {
   );
   readonly showPrefsButton = computed(() =>
     this.permissionsService.hasPermission('groups:preferences:edit'),
-  );
-  readonly showManageAvailability = computed(() =>
-    this.permissionsService.hasPermission('coaching:availability:manage'),
-  );
-  readonly showCoachingSessions = computed(() =>
-    this.permissionsService.hasPermission('coaching:bookings:read'),
   );
 
   protected descriptionExpanded = false;
@@ -208,31 +189,6 @@ export class GroupDetailsPageComponent {
 
   toggleDescription(): void {
     this.descriptionExpanded = !this.descriptionExpanded;
-  }
-
-  loadGroupSessions(groupId: string): void {
-    this.sessionsLoading.set(true);
-    this.coachingService.listGroupSessions(groupId).subscribe({
-      next: (sessions) => {
-        this.groupSessions.set(sessions ?? []);
-        this.sessionsLoading.set(false);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.sessionsLoading.set(false);
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  formatSessionDateTime(isoString: string): string {
-    return new Date(isoString).toLocaleString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   }
 
   openInviteDialog(groupId: string): void {

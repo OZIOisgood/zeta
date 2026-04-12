@@ -2,6 +2,10 @@
 # /infra/pgdata (removed, using named volumes)
 # /infra/minio-data (removed, using named volumes)
 
+# IDE / Editor
+.idea/
+.vscode/
+
 # Environment files
 .env
 

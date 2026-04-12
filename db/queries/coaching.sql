@@ -91,7 +91,7 @@ SELECT * FROM coaching_bookings
 WHERE expert_id = $1
   AND scheduled_at >= $2
   AND scheduled_at < $3
-  AND status != 'cancelled'
+  AND is_cancelled = false
 ORDER BY scheduled_at;
 
 -- name: CreateBooking :one
@@ -113,21 +113,21 @@ ORDER BY cb.scheduled_at DESC;
 SELECT cb.*, cst.name AS session_type_name
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
-WHERE cb.group_id = $1 AND cb.status = 'confirmed'
+WHERE cb.group_id = $1
 ORDER BY cb.scheduled_at;
 
--- name: UpdateBookingStatus :one
+-- name: CancelBooking :one
 UPDATE coaching_bookings
-SET status = $2,
-    cancellation_reason = CASE WHEN $2 = 'cancelled' THEN $3 ELSE cancellation_reason END,
-    cancelled_by = CASE WHEN $2 = 'cancelled' THEN $4 ELSE cancelled_by END,
+SET is_cancelled = true,
+    cancellation_reason = $2,
+    cancelled_by = $3,
     updated_at = NOW()
-WHERE id = $1 AND (expert_id = $5 OR student_id = $5)
+WHERE id = $1 AND (expert_id = $4 OR student_id = $4)
 RETURNING *;
 
 -- name: CountConflictingBookings :one
 SELECT COUNT(*) FROM coaching_bookings
 WHERE expert_id = $1
-  AND status != 'cancelled'
+  AND is_cancelled = false
   AND scheduled_at < $3
   AND scheduled_at + (duration_minutes * interval '1 minute') > $2;

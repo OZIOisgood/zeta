@@ -15,6 +15,7 @@ import { PageContainerComponent } from '../../shared/components/page-container/p
 import { AssetService } from '../../shared/services/asset.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { CoachingBooking, CoachingService } from '../../shared/services/coaching.service';
+import { GroupsService } from '../../shared/services/groups.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
 
 @Component({
@@ -32,6 +33,7 @@ export class HomePageComponent {
   private readonly assetService = inject(AssetService);
   private readonly permissionsService = inject(PermissionsService);
   private readonly coachingService = inject(CoachingService);
+  private readonly groupsService = inject(GroupsService);
 
   public loading = signal(true);
   public assets$ = this.assetService.getAssets().pipe(tap(() => this.loading.set(false)));
@@ -46,14 +48,23 @@ export class HomePageComponent {
   constructor() {
     if (this.permissionsService.hasPermission('coaching:bookings:read')) {
       this.bookingsLoading.set(true);
-      this.coachingService.listMyBookings().subscribe({
-        next: (bookings) => {
-          const upcoming = (bookings ?? []).filter(
-            (b) => b.status === 'confirmed' && new Date(b.scheduled_at) > new Date(),
-          );
-          this.upcomingBookings.set(upcoming.slice(0, 5));
-          this.bookingsLoading.set(false);
-          this.cdr.markForCheck();
+      this.groupsService.list().subscribe({
+        next: (groups) => {
+          const groupIds = groups.map((g) => g.id);
+          this.coachingService.listMyBookingsAllGroups(groupIds).subscribe({
+            next: (bookings) => {
+              const upcoming = (bookings ?? []).filter(
+                (b) => b.status === 'pending' && new Date(b.scheduled_at) > new Date(),
+              );
+              this.upcomingBookings.set(upcoming.slice(0, 5));
+              this.bookingsLoading.set(false);
+              this.cdr.markForCheck();
+            },
+            error: () => {
+              this.bookingsLoading.set(false);
+              this.cdr.markForCheck();
+            },
+          });
         },
         error: () => {
           this.bookingsLoading.set(false);

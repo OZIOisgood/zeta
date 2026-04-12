@@ -59,7 +59,7 @@ tests {
   expect(res.status).to.equal(201);
   expect(res.body.id).to.be.a("string");
   expect(res.body.session_type_id).to.be.a("string");
-  expect(res.body.status).to.equal("confirmed");
+  expect(res.body.status).to.equal("pending");
 
   bru.setVar("bookingId", res.body.id);
 }

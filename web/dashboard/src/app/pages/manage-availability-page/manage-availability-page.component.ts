@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiTextfield } from '@taiga-ui/core';
 import { TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -16,10 +16,12 @@ import {
   CoachingAvailability,
   CoachingBlockedSlot,
   CoachingService,
+  SessionType,
 } from '../../shared/services/coaching.service';
+import { Group, GroupsService } from '../../shared/services/groups.service';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DURATION_OPTIONS = [15, 30, 45, 60];
+const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
 @Component({
   selector: 'app-manage-availability-page',
@@ -39,26 +41,45 @@ const DURATION_OPTIONS = [15, 30, 45, 60];
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ManageAvailabilityPageComponent implements OnInit {
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly coachingService = inject(CoachingService);
+  private readonly groupsService = inject(GroupsService);
   private readonly alerts = inject(TuiAlertService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  // Group selection
+  protected groups = signal<Group[]>([]);
+  protected selectedGroup: Group | null = null;
+  protected groupStringify = (g: Group) => g.name;
+
   protected groupId = '';
   protected loading = signal(true);
+  protected sessionTypes = signal<SessionType[]>([]);
   protected availability = signal<CoachingAvailability[]>([]);
   protected blockedSlots = signal<CoachingBlockedSlot[]>([]);
   protected userTimezone = signal('UTC');
   protected readonly dayNames = DAY_NAMES;
   protected readonly durationOptions = DURATION_OPTIONS;
 
+  // Timezone edit
+  protected editingTimezone = false;
+  protected timezoneInput = '';
+
+  // Session type forms
+  protected showSessionTypeForm = false;
+  protected newSessionTypeName = '';
+  protected newSessionTypeDescription = '';
+  protected newSessionTypeDuration = 30;
+  protected editingSessionTypeId: string | null = null;
+  protected editSessionTypeName = '';
+  protected editSessionTypeDescription = '';
+  protected editSessionTypeDuration = 30;
+
   // Add availability form
   protected showAddForm = false;
   protected newDayOfWeek = 1;
   protected newStartTime = '09:00';
   protected newEndTime = '17:00';
-  protected newDuration = 30;
 
   // Block time form
   protected showBlockForm = false;
@@ -68,26 +89,56 @@ export class ManageAvailabilityPageComponent implements OnInit {
   protected newBlockReason = '';
   protected newBlockFullDay = true;
 
-  // Editing
+  // Editing availability
   protected editingId: string | null = null;
   protected editDayOfWeek = 1;
   protected editStartTime = '';
   protected editEndTime = '';
-  protected editDuration = 30;
 
   ngOnInit(): void {
-    this.groupId = this.route.snapshot.paramMap.get('groupID') ?? '';
+    this.loading.set(true);
+    this.groupsService.list().subscribe({
+      next: (groups) => {
+        this.groups.set(groups ?? []);
+        if (groups.length === 1) {
+          // Auto-select when only one group
+          this.selectGroup(groups[0]);
+        } else {
+          this.loading.set(false);
+          this.cdr.markForCheck();
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+        this.cdr.markForCheck();
+      },
+    });
     this.coachingService.getMyTimezone().subscribe({
       next: (res) => {
         this.userTimezone.set(res.timezone);
         this.cdr.markForCheck();
       },
     });
-    this.loadData();
+  }
+
+  protected selectGroup(group: Group): void {
+    this.selectedGroup = group;
+    this.groupId = group.id;
+    this.loadAll();
+  }
+
+  private loadAll(): void {
+    this.loading.set(true);
+    this.coachingService.listSessionTypes(this.groupId).subscribe({
+      next: (types) => {
+        this.sessionTypes.set(types ?? []);
+        this.loadData();
+      },
+      error: () => this.loadData(),
+    });
   }
 
   private loadData(): void {
-    this.loading.set(true);
     this.coachingService.listMyAvailability(this.groupId).subscribe({
       next: (avail) => {
         this.availability.set(avail ?? []);
@@ -114,6 +165,104 @@ export class ManageAvailabilityPageComponent implements OnInit {
     });
   }
 
+  // Timezone
+  protected startEditTimezone(): void {
+    this.timezoneInput = this.userTimezone();
+    this.editingTimezone = true;
+    this.cdr.markForCheck();
+  }
+
+  protected cancelEditTimezone(): void {
+    this.editingTimezone = false;
+    this.cdr.markForCheck();
+  }
+
+  protected saveTimezone(): void {
+    this.coachingService.setMyTimezone(this.timezoneInput).subscribe({
+      next: (res) => {
+        this.userTimezone.set(res.timezone);
+        this.editingTimezone = false;
+        this.alerts.open('Timezone updated', { appearance: 'positive' }).subscribe();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.alerts.open('Invalid timezone identifier', { appearance: 'negative' }).subscribe();
+      },
+    });
+  }
+
+  // Session Types
+  protected addSessionType(): void {
+    this.coachingService
+      .createSessionType(this.groupId, {
+        name: this.newSessionTypeName,
+        description: this.newSessionTypeDescription,
+        duration_minutes: this.newSessionTypeDuration,
+      })
+      .subscribe({
+        next: () => {
+          this.showSessionTypeForm = false;
+          this.newSessionTypeName = '';
+          this.newSessionTypeDescription = '';
+          this.newSessionTypeDuration = 30;
+          this.coachingService.listSessionTypes(this.groupId).subscribe({
+            next: (types) => { this.sessionTypes.set(types ?? []); this.cdr.markForCheck(); },
+          });
+        },
+        error: () => {
+          this.alerts.open('Failed to create session type', { appearance: 'negative' }).subscribe();
+        },
+      });
+  }
+
+  protected startEditSessionType(st: SessionType): void {
+    this.editingSessionTypeId = st.id;
+    this.editSessionTypeName = st.name;
+    this.editSessionTypeDescription = st.description;
+    this.editSessionTypeDuration = st.duration_minutes;
+    this.cdr.markForCheck();
+  }
+
+  protected saveEditSessionType(): void {
+    if (!this.editingSessionTypeId) return;
+    this.coachingService
+      .updateSessionType(this.groupId, this.editingSessionTypeId, {
+        name: this.editSessionTypeName,
+        description: this.editSessionTypeDescription,
+        duration_minutes: this.editSessionTypeDuration,
+      })
+      .subscribe({
+        next: () => {
+          this.editingSessionTypeId = null;
+          this.coachingService.listSessionTypes(this.groupId).subscribe({
+            next: (types) => { this.sessionTypes.set(types ?? []); this.cdr.markForCheck(); },
+          });
+        },
+        error: () => {
+          this.alerts.open('Failed to update session type', { appearance: 'negative' }).subscribe();
+        },
+      });
+  }
+
+  protected cancelEditSessionType(): void {
+    this.editingSessionTypeId = null;
+    this.cdr.markForCheck();
+  }
+
+  protected deactivateSessionType(id: string): void {
+    this.coachingService.deactivateSessionType(this.groupId, id).subscribe({
+      next: () => {
+        this.coachingService.listSessionTypes(this.groupId).subscribe({
+          next: (types) => { this.sessionTypes.set(types ?? []); this.cdr.markForCheck(); },
+        });
+      },
+      error: () => {
+        this.alerts.open('Failed to deactivate session type', { appearance: 'negative' }).subscribe();
+      },
+    });
+  }
+
+  // Availability
   protected dayName(dow: number): string {
     return DAY_NAMES[dow] ?? '';
   }
@@ -124,7 +273,6 @@ export class ManageAvailabilityPageComponent implements OnInit {
         day_of_week: this.newDayOfWeek,
         start_time: this.newStartTime,
         end_time: this.newEndTime,
-        slot_duration_minutes: this.newDuration,
       })
       .subscribe({
         next: () => {
@@ -144,7 +292,6 @@ export class ManageAvailabilityPageComponent implements OnInit {
     this.editDayOfWeek = a.day_of_week;
     this.editStartTime = a.start_time;
     this.editEndTime = a.end_time;
-    this.editDuration = a.slot_duration_minutes;
     this.cdr.markForCheck();
   }
 
@@ -155,7 +302,6 @@ export class ManageAvailabilityPageComponent implements OnInit {
         day_of_week: this.editDayOfWeek,
         start_time: this.editStartTime,
         end_time: this.editEndTime,
-        slot_duration_minutes: this.editDuration,
       })
       .subscribe({
         next: () => {
@@ -186,6 +332,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
     });
   }
 
+  // Blocked slots
   protected addBlockedSlot(): void {
     const data: { blocked_date: string; start_time?: string; end_time?: string; reason?: string } =
       { blocked_date: this.newBlockDate };
@@ -222,7 +369,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   }
 
   protected goBack(): void {
-    this.router.navigate(['/groups', this.groupId]);
+    this.router.navigate(['/sessions']);
   }
 
   protected formatBlockedDate(isoDate: string): string {
@@ -233,19 +380,6 @@ export class ManageAvailabilityPageComponent implements OnInit {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-    });
-  }
-
-  protected saveTimezone(tz: string): void {
-    this.coachingService.setMyTimezone(tz).subscribe({
-      next: (res) => {
-        this.userTimezone.set(res.timezone);
-        this.alerts.open('Timezone updated', { appearance: 'positive' }).subscribe();
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.alerts.open('Invalid timezone', { appearance: 'negative' }).subscribe();
-      },
     });
   }
 }

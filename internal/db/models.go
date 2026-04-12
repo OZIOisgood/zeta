@@ -54,50 +54,6 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
-type CoachingBookingStatus string
-
-const (
-	CoachingBookingStatusConfirmed CoachingBookingStatus = "confirmed"
-	CoachingBookingStatusCancelled CoachingBookingStatus = "cancelled"
-	CoachingBookingStatusCompleted CoachingBookingStatus = "completed"
-	CoachingBookingStatusNoShow    CoachingBookingStatus = "no_show"
-)
-
-func (e *CoachingBookingStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = CoachingBookingStatus(s)
-	case string:
-		*e = CoachingBookingStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for CoachingBookingStatus: %T", src)
-	}
-	return nil
-}
-
-type NullCoachingBookingStatus struct {
-	CoachingBookingStatus CoachingBookingStatus `json:"coaching_booking_status"`
-	Valid                 bool                  `json:"valid"` // Valid is true if CoachingBookingStatus is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullCoachingBookingStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.CoachingBookingStatus, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.CoachingBookingStatus.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullCoachingBookingStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.CoachingBookingStatus), nil
-}
-
 type InvitationStatus string
 
 const (
@@ -260,19 +216,19 @@ type CoachingBlockedSlot struct {
 }
 
 type CoachingBooking struct {
-	ID                 pgtype.UUID           `json:"id"`
-	ExpertID           string                `json:"expert_id"`
-	StudentID          string                `json:"student_id"`
-	GroupID            pgtype.UUID           `json:"group_id"`
-	SessionTypeID      pgtype.UUID           `json:"session_type_id"`
-	ScheduledAt        pgtype.Timestamptz    `json:"scheduled_at"`
-	DurationMinutes    int32                 `json:"duration_minutes"`
-	Status             CoachingBookingStatus `json:"status"`
-	CancellationReason pgtype.Text           `json:"cancellation_reason"`
-	CancelledBy        pgtype.Text           `json:"cancelled_by"`
-	Notes              pgtype.Text           `json:"notes"`
-	CreatedAt          pgtype.Timestamptz    `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz    `json:"updated_at"`
+	ID                 pgtype.UUID        `json:"id"`
+	ExpertID           string             `json:"expert_id"`
+	StudentID          string             `json:"student_id"`
+	GroupID            pgtype.UUID        `json:"group_id"`
+	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
+	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes    int32              `json:"duration_minutes"`
+	CancellationReason pgtype.Text        `json:"cancellation_reason"`
+	CancelledBy        pgtype.Text        `json:"cancelled_by"`
+	Notes              pgtype.Text        `json:"notes"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	IsCancelled        bool               `json:"is_cancelled"`
 }
 
 type CoachingSessionType struct {

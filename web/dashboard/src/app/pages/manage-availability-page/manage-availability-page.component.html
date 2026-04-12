@@ -2,23 +2,221 @@
   <div class="availability-page">
     <div class="page-header">
       <button tuiButton appearance="flat" size="s" iconStart="@tui.arrow-left" (click)="goBack()">
-        Back to group
+        Back to sessions
       </button>
       <h1 class="tui-text_h3">Manage My Availability</h1>
     </div>
 
-    @if (loading()) {
+    @if (groups().length > 1 && !selectedGroup) {
+      <div class="group-select-section">
+        <p class="tui-text_body-m">Select the group for which you want to manage your availability:</p>
+        <div class="group-select-list">
+          @for (g of groups(); track g.id) {
+            <button tuiButton appearance="outline" size="m" (click)="selectGroup(g)">
+              {{ g.name }}
+            </button>
+          }
+        </div>
+      </div>
+    } @else if (loading()) {
       <p class="tui-text_body-m">Loading...</p>
     } @else {
+
+      <!-- Session Types -->
+      <section class="section">
+        <div class="section-header">
+          <h2 class="tui-text_h4">Session Types</h2>
+          <button
+            tuiButton
+            appearance="flat"
+            size="s"
+            iconStart="@tui.plus"
+            (click)="showSessionTypeForm = !showSessionTypeForm"
+          >
+            Add Session Type
+          </button>
+        </div>
+
+        @if (showSessionTypeForm) {
+          <div class="form-card">
+            <div class="form-row">
+              <div class="form-field form-field--wide">
+                <label class="tui-text_body-s field-label">Name</label>
+                <input
+                  type="text"
+                  class="time-input"
+                  [(ngModel)]="newSessionTypeName"
+                  placeholder="e.g. Strategy Session"
+                />
+              </div>
+              <div class="form-field form-field--wide">
+                <label class="tui-text_body-s field-label">Description (optional)</label>
+                <input
+                  type="text"
+                  class="time-input"
+                  [(ngModel)]="newSessionTypeDescription"
+                  placeholder="Short description"
+                />
+              </div>
+              <div class="form-field">
+                <label class="tui-text_body-s field-label">Duration</label>
+                <select class="native-select" [(ngModel)]="newSessionTypeDuration">
+                  @for (d of durationOptions; track d) {
+                    <option [ngValue]="d">{{ d }} min</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button
+                tuiButton
+                size="s"
+                type="button"
+                [disabled]="!newSessionTypeName"
+                (click)="addSessionType()"
+              >
+                Save
+              </button>
+              <button
+                tuiButton
+                appearance="flat"
+                size="s"
+                type="button"
+                (click)="showSessionTypeForm = false"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (sessionTypes().length === 0 && !showSessionTypeForm) {
+          <p class="tui-text_body-m empty-text">
+            No session types yet. Add one so students can book with you.
+          </p>
+        }
+
+        @for (st of sessionTypes(); track st.id) {
+          <div class="availability-row">
+            @if (editingSessionTypeId === st.id) {
+              <div class="form-card">
+                <div class="form-row">
+                  <div class="form-field form-field--wide">
+                    <label class="tui-text_body-s field-label">Name</label>
+                    <input type="text" class="time-input" [(ngModel)]="editSessionTypeName" />
+                  </div>
+                  <div class="form-field form-field--wide">
+                    <label class="tui-text_body-s field-label">Description</label>
+                    <input
+                      type="text"
+                      class="time-input"
+                      [(ngModel)]="editSessionTypeDescription"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <label class="tui-text_body-s field-label">Duration</label>
+                    <select class="native-select" [(ngModel)]="editSessionTypeDuration">
+                      @for (d of durationOptions; track d) {
+                        <option [ngValue]="d">{{ d }} min</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button tuiButton size="s" type="button" (click)="saveEditSessionType()">
+                    Save
+                  </button>
+                  <button
+                    tuiButton
+                    appearance="flat"
+                    size="s"
+                    type="button"
+                    (click)="cancelEditSessionType()"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="availability-item">
+                <div>
+                  <span class="tui-text_body-m availability-label">
+                    {{ st.name }} &nbsp;&bull;&nbsp; {{ st.duration_minutes }} min
+                  </span>
+                  @if (st.description) {
+                    <p class="tui-text_body-s session-type-desc">{{ st.description }}</p>
+                  }
+                  @if (!st.is_active) {
+                    <span class="status-badge status-badge--inactive">Inactive</span>
+                  }
+                </div>
+                <div class="item-actions">
+                  <button
+                    tuiButton
+                    appearance="flat"
+                    size="xs"
+                    iconStart="@tui.pencil"
+                    (click)="startEditSessionType(st)"
+                  >
+                    Edit
+                  </button>
+                  @if (st.is_active) {
+                    <button
+                      tuiButton
+                      appearance="flat"
+                      size="xs"
+                      iconStart="@tui.eye-off"
+                      (click)="deactivateSessionType(st.id)"
+                    >
+                      Deactivate
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+
       <!-- Weekly Schedule -->
       <section class="section">
         <div class="section-header">
           <div>
             <h2 class="tui-text_h4">Weekly Schedule</h2>
-            <p class="tui-text_body-s timezone-label">
-              Times are in your timezone (<strong>{{ userTimezone() }}</strong
-              >)
-            </p>
+            <div class="timezone-row">
+              @if (editingTimezone) {
+                <input
+                  type="text"
+                  class="time-input timezone-input"
+                  [(ngModel)]="timezoneInput"
+                  placeholder="e.g. Europe/Berlin"
+                />
+                <button tuiButton size="xs" type="button" (click)="saveTimezone()">Save</button>
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  type="button"
+                  (click)="cancelEditTimezone()"
+                >
+                  Cancel
+                </button>
+              } @else {
+                <p class="tui-text_body-s timezone-label">
+                  Times are in your timezone (<strong>{{ userTimezone() }}</strong
+                  >)
+                  <button
+                    tuiButton
+                    appearance="flat"
+                    size="xs"
+                    iconStart="@tui.pencil"
+                    (click)="startEditTimezone()"
+                  >
+                    Change
+                  </button>
+                </p>
+              }
+            </div>
           </div>
           <button
             tuiButton
@@ -49,14 +247,6 @@
               <div class="form-field">
                 <label class="tui-text_body-s field-label">End time</label>
                 <input type="time" class="time-input" [(ngModel)]="newEndTime" />
-              </div>
-              <div class="form-field">
-                <label class="tui-text_body-s field-label">Slot duration</label>
-                <select class="native-select" [(ngModel)]="newDuration">
-                  @for (d of durationOptions; track d) {
-                    <option [ngValue]="d">{{ d }} min</option>
-                  }
-                </select>
               </div>
             </div>
             <div class="form-actions">
@@ -101,18 +291,16 @@
                     <label class="tui-text_body-s field-label">End time</label>
                     <input type="time" class="time-input" [(ngModel)]="editEndTime" />
                   </div>
-                  <div class="form-field">
-                    <label class="tui-text_body-s field-label">Slot duration</label>
-                    <select class="native-select" [(ngModel)]="editDuration">
-                      @for (d of durationOptions; track d) {
-                        <option [ngValue]="d">{{ d }} min</option>
-                      }
-                    </select>
-                  </div>
                 </div>
                 <div class="form-actions">
                   <button tuiButton size="s" type="button" (click)="saveEdit()">Save</button>
-                  <button tuiButton appearance="flat" size="s" type="button" (click)="cancelEdit()">
+                  <button
+                    tuiButton
+                    appearance="flat"
+                    size="s"
+                    type="button"
+                    (click)="cancelEdit()"
+                  >
                     Cancel
                   </button>
                 </div>
@@ -121,7 +309,7 @@
               <div class="availability-item">
                 <span class="tui-text_body-m availability-label">
                   {{ dayName(a.day_of_week) }} &nbsp;&bull;&nbsp; {{ a.start_time }} –
-                  {{ a.end_time }} &nbsp;&bull;&nbsp; {{ a.slot_duration_minutes }} min slots
+                  {{ a.end_time }}
                 </span>
                 <div class="item-actions">
                   <button

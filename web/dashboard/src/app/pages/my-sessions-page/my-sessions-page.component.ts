@@ -9,10 +9,12 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TuiAlertService, TuiButton } from '@taiga-ui/core';
+import { Router } from '@angular/router';
+import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { AuthService } from '../../shared/services/auth.service';
 import { CoachingBooking, CoachingService } from '../../shared/services/coaching.service';
+import { GroupsService } from '../../shared/services/groups.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
 
 type TabKey = 'upcoming' | 'past' | 'cancelled';
@@ -20,52 +22,61 @@ type TabKey = 'upcoming' | 'past' | 'cancelled';
 @Component({
   selector: 'app-my-sessions-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageContainerComponent, TuiButton],
+  imports: [CommonModule, FormsModule, PageContainerComponent, TuiButton, TuiIcon],
   templateUrl: './my-sessions-page.component.html',
   styleUrls: ['./my-sessions-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MySessionsPageComponent implements OnInit {
   private readonly coachingService = inject(CoachingService);
+  private readonly groupsService = inject(GroupsService);
   private readonly auth = inject(AuthService);
   private readonly permissionsService = inject(PermissionsService);
   private readonly alerts = inject(TuiAlertService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
 
   protected loading = signal(true);
   protected allBookings = signal<CoachingBooking[]>([]);
   protected activeTab = signal<TabKey>('upcoming');
 
-  protected canManage = computed(() =>
-    this.permissionsService.hasPermission('coaching:bookings:manage'),
+  protected canBook = computed(() => this.permissionsService.hasPermission('coaching:book'));
+  protected canManageAvailability = computed(() =>
+    this.permissionsService.hasPermission('coaching:availability:manage'),
   );
   protected currentUserId = computed(() => this.auth.user()?.id ?? '');
 
   protected upcoming = computed(() => {
     const now = new Date();
     return this.allBookings().filter(
-      (b) => b.status === 'confirmed' && new Date(b.scheduled_at) > now,
+      (b) => b.status !== 'cancelled' && new Date(b.scheduled_at) > now,
     );
   });
 
   protected past = computed(() => {
     const now = new Date();
     return this.allBookings().filter(
-      (b) =>
-        b.status === 'completed' ||
-        b.status === 'no_show' ||
-        (b.status === 'confirmed' && new Date(b.scheduled_at) <= now),
+      (b) => b.status !== 'cancelled' && new Date(b.scheduled_at) <= now,
     );
   });
 
   protected cancelled = computed(() => this.allBookings().filter((b) => b.status === 'cancelled'));
 
   ngOnInit(): void {
-    this.coachingService.listMyBookings().subscribe({
-      next: (bookings) => {
-        this.allBookings.set(bookings ?? []);
-        this.loading.set(false);
-        this.cdr.markForCheck();
+    this.groupsService.list().subscribe({
+      next: (groups) => {
+        const groupIds = groups.map((g) => g.id);
+        this.coachingService.listMyBookingsAllGroups(groupIds).subscribe({
+          next: (bookings) => {
+            this.allBookings.set(bookings ?? []);
+            this.loading.set(false);
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.loading.set(false);
+            this.cdr.markForCheck();
+          },
+        });
       },
       error: () => {
         this.loading.set(false);
@@ -76,6 +87,14 @@ export class MySessionsPageComponent implements OnInit {
 
   protected setTab(tab: TabKey): void {
     this.activeTab.set(tab);
+  }
+
+  protected bookSession(): void {
+    this.router.navigate(['/sessions/book']);
+  }
+
+  protected manageAvailability(): void {
+    this.router.navigate(['/sessions/settings']);
   }
 
   protected formatDateTime(isoString: string): string {
@@ -90,35 +109,11 @@ export class MySessionsPageComponent implements OnInit {
 
   protected canCancel(booking: CoachingBooking): boolean {
     const msTillSession = new Date(booking.scheduled_at).getTime() - Date.now();
-    return booking.status === 'confirmed' && msTillSession > 60 * 60 * 1000;
+    return booking.status !== 'cancelled' && msTillSession > 60 * 60 * 1000;
   }
 
   protected isExpertForBooking(booking: CoachingBooking): boolean {
     return booking.expert_id === this.currentUserId();
-  }
-
-  protected completeBooking(booking: CoachingBooking): void {
-    this.coachingService.completeBooking(booking.id).subscribe({
-      next: (updated) => {
-        this.allBookings.update((list) => list.map((b) => (b.id === updated.id ? updated : b)));
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.alerts
-          .open('Failed to mark session as completed.', { appearance: 'negative' })
-          .subscribe();
-      },
-    });
-  }
-
-  protected otherParty(booking: CoachingBooking): string {
-    return this.isExpertForBooking(booking)
-      ? booking.student_name || booking.student_id
-      : booking.expert_name || booking.expert_id;
-  }
-
-  protected otherPartyRole(booking: CoachingBooking): string {
-    return this.isExpertForBooking(booking) ? 'Student' : 'Expert';
   }
 
   // Cancel dialog
@@ -142,7 +137,7 @@ export class MySessionsPageComponent implements OnInit {
   protected confirmCancel(): void {
     if (!this.cancelTarget) return;
     this.coachingService
-      .cancelBooking(this.cancelTarget.id, this.cancelReason || undefined)
+      .cancelBooking(this.cancelTarget.group_id, this.cancelTarget.id, this.cancelReason || undefined)
       .subscribe({
         next: (updated) => {
           this.allBookings.update((list) => list.map((b) => (b.id === updated.id ? updated : b)));
@@ -157,5 +152,15 @@ export class MySessionsPageComponent implements OnInit {
           this.closeCancelDialog();
         },
       });
+  }
+
+  protected otherParty(booking: CoachingBooking): string {
+    return this.isExpertForBooking(booking)
+      ? booking.student_name || booking.student_id
+      : booking.expert_name || booking.expert_id;
+  }
+
+  protected otherPartyRole(booking: CoachingBooking): string {
+    return this.isExpertForBooking(booking) ? 'Student' : 'Expert';
   }
 }

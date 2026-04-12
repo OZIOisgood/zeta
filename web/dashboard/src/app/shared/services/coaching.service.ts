@@ -1,7 +1,19 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, map } from 'rxjs';
 import { EnvService } from './env.service';
+
+export interface SessionType {
+  id: string;
+  expert_id: string;
+  group_id: string;
+  name: string;
+  description: string;
+  duration_minutes: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface CoachingAvailability {
   id: string;
@@ -10,7 +22,6 @@ export interface CoachingAvailability {
   day_of_week: number;
   start_time: string;
   end_time: string;
-  slot_duration_minutes: number;
   is_active: boolean;
   created_at: string;
 }
@@ -39,9 +50,11 @@ export interface CoachingBooking {
   student_id: string;
   student_name: string;
   group_id: string;
+  session_type_id: string;
+  session_type_name?: string;
   scheduled_at: string;
   duration_minutes: number;
-  status: 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+  status: 'pending' | 'done' | 'cancelled';
   cancellation_reason?: string;
   cancelled_by?: string;
   notes?: string;
@@ -74,6 +87,40 @@ export class CoachingService {
     return this.http.put<{ timezone: string }>(`${this.apiUrl}/coaching/timezone`, { timezone });
   }
 
+  // Session Types
+  listSessionTypes(groupId: string): Observable<SessionType[]> {
+    return this.http.get<SessionType[]>(
+      `${this.apiUrl}/groups/${groupId}/coaching/session-types`,
+    );
+  }
+
+  createSessionType(
+    groupId: string,
+    data: { name: string; description: string; duration_minutes: number },
+  ): Observable<SessionType> {
+    return this.http.post<SessionType>(
+      `${this.apiUrl}/groups/${groupId}/coaching/session-types`,
+      data,
+    );
+  }
+
+  updateSessionType(
+    groupId: string,
+    sessionTypeId: string,
+    data: { name: string; description: string; duration_minutes: number },
+  ): Observable<SessionType> {
+    return this.http.put<SessionType>(
+      `${this.apiUrl}/groups/${groupId}/coaching/session-types/${sessionTypeId}`,
+      data,
+    );
+  }
+
+  deactivateSessionType(groupId: string, sessionTypeId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/groups/${groupId}/coaching/session-types/${sessionTypeId}`,
+    );
+  }
+
   // Availability
   listMyAvailability(groupId: string): Observable<CoachingAvailability[]> {
     return this.http.get<CoachingAvailability[]>(
@@ -83,12 +130,7 @@ export class CoachingService {
 
   createAvailability(
     groupId: string,
-    data: {
-      day_of_week: number;
-      start_time: string;
-      end_time: string;
-      slot_duration_minutes: number;
-    },
+    data: { day_of_week: number; start_time: string; end_time: string },
   ): Observable<CoachingAvailability> {
     return this.http.post<CoachingAvailability>(
       `${this.apiUrl}/groups/${groupId}/coaching/availability`,
@@ -99,12 +141,7 @@ export class CoachingService {
   updateAvailability(
     groupId: string,
     availabilityId: string,
-    data: {
-      day_of_week: number;
-      start_time: string;
-      end_time: string;
-      slot_duration_minutes: number;
-    },
+    data: { day_of_week: number; start_time: string; end_time: string },
   ): Observable<CoachingAvailability> {
     return this.http.put<CoachingAvailability>(
       `${this.apiUrl}/groups/${groupId}/coaching/availability/${availabilityId}`,
@@ -147,9 +184,13 @@ export class CoachingService {
   }
 
   // Slots
-  listAvailableSlots(groupId: string, expertId: string): Observable<CoachingSlot[]> {
+  listAvailableSlots(
+    groupId: string,
+    expertId: string,
+    sessionTypeId: string,
+  ): Observable<CoachingSlot[]> {
     return this.http.get<CoachingSlot[]>(
-      `${this.apiUrl}/groups/${groupId}/coaching/slots?expert_id=${expertId}`,
+      `${this.apiUrl}/groups/${groupId}/coaching/slots?expert_id=${expertId}&session_type_id=${sessionTypeId}`,
     );
   }
 
@@ -158,8 +199,8 @@ export class CoachingService {
     groupId: string,
     data: {
       expert_id: string;
+      session_type_id: string;
       scheduled_at: string;
-      duration_minutes: number;
       notes?: string;
     },
   ): Observable<CoachingBooking> {
@@ -169,24 +210,31 @@ export class CoachingService {
     );
   }
 
-  listMyBookings(): Observable<CoachingBooking[]> {
-    return this.http.get<CoachingBooking[]>(`${this.apiUrl}/coaching/bookings`);
+  listMyBookings(groupId: string): Observable<CoachingBooking[]> {
+    return this.http.get<CoachingBooking[]>(
+      `${this.apiUrl}/groups/${groupId}/coaching/bookings`,
+    );
+  }
+
+  listMyBookingsAllGroups(groupIds: string[]): Observable<CoachingBooking[]> {
+    if (groupIds.length === 0) {
+      return new Observable(observer => { observer.next([]); observer.complete(); });
+    }
+    return forkJoin(groupIds.map(id => this.listMyBookings(id))).pipe(
+      map(results => results.flat().sort(
+        (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
+      )),
+    );
   }
 
   listGroupSessions(groupId: string): Observable<CoachingBooking[]> {
     return this.http.get<CoachingBooking[]>(`${this.apiUrl}/groups/${groupId}/coaching/sessions`);
   }
 
-  cancelBooking(bookingId: string, reason?: string): Observable<CoachingBooking> {
-    return this.http.put<CoachingBooking>(`${this.apiUrl}/coaching/bookings/${bookingId}/status`, {
-      status: 'cancelled',
-      cancellation_reason: reason,
-    });
-  }
-
-  completeBooking(bookingId: string): Observable<CoachingBooking> {
-    return this.http.put<CoachingBooking>(`${this.apiUrl}/coaching/bookings/${bookingId}/status`, {
-      status: 'completed',
-    });
+  cancelBooking(groupId: string, bookingId: string, reason?: string): Observable<CoachingBooking> {
+    return this.http.put<CoachingBooking>(
+      `${this.apiUrl}/groups/${groupId}/coaching/bookings/${bookingId}/cancel`,
+      reason ? { cancellation_reason: reason } : {},
+    );
   }
 }

@@ -42,23 +42,34 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { permission: 'groups:read' },
       },
+      // Sessions hub — visible to both students and experts
       {
-        path: 'book-coaching',
-        component: BookCoachingPageComponent,
-        canActivate: [permissionGuard],
-        data: { permission: 'coaching:book' },
-      },
-      {
-        path: 'my-sessions',
+        path: 'sessions',
         component: MySessionsPageComponent,
         canActivate: [permissionGuard],
         data: { permission: 'coaching:bookings:read' },
       },
+      // Book a session wizard (students)
       {
-        path: 'groups/:groupID/coaching/availability',
+        path: 'sessions/book',
+        component: BookCoachingPageComponent,
+        canActivate: [permissionGuard],
+        data: { permission: 'coaching:book' },
+      },
+      // Manage availability / session types / blocked slots (experts)
+      {
+        path: 'sessions/settings',
         component: ManageAvailabilityPageComponent,
         canActivate: [permissionGuard],
         data: { permission: 'coaching:availability:manage' },
+      },
+      // Legacy redirects
+      { path: 'my-sessions', redirectTo: 'sessions', pathMatch: 'full' },
+      { path: 'book-coaching', redirectTo: 'sessions/book', pathMatch: 'full' },
+      {
+        path: 'groups/:groupID/coaching/availability',
+        redirectTo: 'sessions/settings',
+        pathMatch: 'full',
       },
     ],
   },

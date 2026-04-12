@@ -1,5 +1,31 @@
 <app-page-container>
-  <h1 class="tui-text_h3">My Sessions</h1>
+  <div class="page-header">
+    <h1 class="tui-text_h3">Sessions</h1>
+    <div class="header-actions">
+      @if (canManageAvailability()) {
+        <button
+          tuiIconButton
+          appearance="flat"
+          size="s"
+          title="Manage availability"
+          (click)="manageAvailability()"
+        >
+          <tui-icon icon="@tui.settings"></tui-icon>
+        </button>
+      }
+      @if (canBook()) {
+        <button
+          tuiIconButton
+          appearance="flat"
+          size="s"
+          title="Book a session"
+          (click)="bookSession()"
+        >
+          <tui-icon icon="@tui.plus"></tui-icon>
+        </button>
+      }
+    </div>
+  </div>
 
   <div class="tabs">
     <button
@@ -26,7 +52,14 @@
   } @else {
     @if (activeTab() === 'upcoming') {
       @if (upcoming().length === 0) {
-        <p class="tui-text_body-m empty-text">No upcoming sessions.</p>
+        <div class="empty-state">
+          <p class="tui-text_body-m empty-text">No upcoming sessions.</p>
+          @if (canBook()) {
+            <button tuiButton appearance="outline" size="s" (click)="bookSession()">
+              Book a session
+            </button>
+          }
+        </div>
       } @else {
         <div class="session-list">
           @for (booking of upcoming(); track booking.id) {
@@ -40,14 +73,14 @@
                   formatDateTime(booking.scheduled_at)
                 }}</span>
                 <span class="tui-text_body-s session-meta">{{ booking.duration_minutes }} min</span>
-                <span class="status-badge status-badge--confirmed">{{ booking.status }}</span>
+                @if (booking.session_type_name) {
+                  <span class="tui-text_body-s session-meta session-type">{{
+                    booking.session_type_name
+                  }}</span>
+                }
+                <span class="status-badge status-badge--pending">upcoming</span>
               </div>
               <div class="session-actions">
-                @if (isExpertForBooking(booking)) {
-                  <button tuiButton appearance="flat" size="s" (click)="completeBooking(booking)">
-                    Mark Completed
-                  </button>
-                }
                 @if (canCancel(booking)) {
                   <button tuiButton appearance="flat" size="s" (click)="openCancelDialog(booking)">
                     Cancel
@@ -76,13 +109,12 @@
                   formatDateTime(booking.scheduled_at)
                 }}</span>
                 <span class="tui-text_body-s session-meta">{{ booking.duration_minutes }} min</span>
-                <span
-                  class="status-badge"
-                  [class.status-badge--completed]="booking.status === 'completed'"
-                  [class.status-badge--no-show]="booking.status === 'no_show'"
-                >
-                  {{ booking.status }}
-                </span>
+                @if (booking.session_type_name) {
+                  <span class="tui-text_body-s session-meta session-type">{{
+                    booking.session_type_name
+                  }}</span>
+                }
+                <span class="status-badge status-badge--done">done</span>
               </div>
             </div>
           }

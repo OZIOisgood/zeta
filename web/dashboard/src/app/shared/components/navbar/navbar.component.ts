@@ -50,10 +50,7 @@ export class NavbarComponent {
   protected readonly showUploadVideo = computed(() =>
     this.permissionsService.hasPermission('assets:create'),
   );
-  protected readonly showBookCoaching = computed(() =>
-    this.permissionsService.hasPermission('coaching:book'),
-  );
-  protected readonly showMySessions = computed(() =>
+  protected readonly showSessions = computed(() =>
     this.permissionsService.hasPermission('coaching:bookings:read'),
   );
 

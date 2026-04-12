@@ -4,9 +4,14 @@
   <tui-stepper [activeItemIndex]="activeIndex" style="margin-bottom: 2rem">
     <button tuiStep icon="@tui.users">Select Group</button>
     <button tuiStep icon="@tui.user" [disabled]="activeIndex < 1">Select Expert</button>
-    <button tuiStep icon="@tui.calendar" [disabled]="activeIndex < 2">Select Time</button>
-    <button tuiStep icon="@tui.check" [disabled]="activeIndex < 3">Confirm</button>
+    <button tuiStep icon="@tui.layers" [disabled]="activeIndex < 2">Session Type</button>
+    <button tuiStep icon="@tui.calendar" [disabled]="activeIndex < 3">Select Time</button>
+    <button tuiStep icon="@tui.check" [disabled]="activeIndex < 4">Confirm</button>
   </tui-stepper>
+
+  @if (loading()) {
+    <p class="tui-text_body-m loading-text">Loading...</p>
+  }
 
   <div [tuiSlides]="slideDirection" style="overflow: hidden">
     @switch (activeIndex) {
@@ -45,7 +50,7 @@
               tuiButton
               size="m"
               type="button"
-              [disabled]="!selectedGroup"
+              [disabled]="!selectedGroup || loading()"
               (click)="selectGroup()"
             >
               Next
@@ -65,7 +70,12 @@
             <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
             <div class="experts-grid">
               @for (expert of experts(); track expert.expert_id) {
-                <button class="expert-card" type="button" (click)="selectExpert(expert)">
+                <button
+                  class="expert-card"
+                  type="button"
+                  [disabled]="loading()"
+                  (click)="selectExpert(expert)"
+                >
                   <tui-avatar [src]="expertAvatarSrc(expert)" size="l"></tui-avatar>
                   <span class="tui-text_body-m expert-name"
                     >{{ expert.first_name }} {{ expert.last_name }}</span
@@ -82,8 +92,59 @@
         </div>
       }
 
-      <!-- Step 3: Select Slot -->
+      <!-- Step 3: Session Type -->
       @case (2) {
+        <div>
+          @if (expertSkipped && selectedExpert) {
+            <p class="tui-text_body-m booking-with-note">
+              Booking with: <strong>{{ selectedExpertName }}</strong>
+            </p>
+          }
+
+          @if (sessionTypes().length === 0) {
+            <p class="tui-text_body-m empty-text">
+              No session types are available for this group yet.
+            </p>
+          } @else {
+            <p class="tui-text_body-m step-description">
+              Choose the type of session you'd like to book.
+            </p>
+            <div class="session-types-grid">
+              @for (type of sessionTypes(); track type.id) {
+                <button
+                  class="session-type-card"
+                  type="button"
+                  [disabled]="loading()"
+                  (click)="selectSessionType(type)"
+                >
+                  <span class="tui-text_body-m session-type-name">{{ type.name }}</span>
+                  @if (type.description) {
+                    <span class="tui-text_body-s session-type-desc">{{ type.description }}</span>
+                  }
+                  <span class="tui-text_body-s session-type-duration"
+                    >{{ type.duration_minutes }} min</span
+                  >
+                </button>
+              }
+            </div>
+          }
+
+          <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem">
+            <button
+              tuiButton
+              appearance="flat"
+              size="m"
+              type="button"
+              (click)="expertSkipped ? (activeIndex = 0) : onBack()"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Step 4: Select Slot -->
+      @case (3) {
         <div>
           @if (expertSkipped && selectedExpert) {
             <p class="tui-text_body-m booking-with-note">
@@ -112,21 +173,15 @@
           }
 
           <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem">
-            <button
-              tuiButton
-              appearance="flat"
-              size="m"
-              type="button"
-              (click)="expertSkipped ? (activeIndex = 0) : onBack()"
-            >
+            <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
               Back
             </button>
           </div>
         </div>
       }
 
-      <!-- Step 4: Confirm -->
-      @case (3) {
+      <!-- Step 5: Confirm -->
+      @case (4) {
         <div>
           @if (booked) {
             <div class="success-message">
@@ -144,13 +199,19 @@
                 <span class="confirm-label tui-text_body-s">Group</span>
                 <span class="tui-text_body-m">{{ selectedGroup?.name }}</span>
               </div>
+              @if (selectedSessionType) {
+                <div class="confirm-detail">
+                  <span class="confirm-label tui-text_body-s">Session Type</span>
+                  <span class="tui-text_body-m">{{ selectedSessionType.name }}</span>
+                </div>
+              }
               <div class="confirm-detail">
                 <span class="confirm-label tui-text_body-s">Date & Time</span>
                 <span class="tui-text_body-m">{{ formatSlotDateTime(selectedSlot) }}</span>
               </div>
               <div class="confirm-detail">
                 <span class="confirm-label tui-text_body-s">Duration</span>
-                <span class="tui-text_body-m">{{ selectedSlot.duration_minutes }} minutes</span>
+                <span class="tui-text_body-m">{{ selectedSessionType?.duration_minutes ?? selectedSlot.duration_minutes }} minutes</span>
               </div>
 
               <div style="margin-top: 1.5rem">
