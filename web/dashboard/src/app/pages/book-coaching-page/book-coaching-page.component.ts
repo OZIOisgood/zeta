@@ -46,6 +46,7 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiChevron,
   ],
   templateUrl: './book-coaching-page.component.html',
+  styleUrl: './book-coaching-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BookCoachingPageComponent implements OnInit {

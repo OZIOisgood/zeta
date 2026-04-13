@@ -109,18 +109,20 @@
             <p class="tui-text_body-m step-description">
               Choose the type of session you'd like to book.
             </p>
-            <div class="session-types-grid">
+            <div class="session-types-list">
               @for (type of sessionTypes(); track type.id) {
                 <button
-                  class="session-type-card"
+                  class="session-type-row"
                   type="button"
                   [disabled]="loading()"
                   (click)="selectSessionType(type)"
                 >
-                  <span class="tui-text_body-m session-type-name">{{ type.name }}</span>
-                  @if (type.description) {
-                    <span class="tui-text_body-s session-type-desc">{{ type.description }}</span>
-                  }
+                  <div class="session-type-info">
+                    <span class="tui-text_body-m session-type-name">{{ type.name }}</span>
+                    @if (type.description) {
+                      <span class="tui-text_body-s session-type-desc">{{ type.description }}</span>
+                    }
+                  </div>
                   <span class="tui-text_body-s session-type-duration"
                     >{{ type.duration_minutes }} min</span
                   >
