@@ -9,8 +9,9 @@ import {
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TuiAlertService, TuiButton, TuiTextfield } from '@taiga-ui/core';
-import { TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
+import { filter, switchMap } from 'rxjs';
+import { TuiAlertService, TuiButton, TuiDialogService, TuiTextfield } from '@taiga-ui/core';
+import { TUI_CONFIRM, TuiConfirmData, TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import {
   CoachingAvailability,
@@ -45,6 +46,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   private readonly coachingService = inject(CoachingService);
   private readonly groupsService = inject(GroupsService);
   private readonly alerts = inject(TuiAlertService);
+  private readonly dialogs = inject(TuiDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   // Group selection
@@ -249,17 +251,28 @@ export class ManageAvailabilityPageComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  protected deactivateSessionType(id: string): void {
-    this.coachingService.deactivateSessionType(this.groupId, id).subscribe({
-      next: () => {
-        this.coachingService.listSessionTypes(this.groupId).subscribe({
-          next: (types) => { this.sessionTypes.set(types ?? []); this.cdr.markForCheck(); },
-        });
-      },
-      error: () => {
-        this.alerts.open('Failed to deactivate session type', { appearance: 'negative' }).subscribe();
-      },
-    });
+  protected deleteSessionType(id: string): void {
+    const data: TuiConfirmData = {
+      content: 'This action cannot be undone.',
+      yes: 'Delete',
+      no: 'Cancel',
+    };
+    this.dialogs
+      .open<boolean>(TUI_CONFIRM, { label: 'Delete Session Type', size: 's', data })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.coachingService.deleteSessionType(this.groupId, id)),
+      )
+      .subscribe({
+        next: () => {
+          this.coachingService.listSessionTypes(this.groupId).subscribe({
+            next: (types) => { this.sessionTypes.set(types ?? []); this.cdr.markForCheck(); },
+          });
+        },
+        error: () => {
+          this.alerts.open('Failed to delete session type', { appearance: 'negative' }).subscribe();
+        },
+      });
   }
 
   // Availability
@@ -322,14 +335,25 @@ export class ManageAvailabilityPageComponent implements OnInit {
   }
 
   protected deleteAvailability(id: string): void {
-    this.coachingService.deleteAvailability(this.groupId, id).subscribe({
-      next: () => this.loadData(),
-      error: () => {
-        this.alerts
-          .open('Failed to delete availability block', { appearance: 'negative' })
-          .subscribe();
-      },
-    });
+    const data: TuiConfirmData = {
+      content: 'This action cannot be undone.',
+      yes: 'Delete',
+      no: 'Cancel',
+    };
+    this.dialogs
+      .open<boolean>(TUI_CONFIRM, { label: 'Delete Availability', size: 's', data })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.coachingService.deleteAvailability(this.groupId, id)),
+      )
+      .subscribe({
+        next: () => this.loadData(),
+        error: () => {
+          this.alerts
+            .open('Failed to delete availability block', { appearance: 'negative' })
+            .subscribe();
+        },
+      });
   }
 
   // Blocked slots
@@ -360,12 +384,23 @@ export class ManageAvailabilityPageComponent implements OnInit {
   }
 
   protected deleteBlockedSlot(id: string): void {
-    this.coachingService.deleteBlockedSlot(this.groupId, id).subscribe({
-      next: () => this.loadBlockedSlots(),
-      error: () => {
-        this.alerts.open('Failed to remove blocked slot', { appearance: 'negative' }).subscribe();
-      },
-    });
+    const data: TuiConfirmData = {
+      content: 'This action cannot be undone.',
+      yes: 'Delete',
+      no: 'Cancel',
+    };
+    this.dialogs
+      .open<boolean>(TUI_CONFIRM, { label: 'Delete Blocked Date', size: 's', data })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.coachingService.deleteBlockedSlot(this.groupId, id)),
+      )
+      .subscribe({
+        next: () => this.loadBlockedSlots(),
+        error: () => {
+          this.alerts.open('Failed to remove blocked slot', { appearance: 'negative' }).subscribe();
+        },
+      });
   }
 
   protected goBack(): void {

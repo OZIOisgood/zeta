@@ -115,7 +115,7 @@ export class CoachingService {
     );
   }
 
-  deactivateSessionType(groupId: string, sessionTypeId: string): Observable<void> {
+  deleteSessionType(groupId: string, sessionTypeId: string): Observable<void> {
     return this.http.delete<void>(
       `${this.apiUrl}/groups/${groupId}/coaching/session-types/${sessionTypeId}`,
     );

@@ -146,9 +146,6 @@
                   @if (st.description) {
                     <p class="tui-text_body-s session-type-desc">{{ st.description }}</p>
                   }
-                  @if (!st.is_active) {
-                    <span class="status-badge status-badge--inactive">Inactive</span>
-                  }
                 </div>
                 <div class="item-actions">
                   <button
@@ -160,17 +157,15 @@
                   >
                     Edit
                   </button>
-                  @if (st.is_active) {
-                    <button
-                      tuiButton
-                      appearance="flat"
-                      size="xs"
-                      iconStart="@tui.eye-off"
-                      (click)="deactivateSessionType(st.id)"
-                    >
-                      Deactivate
-                    </button>
-                  }
+                  <button
+                    tuiButton
+                    appearance="flat"
+                    size="xs"
+                    iconStart="@tui.trash-2"
+                    (click)="deleteSessionType(st.id)"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             }
@@ -345,10 +340,10 @@
             tuiButton
             appearance="flat"
             size="s"
-            iconStart="@tui.ban"
+            iconStart="@tui.plus"
             (click)="showBlockForm = !showBlockForm"
           >
-            Block Time
+            Add Block Time
           </button>
         </div>
 
@@ -432,7 +427,7 @@
               iconStart="@tui.trash-2"
               (click)="deleteBlockedSlot(slot.id)"
             >
-              Remove
+              Delete
             </button>
           </div>
         }
