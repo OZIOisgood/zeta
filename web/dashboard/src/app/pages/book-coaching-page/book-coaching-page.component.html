@@ -22,39 +22,20 @@
             Choose a group to book a coaching session for.
           </p>
 
-          <tui-textfield
-            tuiChevron
-            [content]="selectedGroup && groupTemplate"
-            [stringify]="groupStringify"
-            style="margin-bottom: 1.5rem"
-          >
-            <label tuiLabel>Group</label>
-            <input placeholder="Choose a group" tuiSelect [(ngModel)]="selectedGroup" />
-            <tui-data-list-wrapper
-              *tuiTextfieldDropdown
-              new
-              [itemContent]="groupTemplate"
-              [items]="groups()"
-            />
-          </tui-textfield>
-
-          <ng-template #groupTemplate let-group>
-            <div style="display: flex; align-items: center; gap: 0.5rem">
-              <tui-avatar [src]="groupAvatarSrc(group)" size="xs"></tui-avatar>
-              {{ group.name }}
-            </div>
-          </ng-template>
-
-          <div style="display: flex; justify-content: flex-end">
-            <button
-              tuiButton
-              size="m"
-              type="button"
-              [disabled]="!selectedGroup || loading()"
-              (click)="selectGroup()"
-            >
-              Next
-            </button>
+          <div class="session-types-list">
+            @for (group of groups(); track group.id) {
+              <button
+                class="session-type-row"
+                type="button"
+                [disabled]="loading()"
+                (click)="selectGroup(group)"
+              >
+                <div class="group-row-info">
+                  <tui-avatar [src]="groupAvatarSrc(group)" size="s"></tui-avatar>
+                  <span class="tui-text_body-m session-type-name">{{ group.name }}</span>
+                </div>
+              </button>
+            }
           </div>
         </div>
       }

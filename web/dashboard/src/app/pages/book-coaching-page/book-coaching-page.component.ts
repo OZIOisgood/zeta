@@ -9,12 +9,9 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TuiAlertService, TuiButton, TuiTextfield } from '@taiga-ui/core';
+import { TuiAlertService, TuiButton } from '@taiga-ui/core';
 import {
   TuiAvatar,
-  TuiChevron,
-  TuiDataListWrapper,
-  TuiSelect,
   TuiSlides,
   TuiStep,
   TuiStepper,
@@ -40,10 +37,6 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiStep,
     TuiSlides,
     TuiAvatar,
-    TuiTextfield,
-    TuiSelect,
-    TuiDataListWrapper,
-    TuiChevron,
   ],
   templateUrl: './book-coaching-page.component.html',
   styleUrl: './book-coaching-page.component.scss',
@@ -83,8 +76,6 @@ export class BookCoachingPageComponent implements OnInit {
   protected booking = false;
   protected booked = false;
 
-  protected groupStringify = (g: Group) => g.name;
-
   ngOnInit(): void {
     this.groupsService.list().subscribe({
       next: (groups) => {
@@ -106,11 +97,11 @@ export class BookCoachingPageComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  protected selectGroup(): void {
-    if (!this.selectedGroup) return;
+  protected selectGroup(group: Group): void {
+    this.selectedGroup = group;
     this.loading.set(true);
     this.cdr.markForCheck();
-    this.coachingService.listExperts(this.selectedGroup.id).subscribe({
+    this.coachingService.listExperts(group.id).subscribe({
       next: (experts) => {
         this.loading.set(false);
         this.experts.set(experts ?? []);
