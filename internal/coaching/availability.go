@@ -1,6 +1,7 @@
 package coaching
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -12,6 +13,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type availabilityResponse struct {
@@ -42,6 +44,70 @@ func toAvailabilityResponse(a db.CoachingAvailability) availabilityResponse {
 		IsActive:  a.IsActive,
 		CreatedAt: a.CreatedAt.Time,
 	}
+}
+
+// mergeAvailabilityForDay loads all active availability slots for the given
+// expert/group/day, merges overlapping or adjacent intervals, and replaces the
+// existing rows in the database with the merged result.
+func (h *Handler) mergeAvailabilityForDay(ctx context.Context, expertID string, groupID pgtype.UUID, dayOfWeek int16) error {
+	slots, err := h.q.ListAvailabilityByExpertGroupDay(ctx, db.ListAvailabilityByExpertGroupDayParams{
+		ExpertID:  expertID,
+		GroupID:   groupID,
+		DayOfWeek: dayOfWeek,
+	})
+	if err != nil {
+		return err
+	}
+	if len(slots) <= 1 {
+		return nil
+	}
+
+	// Build merged intervals (slots are already sorted by start_time from the query).
+	type interval struct {
+		start int64
+		end   int64
+	}
+	merged := []interval{{slots[0].StartTime.Microseconds, slots[0].EndTime.Microseconds}}
+	for _, s := range slots[1:] {
+		last := &merged[len(merged)-1]
+		if s.StartTime.Microseconds <= last.end {
+			// Overlapping or adjacent — extend end if necessary.
+			if s.EndTime.Microseconds > last.end {
+				last.end = s.EndTime.Microseconds
+			}
+		} else {
+			merged = append(merged, interval{s.StartTime.Microseconds, s.EndTime.Microseconds})
+		}
+	}
+
+	// Nothing changed — no merges needed.
+	if len(merged) == len(slots) {
+		return nil
+	}
+
+	// Delete all existing slots for this day.
+	for _, s := range slots {
+		if _, err := h.q.DeleteAvailability(ctx, db.DeleteAvailabilityParams{
+			ID:       s.ID,
+			ExpertID: expertID,
+		}); err != nil {
+			return err
+		}
+	}
+
+	// Re-insert merged slots.
+	for _, iv := range merged {
+		if _, err := h.q.CreateAvailability(ctx, db.CreateAvailabilityParams{
+			ExpertID:  expertID,
+			GroupID:   groupID,
+			DayOfWeek: dayOfWeek,
+			StartTime: pgtype.Time{Microseconds: iv.start, Valid: true},
+			EndTime:   pgtype.Time{Microseconds: iv.end, Valid: true},
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (h *Handler) ListMyAvailability(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +198,30 @@ func (h *Handler) CreateAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toAvailabilityResponse(avail))
+	if err := h.mergeAvailabilityForDay(ctx, user.ID, groupID, req.DayOfWeek); err != nil {
+		log.ErrorContext(ctx, "merge_availability_failed",
+			slog.String("component", "coaching"),
+			slog.String("expert_id", user.ID),
+			slog.Any("err", err),
+		)
+		// Non-fatal: slot was created, just return it as-is.
+		writeJSON(w, http.StatusCreated, toAvailabilityResponse(avail))
+		return
+	}
+
+	all, err := h.q.ListAvailabilityByExpertGroup(ctx, db.ListAvailabilityByExpertGroupParams{
+		ExpertID: user.ID,
+		GroupID:  groupID,
+	})
+	if err != nil {
+		writeJSON(w, http.StatusCreated, toAvailabilityResponse(avail))
+		return
+	}
+	resp := make([]availabilityResponse, len(all))
+	for i, a := range all {
+		resp[i] = toAvailabilityResponse(a)
+	}
+	writeJSON(w, http.StatusCreated, resp)
 }
 
 func (h *Handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
@@ -190,7 +279,29 @@ func (h *Handler) UpdateAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toAvailabilityResponse(avail))
+	if err := h.mergeAvailabilityForDay(ctx, user.ID, groupID, req.DayOfWeek); err != nil {
+		log.ErrorContext(ctx, "merge_availability_failed",
+			slog.String("component", "coaching"),
+			slog.String("expert_id", user.ID),
+			slog.Any("err", err),
+		)
+		writeJSON(w, http.StatusOK, toAvailabilityResponse(avail))
+		return
+	}
+
+	all, err := h.q.ListAvailabilityByExpertGroup(ctx, db.ListAvailabilityByExpertGroupParams{
+		ExpertID: user.ID,
+		GroupID:  groupID,
+	})
+	if err != nil {
+		writeJSON(w, http.StatusOK, toAvailabilityResponse(avail))
+		return
+	}
+	resp := make([]availabilityResponse, len(all))
+	for i, a := range all {
+		resp[i] = toAvailabilityResponse(a)
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *Handler) DeleteAvailability(w http.ResponseWriter, r *http.Request) {

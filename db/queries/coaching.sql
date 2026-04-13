@@ -61,6 +61,11 @@ SET day_of_week = $2, start_time = $3, end_time = $4, updated_at = NOW()
 WHERE id = $1 AND expert_id = $5 AND group_id = $6
 RETURNING *;
 
+-- name: ListAvailabilityByExpertGroupDay :many
+SELECT * FROM coaching_availability
+WHERE expert_id = $1 AND group_id = $2 AND day_of_week = $3 AND is_active = true
+ORDER BY start_time;
+
 -- name: DeleteAvailability :execrows
 DELETE FROM coaching_availability WHERE id = $1 AND expert_id = $2;
 

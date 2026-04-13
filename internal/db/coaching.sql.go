@@ -271,6 +271,48 @@ func (q *Queries) DeleteAvailability(ctx context.Context, arg DeleteAvailability
 	return result.RowsAffected(), nil
 }
 
+const listAvailabilityByExpertGroupDay = `-- name: ListAvailabilityByExpertGroupDay :many
+SELECT id, expert_id, group_id, day_of_week, start_time, end_time, is_active, created_at, updated_at FROM coaching_availability
+WHERE expert_id = $1 AND group_id = $2 AND day_of_week = $3 AND is_active = true
+ORDER BY start_time
+`
+
+type ListAvailabilityByExpertGroupDayParams struct {
+	ExpertID  string      `json:"expert_id"`
+	GroupID   pgtype.UUID `json:"group_id"`
+	DayOfWeek int16       `json:"day_of_week"`
+}
+
+func (q *Queries) ListAvailabilityByExpertGroupDay(ctx context.Context, arg ListAvailabilityByExpertGroupDayParams) ([]CoachingAvailability, error) {
+	rows, err := q.db.Query(ctx, listAvailabilityByExpertGroupDay, arg.ExpertID, arg.GroupID, arg.DayOfWeek)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CoachingAvailability
+	for rows.Next() {
+		var i CoachingAvailability
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExpertID,
+			&i.GroupID,
+			&i.DayOfWeek,
+			&i.StartTime,
+			&i.EndTime,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteBlockedSlot = `-- name: DeleteBlockedSlot :execrows
 DELETE FROM coaching_blocked_slots WHERE id = $1 AND expert_id = $2
 `
