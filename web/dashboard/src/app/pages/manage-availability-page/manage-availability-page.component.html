@@ -10,10 +10,12 @@
     @if (groups().length > 1 && !selectedGroup) {
       <div class="group-select-section">
         <p class="tui-text_body-m">Select the group for which you want to manage your availability:</p>
-        <div class="group-select-list">
+        <div class="group-list">
           @for (g of groups(); track g.id) {
-            <button tuiButton appearance="outline" size="m" (click)="selectGroup(g)">
-              {{ g.name }}
+            <button class="group-row" type="button" (click)="selectGroup(g)">
+              <div class="group-row-info">
+                <span class="tui-text_body-m group-row-name">{{ g.name }}</span>
+              </div>
             </button>
           }
         </div>

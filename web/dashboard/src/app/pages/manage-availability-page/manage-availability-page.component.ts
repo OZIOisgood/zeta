@@ -10,8 +10,8 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
-import { TuiAlertService, TuiButton, TuiDialogService, TuiTextfield } from '@taiga-ui/core';
-import { TUI_CONFIRM, TuiConfirmData, TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
+import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
+import { TUI_CONFIRM, TuiConfirmData } from '@taiga-ui/kit';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import {
   CoachingAvailability,
@@ -33,9 +33,6 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
     ReactiveFormsModule,
     PageContainerComponent,
     TuiButton,
-    TuiTextfield,
-    TuiSelect,
-    TuiDataListWrapper,
   ],
   templateUrl: './manage-availability-page.component.html',
   styleUrls: ['./manage-availability-page.component.scss'],
@@ -52,7 +49,6 @@ export class ManageAvailabilityPageComponent implements OnInit {
   // Group selection
   protected groups = signal<Group[]>([]);
   protected selectedGroup: Group | null = null;
-  protected groupStringify = (g: Group) => g.name;
 
   protected groupId = '';
   protected loading = signal(true);
