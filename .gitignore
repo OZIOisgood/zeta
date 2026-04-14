@@ -16,9 +16,6 @@ api
 # IDE
 .idea/
 
-# Local dev config
-web/dashboard/proxy.conf.json
-
 # Tools and temporary files
 tools/
 tmp/
