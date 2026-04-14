@@ -51,14 +51,14 @@
   } @else {
     @if (activeTab() === 'upcoming') {
       @if (upcoming().length === 0) {
-        <div class="empty-state">
-          <p class="tui-text_body-m empty-text">No upcoming sessions.</p>
-          @if (canBook()) {
-            <button tuiButton appearance="outline" size="s" (click)="bookSession()">
-              Book a session
-            </button>
-          }
-        </div>
+        <app-illustrated-message
+          illustrationSrc="illustrations/live-coaching.png"
+          illustrationAlt="No upcoming sessions"
+          heading="No upcoming sessions"
+          description="You don't have any sessions scheduled yet."
+          [buttons]="canBook() ? [{ label: 'Book a session', appearance: 'primary' }] : []"
+          (buttonClick)="bookSession()"
+        />
       } @else {
         <div class="session-list">
           @for (booking of upcoming(); track booking.id) {
@@ -94,7 +94,12 @@
 
     @if (activeTab() === 'past') {
       @if (past().length === 0) {
-        <p class="tui-text_body-m empty-text">No past sessions.</p>
+        <app-illustrated-message
+          illustrationSrc="illustrations/live-coaching.png"
+          illustrationAlt="No past sessions"
+          heading="No past sessions"
+          description="Your completed sessions will appear here."
+        />
       } @else {
         <div class="session-list">
           @for (booking of past(); track booking.id) {
@@ -123,7 +128,12 @@
 
     @if (activeTab() === 'cancelled') {
       @if (cancelled().length === 0) {
-        <p class="tui-text_body-m empty-text">No cancelled sessions.</p>
+        <app-illustrated-message
+          illustrationSrc="illustrations/live-coaching.png"
+          illustrationAlt="No cancelled sessions"
+          heading="No cancelled sessions"
+          description="You haven't cancelled any sessions."
+        />
       } @else {
         <div class="session-list">
           @for (booking of cancelled(); track booking.id) {

@@ -11,6 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
+import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { AuthService } from '../../shared/services/auth.service';
@@ -30,6 +31,7 @@ type TabKey = 'upcoming' | 'past' | 'cancelled';
     TuiButton,
     TuiIcon,
     SectionHeaderComponent,
+    IllustratedMessageComponent,
   ],
   templateUrl: './my-sessions-page.component.html',
   styleUrls: ['./my-sessions-page.component.scss'],
