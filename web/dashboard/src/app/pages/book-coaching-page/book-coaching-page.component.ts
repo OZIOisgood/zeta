@@ -88,6 +88,11 @@ export class BookCoachingPageComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  protected onActiveIndexChange(index: number): void {
+    this.slideDirection = index > this.activeIndex ? 1 : -1;
+    this.activeIndex = index;
+  }
+
   protected onBack(): void {
     this.slideDirection = -1;
     this.activeIndex--;

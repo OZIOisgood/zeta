@@ -1,7 +1,11 @@
 <app-page-container>
   <app-section-header title="Book Live Coaching"></app-section-header>
 
-  <tui-stepper [activeItemIndex]="activeIndex" style="margin-bottom: 2rem">
+  <tui-stepper
+    [activeItemIndex]="activeIndex"
+    (activeItemIndexChange)="onActiveIndexChange($event)"
+    style="margin-bottom: 2rem"
+  >
     <button tuiStep icon="@tui.users">Select Group</button>
     <button tuiStep icon="@tui.user" [disabled]="activeIndex < 1">Select Expert</button>
     <button tuiStep icon="@tui.layers" [disabled]="activeIndex < 2">Session Type</button>
