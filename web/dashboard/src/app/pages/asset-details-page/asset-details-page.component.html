@@ -30,7 +30,8 @@
 
       <div class="text-content">
         <h1 class="tui-text_h3 title mobile-title">{{ asset.title }}</h1>
-        <div class="meta-row">          <a *ngIf="asset.group" class="group-info" [routerLink]="['/groups', asset.group.id]">
+        <div class="meta-row">
+          <a *ngIf="asset.group" class="group-info" [routerLink]="['/groups', asset.group.id]">
             <div
               class="group-avatar"
               *ngIf="asset.group.avatar; else groupInitial"
@@ -133,21 +134,17 @@
             </div>
           </section>
 
-          <tui-block-status *ngIf="(reviews$ | async)?.length === 0">
-            <img
-              alt="No comments yet"
-              src="/illustrations/no-comments-horse.png"
-              tuiSlot="top"
-              class="empty-illustration"
-            />
-            <h4>No comments yet</h4>
-            <span *ngIf="auth.user()?.role === 'expert'"
-              >Leave a comment to share feedback on this video.</span
-            >
-            <span *ngIf="auth.user()?.role !== 'expert'"
-              >Your reviewer hasn't left any comments yet.</span
-            >
-          </tui-block-status>
+          <app-illustrated-message
+            *ngIf="(reviews$ | async)?.length === 0"
+            illustrationSrc="/illustrations/no-comments-horse.png"
+            illustrationAlt="No comments yet"
+            heading="No comments yet"
+            [description]="
+              auth.user()?.role === 'expert'
+                ? 'Leave a comment to share feedback on this video.'
+                : 'Your reviewer hasn\'t left any comments yet.'
+            "
+          ></app-illustrated-message>
         </div>
       </div>
     </div>

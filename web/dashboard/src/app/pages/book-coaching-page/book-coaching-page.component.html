@@ -1,5 +1,5 @@
 <app-page-container>
-  <h1 class="tui-text_h3">Book Live Coaching</h1>
+  <app-section-header title="Book Live Coaching"></app-section-header>
 
   <tui-stepper [activeItemIndex]="activeIndex" style="margin-bottom: 2rem">
     <button tuiStep icon="@tui.users">Select Group</button>
@@ -194,7 +194,12 @@
               </div>
               <div class="confirm-detail">
                 <span class="confirm-label tui-text_body-s">Duration</span>
-                <span class="tui-text_body-m">{{ selectedSessionType?.duration_minutes ?? selectedSlot.duration_minutes }} minutes</span>
+                <span class="tui-text_body-m"
+                  >{{
+                    selectedSessionType?.duration_minutes ?? selectedSlot.duration_minutes
+                  }}
+                  minutes</span
+                >
               </div>
 
               <div style="margin-top: 1.5rem">

@@ -30,6 +30,7 @@ import {
 import { forkJoin, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import {
   AssetService,
   CreateAssetResponse,
@@ -46,6 +47,7 @@ import { VideoSelectorComponent } from './ui/video-selector/video-selector.compo
   imports: [
     CommonModule,
     PageContainerComponent,
+    SectionHeaderComponent,
     ReactiveFormsModule,
     FormsModule,
     TuiButton,

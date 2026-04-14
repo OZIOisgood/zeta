@@ -1,6 +1,5 @@
 <app-page-container>
-  <div class="page-header">
-    <h1 class="tui-text_h3">Sessions</h1>
+  <app-section-header title="Sessions">
     <div class="header-actions">
       @if (canManageAvailability()) {
         <button
@@ -25,7 +24,7 @@
         </button>
       }
     </div>
-  </div>
+  </app-section-header>
 
   <div class="tabs">
     <button

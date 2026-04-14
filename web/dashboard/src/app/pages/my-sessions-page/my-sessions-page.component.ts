@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { AuthService } from '../../shared/services/auth.service';
 import { CoachingBooking, CoachingService } from '../../shared/services/coaching.service';
 import { GroupsService } from '../../shared/services/groups.service';
@@ -22,7 +23,14 @@ type TabKey = 'upcoming' | 'past' | 'cancelled';
 @Component({
   selector: 'app-my-sessions-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageContainerComponent, TuiButton, TuiIcon],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PageContainerComponent,
+    TuiButton,
+    TuiIcon,
+    SectionHeaderComponent,
+  ],
   templateUrl: './my-sessions-page.component.html',
   styleUrls: ['./my-sessions-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -137,7 +145,11 @@ export class MySessionsPageComponent implements OnInit {
   protected confirmCancel(): void {
     if (!this.cancelTarget) return;
     this.coachingService
-      .cancelBooking(this.cancelTarget.group_id, this.cancelTarget.id, this.cancelReason || undefined)
+      .cancelBooking(
+        this.cancelTarget.group_id,
+        this.cancelTarget.id,
+        this.cancelReason || undefined,
+      )
       .subscribe({
         next: (updated) => {
           this.allBookings.update((list) => list.map((b) => (b.id === updated.id ? updated : b)));

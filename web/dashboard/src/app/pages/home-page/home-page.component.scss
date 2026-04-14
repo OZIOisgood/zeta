@@ -6,32 +6,10 @@
 
 .coaching-widget {
   margin-bottom: 2rem;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-
-    h2 {
-      margin: 0;
-    }
-  }
 }
 
 .widget-empty {
   color: var(--tui-text-secondary);
-}
-
-.widget-empty-state {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-
-  p {
-    margin: 0;
-    color: var(--tui-text-secondary);
-  }
 }
 
 .sessions-list {

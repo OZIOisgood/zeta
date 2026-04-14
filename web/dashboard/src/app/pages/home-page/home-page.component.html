@@ -1,21 +1,29 @@
 <app-page-container>
   @if (showCoachingWidget()) {
     <div class="coaching-widget">
-      <div class="coaching-widget__header">
-        <h2 class="tui-text_h3">Upcoming Coaching Sessions</h2>
+      <app-section-header title="Upcoming Coaching Sessions">
         <a tuiButton appearance="flat" size="s" routerLink="/sessions">View all</a>
-      </div>
+      </app-section-header>
       @if (bookingsLoading()) {
         <p class="tui-text_body-m widget-empty">Loading…</p>
       } @else if (upcomingBookings().length === 0) {
-        <div class="widget-empty-state">
-          <p class="tui-text_body-m">No upcoming coaching sessions.</p>
-          @if (canBook()) {
-            <a tuiButton appearance="outline" size="s" routerLink="/sessions/book">
-              Book Live Coaching
-            </a>
-          }
-        </div>
+        <app-illustrated-message
+          illustrationSrc="/illustrations/live-coaching.png"
+          illustrationAlt="No upcoming coaching sessions"
+          heading="No upcoming coaching sessions"
+          description="Book a live coaching session to get personalized feedback."
+          [buttons]="
+            canBook()
+              ? [
+                  {
+                    label: 'Book Live Coaching',
+                    appearance: 'primary',
+                    routerLink: '/sessions/book',
+                  },
+                ]
+              : []
+          "
+        ></app-illustrated-message>
       } @else {
         <div class="sessions-list">
           @for (session of upcomingBookings(); track session.id) {

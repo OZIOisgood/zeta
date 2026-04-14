@@ -3,8 +3,10 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { RouterLink } from '@angular/router';
 import { TuiAppearance, TuiButton, TuiSurface, TuiTitle } from '@taiga-ui/core';
 import { TuiAvatar, TuiBadge, TuiSkeleton } from '@taiga-ui/kit';
-import { TuiBlockStatus, TuiCardMedium } from '@taiga-ui/layout';
+import { TuiCardMedium } from '@taiga-ui/layout';
 import { Asset } from '../../services/asset.service';
+import { IllustratedMessageComponent } from '../illustrated-message/illustrated-message.component';
+import { SectionHeaderComponent } from '../section-header/section-header.component';
 
 @Component({
   selector: 'app-asset-list',
@@ -17,10 +19,11 @@ import { Asset } from '../../services/asset.service';
     TuiTitle,
     TuiBadge,
     TuiAvatar,
-    TuiBlockStatus,
     TuiButton,
     TuiSkeleton,
     TuiAppearance,
+    SectionHeaderComponent,
+    IllustratedMessageComponent,
   ],
   templateUrl: './asset-list.component.html',
   styleUrls: ['./asset-list.component.scss'],

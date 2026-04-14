@@ -11,7 +11,9 @@ import { Router, RouterLink } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core';
 import { tap } from 'rxjs';
 import { AssetListComponent } from '../../shared/components/asset-list/asset-list.component';
+import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { AssetService } from '../../shared/services/asset.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { CoachingBooking, CoachingService } from '../../shared/services/coaching.service';
@@ -21,7 +23,15 @@ import { PermissionsService } from '../../shared/services/permissions.service';
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, PageContainerComponent, AssetListComponent, TuiButton],
+  imports: [
+    CommonModule,
+    RouterLink,
+    PageContainerComponent,
+    AssetListComponent,
+    TuiButton,
+    SectionHeaderComponent,
+    IllustratedMessageComponent,
+  ],
   templateUrl: './home-page.component.html',
   styleUrls: ['./home-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

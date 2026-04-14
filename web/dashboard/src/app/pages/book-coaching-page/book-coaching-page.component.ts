@@ -10,13 +10,9 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiAlertService, TuiButton } from '@taiga-ui/core';
-import {
-  TuiAvatar,
-  TuiSlides,
-  TuiStep,
-  TuiStepper,
-} from '@taiga-ui/kit';
+import { TuiAvatar, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import {
   CoachingService,
   CoachingSlot,
@@ -32,6 +28,7 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     CommonModule,
     FormsModule,
     PageContainerComponent,
+    SectionHeaderComponent,
     TuiButton,
     TuiStepper,
     TuiStep,
@@ -144,9 +141,7 @@ export class BookCoachingPageComponent implements OnInit {
       error: () => {
         this.loading.set(false);
         this.cdr.markForCheck();
-        this.alerts
-          .open('Failed to load session types', { appearance: 'negative' })
-          .subscribe();
+        this.alerts.open('Failed to load session types', { appearance: 'negative' }).subscribe();
       },
     });
   }
@@ -245,7 +240,13 @@ export class BookCoachingPageComponent implements OnInit {
   }
 
   protected confirmBooking(): void {
-    if (!this.selectedGroup || !this.selectedExpert || !this.selectedSlot || !this.selectedSessionType) return;
+    if (
+      !this.selectedGroup ||
+      !this.selectedExpert ||
+      !this.selectedSlot ||
+      !this.selectedSessionType
+    )
+      return;
     this.booking = true;
     this.cdr.markForCheck();
 
