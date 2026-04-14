@@ -223,12 +223,12 @@ type CoachingBooking struct {
 	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
 	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
 	DurationMinutes    int32              `json:"duration_minutes"`
+	IsCancelled        bool               `json:"is_cancelled"`
 	CancellationReason pgtype.Text        `json:"cancellation_reason"`
 	CancelledBy        pgtype.Text        `json:"cancelled_by"`
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	IsCancelled        bool               `json:"is_cancelled"`
 }
 
 type CoachingSessionType struct {
@@ -247,7 +247,7 @@ type Group struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
 	OwnerID     string             `json:"owner_id"`
-	Avatar      []byte             `json:"avatar"`
+	Avatar      string             `json:"avatar"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	Description string             `json:"description"`

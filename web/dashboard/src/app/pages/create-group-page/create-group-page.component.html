@@ -41,7 +41,7 @@
         </button>
         <button
           type="submit"
-          [disabled]="form.invalid || isSubmitting"
+          [disabled]="form.invalid || isSubmitting || !avatarBase64"
           tuiButton
           appearance="primary"
         >

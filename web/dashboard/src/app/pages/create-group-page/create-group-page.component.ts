@@ -46,7 +46,7 @@ export class CreateGroupPageComponent {
   }
 
   protected onSubmit(): void {
-    if (this.form.invalid || this.isSubmitting) {
+    if (this.form.invalid || this.isSubmitting || !this.avatarBase64) {
       return;
     }
 

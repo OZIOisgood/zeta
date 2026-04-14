@@ -1,7 +1,6 @@
 package groups
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -28,9 +27,8 @@ type groupResponse struct {
 
 func toGroupResponse(g db.Group) groupResponse {
 	var avatar *string
-	if len(g.Avatar) > 0 {
-		enc := fmt.Sprintf("data:image/jpeg;base64,%s", base64.StdEncoding.EncodeToString(g.Avatar))
-		avatar = &enc
+	if g.Avatar != "" {
+		avatar = &g.Avatar
 	}
 	return groupResponse{
 		ID:        toUUIDString(g.ID),
@@ -145,27 +143,15 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decode avatar from base64 if provided
-	var avatarData []byte
-	if req.Avatar != "" {
-		var err error
-		avatarData, err = base64.StdEncoding.DecodeString(req.Avatar)
-		if err != nil {
-			http.Error(w, "Invalid avatar data", http.StatusBadRequest)
-			return
-		}
-
-		// Validate avatar size (max 300KB)
-		if len(avatarData) > 300*1024 {
-			http.Error(w, "Avatar size exceeds 300KB limit", http.StatusBadRequest)
-			return
-		}
+	if req.Avatar == "" {
+		http.Error(w, "Avatar is required", http.StatusBadRequest)
+		return
 	}
 
 	group, err := h.q.CreateGroup(ctx, db.CreateGroupParams{
 		Name:        req.Name,
 		OwnerID:     user.ID,
-		Avatar:      avatarData,
+		Avatar:      req.Avatar,
 		Description: req.Description,
 	})
 	if err != nil {
@@ -311,16 +297,7 @@ func (h *Handler) UpdateGroupPreferences(w http.ResponseWriter, r *http.Request)
 
 	avatarData := existing.Avatar
 	if req.Avatar != "" {
-		decoded, err := base64.StdEncoding.DecodeString(req.Avatar)
-		if err != nil {
-			http.Error(w, "Invalid avatar data", http.StatusBadRequest)
-			return
-		}
-		if len(decoded) > 300*1024 {
-			http.Error(w, "Avatar size exceeds 300KB limit", http.StatusBadRequest)
-			return
-		}
-		avatarData = decoded
+		avatarData = req.Avatar
 	}
 
 	group, err := h.q.UpdateGroup(ctx, db.UpdateGroupParams{

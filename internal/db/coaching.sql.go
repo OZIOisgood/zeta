@@ -18,7 +18,7 @@ SET is_cancelled = true,
     cancelled_by = $3,
     updated_at = NOW()
 WHERE id = $1 AND (expert_id = $4 OR student_id = $4)
-RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, cancellation_reason, cancelled_by, notes, created_at, updated_at, is_cancelled
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at
 `
 
 type CancelBookingParams struct {
@@ -44,12 +44,12 @@ func (q *Queries) CancelBooking(ctx context.Context, arg CancelBookingParams) (C
 		&i.SessionTypeID,
 		&i.ScheduledAt,
 		&i.DurationMinutes,
+		&i.IsCancelled,
 		&i.CancellationReason,
 		&i.CancelledBy,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.IsCancelled,
 	)
 	return i, err
 }
@@ -154,7 +154,7 @@ func (q *Queries) CreateBlockedSlot(ctx context.Context, arg CreateBlockedSlotPa
 const createBooking = `-- name: CreateBooking :one
 INSERT INTO coaching_bookings (expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, notes)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, cancellation_reason, cancelled_by, notes, created_at, updated_at, is_cancelled
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at
 `
 
 type CreateBookingParams struct {
@@ -186,12 +186,12 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (C
 		&i.SessionTypeID,
 		&i.ScheduledAt,
 		&i.DurationMinutes,
+		&i.IsCancelled,
 		&i.CancellationReason,
 		&i.CancelledBy,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.IsCancelled,
 	)
 	return i, err
 }
@@ -271,48 +271,6 @@ func (q *Queries) DeleteAvailability(ctx context.Context, arg DeleteAvailability
 	return result.RowsAffected(), nil
 }
 
-const listAvailabilityByExpertGroupDay = `-- name: ListAvailabilityByExpertGroupDay :many
-SELECT id, expert_id, group_id, day_of_week, start_time, end_time, is_active, created_at, updated_at FROM coaching_availability
-WHERE expert_id = $1 AND group_id = $2 AND day_of_week = $3 AND is_active = true
-ORDER BY start_time
-`
-
-type ListAvailabilityByExpertGroupDayParams struct {
-	ExpertID  string      `json:"expert_id"`
-	GroupID   pgtype.UUID `json:"group_id"`
-	DayOfWeek int16       `json:"day_of_week"`
-}
-
-func (q *Queries) ListAvailabilityByExpertGroupDay(ctx context.Context, arg ListAvailabilityByExpertGroupDayParams) ([]CoachingAvailability, error) {
-	rows, err := q.db.Query(ctx, listAvailabilityByExpertGroupDay, arg.ExpertID, arg.GroupID, arg.DayOfWeek)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []CoachingAvailability
-	for rows.Next() {
-		var i CoachingAvailability
-		if err := rows.Scan(
-			&i.ID,
-			&i.ExpertID,
-			&i.GroupID,
-			&i.DayOfWeek,
-			&i.StartTime,
-			&i.EndTime,
-			&i.IsActive,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const deleteBlockedSlot = `-- name: DeleteBlockedSlot :execrows
 DELETE FROM coaching_blocked_slots WHERE id = $1 AND expert_id = $2
 `
@@ -331,7 +289,7 @@ func (q *Queries) DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotPa
 }
 
 const getBooking = `-- name: GetBooking :one
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, cancellation_reason, cancelled_by, notes, created_at, updated_at, is_cancelled FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
 `
 
 type GetBookingParams struct {
@@ -350,12 +308,12 @@ func (q *Queries) GetBooking(ctx context.Context, arg GetBookingParams) (Coachin
 		&i.SessionTypeID,
 		&i.ScheduledAt,
 		&i.DurationMinutes,
+		&i.IsCancelled,
 		&i.CancellationReason,
 		&i.CancelledBy,
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.IsCancelled,
 	)
 	return i, err
 }
@@ -465,6 +423,48 @@ func (q *Queries) ListAvailabilityByExpertGroup(ctx context.Context, arg ListAva
 	return items, nil
 }
 
+const listAvailabilityByExpertGroupDay = `-- name: ListAvailabilityByExpertGroupDay :many
+SELECT id, expert_id, group_id, day_of_week, start_time, end_time, is_active, created_at, updated_at FROM coaching_availability
+WHERE expert_id = $1 AND group_id = $2 AND day_of_week = $3 AND is_active = true
+ORDER BY start_time
+`
+
+type ListAvailabilityByExpertGroupDayParams struct {
+	ExpertID  string      `json:"expert_id"`
+	GroupID   pgtype.UUID `json:"group_id"`
+	DayOfWeek int16       `json:"day_of_week"`
+}
+
+func (q *Queries) ListAvailabilityByExpertGroupDay(ctx context.Context, arg ListAvailabilityByExpertGroupDayParams) ([]CoachingAvailability, error) {
+	rows, err := q.db.Query(ctx, listAvailabilityByExpertGroupDay, arg.ExpertID, arg.GroupID, arg.DayOfWeek)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CoachingAvailability
+	for rows.Next() {
+		var i CoachingAvailability
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExpertID,
+			&i.GroupID,
+			&i.DayOfWeek,
+			&i.StartTime,
+			&i.EndTime,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAvailabilityByGroup = `-- name: ListAvailabilityByGroup :many
 SELECT id, expert_id, group_id, day_of_week, start_time, end_time, is_active, created_at, updated_at FROM coaching_availability
 WHERE group_id = $1 AND is_active = true
@@ -543,7 +543,7 @@ func (q *Queries) ListBlockedSlots(ctx context.Context, arg ListBlockedSlotsPara
 
 const listBookingsByExpertInRange = `-- name: ListBookingsByExpertInRange :many
 
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, cancellation_reason, cancelled_by, notes, created_at, updated_at, is_cancelled FROM coaching_bookings
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings
 WHERE expert_id = $1
   AND scheduled_at >= $2
   AND scheduled_at < $3
@@ -575,12 +575,12 @@ func (q *Queries) ListBookingsByExpertInRange(ctx context.Context, arg ListBooki
 			&i.SessionTypeID,
 			&i.ScheduledAt,
 			&i.DurationMinutes,
+			&i.IsCancelled,
 			&i.CancellationReason,
 			&i.CancelledBy,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.IsCancelled,
 		); err != nil {
 			return nil, err
 		}
@@ -593,7 +593,7 @@ func (q *Queries) ListBookingsByExpertInRange(ctx context.Context, arg ListBooki
 }
 
 const listGroupBookings = `-- name: ListGroupBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cb.is_cancelled, cst.name AS session_type_name
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
 WHERE cb.group_id = $1
@@ -608,12 +608,12 @@ type ListGroupBookingsRow struct {
 	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
 	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
 	DurationMinutes    int32              `json:"duration_minutes"`
+	IsCancelled        bool               `json:"is_cancelled"`
 	CancellationReason pgtype.Text        `json:"cancellation_reason"`
 	CancelledBy        pgtype.Text        `json:"cancelled_by"`
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	IsCancelled        bool               `json:"is_cancelled"`
 	SessionTypeName    string             `json:"session_type_name"`
 }
 
@@ -634,12 +634,12 @@ func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([
 			&i.SessionTypeID,
 			&i.ScheduledAt,
 			&i.DurationMinutes,
+			&i.IsCancelled,
 			&i.CancellationReason,
 			&i.CancelledBy,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.IsCancelled,
 			&i.SessionTypeName,
 		); err != nil {
 			return nil, err
@@ -653,7 +653,7 @@ func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([
 }
 
 const listMyBookings = `-- name: ListMyBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cb.is_cancelled, cst.name AS session_type_name
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
 WHERE (cb.expert_id = $1 OR cb.student_id = $1) AND cb.group_id = $2
@@ -673,12 +673,12 @@ type ListMyBookingsRow struct {
 	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
 	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
 	DurationMinutes    int32              `json:"duration_minutes"`
+	IsCancelled        bool               `json:"is_cancelled"`
 	CancellationReason pgtype.Text        `json:"cancellation_reason"`
 	CancelledBy        pgtype.Text        `json:"cancelled_by"`
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	IsCancelled        bool               `json:"is_cancelled"`
 	SessionTypeName    string             `json:"session_type_name"`
 }
 
@@ -699,12 +699,12 @@ func (q *Queries) ListMyBookings(ctx context.Context, arg ListMyBookingsParams) 
 			&i.SessionTypeID,
 			&i.ScheduledAt,
 			&i.DurationMinutes,
+			&i.IsCancelled,
 			&i.CancellationReason,
 			&i.CancelledBy,
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.IsCancelled,
 			&i.SessionTypeName,
 		); err != nil {
 			return nil, err
