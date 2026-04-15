@@ -16,6 +16,7 @@ import {
   BreadcrumbItem,
   BreadcrumbsComponent,
 } from '../../shared/components/breadcrumbs/breadcrumbs.component';
+import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import {
@@ -39,6 +40,7 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
     PageContainerComponent,
     SectionHeaderComponent,
     BreadcrumbsComponent,
+    IllustratedMessageComponent,
     TuiButton,
   ],
   templateUrl: './manage-availability-page.component.html',

@@ -91,9 +91,11 @@
         }
 
         @if (sessionTypes().length === 0 && !showSessionTypeForm) {
-          <p class="tui-text_body-m empty-text">
-            No session types yet. Add one so students can book with you.
-          </p>
+          <app-illustrated-message
+            illustrationSrc="/illustrations/lonely-horse.png"
+            heading="No session types yet"
+            description="Add a session type so students can book with you."
+          ></app-illustrated-message>
         }
 
         @for (st of sessionTypes(); track st.id) {
@@ -260,9 +262,11 @@
         }
 
         @if (availability().length === 0 && !showAddForm) {
-          <p class="tui-text_body-m empty-text">
-            No availability blocks yet. Add one to start accepting bookings.
-          </p>
+          <app-illustrated-message
+            illustrationSrc="/illustrations/lonely-horse.png"
+            heading="No availability yet"
+            description="Add availability blocks to start accepting bookings."
+          ></app-illustrated-message>
         }
 
         @for (a of availability(); track a.id) {
@@ -398,7 +402,11 @@
         }
 
         @if (blockedSlots().length === 0 && !showBlockForm) {
-          <p class="tui-text_body-m empty-text">No blocked dates.</p>
+          <app-illustrated-message
+            illustrationSrc="/illustrations/bored-horse.png"
+            heading="No blocked dates"
+            description="Block specific dates or times when you're unavailable."
+          ></app-illustrated-message>
         }
 
         @for (slot of blockedSlots(); track slot.id) {
