@@ -7,10 +7,11 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
 import { TUI_CONFIRM, TuiConfirmData } from '@taiga-ui/kit';
+import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { filter, switchMap } from 'rxjs';
 import {
   BreadcrumbItem,
@@ -26,6 +27,18 @@ import {
   SessionType,
 } from '../../shared/services/coaching.service';
 import { Group, GroupsService } from '../../shared/services/groups.service';
+import {
+  AvailabilityDialogComponent,
+  AvailabilityDialogResult,
+} from './ui/availability-dialog/availability-dialog.component';
+import {
+  BlockedSlotDialogComponent,
+  BlockedSlotDialogResult,
+} from './ui/blocked-slot-dialog/blocked-slot-dialog.component';
+import {
+  SessionTypeDialogComponent,
+  SessionTypeDialogResult,
+} from './ui/session-type-dialog/session-type-dialog.component';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
@@ -36,7 +49,6 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
     PageContainerComponent,
     SectionHeaderComponent,
     BreadcrumbsComponent,
@@ -79,41 +91,10 @@ export class ManageAvailabilityPageComponent implements OnInit {
   protected blockedSlots = signal<CoachingBlockedSlot[]>([]);
   protected userTimezone = signal('UTC');
   protected readonly dayNames = DAY_NAMES;
-  protected readonly durationOptions = DURATION_OPTIONS;
 
   // Timezone edit
   protected editingTimezone = false;
   protected timezoneInput = '';
-
-  // Session type forms
-  protected showSessionTypeForm = false;
-  protected newSessionTypeName = '';
-  protected newSessionTypeDescription = '';
-  protected newSessionTypeDuration = 30;
-  protected editingSessionTypeId: string | null = null;
-  protected editSessionTypeName = '';
-  protected editSessionTypeDescription = '';
-  protected editSessionTypeDuration = 30;
-
-  // Add availability form
-  protected showAddForm = false;
-  protected newDayOfWeek = 1;
-  protected newStartTime = '09:00';
-  protected newEndTime = '17:00';
-
-  // Block time form
-  protected showBlockForm = false;
-  protected newBlockDate = '';
-  protected newBlockStartTime = '';
-  protected newBlockEndTime = '';
-  protected newBlockReason = '';
-  protected newBlockFullDay = true;
-
-  // Editing availability
-  protected editingId: string | null = null;
-  protected editDayOfWeek = 1;
-  protected editStartTime = '';
-  protected editEndTime = '';
 
   ngOnInit(): void {
     this.loading.set(true);
@@ -224,67 +205,45 @@ export class ManageAvailabilityPageComponent implements OnInit {
   }
 
   // Session Types
-  protected addSessionType(): void {
-    this.coachingService
-      .createSessionType(this.groupId, {
-        name: this.newSessionTypeName,
-        description: this.newSessionTypeDescription,
-        duration_minutes: this.newSessionTypeDuration,
+  protected openSessionTypeDialog(sessionType: SessionType | null = null): void {
+    this.dialogs
+      .open<SessionTypeDialogResult | null>(new PolymorpheusComponent(SessionTypeDialogComponent), {
+        label: sessionType ? 'Edit Session Type' : 'Add Session Type',
+        size: 's',
+        data: { sessionType, durationOptions: DURATION_OPTIONS },
       })
-      .subscribe({
-        next: () => {
-          this.showSessionTypeForm = false;
-          this.newSessionTypeName = '';
-          this.newSessionTypeDescription = '';
-          this.newSessionTypeDuration = 30;
-          this.coachingService.listSessionTypes(this.groupId).subscribe({
-            next: (types) => {
-              this.sessionTypes.set(types ?? []);
-              this.cdr.markForCheck();
+      .subscribe((result) => {
+        if (!result) return;
+
+        if (sessionType) {
+          this.coachingService.updateSessionType(this.groupId, sessionType.id, result).subscribe({
+            next: () => this.refreshSessionTypes(),
+            error: () => {
+              this.alerts
+                .open('Failed to update session type', { appearance: 'negative' })
+                .subscribe();
             },
           });
-        },
-        error: () => {
-          this.alerts.open('Failed to create session type', { appearance: 'negative' }).subscribe();
-        },
+        } else {
+          this.coachingService.createSessionType(this.groupId, result).subscribe({
+            next: () => this.refreshSessionTypes(),
+            error: () => {
+              this.alerts
+                .open('Failed to create session type', { appearance: 'negative' })
+                .subscribe();
+            },
+          });
+        }
       });
   }
 
-  protected startEditSessionType(st: SessionType): void {
-    this.editingSessionTypeId = st.id;
-    this.editSessionTypeName = st.name;
-    this.editSessionTypeDescription = st.description;
-    this.editSessionTypeDuration = st.duration_minutes;
-    this.cdr.markForCheck();
-  }
-
-  protected saveEditSessionType(): void {
-    if (!this.editingSessionTypeId) return;
-    this.coachingService
-      .updateSessionType(this.groupId, this.editingSessionTypeId, {
-        name: this.editSessionTypeName,
-        description: this.editSessionTypeDescription,
-        duration_minutes: this.editSessionTypeDuration,
-      })
-      .subscribe({
-        next: () => {
-          this.editingSessionTypeId = null;
-          this.coachingService.listSessionTypes(this.groupId).subscribe({
-            next: (types) => {
-              this.sessionTypes.set(types ?? []);
-              this.cdr.markForCheck();
-            },
-          });
-        },
-        error: () => {
-          this.alerts.open('Failed to update session type', { appearance: 'negative' }).subscribe();
-        },
-      });
-  }
-
-  protected cancelEditSessionType(): void {
-    this.editingSessionTypeId = null;
-    this.cdr.markForCheck();
+  private refreshSessionTypes(): void {
+    this.coachingService.listSessionTypes(this.groupId).subscribe({
+      next: (types) => {
+        this.sessionTypes.set(types ?? []);
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   protected deleteSessionType(id: string): void {
@@ -300,14 +259,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
         switchMap(() => this.coachingService.deleteSessionType(this.groupId, id)),
       )
       .subscribe({
-        next: () => {
-          this.coachingService.listSessionTypes(this.groupId).subscribe({
-            next: (types) => {
-              this.sessionTypes.set(types ?? []);
-              this.cdr.markForCheck();
-            },
-          });
-        },
+        next: () => this.refreshSessionTypes(),
         error: () => {
           this.alerts.open('Failed to delete session type', { appearance: 'negative' }).subscribe();
         },
@@ -319,58 +271,39 @@ export class ManageAvailabilityPageComponent implements OnInit {
     return DAY_NAMES[dow] ?? '';
   }
 
-  protected addAvailability(): void {
-    this.coachingService
-      .createAvailability(this.groupId, {
-        day_of_week: this.newDayOfWeek,
-        start_time: this.newStartTime,
-        end_time: this.newEndTime,
-      })
-      .subscribe({
-        next: () => {
-          this.showAddForm = false;
-          this.loadData();
+  protected openAvailabilityDialog(availability: CoachingAvailability | null = null): void {
+    this.dialogs
+      .open<AvailabilityDialogResult | null>(
+        new PolymorpheusComponent(AvailabilityDialogComponent),
+        {
+          label: availability ? 'Edit Availability' : 'Add Availability',
+          size: 's',
+          data: { availability },
         },
-        error: () => {
-          this.alerts
-            .open('Failed to add availability block', { appearance: 'negative' })
-            .subscribe();
-        },
+      )
+      .subscribe((result) => {
+        if (!result) return;
+
+        if (availability) {
+          this.coachingService.updateAvailability(this.groupId, availability.id, result).subscribe({
+            next: () => this.loadData(),
+            error: () => {
+              this.alerts
+                .open('Failed to update availability block', { appearance: 'negative' })
+                .subscribe();
+            },
+          });
+        } else {
+          this.coachingService.createAvailability(this.groupId, result).subscribe({
+            next: () => this.loadData(),
+            error: () => {
+              this.alerts
+                .open('Failed to add availability block', { appearance: 'negative' })
+                .subscribe();
+            },
+          });
+        }
       });
-  }
-
-  protected startEdit(a: CoachingAvailability): void {
-    this.editingId = a.id;
-    this.editDayOfWeek = a.day_of_week;
-    this.editStartTime = a.start_time;
-    this.editEndTime = a.end_time;
-    this.cdr.markForCheck();
-  }
-
-  protected saveEdit(): void {
-    if (!this.editingId) return;
-    this.coachingService
-      .updateAvailability(this.groupId, this.editingId, {
-        day_of_week: this.editDayOfWeek,
-        start_time: this.editStartTime,
-        end_time: this.editEndTime,
-      })
-      .subscribe({
-        next: () => {
-          this.editingId = null;
-          this.loadData();
-        },
-        error: () => {
-          this.alerts
-            .open('Failed to update availability block', { appearance: 'negative' })
-            .subscribe();
-        },
-      });
-  }
-
-  protected cancelEdit(): void {
-    this.editingId = null;
-    this.cdr.markForCheck();
   }
 
   protected deleteAvailability(id: string): void {
@@ -396,30 +329,22 @@ export class ManageAvailabilityPageComponent implements OnInit {
   }
 
   // Blocked slots
-  protected addBlockedSlot(): void {
-    const data: { blocked_date: string; start_time?: string; end_time?: string; reason?: string } =
-      { blocked_date: this.newBlockDate };
-    if (!this.newBlockFullDay) {
-      data.start_time = this.newBlockStartTime;
-      data.end_time = this.newBlockEndTime;
-    }
-    if (this.newBlockReason) {
-      data.reason = this.newBlockReason;
-    }
-    this.coachingService.createBlockedSlot(this.groupId, data).subscribe({
-      next: () => {
-        this.showBlockForm = false;
-        this.newBlockDate = '';
-        this.newBlockStartTime = '';
-        this.newBlockEndTime = '';
-        this.newBlockReason = '';
-        this.newBlockFullDay = true;
-        this.loadBlockedSlots();
-      },
-      error: () => {
-        this.alerts.open('Failed to block time', { appearance: 'negative' }).subscribe();
-      },
-    });
+  protected openBlockedSlotDialog(): void {
+    this.dialogs
+      .open<BlockedSlotDialogResult | null>(new PolymorpheusComponent(BlockedSlotDialogComponent), {
+        label: 'Block Time',
+        size: 's',
+      })
+      .subscribe((result) => {
+        if (!result) return;
+
+        this.coachingService.createBlockedSlot(this.groupId, result).subscribe({
+          next: () => this.loadBlockedSlots(),
+          error: () => {
+            this.alerts.open('Failed to block time', { appearance: 'negative' }).subscribe();
+          },
+        });
+      });
   }
 
   protected deleteBlockedSlot(id: string): void {

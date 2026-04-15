@@ -1,0 +1,42 @@
+<div class="dialog-form">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-field">
+      <tui-textfield [stringify]="dayStringify">
+        <label tuiLabel>Day</label>
+        <input tuiSelect formControlName="day_of_week" />
+        <tui-data-list-wrapper
+          *tuiTextfieldDropdown
+          new
+          [items]="dayOptions"
+          [itemContent]="dayContent"
+        />
+      </tui-textfield>
+
+      <ng-template #dayContent let-item>
+        {{ dayStringify(item) }}
+      </ng-template>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field form-field--half">
+        <tui-textfield>
+          <label tuiLabel>Start time</label>
+          <input formControlName="start_time" tuiTextfield type="time" />
+        </tui-textfield>
+      </div>
+      <div class="form-field form-field--half">
+        <tui-textfield>
+          <label tuiLabel>End time</label>
+          <input formControlName="end_time" tuiTextfield type="time" />
+        </tui-textfield>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button tuiButton type="submit" [disabled]="form.invalid">
+        {{ isEditing ? 'Save' : 'Create' }}
+      </button>
+      <button tuiButton type="button" appearance="flat" (click)="onCancel()">Cancel</button>
+    </div>
+  </form>
+</div>

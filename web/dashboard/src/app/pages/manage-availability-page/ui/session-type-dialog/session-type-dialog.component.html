@@ -1,0 +1,49 @@
+<div class="dialog-form">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Name</label>
+        <input
+          formControlName="name"
+          tuiTextfield
+          type="text"
+          placeholder="e.g. Strategy Session"
+        />
+      </tui-textfield>
+    </div>
+
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Description (optional)</label>
+        <input
+          formControlName="description"
+          tuiTextfield
+          type="text"
+          placeholder="Short description"
+        />
+      </tui-textfield>
+    </div>
+
+    <div class="form-field">
+      <tui-textfield [stringify]="durationStringify">
+        <label tuiLabel>Duration</label>
+        <input tuiSelect formControlName="duration_minutes" />
+        <tui-data-list-wrapper
+          *tuiTextfieldDropdown
+          new
+          [items]="durationOptions"
+          [itemContent]="durationContent"
+        />
+      </tui-textfield>
+
+      <ng-template #durationContent let-item> {{ item }} min </ng-template>
+    </div>
+
+    <div class="form-actions">
+      <button tuiButton type="submit" [disabled]="form.invalid">
+        {{ isEditing ? 'Save' : 'Create' }}
+      </button>
+      <button tuiButton type="button" appearance="flat" (click)="onCancel()">Cancel</button>
+    </div>
+  </form>
+</div>

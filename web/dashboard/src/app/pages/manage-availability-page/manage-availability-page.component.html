@@ -54,66 +54,13 @@
             appearance="flat"
             size="s"
             iconStart="@tui.plus"
-            (click)="showSessionTypeForm = !showSessionTypeForm"
+            (click)="openSessionTypeDialog()"
           >
             Add Session Type
           </button>
         </div>
 
-        @if (showSessionTypeForm) {
-          <div class="form-card">
-            <div class="form-row">
-              <div class="form-field form-field--wide">
-                <label class="tui-text_body-s field-label">Name</label>
-                <input
-                  type="text"
-                  class="time-input"
-                  [(ngModel)]="newSessionTypeName"
-                  placeholder="e.g. Strategy Session"
-                />
-              </div>
-              <div class="form-field form-field--wide">
-                <label class="tui-text_body-s field-label">Description (optional)</label>
-                <input
-                  type="text"
-                  class="time-input"
-                  [(ngModel)]="newSessionTypeDescription"
-                  placeholder="Short description"
-                />
-              </div>
-              <div class="form-field">
-                <label class="tui-text_body-s field-label">Duration</label>
-                <select class="native-select" [(ngModel)]="newSessionTypeDuration">
-                  @for (d of durationOptions; track d) {
-                    <option [ngValue]="d">{{ d }} min</option>
-                  }
-                </select>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button
-                tuiButton
-                size="s"
-                type="button"
-                [disabled]="!newSessionTypeName"
-                (click)="addSessionType()"
-              >
-                Save
-              </button>
-              <button
-                tuiButton
-                appearance="flat"
-                size="s"
-                type="button"
-                (click)="showSessionTypeForm = false"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        }
-
-        @if (sessionTypes().length === 0 && !showSessionTypeForm) {
+        @if (sessionTypes().length === 0) {
           <app-illustrated-message
             illustrationSrc="/illustrations/lonely-horse.png"
             heading="No session types yet"
@@ -123,77 +70,36 @@
 
         @for (st of sessionTypes(); track st.id) {
           <div class="availability-row">
-            @if (editingSessionTypeId === st.id) {
-              <div class="form-card">
-                <div class="form-row">
-                  <div class="form-field form-field--wide">
-                    <label class="tui-text_body-s field-label">Name</label>
-                    <input type="text" class="time-input" [(ngModel)]="editSessionTypeName" />
-                  </div>
-                  <div class="form-field form-field--wide">
-                    <label class="tui-text_body-s field-label">Description</label>
-                    <input
-                      type="text"
-                      class="time-input"
-                      [(ngModel)]="editSessionTypeDescription"
-                    />
-                  </div>
-                  <div class="form-field">
-                    <label class="tui-text_body-s field-label">Duration</label>
-                    <select class="native-select" [(ngModel)]="editSessionTypeDuration">
-                      @for (d of durationOptions; track d) {
-                        <option [ngValue]="d">{{ d }} min</option>
-                      }
-                    </select>
-                  </div>
-                </div>
-                <div class="form-actions">
-                  <button tuiButton size="s" type="button" (click)="saveEditSessionType()">
-                    Save
-                  </button>
-                  <button
-                    tuiButton
-                    appearance="flat"
-                    size="s"
-                    type="button"
-                    (click)="cancelEditSessionType()"
-                  >
-                    Cancel
-                  </button>
-                </div>
+            <div class="availability-item">
+              <div>
+                <span class="tui-text_body-m availability-label">
+                  {{ st.name }} &nbsp;&bull;&nbsp; {{ st.duration_minutes }} min
+                </span>
+                @if (st.description) {
+                  <p class="tui-text_body-s session-type-desc">{{ st.description }}</p>
+                }
               </div>
-            } @else {
-              <div class="availability-item">
-                <div>
-                  <span class="tui-text_body-m availability-label">
-                    {{ st.name }} &nbsp;&bull;&nbsp; {{ st.duration_minutes }} min
-                  </span>
-                  @if (st.description) {
-                    <p class="tui-text_body-s session-type-desc">{{ st.description }}</p>
-                  }
-                </div>
-                <div class="item-actions">
-                  <button
-                    tuiButton
-                    appearance="flat"
-                    size="xs"
-                    iconStart="@tui.pencil"
-                    (click)="startEditSessionType(st)"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    tuiButton
-                    appearance="flat"
-                    size="xs"
-                    iconStart="@tui.trash-2"
-                    (click)="deleteSessionType(st.id)"
-                  >
-                    Delete
-                  </button>
-                </div>
+              <div class="item-actions">
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.pencil"
+                  (click)="openSessionTypeDialog(st)"
+                >
+                  Edit
+                </button>
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.trash-2"
+                  (click)="deleteSessionType(st.id)"
+                >
+                  Delete
+                </button>
               </div>
-            }
+            </div>
           </div>
         }
       }
@@ -240,48 +146,13 @@
             appearance="flat"
             size="s"
             iconStart="@tui.plus"
-            (click)="showAddForm = !showAddForm"
+            (click)="openAvailabilityDialog()"
           >
             Add Availability
           </button>
         </div>
 
-        @if (showAddForm) {
-          <div class="form-card">
-            <div class="form-row">
-              <div class="form-field">
-                <label class="tui-text_body-s field-label">Day</label>
-                <select class="native-select" [(ngModel)]="newDayOfWeek">
-                  @for (day of dayNames; track $index) {
-                    <option [ngValue]="$index">{{ day }}</option>
-                  }
-                </select>
-              </div>
-              <div class="form-field">
-                <label class="tui-text_body-s field-label">Start time</label>
-                <input type="time" class="time-input" [(ngModel)]="newStartTime" />
-              </div>
-              <div class="form-field">
-                <label class="tui-text_body-s field-label">End time</label>
-                <input type="time" class="time-input" [(ngModel)]="newEndTime" />
-              </div>
-            </div>
-            <div class="form-actions">
-              <button tuiButton size="s" type="button" (click)="addAvailability()">Save</button>
-              <button
-                tuiButton
-                appearance="flat"
-                size="s"
-                type="button"
-                (click)="showAddForm = false"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        }
-
-        @if (availability().length === 0 && !showAddForm) {
+        @if (availability().length === 0) {
           <app-illustrated-message
             illustrationSrc="/illustrations/lonely-horse.png"
             heading="No availability yet"
@@ -291,61 +162,32 @@
 
         @for (a of availability(); track a.id) {
           <div class="availability-row">
-            @if (editingId === a.id) {
-              <div class="form-card">
-                <div class="form-row">
-                  <div class="form-field">
-                    <label class="tui-text_body-s field-label">Day</label>
-                    <select class="native-select" [(ngModel)]="editDayOfWeek">
-                      @for (day of dayNames; track $index) {
-                        <option [ngValue]="$index">{{ day }}</option>
-                      }
-                    </select>
-                  </div>
-                  <div class="form-field">
-                    <label class="tui-text_body-s field-label">Start time</label>
-                    <input type="time" class="time-input" [(ngModel)]="editStartTime" />
-                  </div>
-                  <div class="form-field">
-                    <label class="tui-text_body-s field-label">End time</label>
-                    <input type="time" class="time-input" [(ngModel)]="editEndTime" />
-                  </div>
-                </div>
-                <div class="form-actions">
-                  <button tuiButton size="s" type="button" (click)="saveEdit()">Save</button>
-                  <button tuiButton appearance="flat" size="s" type="button" (click)="cancelEdit()">
-                    Cancel
-                  </button>
-                </div>
+            <div class="availability-item">
+              <span class="tui-text_body-m availability-label">
+                {{ dayName(a.day_of_week) }} &nbsp;&bull;&nbsp; {{ a.start_time }} –
+                {{ a.end_time }}
+              </span>
+              <div class="item-actions">
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.pencil"
+                  (click)="openAvailabilityDialog(a)"
+                >
+                  Edit
+                </button>
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.trash-2"
+                  (click)="deleteAvailability(a.id)"
+                >
+                  Delete
+                </button>
               </div>
-            } @else {
-              <div class="availability-item">
-                <span class="tui-text_body-m availability-label">
-                  {{ dayName(a.day_of_week) }} &nbsp;&bull;&nbsp; {{ a.start_time }} –
-                  {{ a.end_time }}
-                </span>
-                <div class="item-actions">
-                  <button
-                    tuiButton
-                    appearance="flat"
-                    size="xs"
-                    iconStart="@tui.pencil"
-                    (click)="startEdit(a)"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    tuiButton
-                    appearance="flat"
-                    size="xs"
-                    iconStart="@tui.trash-2"
-                    (click)="deleteAvailability(a.id)"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            }
+            </div>
           </div>
         }
       }
@@ -358,69 +200,13 @@
             appearance="flat"
             size="s"
             iconStart="@tui.plus"
-            (click)="showBlockForm = !showBlockForm"
+            (click)="openBlockedSlotDialog()"
           >
             Add Block Time
           </button>
         </div>
 
-        @if (showBlockForm) {
-          <div class="form-card">
-            <div class="form-row">
-              <div class="form-field">
-                <label class="tui-text_body-s field-label">Date</label>
-                <input type="date" class="time-input" [(ngModel)]="newBlockDate" />
-              </div>
-              <div class="form-field form-field--checkbox">
-                <label class="tui-text_body-s">
-                  <input type="checkbox" [(ngModel)]="newBlockFullDay" />
-                  Full day
-                </label>
-              </div>
-              @if (!newBlockFullDay) {
-                <div class="form-field">
-                  <label class="tui-text_body-s field-label">Start time</label>
-                  <input type="time" class="time-input" [(ngModel)]="newBlockStartTime" />
-                </div>
-                <div class="form-field">
-                  <label class="tui-text_body-s field-label">End time</label>
-                  <input type="time" class="time-input" [(ngModel)]="newBlockEndTime" />
-                </div>
-              }
-              <div class="form-field form-field--wide">
-                <label class="tui-text_body-s field-label">Reason (optional)</label>
-                <input
-                  type="text"
-                  class="time-input"
-                  [(ngModel)]="newBlockReason"
-                  placeholder="e.g. Holiday"
-                />
-              </div>
-            </div>
-            <div class="form-actions">
-              <button
-                tuiButton
-                size="s"
-                type="button"
-                [disabled]="!newBlockDate"
-                (click)="addBlockedSlot()"
-              >
-                Block
-              </button>
-              <button
-                tuiButton
-                appearance="flat"
-                size="s"
-                type="button"
-                (click)="showBlockForm = false"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        }
-
-        @if (blockedSlots().length === 0 && !showBlockForm) {
+        @if (blockedSlots().length === 0) {
           <app-illustrated-message
             illustrationSrc="/illustrations/bored-horse.png"
             heading="No blocked dates"

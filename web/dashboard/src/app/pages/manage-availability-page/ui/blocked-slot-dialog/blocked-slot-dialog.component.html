@@ -1,0 +1,44 @@
+<div class="dialog-form">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Date</label>
+        <input formControlName="blocked_date" tuiTextfield type="date" />
+      </tui-textfield>
+    </div>
+
+    <label tuiLabel>
+      <input tuiCheckbox type="checkbox" formControlName="full_day" />
+      Full day
+    </label>
+
+    @if (!form.value.full_day) {
+      <div class="form-row">
+        <div class="form-field form-field--half">
+          <tui-textfield>
+            <label tuiLabel>Start time</label>
+            <input formControlName="start_time" tuiTextfield type="time" />
+          </tui-textfield>
+        </div>
+        <div class="form-field form-field--half">
+          <tui-textfield>
+            <label tuiLabel>End time</label>
+            <input formControlName="end_time" tuiTextfield type="time" />
+          </tui-textfield>
+        </div>
+      </div>
+    }
+
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Reason (optional)</label>
+        <input formControlName="reason" tuiTextfield type="text" placeholder="e.g. Holiday" />
+      </tui-textfield>
+    </div>
+
+    <div class="form-actions">
+      <button tuiButton type="submit" [disabled]="form.invalid">Block</button>
+      <button tuiButton type="button" appearance="flat" (click)="onCancel()">Cancel</button>
+    </div>
+  </form>
+</div>

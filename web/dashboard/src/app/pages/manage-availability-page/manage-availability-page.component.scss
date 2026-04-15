@@ -100,35 +100,7 @@
   margin-bottom: 1rem;
 }
 
-.form-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 120px;
-}
-
-.form-field--wide {
-  flex: 1;
-  min-width: 200px;
-}
-
-.form-field--checkbox {
-  justify-content: flex-end;
-}
-
-.field-label {
-  color: var(--tui-text-secondary);
-}
-
-.time-input,
-.native-select {
+.time-input {
   border: 1px solid var(--tui-border-normal);
   border-radius: 0.5rem;
   padding: 0.375rem 0.5rem;
@@ -138,14 +110,8 @@
   outline: none;
 }
 
-.time-input:focus,
-.native-select:focus {
+.time-input:focus {
   border-color: var(--tui-border-focus);
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.5rem;
 }
 
 .availability-row {
@@ -209,15 +175,6 @@
 }
 
 @media (max-width: 47.9375em) {
-  .form-row {
-    flex-direction: column;
-  }
-
-  .form-field {
-    min-width: unset;
-    width: 100%;
-  }
-
   .availability-item {
     flex-direction: column;
     align-items: flex-start;
