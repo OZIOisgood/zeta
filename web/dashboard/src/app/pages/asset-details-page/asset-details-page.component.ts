@@ -15,7 +15,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import '@mux/mux-player';
 import { TuiResponsiveDialogService } from '@taiga-ui/addon-mobile';
-import { TuiAutoFocus } from '@taiga-ui/cdk';
+import { TuiAutoFocus, TuiItem } from '@taiga-ui/cdk';
 import {
   TuiAlertService,
   TuiButton,
@@ -29,6 +29,7 @@ import {
 import {
   TUI_CONFIRM,
   TuiBadge,
+  TuiBreadcrumbs,
   TuiElasticContainer,
   TuiPagination,
   TuiSkeleton,
@@ -47,6 +48,7 @@ import {
 } from 'rxjs';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { Asset, AssetService, Review } from '../../shared/services/asset.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
@@ -73,7 +75,10 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiLink,
     TuiBadge,
     TuiSkeleton,
+    TuiBreadcrumbs,
+    TuiItem,
     IllustratedMessageComponent,
+    SectionHeaderComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',

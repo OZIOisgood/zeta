@@ -8,11 +8,13 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TuiItem } from '@taiga-ui/cdk';
+import { TuiAlertService, TuiButton, TuiDialogService, TuiLink } from '@taiga-ui/core';
+import { TUI_CONFIRM, TuiBreadcrumbs, TuiConfirmData } from '@taiga-ui/kit';
 import { filter, switchMap } from 'rxjs';
-import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
-import { TUI_CONFIRM, TuiConfirmData } from '@taiga-ui/kit';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import {
   CoachingAvailability,
   CoachingBlockedSlot,
@@ -32,7 +34,12 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
     FormsModule,
     ReactiveFormsModule,
     PageContainerComponent,
+    SectionHeaderComponent,
     TuiButton,
+    TuiBreadcrumbs,
+    TuiItem,
+    TuiLink,
+    RouterLink,
   ],
   templateUrl: './manage-availability-page.component.html',
   styleUrls: ['./manage-availability-page.component.scss'],
@@ -40,6 +47,7 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 })
 export class ManageAvailabilityPageComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly coachingService = inject(CoachingService);
   private readonly groupsService = inject(GroupsService);
   private readonly alerts = inject(TuiAlertService);
@@ -98,9 +106,19 @@ export class ManageAvailabilityPageComponent implements OnInit {
     this.groupsService.list().subscribe({
       next: (groups) => {
         this.groups.set(groups ?? []);
+        const routeGroupId = this.route.snapshot.paramMap.get('groupId');
+        if (routeGroupId) {
+          const match = groups.find((g) => g.id === routeGroupId);
+          if (match) {
+            this.selectedGroup = match;
+            this.groupId = match.id;
+            this.loadAll();
+            return;
+          }
+        }
         if (groups.length === 1) {
-          // Auto-select when only one group
-          this.selectGroup(groups[0]);
+          // Auto-select when only one group — redirect to URL with groupId
+          this.router.navigate(['/sessions/settings', groups[0].id], { replaceUrl: true });
         } else {
           this.loading.set(false);
           this.cdr.markForCheck();
@@ -120,9 +138,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   }
 
   protected selectGroup(group: Group): void {
-    this.selectedGroup = group;
-    this.groupId = group.id;
-    this.loadAll();
+    this.router.navigate(['/sessions/settings', group.id]);
   }
 
   private loadAll(): void {
@@ -204,7 +220,10 @@ export class ManageAvailabilityPageComponent implements OnInit {
           this.newSessionTypeDescription = '';
           this.newSessionTypeDuration = 30;
           this.coachingService.listSessionTypes(this.groupId).subscribe({
-            next: (types) => { this.sessionTypes.set(types ?? []); this.cdr.markForCheck(); },
+            next: (types) => {
+              this.sessionTypes.set(types ?? []);
+              this.cdr.markForCheck();
+            },
           });
         },
         error: () => {
@@ -233,7 +252,10 @@ export class ManageAvailabilityPageComponent implements OnInit {
         next: () => {
           this.editingSessionTypeId = null;
           this.coachingService.listSessionTypes(this.groupId).subscribe({
-            next: (types) => { this.sessionTypes.set(types ?? []); this.cdr.markForCheck(); },
+            next: (types) => {
+              this.sessionTypes.set(types ?? []);
+              this.cdr.markForCheck();
+            },
           });
         },
         error: () => {
@@ -262,7 +284,10 @@ export class ManageAvailabilityPageComponent implements OnInit {
       .subscribe({
         next: () => {
           this.coachingService.listSessionTypes(this.groupId).subscribe({
-            next: (types) => { this.sessionTypes.set(types ?? []); this.cdr.markForCheck(); },
+            next: (types) => {
+              this.sessionTypes.set(types ?? []);
+              this.cdr.markForCheck();
+            },
           });
         },
         error: () => {
@@ -397,10 +422,6 @@ export class ManageAvailabilityPageComponent implements OnInit {
           this.alerts.open('Failed to remove blocked slot', { appearance: 'negative' }).subscribe();
         },
       });
-  }
-
-  protected goBack(): void {
-    this.router.navigate(['/sessions']);
   }
 
   protected formatBlockedDate(isoDate: string): string {

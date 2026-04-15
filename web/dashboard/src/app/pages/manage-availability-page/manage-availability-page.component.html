@@ -1,15 +1,32 @@
 <app-page-container>
   <div class="availability-page">
-    <div class="page-header">
-      <button tuiButton appearance="flat" size="s" iconStart="@tui.arrow-left" (click)="goBack()">
-        Back to sessions
-      </button>
-      <h1 class="tui-text_h3">Manage My Availability</h1>
-    </div>
+    <tui-breadcrumbs size="l">
+      <ng-container *tuiItem>
+        <a tuiLink routerLink="/sessions">Sessions</a>
+      </ng-container>
+      @if (selectedGroup) {
+        <ng-container *tuiItem>
+          <a tuiLink routerLink="/sessions/settings">Manage Availability</a>
+        </ng-container>
+        <ng-container *tuiItem>
+          <span>{{ selectedGroup.name }}</span>
+        </ng-container>
+      } @else {
+        <ng-container *tuiItem>
+          <span>Manage Availability</span>
+        </ng-container>
+      }
+    </tui-breadcrumbs>
+
+    <app-section-header
+      [title]="selectedGroup ? selectedGroup.name : 'Manage Availability'"
+    ></app-section-header>
 
     @if (groups().length > 1 && !selectedGroup) {
       <div class="group-select-section">
-        <p class="tui-text_body-m">Select the group for which you want to manage your availability:</p>
+        <p class="tui-text_body-m">
+          Select the group for which you want to manage your availability:
+        </p>
         <div class="group-list">
           @for (g of groups(); track g.id) {
             <button class="group-row" type="button" (click)="selectGroup(g)">
@@ -23,7 +40,6 @@
     } @else if (loading()) {
       <p class="tui-text_body-m">Loading...</p>
     } @else {
-
       <!-- Session Types -->
       <section class="section">
         <div class="section-header">
@@ -291,13 +307,7 @@
                 </div>
                 <div class="form-actions">
                   <button tuiButton size="s" type="button" (click)="saveEdit()">Save</button>
-                  <button
-                    tuiButton
-                    appearance="flat"
-                    size="s"
-                    type="button"
-                    (click)="cancelEdit()"
-                  >
+                  <button tuiButton appearance="flat" size="s" type="button" (click)="cancelEdit()">
                     Cancel
                   </button>
                 </div>

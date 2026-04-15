@@ -1,13 +1,9 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-} from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TuiItem } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiDialogService, TuiLink } from '@taiga-ui/core';
-import { TuiElasticContainer } from '@taiga-ui/kit';
+import { TuiBreadcrumbs, TuiElasticContainer } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { Observable, catchError, filter, map, of, startWith, switchMap, take } from 'rxjs';
@@ -29,6 +25,9 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiLink,
     TuiCardLarge,
     TuiElasticContainer,
+    TuiBreadcrumbs,
+    TuiItem,
+    RouterLink,
   ],
   templateUrl: './group-details-page.component.html',
   styleUrls: ['./group-details-page.component.scss'],

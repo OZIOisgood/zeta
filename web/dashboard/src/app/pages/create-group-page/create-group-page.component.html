@@ -1,53 +1,61 @@
 <app-page-container>
-  <div class="create-group-container">
-    <h1 class="tui-text_h2">Create Group</h1>
+  <tui-breadcrumbs size="l">
+    <ng-container *tuiItem>
+      <a tuiLink routerLink="/groups">Groups</a>
+    </ng-container>
+    <ng-container *tuiItem>
+      <span>Create Group</span>
+    </ng-container>
+  </tui-breadcrumbs>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="create-group-form">
-      <div class="form-field">
-        <tui-textfield>
-          <label tuiLabel>Group Name</label>
-          <input formControlName="name" tuiTextfield type="text" />
-        </tui-textfield>
+  <app-section-header title="Create Group"></app-section-header>
 
-        <div
-          *ngIf="form.get('name')?.invalid && form.get('name')?.touched"
-          class="tui-text_body-s error-message"
-        >
-          Group name is required
-        </div>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="create-group-form">
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Group Name</label>
+        <input formControlName="name" tuiTextfield type="text" />
+      </tui-textfield>
+
+      <div
+        *ngIf="form.get('name')?.invalid && form.get('name')?.touched"
+        class="tui-text_body-s error-message"
+      >
+        Group name is required
       </div>
+    </div>
 
-      <div class="form-field">
-        <tui-textfield>
-          <label tuiLabel>Description</label>
-          <textarea tuiTextarea formControlName="description" [min]="3" [max]="10"></textarea>
-        </tui-textfield>
-      </div>
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Description</label>
+        <textarea tuiTextarea formControlName="description" [min]="3" [max]="10"></textarea>
+      </tui-textfield>
+    </div>
 
-      <app-avatar-selector
+    <app-avatar-selector
+      [disabled]="isSubmitting"
+      (avatarChange)="onAvatarChange($event)"
+    ></app-avatar-selector>
+
+    <div class="form-actions">
+      <button
+        type="button"
+        (click)="onCancel()"
+        tuiButton
+        appearance="flat"
+        size="m"
         [disabled]="isSubmitting"
-        (avatarChange)="onAvatarChange($event)"
-      ></app-avatar-selector>
-
-      <div class="form-actions">
-        <button
-          type="button"
-          (click)="onCancel()"
-          tuiButton
-          appearance="secondary"
-          [disabled]="isSubmitting"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          [disabled]="form.invalid || isSubmitting || !avatarBase64"
-          tuiButton
-          appearance="primary"
-        >
-          {{ isSubmitting ? 'Creating...' : 'Create Group' }}
-        </button>
-      </div>
-    </form>
-  </div>
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        [disabled]="form.invalid || isSubmitting || !avatarBase64"
+        tuiButton
+        size="m"
+      >
+        {{ isSubmitting ? 'Creating...' : 'Create' }}
+      </button>
+    </div>
+  </form>
 </app-page-container>

@@ -1,18 +1,12 @@
 <app-page-container *ngIf="asset$ | async as asset; else loadingSkeleton">
-  <div class="header">
-    <a tuiButton appearance="flat" iconStart="@tui.arrow-left" routerLink="/">Back</a>
-
-    <h1 class="tui-text_h3 desktop-title">{{ asset.title }}</h1>
-
-    <tui-pagination
-      *ngIf="(asset.videos?.length || 0) > 1"
-      [length]="asset.videos!.length"
-      [index]="videoIndex"
-      (indexChange)="onIndexChange($event)"
-      class="pagination"
-    ></tui-pagination>
-    <div *ngIf="(asset.videos?.length || 0) == 1" style="width: 105px"></div>
-  </div>
+  <tui-breadcrumbs size="l">
+    <ng-container *tuiItem>
+      <a tuiLink routerLink="/">Home</a>
+    </ng-container>
+    <ng-container *tuiItem>
+      <span>{{ asset.title }}</span>
+    </ng-container>
+  </tui-breadcrumbs>
 
   <div class="content-body">
     <div class="media-content">
@@ -28,8 +22,17 @@
         <p class="tui-text_body-m">Video is processing or not available.</p>
       </div>
 
+      <div class="title-row">
+        <h1 class="tui-text_h3 title">{{ asset.title }}</h1>
+        <tui-pagination
+          *ngIf="(asset.videos?.length || 0) > 1"
+          [length]="asset.videos!.length"
+          [index]="videoIndex"
+          (indexChange)="onIndexChange($event)"
+        ></tui-pagination>
+      </div>
+
       <div class="text-content">
-        <h1 class="tui-text_h3 title mobile-title">{{ asset.title }}</h1>
         <div class="meta-row">
           <a *ngIf="asset.group" class="group-info" [routerLink]="['/groups', asset.group.id]">
             <div
@@ -71,7 +74,7 @@
         class="comments-section tui-space_top-6"
         style="padding-bottom: 80px"
       >
-        <h2 class="tui-text_h3" style="margin-bottom: 1rem">Comments</h2>
+        <app-section-header title="Comments"></app-section-header>
 
         <div
           class="reviews-list tui-space_top-4"
@@ -248,26 +251,21 @@
 
 <ng-template #loadingSkeleton>
   <app-page-container>
-    <div class="header">
-      <span [tuiSkeleton]="true" style="width: 80px; height: 36px; display: inline-block"></span>
-      <span [tuiSkeleton]="true" class="tui-text_h3 desktop-title" style="width: 200px">Title</span>
-      <span style="width: 105px"></span>
-    </div>
+    <span
+      [tuiSkeleton]="true"
+      style="width: 120px; height: 20px; display: inline-block; margin-bottom: 1rem"
+    ></span>
 
     <div class="content-body">
       <div class="media-content">
         <div class="player-wrapper" [tuiSkeleton]="true"></div>
 
+        <div class="title-row">
+          <h1 class="tui-text_h3 title" [tuiSkeleton]="true">Loading title...</h1>
+        </div>
+
         <div class="text-content">
-          <h1 class="tui-text_h3 title mobile-title" [tuiSkeleton]="true">Loading title...</h1>
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 1rem;
-            "
-          >
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem">
             <span [tuiSkeleton]="true" style="width: 80px; height: 24px; display: inline-block"
               >Status</span
             >

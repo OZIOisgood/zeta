@@ -63,6 +63,12 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { permission: 'coaching:availability:manage' },
       },
+      {
+        path: 'sessions/settings/:groupId',
+        component: ManageAvailabilityPageComponent,
+        canActivate: [permissionGuard],
+        data: { permission: 'coaching:availability:manage' },
+      },
       // Legacy redirects
       { path: 'my-sessions', redirectTo: 'sessions', pathMatch: 'full' },
       { path: 'book-coaching', redirectTo: 'sessions/book', pathMatch: 'full' },
