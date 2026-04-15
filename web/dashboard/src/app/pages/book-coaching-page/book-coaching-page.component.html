@@ -22,25 +22,34 @@
       <!-- Step 1: Select Group -->
       @case (0) {
         <div>
-          <p class="tui-text_body-m step-description">
-            Choose a group to book a coaching session for.
-          </p>
+          @if (groups().length === 0) {
+            <app-illustrated-message
+              illustrationSrc="illustrations/lonely-horse.png"
+              illustrationAlt="No groups"
+              heading="You're not in any group yet"
+              description="Ask your coach or instructor to invite you to a group so you can book sessions."
+            />
+          } @else {
+            <p class="tui-text_body-m step-description">
+              Choose a group to book a coaching session for.
+            </p>
 
-          <div class="session-types-list">
-            @for (group of groups(); track group.id) {
-              <button
-                class="session-type-row"
-                type="button"
-                [disabled]="loading()"
-                (click)="selectGroup(group)"
-              >
-                <div class="group-row-info">
-                  <tui-avatar [src]="groupAvatarSrc(group)" size="s"></tui-avatar>
-                  <span class="tui-text_body-m session-type-name">{{ group.name }}</span>
-                </div>
-              </button>
-            }
-          </div>
+            <div class="session-types-list">
+              @for (group of groups(); track group.id) {
+                <button
+                  class="session-type-row"
+                  type="button"
+                  [disabled]="loading()"
+                  (click)="selectGroup(group)"
+                >
+                  <div class="group-row-info">
+                    <tui-avatar [src]="groupAvatarSrc(group)" size="s"></tui-avatar>
+                    <span class="tui-text_body-m session-type-name">{{ group.name }}</span>
+                  </div>
+                </button>
+              }
+            </div>
+          }
         </div>
       }
 
@@ -48,9 +57,12 @@
       @case (1) {
         <div>
           @if (experts().length === 0) {
-            <p class="tui-text_body-m empty-text">
-              No experts have availability in this group yet.
-            </p>
+            <app-illustrated-message
+              illustrationSrc="illustrations/lonely-horse.png"
+              illustrationAlt="No experts available"
+              heading="No experts available"
+              description="There are no experts with availability in this group yet. Please check back later or try another group."
+            />
           } @else {
             <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
             <div class="experts-grid">
@@ -87,9 +99,12 @@
           }
 
           @if (sessionTypes().length === 0) {
-            <p class="tui-text_body-m empty-text">
-              No session types are available for this group yet.
-            </p>
+            <app-illustrated-message
+              illustrationSrc="illustrations/lonely-horse.png"
+              illustrationAlt="No session types"
+              heading="No session types configured"
+              description="The expert hasn't set up any session types yet. Please check back later or contact your coach."
+            />
           } @else {
             <p class="tui-text_body-m step-description">
               Choose the type of session you'd like to book.
@@ -140,7 +155,12 @@
           }
 
           @if (slots().length === 0) {
-            <p class="tui-text_body-m empty-text">No available slots for this expert.</p>
+            <app-illustrated-message
+              illustrationSrc="illustrations/lonely-horse.png"
+              illustrationAlt="No available times"
+              heading="No available times"
+              description="This expert doesn't have any open slots right now. Try a different session type or check back later."
+            />
           } @else {
             <p class="tui-text_body-m step-description">All times are in your local timezone.</p>
             <div class="slot-picker">

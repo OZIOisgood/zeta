@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiAlertService, TuiButton } from '@taiga-ui/core';
 import { TuiAvatar, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
+import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import {
@@ -34,6 +35,7 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiStep,
     TuiSlides,
     TuiAvatar,
+    IllustratedMessageComponent,
   ],
   templateUrl: './book-coaching-page.component.html',
   styleUrl: './book-coaching-page.component.scss',
