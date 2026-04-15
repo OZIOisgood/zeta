@@ -1,13 +1,8 @@
 <app-page-container>
   @if (group$ | async; as group) {
-    <tui-breadcrumbs size="l">
-      <ng-container *tuiItem>
-        <a tuiLink routerLink="/groups">Groups</a>
-      </ng-container>
-      <ng-container *tuiItem>
-        <span>{{ group.name }}</span>
-      </ng-container>
-    </tui-breadcrumbs>
+    <app-breadcrumbs
+      [items]="[{ label: 'Groups', routerLink: '/groups' }, { label: group.name }]"
+    ></app-breadcrumbs>
 
     <div class="group-hero">
       <div class="group-banner" [style.background]="headerGradient$ | async"></div>

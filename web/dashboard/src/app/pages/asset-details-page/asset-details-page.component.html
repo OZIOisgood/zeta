@@ -1,12 +1,7 @@
 <app-page-container *ngIf="asset$ | async as asset; else loadingSkeleton">
-  <tui-breadcrumbs size="l">
-    <ng-container *tuiItem>
-      <a tuiLink routerLink="/">Home</a>
-    </ng-container>
-    <ng-container *tuiItem>
-      <span>{{ asset.title }}</span>
-    </ng-container>
-  </tui-breadcrumbs>
+  <app-breadcrumbs
+    [items]="[{ label: 'Home', routerLink: '/' }, { label: asset.title }]"
+  ></app-breadcrumbs>
 
   <div class="content-body">
     <div class="media-content">

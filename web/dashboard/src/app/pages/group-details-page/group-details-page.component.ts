@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TuiItem } from '@taiga-ui/cdk';
-import { TuiAlertService, TuiButton, TuiDialogService, TuiLink } from '@taiga-ui/core';
-import { TuiBreadcrumbs, TuiElasticContainer } from '@taiga-ui/kit';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
+import { TuiElasticContainer } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { Observable, catchError, filter, map, of, startWith, switchMap, take } from 'rxjs';
+import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
 import { GroupPreferencesDialogComponent } from '../../shared/components/group-preferences-dialog/group-preferences-dialog.component';
 import { InviteDialogComponent } from '../../shared/components/invite-dialog/invite-dialog.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -22,12 +22,9 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     PageContainerComponent,
     UsersListComponent,
     TuiButton,
-    TuiLink,
     TuiCardLarge,
     TuiElasticContainer,
-    TuiBreadcrumbs,
-    TuiItem,
-    RouterLink,
+    BreadcrumbsComponent,
   ],
   templateUrl: './group-details-page.component.html',
   styleUrls: ['./group-details-page.component.scss'],

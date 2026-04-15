@@ -8,11 +8,14 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TuiItem } from '@taiga-ui/cdk';
-import { TuiAlertService, TuiButton, TuiDialogService, TuiLink } from '@taiga-ui/core';
-import { TUI_CONFIRM, TuiBreadcrumbs, TuiConfirmData } from '@taiga-ui/kit';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
+import { TUI_CONFIRM, TuiConfirmData } from '@taiga-ui/kit';
 import { filter, switchMap } from 'rxjs';
+import {
+  BreadcrumbItem,
+  BreadcrumbsComponent,
+} from '../../shared/components/breadcrumbs/breadcrumbs.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import {
@@ -35,11 +38,8 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
     ReactiveFormsModule,
     PageContainerComponent,
     SectionHeaderComponent,
+    BreadcrumbsComponent,
     TuiButton,
-    TuiBreadcrumbs,
-    TuiItem,
-    TuiLink,
-    RouterLink,
   ],
   templateUrl: './manage-availability-page.component.html',
   styleUrls: ['./manage-availability-page.component.scss'],
@@ -57,6 +57,17 @@ export class ManageAvailabilityPageComponent implements OnInit {
   // Group selection
   protected groups = signal<Group[]>([]);
   protected selectedGroup: Group | null = null;
+
+  get breadcrumbItems(): BreadcrumbItem[] {
+    const items: BreadcrumbItem[] = [{ label: 'Sessions', routerLink: '/sessions' }];
+    if (this.selectedGroup) {
+      items.push({ label: 'Manage Availability', routerLink: '/sessions/settings' });
+      items.push({ label: this.selectedGroup.name });
+    } else {
+      items.push({ label: 'Manage Availability' });
+    }
+    return items;
+  }
 
   protected groupId = '';
   protected loading = signal(true);

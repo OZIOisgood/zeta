@@ -1,26 +1,8 @@
 <app-page-container>
   <div class="availability-page">
-    <tui-breadcrumbs size="l">
-      <ng-container *tuiItem>
-        <a tuiLink routerLink="/sessions">Sessions</a>
-      </ng-container>
-      @if (selectedGroup) {
-        <ng-container *tuiItem>
-          <a tuiLink routerLink="/sessions/settings">Manage Availability</a>
-        </ng-container>
-        <ng-container *tuiItem>
-          <span>{{ selectedGroup.name }}</span>
-        </ng-container>
-      } @else {
-        <ng-container *tuiItem>
-          <span>Manage Availability</span>
-        </ng-container>
-      }
-    </tui-breadcrumbs>
+    <app-breadcrumbs [items]="breadcrumbItems"></app-breadcrumbs>
 
-    <app-section-header
-      [title]="selectedGroup ? selectedGroup.name : 'Manage Availability'"
-    ></app-section-header>
+    <app-section-header title="Manage Availability"></app-section-header>
 
     @if (groups().length > 1 && !selectedGroup) {
       <div class="group-select-section">

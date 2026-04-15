@@ -15,7 +15,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import '@mux/mux-player';
 import { TuiResponsiveDialogService } from '@taiga-ui/addon-mobile';
-import { TuiAutoFocus, TuiItem } from '@taiga-ui/cdk';
+import { TuiAutoFocus } from '@taiga-ui/cdk';
 import {
   TuiAlertService,
   TuiButton,
@@ -29,7 +29,6 @@ import {
 import {
   TUI_CONFIRM,
   TuiBadge,
-  TuiBreadcrumbs,
   TuiElasticContainer,
   TuiPagination,
   TuiSkeleton,
@@ -46,6 +45,7 @@ import {
   tap,
   type Observer,
 } from 'rxjs';
+import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
@@ -75,8 +75,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiLink,
     TuiBadge,
     TuiSkeleton,
-    TuiBreadcrumbs,
-    TuiItem,
+    BreadcrumbsComponent,
     IllustratedMessageComponent,
     SectionHeaderComponent,
   ],

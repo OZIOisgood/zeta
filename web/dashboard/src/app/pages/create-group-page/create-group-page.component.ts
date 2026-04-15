@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { TuiItem } from '@taiga-ui/cdk';
-import { TuiButton, TuiLabel, TuiLink, TuiTextfield } from '@taiga-ui/core';
-import { TuiBreadcrumbs, TuiTextarea } from '@taiga-ui/kit';
+import { Router } from '@angular/router';
+import { TuiButton, TuiLabel, TuiTextfield } from '@taiga-ui/core';
+import { TuiTextarea } from '@taiga-ui/kit';
 import { AvatarSelectorComponent } from '../../shared/components/avatar-selector/avatar-selector.component';
+import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { GroupsService } from '../../shared/services/groups.service';
@@ -17,15 +17,12 @@ import { GroupsService } from '../../shared/services/groups.service';
     CommonModule,
     PageContainerComponent,
     SectionHeaderComponent,
+    BreadcrumbsComponent,
     ReactiveFormsModule,
     TuiButton,
     TuiLabel,
-    TuiLink,
     TuiTextfield,
     TuiTextarea,
-    TuiBreadcrumbs,
-    TuiItem,
-    RouterLink,
     AvatarSelectorComponent,
   ],
   templateUrl: './create-group-page.component.html',

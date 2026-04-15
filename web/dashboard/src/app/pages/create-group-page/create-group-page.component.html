@@ -1,12 +1,7 @@
 <app-page-container>
-  <tui-breadcrumbs size="l">
-    <ng-container *tuiItem>
-      <a tuiLink routerLink="/groups">Groups</a>
-    </ng-container>
-    <ng-container *tuiItem>
-      <span>Create Group</span>
-    </ng-container>
-  </tui-breadcrumbs>
+  <app-breadcrumbs
+    [items]="[{ label: 'Groups', routerLink: '/groups' }, { label: 'Create Group' }]"
+  ></app-breadcrumbs>
 
   <app-section-header title="Create Group"></app-section-header>
 
