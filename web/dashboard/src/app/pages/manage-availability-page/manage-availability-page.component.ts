@@ -59,6 +59,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   // Group selection
   protected groups = signal<Group[]>([]);
   protected selectedGroup: Group | null = null;
+  protected activeTab = signal<'session-types' | 'schedule' | 'blocked'>('session-types');
 
   get breadcrumbItems(): BreadcrumbItem[] {
     const items: BreadcrumbItem[] = [{ label: 'Sessions', routerLink: '/sessions' }];
@@ -152,6 +153,10 @@ export class ManageAvailabilityPageComponent implements OnInit {
 
   protected selectGroup(group: Group): void {
     this.router.navigate(['/sessions/settings', group.id]);
+  }
+
+  protected setTab(tab: 'session-types' | 'schedule' | 'blocked'): void {
+    this.activeTab.set(tab);
   }
 
   private loadAll(): void {

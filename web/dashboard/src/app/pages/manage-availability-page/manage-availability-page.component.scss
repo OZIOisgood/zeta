@@ -47,26 +47,50 @@
   font-weight: 500;
 }
 
-.section {
-  margin-bottom: 2.5rem;
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--tui-border-normal);
+  flex-wrap: wrap;
 }
 
-.section-header {
+.tab {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--tui-text-secondary);
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  margin-bottom: -1px;
+  font-family: inherit;
+
+  &:hover {
+    color: var(--tui-text-primary);
+  }
+}
+
+.tab--active {
+  color: var(--tui-text-primary);
+  border-bottom-color: var(--tui-text-action);
+  font-weight: 500;
+}
+
+.tab-action {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 1rem;
   flex-wrap: wrap;
   gap: 0.5rem;
-
-  h2 {
-    margin: 0;
-  }
 }
 
 .timezone-label {
   color: var(--tui-text-secondary);
-  margin-top: 0.25rem;
 }
 
 .form-card {

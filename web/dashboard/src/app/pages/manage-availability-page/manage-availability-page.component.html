@@ -22,10 +22,33 @@
     } @else if (loading()) {
       <p class="tui-text_body-m">Loading...</p>
     } @else {
-      <!-- Session Types -->
-      <section class="section">
-        <div class="section-header">
-          <h2 class="tui-text_h4">Session Types</h2>
+      <div class="tabs">
+        <button
+          class="tab"
+          [class.tab--active]="activeTab() === 'session-types'"
+          (click)="setTab('session-types')"
+        >
+          Session Types ({{ sessionTypes().length }})
+        </button>
+        <button
+          class="tab"
+          [class.tab--active]="activeTab() === 'schedule'"
+          (click)="setTab('schedule')"
+        >
+          Weekly Schedule ({{ availability().length }})
+        </button>
+        <button
+          class="tab"
+          [class.tab--active]="activeTab() === 'blocked'"
+          (click)="setTab('blocked')"
+        >
+          Blocked Dates ({{ blockedSlots().length }})
+        </button>
+      </div>
+
+      <!-- Session Types Tab -->
+      @if (activeTab() === 'session-types') {
+        <div class="tab-action">
           <button
             tuiButton
             appearance="flat"
@@ -173,47 +196,44 @@
             }
           </div>
         }
-      </section>
+      }
 
-      <!-- Weekly Schedule -->
-      <section class="section">
-        <div class="section-header">
-          <div>
-            <h2 class="tui-text_h4">Weekly Schedule</h2>
-            <div class="timezone-row">
-              @if (editingTimezone) {
-                <input
-                  type="text"
-                  class="time-input timezone-input"
-                  [(ngModel)]="timezoneInput"
-                  placeholder="e.g. Europe/Berlin"
-                />
-                <button tuiButton size="xs" type="button" (click)="saveTimezone()">Save</button>
+      <!-- Weekly Schedule Tab -->
+      @if (activeTab() === 'schedule') {
+        <div class="tab-action">
+          <div class="timezone-row">
+            @if (editingTimezone) {
+              <input
+                type="text"
+                class="time-input timezone-input"
+                [(ngModel)]="timezoneInput"
+                placeholder="e.g. Europe/Berlin"
+              />
+              <button tuiButton size="xs" type="button" (click)="saveTimezone()">Save</button>
+              <button
+                tuiButton
+                appearance="flat"
+                size="xs"
+                type="button"
+                (click)="cancelEditTimezone()"
+              >
+                Cancel
+              </button>
+            } @else {
+              <p class="tui-text_body-s timezone-label">
+                Times are in your timezone (<strong>{{ userTimezone() }}</strong
+                >)
                 <button
                   tuiButton
                   appearance="flat"
                   size="xs"
-                  type="button"
-                  (click)="cancelEditTimezone()"
+                  iconStart="@tui.pencil"
+                  (click)="startEditTimezone()"
                 >
-                  Cancel
+                  Change
                 </button>
-              } @else {
-                <p class="tui-text_body-s timezone-label">
-                  Times are in your timezone (<strong>{{ userTimezone() }}</strong
-                  >)
-                  <button
-                    tuiButton
-                    appearance="flat"
-                    size="xs"
-                    iconStart="@tui.pencil"
-                    (click)="startEditTimezone()"
-                  >
-                    Change
-                  </button>
-                </p>
-              }
-            </div>
+              </p>
+            }
           </div>
           <button
             tuiButton
@@ -328,12 +348,11 @@
             }
           </div>
         }
-      </section>
+      }
 
-      <!-- Blocked Dates -->
-      <section class="section">
-        <div class="section-header">
-          <h2 class="tui-text_h4">Blocked Dates</h2>
+      <!-- Blocked Dates Tab -->
+      @if (activeTab() === 'blocked') {
+        <div class="tab-action">
           <button
             tuiButton
             appearance="flat"
@@ -433,7 +452,7 @@
             </button>
           </div>
         }
-      </section>
+      }
     }
   </div>
 </app-page-container>
