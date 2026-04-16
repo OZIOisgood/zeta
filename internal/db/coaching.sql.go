@@ -196,6 +196,23 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (C
 	return i, err
 }
 
+const createBookingReminder = `-- name: CreateBookingReminder :exec
+
+INSERT INTO coaching_booking_reminders (booking_id, remind_at)
+VALUES ($1, $2)
+`
+
+type CreateBookingReminderParams struct {
+	BookingID pgtype.UUID        `json:"booking_id"`
+	RemindAt  pgtype.Timestamptz `json:"remind_at"`
+}
+
+// === Booking Reminders ===
+func (q *Queries) CreateBookingReminder(ctx context.Context, arg CreateBookingReminderParams) error {
+	_, err := q.db.Exec(ctx, createBookingReminder, arg.BookingID, arg.RemindAt)
+	return err
+}
+
 const createSessionType = `-- name: CreateSessionType :one
 
 INSERT INTO coaching_session_types (expert_id, group_id, name, description, duration_minutes)
@@ -717,6 +734,57 @@ func (q *Queries) ListMyBookings(ctx context.Context, arg ListMyBookingsParams) 
 	return items, nil
 }
 
+const listPendingReminders = `-- name: ListPendingReminders :many
+SELECT r.id, r.booking_id, r.remind_at,
+       b.expert_id, b.student_id, b.scheduled_at, b.duration_minutes, b.is_cancelled
+FROM coaching_booking_reminders r
+JOIN coaching_bookings b ON b.id = r.booking_id
+WHERE r.sent_at IS NULL
+  AND r.remind_at <= NOW()
+ORDER BY r.remind_at
+LIMIT 100
+`
+
+type ListPendingRemindersRow struct {
+	ID              pgtype.UUID        `json:"id"`
+	BookingID       pgtype.UUID        `json:"booking_id"`
+	RemindAt        pgtype.Timestamptz `json:"remind_at"`
+	ExpertID        string             `json:"expert_id"`
+	StudentID       string             `json:"student_id"`
+	ScheduledAt     pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes int32              `json:"duration_minutes"`
+	IsCancelled     bool               `json:"is_cancelled"`
+}
+
+func (q *Queries) ListPendingReminders(ctx context.Context) ([]ListPendingRemindersRow, error) {
+	rows, err := q.db.Query(ctx, listPendingReminders)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPendingRemindersRow
+	for rows.Next() {
+		var i ListPendingRemindersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.BookingID,
+			&i.RemindAt,
+			&i.ExpertID,
+			&i.StudentID,
+			&i.ScheduledAt,
+			&i.DurationMinutes,
+			&i.IsCancelled,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSessionTypesByExpertGroup = `-- name: ListSessionTypesByExpertGroup :many
 SELECT id, expert_id, group_id, name, description, duration_minutes, is_active, created_at, updated_at FROM coaching_session_types
 WHERE expert_id = $1 AND group_id = $2 AND is_active = true
@@ -792,6 +860,15 @@ func (q *Queries) ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UU
 		return nil, err
 	}
 	return items, nil
+}
+
+const markReminderSent = `-- name: MarkReminderSent :exec
+UPDATE coaching_booking_reminders SET sent_at = NOW() WHERE id = $1
+`
+
+func (q *Queries) MarkReminderSent(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, markReminderSent, id)
+	return err
 }
 
 const updateAvailability = `-- name: UpdateAvailability :one

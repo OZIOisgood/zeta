@@ -203,7 +203,7 @@ func (h *Handler) ListAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 5. Compute slots using the session type's duration.
-	minNotice := now.Add(MinBookingNotice)
+	minNotice := now.Add(h.minBookingNotice)
 	slots := computeSlots(avail, blocked, bookings, loc, rangeStart, rangeEnd, minNotice, sessionType.DurationMinutes)
 	if slots == nil {
 		slots = []SlotResponse{}

@@ -18,7 +18,8 @@ export type Permission =
   | 'coaching:slots:read'
   | 'coaching:book'
   | 'coaching:bookings:read'
-  | 'coaching:bookings:manage';
+  | 'coaching:bookings:manage'
+  | 'coaching:video:connect';
 
 @Injectable({
   providedIn: 'root',

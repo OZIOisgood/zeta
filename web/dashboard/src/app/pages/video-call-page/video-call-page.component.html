@@ -1,0 +1,51 @@
+<div class="video-call-container">
+  @if (connecting()) {
+    <div class="center-message">
+      <p class="tui-text_h4">Connecting to session...</p>
+    </div>
+  } @else if (error()) {
+    <div class="center-message">
+      <p class="tui-text_h4">Could not join session</p>
+      <p class="tui-text_body-m error-detail">{{ error() }}</p>
+      <button tuiButton appearance="primary" size="m" (click)="leave()">Back to Sessions</button>
+    </div>
+  } @else {
+    <div class="video-grid">
+      <div class="video-panel video-panel--remote">
+        @if (remoteJoined()) {
+          <div #remoteVideo class="video-element"></div>
+        } @else {
+          <div class="center-message">
+            <p class="tui-text_body-l">Waiting for the other participant to join...</p>
+          </div>
+        }
+      </div>
+      <div class="video-panel video-panel--local">
+        <div #localVideo class="video-element"></div>
+      </div>
+    </div>
+    <div class="controls-bar">
+      <button
+        tuiIconButton
+        [appearance]="audioEnabled() ? 'secondary' : 'destructive'"
+        size="l"
+        (click)="toggleAudio()"
+        title="Toggle microphone"
+      >
+        <tui-icon [icon]="audioEnabled() ? '@tui.mic' : '@tui.mic-off'"></tui-icon>
+      </button>
+      <button
+        tuiIconButton
+        [appearance]="videoEnabled() ? 'secondary' : 'destructive'"
+        size="l"
+        (click)="toggleVideo()"
+        title="Toggle camera"
+      >
+        <tui-icon [icon]="videoEnabled() ? '@tui.video' : '@tui.video-off'"></tui-icon>
+      </button>
+      <button tuiIconButton appearance="destructive" size="l" (click)="leave()" title="Leave call">
+        <tui-icon icon="@tui.phone-off"></tui-icon>
+      </button>
+    </div>
+  }
+</div>

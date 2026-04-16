@@ -231,6 +231,14 @@ type CoachingBooking struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type CoachingBookingReminder struct {
+	ID        pgtype.UUID        `json:"id"`
+	BookingID pgtype.UUID        `json:"booking_id"`
+	RemindAt  pgtype.Timestamptz `json:"remind_at"`
+	SentAt    pgtype.Timestamptz `json:"sent_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type CoachingSessionType struct {
 	ID              pgtype.UUID        `json:"id"`
 	ExpertID        string             `json:"expert_id"`

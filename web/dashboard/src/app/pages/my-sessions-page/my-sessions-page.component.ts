@@ -177,4 +177,18 @@ export class MySessionsPageComponent implements OnInit {
   protected otherPartyRole(booking: CoachingBooking): string {
     return this.isExpertForBooking(booking) ? 'Student' : 'Expert';
   }
+
+  protected canJoin(booking: CoachingBooking): boolean {
+    if (booking.status === 'cancelled') return false;
+    const msUntil = new Date(booking.scheduled_at).getTime() - Date.now();
+    const msAfterEnd =
+      Date.now() -
+      (new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60 * 1000);
+    // 15 min before → end of session
+    return msUntil <= 15 * 60 * 1000 && msAfterEnd <= 0;
+  }
+
+  protected joinSession(booking: CoachingBooking): void {
+    this.router.navigate(['/sessions', booking.group_id, booking.id, 'call']);
+  }
 }

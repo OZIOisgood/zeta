@@ -94,6 +94,19 @@ export class HomePageComponent {
     });
   }
 
+  canJoinSession(session: CoachingBooking): boolean {
+    if (session.status === 'cancelled') return false;
+    const msUntil = new Date(session.scheduled_at).getTime() - Date.now();
+    const msAfterEnd =
+      Date.now() -
+      (new Date(session.scheduled_at).getTime() + session.duration_minutes * 60 * 1000);
+    return msUntil <= 15 * 60 * 1000 && msAfterEnd <= 0;
+  }
+
+  joinSession(session: CoachingBooking): void {
+    this.router.navigate(['/sessions', session.group_id, session.id, 'call']);
+  }
+
   onAddVideo() {
     this.router.navigate(['/upload-video']);
   }

@@ -17,8 +17,6 @@ import (
 
 // Booking business-rule constants.
 const (
-	MinBookingNotice       = 2 * time.Hour
-	CancellationNotice     = 1 * time.Hour
 	SlotLookaheadDays      = 28
 	BlockedSlotRangeMonths = 3
 	MinSessionDuration     = int32(15)
@@ -26,18 +24,49 @@ const (
 )
 
 type Handler struct {
-	q            *db.Queries
-	pool         *pgxpool.Pool
-	logger       *slog.Logger
-	emailService *email.Service
+	q                   *db.Queries
+	pool                *pgxpool.Pool
+	logger              *slog.Logger
+	emailService        *email.Service
+	agoraAppID          string
+	agoraAppCertificate string
+	schedulerSecret     string
+	minBookingNotice    time.Duration
+	cancellationNotice  time.Duration
+	connectWindow       time.Duration
 }
 
-func NewHandler(q *db.Queries, pool *pgxpool.Pool, emailService *email.Service, logger *slog.Logger) *Handler {
+// HandlerConfig holds configurable time constraints for coaching bookings.
+type HandlerConfig struct {
+	AgoraAppID          string
+	AgoraAppCertificate string
+	SchedulerSecret     string
+	MinBookingNotice    time.Duration // default: 2h
+	CancellationNotice  time.Duration // default: 1h
+	ConnectWindow       time.Duration // default: 15m — how early before a session participants may join
+}
+
+func NewHandler(q *db.Queries, pool *pgxpool.Pool, emailService *email.Service, logger *slog.Logger, cfg HandlerConfig) *Handler {
+	if cfg.MinBookingNotice == 0 {
+		cfg.MinBookingNotice = 2 * time.Hour
+	}
+	if cfg.CancellationNotice == 0 {
+		cfg.CancellationNotice = 1 * time.Hour
+	}
+	if cfg.ConnectWindow == 0 {
+		cfg.ConnectWindow = 15 * time.Minute
+	}
 	return &Handler{
-		q:            q,
-		pool:         pool,
-		logger:       logger,
-		emailService: emailService,
+		q:                   q,
+		pool:                pool,
+		logger:              logger,
+		emailService:        emailService,
+		agoraAppID:          cfg.AgoraAppID,
+		agoraAppCertificate: cfg.AgoraAppCertificate,
+		schedulerSecret:     cfg.SchedulerSecret,
+		minBookingNotice:    cfg.MinBookingNotice,
+		cancellationNotice:  cfg.CancellationNotice,
+		connectWindow:       cfg.ConnectWindow,
 	}
 }
 
@@ -94,6 +123,12 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		})
 		// CancelBooking — fine-grained auth handled inside the handler
 		r.Put("/bookings/{bookingID}/cancel", h.CancelBooking)
+
+		// Video connect — generate Agora RTC token
+		r.Group(func(r chi.Router) {
+			r.Use(auth.RequirePermission(permissions.CoachingVideoConnect))
+			r.Get("/bookings/{bookingID}/connect", h.ConnectToBooking)
+		})
 	})
 
 	// Cross-group timezone endpoints
@@ -150,4 +185,24 @@ func (h *Handler) resolveUsers(ctx context.Context, userIDs []string) map[string
 	}
 	wg.Wait()
 	return result
+}
+
+// resolveEmails fetches email addresses for given WorkOS user IDs.
+func (h *Handler) resolveEmails(ctx context.Context, userIDs []string) []string {
+	var emails []string
+	for _, id := range userIDs {
+		u, err := usermanagement.GetUser(ctx, usermanagement.GetUserOpts{User: id})
+		if err != nil {
+			h.logger.WarnContext(ctx, "resolve_email_failed",
+				slog.String("component", "coaching"),
+				slog.String("user_id", id),
+				slog.Any("err", err),
+			)
+			continue
+		}
+		if u.Email != "" {
+			emails = append(emails, u.Email)
+		}
+	}
+	return emails
 }

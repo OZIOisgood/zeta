@@ -89,9 +89,7 @@ export class CoachingService {
 
   // Session Types
   listSessionTypes(groupId: string): Observable<SessionType[]> {
-    return this.http.get<SessionType[]>(
-      `${this.apiUrl}/groups/${groupId}/coaching/session-types`,
-    );
+    return this.http.get<SessionType[]>(`${this.apiUrl}/groups/${groupId}/coaching/session-types`);
   }
 
   createSessionType(
@@ -211,19 +209,22 @@ export class CoachingService {
   }
 
   listMyBookings(groupId: string): Observable<CoachingBooking[]> {
-    return this.http.get<CoachingBooking[]>(
-      `${this.apiUrl}/groups/${groupId}/coaching/bookings`,
-    );
+    return this.http.get<CoachingBooking[]>(`${this.apiUrl}/groups/${groupId}/coaching/bookings`);
   }
 
   listMyBookingsAllGroups(groupIds: string[]): Observable<CoachingBooking[]> {
     if (groupIds.length === 0) {
-      return new Observable(observer => { observer.next([]); observer.complete(); });
+      return new Observable((observer) => {
+        observer.next([]);
+        observer.complete();
+      });
     }
-    return forkJoin(groupIds.map(id => this.listMyBookings(id))).pipe(
-      map(results => results.flat().sort(
-        (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
-      )),
+    return forkJoin(groupIds.map((id) => this.listMyBookings(id))).pipe(
+      map((results) =>
+        results
+          .flat()
+          .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()),
+      ),
     );
   }
 
@@ -237,4 +238,17 @@ export class CoachingService {
       reason ? { cancellation_reason: reason } : {},
     );
   }
+
+  connectToBooking(groupId: string, bookingId: string): Observable<ConnectResponse> {
+    return this.http.get<ConnectResponse>(
+      `${this.apiUrl}/groups/${groupId}/coaching/bookings/${bookingId}/connect`,
+    );
+  }
+}
+
+export interface ConnectResponse {
+  app_id: string;
+  channel: string;
+  token: string;
+  uid: number;
 }

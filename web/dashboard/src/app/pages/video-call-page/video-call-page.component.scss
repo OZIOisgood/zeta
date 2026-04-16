@@ -1,0 +1,74 @@
+.video-call-container {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #111;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+}
+
+.center-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-detail {
+  color: var(--tui-status-negative);
+  max-width: 400px;
+}
+
+.video-grid {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.video-panel {
+  overflow: hidden;
+}
+
+.video-panel--remote {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-panel--local {
+  position: absolute;
+  bottom: 6rem;
+  right: 1.5rem;
+  width: 200px;
+  height: 150px;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+.video-element {
+  width: 100%;
+  height: 100%;
+}
+
+.controls-bar {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1rem;
+  z-index: 3;
+  padding: 0.75rem 1.5rem;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 2rem;
+  backdrop-filter: blur(8px);
+}

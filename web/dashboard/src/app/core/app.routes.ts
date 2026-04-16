@@ -8,6 +8,7 @@ import { HomePageComponent } from '../pages/home-page/home-page.component';
 import { ManageAvailabilityPageComponent } from '../pages/manage-availability-page/manage-availability-page.component';
 import { MySessionsPageComponent } from '../pages/my-sessions-page/my-sessions-page.component';
 import { UploadVideoPageComponent } from '../pages/upload-video-page/upload-video-page.component';
+import { VideoCallPageComponent } from '../pages/video-call-page/video-call-page.component';
 import { ShellComponent } from '../shared/components/shell/shell.component';
 import { permissionGuard } from './guards/permission.guard';
 
@@ -78,6 +79,13 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
     ],
+  },
+  // Full-screen video call — no navbar, no sidebar, no app chrome
+  {
+    path: 'sessions/:groupId/:bookingId/call',
+    component: VideoCallPageComponent,
+    canActivate: [permissionGuard],
+    data: { permission: 'coaching:video:connect' },
   },
   { path: '**', redirectTo: '' },
 ];

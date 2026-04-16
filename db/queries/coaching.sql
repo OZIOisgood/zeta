@@ -136,3 +136,22 @@ WHERE expert_id = $1
   AND is_cancelled = false
   AND scheduled_at < $3
   AND scheduled_at + (duration_minutes * interval '1 minute') > $2;
+
+-- === Booking Reminders ===
+
+-- name: CreateBookingReminder :exec
+INSERT INTO coaching_booking_reminders (booking_id, remind_at)
+VALUES ($1, $2);
+
+-- name: ListPendingReminders :many
+SELECT r.id, r.booking_id, r.remind_at,
+       b.expert_id, b.student_id, b.scheduled_at, b.duration_minutes, b.is_cancelled
+FROM coaching_booking_reminders r
+JOIN coaching_bookings b ON b.id = r.booking_id
+WHERE r.sent_at IS NULL
+  AND r.remind_at <= NOW()
+ORDER BY r.remind_at
+LIMIT 100;
+
+-- name: MarkReminderSent :exec
+UPDATE coaching_booking_reminders SET sent_at = NOW() WHERE id = $1;

@@ -38,6 +38,11 @@
               <span class="status-badge status-badge--{{ session.status }}">{{
                 session.status
               }}</span>
+              @if (canJoinSession(session)) {
+                <button tuiButton appearance="primary" size="xs" (click)="joinSession(session)">
+                  Join
+                </button>
+              }
             </div>
           }
         </div>

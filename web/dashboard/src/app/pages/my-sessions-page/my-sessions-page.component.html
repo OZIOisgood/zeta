@@ -80,6 +80,11 @@
                 <span class="status-badge status-badge--pending">upcoming</span>
               </div>
               <div class="session-actions">
+                @if (canJoin(booking)) {
+                  <button tuiButton appearance="primary" size="s" (click)="joinSession(booking)">
+                    Join
+                  </button>
+                }
                 @if (canCancel(booking)) {
                   <button tuiButton appearance="flat" size="s" (click)="openCancelDialog(booking)">
                     Cancel

@@ -187,8 +187,8 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if time.Until(scheduledAt) < MinBookingNotice {
-		http.Error(w, "Sessions must be booked at least 2 hours in advance", http.StatusBadRequest)
+	if time.Until(scheduledAt) < h.minBookingNotice {
+		http.Error(w, "Sessions must be booked at least "+h.minBookingNotice.String()+" in advance", http.StatusBadRequest)
 		return
 	}
 
@@ -268,6 +268,7 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.sendBookingCreatedEmail(ctx, booking)
+	h.scheduleReminders(ctx, booking)
 
 	users := h.resolveUsers(ctx, []string{booking.ExpertID, booking.StudentID})
 	writeJSON(w, http.StatusCreated, toBookingResponse(booking, users, sessionType.Name))
@@ -409,8 +410,8 @@ func (h *Handler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if time.Until(existing.ScheduledAt.Time) < CancellationNotice {
-		http.Error(w, "Cancellations must be made at least 1 hour before the session", http.StatusBadRequest)
+	if time.Until(existing.ScheduledAt.Time) < h.cancellationNotice {
+		http.Error(w, "Cancellations must be made at least "+h.cancellationNotice.String()+" before the session", http.StatusBadRequest)
 		return
 	}
 
@@ -449,24 +450,92 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 	body := "Your live coaching session has been confirmed.\n\nDate & Time: " + scheduledStr +
 		"\nDuration: " + formatDuration(b.DurationMinutes)
 
-	log.InfoContext(ctx, "booking_created_email_queued",
+	recipients := h.resolveEmails(ctx, []string{b.ExpertID, b.StudentID})
+
+	if len(recipients) == 0 {
+		log.WarnContext(ctx, "booking_created_email_no_recipients",
+			slog.String("component", "coaching"),
+		)
+		return
+	}
+
+	if err := h.emailService.Send(recipients, subject, body); err != nil {
+		log.ErrorContext(ctx, "booking_created_email_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		return
+	}
+
+	log.InfoContext(ctx, "booking_created_email_sent",
 		slog.String("component", "coaching"),
 		slog.String("expert_id", b.ExpertID),
 		slog.String("student_id", b.StudentID),
 		slog.String("scheduled_at", scheduledStr),
 	)
-	_ = subject
-	_ = body
 }
 
 func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBooking, cancelledByID string) {
 	log := logger.From(ctx, h.logger)
 	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
-	log.InfoContext(ctx, "booking_cancelled_email_queued",
+
+	// Notify the other party (the one who didn't cancel).
+	otherID := b.ExpertID
+	if cancelledByID == b.ExpertID {
+		otherID = b.StudentID
+	}
+
+	recipients := h.resolveEmails(ctx, []string{otherID})
+	if len(recipients) == 0 {
+		return
+	}
+
+	subject := "Live Coaching Session Cancelled"
+	body := "A live coaching session scheduled for " + scheduledStr +
+		" (" + formatDuration(b.DurationMinutes) + ") has been cancelled."
+	if reason := b.CancellationReason.String; reason != "" {
+		body += "\n\nReason: " + reason
+	}
+
+	if err := h.emailService.Send(recipients, subject, body); err != nil {
+		log.ErrorContext(ctx, "booking_cancellation_email_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		return
+	}
+
+	log.InfoContext(ctx, "booking_cancellation_email_sent",
 		slog.String("component", "coaching"),
 		slog.String("expert_id", b.ExpertID),
 		slog.String("student_id", b.StudentID),
 		slog.String("cancelled_by", cancelledByID),
 		slog.String("scheduled_at", scheduledStr),
 	)
+}
+
+// scheduleReminders creates 24h, 1h, and 15min reminder rows for a new booking.
+// Failures are logged but do not affect the booking creation response.
+func (h *Handler) scheduleReminders(ctx context.Context, b db.CoachingBooking) {
+	log := logger.From(ctx, h.logger)
+	offsets := []time.Duration{24 * time.Hour, 1 * time.Hour, 15 * time.Minute}
+
+	for _, offset := range offsets {
+		remindAt := b.ScheduledAt.Time.Add(-offset)
+		if remindAt.Before(time.Now()) {
+			continue // skip reminders that are already in the past
+		}
+		err := h.q.CreateBookingReminder(ctx, db.CreateBookingReminderParams{
+			BookingID: b.ID,
+			RemindAt:  pgtype.Timestamptz{Time: remindAt, Valid: true},
+		})
+		if err != nil {
+			log.ErrorContext(ctx, "schedule_reminder_failed",
+				slog.String("component", "coaching"),
+				slog.Any("err", err),
+				slog.String("booking_id", uuidToString(b.ID)),
+				slog.Duration("offset", offset),
+			)
+		}
+	}
 }
