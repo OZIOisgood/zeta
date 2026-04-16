@@ -3,9 +3,11 @@
   margin-bottom: 1.5rem;
 }
 
-.loading-text {
-  color: var(--tui-text-secondary);
-  margin-bottom: 1rem;
+.step-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
 }
 
 .session-types-list {
@@ -91,6 +93,23 @@
   font-weight: 500;
 }
 
+.skeleton-card {
+  aspect-ratio: 1;
+  width: 100%;
+  min-height: 175px;
+}
+
+.skeleton-row {
+  pointer-events: none;
+  height: 3.5rem;
+}
+
+.slot-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .slot-picker {
   display: flex;
   flex-direction: column;
@@ -133,11 +152,6 @@
   }
 }
 
-.booking-with-note {
-  color: var(--tui-text-secondary);
-  margin-bottom: 1rem;
-}
-
 .confirmation-card {
   background: var(--tui-background-neutral-1);
   border-radius: 0.75rem;
@@ -170,11 +184,6 @@
   resize: vertical;
   font-family: inherit;
   margin-top: 0.25rem;
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.5rem;
 }
 
 .success-message {

@@ -13,15 +13,14 @@
     <button tuiStep icon="@tui.check" [disabled]="activeIndex < 4">Confirm</button>
   </tui-stepper>
 
-  @if (loading()) {
-    <p class="tui-text_body-m loading-text">Loading...</p>
-  }
-
   <div [tuiSlides]="slideDirection" style="overflow: hidden">
     @switch (activeIndex) {
       <!-- Step 1: Select Group -->
       @case (0) {
         <div>
+          <p class="tui-text_body-m step-description">
+            Select a group to book a coaching session in.
+          </p>
           <app-groups-list
             [groups]="groups()"
             [loading]="groupsLoading()"
@@ -34,7 +33,19 @@
       <!-- Step 2: Select Expert -->
       @case (1) {
         <div>
-          @if (experts().length === 0) {
+          @if (expertsLoading()) {
+            <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
+            <div class="experts-grid">
+              @for (_ of [1, 2, 3]; track _) {
+                <div
+                  tuiAppearance="neutral"
+                  tuiCardMedium
+                  class="skeleton-card"
+                  [tuiSkeleton]="true"
+                ></div>
+              }
+            </div>
+          } @else if (experts().length === 0) {
             <app-illustrated-message
               illustrationSrc="illustrations/lonely-horse.png"
               illustrationAlt="No experts available"
@@ -45,12 +56,7 @@
             <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
             <div class="experts-grid">
               @for (expert of experts(); track expert.expert_id) {
-                <button
-                  class="expert-card"
-                  type="button"
-                  [disabled]="loading()"
-                  (click)="selectExpert(expert)"
-                >
+                <button class="expert-card" type="button" (click)="selectExpert(expert)">
                   <tui-avatar [src]="expertAvatarSrc(expert)" size="l"></tui-avatar>
                   <span class="tui-text_body-m expert-name"
                     >{{ expert.first_name }} {{ expert.last_name }}</span
@@ -59,7 +65,7 @@
               }
             </div>
           }
-          <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem">
+          <div class="step-nav">
             <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
               Back
             </button>
@@ -70,7 +76,18 @@
       <!-- Step 3: Session Type -->
       @case (2) {
         <div>
-          @if (sessionTypes().length === 0) {
+          @if (sessionTypesLoading()) {
+            <p class="tui-text_body-m step-description">
+              Choose the type of session you'd like to book.
+            </p>
+            <div class="session-types-list">
+              @for (_ of [1, 2, 3]; track _) {
+                <div class="session-type-row skeleton-row" [tuiSkeleton]="true">
+                  <span>&nbsp;</span>
+                </div>
+              }
+            </div>
+          } @else if (sessionTypes().length === 0) {
             <app-illustrated-message
               illustrationSrc="illustrations/lonely-horse.png"
               illustrationAlt="No session types"
@@ -83,12 +100,7 @@
             </p>
             <div class="session-types-list">
               @for (type of sessionTypes(); track type.id) {
-                <button
-                  class="session-type-row"
-                  type="button"
-                  [disabled]="loading()"
-                  (click)="selectSessionType(type)"
-                >
+                <button class="session-type-row" type="button" (click)="selectSessionType(type)">
                   <div class="session-type-info">
                     <span class="tui-text_body-m session-type-name">{{ type.name }}</span>
                     @if (type.description) {
@@ -103,7 +115,7 @@
             </div>
           }
 
-          <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem">
+          <div class="step-nav">
             <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
               Back
             </button>
@@ -114,7 +126,30 @@
       <!-- Step 4: Select Slot -->
       @case (3) {
         <div>
-          @if (slots().length === 0) {
+          @if (slotsLoading()) {
+            <p class="tui-text_body-m step-description">
+              Pick a date and time that works for you. All times are in your local timezone.
+            </p>
+            <div class="slot-skeleton">
+              @for (_ of [1, 2]; track _) {
+                <div class="slot-day">
+                  <span
+                    class="slot-date"
+                    [tuiSkeleton]="true"
+                    style="width: 180px; display: inline-block"
+                    >&nbsp;</span
+                  >
+                  <div class="slot-chips">
+                    @for (__ of [1, 2, 3, 4]; track __) {
+                      <span class="slot-chip" [tuiSkeleton]="true"
+                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span
+                      >
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else if (slots().length === 0) {
             <app-illustrated-message
               illustrationSrc="illustrations/lonely-horse.png"
               illustrationAlt="No available times"
@@ -122,7 +157,9 @@
               description="This expert doesn't have any open slots right now. Try a different session type or check back later."
             />
           } @else {
-            <p class="tui-text_body-m step-description">All times are in your local timezone.</p>
+            <p class="tui-text_body-m step-description">
+              Pick a date and time that works for you. All times are in your local timezone.
+            </p>
             <div class="slot-picker">
               @for (date of slotDates; track date) {
                 <div class="slot-day">
@@ -139,7 +176,7 @@
             </div>
           }
 
-          <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem">
+          <div class="step-nav">
             <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
               Back
             </button>
@@ -196,7 +233,10 @@
                 ></textarea>
               </div>
 
-              <div class="form-actions" style="margin-top: 1.5rem">
+              <div class="step-nav" style="margin-top: 1.5rem">
+                <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+                  Back
+                </button>
                 <button
                   tuiButton
                   size="m"
@@ -205,9 +245,6 @@
                   (click)="confirmBooking()"
                 >
                   {{ booking ? 'Booking...' : 'Book Session' }}
-                </button>
-                <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
-                  Back
                 </button>
               </div>
             </div>

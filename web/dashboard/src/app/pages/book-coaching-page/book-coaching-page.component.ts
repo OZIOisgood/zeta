@@ -9,8 +9,9 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TuiAlertService, TuiButton } from '@taiga-ui/core';
-import { TuiAvatar, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
+import { TuiAlertService, TuiAppearance, TuiButton } from '@taiga-ui/core';
+import { TuiAvatar, TuiSkeleton, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
+import { TuiCardMedium } from '@taiga-ui/layout';
 import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -36,6 +37,9 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiStep,
     TuiSlides,
     TuiAvatar,
+    TuiSkeleton,
+    TuiAppearance,
+    TuiCardMedium,
     GroupsListComponent,
     IllustratedMessageComponent,
   ],
@@ -52,7 +56,6 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected activeIndex = 0;
   protected slideDirection = 1;
-  protected loading = signal(false);
 
   // Step 1
   protected groups = signal<Group[]>([]);
@@ -61,14 +64,17 @@ export class BookCoachingPageComponent implements OnInit {
 
   // Step 2
   protected experts = signal<ExpertInfo[]>([]);
+  protected expertsLoading = signal(false);
   protected selectedExpert: ExpertInfo | null = null;
 
   // Step 3 (Session Type)
   protected sessionTypes = signal<SessionType[]>([]);
+  protected sessionTypesLoading = signal(false);
   protected selectedSessionType: SessionType | null = null;
 
   // Step 4 (Slot)
   protected slots = signal<CoachingSlot[]>([]);
+  protected slotsLoading = signal(false);
   protected slotsByDate = signal<Map<string, CoachingSlot[]>>(new Map());
   protected selectedSlot: CoachingSlot | null = null;
 
@@ -115,17 +121,17 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected selectGroup(group: Group): void {
     this.selectedGroup = group;
-    this.loading.set(true);
-    this.cdr.markForCheck();
+    this.expertsLoading.set(true);
+    this.experts.set([]);
+    this.onNext();
     this.coachingService.listExperts(group.id).subscribe({
       next: (experts) => {
-        this.loading.set(false);
+        this.expertsLoading.set(false);
         this.experts.set(experts ?? []);
-        this.onNext();
         this.cdr.markForCheck();
       },
       error: () => {
-        this.loading.set(false);
+        this.expertsLoading.set(false);
         this.cdr.markForCheck();
         this.alerts.open('Failed to load experts', { appearance: 'negative' }).subscribe();
       },
@@ -134,23 +140,24 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected selectExpert(expert: ExpertInfo): void {
     this.selectedExpert = expert;
+    this.sessionTypesLoading.set(true);
+    this.sessionTypes.set([]);
+    this.slideDirection = 1;
+    this.activeIndex = 2;
+    this.cdr.markForCheck();
     this.loadSessionTypes();
   }
 
   private loadSessionTypes(): void {
     if (!this.selectedGroup) return;
-    this.loading.set(true);
-    this.cdr.markForCheck();
     this.coachingService.listSessionTypes(this.selectedGroup.id).subscribe({
       next: (types) => {
-        this.loading.set(false);
+        this.sessionTypesLoading.set(false);
         this.sessionTypes.set((types ?? []).filter((t) => t.is_active));
-        this.slideDirection = 1;
-        this.activeIndex = 2; // jump to session type step
         this.cdr.markForCheck();
       },
       error: () => {
-        this.loading.set(false);
+        this.sessionTypesLoading.set(false);
         this.cdr.markForCheck();
         this.alerts.open('Failed to load session types', { appearance: 'negative' }).subscribe();
       },
@@ -159,13 +166,17 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected selectSessionType(type: SessionType): void {
     this.selectedSessionType = type;
+    this.slotsLoading.set(true);
+    this.slots.set([]);
+    this.slotsByDate.set(new Map());
+    this.slideDirection = 1;
+    this.activeIndex = 3;
+    this.cdr.markForCheck();
     this.loadSlots();
   }
 
   private loadSlots(): void {
     if (!this.selectedGroup || !this.selectedExpert || !this.selectedSessionType) return;
-    this.loading.set(true);
-    this.cdr.markForCheck();
     this.coachingService
       .listAvailableSlots(
         this.selectedGroup.id,
@@ -174,15 +185,13 @@ export class BookCoachingPageComponent implements OnInit {
       )
       .subscribe({
         next: (slots) => {
-          this.loading.set(false);
+          this.slotsLoading.set(false);
           this.slots.set(slots ?? []);
           this.slotsByDate.set(this.groupSlotsByDate(slots ?? []));
-          this.slideDirection = 1;
-          this.activeIndex = 3; // jump to slot step
           this.cdr.markForCheck();
         },
         error: () => {
-          this.loading.set(false);
+          this.slotsLoading.set(false);
           this.cdr.markForCheck();
           this.alerts
             .open('Failed to load available slots', { appearance: 'negative' })
