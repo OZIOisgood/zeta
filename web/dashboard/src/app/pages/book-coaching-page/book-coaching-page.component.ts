@@ -12,8 +12,15 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiDay, TuiMonth } from '@taiga-ui/cdk/date-time';
-import { TuiAlertService, TuiAppearance, TuiButton, TuiCalendar } from '@taiga-ui/core';
-import { TuiAvatar, TuiSkeleton, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
+import {
+  TuiAlertService,
+  TuiAppearance,
+  TuiButton,
+  TuiCalendar,
+  TuiLabel,
+  TuiTextfield,
+} from '@taiga-ui/core';
+import { TuiAvatar, TuiSkeleton, TuiSlides, TuiStep, TuiStepper, TuiTextarea } from '@taiga-ui/kit';
 import { TuiCardMedium } from '@taiga-ui/layout';
 import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
@@ -44,6 +51,9 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiAppearance,
     TuiCardMedium,
     TuiCalendar,
+    TuiTextfield,
+    TuiLabel,
+    TuiTextarea,
     GroupsListComponent,
     IllustratedMessageComponent,
   ],

@@ -205,61 +205,62 @@
               <span class="tui-text_h4">✓ Session booked! Redirecting to My Sessions...</span>
             </div>
           } @else if (selectedSlot) {
-            <div class="confirmation-card">
-              <h2 class="tui-text_h4">Confirm your booking</h2>
+            <p class="tui-text_body-m step-description">
+              Review your session details and confirm your booking.
+            </p>
 
-              <div class="confirm-detail">
-                <span class="confirm-label tui-text_body-s">Expert</span>
-                <span class="tui-text_body-m">{{ selectedExpertName }}</span>
+            <div class="confirm-summary">
+              <div class="confirm-row">
+                <span class="confirm-label">Group</span>
+                <span>{{ selectedGroup?.name }}</span>
               </div>
-              <div class="confirm-detail">
-                <span class="confirm-label tui-text_body-s">Group</span>
-                <span class="tui-text_body-m">{{ selectedGroup?.name }}</span>
+              <div class="confirm-row">
+                <span class="confirm-label">Expert</span>
+                <span>{{ selectedExpertName }}</span>
               </div>
               @if (selectedSessionType) {
-                <div class="confirm-detail">
-                  <span class="confirm-label tui-text_body-s">Session Type</span>
-                  <span class="tui-text_body-m">{{ selectedSessionType.name }}</span>
+                <div class="confirm-row">
+                  <span class="confirm-label">Session</span>
+                  <span>{{ selectedSessionType.name }}</span>
                 </div>
               }
-              <div class="confirm-detail">
-                <span class="confirm-label tui-text_body-s">Date & Time</span>
-                <span class="tui-text_body-m">{{ formatSlotDateTime(selectedSlot) }}</span>
+              <div class="confirm-row">
+                <span class="confirm-label">Date & Time</span>
+                <span>{{ formatSlotDateTime(selectedSlot) }}</span>
               </div>
-              <div class="confirm-detail">
-                <span class="confirm-label tui-text_body-s">Duration</span>
-                <span class="tui-text_body-m"
+              <div class="confirm-row">
+                <span class="confirm-label">Duration</span>
+                <span
                   >{{
                     selectedSessionType?.duration_minutes ?? selectedSlot.duration_minutes
                   }}
                   minutes</span
                 >
               </div>
+            </div>
 
-              <div style="margin-top: 1.5rem">
-                <label class="tui-text_body-s confirm-label">Notes (optional)</label>
-                <textarea
-                  class="notes-input"
-                  rows="3"
-                  placeholder="Anything you'd like to share with the expert..."
-                  [(ngModel)]="notes"
-                ></textarea>
-              </div>
+            <tui-textfield style="margin-top: 1.5rem">
+              <label tuiLabel>Notes (optional)</label>
+              <textarea
+                tuiTextarea
+                [(ngModel)]="notes"
+                placeholder="Anything you'd like to share with the expert..."
+              ></textarea>
+            </tui-textfield>
 
-              <div class="step-nav" style="margin-top: 1.5rem">
-                <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
-                  Back
-                </button>
-                <button
-                  tuiButton
-                  size="m"
-                  type="button"
-                  [disabled]="booking"
-                  (click)="confirmBooking()"
-                >
-                  {{ booking ? 'Booking...' : 'Book Session' }}
-                </button>
-              </div>
+            <div class="step-nav">
+              <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+                Back
+              </button>
+              <button
+                tuiButton
+                size="m"
+                type="button"
+                [disabled]="booking"
+                (click)="confirmBooking()"
+              >
+                {{ booking ? 'Booking...' : 'Book Session' }}
+              </button>
             </div>
           }
         </div>
