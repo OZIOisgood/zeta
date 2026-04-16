@@ -3,13 +3,16 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   inject,
   OnInit,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TuiAlertService, TuiAppearance, TuiButton } from '@taiga-ui/core';
+import { TuiDay, TuiMonth } from '@taiga-ui/cdk/date-time';
+import { TuiAlertService, TuiAppearance, TuiButton, TuiCalendar } from '@taiga-ui/core';
 import { TuiAvatar, TuiSkeleton, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
 import { TuiCardMedium } from '@taiga-ui/layout';
 import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
@@ -40,6 +43,7 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiSkeleton,
     TuiAppearance,
     TuiCardMedium,
+    TuiCalendar,
     GroupsListComponent,
     IllustratedMessageComponent,
   ],
@@ -77,6 +81,13 @@ export class BookCoachingPageComponent implements OnInit {
   protected slotsLoading = signal(false);
   protected slotsByDate = signal<Map<string, CoachingSlot[]>>(new Map());
   protected selectedSlot: CoachingSlot | null = null;
+  protected selectedCalendarDate: TuiDay | null = null;
+  protected calendarMonth = TuiMonth.currentLocal();
+  protected calendarMin = TuiDay.currentLocal();
+  protected calendarMax = TuiDay.currentLocal().append({ month: 3 });
+  private availableDaySet = new Set<string>();
+
+  @ViewChild('slotsPanel') private slotsPanel?: ElementRef<HTMLElement>;
 
   // Step 5 (Confirm)
   protected notes = '';
@@ -169,6 +180,8 @@ export class BookCoachingPageComponent implements OnInit {
     this.slotsLoading.set(true);
     this.slots.set([]);
     this.slotsByDate.set(new Map());
+    this.selectedCalendarDate = null;
+    this.availableDaySet = new Set();
     this.slideDirection = 1;
     this.activeIndex = 3;
     this.cdr.markForCheck();
@@ -202,17 +215,71 @@ export class BookCoachingPageComponent implements OnInit {
 
   private groupSlotsByDate(slots: CoachingSlot[]): Map<string, CoachingSlot[]> {
     const map = new Map<string, CoachingSlot[]>();
+    const daySet = new Set<string>();
     for (const slot of slots) {
-      const date = new Date(slot.starts_at).toLocaleDateString(undefined, {
+      const d = new Date(slot.starts_at);
+      const dateKey = this.toDateKey(d);
+      daySet.add(dateKey);
+      const label = d.toLocaleDateString(undefined, {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
       });
-      const existing = map.get(date) ?? [];
+      const existing = map.get(dateKey) ?? [];
       existing.push(slot);
-      map.set(date, existing);
+      map.set(dateKey, existing);
     }
+    this.availableDaySet = daySet;
+
+    // Set calendar bounds to the range of available slots
+    if (slots.length > 0) {
+      const first = new Date(slots[0].starts_at);
+      const last = new Date(slots[slots.length - 1].starts_at);
+      this.calendarMin = TuiDay.fromLocalNativeDate(first);
+      this.calendarMax = TuiDay.fromLocalNativeDate(last);
+      this.calendarMonth = new TuiMonth(first.getFullYear(), first.getMonth());
+    }
+
     return map;
+  }
+
+  private toDateKey(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  protected readonly disabledDayHandler = (day: TuiDay): boolean => {
+    const key = `${day.year}-${String(day.month + 1).padStart(2, '0')}-${String(day.day).padStart(2, '0')}`;
+    return !this.availableDaySet.has(key);
+  };
+
+  protected readonly markerHandler = (day: TuiDay): [] | [string] => {
+    const key = `${day.year}-${String(day.month + 1).padStart(2, '0')}-${String(day.day).padStart(2, '0')}`;
+    return this.availableDaySet.has(key) ? ['var(--tui-status-positive)'] : [];
+  };
+
+  protected onDayClick(day: TuiDay): void {
+    this.selectedCalendarDate = day;
+    this.cdr.markForCheck();
+    // On mobile, scroll to slots panel
+    setTimeout(() => {
+      this.slotsPanel?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  protected get slotsForSelectedDate(): CoachingSlot[] {
+    if (!this.selectedCalendarDate) return [];
+    const key = `${this.selectedCalendarDate.year}-${String(this.selectedCalendarDate.month + 1).padStart(2, '0')}-${String(this.selectedCalendarDate.day).padStart(2, '0')}`;
+    return this.slotsByDate().get(key) ?? [];
+  }
+
+  protected get selectedDateLabel(): string {
+    if (!this.selectedCalendarDate) return '';
+    const d = this.selectedCalendarDate.toLocalNativeDate();
+    return d.toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
   }
 
   protected selectSlot(slot: CoachingSlot): void {
@@ -294,9 +361,5 @@ export class BookCoachingPageComponent implements OnInit {
           }
         },
       });
-  }
-
-  protected get slotDates(): string[] {
-    return Array.from(this.slotsByDate().keys());
   }
 }

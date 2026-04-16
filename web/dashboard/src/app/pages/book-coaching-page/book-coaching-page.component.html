@@ -130,24 +130,19 @@
             <p class="tui-text_body-m step-description">
               Pick a date and time that works for you. All times are in your local timezone.
             </p>
-            <div class="slot-skeleton">
-              @for (_ of [1, 2]; track _) {
-                <div class="slot-day">
-                  <span
-                    class="slot-date"
-                    [tuiSkeleton]="true"
-                    style="width: 180px; display: inline-block"
-                    >&nbsp;</span
+            <div class="calendar-layout">
+              <div
+                class="calendar-panel"
+                [tuiSkeleton]="true"
+                style="height: 320px; border-radius: 0.75rem"
+              ></div>
+              <div class="slots-panel">
+                <div class="slots-panel-placeholder">
+                  <span class="tui-text_body-m" style="color: var(--tui-text-tertiary)"
+                    >Loading available times...</span
                   >
-                  <div class="slot-chips">
-                    @for (__ of [1, 2, 3, 4]; track __) {
-                      <span class="slot-chip" [tuiSkeleton]="true"
-                        >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span
-                      >
-                    }
-                  </div>
                 </div>
-              }
+              </div>
             </div>
           } @else if (slots().length === 0) {
             <app-illustrated-message
@@ -160,19 +155,37 @@
             <p class="tui-text_body-m step-description">
               Pick a date and time that works for you. All times are in your local timezone.
             </p>
-            <div class="slot-picker">
-              @for (date of slotDates; track date) {
-                <div class="slot-day">
-                  <h3 class="tui-text_body-m slot-date">{{ date }}</h3>
+            <div class="calendar-layout">
+              <div class="calendar-panel">
+                <tui-calendar
+                  [value]="selectedCalendarDate"
+                  [month]="calendarMonth"
+                  [min]="calendarMin"
+                  [max]="calendarMax"
+                  [disabledItemHandler]="disabledDayHandler"
+                  [markerHandler]="markerHandler"
+                  (dayClick)="onDayClick($event)"
+                  (monthChange)="calendarMonth = $event"
+                ></tui-calendar>
+              </div>
+              <div class="slots-panel" #slotsPanel>
+                @if (selectedCalendarDate) {
+                  <h3 class="tui-text_body-l-2 slots-panel-title">{{ selectedDateLabel }}</h3>
                   <div class="slot-chips">
-                    @for (slot of slotsByDate().get(date) || []; track slot.starts_at) {
+                    @for (slot of slotsForSelectedDate; track slot.starts_at) {
                       <button class="slot-chip" type="button" (click)="selectSlot(slot)">
                         {{ formatTime(slot.starts_at) }}
                       </button>
                     }
                   </div>
-                </div>
-              }
+                } @else {
+                  <div class="slots-panel-placeholder">
+                    <span class="tui-text_body-m" style="color: var(--tui-text-tertiary)"
+                      >Select a date to see available times</span
+                    >
+                  </div>
+                }
+              </div>
             </div>
           }
 
