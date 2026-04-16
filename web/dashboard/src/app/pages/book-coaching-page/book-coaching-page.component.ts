@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TuiAlertService, TuiButton } from '@taiga-ui/core';
 import { TuiAvatar, TuiSlides, TuiStep, TuiStepper } from '@taiga-ui/kit';
+import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
@@ -35,6 +36,7 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiStep,
     TuiSlides,
     TuiAvatar,
+    GroupsListComponent,
     IllustratedMessageComponent,
   ],
   templateUrl: './book-coaching-page.component.html',
@@ -54,12 +56,12 @@ export class BookCoachingPageComponent implements OnInit {
 
   // Step 1
   protected groups = signal<Group[]>([]);
+  protected groupsLoading = signal(true);
   protected selectedGroup: Group | null = null;
 
   // Step 2
   protected experts = signal<ExpertInfo[]>([]);
   protected selectedExpert: ExpertInfo | null = null;
-  protected expertSkipped = false;
 
   // Step 3 (Session Type)
   protected sessionTypes = signal<SessionType[]>([]);
@@ -79,9 +81,19 @@ export class BookCoachingPageComponent implements OnInit {
     this.groupsService.list().subscribe({
       next: (groups) => {
         this.groups.set(groups ?? []);
+        this.groupsLoading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.groupsLoading.set(false);
         this.cdr.markForCheck();
       },
     });
+  }
+
+  protected onGroupSelect(groupId: string): void {
+    const group = this.groups().find((g) => g.id === groupId);
+    if (group) this.selectGroup(group);
   }
 
   protected onNext(): void {
@@ -109,15 +121,7 @@ export class BookCoachingPageComponent implements OnInit {
       next: (experts) => {
         this.loading.set(false);
         this.experts.set(experts ?? []);
-        if (experts.length === 1) {
-          // Auto-skip expert selection
-          this.selectedExpert = experts[0];
-          this.expertSkipped = true;
-          this.loadSessionTypes();
-        } else {
-          this.expertSkipped = false;
-          this.onNext(); // go to expert selection (step 1)
-        }
+        this.onNext();
         this.cdr.markForCheck();
       },
       error: () => {
@@ -227,13 +231,6 @@ export class BookCoachingPageComponent implements OnInit {
     );
   }
 
-  protected groupAvatarSrc(group: Group): string {
-    if (!group.avatar) return '@tui.users';
-    return group.avatar.startsWith('data:')
-      ? group.avatar
-      : `data:image/jpeg;base64,${group.avatar}`;
-  }
-
   protected get selectedExpertName(): string {
     if (!this.selectedExpert) return '';
     return `${this.selectedExpert.first_name} ${this.selectedExpert.last_name}`.trim() || 'Expert';
@@ -241,9 +238,10 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected expertAvatarSrc(expert: ExpertInfo): string {
     if (!expert.avatar) return '@tui.user-round';
-    return expert.avatar.startsWith('data:')
-      ? expert.avatar
-      : `data:image/jpeg;base64,${expert.avatar}`;
+    if (expert.avatar.startsWith('http') || expert.avatar.startsWith('data:')) {
+      return expert.avatar;
+    }
+    return `data:image/jpeg;base64,${expert.avatar}`;
   }
 
   protected confirmBooking(): void {

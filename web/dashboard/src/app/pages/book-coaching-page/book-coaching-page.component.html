@@ -22,34 +22,12 @@
       <!-- Step 1: Select Group -->
       @case (0) {
         <div>
-          @if (groups().length === 0) {
-            <app-illustrated-message
-              illustrationSrc="illustrations/lonely-horse.png"
-              illustrationAlt="No groups"
-              heading="You're not in any group yet"
-              description="Ask your coach or instructor to invite you to a group so you can book sessions."
-            />
-          } @else {
-            <p class="tui-text_body-m step-description">
-              Choose a group to book a coaching session for.
-            </p>
-
-            <div class="session-types-list">
-              @for (group of groups(); track group.id) {
-                <button
-                  class="session-type-row"
-                  type="button"
-                  [disabled]="loading()"
-                  (click)="selectGroup(group)"
-                >
-                  <div class="group-row-info">
-                    <tui-avatar [src]="groupAvatarSrc(group)" size="s"></tui-avatar>
-                    <span class="tui-text_body-m session-type-name">{{ group.name }}</span>
-                  </div>
-                </button>
-              }
-            </div>
-          }
+          <app-groups-list
+            [groups]="groups()"
+            [loading]="groupsLoading()"
+            [title]="''"
+            (selectGroup)="onGroupSelect($event)"
+          ></app-groups-list>
         </div>
       }
 
@@ -92,12 +70,6 @@
       <!-- Step 3: Session Type -->
       @case (2) {
         <div>
-          @if (expertSkipped && selectedExpert) {
-            <p class="tui-text_body-m booking-with-note">
-              Booking with: <strong>{{ selectedExpertName }}</strong>
-            </p>
-          }
-
           @if (sessionTypes().length === 0) {
             <app-illustrated-message
               illustrationSrc="illustrations/lonely-horse.png"
@@ -132,13 +104,7 @@
           }
 
           <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem">
-            <button
-              tuiButton
-              appearance="flat"
-              size="m"
-              type="button"
-              (click)="expertSkipped ? (activeIndex = 0) : onBack()"
-            >
+            <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
               Back
             </button>
           </div>
@@ -148,12 +114,6 @@
       <!-- Step 4: Select Slot -->
       @case (3) {
         <div>
-          @if (expertSkipped && selectedExpert) {
-            <p class="tui-text_body-m booking-with-note">
-              Booking with: <strong>{{ selectedExpertName }}</strong>
-            </p>
-          }
-
           @if (slots().length === 0) {
             <app-illustrated-message
               illustrationSrc="illustrations/lonely-horse.png"
