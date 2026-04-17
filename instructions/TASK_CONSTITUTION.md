@@ -24,7 +24,17 @@ Each task folder must contain:
 
 - **Professional Tone**: Write all documentation in a distinct, formal, and professional manner. Avoid casual language (e.g., "cos", "I want", "maybe").
 - **Clarity**: Use clear, concise statements for requirements and descriptions.
-- **Structure**: properly use headers, lists, and bold text to improve readability.
+- **Structure**: Properly use headers, lists, and bold text to improve readability.
+
+### Diagrams
+
+- **Use Mermaid exclusively** for all diagrams (no ASCII art). Mermaid renders natively in GitHub and most Markdown viewers.
+- Choose the appropriate diagram type for the content:
+  - `sequenceDiagram` — API call flows, multi-participant interactions.
+  - `graph LR` / `graph TD` — User journeys, workflows, architecture overviews.
+  - `erDiagram` — Database schema and entity relationships.
+- Keep diagrams focused. Prefer multiple small diagrams over one overloaded diagram.
+- Place diagrams in the **Architecture** section of `README.md`.
 
 ## 3. Workflow
 
@@ -61,5 +71,9 @@ Fill out `RESOLUTION.md` with:
 
 ### 5. Completion
 
+- **Update root `README.md`**: If the task introduces or modifies database tables, API flows, system architecture, or user journeys, update the corresponding Mermaid diagrams and documentation in the root `README.md`. This is the single source of truth for the project's architecture.
+  - Add new entities to the `erDiagram` block.
+  - Add or update `sequenceDiagram` / `graph` blocks for new flows.
+  - Update feature descriptions and setup instructions as needed.
 - Mark the item as done in `ISSUES.md` if applicable.
 - Commit the task folder along with the code changes.
