@@ -33,6 +33,10 @@ VALUES ($1, $2, $3, $4) RETURNING *;
 SELECT * FROM group_invitations
 WHERE code = $1 LIMIT 1;
 
+-- name: GetGroupInvitationByID :one
+SELECT * FROM group_invitations
+WHERE id = $1 AND group_id = $2 LIMIT 1;
+
 -- name: RemoveUserFromGroup :exec
 DELETE FROM user_groups WHERE user_id = $1 AND group_id = $2;
 

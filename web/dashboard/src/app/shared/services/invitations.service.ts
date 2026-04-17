@@ -32,4 +32,10 @@ export class InvitationsService {
   accept(code: string): Observable<{ group_id: string }> {
     return this.http.post<{ group_id: string }>(`${this.apiUrl}/invitations/accept`, { code });
   }
+
+  getQrCode(groupId: string, invitationId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${groupId}/invitations/${invitationId}/qr`, {
+      responseType: 'blob',
+    });
+  }
 }

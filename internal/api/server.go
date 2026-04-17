@@ -69,7 +69,7 @@ func (s *Server) routes() {
 	llmService := llm.NewService(s.Logger)
 	assetsHandler := assets.NewHandler(queries, emailService, s.Logger)
 	groupsHandler := groups.NewHandler(queries, s.Logger)
-	invitationsHandler := invitations.NewHandler(queries, emailService, s.Logger)
+	invitationsHandler := invitations.NewHandler(queries, emailService, s.Logger, frontendBaseURL())
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService)
 	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, s.Logger, coaching.HandlerConfig{
@@ -120,6 +120,7 @@ func (s *Server) routes() {
 			r.Get("/{groupID}/users", usersHandler.ListGroupUsers)
 			r.Delete("/{groupID}/users/{userID}", usersHandler.RemoveGroupUser)
 			r.Post("/{groupID}/invitations", invitationsHandler.CreateInvitation)
+			r.Get("/{groupID}/invitations/{invitationID}/qr", invitationsHandler.GetInvitationQR)
 			r.Get("/invitations/{code}", invitationsHandler.GetInvitationInfo)
 			r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)
 		})
@@ -153,4 +154,11 @@ func parseDurationOrDefault(s string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return d
+}
+
+func frontendBaseURL() string {
+	if v := os.Getenv("FRONTEND_URL"); v != "" {
+		return strings.TrimRight(v, "/")
+	}
+	return "http://localhost:4200"
 }

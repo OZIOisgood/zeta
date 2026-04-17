@@ -1,37 +1,84 @@
 <div class="invite-container">
-  <div class="form-field">
-    <tui-textfield>
-      <label tuiLabel>Email Address</label>
-      <input
-        [formControl]="emailControl"
-        tuiTextfield
-        type="email"
-        placeholder="user@example.com"
-      />
-    </tui-textfield>
-  </div>
+  @if (!inviteLink) {
+    <div class="form-field">
+      <tui-textfield>
+        <label tuiLabel>Email Address</label>
+        <input
+          [formControl]="emailControl"
+          tuiTextfield
+          type="email"
+          placeholder="user@example.com"
+        />
+      </tui-textfield>
+    </div>
 
-  @if (errorMessage) {
-    <p class="error-message">{{ errorMessage }}</p>
+    @if (errorMessage) {
+      <p class="error-message">{{ errorMessage }}</p>
+    }
+
+    <div class="form-actions">
+      <button
+        tuiButton
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="emailControl.invalid || isSubmitting"
+      >
+        Send Invitation
+      </button>
+      <button
+        tuiButton
+        type="button"
+        appearance="flat"
+        (click)="onClose()"
+        [disabled]="isSubmitting"
+      >
+        Cancel
+      </button>
+    </div>
+  } @else {
+    <p class="success-message">Invitation sent successfully!</p>
+
+    @if (qrImageUrl) {
+      <div class="qr-section">
+        <img [src]="qrImageUrl" alt="Invitation QR Code" class="qr-image" />
+      </div>
+    }
+
+    <div class="link-section">
+      <code class="invite-link">{{ inviteLink }}</code>
+    </div>
+
+    <div class="form-actions">
+      <button
+        tuiButton
+        type="button"
+        appearance="flat"
+        size="s"
+        (click)="onCopyLink()"
+      >
+        <tui-icon icon="@tui.copy" />
+        {{ linkCopied ? 'Copied!' : 'Copy Link' }}
+      </button>
+      @if (qrImageUrl) {
+        <button
+          tuiButton
+          type="button"
+          appearance="flat"
+          size="s"
+          (click)="onDownloadQr()"
+        >
+          <tui-icon icon="@tui.download" />
+          Download QR
+        </button>
+      }
+      <span class="spacer"></span>
+      <button
+        tuiButton
+        type="button"
+        (click)="onClose()"
+      >
+        Done
+      </button>
+    </div>
   }
-
-  <div class="form-actions">
-    <button
-      tuiButton
-      type="button"
-      (click)="onSubmit()"
-      [disabled]="emailControl.invalid || isSubmitting"
-    >
-      Send Invitation
-    </button>
-    <button
-      tuiButton
-      type="button"
-      appearance="flat"
-      (click)="onCancel()"
-      [disabled]="isSubmitting"
-    >
-      Cancel
-    </button>
-  </div>
 </div>

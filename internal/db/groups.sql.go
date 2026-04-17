@@ -158,6 +158,31 @@ func (q *Queries) GetGroupInvitationByCode(ctx context.Context, code string) (Gr
 	return i, err
 }
 
+const getGroupInvitationByID = `-- name: GetGroupInvitationByID :one
+SELECT id, group_id, inviter_id, email, code, status, created_at FROM group_invitations
+WHERE id = $1 AND group_id = $2 LIMIT 1
+`
+
+type GetGroupInvitationByIDParams struct {
+	ID      pgtype.UUID `json:"id"`
+	GroupID pgtype.UUID `json:"group_id"`
+}
+
+func (q *Queries) GetGroupInvitationByID(ctx context.Context, arg GetGroupInvitationByIDParams) (GroupInvitation, error) {
+	row := q.db.QueryRow(ctx, getGroupInvitationByID, arg.ID, arg.GroupID)
+	var i GroupInvitation
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.InviterID,
+		&i.Email,
+		&i.Code,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listGroupMembers = `-- name: ListGroupMembers :many
 SELECT user_id FROM user_groups
 WHERE group_id = $1

@@ -15,8 +15,42 @@
   margin: 0;
 }
 
+.success-message {
+  color: var(--tui-status-positive);
+  margin: 0;
+  font-weight: 500;
+}
+
+.qr-section {
+  display: flex;
+  justify-content: center;
+}
+
+.qr-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 0.5rem;
+}
+
+.link-section {
+  display: flex;
+  justify-content: center;
+}
+
+.invite-link {
+  font-size: 0.8rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--tui-background-neutral-1);
+  border-radius: 0.25rem;
+  word-break: break-all;
+}
+
 .form-actions {
   display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.spacer {
+  flex: 1;
 }

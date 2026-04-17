@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -18,20 +19,23 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	qrcode "github.com/skip2/go-qrcode"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
 type Handler struct {
-	q      *db.Queries
-	email  *email.Service
-	logger *slog.Logger
+	q                *db.Queries
+	email            *email.Service
+	logger           *slog.Logger
+	webInviteBaseURL string
 }
 
-func NewHandler(q *db.Queries, email *email.Service, logger *slog.Logger) *Handler {
+func NewHandler(q *db.Queries, email *email.Service, logger *slog.Logger, webInviteBaseURL string) *Handler {
 	return &Handler{
-		q:      q,
-		email:  email,
-		logger: logger,
+		q:                q,
+		email:            email,
+		logger:           logger,
+		webInviteBaseURL: webInviteBaseURL,
 	}
 }
 
@@ -332,6 +336,106 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"group_id": groupIDStr,
 	})
+}
+
+func (h *Handler) GetInvitationQR(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	groupIDStr := chi.URLParam(r, "groupID")
+	groupID, err := uuid.Parse(groupIDStr)
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+	pgGroupID := pgtype.UUID{Bytes: groupID, Valid: true}
+
+	// Verify user is a member of the group
+	isMember, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{
+		UserID:  user.ID,
+		GroupID: pgGroupID,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "invitation_qr_check_membership_failed",
+			slog.String("component", "invitations"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to verify group membership", http.StatusInternalServerError)
+		return
+	}
+	if !isMember {
+		http.Error(w, "You are not a member of this group", http.StatusForbidden)
+		return
+	}
+
+	invitationIDStr := chi.URLParam(r, "invitationID")
+	invitationID, err := uuid.Parse(invitationIDStr)
+	if err != nil {
+		http.Error(w, "Invalid invitation ID", http.StatusBadRequest)
+		return
+	}
+	pgInvitationID := pgtype.UUID{Bytes: invitationID, Valid: true}
+
+	invitation, err := h.q.GetGroupInvitationByID(ctx, db.GetGroupInvitationByIDParams{
+		ID:      pgInvitationID,
+		GroupID: pgGroupID,
+	})
+	if err != nil {
+		log.WarnContext(ctx, "invitation_qr_not_found",
+			slog.String("component", "invitations"),
+			slog.String("invitation_id", invitationIDStr),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Invitation not found", http.StatusNotFound)
+		return
+	}
+
+	if invitation.Status != db.InvitationStatusPending {
+		http.Error(w, "Invitation already used", http.StatusBadRequest)
+		return
+	}
+
+	// Parse optional size parameter
+	size := 256
+	if sizeParam := r.URL.Query().Get("size"); sizeParam != "" {
+		if parsed, err := strconv.Atoi(sizeParam); err == nil {
+			if parsed >= 128 && parsed <= 1024 {
+				size = parsed
+			}
+		}
+	}
+
+	inviteURL := fmt.Sprintf("%s/groups?invite=%s", h.webInviteBaseURL, invitation.Code)
+
+	png, err := qrcode.Encode(inviteURL, qrcode.Medium, size)
+	if err != nil {
+		log.ErrorContext(ctx, "invitation_qr_generation_failed",
+			slog.String("component", "invitations"),
+			slog.String("invitation_id", invitationIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to generate QR code", http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoContext(ctx, "invitation_qr_generated",
+		slog.String("component", "invitations"),
+		slog.String("invitation_id", invitationIDStr),
+		slog.String("group_id", groupIDStr),
+		slog.Int("size", size),
+	)
+
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "private, max-age=3600")
+	w.Write(png)
 }
 
 const codeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"

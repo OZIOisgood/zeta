@@ -11,7 +11,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Remote Video Analysis**: Students upload videos of their practice; experts provide detailed feedback.
 - **Professional Dashboard**: Manage students, videos, and reviews in one place.
 - **Groups Management**: Create and manage user groups.
-- **Group Invitations**: Invite users to groups via email with a unique invite link and confirmation flow.
+- **Group Invitations**: Invite users to groups via email with a unique invite link, QR code generation, and confirmation flow.
 - **Seamless Uploads**: Direct high-quality video uploads powered by Mux.
 - **Secure Authentication**: Enterprise-grade auth via WorkOS.
 - **Video Reviews**: Add comments and feedback directly to video clips.
@@ -94,8 +94,9 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 1. An admin or expert opens the group details page and clicks "Invite User".
 2. A dialog prompts for the invitee's email address.
 3. The backend generates a unique 6-character code and sends an email with the invite link (`/groups?invite=<CODE>`).
-4. When the recipient opens the link, a confirmation dialog shows the group name and avatar.
-5. On acceptance, the user is added to the group and redirected to the group details page.
+4. The dialog displays a **QR code** (server-generated PNG) encoding the invite URL, with options to copy the link or download the QR image.
+5. When the recipient opens the link (or scans the QR code), a confirmation dialog shows the group name and avatar.
+6. On acceptance, the user is added to the group and redirected to the group details page.
 
 ### Live Coaching Flow
 

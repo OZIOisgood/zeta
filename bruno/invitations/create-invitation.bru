@@ -27,4 +27,5 @@ tests {
   expect(res.body.code).to.have.lengthOf(6);
 
   bru.setVar("inviteCode", res.body.code);
+  bru.setVar("invitationId", res.body.id);
 }

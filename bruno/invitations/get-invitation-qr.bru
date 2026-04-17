@@ -1,0 +1,20 @@
+meta {
+  name: Get Invitation QR Code
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/groups/{{groupId}}/invitations/{{invitationId}}/qr
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminBearerToken}}
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.headers['content-type']).to.equal('image/png');
+}
