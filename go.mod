@@ -19,6 +19,7 @@ require (
 )
 
 require (
+	github.com/AgoraIO-Community/go-tokenbuilder v1.4.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

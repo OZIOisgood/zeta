@@ -53,8 +53,9 @@
 
 ## 9. Documentation Resources
 
-- **LLM Docs**: Use these `llms-full.txt` resources for comprehensive documentation:
-  - **Taiga UI**: https://taiga-ui.dev/llms-full.txt
-  - **Mux**: https://www.mux.com/llms-full.txt
-  - **WorkOS**: https://workos.com/docs/llms-full.txt
-  - **Resend**: https://resend.com/docs/llms-full.txt
+- **LLM Docs**: Use these `llms.txt` or `llms-full.txt` resources for comprehensive documentation:
+  - **Taiga UI**: `https://taiga-ui.dev/v4/llms.txt` and `https://taiga-ui.dev/v4/llms-full.txt`
+  - **Mux**: `https://www.mux.com/llms.txt` and `https://www.mux.com/llms-full.txt`
+  - **Agora**: `https://docs.agora.io/en/llms.txt`
+  - **WorkOS**: `https://workos.com/docs/llms.txt` and `https://workos.com/docs/llms-full.txt`
+  - **Resend**: `https://resend.com/docs/llms.txt` and `https://resend.com/docs/llms-full.txt`

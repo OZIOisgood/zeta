@@ -1,0 +1,65 @@
+meta {
+  name: Create Booking
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/bookings
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentBearerToken}}
+}
+
+script:pre-request {
+  // Fetch a student token if not already set
+  if (!bru.getVar("studentBearerToken")) {
+    const res = await bru.runRequest("auth/get-student-token");
+    if (res.status === 200 && res.body && res.body.token) {
+      bru.setVar("studentBearerToken", res.body.token);
+    }
+  }
+
+  // Derive expertId from the admin bearer token (admin is the expert)
+  const adminToken = bru.getVar("adminBearerToken");
+  if (adminToken) {
+    try {
+      const payload = JSON.parse(atob(adminToken.split(".")[1]));
+      bru.setVar("expertId", payload.sub);
+    } catch(e) {}
+  }
+
+  // Fetch a session type ID if not already set
+  if (!bru.getVar("sessionTypeId")) {
+    const res = await bru.runRequest("coaching/list-session-types");
+    if (res.status === 200 && res.body && res.body.length > 0) {
+      bru.setVar("sessionTypeId", res.body[0].id);
+    }
+  }
+
+  // Generate a unique future date for each test run to avoid conflicts
+  const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + Math.floor(Math.random() * 180) * 24 * 60 * 60 * 1000);
+  future.setUTCHours(10, 0, 0, 0);
+  bru.setVar("bookingScheduledAt", future.toISOString());
+}
+
+body:json {
+  {
+    "expert_id": "{{expertId}}",
+    "session_type_id": "{{sessionTypeId}}",
+    "scheduled_at": "{{bookingScheduledAt}}",
+    "notes": "Looking forward to this session"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(201);
+  expect(res.body.id).to.be.a("string");
+  expect(res.body.session_type_id).to.be.a("string");
+  expect(res.body.status).to.equal("pending");
+
+  bru.setVar("bookingId", res.body.id);
+}

@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { TuiAlertService, TuiButton, TuiDialogService, TuiLink } from '@taiga-ui/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
 import { TuiElasticContainer } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { Observable, catchError, filter, map, of, startWith, switchMap, take } from 'rxjs';
+import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
 import { GroupPreferencesDialogComponent } from '../../shared/components/group-preferences-dialog/group-preferences-dialog.component';
 import { InviteDialogComponent } from '../../shared/components/invite-dialog/invite-dialog.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -21,9 +22,9 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     PageContainerComponent,
     UsersListComponent,
     TuiButton,
-    TuiLink,
     TuiCardLarge,
     TuiElasticContainer,
+    BreadcrumbsComponent,
   ],
   templateUrl: './group-details-page.component.html',
   styleUrls: ['./group-details-page.component.scss'],
@@ -31,10 +32,13 @@ import { PermissionsService } from '../../shared/services/permissions.service';
 })
 export class GroupDetailsPageComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly permissionsService = inject(PermissionsService);
   private readonly groupsService = inject(GroupsService);
   private readonly dialogs = inject(TuiDialogService);
   private readonly alerts = inject(TuiAlertService);
+
+  constructor() {}
 
   readonly groupId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
   readonly group$ = this.groupId$.pipe(
@@ -198,14 +202,20 @@ export class GroupDetailsPageComponent {
 
   openPreferencesDialog(group: Group): void {
     this.dialogs
-      .open<Group>(new PolymorpheusComponent(GroupPreferencesDialogComponent), {
+      .open<Group | null>(new PolymorpheusComponent(GroupPreferencesDialogComponent), {
         label: 'Group Preferences',
         size: 's',
         data: group,
       })
-      .pipe(take(1), filter(Boolean))
-      .subscribe(() => {
-        this.alerts.open('Group updated', { appearance: 'positive' }).subscribe();
+      .pipe(take(1))
+      .subscribe((result) => {
+        if (result === null) {
+          // Group was deleted — navigate back to groups list
+          this.alerts.open('Group deleted', { appearance: 'positive' }).subscribe();
+          this.router.navigate(['/groups']);
+        } else if (result) {
+          this.alerts.open('Group updated', { appearance: 'positive' }).subscribe();
+        }
       });
   }
 }

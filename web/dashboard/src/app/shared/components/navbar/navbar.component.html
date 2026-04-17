@@ -13,6 +13,7 @@
     <a *ngIf="showUploadVideo()" tuiTab routerLink="/upload-video" routerLinkActive>
       Upload video
     </a>
+    <a *ngIf="showSessions()" tuiTab routerLink="/sessions" routerLinkActive> Sessions </a>
   </tui-tabs>
 
   <ng-container *ngIf="user() as u">
@@ -90,6 +91,16 @@
     >
       <tui-icon icon="@tui.upload-cloud" [style.height.rem]="1.25"></tui-icon>
       Upload video
+    </a>
+    <a
+      *ngIf="showSessions()"
+      class="mobile-nav-item"
+      routerLink="/sessions"
+      routerLinkActive="active"
+      (click)="mobileMenuOpen.set(false)"
+    >
+      <tui-icon icon="@tui.calendar-check" [style.height.rem]="1.25"></tui-icon>
+      Sessions
     </a>
   </nav>
 

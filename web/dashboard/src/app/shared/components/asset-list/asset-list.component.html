@@ -1,6 +1,4 @@
-<h1 class="tui-text_h3 list-title" *ngIf="title" [tuiSkeleton]="loading ? title : ''">
-  {{ loading ? '' : title }}
-</h1>
+<app-section-header *ngIf="title" [title]="title" [loading]="loading"></app-section-header>
 
 <div class="grid" *ngIf="loading">
   <div
@@ -12,31 +10,27 @@
   ></div>
 </div>
 
-<tui-block-status *ngIf="!loading && assets.length === 0 && !showAddTile">
-  <img
-    alt="No videos yet"
-    src="/illustrations/bored-horse.png"
-    tuiSlot="top"
-    class="empty-illustration"
-  />
-  <h4>No videos yet</h4>
-  <span *ngIf="role === 'expert'">Your students haven't uploaded any videos yet.</span>
-  <span *ngIf="role !== 'expert'">There are no videos here yet.</span>
-</tui-block-status>
+<app-illustrated-message
+  *ngIf="!loading && assets.length === 0 && !showAddTile"
+  illustrationSrc="/illustrations/bored-horse.png"
+  illustrationAlt="No videos yet"
+  heading="No videos yet"
+  [description]="
+    role === 'expert'
+      ? 'Your students haven\'t uploaded any videos yet.'
+      : 'There are no videos here yet.'
+  "
+></app-illustrated-message>
 
-<tui-block-status *ngIf="!loading && assets.length === 0 && showAddTile">
-  <img
-    alt="No videos yet"
-    src="/illustrations/bored-horse.png"
-    tuiSlot="top"
-    class="empty-illustration"
-  />
-  <h4>Upload your first video</h4>
-  <span>Get started by uploading a video for review.</span>
-  <button tuiButton appearance="primary" type="button" (click)="addVideo.emit()">
-    Upload video
-  </button>
-</tui-block-status>
+<app-illustrated-message
+  *ngIf="!loading && assets.length === 0 && showAddTile"
+  illustrationSrc="/illustrations/bored-horse.png"
+  illustrationAlt="No videos yet"
+  heading="Upload your first video"
+  description="Get started by uploading a video for review."
+  [buttons]="[{ label: 'Upload video', appearance: 'primary' }]"
+  (buttonClick)="addVideo.emit()"
+></app-illustrated-message>
 
 <div class="grid" *ngIf="!loading && assets.length > 0">
   <div

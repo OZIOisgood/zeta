@@ -22,6 +22,23 @@ import (
 const CookieName = "zeta_session"
 const RefreshCookieName = "zeta_refresh"
 
+// cookieSecure returns false when DEV_AUTH_ENABLED is set, so that HttpOnly
+// cookies work over plain HTTP during local development. In production the
+// flag is never set, so Secure=true is always used.
+func cookieSecure() bool {
+	return os.Getenv("DEV_AUTH_ENABLED") != "true"
+}
+
+// cookieSameSite returns SameSiteLaxMode for local HTTP development (where
+// SameSiteNone requires Secure=true and would be rejected by browsers) and
+// SameSiteNoneMode for production (cross-site API ↔ frontend on different origins).
+func cookieSameSite() http.SameSite {
+	if os.Getenv("DEV_AUTH_ENABLED") == "true" {
+		return http.SameSiteLaxMode
+	}
+	return http.SameSiteNoneMode
+}
+
 type Handler struct {
 	logger *slog.Logger
 	q      *db.Queries
@@ -157,8 +174,8 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  time.Now().Add(24 * time.Hour),
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
 	})
 
 	// Store the refresh token in a separate HttpOnly cookie for token rotation on profile updates.
@@ -169,8 +186,8 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
 	})
 
 	h.logger.InfoContext(ctx, "auth_login_succeeded",
@@ -195,8 +212,8 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
 	})
 	http.SetCookie(w, &http.Cookie{
 		Name:     RefreshCookieName,
@@ -204,8 +221,8 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
 	})
 
 	// 2. Determine redirect URL
@@ -523,16 +540,16 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 				Value:    refreshResp.AccessToken,
 				Path:     "/",
 				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteNoneMode,
+				Secure:   cookieSecure(),
+				SameSite: cookieSameSite(),
 			})
 			http.SetCookie(w, &http.Cookie{
 				Name:     RefreshCookieName,
 				Value:    refreshResp.RefreshToken,
 				Path:     "/",
 				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteNoneMode,
+				Secure:   cookieSecure(),
+				SameSite: cookieSameSite(),
 			})
 		}
 	}

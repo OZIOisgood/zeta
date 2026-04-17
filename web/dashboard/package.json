@@ -39,6 +39,8 @@
     "@taiga-ui/kit": "^4.61.0",
     "@taiga-ui/layout": "^4.61.0",
     "@taiga-ui/polymorpheus": "^4.9.0",
+    "@taiga-ui/styles": "^4.61.0",
+    "agora-rtc-sdk-ng": "^4.24.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

@@ -1,0 +1,26 @@
+meta {
+  name: List Session Types
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/session-types
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminBearerToken}}
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body).to.be.an("array");
+  expect(res.body.length).to.be.above(0);
+  expect(res.body[0].id).to.be.a("string");
+  expect(res.body[0].name).to.be.a("string");
+  expect(res.body[0].duration_minutes).to.be.a("number");
+
+  bru.setVar("sessionTypeId", res.body[0].id);
+}

@@ -1,4 +1,4 @@
-<h1 class="tui-text_h3 list-title" *ngIf="title" [tuiSkeleton]="loading ? title : ''">{{ loading ? '' : title }}</h1>
+<app-section-header *ngIf="title" [title]="title" [loading]="loading"></app-section-header>
 
 <div class="grid" *ngIf="loading">
   <div
@@ -10,30 +10,23 @@
   ></div>
 </div>
 
-<tui-block-status *ngIf="!loading && groups.length === 0 && !showCreateTile">
-  <img
-    alt="No groups yet"
-    src="/illustrations/lonely-horse.png"
-    tuiSlot="top"
-    class="empty-illustration"
-  />
-  <h4>No groups yet</h4>
-  <span>You haven't joined any groups yet.</span>
-</tui-block-status>
+<app-illustrated-message
+  *ngIf="!loading && groups.length === 0 && !showCreateTile"
+  illustrationSrc="/illustrations/lonely-horse.png"
+  illustrationAlt="No groups yet"
+  heading="No groups yet"
+  description="You haven't joined any groups yet."
+></app-illustrated-message>
 
-<tui-block-status *ngIf="!loading && groups.length === 0 && showCreateTile">
-  <img
-    alt="No groups yet"
-    src="/illustrations/lonely-horse.png"
-    tuiSlot="top"
-    class="empty-illustration"
-  />
-  <h4>Create your first group</h4>
-  <span>Get started by creating a group for your students.</span>
-  <button tuiButton appearance="primary" type="button" (click)="createGroup.emit()">
-    Create group
-  </button>
-</tui-block-status>
+<app-illustrated-message
+  *ngIf="!loading && groups.length === 0 && showCreateTile"
+  illustrationSrc="/illustrations/lonely-horse.png"
+  illustrationAlt="No groups yet"
+  heading="Create your first group"
+  description="Get started by creating a group for your students."
+  [buttons]="[{ label: 'Create group', appearance: 'primary' }]"
+  (buttonClick)="createGroup.emit()"
+></app-illustrated-message>
 
 <div class="grid" *ngIf="!loading && groups.length > 0">
   <div

@@ -45,4 +45,8 @@ export class GroupsService {
   ): Observable<Group> {
     return this.http.put<Group>(`${this.apiUrl}/${id}`, data);
   }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }

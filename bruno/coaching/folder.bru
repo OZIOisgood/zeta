@@ -1,0 +1,20 @@
+meta {
+  seq: 10
+}
+
+script:pre-request {
+  // Auto-fetch a bearer token if not already set (enables running individual requests in the GUI)
+  if (!bru.getVar("adminBearerToken")) {
+    const res = await bru.runRequest("auth/get-token");
+    if (res.status === 200 && res.body && res.body.token) {
+      bru.setVar("adminBearerToken", res.body.token);
+    }
+  }
+  // Auto-fetch a group ID if not already set
+  if (!bru.getVar("groupId")) {
+    const res = await bru.runRequest("groups/list-groups");
+    if (res.status === 200 && res.body && res.body.length > 0) {
+      bru.setVar("groupId", res.body[0].id);
+    }
+  }
+}

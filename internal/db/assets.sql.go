@@ -86,7 +86,7 @@ type GetAssetRow struct {
 	MuxUploadID string             `json:"mux_upload_id"`
 	MuxAssetID  string             `json:"mux_asset_id"`
 	GroupName   pgtype.Text        `json:"group_name"`
-	GroupAvatar []byte             `json:"group_avatar"`
+	GroupAvatar pgtype.Text        `json:"group_avatar"`
 }
 
 func (q *Queries) GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error) {

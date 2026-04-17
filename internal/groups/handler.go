@@ -1,7 +1,6 @@
 package groups
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -18,27 +17,28 @@ import (
 
 // groupResponse is a JSON-safe DTO for db.Group.
 type groupResponse struct {
-	ID        string  `json:"id"`
-	Name      string  `json:"name"`
-	OwnerID   string  `json:"owner_id"`
-	Avatar    *string `json:"avatar"`
-	CreatedAt string  `json:"created_at"`
-	UpdatedAt string  `json:"updated_at"`
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	OwnerID     string  `json:"owner_id"`
+	Avatar      *string `json:"avatar"`
+	Description string  `json:"description"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
 }
 
 func toGroupResponse(g db.Group) groupResponse {
 	var avatar *string
-	if len(g.Avatar) > 0 {
-		enc := fmt.Sprintf("data:image/jpeg;base64,%s", base64.StdEncoding.EncodeToString(g.Avatar))
-		avatar = &enc
+	if g.Avatar != "" {
+		avatar = &g.Avatar
 	}
 	return groupResponse{
-		ID:        toUUIDString(g.ID),
-		Name:      g.Name,
-		OwnerID:   g.OwnerID,
-		Avatar:    avatar,
-		CreatedAt: g.CreatedAt.Time.Format(time.RFC3339),
-		UpdatedAt: g.UpdatedAt.Time.Format(time.RFC3339),
+		ID:          toUUIDString(g.ID),
+		Name:        g.Name,
+		OwnerID:     g.OwnerID,
+		Avatar:      avatar,
+		Description: g.Description,
+		CreatedAt:   g.CreatedAt.Time.Format(time.RFC3339),
+		UpdatedAt:   g.UpdatedAt.Time.Format(time.RFC3339),
 	}
 }
 
@@ -96,12 +96,13 @@ func (h *Handler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	dtos := make([]groupResponse, len(groups))
 	for i, g := range groups {
 		dtos[i] = toGroupResponse(db.Group{
-			ID:        g.ID,
-			Name:      g.Name,
-			OwnerID:   g.OwnerID,
-			Avatar:    g.Avatar,
-			CreatedAt: g.CreatedAt,
-			UpdatedAt: g.UpdatedAt,
+			ID:          g.ID,
+			Name:        g.Name,
+			OwnerID:     g.OwnerID,
+			Avatar:      g.Avatar,
+			Description: g.Description,
+			CreatedAt:   g.CreatedAt,
+			UpdatedAt:   g.UpdatedAt,
 		})
 	}
 
@@ -145,27 +146,15 @@ func (h *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decode avatar from base64 if provided
-	var avatarData []byte
-	if req.Avatar != "" {
-		var err error
-		avatarData, err = base64.StdEncoding.DecodeString(req.Avatar)
-		if err != nil {
-			http.Error(w, "Invalid avatar data", http.StatusBadRequest)
-			return
-		}
-
-		// Validate avatar size (max 300KB)
-		if len(avatarData) > 300*1024 {
-			http.Error(w, "Avatar size exceeds 300KB limit", http.StatusBadRequest)
-			return
-		}
+	if req.Avatar == "" {
+		http.Error(w, "Avatar is required", http.StatusBadRequest)
+		return
 	}
 
 	group, err := h.q.CreateGroup(ctx, db.CreateGroupParams{
 		Name:        req.Name,
 		OwnerID:     user.ID,
-		Avatar:      avatarData,
+		Avatar:      req.Avatar,
 		Description: req.Description,
 	})
 	if err != nil {
@@ -311,16 +300,7 @@ func (h *Handler) UpdateGroupPreferences(w http.ResponseWriter, r *http.Request)
 
 	avatarData := existing.Avatar
 	if req.Avatar != "" {
-		decoded, err := base64.StdEncoding.DecodeString(req.Avatar)
-		if err != nil {
-			http.Error(w, "Invalid avatar data", http.StatusBadRequest)
-			return
-		}
-		if len(decoded) > 300*1024 {
-			http.Error(w, "Avatar size exceeds 300KB limit", http.StatusBadRequest)
-			return
-		}
-		avatarData = decoded
+		avatarData = req.Avatar
 	}
 
 	group, err := h.q.UpdateGroup(ctx, db.UpdateGroupParams{
@@ -348,4 +328,53 @@ func (h *Handler) UpdateGroupPreferences(w http.ResponseWriter, r *http.Request)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(toGroupResponse(group))
+}
+
+func (h *Handler) DeleteGroup(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsDelete) {
+		log.WarnContext(ctx, "group_delete_permission_denied",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+		)
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	groupIDStr := chi.URLParam(r, "groupID")
+	var groupID pgtype.UUID
+	if err := groupID.Scan(groupIDStr); err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	err := h.q.DeleteGroup(ctx, db.DeleteGroupParams{
+		ID:      groupID,
+		OwnerID: user.ID,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "group_delete_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to delete group", http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoContext(ctx, "group_deleted",
+		slog.String("component", "groups"),
+		slog.String("user_id", user.ID),
+		slog.String("group_id", groupIDStr),
+	)
+
+	w.WriteHeader(http.StatusNoContent)
 }

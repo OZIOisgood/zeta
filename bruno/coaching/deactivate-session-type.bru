@@ -1,0 +1,28 @@
+meta {
+  name: Deactivate Session Type
+  type: http
+  seq: 17
+}
+
+delete {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/session-types/{{sessionTypeId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminBearerToken}}
+}
+
+script:pre-request {
+  if (!bru.getVar("sessionTypeId")) {
+    const res = await bru.runRequest("coaching/list-session-types");
+    if (res.status === 200 && res.body && res.body.length > 0) {
+      bru.setVar("sessionTypeId", res.body[0].id);
+    }
+  }
+}
+
+tests {
+  expect(res.status).to.equal(204);
+}

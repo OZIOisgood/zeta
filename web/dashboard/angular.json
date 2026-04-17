@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "pnpm"
+    "packageManager": "pnpm",
+    "analytics": false
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -37,6 +38,7 @@
             "styles": [
               "@taiga-ui/core/styles/taiga-ui-theme.less",
               "@taiga-ui/core/styles/taiga-ui-fonts.less",
+              "@taiga-ui/styles/taiga-ui-global.less",
               "src/styles.scss"
             ]
           },
@@ -71,7 +73,8 @@
               "buildTarget": "dashboard:build:production"
             },
             "development": {
-              "buildTarget": "dashboard:build:development"
+              "buildTarget": "dashboard:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

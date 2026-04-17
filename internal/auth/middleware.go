@@ -111,6 +111,28 @@ func RequireAuth(next http.Handler) http.Handler {
 	})
 }
 
+// RequirePermission returns a middleware that rejects requests where the authenticated
+// user does not hold the given permission string. Unauthenticated requests get 401;
+// requests without the permission get 403.
+func RequirePermission(permission string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			user := GetUser(r.Context())
+			if user == nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			for _, p := range user.Permissions {
+				if p == permission {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			http.Error(w, "Permission denied", http.StatusForbidden)
+		})
+	}
+}
+
 func GetUser(ctx context.Context) *UserContext {
 	user, ok := ctx.Value(UserKey).(*UserContext)
 	if !ok {

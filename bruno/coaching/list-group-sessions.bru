@@ -1,0 +1,20 @@
+meta {
+  name: List Group Sessions
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/sessions
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminBearerToken}}
+}
+
+tests {
+  expect(res.status).to.equal(200);
+  expect(res.body).to.be.an("array");
+}

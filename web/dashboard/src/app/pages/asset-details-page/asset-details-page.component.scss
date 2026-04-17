@@ -3,44 +3,20 @@
   padding-bottom: 2rem;
 }
 
-.header {
+.title-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.desktop-title {
-  display: none;
-  margin: 0;
-
-  @media (min-width: 64em) {
-    display: block;
-  }
-}
-
-.mobile-title {
-  display: block;
-
-  @media (min-width: 64em) {
-    display: none;
-  }
+  margin-bottom: 1rem;
 }
 
 .title {
-  margin: 0 0 1rem;
+  margin: 0;
 }
 
 .content-body {
   display: flex;
-  flex-direction: column-reverse;
-  gap: 1.5rem;
-}
-
-@media (min-width: 64em) {
-  .content-body {
-    flex-direction: column;
-  }
+  flex-direction: column;
 }
 
 .player-wrapper {

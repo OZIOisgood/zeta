@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { TuiAppearance, TuiButton, TuiSurface, TuiTitle } from '@taiga-ui/core';
 import { TuiAvatar, TuiSkeleton } from '@taiga-ui/kit';
-import { TuiBlockStatus, TuiCardMedium } from '@taiga-ui/layout';
+import { TuiCardMedium } from '@taiga-ui/layout';
 import { Group } from '../../services/groups.service';
+import { IllustratedMessageComponent } from '../illustrated-message/illustrated-message.component';
+import { SectionHeaderComponent } from '../section-header/section-header.component';
 
 @Component({
   selector: 'app-groups-list',
@@ -14,10 +16,11 @@ import { Group } from '../../services/groups.service';
     TuiSurface,
     TuiTitle,
     TuiAvatar,
-    TuiBlockStatus,
     TuiButton,
     TuiSkeleton,
     TuiAppearance,
+    SectionHeaderComponent,
+    IllustratedMessageComponent,
   ],
   templateUrl: './groups-list.component.html',
   styleUrls: ['./groups-list.component.scss'],

@@ -35,7 +35,7 @@ import {
   TuiTextarea,
   type TuiConfirmData,
 } from '@taiga-ui/kit';
-import { TuiBlockStatus, TuiCardLarge } from '@taiga-ui/layout';
+import { TuiCardLarge } from '@taiga-ui/layout';
 import {
   BehaviorSubject,
   combineLatest,
@@ -45,7 +45,10 @@ import {
   tap,
   type Observer,
 } from 'rxjs';
+import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
+import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { Asset, AssetService, Review } from '../../shared/services/asset.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
@@ -72,7 +75,9 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiLink,
     TuiBadge,
     TuiSkeleton,
-    TuiBlockStatus,
+    BreadcrumbsComponent,
+    IllustratedMessageComponent,
+    SectionHeaderComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',

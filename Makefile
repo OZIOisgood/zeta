@@ -11,6 +11,14 @@ api\:build:
 api\:start:
 	go run ./cmd/api
 
+api\:stop:
+	@kill $$(lsof -ti :8080) 2>/dev/null || true
+
+api\:restart:
+	@kill $$(lsof -ti :8080) 2>/dev/null || true
+	@sleep 1
+	go run ./cmd/api
+
 web\:build:
 	cd web/dashboard && pnpm install && pnpm run build
 

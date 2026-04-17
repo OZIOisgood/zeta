@@ -1,9 +1,3 @@
-.group-details-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding-bottom: 2rem;
-}
-
 .group-hero {
   margin-bottom: 1.5rem;
 }
@@ -82,5 +76,104 @@
 
   h2 {
     margin: 0;
+  }
+}
+
+.coaching-section {
+  margin-top: 1.5rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.sessions-empty {
+  color: var(--tui-text-secondary);
+}
+
+.sessions-table {
+  border: 1px solid var(--tui-border-normal);
+  border-radius: var(--tui-radius-m);
+  overflow: hidden;
+
+  &__header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr 0.75fr 1fr;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: var(--tui-background-neutral-1);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--tui-text-secondary);
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr 0.75fr 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--tui-border-normal);
+    align-items: center;
+
+    &:hover {
+      background: var(--tui-background-neutral-1-hover);
+    }
+  }
+
+  &__cell {
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 47.9375em) {
+    &__header {
+      display: none;
+    }
+
+    &__row {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem 0.5rem;
+      padding: 0.75rem;
+    }
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--tui-radius-s);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+
+  &--confirmed {
+    background: rgba(34, 197, 94, 0.15);
+    color: #16a34a;
+  }
+
+  &--completed {
+    background: rgba(59, 130, 246, 0.15);
+    color: #2563eb;
+  }
+
+  &--cancelled {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+  }
+
+  &--no_show {
+    background: rgba(234, 179, 8, 0.15);
+    color: #ca8a04;
   }
 }

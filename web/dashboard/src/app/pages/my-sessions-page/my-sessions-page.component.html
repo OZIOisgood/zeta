@@ -1,0 +1,195 @@
+<app-page-container>
+  <app-section-header title="Sessions">
+    <div class="header-actions">
+      @if (canManageAvailability()) {
+        <button
+          tuiIconButton
+          appearance="flat"
+          size="m"
+          title="Manage availability"
+          (click)="manageAvailability()"
+        >
+          <tui-icon icon="@tui.settings"></tui-icon>
+        </button>
+      }
+      @if (canBook()) {
+        <button
+          tuiIconButton
+          appearance="flat"
+          size="m"
+          title="Book a session"
+          (click)="bookSession()"
+        >
+          <tui-icon icon="@tui.plus"></tui-icon>
+        </button>
+      }
+    </div>
+  </app-section-header>
+
+  <div class="tabs">
+    <button
+      class="tab"
+      [class.tab--active]="activeTab() === 'upcoming'"
+      (click)="setTab('upcoming')"
+    >
+      Upcoming ({{ upcoming().length }})
+    </button>
+    <button class="tab" [class.tab--active]="activeTab() === 'past'" (click)="setTab('past')">
+      Past ({{ past().length }})
+    </button>
+    <button
+      class="tab"
+      [class.tab--active]="activeTab() === 'cancelled'"
+      (click)="setTab('cancelled')"
+    >
+      Cancelled ({{ cancelled().length }})
+    </button>
+  </div>
+
+  @if (loading()) {
+    <p class="tui-text_body-m loading-text">Loading sessions...</p>
+  } @else {
+    @if (activeTab() === 'upcoming') {
+      @if (upcoming().length === 0) {
+        <app-illustrated-message
+          illustrationSrc="illustrations/live-coaching.png"
+          illustrationAlt="No upcoming sessions"
+          heading="No upcoming sessions"
+          description="You don't have any sessions scheduled yet."
+          [buttons]="canBook() ? [{ label: 'Book a session', appearance: 'primary' }] : []"
+          (buttonClick)="bookSession()"
+        />
+      } @else {
+        <div class="session-list">
+          @for (booking of upcoming(); track booking.id) {
+            <div class="session-card">
+              <div class="session-info">
+                <div class="session-party-info">
+                  <span class="tui-text_body-m session-party">{{ otherParty(booking) }}</span>
+                  <span class="tui-text_body-s session-role">{{ otherPartyRole(booking) }}</span>
+                </div>
+                <span class="tui-text_body-s session-meta">{{
+                  formatDateTime(booking.scheduled_at)
+                }}</span>
+                <span class="tui-text_body-s session-meta">{{ booking.duration_minutes }} min</span>
+                @if (booking.session_type_name) {
+                  <span class="tui-text_body-s session-meta session-type">{{
+                    booking.session_type_name
+                  }}</span>
+                }
+                <span class="status-badge status-badge--pending">upcoming</span>
+              </div>
+              <div class="session-actions">
+                @if (canJoin(booking)) {
+                  <button tuiButton appearance="primary" size="s" (click)="joinSession(booking)">
+                    Join
+                  </button>
+                }
+                @if (canCancel(booking)) {
+                  <button tuiButton appearance="flat" size="s" (click)="openCancelDialog(booking)">
+                    Cancel
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab() === 'past') {
+      @if (past().length === 0) {
+        <app-illustrated-message
+          illustrationSrc="illustrations/live-coaching.png"
+          illustrationAlt="No past sessions"
+          heading="No past sessions"
+          description="Your completed sessions will appear here."
+        />
+      } @else {
+        <div class="session-list">
+          @for (booking of past(); track booking.id) {
+            <div class="session-card">
+              <div class="session-info">
+                <div class="session-party-info">
+                  <span class="tui-text_body-m session-party">{{ otherParty(booking) }}</span>
+                  <span class="tui-text_body-s session-role">{{ otherPartyRole(booking) }}</span>
+                </div>
+                <span class="tui-text_body-s session-meta">{{
+                  formatDateTime(booking.scheduled_at)
+                }}</span>
+                <span class="tui-text_body-s session-meta">{{ booking.duration_minutes }} min</span>
+                @if (booking.session_type_name) {
+                  <span class="tui-text_body-s session-meta session-type">{{
+                    booking.session_type_name
+                  }}</span>
+                }
+                <span class="status-badge status-badge--done">done</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab() === 'cancelled') {
+      @if (cancelled().length === 0) {
+        <app-illustrated-message
+          illustrationSrc="illustrations/live-coaching.png"
+          illustrationAlt="No cancelled sessions"
+          heading="No cancelled sessions"
+          description="You haven't cancelled any sessions."
+        />
+      } @else {
+        <div class="session-list">
+          @for (booking of cancelled(); track booking.id) {
+            <div class="session-card">
+              <div class="session-info">
+                <div class="session-party-info">
+                  <span class="tui-text_body-m session-party">{{ otherParty(booking) }}</span>
+                  <span class="tui-text_body-s session-role">{{ otherPartyRole(booking) }}</span>
+                </div>
+                <span class="tui-text_body-s session-meta">{{
+                  formatDateTime(booking.scheduled_at)
+                }}</span>
+                @if (booking.cancellation_reason) {
+                  <span class="tui-text_body-s session-meta"
+                    >Reason: {{ booking.cancellation_reason }}</span
+                  >
+                }
+                <span class="status-badge status-badge--cancelled">cancelled</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+</app-page-container>
+
+@if (cancelDialogOpen && cancelTarget) {
+  <div class="dialog-overlay" (click)="closeCancelDialog()">
+    <div class="dialog-card" (click)="$event.stopPropagation()">
+      <h3 class="tui-text_h4">Cancel Session</h3>
+      <p class="tui-text_body-m dialog-desc">
+        Are you sure you want to cancel your session with
+        <strong>{{ otherParty(cancelTarget) }}</strong>
+        on {{ formatDateTime(cancelTarget.scheduled_at) }}?
+      </p>
+      <label class="tui-text_body-s dialog-label">Reason (optional)</label>
+      <textarea
+        class="dialog-textarea"
+        rows="3"
+        placeholder="Let them know why you're cancelling..."
+        [(ngModel)]="cancelReason"
+      ></textarea>
+      <div class="dialog-actions">
+        <button tuiButton appearance="destructive" size="m" (click)="confirmCancel()">
+          Cancel Session
+        </button>
+        <button tuiButton appearance="flat" size="m" (click)="closeCancelDialog()">
+          Keep Session
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,9 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TuiButton, TuiDialogContext, TuiLabel, TuiTextfield } from '@taiga-ui/core';
-import { TuiTextarea } from '@taiga-ui/kit';
+import {
+  TuiAlertService,
+  TuiButton,
+  TuiDialogContext,
+  TuiDialogService,
+  TuiLabel,
+  TuiTextfield,
+} from '@taiga-ui/core';
+import { TUI_CONFIRM, TuiTextarea, type TuiConfirmData } from '@taiga-ui/kit';
 import { injectContext } from '@taiga-ui/polymorpheus';
+import { filter, switchMap } from 'rxjs';
+import { AuthService } from '../../services/auth.service';
 import { Group, GroupsService } from '../../services/groups.service';
 import { AvatarSelectorComponent } from '../avatar-selector/avatar-selector.component';
 
@@ -25,11 +34,16 @@ import { AvatarSelectorComponent } from '../avatar-selector/avatar-selector.comp
 })
 export class GroupPreferencesDialogComponent {
   private readonly groupsService = inject(GroupsService);
-  private readonly context = injectContext<TuiDialogContext<Group, Group>>();
+  private readonly auth = inject(AuthService);
+  private readonly dialogs = inject(TuiDialogService);
+  private readonly alerts = inject(TuiAlertService);
+  private readonly context = injectContext<TuiDialogContext<Group | null, Group>>();
 
   protected get group(): Group {
     return this.context.data;
   }
+
+  protected readonly isOwner = computed(() => this.auth.user()?.id === this.group.owner_id);
 
   protected readonly form = new FormGroup({
     name: new FormControl(this.group.name, [Validators.required]),
@@ -37,6 +51,7 @@ export class GroupPreferencesDialogComponent {
   });
 
   protected isSubmitting = false;
+  protected isDeleting = false;
   protected newAvatarBase64: string | null = null;
 
   protected getInitialAvatar(): string | null {
@@ -72,6 +87,40 @@ export class GroupPreferencesDialogComponent {
         error: (err) => {
           console.error('Failed to update group:', err);
           this.isSubmitting = false;
+        },
+      });
+  }
+
+  protected onDeleteGroup(): void {
+    if (this.isDeleting) return;
+
+    const data: TuiConfirmData = {
+      content: 'This action cannot be undone. All group data will be permanently deleted.',
+      yes: 'Delete Group',
+      no: 'Cancel',
+    };
+
+    this.dialogs
+      .open<boolean>(TUI_CONFIRM, {
+        label: 'Delete Group',
+        size: 's',
+        data,
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => {
+          this.isDeleting = true;
+          return this.groupsService.delete(this.group.id);
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.context.completeWith(null);
+        },
+        error: (err) => {
+          console.error('Failed to delete group:', err);
+          this.isDeleting = false;
+          this.alerts.open('Failed to delete group', { appearance: 'negative' }).subscribe();
         },
       });
   }

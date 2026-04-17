@@ -48,7 +48,7 @@ INSERT INTO groups (name, owner_id, avatar, description) VALUES ($1, $2, $3, $4)
 type CreateGroupParams struct {
 	Name        string `json:"name"`
 	OwnerID     string `json:"owner_id"`
-	Avatar      []byte `json:"avatar"`
+	Avatar      string `json:"avatar"`
 	Description string `json:"description"`
 }
 
@@ -102,6 +102,20 @@ func (q *Queries) CreateGroupInvitation(ctx context.Context, arg CreateGroupInvi
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const deleteGroup = `-- name: DeleteGroup :exec
+DELETE FROM groups WHERE id = $1 AND owner_id = $2
+`
+
+type DeleteGroupParams struct {
+	ID      pgtype.UUID `json:"id"`
+	OwnerID string      `json:"owner_id"`
+}
+
+func (q *Queries) DeleteGroup(ctx context.Context, arg DeleteGroupParams) error {
+	_, err := q.db.Exec(ctx, deleteGroup, arg.ID, arg.OwnerID)
+	return err
 }
 
 const getGroup = `-- name: GetGroup :one
@@ -181,7 +195,7 @@ type ListUserGroupsRow struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
 	OwnerID     string             `json:"owner_id"`
-	Avatar      []byte             `json:"avatar"`
+	Avatar      string             `json:"avatar"`
 	Description string             `json:"description"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
@@ -237,7 +251,7 @@ type UpdateGroupParams struct {
 	ID          pgtype.UUID `json:"id"`
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
-	Avatar      []byte      `json:"avatar"`
+	Avatar      string      `json:"avatar"`
 }
 
 func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error) {

@@ -1,0 +1,34 @@
+meta {
+  name: Create Availability
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/groups/{{groupId}}/coaching/availability
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminBearerToken}}
+}
+
+body:json {
+  {
+    "day_of_week": 1,
+    "start_time": "09:00",
+    "end_time": "12:00"
+  }
+}
+
+tests {
+  expect(res.status).to.equal(201);
+  expect(res.body.id).to.be.a("string");
+  expect(res.body.day_of_week).to.equal(1);
+  expect(res.body.start_time).to.equal("09:00");
+  expect(res.body.end_time).to.equal("12:00");
+  expect(res.body.is_active).to.equal(true);
+
+  bru.setVar("availabilityId", res.body.id);
+}

@@ -38,3 +38,6 @@ DELETE FROM user_groups WHERE user_id = $1 AND group_id = $2;
 
 -- name: UpdateGroupInvitationStatus :exec
 UPDATE group_invitations SET status = @status WHERE id = @id;
+
+-- name: DeleteGroup :exec
+DELETE FROM groups WHERE id = $1 AND owner_id = $2;

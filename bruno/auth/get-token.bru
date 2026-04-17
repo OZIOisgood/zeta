@@ -22,5 +22,5 @@ tests {
   expect(res.body.token).to.be.a("string");
   expect(res.body.token).to.have.length.above(10);
 
-  bru.setVar("bearerToken", res.body.token);
+  bru.setVar("adminBearerToken", res.body.token);
 }

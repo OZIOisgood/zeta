@@ -1,0 +1,231 @@
+.step-description {
+  color: var(--tui-text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.step-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.session-types-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.session-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--tui-background-neutral-1);
+  border: none;
+  outline: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--tui-background-neutral-2);
+  }
+}
+
+.session-type-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.session-type-name {
+  font-weight: 500;
+}
+
+.session-type-desc {
+  color: var(--tui-text-secondary);
+}
+
+.session-type-duration {
+  white-space: nowrap;
+  padding: 0.125rem 0.625rem;
+  border-radius: 2rem;
+  background: var(--tui-background-neutral-2);
+  color: var(--tui-text-secondary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.experts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.expert-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  background: var(--tui-background-neutral-1);
+  border: 1px solid var(--tui-border-normal);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--tui-border-focus);
+  }
+}
+
+.expert-name {
+  text-align: center;
+  font-weight: 500;
+}
+
+.skeleton-card {
+  aspect-ratio: 1;
+  width: 100%;
+  min-height: 175px;
+}
+
+.skeleton-row {
+  pointer-events: none;
+  height: 3.5rem;
+}
+
+.calendar-layout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.calendar-panel {
+  min-width: 0;
+}
+
+.slots-panel {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.slots-panel-title {
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.slots-panel-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 200px;
+}
+
+.slot-chips {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  // max-height: 320px;
+  overflow-y: auto;
+}
+
+.slot-chip {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--tui-border-normal);
+  border-radius: 0.75rem;
+  background: var(--tui-background-base);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: center;
+  font-family: inherit;
+  color: inherit;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: var(--tui-background-neutral-1);
+    border-color: var(--tui-border-focus);
+  }
+}
+
+.confirm-summary {
+}
+
+.confirm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--tui-border-normal);
+
+  &:first-child {
+    border-top: 1px solid var(--tui-border-normal);
+  }
+}
+
+.confirm-label {
+  color: var(--tui-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.success-message {
+  padding: 2rem;
+  text-align: center;
+  color: var(--tui-text-positive);
+}
+
+.empty-text {
+  color: var(--tui-text-secondary);
+  padding: 1rem 0;
+}
+
+@media (max-width: 47.9375em) {
+  .experts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .calendar-panel {
+    justify-self: center;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .slots-panel {
+    min-height: auto;
+  }
+
+  .slot-chips {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .confirm-row {
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+}

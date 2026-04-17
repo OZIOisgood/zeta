@@ -1,0 +1,244 @@
+<app-page-container>
+  <div class="availability-page">
+    <app-breadcrumbs [items]="breadcrumbItems"></app-breadcrumbs>
+
+    <app-section-header title="Manage Availability"></app-section-header>
+
+    @if (groups().length > 1 && !selectedGroup) {
+      <div class="group-select-section">
+        <p class="tui-text_body-m">
+          Select the group for which you want to manage your availability:
+        </p>
+        <div class="group-list">
+          @for (g of groups(); track g.id) {
+            <button class="group-row" type="button" (click)="selectGroup(g)">
+              <div class="group-row-info">
+                <span class="tui-text_body-m group-row-name">{{ g.name }}</span>
+              </div>
+            </button>
+          }
+        </div>
+      </div>
+    } @else if (loading()) {
+      <p class="tui-text_body-m">Loading...</p>
+    } @else {
+      <div class="tabs">
+        <button
+          class="tab"
+          [class.tab--active]="activeTab() === 'session-types'"
+          (click)="setTab('session-types')"
+        >
+          Session Types ({{ sessionTypes().length }})
+        </button>
+        <button
+          class="tab"
+          [class.tab--active]="activeTab() === 'schedule'"
+          (click)="setTab('schedule')"
+        >
+          Weekly Schedule ({{ availability().length }})
+        </button>
+        <button
+          class="tab"
+          [class.tab--active]="activeTab() === 'blocked'"
+          (click)="setTab('blocked')"
+        >
+          Blocked Dates ({{ blockedSlots().length }})
+        </button>
+      </div>
+
+      <!-- Session Types Tab -->
+      @if (activeTab() === 'session-types') {
+        <div class="tab-action">
+          <button
+            tuiButton
+            appearance="flat"
+            size="s"
+            iconStart="@tui.plus"
+            (click)="openSessionTypeDialog()"
+          >
+            Add Session Type
+          </button>
+        </div>
+
+        @if (sessionTypes().length === 0) {
+          <app-illustrated-message
+            illustrationSrc="/illustrations/lonely-horse.png"
+            heading="No session types yet"
+            description="Add a session type so students can book with you."
+          ></app-illustrated-message>
+        }
+
+        @for (st of sessionTypes(); track st.id) {
+          <div class="availability-row">
+            <div class="availability-item">
+              <div>
+                <span class="tui-text_body-m availability-label">
+                  {{ st.name }} &nbsp;&bull;&nbsp; {{ st.duration_minutes }} min
+                </span>
+                @if (st.description) {
+                  <p class="tui-text_body-s session-type-desc">{{ st.description }}</p>
+                }
+              </div>
+              <div class="item-actions">
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.pencil"
+                  (click)="openSessionTypeDialog(st)"
+                >
+                  Edit
+                </button>
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.trash-2"
+                  (click)="deleteSessionType(st.id)"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- Weekly Schedule Tab -->
+      @if (activeTab() === 'schedule') {
+        <div class="tab-action">
+          <div class="timezone-row">
+            @if (editingTimezone) {
+              <input
+                type="text"
+                class="time-input timezone-input"
+                [(ngModel)]="timezoneInput"
+                placeholder="e.g. Europe/Berlin"
+              />
+              <button tuiButton size="xs" type="button" (click)="saveTimezone()">Save</button>
+              <button
+                tuiButton
+                appearance="flat"
+                size="xs"
+                type="button"
+                (click)="cancelEditTimezone()"
+              >
+                Cancel
+              </button>
+            } @else {
+              <p class="tui-text_body-s timezone-label">
+                Times are in your timezone (<strong>{{ userTimezone() }}</strong
+                >)
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.pencil"
+                  (click)="startEditTimezone()"
+                >
+                  Change
+                </button>
+              </p>
+            }
+          </div>
+          <button
+            tuiButton
+            appearance="flat"
+            size="s"
+            iconStart="@tui.plus"
+            (click)="openAvailabilityDialog()"
+          >
+            Add Availability
+          </button>
+        </div>
+
+        @if (availability().length === 0) {
+          <app-illustrated-message
+            illustrationSrc="/illustrations/lonely-horse.png"
+            heading="No availability yet"
+            description="Add availability blocks to start accepting bookings."
+          ></app-illustrated-message>
+        }
+
+        @for (a of availability(); track a.id) {
+          <div class="availability-row">
+            <div class="availability-item">
+              <span class="tui-text_body-m availability-label">
+                {{ dayName(a.day_of_week) }} &nbsp;&bull;&nbsp; {{ a.start_time }} –
+                {{ a.end_time }}
+              </span>
+              <div class="item-actions">
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.pencil"
+                  (click)="openAvailabilityDialog(a)"
+                >
+                  Edit
+                </button>
+                <button
+                  tuiButton
+                  appearance="flat"
+                  size="xs"
+                  iconStart="@tui.trash-2"
+                  (click)="deleteAvailability(a.id)"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- Blocked Dates Tab -->
+      @if (activeTab() === 'blocked') {
+        <div class="tab-action">
+          <button
+            tuiButton
+            appearance="flat"
+            size="s"
+            iconStart="@tui.plus"
+            (click)="openBlockedSlotDialog()"
+          >
+            Add Block Time
+          </button>
+        </div>
+
+        @if (blockedSlots().length === 0) {
+          <app-illustrated-message
+            illustrationSrc="/illustrations/bored-horse.png"
+            heading="No blocked dates"
+            description="Block specific dates or times when you're unavailable."
+          ></app-illustrated-message>
+        }
+
+        @for (slot of blockedSlots(); track slot.id) {
+          <div class="availability-item">
+            <span class="tui-text_body-m availability-label">
+              {{ formatBlockedDate(slot.blocked_date) }}
+              @if (!slot.start_time) {
+                &nbsp;&bull;&nbsp;Full day
+              } @else {
+                &nbsp;&bull;&nbsp;{{ slot.start_time }} – {{ slot.end_time }}
+              }
+              @if (slot.reason) {
+                &nbsp;&bull;&nbsp;<em>{{ slot.reason }}</em>
+              }
+            </span>
+            <button
+              tuiButton
+              appearance="flat"
+              size="xs"
+              iconStart="@tui.trash-2"
+              (click)="deleteBlockedSlot(slot.id)"
+            >
+              Delete
+            </button>
+          </div>
+        }
+      }
+    }
+  </div>
+</app-page-container>

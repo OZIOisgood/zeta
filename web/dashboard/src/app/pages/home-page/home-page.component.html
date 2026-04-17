@@ -1,4 +1,55 @@
 <app-page-container>
+  @if (showCoachingWidget()) {
+    <div class="coaching-widget">
+      <app-section-header title="Upcoming Coaching Sessions">
+        <a tuiButton appearance="flat" size="s" routerLink="/sessions">View all</a>
+      </app-section-header>
+      @if (bookingsLoading()) {
+        <p class="tui-text_body-m widget-empty">Loading…</p>
+      } @else if (upcomingBookings().length === 0) {
+        <app-illustrated-message
+          illustrationSrc="/illustrations/live-coaching.png"
+          illustrationAlt="No upcoming coaching sessions"
+          heading="No upcoming coaching sessions"
+          description="Book a live coaching session to get personalized feedback."
+          [buttons]="
+            canBook()
+              ? [
+                  {
+                    label: 'Book Live Coaching',
+                    appearance: 'primary',
+                    routerLink: '/sessions/book',
+                  },
+                ]
+              : []
+          "
+        ></app-illustrated-message>
+      } @else {
+        <div class="sessions-list">
+          @for (session of upcomingBookings(); track session.id) {
+            <div class="session-row">
+              <span class="session-row__party">{{
+                session.expert_name || session.student_name
+              }}</span>
+              <span class="session-row__date">{{
+                formatSessionDateTime(session.scheduled_at)
+              }}</span>
+              <span class="session-row__duration">{{ session.duration_minutes }} min</span>
+              <span class="status-badge status-badge--{{ session.status }}">{{
+                session.status
+              }}</span>
+              @if (canJoinSession(session)) {
+                <button tuiButton appearance="primary" size="xs" (click)="joinSession(session)">
+                  Join
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
   <app-asset-list
     [assets]="(assets$ | async) || []"
     [loading]="loading()"

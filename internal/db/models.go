@@ -193,11 +193,69 @@ type Asset struct {
 	OwnerID     string             `json:"owner_id"`
 }
 
+type CoachingAvailability struct {
+	ID        pgtype.UUID        `json:"id"`
+	ExpertID  string             `json:"expert_id"`
+	GroupID   pgtype.UUID        `json:"group_id"`
+	DayOfWeek int16              `json:"day_of_week"`
+	StartTime pgtype.Time        `json:"start_time"`
+	EndTime   pgtype.Time        `json:"end_time"`
+	IsActive  bool               `json:"is_active"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type CoachingBlockedSlot struct {
+	ID          pgtype.UUID        `json:"id"`
+	ExpertID    string             `json:"expert_id"`
+	BlockedDate pgtype.Date        `json:"blocked_date"`
+	StartTime   pgtype.Time        `json:"start_time"`
+	EndTime     pgtype.Time        `json:"end_time"`
+	Reason      pgtype.Text        `json:"reason"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type CoachingBooking struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ExpertID           string             `json:"expert_id"`
+	StudentID          string             `json:"student_id"`
+	GroupID            pgtype.UUID        `json:"group_id"`
+	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
+	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes    int32              `json:"duration_minutes"`
+	IsCancelled        bool               `json:"is_cancelled"`
+	CancellationReason pgtype.Text        `json:"cancellation_reason"`
+	CancelledBy        pgtype.Text        `json:"cancelled_by"`
+	Notes              pgtype.Text        `json:"notes"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type CoachingBookingReminder struct {
+	ID        pgtype.UUID        `json:"id"`
+	BookingID pgtype.UUID        `json:"booking_id"`
+	RemindAt  pgtype.Timestamptz `json:"remind_at"`
+	SentAt    pgtype.Timestamptz `json:"sent_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type CoachingSessionType struct {
+	ID              pgtype.UUID        `json:"id"`
+	ExpertID        string             `json:"expert_id"`
+	GroupID         pgtype.UUID        `json:"group_id"`
+	Name            string             `json:"name"`
+	Description     string             `json:"description"`
+	DurationMinutes int32              `json:"duration_minutes"`
+	IsActive        bool               `json:"is_active"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Group struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
 	OwnerID     string             `json:"owner_id"`
-	Avatar      []byte             `json:"avatar"`
+	Avatar      string             `json:"avatar"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	Description string             `json:"description"`
@@ -225,6 +283,7 @@ type UserPreference struct {
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 	Avatar    string           `json:"avatar"`
+	Timezone  string           `json:"timezone"`
 }
 
 type Video struct {

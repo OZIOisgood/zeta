@@ -1,0 +1,270 @@
+<app-page-container>
+  <app-section-header title="Book Live Coaching"></app-section-header>
+
+  <tui-stepper
+    [activeItemIndex]="activeIndex"
+    (activeItemIndexChange)="onActiveIndexChange($event)"
+    style="margin-bottom: 2rem"
+  >
+    <button tuiStep icon="@tui.users">Select Group</button>
+    <button tuiStep icon="@tui.user" [disabled]="activeIndex < 1">Select Expert</button>
+    <button tuiStep icon="@tui.layers" [disabled]="activeIndex < 2">Session Type</button>
+    <button tuiStep icon="@tui.calendar" [disabled]="activeIndex < 3">Select Time</button>
+    <button tuiStep icon="@tui.check" [disabled]="activeIndex < 4">Confirm</button>
+  </tui-stepper>
+
+  <div [tuiSlides]="slideDirection" style="overflow: hidden">
+    @switch (activeIndex) {
+      <!-- Step 1: Select Group -->
+      @case (0) {
+        <div>
+          <p class="tui-text_body-m step-description">
+            Select a group to book a coaching session in.
+          </p>
+          <app-groups-list
+            [groups]="groups()"
+            [loading]="groupsLoading()"
+            [title]="''"
+            (selectGroup)="onGroupSelect($event)"
+          ></app-groups-list>
+        </div>
+      }
+
+      <!-- Step 2: Select Expert -->
+      @case (1) {
+        <div>
+          @if (expertsLoading()) {
+            <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
+            <div class="experts-grid">
+              @for (_ of [1, 2, 3]; track _) {
+                <div
+                  tuiAppearance="neutral"
+                  tuiCardMedium
+                  class="skeleton-card"
+                  [tuiSkeleton]="true"
+                ></div>
+              }
+            </div>
+          } @else if (experts().length === 0) {
+            <app-illustrated-message
+              illustrationSrc="illustrations/lonely-horse.png"
+              illustrationAlt="No experts available"
+              heading="No experts available"
+              description="There are no experts with availability in this group yet. Please check back later or try another group."
+            />
+          } @else {
+            <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
+            <div class="experts-grid">
+              @for (expert of experts(); track expert.expert_id) {
+                <button class="expert-card" type="button" (click)="selectExpert(expert)">
+                  <tui-avatar [src]="expertAvatarSrc(expert)" size="l"></tui-avatar>
+                  <span class="tui-text_body-m expert-name"
+                    >{{ expert.first_name }} {{ expert.last_name }}</span
+                  >
+                </button>
+              }
+            </div>
+          }
+          <div class="step-nav">
+            <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+              Back
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Step 3: Session Type -->
+      @case (2) {
+        <div>
+          @if (sessionTypesLoading()) {
+            <p class="tui-text_body-m step-description">
+              Choose the type of session you'd like to book.
+            </p>
+            <div class="session-types-list">
+              @for (_ of [1, 2, 3]; track _) {
+                <div class="session-type-row skeleton-row" [tuiSkeleton]="true">
+                  <span>&nbsp;</span>
+                </div>
+              }
+            </div>
+          } @else if (sessionTypes().length === 0) {
+            <app-illustrated-message
+              illustrationSrc="illustrations/lonely-horse.png"
+              illustrationAlt="No session types"
+              heading="No session types configured"
+              description="The expert hasn't set up any session types yet. Please check back later or contact your coach."
+            />
+          } @else {
+            <p class="tui-text_body-m step-description">
+              Choose the type of session you'd like to book.
+            </p>
+            <div class="session-types-list">
+              @for (type of sessionTypes(); track type.id) {
+                <button class="session-type-row" type="button" (click)="selectSessionType(type)">
+                  <div class="session-type-info">
+                    <span class="tui-text_body-m session-type-name">{{ type.name }}</span>
+                    @if (type.description) {
+                      <span class="tui-text_body-s session-type-desc">{{ type.description }}</span>
+                    }
+                  </div>
+                  <span class="tui-text_body-s session-type-duration"
+                    >{{ type.duration_minutes }} min</span
+                  >
+                </button>
+              }
+            </div>
+          }
+
+          <div class="step-nav">
+            <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+              Back
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Step 4: Select Slot -->
+      @case (3) {
+        <div>
+          @if (slotsLoading()) {
+            <p class="tui-text_body-m step-description">
+              Pick a date and time that works for you. All times are in your local timezone.
+            </p>
+            <div class="calendar-layout">
+              <div
+                class="calendar-panel"
+                [tuiSkeleton]="true"
+                style="height: 320px; border-radius: 0.75rem"
+              ></div>
+              <div class="slots-panel">
+                <div class="slots-panel-placeholder">
+                  <span class="tui-text_body-m" style="color: var(--tui-text-tertiary)"
+                    >Loading available times...</span
+                  >
+                </div>
+              </div>
+            </div>
+          } @else if (slots().length === 0) {
+            <app-illustrated-message
+              illustrationSrc="illustrations/lonely-horse.png"
+              illustrationAlt="No available times"
+              heading="No available times"
+              description="This expert doesn't have any open slots right now. Try a different session type or check back later."
+            />
+          } @else {
+            <p class="tui-text_body-m step-description">
+              Pick a date and time that works for you. All times are in your local timezone.
+            </p>
+            <div class="calendar-layout">
+              <div class="calendar-panel">
+                <tui-calendar
+                  [value]="selectedCalendarDate"
+                  [month]="calendarMonth"
+                  [min]="calendarMin"
+                  [max]="calendarMax"
+                  [disabledItemHandler]="disabledDayHandler"
+                  [markerHandler]="markerHandler"
+                  (dayClick)="onDayClick($event)"
+                  (monthChange)="calendarMonth = $event"
+                ></tui-calendar>
+              </div>
+              <div class="slots-panel" #slotsPanel>
+                @if (selectedCalendarDate) {
+                  <h3 class="tui-text_body-l-2 slots-panel-title">{{ selectedDateLabel }}</h3>
+                  <div class="slot-chips">
+                    @for (slot of slotsForSelectedDate; track slot.starts_at) {
+                      <button class="slot-chip" type="button" (click)="selectSlot(slot)">
+                        {{ formatTime(slot.starts_at) }}
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <div class="slots-panel-placeholder">
+                    <span class="tui-text_body-m" style="color: var(--tui-text-tertiary)"
+                      >Select a date to see available times</span
+                    >
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="step-nav">
+            <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+              Back
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Step 5: Confirm -->
+      @case (4) {
+        <div>
+          @if (booked) {
+            <div class="success-message">
+              <span class="tui-text_h4">✓ Session booked! Redirecting to My Sessions...</span>
+            </div>
+          } @else if (selectedSlot) {
+            <p class="tui-text_body-m step-description">
+              Review your session details and confirm your booking.
+            </p>
+
+            <div class="confirm-summary">
+              <div class="confirm-row">
+                <span class="confirm-label">Group</span>
+                <span>{{ selectedGroup?.name }}</span>
+              </div>
+              <div class="confirm-row">
+                <span class="confirm-label">Expert</span>
+                <span>{{ selectedExpertName }}</span>
+              </div>
+              @if (selectedSessionType) {
+                <div class="confirm-row">
+                  <span class="confirm-label">Session</span>
+                  <span>{{ selectedSessionType.name }}</span>
+                </div>
+              }
+              <div class="confirm-row">
+                <span class="confirm-label">Date & Time</span>
+                <span>{{ formatSlotDateTime(selectedSlot) }}</span>
+              </div>
+              <div class="confirm-row">
+                <span class="confirm-label">Duration</span>
+                <span
+                  >{{
+                    selectedSessionType?.duration_minutes ?? selectedSlot.duration_minutes
+                  }}
+                  minutes</span
+                >
+              </div>
+            </div>
+
+            <tui-textfield style="margin-top: 1.5rem">
+              <label tuiLabel>Notes (optional)</label>
+              <textarea
+                tuiTextarea
+                [(ngModel)]="notes"
+                placeholder="Anything you'd like to share with the expert..."
+              ></textarea>
+            </tui-textfield>
+
+            <div class="step-nav">
+              <button tuiButton appearance="flat" size="m" type="button" (click)="onBack()">
+                Back
+              </button>
+              <button
+                tuiButton
+                size="m"
+                type="button"
+                [disabled]="booking"
+                (click)="confirmBooking()"
+              >
+                {{ booking ? 'Booking...' : 'Book Session' }}
+              </button>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</app-page-container>

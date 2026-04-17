@@ -2,7 +2,6 @@ package assets
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -267,8 +266,8 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 	var group *GroupInfo
 	if asset.GroupID.Valid && asset.GroupName.Valid {
 		groupAvatar := ""
-		if len(asset.GroupAvatar) > 0 {
-			groupAvatar = base64.StdEncoding.EncodeToString(asset.GroupAvatar)
+		if asset.GroupAvatar.Valid {
+			groupAvatar = asset.GroupAvatar.String
 		}
 		group = &GroupInfo{
 			ID:     toUUIDString(asset.GroupID),

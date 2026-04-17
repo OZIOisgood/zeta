@@ -5,7 +5,9 @@ import { Router } from '@angular/router';
 import { TuiButton, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiTextarea } from '@taiga-ui/kit';
 import { AvatarSelectorComponent } from '../../shared/components/avatar-selector/avatar-selector.component';
+import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
+import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { GroupsService } from '../../shared/services/groups.service';
 
 @Component({
@@ -14,6 +16,8 @@ import { GroupsService } from '../../shared/services/groups.service';
   imports: [
     CommonModule,
     PageContainerComponent,
+    SectionHeaderComponent,
+    BreadcrumbsComponent,
     ReactiveFormsModule,
     TuiButton,
     TuiLabel,
@@ -46,7 +50,7 @@ export class CreateGroupPageComponent {
   }
 
   protected onSubmit(): void {
-    if (this.form.invalid || this.isSubmitting) {
+    if (this.form.invalid || this.isSubmitting || !this.avatarBase64) {
       return;
     }
 

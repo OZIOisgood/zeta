@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	_ "time/tzdata" // embed IANA timezone database for Cloud Run (alpine has no tzdata)
 
 	"github.com/OZIOisgood/zeta/internal/api"
 	"github.com/OZIOisgood/zeta/internal/logger"

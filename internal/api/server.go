@@ -10,6 +10,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/assets"
 	"github.com/OZIOisgood/zeta/internal/auth"
+	"github.com/OZIOisgood/zeta/internal/coaching"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/groups"
@@ -71,6 +72,14 @@ func (s *Server) routes() {
 	invitationsHandler := invitations.NewHandler(queries, emailService, s.Logger)
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService)
+	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, s.Logger, coaching.HandlerConfig{
+		AgoraAppID:          os.Getenv("AGORA_APP_ID"),
+		AgoraAppCertificate: os.Getenv("AGORA_APP_CERTIFICATE"),
+		SchedulerSecret:     os.Getenv("SCHEDULER_SECRET"),
+		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
+		CancellationNotice:  parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
+		ConnectWindow:       parseDurationOrDefault(os.Getenv("CONNECT_WINDOW"), 15*time.Minute),
+	})
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware(s.Logger, jwksCache))
@@ -107,13 +116,18 @@ func (s *Server) routes() {
 			r.Post("/", groupsHandler.CreateGroup)
 			r.Get("/{groupID}", groupsHandler.GetGroupByID)
 			r.Put("/{groupID}", groupsHandler.UpdateGroupPreferences)
+			r.Delete("/{groupID}", groupsHandler.DeleteGroup)
 			r.Get("/{groupID}/users", usersHandler.ListGroupUsers)
 			r.Delete("/{groupID}/users/{userID}", usersHandler.RemoveGroupUser)
 			r.Post("/{groupID}/invitations", invitationsHandler.CreateInvitation)
 			r.Get("/invitations/{code}", invitationsHandler.GetInvitationInfo)
 			r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)
 		})
+		coachingHandler.RegisterRoutes(r)
 	})
+
+	// Internal routes (not behind user auth — protected by scheduler secret)
+	s.Router.Post("/internal/coaching/reminders", coachingHandler.ProcessReminders)
 }
 
 // allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)
@@ -128,4 +142,15 @@ func allowedOrigins() []string {
 		}
 	}
 	return origins
+}
+
+func parseDurationOrDefault(s string, fallback time.Duration) time.Duration {
+	if s == "" {
+		return fallback
+	}
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return fallback
+	}
+	return d
 }
