@@ -7,7 +7,6 @@
 
 ## 2. Database & Infrastructure
 
-- **Migrations**: Since data is not yet valuable, prefer **editing existing migrations** to refine the schema rather than creating new ones.
 - **Environment**: We frequently restart the Docker environment (`make infra:restart`).
 
 ## 3. Frontend & Design (Dashboard)
