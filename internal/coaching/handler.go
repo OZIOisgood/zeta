@@ -47,15 +47,6 @@ type HandlerConfig struct {
 }
 
 func NewHandler(q *db.Queries, pool *pgxpool.Pool, emailService *email.Service, logger *slog.Logger, cfg HandlerConfig) *Handler {
-	if cfg.MinBookingNotice == 0 {
-		cfg.MinBookingNotice = 2 * time.Hour
-	}
-	if cfg.CancellationNotice == 0 {
-		cfg.CancellationNotice = 1 * time.Hour
-	}
-	if cfg.ConnectWindow == 0 {
-		cfg.ConnectWindow = 15 * time.Minute
-	}
 	return &Handler{
 		q:                   q,
 		pool:                pool,
