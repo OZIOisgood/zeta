@@ -53,6 +53,7 @@ This creates the folder and template files.
 Fill out `README.md` with:
 
 - **User Story/Requirement**: As a <role>, I want <feature>...
+- **Permissions**: Explicitly state whether the feature requires new permissions or reuses existing ones. Reference `internal/permissions/permissions.go` for the current permission set. If new permissions are needed, specify the permission name, which roles should have it, and where it will be enforced (handler/middleware).
 - **Context**: Links to relevant files, existing issues, or design docs.
 - **Acceptance Criteria**: What defines "done".
 
