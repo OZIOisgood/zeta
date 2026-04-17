@@ -102,7 +102,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --add-cloudsql-instances=${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:zeta-prod \
-            --set-secrets="DB_URL=zeta-prod-db-url:latest,WORKOS_API_KEY=zeta-prod-workos-api-key:latest,WORKOS_CLIENT_ID=zeta-prod-workos-client-id:latest,WORKOS_COOKIE_SECRET=zeta-prod-workos-cookie-secret:latest,MUX_TOKEN_ID=zeta-prod-mux-token-id:latest,MUX_TOKEN_SECRET=zeta-prod-mux-token-secret:latest,RESEND_API_KEY=zeta-prod-resend-api-key:latest,OPENROUTER_API_KEY=zeta-prod-openrouter-api-key:latest,DEFAULT_ORG_ID=zeta-prod-default-org-id:latest" \
+            --set-secrets="DB_URL=zeta-prod-db-url:latest,WORKOS_API_KEY=zeta-prod-workos-api-key:latest,WORKOS_CLIENT_ID=zeta-prod-workos-client-id:latest,WORKOS_COOKIE_SECRET=zeta-prod-workos-cookie-secret:latest,MUX_TOKEN_ID=zeta-prod-mux-token-id:latest,MUX_TOKEN_SECRET=zeta-prod-mux-token-secret:latest,RESEND_API_KEY=zeta-prod-resend-api-key:latest,OPENROUTER_API_KEY=zeta-prod-openrouter-api-key:latest,DEFAULT_ORG_ID=zeta-prod-default-org-id:latest,AGORA_APP_ID=zeta-prod-agora-app-id:latest,AGORA_APP_CERTIFICATE=zeta-prod-agora-app-certificate:latest,SCHEDULER_SECRET=zeta-prod-scheduler-secret:latest" \
             --set-env-vars="ENV=prod,LOG_LEVEL=info,DEFAULT_LANGUAGE=en,ALLOWED_ORIGINS=https://${{ vars.CLOUD_RUN_PROD_DASHBOARD_URL }},FRONTEND_URL=https://${{ vars.CLOUD_RUN_PROD_DASHBOARD_URL }},WORKOS_REDIRECT_URI=https://${{ vars.CLOUD_RUN_PROD_URL }}/auth/callback"
 
   build-and-deploy-dashboard:
