@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import AgoraRTC, {
   IAgoraRTCClient,
   ICameraVideoTrack,
@@ -7,45 +7,42 @@ import AgoraRTC, {
   IRemoteVideoTrack,
 } from 'agora-rtc-sdk-ng';
 
-export interface AgoraState {
-  client: IAgoraRTCClient | null;
-  localAudioTrack: IMicrophoneAudioTrack | null;
-  localVideoTrack: ICameraVideoTrack | null;
-  remoteAudioTrack: IRemoteAudioTrack | null;
-  remoteVideoTrack: IRemoteVideoTrack | null;
-}
-
 @Injectable({ providedIn: 'root' })
 export class AgoraService {
-  private state: AgoraState = {
-    client: null,
-    localAudioTrack: null,
-    localVideoTrack: null,
-    remoteAudioTrack: null,
-    remoteVideoTrack: null,
-  };
+  private client: IAgoraRTCClient | null = null;
 
-  async join(appId: string, channel: string, token: string, uid: number): Promise<AgoraState> {
+  readonly localAudioTrack = signal<IMicrophoneAudioTrack | null>(null);
+  readonly localVideoTrack = signal<ICameraVideoTrack | null>(null);
+  readonly remoteAudioTrack = signal<IRemoteAudioTrack | null>(null);
+  readonly remoteVideoTrack = signal<IRemoteVideoTrack | null>(null);
+
+  async join(appId: string, channel: string, token: string, uid: number): Promise<void> {
     const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+    this.client = client;
 
     client.on('user-published', async (user, mediaType) => {
       await client.subscribe(user, mediaType);
       if (mediaType === 'audio') {
-        this.state.remoteAudioTrack = user.audioTrack ?? null;
+        this.remoteAudioTrack.set(user.audioTrack ?? null);
         user.audioTrack?.play();
       }
       if (mediaType === 'video') {
-        this.state.remoteVideoTrack = user.videoTrack ?? null;
+        this.remoteVideoTrack.set(user.videoTrack ?? null);
       }
     });
 
     client.on('user-unpublished', (_user, mediaType) => {
       if (mediaType === 'audio') {
-        this.state.remoteAudioTrack = null;
+        this.remoteAudioTrack.set(null);
       }
       if (mediaType === 'video') {
-        this.state.remoteVideoTrack = null;
+        this.remoteVideoTrack.set(null);
       }
+    });
+
+    client.on('user-left', () => {
+      this.remoteAudioTrack.set(null);
+      this.remoteVideoTrack.set(null);
     });
 
     await client.join(appId, channel, token, uid);
@@ -53,45 +50,32 @@ export class AgoraService {
     const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
     await client.publish([audioTrack, videoTrack]);
 
-    this.state = {
-      client,
-      localAudioTrack: audioTrack,
-      localVideoTrack: videoTrack,
-      remoteAudioTrack: null,
-      remoteVideoTrack: null,
-    };
-
-    return this.state;
-  }
-
-  getState(): AgoraState {
-    return this.state;
+    this.localAudioTrack.set(audioTrack);
+    this.localVideoTrack.set(videoTrack);
   }
 
   toggleAudio(): boolean {
-    const track = this.state.localAudioTrack;
+    const track = this.localAudioTrack();
     if (!track) return false;
     track.setEnabled(!track.enabled);
     return track.enabled;
   }
 
   toggleVideo(): boolean {
-    const track = this.state.localVideoTrack;
+    const track = this.localVideoTrack();
     if (!track) return false;
     track.setEnabled(!track.enabled);
     return track.enabled;
   }
 
   async leave(): Promise<void> {
-    this.state.localAudioTrack?.close();
-    this.state.localVideoTrack?.close();
-    await this.state.client?.leave();
-    this.state = {
-      client: null,
-      localAudioTrack: null,
-      localVideoTrack: null,
-      remoteAudioTrack: null,
-      remoteVideoTrack: null,
-    };
+    this.localAudioTrack()?.close();
+    this.localVideoTrack()?.close();
+    await this.client?.leave();
+    this.client = null;
+    this.localAudioTrack.set(null);
+    this.localVideoTrack.set(null);
+    this.remoteAudioTrack.set(null);
+    this.remoteVideoTrack.set(null);
   }
 }

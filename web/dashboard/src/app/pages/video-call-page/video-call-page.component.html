@@ -12,9 +12,8 @@
   } @else {
     <div class="video-grid">
       <div class="video-panel video-panel--remote">
-        @if (remoteJoined()) {
-          <div #remoteVideo class="video-element"></div>
-        } @else {
+        <div #remoteVideo class="video-element"></div>
+        @if (!remoteJoined()) {
           <div class="center-message">
             <p class="tui-text_body-l">Waiting for the other participant to join...</p>
           </div>
