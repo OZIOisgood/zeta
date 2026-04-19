@@ -31,15 +31,17 @@ type groupUser struct {
 
 type Handler struct {
 	logger *slog.Logger
-	q      *db.Queries
-	email  *email.Service
+	q      db.Querier
+	email  email.Sender
+	workos auth.UserManagement
 }
 
-func NewHandler(logger *slog.Logger, q *db.Queries, emailService *email.Service) *Handler {
+func NewHandler(logger *slog.Logger, q db.Querier, emailService email.Sender, workos auth.UserManagement) *Handler {
 	return &Handler{
 		logger: logger,
 		q:      q,
 		email:  emailService,
+		workos: workos,
 	}
 }
 
@@ -93,7 +95,7 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 	orgID := os.Getenv("DEFAULT_ORG_ID")
 
 	roleByUserID := make(map[string]string, len(memberIDs))
-	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
+	memberships, err := h.workos.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
 		OrganizationID: orgID,
 		Limit:          100,
 	})
@@ -123,7 +125,7 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(idx int, userID string) {
 			defer wg.Done()
-			u, err := usermanagement.GetUser(ctx, usermanagement.GetUserOpts{
+			u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
 				User: userID,
 			})
 			if err != nil {
@@ -238,7 +240,7 @@ func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {
 			slog.String("target_user_id", targetUserID),
 		)
 
-		removedUser, err := usermanagement.GetUser(bgCtx, usermanagement.GetUserOpts{
+		removedUser, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
 			User: targetUserID,
 		})
 		if err != nil {

@@ -24,10 +24,11 @@ const (
 )
 
 type Handler struct {
-	q                   *db.Queries
+	q                   db.Querier
 	pool                *pgxpool.Pool
 	logger              *slog.Logger
-	emailService        *email.Service
+	emailService        email.Sender
+	workos              auth.UserManagement
 	agoraAppID          string
 	agoraAppCertificate string
 	schedulerSecret     string
@@ -46,12 +47,13 @@ type HandlerConfig struct {
 	ConnectWindow       time.Duration // default: 15m — how early before a session participants may join
 }
 
-func NewHandler(q *db.Queries, pool *pgxpool.Pool, emailService *email.Service, logger *slog.Logger, cfg HandlerConfig) *Handler {
+func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, workos auth.UserManagement, logger *slog.Logger, cfg HandlerConfig) *Handler {
 	return &Handler{
 		q:                   q,
 		pool:                pool,
 		logger:              logger,
 		emailService:        emailService,
+		workos:              workos,
 		agoraAppID:          cfg.AgoraAppID,
 		agoraAppCertificate: cfg.AgoraAppCertificate,
 		schedulerSecret:     cfg.SchedulerSecret,
@@ -152,7 +154,7 @@ func (h *Handler) resolveUsers(ctx context.Context, userIDs []string) map[string
 		wg.Add(1)
 		go func(id string) {
 			defer wg.Done()
-			u, err := usermanagement.GetUser(ctx, usermanagement.GetUserOpts{User: id})
+			u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{User: id})
 			if err != nil {
 				h.logger.WarnContext(ctx, "resolve_user_failed",
 					slog.String("component", "coaching"),
@@ -182,7 +184,7 @@ func (h *Handler) resolveUsers(ctx context.Context, userIDs []string) map[string
 func (h *Handler) resolveEmails(ctx context.Context, userIDs []string) []string {
 	var emails []string
 	for _, id := range userIDs {
-		u, err := usermanagement.GetUser(ctx, usermanagement.GetUserOpts{User: id})
+		u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{User: id})
 		if err != nil {
 			h.logger.WarnContext(ctx, "resolve_email_failed",
 				slog.String("component", "coaching"),

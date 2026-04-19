@@ -64,15 +64,17 @@ func (s *Server) routes() {
 	queries := db.New(s.Pool)
 
 	// Initialize Handlers
-	authHandler := auth.NewHandler(s.Logger, queries)
+	workosClient := auth.NewWorkOSClient()
+	authHandler := auth.NewHandler(s.Logger, queries, workosClient)
 	emailService := email.NewService(s.Logger)
 	llmService := llm.NewService(s.Logger)
-	assetsHandler := assets.NewHandler(queries, emailService, s.Logger)
+	muxClient := assets.NewMuxClient()
+	assetsHandler := assets.NewHandler(queries, muxClient, emailService, workosClient, s.Logger)
 	groupsHandler := groups.NewHandler(queries, s.Logger)
-	invitationsHandler := invitations.NewHandler(queries, emailService, s.Logger, frontendBaseURL())
+	invitationsHandler := invitations.NewHandler(queries, emailService, workosClient, s.Logger, frontendBaseURL())
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
-	usersHandler := users.NewHandler(s.Logger, queries, emailService)
-	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, s.Logger, coaching.HandlerConfig{
+	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
+	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, workosClient, s.Logger, coaching.HandlerConfig{
 		AgoraAppID:          os.Getenv("AGORA_APP_ID"),
 		AgoraAppCertificate: os.Getenv("AGORA_APP_CERTIFICATE"),
 		SchedulerSecret:     os.Getenv("SCHEDULER_SECRET"),

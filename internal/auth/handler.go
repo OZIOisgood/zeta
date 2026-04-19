@@ -41,14 +41,16 @@ func cookieSameSite() http.SameSite {
 
 type Handler struct {
 	logger *slog.Logger
-	q      *db.Queries
+	q      db.Querier
+	workos UserManagement
 }
 
-func NewHandler(logger *slog.Logger, q *db.Queries) *Handler {
+func NewHandler(logger *slog.Logger, q db.Querier, workos UserManagement) *Handler {
 	usermanagement.SetAPIKey(os.Getenv("WORKOS_API_KEY"))
 	return &Handler{
 		logger: logger,
 		q:      q,
+		workos: workos,
 	}
 }
 
@@ -61,7 +63,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	clientID := os.Getenv("WORKOS_CLIENT_ID")
 	redirectURI := os.Getenv("WORKOS_REDIRECT_URI")
 
-	url, err := usermanagement.GetAuthorizationURL(usermanagement.GetAuthorizationURLOpts{
+	url, err := h.workos.GetAuthorizationURL(usermanagement.GetAuthorizationURLOpts{
 		ClientID:    clientID,
 		RedirectURI: redirectURI,
 		Provider:    "authkit",
@@ -91,7 +93,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	clientID := os.Getenv("WORKOS_CLIENT_ID")
 
-	resp, err := usermanagement.AuthenticateWithCode(ctx, usermanagement.AuthenticateWithCodeOpts{
+	resp, err := h.workos.AuthenticateWithCode(ctx, usermanagement.AuthenticateWithCodeOpts{
 		ClientID: clientID,
 		Code:     code,
 	})
@@ -250,7 +252,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		_, _, _ = jwt.NewParser().ParseUnverified(tokenString, &logoutClaims)
 
 		if sid, ok := logoutClaims["sid"].(string); ok && sid != "" {
-			logoutURL, err := usermanagement.GetLogoutURL(usermanagement.GetLogoutURLOpts{
+			logoutURL, err := h.workos.GetLogoutURL(usermanagement.GetLogoutURLOpts{
 				SessionID: sid,
 				ReturnTo:  frontendURL,
 			})
@@ -325,7 +327,7 @@ func (h *Handler) getPermissionsForRole(ctx context.Context, roleSlug string) ([
 
 func (h *Handler) ensureUserInOrg(ctx context.Context, userID string) (string, []string, error) {
 	// 1. Check existing memberships
-	memberships, err := usermanagement.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
+	memberships, err := h.workos.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
 		UserID: userID,
 	})
 	if err != nil {
@@ -345,7 +347,7 @@ func (h *Handler) ensureUserInOrg(ctx context.Context, userID string) (string, [
 	defaultOrgID := h.getDefaultOrgID()
 	role := permissions.RoleStudent
 
-	_, err = usermanagement.CreateOrganizationMembership(ctx, usermanagement.CreateOrganizationMembershipOpts{
+	_, err = h.workos.CreateOrganizationMembership(ctx, usermanagement.CreateOrganizationMembershipOpts{
 		OrganizationID: defaultOrgID,
 		UserID:         userID,
 		RoleSlug:       role,
@@ -501,7 +503,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	// Try to update WorkOS user
 	go func() {
 		// Update WorkOS user
-		_, err := usermanagement.UpdateUser(context.Background(), usermanagement.UpdateUserOpts{
+		_, err := h.workos.UpdateUser(context.Background(), usermanagement.UpdateUserOpts{
 			User:      user.ID,
 			FirstName: req.FirstName,
 			LastName:  req.LastName,
@@ -524,7 +526,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	// We use the stored refresh token to obtain a new WorkOS AccessToken (RS256).
 	if refreshCookie, err := r.Cookie(RefreshCookieName); err == nil && refreshCookie.Value != "" {
 		clientID := os.Getenv("WORKOS_CLIENT_ID")
-		refreshResp, err := usermanagement.AuthenticateWithRefreshToken(ctx, usermanagement.AuthenticateWithRefreshTokenOpts{
+		refreshResp, err := h.workos.AuthenticateWithRefreshToken(ctx, usermanagement.AuthenticateWithRefreshTokenOpts{
 			ClientID:     clientID,
 			RefreshToken: refreshCookie.Value,
 		})
@@ -589,7 +591,7 @@ func (h *Handler) DevToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	clientID := os.Getenv("WORKOS_CLIENT_ID")
-	resp, err := usermanagement.AuthenticateWithPassword(ctx, usermanagement.AuthenticateWithPasswordOpts{
+	resp, err := h.workos.AuthenticateWithPassword(ctx, usermanagement.AuthenticateWithPasswordOpts{
 		ClientID: clientID,
 		Email:    req.Email,
 		Password: req.Password,

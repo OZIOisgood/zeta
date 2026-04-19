@@ -12,7 +12,6 @@ import (
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
-	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	muxgo "github.com/muxinc/mux-go"
@@ -20,24 +19,20 @@ import (
 )
 
 type Handler struct {
-	q         *db.Queries
-	muxClient *muxgo.APIClient
-	email     *email.Service
-	logger    *slog.Logger
+	q      db.Querier
+	mux    MuxClient
+	email  email.Sender
+	workos auth.UserManagement
+	logger *slog.Logger
 }
 
-func NewHandler(q *db.Queries, email *email.Service, logger *slog.Logger) *Handler {
-	id := tools.GetEnv("MUX_TOKEN_ID")
-	secret := tools.GetEnv("MUX_TOKEN_SECRET")
-	cfg := muxgo.NewConfiguration(
-		muxgo.WithBasicAuth(id, secret),
-	)
-
+func NewHandler(q db.Querier, mux MuxClient, email email.Sender, workos auth.UserManagement, logger *slog.Logger) *Handler {
 	return &Handler{
-		q:         q,
-		muxClient: muxgo.NewAPIClient(cfg),
-		email:     email,
-		logger:    logger,
+		q:      q,
+		mux:    mux,
+		email:  email,
+		workos: workos,
+		logger: logger,
 	}
 }
 
@@ -293,13 +288,13 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) fetchPlaybackIDFromMux(ctx context.Context, uploadID string) (string, error) {
-	upload, err := h.muxClient.DirectUploadsApi.GetDirectUpload(uploadID)
+	upload, err := h.mux.GetDirectUpload(uploadID)
 	if err != nil {
 		return "", err
 	}
 
 	if upload.Data.Status == "asset_created" && upload.Data.AssetId != "" {
-		asset, err := h.muxClient.AssetsApi.GetAsset(upload.Data.AssetId)
+		asset, err := h.mux.GetAsset(upload.Data.AssetId)
 		if err != nil {
 			return "", err
 		}
@@ -435,7 +430,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 
 
 		// Fetch Owner Email from WorkOS
-		owner, err := usermanagement.GetUser(bgCtx, usermanagement.GetUserOpts{
+		owner, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
 			User: group.OwnerID,
 		})
 		if err != nil {
@@ -528,7 +523,7 @@ func (h *Handler) createMuxUpload(ctx context.Context) (*muxgo.UploadResponse, e
 	}
 	
 	// Execute the request
-	upload, err := h.muxClient.DirectUploadsApi.CreateDirectUpload(request)
+	upload, err := h.mux.CreateDirectUpload(request)
 	return &upload, err
 }
 
@@ -609,7 +604,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// Only send email if the person finalizing is not the owner
 		if asset.OwnerID != userInfo.ID {
-			owner, err := usermanagement.GetUser(ctx, usermanagement.GetUserOpts{
+			owner, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
 				User: asset.OwnerID,
 			})
 			if err != nil {

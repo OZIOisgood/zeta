@@ -51,11 +51,11 @@ func toUUIDString(u pgtype.UUID) string {
 }
 
 type Handler struct {
-	q      *db.Queries
+	q      db.Querier
 	logger *slog.Logger
 }
 
-func NewHandler(q *db.Queries, logger *slog.Logger) *Handler {
+func NewHandler(q db.Querier, logger *slog.Logger) *Handler {
 	return &Handler{
 		q:      q,
 		logger: logger,

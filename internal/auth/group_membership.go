@@ -12,7 +12,7 @@ import (
 // RequireGroupMembership returns a middleware that verifies the authenticated user is a
 // member of the group identified by the {groupID} URL parameter. Unauthenticated requests
 // get 401; non-members get 403.
-func RequireGroupMembership(q *db.Queries, logger *slog.Logger) func(http.Handler) http.Handler {
+func RequireGroupMembership(q db.Querier, logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()

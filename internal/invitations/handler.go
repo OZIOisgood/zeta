@@ -24,16 +24,18 @@ import (
 )
 
 type Handler struct {
-	q                *db.Queries
-	email            *email.Service
+	q                db.Querier
+	email            email.Sender
+	workos           auth.UserManagement
 	logger           *slog.Logger
 	webInviteBaseURL string
 }
 
-func NewHandler(q *db.Queries, email *email.Service, logger *slog.Logger, webInviteBaseURL string) *Handler {
+func NewHandler(q db.Querier, email email.Sender, workos auth.UserManagement, logger *slog.Logger, webInviteBaseURL string) *Handler {
 	return &Handler{
 		q:                q,
 		email:            email,
+		workos:           workos,
 		logger:           logger,
 		webInviteBaseURL: webInviteBaseURL,
 	}
@@ -291,7 +293,7 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 			slog.String("inviter_id", invitation.InviterID),
 		)
 
-		inviter, err := usermanagement.GetUser(bgCtx, usermanagement.GetUserOpts{
+		inviter, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
 			User: invitation.InviterID,
 		})
 		if err != nil {

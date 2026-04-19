@@ -57,3 +57,16 @@ db\:migrate\:down:
 db\:migrate\:reset:
 	migrate -path db/migrations -database "$(DB_URL)" down
 
+test\:unit:
+	go test ./... -count=1
+
+test\:integration:
+	go test -tags=integration ./... -count=1
+
+test\:coverage:
+	go test ./... -count=1 -coverprofile=coverage.out
+	go tool cover -func=coverage.out
+
+mocks:
+	go generate ./internal/...
+

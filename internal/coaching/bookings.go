@@ -212,7 +212,7 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		qtx := h.q.WithTx(tx)
+		qtx := db.New(tx)
 
 		conflicts, err := qtx.CountConflictingBookings(ctx, db.CountConflictingBookingsParams{
 			ExpertID:      req.ExpertID,

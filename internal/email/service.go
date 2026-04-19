@@ -8,6 +8,13 @@ import (
 	"github.com/resend/resend-go/v2"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock_sender.go -package=mocks
+
+// Sender is the interface for sending emails.
+type Sender interface {
+	Send(to []string, subject string, text string) error
+}
+
 type Service struct {
 	client *resend.Client
 	logger *slog.Logger

@@ -13,6 +13,13 @@ import (
 	"time"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock_enhancer.go -package=mocks
+
+// Enhancer is the interface for LLM text enhancement.
+type Enhancer interface {
+	EnhanceReviewText(ctx context.Context, originalText string) (string, error)
+}
+
 type Service struct {
 	apiKey string
 	client *http.Client
