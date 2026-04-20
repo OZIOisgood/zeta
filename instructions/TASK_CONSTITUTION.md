@@ -60,6 +60,7 @@ Fill out `README.md` with:
 ### 3. Execution
 
 - Implement the changes.
+- Before implementing, explicitly assess whether automated tests must be added or updated for the affected behavior. Document that decision in the task README when it is not obvious.
 - Follow the **Project Constitution** for coding standards and QA.
 
 ### 4. Resolution
@@ -68,10 +69,12 @@ Fill out `RESOLUTION.md` with:
 
 - **Summary**: What was changed.
 - **Verification**: How it was tested (e.g., "Ran `make web:build`", "Checked UI").
+- **Tests**: State whether tests were added or updated. If not, explain why.
 - **Next Steps**: Any follow-up tasks.
 
 ### 5. Completion
 
+- **Test Verification**: Run tests (e.g., `make test:unit` `make test:integration`) before considering the task complete. If the target is missing or broken, fix it as part of the task or explicitly record the blocker in `RESOLUTION.md`.
 - **Update root `README.md`**: If the task introduces or modifies database tables, API flows, system architecture, or user journeys, update the corresponding Mermaid diagrams and documentation in the root `README.md`. This is the single source of truth for the project's architecture.
   - Add new entities to the `erDiagram` block.
   - Add or update `sequenceDiagram` / `graph` blocks for new flows.
