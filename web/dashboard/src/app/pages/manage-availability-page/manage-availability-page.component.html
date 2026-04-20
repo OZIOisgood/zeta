@@ -107,40 +107,6 @@
       <!-- Weekly Schedule Tab -->
       @if (activeTab() === 'schedule') {
         <div class="tab-action">
-          <div class="timezone-row">
-            @if (editingTimezone) {
-              <input
-                type="text"
-                class="time-input timezone-input"
-                [(ngModel)]="timezoneInput"
-                placeholder="e.g. Europe/Berlin"
-              />
-              <button tuiButton size="xs" type="button" (click)="saveTimezone()">Save</button>
-              <button
-                tuiButton
-                appearance="flat"
-                size="xs"
-                type="button"
-                (click)="cancelEditTimezone()"
-              >
-                Cancel
-              </button>
-            } @else {
-              <p class="tui-text_body-s timezone-label">
-                Times are in your timezone (<strong>{{ userTimezone() }}</strong
-                >)
-                <button
-                  tuiButton
-                  appearance="flat"
-                  size="xs"
-                  iconStart="@tui.pencil"
-                  (click)="startEditTimezone()"
-                >
-                  Change
-                </button>
-              </p>
-            }
-          </div>
           <button
             tuiButton
             appearance="flat"

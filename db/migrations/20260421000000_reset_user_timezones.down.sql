@@ -1,0 +1,2 @@
+-- No rollback: the original timezone values were intentionally discarded.
+-- Run the corresponding .up migration again to reset values to UTC if needed.

@@ -7,7 +7,6 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
 import { TUI_CONFIRM, TuiConfirmData } from '@taiga-ui/kit';
@@ -48,7 +47,6 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     PageContainerComponent,
     SectionHeaderComponent,
     BreadcrumbsComponent,
@@ -89,12 +87,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   protected sessionTypes = signal<SessionType[]>([]);
   protected availability = signal<CoachingAvailability[]>([]);
   protected blockedSlots = signal<CoachingBlockedSlot[]>([]);
-  protected userTimezone = signal('UTC');
   protected readonly dayNames = DAY_NAMES;
-
-  // Timezone edit
-  protected editingTimezone = false;
-  protected timezoneInput = '';
 
   ngOnInit(): void {
     this.loading.set(true);
@@ -121,12 +114,6 @@ export class ManageAvailabilityPageComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.cdr.markForCheck();
-      },
-    });
-    this.coachingService.getMyTimezone().subscribe({
-      next: (res) => {
-        this.userTimezone.set(res.timezone);
         this.cdr.markForCheck();
       },
     });
@@ -174,32 +161,6 @@ export class ManageAvailabilityPageComponent implements OnInit {
       error: () => {
         this.loading.set(false);
         this.cdr.markForCheck();
-      },
-    });
-  }
-
-  // Timezone
-  protected startEditTimezone(): void {
-    this.timezoneInput = this.userTimezone();
-    this.editingTimezone = true;
-    this.cdr.markForCheck();
-  }
-
-  protected cancelEditTimezone(): void {
-    this.editingTimezone = false;
-    this.cdr.markForCheck();
-  }
-
-  protected saveTimezone(): void {
-    this.coachingService.setMyTimezone(this.timezoneInput).subscribe({
-      next: (res) => {
-        this.userTimezone.set(res.timezone);
-        this.editingTimezone = false;
-        this.alerts.open('Timezone updated', { appearance: 'positive' }).subscribe();
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.alerts.open('Invalid timezone identifier', { appearance: 'negative' }).subscribe();
       },
     });
   }

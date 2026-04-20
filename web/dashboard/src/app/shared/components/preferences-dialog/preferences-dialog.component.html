@@ -30,6 +30,22 @@
       </ng-template>
     </div>
 
+    <div class="form-field">
+      <tui-textfield tuiChevron [stringify]="timezoneStringify">
+        <label tuiLabel>Timezone</label>
+        <input tuiComboBox [formControl]="timezoneControl" (input)="onSearch($event)" />
+        <tui-data-list-wrapper
+          *tuiTextfieldDropdown
+          new
+          [items]="filteredTimezones"
+          [itemContent]="tzContent"
+        ></tui-data-list-wrapper>
+      </tui-textfield>
+      <ng-template #tzContent let-tz>
+        {{ timezoneStringify(tz) }}
+      </ng-template>
+    </div>
+
     <app-avatar-selector
       [initialAvatar]="getInitialAvatar()"
       [disabled]="isSubmitting"
