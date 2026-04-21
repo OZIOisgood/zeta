@@ -104,13 +104,8 @@ export class ManageAvailabilityPageComponent implements OnInit {
             return;
           }
         }
-        if (groups.length === 1) {
-          // Auto-select when only one group — redirect to URL with groupId
-          this.router.navigate(['/sessions/settings', groups[0].id], { replaceUrl: true });
-        } else {
-          this.loading.set(false);
-          this.cdr.markForCheck();
-        }
+        this.loading.set(false);
+        this.cdr.markForCheck();
       },
       error: () => {
         this.loading.set(false);

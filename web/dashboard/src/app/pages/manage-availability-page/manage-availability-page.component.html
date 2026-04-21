@@ -4,7 +4,24 @@
 
     <app-section-header title="Manage Availability"></app-section-header>
 
-    @if (groups().length > 1 && !selectedGroup) {
+    @if (loading()) {
+      <div class="group-list">
+        @for (_ of [1, 2, 3]; track _) {
+          <div class="group-row" [tuiSkeleton]="true">
+            <div class="group-row-info">
+              <span class="tui-text_body-m group-row-name">&nbsp;</span>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (groups().length === 0) {
+      <app-illustrated-message
+        illustrationSrc="/illustrations/lonely-horse.png"
+        illustrationAlt="No groups"
+        heading="No Groups Yet"
+        description="You are not a member of any group. Create or join a group to start managing your availability."
+      ></app-illustrated-message>
+    } @else if (!selectedGroup) {
       <div class="group-select-section">
         <p class="tui-text_body-m">
           Select the group for which you want to manage your availability:
@@ -19,8 +36,6 @@
           }
         </div>
       </div>
-    } @else if (loading()) {
-      <p class="tui-text_body-m">Loading...</p>
     } @else {
       <div class="tabs">
         <button
