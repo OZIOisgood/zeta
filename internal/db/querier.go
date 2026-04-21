@@ -66,6 +66,7 @@ type Querier interface {
 	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]VideoReview, error)
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
+	SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error)
 	UpdateAssetStatus(ctx context.Context, arg UpdateAssetStatusParams) error
 	UpdateAvailability(ctx context.Context, arg UpdateAvailabilityParams) (CoachingAvailability, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)

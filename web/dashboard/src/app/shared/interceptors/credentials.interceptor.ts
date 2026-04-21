@@ -5,8 +5,10 @@ import { EnvService } from '../services/env.service';
 export const credentialsInterceptor: HttpInterceptorFn = (req, next) => {
   const env = inject(EnvService);
   if (req.url.startsWith(env.apiUrl)) {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const authReq = req.clone({
       withCredentials: true,
+      setHeaders: { 'X-Timezone': tz },
     });
     return next(authReq);
   }

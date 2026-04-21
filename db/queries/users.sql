@@ -9,6 +9,15 @@ SET language = EXCLUDED.language,
     updated_at = NOW()
 RETURNING *;
 
+-- name: SeedUserPreferences :one
+INSERT INTO user_preferences (user_id, language, timezone)
+VALUES ($1, $2, $3)
+ON CONFLICT (user_id) DO UPDATE
+SET language   = EXCLUDED.language,
+    timezone   = EXCLUDED.timezone,
+    updated_at = NOW()
+RETURNING *;
+
 -- name: UpsertUserAvatar :one
 INSERT INTO user_preferences (user_id, language, avatar)
 VALUES ($1, 'en', $2)

@@ -11,6 +11,7 @@ export interface User {
   last_name: string;
   language: string;
   avatar: string;
+  timezone: string;
   role: string;
   permissions: string[];
 }
@@ -95,6 +96,7 @@ export class AuthService {
     first_name: string;
     last_name: string;
     language: string;
+    timezone: string;
     avatar?: string;
   }): Observable<User> {
     return this.http.put<User>(`${this.baseUrl}/me`, data).pipe(tap((user) => this.user.set(user)));

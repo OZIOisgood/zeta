@@ -1,7 +1,7 @@
 <div class="dialog-form">
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="form-field">
-      <tui-textfield [stringify]="dayStringify">
+      <tui-textfield tuiChevron [stringify]="dayStringify">
         <label tuiLabel>Day</label>
         <input tuiSelect formControlName="day_of_week" />
         <tui-data-list-wrapper

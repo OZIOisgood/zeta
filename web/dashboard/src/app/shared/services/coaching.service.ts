@@ -78,15 +78,6 @@ export class CoachingService {
     return this.env.apiUrl;
   }
 
-  // Timezone
-  getMyTimezone(): Observable<{ timezone: string }> {
-    return this.http.get<{ timezone: string }>(`${this.apiUrl}/coaching/timezone`);
-  }
-
-  setMyTimezone(timezone: string): Observable<{ timezone: string }> {
-    return this.http.put<{ timezone: string }>(`${this.apiUrl}/coaching/timezone`, { timezone });
-  }
-
   // Session Types
   listSessionTypes(groupId: string): Observable<SessionType[]> {
     return this.http.get<SessionType[]>(`${this.apiUrl}/groups/${groupId}/coaching/session-types`);

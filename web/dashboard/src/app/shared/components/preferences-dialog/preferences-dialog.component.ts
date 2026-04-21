@@ -11,9 +11,7 @@ import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TuiButton, TuiDialogContext, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiChevron, TuiComboBox, TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
 import { injectContext } from '@taiga-ui/polymorpheus';
-import { forkJoin, Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { CoachingService } from '../../services/coaching.service';
 import { AvatarSelectorComponent } from '../avatar-selector/avatar-selector.component';
 
 @Component({
@@ -37,13 +35,11 @@ import { AvatarSelectorComponent } from '../avatar-selector/avatar-selector.comp
 })
 export class PreferencesDialogComponent implements OnInit {
   private readonly auth = inject(AuthService);
-  private readonly coachingService = inject(CoachingService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly context = injectContext<TuiDialogContext<void>>();
 
   private readonly allTimezones: string[] = Intl.supportedValuesOf('timeZone');
   protected filteredTimezones: string[] = this.allTimezones;
-  protected readonly timezoneControl = new FormControl<string | null>(null);
   protected readonly timezoneStringify = (tz: string): string => {
     try {
       const offset =
@@ -73,19 +69,16 @@ export class PreferencesDialogComponent implements OnInit {
         this.languages[0],
       [Validators.required],
     ),
+    timezone: new FormControl<string | null>(this.auth.user()?.timezone || null, [
+      Validators.required,
+    ]),
   });
 
   protected isSubmitting = false;
   protected newAvatarBase64: string | null = null;
 
   ngOnInit(): void {
-    this.coachingService.getMyTimezone().subscribe({
-      next: (res) => {
-        this.timezoneControl.setValue(res.timezone, { emitEvent: false });
-        this.cdr.markForCheck();
-      },
-    });
-    this.timezoneControl.valueChanges.subscribe(() => {
+    this.form.controls.timezone.valueChanges.subscribe(() => {
       this.filteredTimezones = this.allTimezones;
       this.cdr.markForCheck();
     });
@@ -124,40 +117,31 @@ export class PreferencesDialogComponent implements OnInit {
       return;
     }
 
-    const first_name = this.form.get('first_name')?.value;
-    const last_name = this.form.get('last_name')?.value;
-    const languageObj = this.form.get('language')?.value as { code: string; name: string } | null;
-    const language = languageObj?.code;
-
-    if (!first_name || !last_name || !language) {
-      return;
-    }
+    const first_name = this.form.controls.first_name.value!;
+    const last_name = this.form.controls.last_name.value!;
+    const languageObj = this.form.controls.language.value as { code: string; name: string };
+    const timezone = this.form.controls.timezone.value!;
 
     this.isSubmitting = true;
 
-    const profileSave = this.auth.updateUser({
-      first_name,
-      last_name,
-      language,
-      ...(this.newAvatarBase64 ? { avatar: this.newAvatarBase64 } : {}),
-    });
-
-    const tz = this.timezoneControl.value;
-    const saves: Observable<unknown>[] = [profileSave];
-    if (tz && this.allTimezones.includes(tz)) {
-      saves.push(this.coachingService.setMyTimezone(tz));
-    }
-
-    forkJoin(saves).subscribe({
-      next: () => {
-        this.context.completeWith();
-      },
-      error: (error) => {
-        console.error('Failed to save preferences:', error);
-        this.isSubmitting = false;
-        this.cdr.markForCheck();
-      },
-    });
+    this.auth
+      .updateUser({
+        first_name,
+        last_name,
+        language: languageObj.code,
+        timezone,
+        ...(this.newAvatarBase64 ? { avatar: this.newAvatarBase64 } : {}),
+      })
+      .subscribe({
+        next: () => {
+          this.context.completeWith();
+        },
+        error: (error) => {
+          console.error('Failed to save preferences:', error);
+          this.isSubmitting = false;
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   protected onCancel(): void {

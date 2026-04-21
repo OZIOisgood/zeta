@@ -67,10 +67,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/groups/{groupID}/coaching", func(r chi.Router) {
 		r.Use(auth.RequireGroupMembership(h.q, h.logger))
 
-		// Timezone (no extra permission — all group members)
-		r.Get("/timezone", h.GetMyTimezone)
-		r.Put("/timezone", h.SetMyTimezone)
-
 		// Session types — read: slots:read | write: availability:manage
 		r.Get("/session-types", h.ListSessionTypes)
 		r.Group(func(r chi.Router) {
@@ -124,9 +120,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		})
 	})
 
-	// Cross-group timezone endpoints
-	r.Get("/coaching/timezone", h.GetMyTimezone)
-	r.Put("/coaching/timezone", h.SetMyTimezone)
 }
 
 // --- User info resolution ---

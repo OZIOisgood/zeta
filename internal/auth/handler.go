@@ -403,11 +403,18 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	prefs, err := h.q.GetUserPreferences(ctx, user.ID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			// No preferences yet, create default
+			// No preferences yet — first login. Seed language and timezone in one query.
 			lang := tools.NegotiateLanguage(r.Header.Get("Accept-Language"))
-			prefs, err = h.q.UpsertUserPreferences(ctx, db.UpsertUserPreferencesParams{
+			tz := "UTC"
+			if raw := r.Header.Get("X-Timezone"); raw != "" {
+				if _, tzErr := time.LoadLocation(raw); tzErr == nil {
+					tz = raw
+				}
+			}
+			prefs, err = h.q.SeedUserPreferences(ctx, db.SeedUserPreferencesParams{
 				UserID:   user.ID,
 				Language: db.LanguageCode(lang),
+				Timezone: tz,
 			})
 			if err != nil {
 				h.logger.ErrorContext(ctx, "auth_create_prefs_failed",
@@ -438,6 +445,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"email":       user.Email,
 		"language":    prefs.Language,
 		"avatar":      prefs.Avatar,
+		"timezone":    prefs.Timezone,
 		"role":        user.Role,
 		"permissions": user.Permissions,
 	}
@@ -451,6 +459,7 @@ type UpdateUserRequest struct {
 	LastName  string `json:"last_name"`
 	Language  string `json:"language"`
 	Avatar    string `json:"avatar"`
+	Timezone  string `json:"timezone"`
 }
 
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
@@ -480,6 +489,24 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		)
 		http.Error(w, "Failed to update settings", http.StatusInternalServerError)
 		return
+	}
+
+	// Update timezone if provided and valid
+	if req.Timezone != "" {
+		if _, tzErr := time.LoadLocation(req.Timezone); tzErr == nil {
+			if tzErr2 := h.q.UpsertUserTimezone(ctx, db.UpsertUserTimezoneParams{
+				UserID:   user.ID,
+				Timezone: req.Timezone,
+			}); tzErr2 != nil {
+				h.logger.ErrorContext(ctx, "auth_update_timezone_failed",
+					slog.String("component", "auth"),
+					slog.String("user_id", user.ID),
+					slog.Any("err", tzErr2),
+				)
+				http.Error(w, "Failed to update timezone", http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 
 	// Update avatar if provided

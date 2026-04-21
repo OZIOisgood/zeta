@@ -15,7 +15,7 @@
     </div>
 
     <div class="form-field">
-      <tui-textfield [stringify]="stringifyLanguage">
+      <tui-textfield tuiChevron [stringify]="stringifyLanguage">
         <label tuiLabel>Language</label>
         <input tuiSelect formControlName="language" />
         <tui-data-list-wrapper
@@ -33,7 +33,7 @@
     <div class="form-field">
       <tui-textfield tuiChevron [stringify]="timezoneStringify">
         <label tuiLabel>Timezone</label>
-        <input tuiComboBox [formControl]="timezoneControl" (input)="onSearch($event)" />
+        <input tuiComboBox [formControl]="form.controls.timezone" (input)="onSearch($event)" />
         <tui-data-list-wrapper
           *tuiTextfieldDropdown
           new

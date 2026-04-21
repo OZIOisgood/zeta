@@ -27,6 +27,36 @@ func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPr
 	return i, err
 }
 
+const seedUserPreferences = `-- name: SeedUserPreferences :one
+INSERT INTO user_preferences (user_id, language, timezone)
+VALUES ($1, $2, $3)
+ON CONFLICT (user_id) DO UPDATE
+SET language   = EXCLUDED.language,
+    timezone   = EXCLUDED.timezone,
+    updated_at = NOW()
+RETURNING user_id, language, created_at, updated_at, avatar, timezone
+`
+
+type SeedUserPreferencesParams struct {
+	UserID   string       `json:"user_id"`
+	Language LanguageCode `json:"language"`
+	Timezone string       `json:"timezone"`
+}
+
+func (q *Queries) SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error) {
+	row := q.db.QueryRow(ctx, seedUserPreferences, arg.UserID, arg.Language, arg.Timezone)
+	var i UserPreference
+	err := row.Scan(
+		&i.UserID,
+		&i.Language,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Avatar,
+		&i.Timezone,
+	)
+	return i, err
+}
+
 const updateUserAvatar = `-- name: UpdateUserAvatar :one
 UPDATE user_preferences
 SET avatar     = $2,
