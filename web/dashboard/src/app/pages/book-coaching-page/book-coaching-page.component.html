@@ -201,9 +201,14 @@
       @case (4) {
         <div>
           @if (booked) {
-            <div class="success-message">
-              <span class="tui-text_h4">✓ Session booked! Redirecting to My Sessions...</span>
-            </div>
+            <app-illustrated-message
+              illustrationSrc="illustrations/live-coaching-done.png"
+              illustrationAlt="Session booked"
+              heading="Session booked!"
+              description="Your coaching session has been successfully scheduled."
+              [buttons]="[{ label: 'View My Sessions', appearance: 'primary' }]"
+              (buttonClick)="goToSessions()"
+            />
           } @else if (selectedSlot) {
             <p class="tui-text_body-m step-description">
               Review your session details and confirm your booking.

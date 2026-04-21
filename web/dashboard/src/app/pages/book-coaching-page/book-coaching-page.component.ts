@@ -353,11 +353,11 @@ export class BookCoachingPageComponent implements OnInit {
           this.booked = true;
           this.booking = false;
           this.cdr.markForCheck();
-          setTimeout(() => this.router.navigate(['/sessions']), 1500);
         },
         error: (err) => {
           this.booking = false;
           this.cdr.markForCheck();
+
           const msg =
             err.status === 409
               ? 'That slot was just taken. Please choose another.'
@@ -371,5 +371,9 @@ export class BookCoachingPageComponent implements OnInit {
           }
         },
       });
+  }
+
+  protected goToSessions(): void {
+    this.router.navigate(['/sessions']);
   }
 }
