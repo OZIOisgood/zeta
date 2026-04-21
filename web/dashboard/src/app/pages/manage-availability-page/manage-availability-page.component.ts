@@ -3,19 +3,21 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
-import { TUI_CONFIRM, TuiConfirmData } from '@taiga-ui/kit';
+import { TUI_CONFIRM, TuiConfirmData, TuiSkeleton } from '@taiga-ui/kit';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { filter, switchMap } from 'rxjs';
 import {
   BreadcrumbItem,
   BreadcrumbsComponent,
 } from '../../shared/components/breadcrumbs/breadcrumbs.component';
+import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
@@ -26,6 +28,7 @@ import {
   SessionType,
 } from '../../shared/services/coaching.service';
 import { Group, GroupsService } from '../../shared/services/groups.service';
+import { PermissionsService } from '../../shared/services/permissions.service';
 import {
   AvailabilityDialogComponent,
   AvailabilityDialogResult,
@@ -51,7 +54,9 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
     SectionHeaderComponent,
     BreadcrumbsComponent,
     IllustratedMessageComponent,
+    GroupsListComponent,
     TuiButton,
+    TuiSkeleton,
   ],
   templateUrl: './manage-availability-page.component.html',
   styleUrls: ['./manage-availability-page.component.scss'],
@@ -62,6 +67,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly coachingService = inject(CoachingService);
   private readonly groupsService = inject(GroupsService);
+  private readonly permissionsService = inject(PermissionsService);
   private readonly alerts = inject(TuiAlertService);
   private readonly dialogs = inject(TuiDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -69,6 +75,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   // Group selection
   protected groups = signal<Group[]>([]);
   protected selectedGroup: Group | null = null;
+  protected canCreateGroup = computed(() => this.permissionsService.hasPermission('groups:create'));
   protected activeTab = signal<'session-types' | 'schedule' | 'blocked'>('session-types');
 
   get breadcrumbItems(): BreadcrumbItem[] {
@@ -116,6 +123,10 @@ export class ManageAvailabilityPageComponent implements OnInit {
 
   protected selectGroup(group: Group): void {
     this.router.navigate(['/sessions/settings', group.id]);
+  }
+
+  protected onGroupSelect(groupId: string): void {
+    this.router.navigate(['/sessions/settings', groupId]);
   }
 
   protected setTab(tab: 'session-types' | 'schedule' | 'blocked'): void {

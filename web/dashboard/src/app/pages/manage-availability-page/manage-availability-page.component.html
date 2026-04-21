@@ -20,22 +20,25 @@
         illustrationAlt="No groups"
         heading="No Groups Yet"
         description="You are not a member of any group. Create or join a group to start managing your availability."
+        [buttons]="
+          canCreateGroup()
+            ? [
+                {
+                  label: 'Create group',
+                  appearance: 'primary',
+                  routerLink: '/create-group',
+                },
+              ]
+            : []
+        "
       ></app-illustrated-message>
     } @else if (!selectedGroup) {
-      <div class="group-select-section">
-        <p class="tui-text_body-m">
-          Select the group for which you want to manage your availability:
-        </p>
-        <div class="group-list">
-          @for (g of groups(); track g.id) {
-            <button class="group-row" type="button" (click)="selectGroup(g)">
-              <div class="group-row-info">
-                <span class="tui-text_body-m group-row-name">{{ g.name }}</span>
-              </div>
-            </button>
-          }
-        </div>
-      </div>
+      <app-groups-list
+        [groups]="groups()"
+        [loading]="false"
+        title=""
+        (selectGroup)="onGroupSelect($event)"
+      ></app-groups-list>
     } @else {
       <div class="tabs">
         <button
