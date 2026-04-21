@@ -486,7 +486,7 @@ Parsed in `server.go` via `time.ParseDuration` with defaults. Read via `HandlerC
 ### Permissions
 
 - [x] `coaching:video:connect` permission constant added to `internal/permissions/permissions.go`
-- [ ] `coaching:video:connect` assigned to admin, expert, and student roles (via WorkOS)
+- [x] `coaching:video:connect` assigned to admin, expert, and student roles (via WorkOS)
 - [ ] `coaching:bookings:manage` activated for admin-level cancel operations (middleware-gated)
 - [x] Frontend `permissions.service.ts` updated with new permission constant
 
@@ -542,10 +542,10 @@ Parsed in `server.go` via `time.ParseDuration` with defaults. Read via `HandlerC
 
 ### Configuration
 
-- [ ] `AGORA_APP_ID`, `AGORA_APP_CERTIFICATE`, `SCHEDULER_SECRET` added to `.env` with real values
+- [x] `AGORA_APP_ID`, `AGORA_APP_CERTIFICATE`, `SCHEDULER_SECRET` added to `.env` with real values
 - [x] `AGORA_APP_ID`, `AGORA_APP_CERTIFICATE`, `SCHEDULER_SECRET` added to `.env.example` with placeholder values
 - [x] `MIN_BOOKING_NOTICE`, `CANCELLATION_NOTICE`, `CONNECT_WINDOW` added to `.env.example`
-- [ ] New env vars added to Cloud Run configuration / Terraform variables
+- [x] New env vars added to Cloud Run configuration / Terraform variables
 
 ### Documentation
 
