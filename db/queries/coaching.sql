@@ -121,6 +121,13 @@ JOIN coaching_session_types cst ON cst.id = cb.session_type_id
 WHERE cb.group_id = $1
 ORDER BY cb.scheduled_at;
 
+-- name: ListAllMyBookings :many
+SELECT cb.*, cst.name AS session_type_name
+FROM coaching_bookings cb
+JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+WHERE cb.expert_id = $1 OR cb.student_id = $1
+ORDER BY cb.scheduled_at ASC;
+
 -- name: CancelBooking :one
 UPDATE coaching_bookings
 SET is_cancelled = true,

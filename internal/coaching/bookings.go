@@ -113,6 +113,16 @@ func toBookingResponseFromRow(b db.ListMyBookingsRow, users map[string]userInfo)
 	)
 }
 
+func toBookingResponseFromAllRow(b db.ListAllMyBookingsRow, users map[string]userInfo) bookingResponse {
+	return buildBookingResponse(
+		b.ID, b.ExpertID, b.StudentID,
+		b.GroupID, b.SessionTypeID, b.SessionTypeName,
+		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
+		b.CancellationReason, b.CancelledBy, b.Notes,
+		b.CreatedAt, users,
+	)
+}
+
 func toBookingResponseFromGroupRow(b db.ListGroupBookingsRow, users map[string]userInfo) bookingResponse {
 	return buildBookingResponse(
 		b.ID, b.ExpertID, b.StudentID,
@@ -316,6 +326,44 @@ func (h *Handler) ListMyBookings(w http.ResponseWriter, r *http.Request) {
 	resp := make([]bookingResponse, len(bookings))
 	for i, b := range bookings {
 		resp[i] = toBookingResponseFromRow(b, users)
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *Handler) ListAllMyBookings(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	bookings, err := h.q.ListAllMyBookings(ctx, user.ID)
+	if err != nil {
+		log.ErrorContext(ctx, "list_all_bookings_failed",
+			slog.String("component", "coaching"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to list bookings", http.StatusInternalServerError)
+		return
+	}
+
+	if bookings == nil {
+		bookings = []db.ListAllMyBookingsRow{}
+	}
+
+	pairs := make([][2]string, len(bookings))
+	for i, b := range bookings {
+		pairs[i] = [2]string{b.ExpertID, b.StudentID}
+	}
+	users := h.resolveUsers(ctx, collectUserIDs(pairs))
+
+	resp := make([]bookingResponse, len(bookings))
+	for i, b := range bookings {
+		resp[i] = toBookingResponseFromAllRow(b, users)
 	}
 
 	writeJSON(w, http.StatusOK, resp)

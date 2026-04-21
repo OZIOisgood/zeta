@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import { EnvService } from './env.service';
 
 export interface SessionType {
@@ -203,20 +203,8 @@ export class CoachingService {
     return this.http.get<CoachingBooking[]>(`${this.apiUrl}/groups/${groupId}/coaching/bookings`);
   }
 
-  listMyBookingsAllGroups(groupIds: string[]): Observable<CoachingBooking[]> {
-    if (groupIds.length === 0) {
-      return new Observable((observer) => {
-        observer.next([]);
-        observer.complete();
-      });
-    }
-    return forkJoin(groupIds.map((id) => this.listMyBookings(id))).pipe(
-      map((results) =>
-        results
-          .flat()
-          .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()),
-      ),
-    );
+  listAllMyBookings(): Observable<CoachingBooking[]> {
+    return this.http.get<CoachingBooking[]>(`${this.apiUrl}/coaching/bookings`);
   }
 
   listGroupSessions(groupId: string): Observable<CoachingBooking[]> {

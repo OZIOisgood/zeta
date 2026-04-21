@@ -64,6 +64,12 @@ func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, wor
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
+	// Cross-group bookings endpoint — no group membership required
+	r.Group(func(r chi.Router) {
+		r.Use(auth.RequirePermission(permissions.CoachingBookingsRead))
+		r.Get("/coaching/bookings", h.ListAllMyBookings)
+	})
+
 	r.Route("/groups/{groupID}/coaching", func(r chi.Router) {
 		r.Use(auth.RequireGroupMembership(h.q, h.logger))
 

@@ -399,6 +399,66 @@ func (q *Queries) ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.U
 	return items, nil
 }
 
+const listAllMyBookings = `-- name: ListAllMyBookings :many
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name
+FROM coaching_bookings cb
+JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+WHERE cb.expert_id = $1 OR cb.student_id = $1
+ORDER BY cb.scheduled_at ASC
+`
+
+type ListAllMyBookingsRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ExpertID           string             `json:"expert_id"`
+	StudentID          string             `json:"student_id"`
+	GroupID            pgtype.UUID        `json:"group_id"`
+	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
+	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes    int32              `json:"duration_minutes"`
+	IsCancelled        bool               `json:"is_cancelled"`
+	CancellationReason pgtype.Text        `json:"cancellation_reason"`
+	CancelledBy        pgtype.Text        `json:"cancelled_by"`
+	Notes              pgtype.Text        `json:"notes"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	SessionTypeName    string             `json:"session_type_name"`
+}
+
+func (q *Queries) ListAllMyBookings(ctx context.Context, expertID string) ([]ListAllMyBookingsRow, error) {
+	rows, err := q.db.Query(ctx, listAllMyBookings, expertID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllMyBookingsRow
+	for rows.Next() {
+		var i ListAllMyBookingsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExpertID,
+			&i.StudentID,
+			&i.GroupID,
+			&i.SessionTypeID,
+			&i.ScheduledAt,
+			&i.DurationMinutes,
+			&i.IsCancelled,
+			&i.CancellationReason,
+			&i.CancelledBy,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SessionTypeName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAvailabilityByExpertGroup = `-- name: ListAvailabilityByExpertGroup :many
 SELECT id, expert_id, group_id, day_of_week, start_time, end_time, is_active, created_at, updated_at FROM coaching_availability
 WHERE expert_id = $1 AND group_id = $2 AND is_active = true

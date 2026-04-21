@@ -16,7 +16,6 @@ import { PageContainerComponent } from '../../shared/components/page-container/p
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { AuthService } from '../../shared/services/auth.service';
 import { CoachingBooking, CoachingService } from '../../shared/services/coaching.service';
-import { GroupsService } from '../../shared/services/groups.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
 
 type TabKey = 'upcoming' | 'past' | 'cancelled';
@@ -39,7 +38,6 @@ type TabKey = 'upcoming' | 'past' | 'cancelled';
 })
 export class MySessionsPageComponent implements OnInit {
   private readonly coachingService = inject(CoachingService);
-  private readonly groupsService = inject(GroupsService);
   private readonly auth = inject(AuthService);
   private readonly permissionsService = inject(PermissionsService);
   private readonly alerts = inject(TuiAlertService);
@@ -73,20 +71,11 @@ export class MySessionsPageComponent implements OnInit {
   protected cancelled = computed(() => this.allBookings().filter((b) => b.status === 'cancelled'));
 
   ngOnInit(): void {
-    this.groupsService.list().subscribe({
-      next: (groups) => {
-        const groupIds = groups.map((g) => g.id);
-        this.coachingService.listMyBookingsAllGroups(groupIds).subscribe({
-          next: (bookings) => {
-            this.allBookings.set(bookings ?? []);
-            this.loading.set(false);
-            this.cdr.markForCheck();
-          },
-          error: () => {
-            this.loading.set(false);
-            this.cdr.markForCheck();
-          },
-        });
+    this.coachingService.listAllMyBookings().subscribe({
+      next: (bookings) => {
+        this.allBookings.set(bookings ?? []);
+        this.loading.set(false);
+        this.cdr.markForCheck();
       },
       error: () => {
         this.loading.set(false);

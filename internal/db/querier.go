@@ -49,6 +49,7 @@ type Querier interface {
 	GetUserTimezone(ctx context.Context, userID string) (string, error)
 	HasVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (bool, error)
 	ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.UUID) ([]string, error)
+	ListAllMyBookings(ctx context.Context, expertID string) ([]ListAllMyBookingsRow, error)
 	ListAssets(ctx context.Context) ([]ListAssetsRow, error)
 	ListAvailabilityByExpertGroup(ctx context.Context, arg ListAvailabilityByExpertGroupParams) ([]CoachingAvailability, error)
 	ListAvailabilityByExpertGroupDay(ctx context.Context, arg ListAvailabilityByExpertGroupDayParams) ([]CoachingAvailability, error)
