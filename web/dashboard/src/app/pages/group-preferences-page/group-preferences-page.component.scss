@@ -1,0 +1,82 @@
+.preferences-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.loading-placeholder {
+  padding: 1rem 0;
+}
+
+.content {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.tabs-nav {
+  min-inline-size: 10rem;
+  inline-size: 10rem;
+  flex-shrink: 0;
+}
+
+.tab-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.preferences-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  // max-width: 32rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.danger-zone {
+  border: 2px solid var(--tui-status-negative-pale);
+  border-radius: var(--tui-radius-m);
+  padding: 1rem 1.25rem;
+  // max-width: 40rem;
+
+  &__title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--tui-status-negative);
+    margin: 0 0 0.75rem;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  &__description {
+    strong {
+      display: block;
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.8125rem;
+      color: var(--tui-text-secondary);
+    }
+  }
+}

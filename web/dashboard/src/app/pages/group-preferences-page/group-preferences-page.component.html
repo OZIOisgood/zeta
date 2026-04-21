@@ -1,0 +1,87 @@
+<app-page-container>
+  <div class="preferences-page">
+    <app-breadcrumbs [items]="breadcrumbs()"></app-breadcrumbs>
+
+    <app-section-header title="Group Preferences"></app-section-header>
+
+    @if (loading()) {
+      <div class="loading-placeholder">
+        <div [tuiSkeleton]="true" style="height: 2.5rem; border-radius: 0.5rem"></div>
+      </div>
+    } @else {
+      <section class="content">
+        <nav
+          tuiTabs
+          vertical="left"
+          class="tabs-nav"
+          [activeItemIndex]="activeTabIndex()"
+          (activeItemIndexChange)="activeTabIndex.set($event)"
+        >
+          <button tuiTab type="button">Preferences</button>
+          @if (isOwner()) {
+            <button tuiTab type="button">Danger Zone</button>
+          }
+        </nav>
+
+        <div class="tab-content">
+          @if (activeTabIndex() === 0) {
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="preferences-form">
+              <div class="form-field">
+                <tui-textfield>
+                  <label tuiLabel>Name</label>
+                  <input formControlName="name" tuiTextfield type="text" />
+                </tui-textfield>
+              </div>
+
+              <div class="form-field">
+                <tui-textfield>
+                  <label tuiLabel>Description</label>
+                  <textarea
+                    tuiTextarea
+                    formControlName="description"
+                    [min]="3"
+                    [max]="10"
+                  ></textarea>
+                </tui-textfield>
+              </div>
+
+              <app-avatar-selector
+                [initialAvatar]="getInitialAvatar()"
+                [disabled]="isSubmitting"
+                (avatarChange)="onAvatarChange($event)"
+              ></app-avatar-selector>
+
+              <div class="form-actions">
+                <button tuiButton type="submit" [disabled]="isSaveDisabled">Save</button>
+              </div>
+            </form>
+          }
+
+          @if (activeTabIndex() === 1 && isOwner()) {
+            <div class="danger-zone">
+              <h4 class="danger-zone__title">Danger Zone</h4>
+              <div class="danger-zone__row">
+                <div class="danger-zone__description">
+                  <strong>Delete this group</strong>
+                  <p>
+                    Permanently delete this group and all its members, invitations, and content.
+                  </p>
+                </div>
+                <button
+                  tuiButton
+                  type="button"
+                  appearance="destructive"
+                  size="m"
+                  [disabled]="isDeleting"
+                  (click)="onDeleteGroup()"
+                >
+                  Delete Group
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</app-page-container>

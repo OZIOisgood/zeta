@@ -3,6 +3,7 @@ import { AssetDetailsPageComponent } from '../pages/asset-details-page/asset-det
 import { BookCoachingPageComponent } from '../pages/book-coaching-page/book-coaching-page.component';
 import { CreateGroupPageComponent } from '../pages/create-group-page/create-group-page.component';
 import { GroupDetailsPageComponent } from '../pages/group-details-page/group-details-page.component';
+import { GroupPreferencesPageComponent } from '../pages/group-preferences-page/group-preferences-page.component';
 import { GroupsPageComponent } from '../pages/groups-page/groups-page.component';
 import { HomePageComponent } from '../pages/home-page/home-page.component';
 import { ManageAvailabilityPageComponent } from '../pages/manage-availability-page/manage-availability-page.component';
@@ -42,6 +43,12 @@ export const routes: Routes = [
         component: GroupDetailsPageComponent,
         canActivate: [permissionGuard],
         data: { permission: 'groups:read' },
+      },
+      {
+        path: 'groups/:id/preferences',
+        component: GroupPreferencesPageComponent,
+        canActivate: [permissionGuard],
+        data: { permission: 'groups:preferences:edit' },
       },
       // Sessions hub — visible to both students and experts
       {
