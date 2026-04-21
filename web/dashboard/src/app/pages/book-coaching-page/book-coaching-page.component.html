@@ -244,6 +244,8 @@
               <textarea
                 tuiTextarea
                 [(ngModel)]="notes"
+                [min]="5"
+                [max]="15"
                 placeholder="Anything you'd like to share with the expert..."
               ></textarea>
             </tui-textfield>
