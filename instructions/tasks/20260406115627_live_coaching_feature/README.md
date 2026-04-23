@@ -504,7 +504,7 @@ Parsed in `server.go` via `time.ParseDuration` with defaults. Read via `HandlerC
 
 - [x] `sendBookingCreatedEmail()` calls `emailService.Send()` (was a stub)
 - [x] `sendCancellationEmail()` calls `emailService.Send()` (was a stub)
-- [ ] Emails include session details, partner name, scheduled time, and group name
+- [x] Emails include session details, partner name, scheduled time, and group name
 
 ### Backend — Reminders
 

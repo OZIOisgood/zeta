@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
@@ -15,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
 // --- DTO ---
@@ -277,7 +279,7 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		break
 	}
 
-	h.sendBookingCreatedEmail(ctx, booking)
+	h.sendBookingCreatedEmail(ctx, booking, sessionType.Name)
 	h.scheduleReminders(ctx, booking)
 
 	users := h.resolveUsers(ctx, []string{booking.ExpertID, booking.StudentID})
@@ -489,28 +491,96 @@ func (h *Handler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toBookingResponse(updated, users, ""))
 }
 
-// --- Email stubs ---
+// --- Email helpers ---
 
-func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBooking) {
-	log := logger.From(ctx, h.logger)
-	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
-	subject := "Live Coaching Session Confirmed"
-	body := "Your live coaching session has been confirmed.\n\nDate & Time: " + scheduledStr +
-		"\nDuration: " + formatDuration(b.DurationMinutes)
+// bookingParticipant holds the resolved name and email for a booking participant.
+type bookingParticipant struct {
+	name  string
+	email string
+}
 
-	recipients := h.resolveEmails(ctx, []string{b.ExpertID, b.StudentID})
-
-	if len(recipients) == 0 {
-		log.WarnContext(ctx, "booking_created_email_no_recipients",
+// resolveParticipant fetches a WorkOS user's display name and email address in one call.
+func (h *Handler) resolveParticipant(ctx context.Context, userID string) bookingParticipant {
+	u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{User: userID})
+	if err != nil {
+		h.logger.WarnContext(ctx, "resolve_participant_failed",
 			slog.String("component", "coaching"),
+			slog.String("user_id", userID),
+			slog.Any("err", err),
 		)
-		return
+		return bookingParticipant{}
+	}
+	return bookingParticipant{
+		name:  strings.TrimSpace(u.FirstName + " " + u.LastName),
+		email: u.Email,
+	}
+}
+
+// --- Email sending ---
+
+func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBooking, sessionTypeName string) {
+	log := logger.From(ctx, h.logger)
+
+	groupName := ""
+	if group, err := h.q.GetGroup(ctx, b.GroupID); err != nil {
+		log.WarnContext(ctx, "booking_email_fetch_group_failed",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(b.ID)),
+			slog.Any("err", err),
+		)
+	} else {
+		groupName = group.Name
 	}
 
-	if err := h.emailService.Send(recipients, subject, body); err != nil {
-		log.ErrorContext(ctx, "booking_created_email_failed",
+	expert := h.resolveParticipant(ctx, b.ExpertID)
+	student := h.resolveParticipant(ctx, b.StudentID)
+
+	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
+	durationStr := formatDuration(b.DurationMinutes)
+	subject := "Live Coaching Session Confirmed"
+
+	buildBody := func(partnerName string) string {
+		body := "Your live coaching session has been confirmed.\n\n" +
+			"Session: " + sessionTypeName + "\n" +
+			"With: " + partnerName + "\n" +
+			"Group: " + groupName + "\n" +
+			"Date & Time: " + scheduledStr + "\n" +
+			"Duration: " + durationStr
+		if b.Notes.Valid && b.Notes.String != "" {
+			body += "\nNotes: " + b.Notes.String
+		}
+		return body
+	}
+
+	type emailTarget struct {
+		addr    string
+		partner string
+	}
+	targets := []emailTarget{
+		{addr: student.email, partner: expert.name},
+		{addr: expert.email, partner: student.name},
+	}
+
+	sentCount := 0
+	for _, t := range targets {
+		if t.addr == "" {
+			continue
+		}
+		if err := h.emailService.Send([]string{t.addr}, subject, buildBody(t.partner)); err != nil {
+			log.ErrorContext(ctx, "booking_created_email_failed",
+				slog.String("component", "coaching"),
+				slog.String("recipient", t.addr),
+				slog.Any("err", err),
+			)
+			continue
+		}
+		sentCount++
+	}
+
+	if sentCount == 0 {
+		log.WarnContext(ctx, "booking_created_email_no_recipients",
 			slog.String("component", "coaching"),
-			slog.Any("err", err),
+			slog.String("booking_id", uuidToString(b.ID)),
 		)
 		return
 	}
@@ -525,27 +595,59 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 
 func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBooking, cancelledByID string) {
 	log := logger.From(ctx, h.logger)
-	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
 
-	// Notify the other party (the one who didn't cancel).
-	otherID := b.ExpertID
-	if cancelledByID == b.ExpertID {
-		otherID = b.StudentID
+	sessionTypeName := ""
+	if st, err := h.q.GetSessionType(ctx, db.GetSessionTypeParams{ID: b.SessionTypeID, GroupID: b.GroupID}); err != nil {
+		log.WarnContext(ctx, "cancellation_email_fetch_session_type_failed",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(b.ID)),
+			slog.Any("err", err),
+		)
+	} else {
+		sessionTypeName = st.Name
 	}
 
-	recipients := h.resolveEmails(ctx, []string{otherID})
-	if len(recipients) == 0 {
+	groupName := ""
+	if group, err := h.q.GetGroup(ctx, b.GroupID); err != nil {
+		log.WarnContext(ctx, "cancellation_email_fetch_group_failed",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(b.ID)),
+			slog.Any("err", err),
+		)
+	} else {
+		groupName = group.Name
+	}
+
+	expert := h.resolveParticipant(ctx, b.ExpertID)
+	student := h.resolveParticipant(ctx, b.StudentID)
+
+	cancellerName := expert.name
+	if cancelledByID == b.StudentID {
+		cancellerName = student.name
+	}
+
+	// Notify the other party (the one who didn't cancel).
+	otherEmail := student.email
+	if cancelledByID == b.StudentID {
+		otherEmail = expert.email
+	}
+	if otherEmail == "" {
 		return
 	}
 
+	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
 	subject := "Live Coaching Session Cancelled"
-	body := "A live coaching session scheduled for " + scheduledStr +
-		" (" + formatDuration(b.DurationMinutes) + ") has been cancelled."
+	body := "A coaching session has been cancelled.\n\n" +
+		"Session: " + sessionTypeName + "\n" +
+		"Group: " + groupName + "\n" +
+		"Date & Time: " + scheduledStr + "\n" +
+		"Duration: " + formatDuration(b.DurationMinutes) + "\n" +
+		"Cancelled by: " + cancellerName
 	if reason := b.CancellationReason.String; reason != "" {
-		body += "\n\nReason: " + reason
+		body += "\nReason: " + reason
 	}
 
-	if err := h.emailService.Send(recipients, subject, body); err != nil {
+	if err := h.emailService.Send([]string{otherEmail}, subject, body); err != nil {
 		log.ErrorContext(ctx, "booking_cancellation_email_failed",
 			slog.String("component", "coaching"),
 			slog.Any("err", err),
