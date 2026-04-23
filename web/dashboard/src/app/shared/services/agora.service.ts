@@ -20,6 +20,8 @@ export class AgoraService {
   readonly videoDevices = signal<MediaDeviceInfo[]>([]);
   readonly selectedAudioDeviceId = signal<string>('');
   readonly selectedVideoDeviceId = signal<string>('');
+  readonly audioEnabled = signal(true);
+  readonly videoEnabled = signal(true);
 
   async join(appId: string, channel: string, token: string, uid: number): Promise<void> {
     const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
@@ -85,18 +87,20 @@ export class AgoraService {
     this.selectedVideoDeviceId.set(deviceId);
   }
 
-  toggleAudio(): boolean {
+  async toggleAudio(): Promise<void> {
     const track = this.localAudioTrack();
-    if (!track) return false;
-    track.setEnabled(!track.enabled);
-    return track.enabled;
+    if (!track) return;
+    const next = !this.audioEnabled();
+    await track.setEnabled(next);
+    this.audioEnabled.set(next);
   }
 
-  toggleVideo(): boolean {
+  async toggleVideo(): Promise<void> {
     const track = this.localVideoTrack();
-    if (!track) return false;
-    track.setEnabled(!track.enabled);
-    return track.enabled;
+    if (!track) return;
+    const next = !this.videoEnabled();
+    await track.setEnabled(next);
+    this.videoEnabled.set(next);
   }
 
   async leave(): Promise<void> {
@@ -112,5 +116,7 @@ export class AgoraService {
     this.videoDevices.set([]);
     this.selectedAudioDeviceId.set('');
     this.selectedVideoDeviceId.set('');
+    this.audioEnabled.set(true);
+    this.videoEnabled.set(true);
   }
 }

@@ -38,9 +38,14 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
 
   protected error = signal<string | null>(null);
   protected connecting = signal(true);
-  protected audioEnabled = signal(true);
-  protected videoEnabled = signal(true);
   protected showDevicePanel = signal(false);
+
+  protected get audioEnabled() {
+    return this.agoraService.audioEnabled;
+  }
+  protected get videoEnabled() {
+    return this.agoraService.videoEnabled;
+  }
 
   protected remoteJoined = computed(
     () => !!(this.agoraService.remoteAudioTrack() || this.agoraService.remoteVideoTrack()),
@@ -100,13 +105,11 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   }
 
   protected toggleAudio(): void {
-    const enabled = this.agoraService.toggleAudio();
-    this.audioEnabled.set(enabled);
+    this.agoraService.toggleAudio();
   }
 
   protected toggleVideo(): void {
-    const enabled = this.agoraService.toggleVideo();
-    this.videoEnabled.set(enabled);
+    this.agoraService.toggleVideo();
   }
 
   protected leave(): void {
