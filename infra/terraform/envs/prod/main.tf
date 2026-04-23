@@ -127,3 +127,26 @@ output "dashboard_domain" {
 output "api_domain" {
   value = "api.zeta.m4xon.com"
 }
+
+# /* --------------------------------- CLOUD SCHEDULER --------------------------------- */
+
+variable "scheduler_secret" {
+  type      = string
+  sensitive = true
+}
+
+resource "google_cloud_scheduler_job" "coaching_reminders" {
+  name             = "coaching-reminders"
+  region           = var.region
+  schedule         = "*/5 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "30s"
+
+  http_target {
+    uri         = "${module.cloud_run.service_url}/internal/coaching/reminders"
+    http_method = "POST"
+    headers = {
+      "Authorization" = "Bearer ${var.scheduler_secret}"
+    }
+  }
+}

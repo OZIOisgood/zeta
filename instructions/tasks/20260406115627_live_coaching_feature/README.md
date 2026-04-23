@@ -514,7 +514,7 @@ Parsed in `server.go` via `time.ParseDuration` with defaults. Read via `HandlerC
 - [x] Internal endpoint is protected by `Authorization: Bearer <SCHEDULER_SECRET>` header (not standard auth)
 - [x] Reminder processing is idempotent (`sent_at` timestamp prevents re-query)
 - [x] 15-min reminder email includes a direct "Join" link
-- [ ] Terraform Cloud Scheduler job is defined (every 5 minutes)
+- [x] Terraform Cloud Scheduler job is defined (every 5 minutes)
 
 ### Backend — Configurable Time Constraints
 
