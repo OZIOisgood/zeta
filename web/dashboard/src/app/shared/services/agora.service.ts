@@ -16,6 +16,11 @@ export class AgoraService {
   readonly remoteAudioTrack = signal<IRemoteAudioTrack | null>(null);
   readonly remoteVideoTrack = signal<IRemoteVideoTrack | null>(null);
 
+  readonly audioDevices = signal<MediaDeviceInfo[]>([]);
+  readonly videoDevices = signal<MediaDeviceInfo[]>([]);
+  readonly selectedAudioDeviceId = signal<string>('');
+  readonly selectedVideoDeviceId = signal<string>('');
+
   async join(appId: string, channel: string, token: string, uid: number): Promise<void> {
     const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     this.client = client;
@@ -52,6 +57,32 @@ export class AgoraService {
 
     this.localAudioTrack.set(audioTrack);
     this.localVideoTrack.set(videoTrack);
+
+    await this.loadDevices();
+    const audioDeviceId = audioTrack.getMediaStreamTrack().getSettings().deviceId;
+    const videoDeviceId = videoTrack.getMediaStreamTrack().getSettings().deviceId;
+    if (audioDeviceId) this.selectedAudioDeviceId.set(audioDeviceId);
+    if (videoDeviceId) this.selectedVideoDeviceId.set(videoDeviceId);
+  }
+
+  async loadDevices(): Promise<void> {
+    const devices = await AgoraRTC.getDevices();
+    this.audioDevices.set(devices.filter((d) => d.kind === 'audioinput'));
+    this.videoDevices.set(devices.filter((d) => d.kind === 'videoinput'));
+  }
+
+  async setAudioDevice(deviceId: string): Promise<void> {
+    const track = this.localAudioTrack();
+    if (!track) return;
+    await track.setDevice(deviceId);
+    this.selectedAudioDeviceId.set(deviceId);
+  }
+
+  async setVideoDevice(deviceId: string): Promise<void> {
+    const track = this.localVideoTrack();
+    if (!track) return;
+    await track.setDevice(deviceId);
+    this.selectedVideoDeviceId.set(deviceId);
   }
 
   toggleAudio(): boolean {
@@ -77,5 +108,9 @@ export class AgoraService {
     this.localVideoTrack.set(null);
     this.remoteAudioTrack.set(null);
     this.remoteVideoTrack.set(null);
+    this.audioDevices.set([]);
+    this.videoDevices.set([]);
+    this.selectedAudioDeviceId.set('');
+    this.selectedVideoDeviceId.set('');
   }
 }

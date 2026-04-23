@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  HostListener,
   OnDestroy,
   OnInit,
   computed,
@@ -32,11 +33,14 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
 
   private readonly localVideoEl = viewChild<ElementRef<HTMLDivElement>>('localVideo');
   private readonly remoteVideoEl = viewChild<ElementRef<HTMLDivElement>>('remoteVideo');
+  private readonly devicePanelRef = viewChild<ElementRef<HTMLElement>>('devicePanel');
+  private readonly settingsBtnRef = viewChild<ElementRef<HTMLElement>>('settingsBtn');
 
   protected error = signal<string | null>(null);
   protected connecting = signal(true);
   protected audioEnabled = signal(true);
   protected videoEnabled = signal(true);
+  protected showDevicePanel = signal(false);
 
   protected remoteJoined = computed(
     () => !!(this.agoraService.remoteAudioTrack() || this.agoraService.remoteVideoTrack()),
@@ -109,5 +113,29 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
     this.agoraService.leave().then(() => {
       this.router.navigate(['/sessions']);
     });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.showDevicePanel()) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    const panel = this.devicePanelRef()?.nativeElement;
+    const btn = this.settingsBtnRef()?.nativeElement;
+    if ((!panel || !panel.contains(target)) && (!btn || !btn.contains(target))) {
+      this.showDevicePanel.set(false);
+    }
+  }
+
+  protected toggleDevicePanel(): void {
+    this.showDevicePanel.update((v) => !v);
+  }
+
+  protected setAudioDevice(event: Event): void {
+    this.agoraService.setAudioDevice((event.target as HTMLSelectElement).value);
+  }
+
+  protected setVideoDevice(event: Event): void {
+    this.agoraService.setVideoDevice((event.target as HTMLSelectElement).value);
   }
 }

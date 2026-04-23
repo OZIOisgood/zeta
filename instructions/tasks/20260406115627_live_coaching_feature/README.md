@@ -529,7 +529,7 @@ Parsed in `server.go` via `time.ParseDuration` with defaults. Read via `HandlerC
 - [x] `AgoraService` wraps Agora client lifecycle (join, leave, toggle mic/camera)
 - [x] Video call page at `/sessions/:groupId/:bookingId/call` with full-screen 1-on-1 video (outside ShellComponent)
 - [x] Controls: mic toggle, camera toggle, leave button
-- [ ] Device selector (audio input, video input) via `AgoraRTC.getDevices()`
+- [x] Device selector (audio input, video input) via `AgoraRTC.getDevices()`
 - [ ] Responsive layout (mobile stacked)
 - [x] Event listeners registered before `join()`
 - [x] Tracks cleaned up with `close()` on leave

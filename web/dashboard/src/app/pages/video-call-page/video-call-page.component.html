@@ -23,6 +23,46 @@
         <div #localVideo class="video-element"></div>
       </div>
     </div>
+    @if (showDevicePanel()) {
+      <div #devicePanel class="device-panel">
+        @if (agoraService.audioDevices().length > 0) {
+          <div class="device-row">
+            <label class="device-label">
+              <tui-icon icon="@tui.mic" class="device-icon"></tui-icon>
+              Microphone
+            </label>
+            <select
+              class="device-select"
+              [value]="agoraService.selectedAudioDeviceId()"
+              (change)="setAudioDevice($event)"
+            >
+              @for (device of agoraService.audioDevices(); track device.deviceId; let i = $index) {
+                <option [value]="device.deviceId">
+                  {{ device.label || 'Microphone ' + (i + 1) }}
+                </option>
+              }
+            </select>
+          </div>
+        }
+        @if (agoraService.videoDevices().length > 0) {
+          <div class="device-row">
+            <label class="device-label">
+              <tui-icon icon="@tui.video" class="device-icon"></tui-icon>
+              Camera
+            </label>
+            <select
+              class="device-select"
+              [value]="agoraService.selectedVideoDeviceId()"
+              (change)="setVideoDevice($event)"
+            >
+              @for (device of agoraService.videoDevices(); track device.deviceId; let i = $index) {
+                <option [value]="device.deviceId">{{ device.label || 'Camera ' + (i + 1) }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+    }
     <div class="controls-bar">
       <button
         tuiIconButton
@@ -41,6 +81,16 @@
         title="Toggle camera"
       >
         <tui-icon [icon]="videoEnabled() ? '@tui.video' : '@tui.video-off'"></tui-icon>
+      </button>
+      <button
+        #settingsBtn
+        tuiIconButton
+        [appearance]="showDevicePanel() ? 'primary' : 'secondary'"
+        size="l"
+        (click)="toggleDevicePanel()"
+        title="Device settings"
+      >
+        <tui-icon icon="@tui.settings"></tui-icon>
       </button>
       <button tuiIconButton appearance="destructive" size="l" (click)="leave()" title="Leave call">
         <tui-icon icon="@tui.phone-off"></tui-icon>
