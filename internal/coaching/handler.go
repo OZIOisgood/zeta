@@ -32,6 +32,7 @@ type Handler struct {
 	agoraAppID          string
 	agoraAppCertificate string
 	schedulerSecret     string
+	appBaseURL          string
 	minBookingNotice    time.Duration
 	cancellationNotice  time.Duration
 	connectWindow       time.Duration
@@ -42,6 +43,7 @@ type HandlerConfig struct {
 	AgoraAppID          string
 	AgoraAppCertificate string
 	SchedulerSecret     string
+	AppBaseURL          string // base URL of the frontend app (e.g. https://app.example.com)
 	MinBookingNotice    time.Duration // default: 2h
 	CancellationNotice  time.Duration // default: 1h
 	ConnectWindow       time.Duration // default: 15m — how early before a session participants may join
@@ -57,6 +59,7 @@ func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, wor
 		agoraAppID:          cfg.AgoraAppID,
 		agoraAppCertificate: cfg.AgoraAppCertificate,
 		schedulerSecret:     cfg.SchedulerSecret,
+		appBaseURL:          cfg.AppBaseURL,
 		minBookingNotice:    cfg.MinBookingNotice,
 		cancellationNotice:  cfg.CancellationNotice,
 		connectWindow:       cfg.ConnectWindow,

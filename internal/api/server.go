@@ -78,6 +78,7 @@ func (s *Server) routes() {
 		AgoraAppID:          os.Getenv("AGORA_APP_ID"),
 		AgoraAppCertificate:  os.Getenv("AGORA_APP_CERTIFICATE"),
 		SchedulerSecret:     os.Getenv("SCHEDULER_SECRET"),
+		AppBaseURL:          frontendBaseURL(),
 		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
 		CancellationNotice:  parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
 		ConnectWindow:       parseDurationOrDefault(os.Getenv("CONNECT_WINDOW"), 15*time.Minute),

@@ -56,21 +56,6 @@ func (mr *MockQuerierMockRecorder) AddUserToGroup(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToGroup", reflect.TypeOf((*MockQuerier)(nil).AddUserToGroup), ctx, arg)
 }
 
-// AdminCancelBooking mocks base method.
-func (m *MockQuerier) AdminCancelBooking(ctx context.Context, arg db.AdminCancelBookingParams) (db.CoachingBooking, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AdminCancelBooking", ctx, arg)
-	ret0, _ := ret[0].(db.CoachingBooking)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AdminCancelBooking indicates an expected call of AdminCancelBooking.
-func (mr *MockQuerierMockRecorder) AdminCancelBooking(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminCancelBooking", reflect.TypeOf((*MockQuerier)(nil).AdminCancelBooking), ctx, arg)
-}
-
 // CancelBooking mocks base method.
 func (m *MockQuerier) CancelBooking(ctx context.Context, arg db.CancelBookingParams) (db.CoachingBooking, error) {
 	m.ctrl.T.Helper()
@@ -426,21 +411,6 @@ func (m *MockQuerier) GetBooking(ctx context.Context, arg db.GetBookingParams) (
 func (mr *MockQuerierMockRecorder) GetBooking(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBooking", reflect.TypeOf((*MockQuerier)(nil).GetBooking), ctx, arg)
-}
-
-// GetBookingByGroupID mocks base method.
-func (m *MockQuerier) GetBookingByGroupID(ctx context.Context, arg db.GetBookingByGroupIDParams) (db.CoachingBooking, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBookingByGroupID", ctx, arg)
-	ret0, _ := ret[0].(db.CoachingBooking)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBookingByGroupID indicates an expected call of GetBookingByGroupID.
-func (mr *MockQuerierMockRecorder) GetBookingByGroupID(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookingByGroupID", reflect.TypeOf((*MockQuerier)(nil).GetBookingByGroupID), ctx, arg)
 }
 
 // GetGroup mocks base method.

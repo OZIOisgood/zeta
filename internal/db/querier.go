@@ -12,7 +12,6 @@ import (
 
 type Querier interface {
 	AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error
-	AdminCancelBooking(ctx context.Context, arg AdminCancelBookingParams) (CoachingBooking, error)
 	CancelBooking(ctx context.Context, arg CancelBookingParams) (CoachingBooking, error)
 	CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) (bool, error)
 	CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error)
@@ -41,7 +40,6 @@ type Querier interface {
 	GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (AssetStatus, error)
 	GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]GetAssetVideosRow, error)
 	GetBooking(ctx context.Context, arg GetBookingParams) (CoachingBooking, error)
-	GetBookingByGroupID(ctx context.Context, arg GetBookingByGroupIDParams) (CoachingBooking, error)
 	GetGroup(ctx context.Context, id pgtype.UUID) (Group, error)
 	GetGroupInvitationByCode(ctx context.Context, code string) (GroupInvitation, error)
 	GetGroupInvitationByID(ctx context.Context, arg GetGroupInvitationByIDParams) (GroupInvitation, error)

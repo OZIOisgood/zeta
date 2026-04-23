@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/OZIOisgood/zeta/internal/logger"
 )
@@ -44,6 +45,15 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 		subject := "Coaching Session Reminder"
 		body := "You have an upcoming coaching session.\n\nDate & Time: " + scheduledStr +
 			"\nDuration: " + formatDuration(rem.DurationMinutes)
+
+		// For the 15-min reminder, append a direct "Join" link.
+		diff := rem.ScheduledAt.Time.Sub(rem.RemindAt.Time)
+		if diff <= 20*time.Minute && h.appBaseURL != "" {
+			groupID := uuidToString(rem.GroupID)
+			bookingID := uuidToString(rem.BookingID)
+			joinURL := h.appBaseURL + "/sessions/" + groupID + "/" + bookingID + "/call"
+			body += "\n\nYour session is about to start. Join now:\n" + joinURL
+		}
 
 		recipients := h.resolveEmails(ctx, []string{rem.ExpertID, rem.StudentID})
 		if len(recipients) > 0 {

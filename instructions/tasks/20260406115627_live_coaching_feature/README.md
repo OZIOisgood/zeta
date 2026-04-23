@@ -513,7 +513,7 @@ Parsed in `server.go` via `time.ParseDuration` with defaults. Read via `HandlerC
 - [x] `POST /internal/coaching/reminders` processes pending reminders (where `sent_at IS NULL AND remind_at <= NOW()`)
 - [x] Internal endpoint is protected by `Authorization: Bearer <SCHEDULER_SECRET>` header (not standard auth)
 - [x] Reminder processing is idempotent (`sent_at` timestamp prevents re-query)
-- [ ] 15-min reminder email includes a direct "Join" link
+- [x] 15-min reminder email includes a direct "Join" link
 - [ ] Terraform Cloud Scheduler job is defined (every 5 minutes)
 
 ### Backend — Configurable Time Constraints
