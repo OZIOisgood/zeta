@@ -56,6 +56,21 @@ func (mr *MockQuerierMockRecorder) AddUserToGroup(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToGroup", reflect.TypeOf((*MockQuerier)(nil).AddUserToGroup), ctx, arg)
 }
 
+// AdminCancelBooking mocks base method.
+func (m *MockQuerier) AdminCancelBooking(ctx context.Context, arg db.AdminCancelBookingParams) (db.CoachingBooking, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminCancelBooking", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingBooking)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminCancelBooking indicates an expected call of AdminCancelBooking.
+func (mr *MockQuerierMockRecorder) AdminCancelBooking(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminCancelBooking", reflect.TypeOf((*MockQuerier)(nil).AdminCancelBooking), ctx, arg)
+}
+
 // CancelBooking mocks base method.
 func (m *MockQuerier) CancelBooking(ctx context.Context, arg db.CancelBookingParams) (db.CoachingBooking, error) {
 	m.ctrl.T.Helper()
@@ -413,6 +428,21 @@ func (mr *MockQuerierMockRecorder) GetBooking(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBooking", reflect.TypeOf((*MockQuerier)(nil).GetBooking), ctx, arg)
 }
 
+// GetBookingByGroupID mocks base method.
+func (m *MockQuerier) GetBookingByGroupID(ctx context.Context, arg db.GetBookingByGroupIDParams) (db.CoachingBooking, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBookingByGroupID", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingBooking)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBookingByGroupID indicates an expected call of GetBookingByGroupID.
+func (mr *MockQuerierMockRecorder) GetBookingByGroupID(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookingByGroupID", reflect.TypeOf((*MockQuerier)(nil).GetBookingByGroupID), ctx, arg)
+}
+
 // GetGroup mocks base method.
 func (m *MockQuerier) GetGroup(ctx context.Context, id pgtype.UUID) (db.Group, error) {
 	m.ctrl.T.Helper()
@@ -531,6 +561,21 @@ func (m *MockQuerier) ListActiveExpertsInGroup(ctx context.Context, groupID pgty
 func (mr *MockQuerierMockRecorder) ListActiveExpertsInGroup(ctx, groupID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActiveExpertsInGroup", reflect.TypeOf((*MockQuerier)(nil).ListActiveExpertsInGroup), ctx, groupID)
+}
+
+// ListAllMyBookings mocks base method.
+func (m *MockQuerier) ListAllMyBookings(ctx context.Context, expertID string) ([]db.ListAllMyBookingsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllMyBookings", ctx, expertID)
+	ret0, _ := ret[0].([]db.ListAllMyBookingsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllMyBookings indicates an expected call of ListAllMyBookings.
+func (mr *MockQuerierMockRecorder) ListAllMyBookings(ctx, expertID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllMyBookings", reflect.TypeOf((*MockQuerier)(nil).ListAllMyBookings), ctx, expertID)
 }
 
 // ListAssets mocks base method.
@@ -653,21 +698,6 @@ func (mr *MockQuerierMockRecorder) ListGroupMembers(ctx, groupID any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembers", reflect.TypeOf((*MockQuerier)(nil).ListGroupMembers), ctx, groupID)
 }
 
-// ListAllMyBookings mocks base method.
-func (m *MockQuerier) ListAllMyBookings(ctx context.Context, expertID string) ([]db.ListAllMyBookingsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAllMyBookings", ctx, expertID)
-	ret0, _ := ret[0].([]db.ListAllMyBookingsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListAllMyBookings indicates an expected call of ListAllMyBookings.
-func (mr *MockQuerierMockRecorder) ListAllMyBookings(ctx, expertID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllMyBookings", reflect.TypeOf((*MockQuerier)(nil).ListAllMyBookings), ctx, expertID)
-}
-
 // ListMyBookings mocks base method.
 func (m *MockQuerier) ListMyBookings(ctx context.Context, arg db.ListMyBookingsParams) ([]db.ListMyBookingsRow, error) {
 	m.ctrl.T.Helper()
@@ -784,6 +814,21 @@ func (m *MockQuerier) RemoveUserFromGroup(ctx context.Context, arg db.RemoveUser
 func (mr *MockQuerierMockRecorder) RemoveUserFromGroup(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromGroup", reflect.TypeOf((*MockQuerier)(nil).RemoveUserFromGroup), ctx, arg)
+}
+
+// SeedUserPreferences mocks base method.
+func (m *MockQuerier) SeedUserPreferences(ctx context.Context, arg db.SeedUserPreferencesParams) (db.UserPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SeedUserPreferences", ctx, arg)
+	ret0, _ := ret[0].(db.UserPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SeedUserPreferences indicates an expected call of SeedUserPreferences.
+func (mr *MockQuerierMockRecorder) SeedUserPreferences(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SeedUserPreferences", reflect.TypeOf((*MockQuerier)(nil).SeedUserPreferences), ctx, arg)
 }
 
 // UpdateAssetStatus mocks base method.

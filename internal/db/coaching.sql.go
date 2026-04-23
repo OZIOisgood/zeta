@@ -11,6 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const adminCancelBooking = `-- name: AdminCancelBooking :one
+UPDATE coaching_bookings
+SET is_cancelled = true,
+    cancellation_reason = $2,
+    cancelled_by = $3,
+    updated_at = NOW()
+WHERE id = $1 AND group_id = $4
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at
+`
+
+type AdminCancelBookingParams struct {
+	ID                 pgtype.UUID `json:"id"`
+	CancellationReason pgtype.Text `json:"cancellation_reason"`
+	CancelledBy        pgtype.Text `json:"cancelled_by"`
+	GroupID            pgtype.UUID `json:"group_id"`
+}
+
+func (q *Queries) AdminCancelBooking(ctx context.Context, arg AdminCancelBookingParams) (CoachingBooking, error) {
+	row := q.db.QueryRow(ctx, adminCancelBooking,
+		arg.ID,
+		arg.CancellationReason,
+		arg.CancelledBy,
+		arg.GroupID,
+	)
+	var i CoachingBooking
+	err := row.Scan(
+		&i.ID,
+		&i.ExpertID,
+		&i.StudentID,
+		&i.GroupID,
+		&i.SessionTypeID,
+		&i.ScheduledAt,
+		&i.DurationMinutes,
+		&i.IsCancelled,
+		&i.CancellationReason,
+		&i.CancelledBy,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const cancelBooking = `-- name: CancelBooking :one
 UPDATE coaching_bookings
 SET is_cancelled = true,
@@ -316,6 +359,36 @@ type GetBookingParams struct {
 
 func (q *Queries) GetBooking(ctx context.Context, arg GetBookingParams) (CoachingBooking, error) {
 	row := q.db.QueryRow(ctx, getBooking, arg.ID, arg.ExpertID)
+	var i CoachingBooking
+	err := row.Scan(
+		&i.ID,
+		&i.ExpertID,
+		&i.StudentID,
+		&i.GroupID,
+		&i.SessionTypeID,
+		&i.ScheduledAt,
+		&i.DurationMinutes,
+		&i.IsCancelled,
+		&i.CancellationReason,
+		&i.CancelledBy,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getBookingByGroupID = `-- name: GetBookingByGroupID :one
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings WHERE id = $1 AND group_id = $2
+`
+
+type GetBookingByGroupIDParams struct {
+	ID      pgtype.UUID `json:"id"`
+	GroupID pgtype.UUID `json:"group_id"`
+}
+
+func (q *Queries) GetBookingByGroupID(ctx context.Context, arg GetBookingByGroupIDParams) (CoachingBooking, error) {
+	row := q.db.QueryRow(ctx, getBookingByGroupID, arg.ID, arg.GroupID)
 	var i CoachingBooking
 	err := row.Scan(
 		&i.ID,

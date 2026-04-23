@@ -76,7 +76,7 @@ func (s *Server) routes() {
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, workosClient, s.Logger, coaching.HandlerConfig{
 		AgoraAppID:          os.Getenv("AGORA_APP_ID"),
-		AgoraAppCertificate: os.Getenv("AGORA_APP_CERTIFICATE"),
+		AgoraAppCertificate:  os.Getenv("AGORA_APP_CERTIFICATE"),
 		SchedulerSecret:     os.Getenv("SCHEDULER_SECRET"),
 		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
 		CancellationNotice:  parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
