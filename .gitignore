@@ -24,5 +24,8 @@ google-cloud-sdk/
 # Terraform
 **/.terraform/
 
+# Coverage reports
+coverage/
+
 # Log files
 log*.txt

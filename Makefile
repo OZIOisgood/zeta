@@ -64,8 +64,10 @@ test\:integration:
 	go test -tags=integration ./... -count=1
 
 test\:coverage:
-	go test ./... -count=1 -coverprofile=coverage.out
-	go tool cover -func=coverage.out
+	mkdir -p coverage
+	go test ./... -count=1 -coverprofile=coverage/coverage.out
+	go tool cover -func=coverage/coverage.out
+	go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 
 mocks:
 	go generate ./internal/...
