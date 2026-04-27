@@ -16,6 +16,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -167,7 +168,7 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":   toUUIDString(invitation.ID),
+		"id":   pgutil.UUIDToString(invitation.ID),
 		"code": invitation.Code,
 	})
 }
@@ -441,14 +442,6 @@ func (h *Handler) GetInvitationQR(w http.ResponseWriter, r *http.Request) {
 }
 
 const codeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
-func toUUIDString(u pgtype.UUID) string {
-	if !u.Valid {
-		return ""
-	}
-	src := u.Bytes
-	return fmt.Sprintf("%x-%x-%x-%x-%x", src[0:4], src[4:6], src[6:8], src[8:10], src[10:16])
-}
 
 func generateCode(length int) (string, error) {
 	b := make([]byte, length)

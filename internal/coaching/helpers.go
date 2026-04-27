@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -13,10 +14,7 @@ import (
 // --- UUID helpers ---
 
 func uuidToString(u pgtype.UUID) string {
-	if !u.Valid {
-		return ""
-	}
-	return fmt.Sprintf("%x-%x-%x-%x-%x", u.Bytes[0:4], u.Bytes[4:6], u.Bytes[6:8], u.Bytes[8:10], u.Bytes[10:16])
+	return pgutil.UUIDToString(u)
 }
 
 func parseUUID(s string) (pgtype.UUID, error) {

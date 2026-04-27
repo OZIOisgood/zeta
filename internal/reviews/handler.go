@@ -2,7 +2,6 @@ package reviews
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -99,7 +99,7 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response[i] = ReviewResponse{
-			ID:               toUUIDString(review.ID),
+			ID:               pgutil.UUIDToString(review.ID),
 			Content:          review.Content,
 			TimestampSeconds: timestampSeconds,
 			CreatedAt:        createdAt,
@@ -189,7 +189,7 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responseData := map[string]interface{}{
-		"id":         toUUIDString(review.ID),
+		"id":         pgutil.UUIDToString(review.ID),
 		"content":    review.Content,
 		"created_at": createdAt,
 	}
@@ -274,7 +274,7 @@ func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 	createdAt := review.CreatedAt.Time
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":         toUUIDString(review.ID),
+		"id":         pgutil.UUIDToString(review.ID),
 		"content":    review.Content,
 		"created_at": createdAt,
 	})
@@ -399,10 +399,4 @@ func (h *Handler) EnhanceText(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func toUUIDString(u pgtype.UUID) string {
-	if !u.Valid {
-		return ""
-	}
-	src := u.Bytes
-	return fmt.Sprintf("%x-%x-%x-%x-%x", src[0:4], src[4:6], src[6:8], src[8:10], src[10:16])
-}
+

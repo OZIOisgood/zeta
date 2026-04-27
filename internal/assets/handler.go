@@ -12,6 +12,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	muxgo "github.com/muxinc/mux-go"
@@ -168,7 +169,7 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 		}
 
 		resp[i] = AssetItem{
-			ID:          toUUIDString(a.ID),
+			ID:          pgutil.UUIDToString(a.ID),
 			Title:       a.Name,
 			Description: a.Description,
 			OwnerID:     a.OwnerID,
@@ -237,7 +238,7 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		videos = append(videos, VideoItem{
-			ID:          toUUIDString(v.ID),
+			ID:          pgutil.UUIDToString(v.ID),
 			PlaybackID:  playbackID,
 			Status:      string(v.Status),
 			ReviewCount: v.ReviewCount,
@@ -265,14 +266,14 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 			groupAvatar = asset.GroupAvatar.String
 		}
 		group = &GroupInfo{
-			ID:     toUUIDString(asset.GroupID),
+			ID:     pgutil.UUIDToString(asset.GroupID),
 			Name:   asset.GroupName.String,
 			Avatar: groupAvatar,
 		}
 	}
 
 	resp := AssetItem{
-		ID:          toUUIDString(asset.ID),
+		ID:          pgutil.UUIDToString(asset.ID),
 		Title:       asset.Name,
 		Description: asset.Description,
 		OwnerID:     asset.OwnerID,
@@ -396,7 +397,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 	log.InfoContext(ctx, "asset_created",
 		slog.String("component", "assets"),
 		slog.String("user_id", userCtx.ID),
-		slog.String("asset_id", toUUIDString(asset.ID)),
+		slog.String("asset_id", pgutil.UUIDToString(asset.ID)),
 		slog.String("group_id", req.GroupID),
 	)
 
@@ -406,7 +407,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		bgCtx := context.Background()
 		bgLog := h.logger.With(
 			slog.String("component", "assets"),
-			slog.String("asset_id", toUUIDString(asset.ID)),
+			slog.String("asset_id", pgutil.UUIDToString(asset.ID)),
 		)
 		
 		// Fetch group to find owner
@@ -475,7 +476,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			// In a real app, we might want to cleanup the asset or handle partial failures
 			log.ErrorContext(ctx, "asset_mux_upload_failed",
 				slog.String("component", "assets"),
-				slog.String("asset_id", toUUIDString(asset.ID)),
+				slog.String("asset_id", pgutil.UUIDToString(asset.ID)),
 				slog.String("filename", filename),
 				slog.Any("err", err),
 			)
@@ -492,7 +493,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.ErrorContext(ctx, "asset_video_create_failed",
 				slog.String("component", "assets"),
-				slog.String("asset_id", toUUIDString(asset.ID)),
+				slog.String("asset_id", pgutil.UUIDToString(asset.ID)),
 				slog.String("filename", filename),
 				slog.Any("err", err),
 			)
@@ -501,7 +502,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		videos = append(videos, VideoResponse{
-			ID:        toUUIDString(video.ID),
+			ID:        pgutil.UUIDToString(video.ID),
 			UploadURL: upload.Data.Url,
 			Filename:  filename,
 		})
@@ -509,7 +510,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(CreateAssetResponse{
-		AssetID: toUUIDString(asset.ID),
+		AssetID: pgutil.UUIDToString(asset.ID),
 		Videos:  videos,
 	})
 }
@@ -525,15 +526,6 @@ func (h *Handler) createMuxUpload(ctx context.Context) (*muxgo.UploadResponse, e
 	// Execute the request
 	upload, err := h.mux.CreateDirectUpload(request)
 	return &upload, err
-}
-
-// Helper to convert pgtype.UUID to string.
-func toUUIDString(u pgtype.UUID) string {
-	if !u.Valid {
-		return ""
-	}
-	src := u.Bytes
-	return fmt.Sprintf("%x-%x-%x-%x-%x", src[0:4], src[4:6], src[6:8], src[8:10], src[10:16])
 }
 
 func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {

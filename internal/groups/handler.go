@@ -2,7 +2,6 @@ package groups
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -32,7 +32,7 @@ func toGroupResponse(g db.Group) groupResponse {
 		avatar = &g.Avatar
 	}
 	return groupResponse{
-		ID:          toUUIDString(g.ID),
+		ID:          pgutil.UUIDToString(g.ID),
 		Name:        g.Name,
 		OwnerID:     g.OwnerID,
 		Avatar:      avatar,
@@ -40,14 +40,6 @@ func toGroupResponse(g db.Group) groupResponse {
 		CreatedAt:   g.CreatedAt.Time.Format(time.RFC3339),
 		UpdatedAt:   g.UpdatedAt.Time.Format(time.RFC3339),
 	}
-}
-
-func toUUIDString(u pgtype.UUID) string {
-	if !u.Valid {
-		return ""
-	}
-	src := u.Bytes
-	return fmt.Sprintf("%x-%x-%x-%x-%x", src[0:4], src[4:6], src[6:8], src[8:10], src[10:16])
 }
 
 type Handler struct {

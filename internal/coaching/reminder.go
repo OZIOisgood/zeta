@@ -1,12 +1,15 @@
 package coaching
 
 import (
+	"context"
 	"crypto/subtle"
 	"log/slog"
 	"net/http"
 	"time"
 
+	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // ProcessReminders is an internal endpoint called by Cloud Scheduler.
@@ -84,4 +87,30 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 	)
 
 	writeJSON(w, http.StatusOK, map[string]int{"processed": len(reminders), "sent": sent})
+}
+
+// scheduleReminders creates 24h, 1h, and 15min reminder rows for a new booking.
+// Failures are logged but do not affect the booking creation response.
+func (h *Handler) scheduleReminders(ctx context.Context, b db.CoachingBooking) {
+	log := logger.From(ctx, h.logger)
+	offsets := []time.Duration{24 * time.Hour, 1 * time.Hour, 15 * time.Minute}
+
+	for _, offset := range offsets {
+		remindAt := b.ScheduledAt.Time.Add(-offset)
+		if remindAt.Before(time.Now()) {
+			continue // skip reminders that are already in the past
+		}
+		err := h.q.CreateBookingReminder(ctx, db.CreateBookingReminderParams{
+			BookingID: b.ID,
+			RemindAt:  pgtype.Timestamptz{Time: remindAt, Valid: true},
+		})
+		if err != nil {
+			log.ErrorContext(ctx, "schedule_reminder_failed",
+				slog.String("component", "coaching"),
+				slog.Any("err", err),
+				slog.String("booking_id", uuidToString(b.ID)),
+				slog.Duration("offset", offset),
+			)
+		}
+	}
 }
