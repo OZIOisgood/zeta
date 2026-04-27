@@ -17,7 +17,7 @@ api
 .idea/
 
 # Tools and temporary files
-tools/
+/tools/
 tmp/
 google-cloud-sdk/
 
