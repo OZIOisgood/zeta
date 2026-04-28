@@ -84,3 +84,134 @@ func TestIsBlocked_PartialDay(t *testing.T) {
 		})
 	}
 }
+
+// slotStarts extracts StartsAt from each SlotResponse for readable error output.
+func slotStarts(slots []SlotResponse) []time.Time {
+	out := make([]time.Time, len(slots))
+	for i, s := range slots {
+		out[i] = s.StartsAt
+	}
+	return out
+}
+
+func TestComputeSlots(t *testing.T) {
+	loc := time.UTC
+
+	// 2025-01-20 is a Monday.
+	monday := time.Date(2025, 1, 20, 0, 0, 0, 0, time.UTC)
+	rangeStart := monday
+	rangeEnd := monday.AddDate(0, 0, 1)
+
+	start900, _ := parseTime("09:00")
+	end1200, _ := parseTime("12:00")
+	end1030, _ := parseTime("10:30")
+
+	// Availability: Monday 09:00–12:00 UTC, yields three 60-min slots.
+	mondayAvail := []db.CoachingAvailability{{
+		ExpertID:  "expert-1",
+		DayOfWeek: 1, // Monday
+		StartTime: start900,
+		EndTime:   end1200,
+	}}
+
+	tests := []struct {
+		name       string
+		avail      []db.CoachingAvailability
+		blocked    []db.CoachingBlockedSlot
+		bookings   []db.CoachingBooking
+		minNotice  time.Time
+		duration   int32
+		wantStarts []time.Time
+	}{
+		{
+			name:       "no availability: no slots",
+			avail:      nil,
+			minNotice:  monday,
+			duration:   60,
+			wantStarts: nil,
+		},
+		{
+			name:      "basic: three 60-min slots in 09:00–12:00 window",
+			avail:     mondayAvail,
+			minNotice: monday, // far in the past, no filtering
+			duration:  60,
+			wantStarts: []time.Time{
+				time.Date(2025, 1, 20, 9, 0, 0, 0, time.UTC),
+				time.Date(2025, 1, 20, 10, 0, 0, 0, time.UTC),
+				time.Date(2025, 1, 20, 11, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			// Window 09:00–10:30 with 60-min slots:
+			// 09:00+60m=10:00 ≤ 10:30 → fits; 10:00+60m=11:00 > 10:30 → doesn't fit.
+			name: "partial window: slot that doesn't fit is excluded",
+			avail: []db.CoachingAvailability{{
+				ExpertID: "expert-1", DayOfWeek: 1,
+				StartTime: start900, EndTime: end1030,
+			}},
+			minNotice: monday,
+			duration:  60,
+			wantStarts: []time.Time{
+				time.Date(2025, 1, 20, 9, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			// minNotice = 10:30. Slots that START before 10:30 must be excluded.
+			// 09:00 slot starts at 09:00 < 10:30 → excluded.
+			// 10:00 slot starts at 10:00 < 10:30 → excluded.   ← BUG: current
+			//   code checks slotEnd (11:00 > 10:30) and shows this slot.
+			// 11:00 slot starts at 11:00 ≥ 10:30 → shown.
+			name:      "minNotice: excludes slots whose START is before the notice deadline",
+			avail:     mondayAvail,
+			minNotice: time.Date(2025, 1, 20, 10, 30, 0, 0, time.UTC),
+			duration:  60,
+			wantStarts: []time.Time{
+				time.Date(2025, 1, 20, 11, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			// Full-day blocked slot must remove all slots for that day.
+			name:  "full-day block: no slots for the blocked day",
+			avail: mondayAvail,
+			blocked: []db.CoachingBlockedSlot{{
+				BlockedDate: pgtype.Date{Time: time.Date(2025, 1, 20, 0, 0, 0, 0, time.UTC), Valid: true},
+				// StartTime / EndTime left as zero → Valid:false → full-day block
+			}},
+			minNotice:  monday,
+			duration:   60,
+			wantStarts: nil,
+		},
+		{
+			// Booking at 10:00–11:00 should remove only the 10:00 slot.
+			name:  "booking: only the overlapping slot is removed",
+			avail: mondayAvail,
+			bookings: []db.CoachingBooking{{
+				ScheduledAt:     pgtype.Timestamptz{Time: time.Date(2025, 1, 20, 10, 0, 0, 0, time.UTC), Valid: true},
+				DurationMinutes: 60,
+			}},
+			minNotice: monday,
+			duration:  60,
+			wantStarts: []time.Time{
+				time.Date(2025, 1, 20, 9, 0, 0, 0, time.UTC),
+				time.Date(2025, 1, 20, 11, 0, 0, 0, time.UTC),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := computeSlots(tc.avail, tc.blocked, tc.bookings, loc,
+				rangeStart, rangeEnd, tc.minNotice, tc.duration)
+
+			if len(got) != len(tc.wantStarts) {
+				t.Fatalf("got %d slots %v, want %d %v",
+					len(got), slotStarts(got), len(tc.wantStarts), tc.wantStarts)
+			}
+			for i, want := range tc.wantStarts {
+				if !got[i].StartsAt.Equal(want) {
+					t.Errorf("slot[%d]: got %v, want %v", i, got[i].StartsAt, want)
+				}
+			}
+		})
+	}
+}

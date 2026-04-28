@@ -205,8 +205,8 @@ func computeSlots(
 			for slotStart := windowStart; !slotStart.Add(duration).After(windowEnd); slotStart = slotStart.Add(duration) {
 				slotEnd := slotStart.Add(duration)
 
-				// Skip past slots or within minimum notice.
-				if slotEnd.Before(minNotice) {
+				// Skip slots that start before the minimum booking notice deadline.
+				if slotStart.Before(minNotice) {
 					continue
 				}
 
