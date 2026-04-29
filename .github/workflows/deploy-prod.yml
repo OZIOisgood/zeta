@@ -93,6 +93,13 @@ jobs:
           docker push "$IMAGE_TAG"
           docker push "${{ env.IMAGE_API }}:stable"
 
+      - name: Remove legacy Agora recording secret bindings
+        run: |
+          gcloud run services update zeta-api \
+            --region ${{ env.REGION }} \
+            --project ${{ vars.GCP_PROJECT_ID }} \
+            --remove-secrets="AGORA_CLOUD_RECORDING_ENABLED,AGORA_CLOUD_RECORDING_BASE_URL,AGORA_RECORDING_MODE,AGORA_RECORDING_STORAGE_VENDOR,AGORA_RECORDING_STORAGE_REGION,AGORA_RECORDING_STORAGE_BUCKET,AGORA_RECORDING_FILE_PREFIX,AGORA_RECORDING_MAX_IDLE_TIME,AGORA_RECORDING_TRANSCODING_WIDTH,AGORA_RECORDING_TRANSCODING_HEIGHT,AGORA_RECORDING_TRANSCODING_BITRATE,AGORA_RECORDING_TRANSCODING_FPS"
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy zeta-api \
