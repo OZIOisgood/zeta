@@ -29,6 +29,7 @@ This feature reuses `coaching:video:connect`. No new permission is required beca
   - Cloud Recording REST quickstart
   - Cloud Recording RESTful API reference
   - REST authentication reference
+  - Third-party cloud storage regions: Google Cloud Storage uses `vendor=6` and `region=0`.
 
 ## Test Decision
 
@@ -39,5 +40,6 @@ Automated backend tests should be updated because this feature changes the conne
 - [x] When recording is enabled and configured, connect starts one cloud recording per booking.
 - [x] The recording service uses a unique integer recording UID that is different from participant UIDs.
 - [x] The recording request uses the current Agora REST base URL and Basic HTTP authentication.
+- [x] Dev/prod infrastructure provisions Google Cloud Storage and HMAC credentials for Agora recording output.
 - [x] Client leave and cleanup routes stop active recordings without failing if Agora has already stopped them.
 - [x] `make api:build` succeeds.

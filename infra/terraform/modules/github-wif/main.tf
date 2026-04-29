@@ -58,6 +58,20 @@ resource "google_project_iam_member" "cloudsql_admin" {
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
+# Allow the deploy SA to manage GCS buckets and HMAC keys via Terraform.
+resource "google_project_iam_member" "storage_admin" {
+  project = var.project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# Allow the deploy SA to manage Cloud Scheduler jobs via Terraform.
+resource "google_project_iam_member" "cloudscheduler_admin" {
+  project = var.project_id
+  role    = "roles/cloudscheduler.admin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
 # Allow the deploy SA to manage IAM on service accounts via Terraform.
 resource "google_project_iam_member" "sa_admin" {
   project = var.project_id

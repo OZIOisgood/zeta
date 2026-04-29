@@ -85,6 +85,17 @@ module "cloud_sql" {
   deletion_protection = false
 }
 
+module "agora_recording_storage" {
+  source = "../../modules/agora-recording-storage"
+
+  project_id    = var.project_id
+  region        = var.region
+  environment   = "dev"
+  force_destroy = true
+
+  depends_on = [module.github_wif]
+}
+
 output "service_url" {
   value = module.cloud_run.service_url
 }
@@ -142,6 +153,7 @@ resource "google_cloud_scheduler_job" "coaching_reminders" {
   schedule         = "*/5 * * * *"
   time_zone        = "UTC"
   attempt_deadline = "30s"
+  depends_on       = [module.github_wif]
 
   http_target {
     uri         = "${module.cloud_run.service_url}/internal/coaching/reminders"
@@ -158,6 +170,7 @@ resource "google_cloud_scheduler_job" "coaching_recordings_cleanup" {
   schedule         = "*/5 * * * *"
   time_zone        = "UTC"
   attempt_deadline = "30s"
+  depends_on       = [module.github_wif]
 
   http_target {
     uri         = "${module.cloud_run.service_url}/internal/coaching/recordings/cleanup"

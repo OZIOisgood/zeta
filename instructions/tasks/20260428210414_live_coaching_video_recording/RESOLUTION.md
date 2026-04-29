@@ -10,6 +10,8 @@
 ## Technical Details
 - Recording is disabled by default and controlled by `AGORA_CLOUD_RECORDING_ENABLED`.
 - The implementation uses Agora's current Cloud Recording REST base URL (`https://api.sd-rtn.com`) and Basic HTTP authentication with REST customer credentials.
+- Dev/prod Terraform provisions one Google Cloud Storage bucket per environment and generates service-account HMAC credentials for Agora Cloud Recording (`vendor=6`, `region=0`).
+- Cloud Run deploys use plain env vars for static recording settings and Secret Manager only for credentials.
 - Participant UIDs are deterministic per booking role: student `1`, expert `2`, recording bot `3`.
 - Recording start is serialized with a booking row lock so concurrent joins do not start duplicate recordings.
 - Recording metadata is modeled as a one-to-one child of `coaching_bookings` to keep the booking table focused on scheduling data.
@@ -33,5 +35,4 @@ Added focused backend unit coverage for recording UID and lifecycle helper behav
 
 ## Next Steps
 
-- Configure Cloud Scheduler to call `POST /internal/coaching/recordings/cleanup`.
 - Decide how recorded cloud-storage files should be imported into the asset/Mux review workflow.

@@ -53,7 +53,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 5. **Agora Configuration**:
    - Create a project in [Agora Console](https://console.agora.io/).
    - Set `AGORA_APP_ID` and `AGORA_APP_CERTIFICATE` in `.env`.
-   - To enable recording, enable Cloud Recording in Agora Console, create REST credentials, configure an object storage bucket that Agora can write to directly (for example Google Cloud Storage, Amazon S3, or Azure Blob Storage), and set `AGORA_CLOUD_RECORDING_ENABLED=true` with the `AGORA_REST_*` and `AGORA_RECORDING_*` variables.
+   - To enable recording locally, enable Cloud Recording in Agora Console, create REST credentials, configure object storage that Agora can write to directly, and set `AGORA_CLOUD_RECORDING_ENABLED=true` with the `AGORA_REST_*` and `AGORA_RECORDING_*` variables.
+   - In deployed `dev` and `prod`, Terraform provisions a Google Cloud Storage bucket plus HMAC credentials for Agora Cloud Recording. The deploy workflow injects static recording config as Cloud Run env vars and injects the generated HMAC credentials through Secret Manager.
 
 6. **Coaching Time Constraints** (optional, defaults are production-safe):
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
