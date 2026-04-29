@@ -107,6 +107,79 @@ RETURNING *;
 -- name: GetBooking :one
 SELECT * FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2);
 
+-- name: GetBookingForRecordingUpdate :one
+SELECT * FROM coaching_bookings
+WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
+FOR UPDATE;
+
+-- name: GetBookingRecordingForUpdate :one
+SELECT * FROM coaching_booking_recordings
+WHERE booking_id = $1
+FOR UPDATE;
+
+-- name: GetBookingRecording :one
+SELECT * FROM coaching_booking_recordings
+WHERE booking_id = $1;
+
+-- name: MarkBookingRecordingStarted :one
+INSERT INTO coaching_booking_recordings (
+    booking_id,
+    status,
+    resource_id,
+    sid,
+    uid,
+    file_prefix,
+    started_at,
+    stopped_at,
+    error
+)
+VALUES ($1, 'started', $2, $3, $4, $5, NOW(), NULL, NULL)
+ON CONFLICT (booking_id) DO UPDATE SET
+    status = 'started',
+    resource_id = EXCLUDED.resource_id,
+    sid = EXCLUDED.sid,
+    uid = EXCLUDED.uid,
+    file_prefix = EXCLUDED.file_prefix,
+    started_at = NOW(),
+    stopped_at = NULL,
+    error = NULL,
+    updated_at = NOW()
+RETURNING *;
+
+-- name: MarkBookingRecordingFailed :exec
+INSERT INTO coaching_booking_recordings (booking_id, status, error)
+VALUES ($1, 'failed', $2)
+ON CONFLICT (booking_id) DO UPDATE SET
+    status = 'failed',
+    error = EXCLUDED.error,
+    updated_at = NOW();
+
+-- name: MarkBookingRecordingStopping :one
+UPDATE coaching_booking_recordings
+SET status = 'stopping',
+    updated_at = NOW()
+WHERE booking_id = $1
+  AND status IN ('starting', 'started')
+RETURNING *;
+
+-- name: MarkBookingRecordingStopped :one
+UPDATE coaching_booking_recordings
+SET status = 'stopped',
+    stopped_at = NOW(),
+    error = NULL,
+    updated_at = NOW()
+WHERE booking_id = $1
+RETURNING *;
+
+-- name: ListRecordingsPastEnd :many
+SELECT r.*
+FROM coaching_booking_recordings r
+JOIN coaching_bookings b ON b.id = r.booking_id
+WHERE r.status IN ('starting', 'started', 'stopping')
+  AND b.scheduled_at + (b.duration_minutes * interval '1 minute') <= NOW()
+ORDER BY b.scheduled_at
+LIMIT $1;
+
 -- name: ListMyBookings :many
 SELECT cb.*, cst.name AS session_type_name
 FROM coaching_bookings cb

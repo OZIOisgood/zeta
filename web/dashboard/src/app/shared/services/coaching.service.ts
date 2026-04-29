@@ -223,6 +223,13 @@ export class CoachingService {
       `${this.apiUrl}/groups/${groupId}/coaching/bookings/${bookingId}/connect`,
     );
   }
+
+  stopBookingRecording(groupId: string, bookingId: string): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(
+      `${this.apiUrl}/groups/${groupId}/coaching/bookings/${bookingId}/recording/stop`,
+      {},
+    );
+  }
 }
 
 export interface ConnectResponse {

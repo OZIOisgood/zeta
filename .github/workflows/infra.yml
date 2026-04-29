@@ -45,6 +45,9 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -58,9 +61,15 @@ jobs:
 
       - name: Terraform Plan
         run: |
+          SCHEDULER_SECRET="$(gcloud secrets versions access latest \
+            --secret="zeta-${{ inputs.environment }}-scheduler-secret" \
+            --project="${{ vars.GCP_PROJECT_ID }}")"
+          echo "::add-mask::$SCHEDULER_SECRET"
+
           terraform plan \
             -var="project_id=${{ vars.GCP_PROJECT_ID }}" \
             -var="region=${{ env.REGION }}" \
+            -var="scheduler_secret=${SCHEDULER_SECRET}" \
             -out=tfplan
 
       - name: Terraform Apply

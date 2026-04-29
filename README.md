@@ -16,6 +16,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Secure Authentication**: Enterprise-grade auth via WorkOS.
 - **Video Reviews**: Add comments and feedback directly to video clips.
 - **Live Video Coaching**: 1-on-1 Agora-powered video calls with booking, availability management, and automated email reminders.
+- **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle.
 
 ## How to start
 
@@ -52,6 +53,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 5. **Agora Configuration**:
    - Create a project in [Agora Console](https://console.agora.io/).
    - Set `AGORA_APP_ID` and `AGORA_APP_CERTIFICATE` in `.env`.
+   - To enable recording, enable Cloud Recording in Agora Console, create REST credentials, configure an object storage bucket that Agora can write to directly (for example Google Cloud Storage, Amazon S3, or Azure Blob Storage), and set `AGORA_CLOUD_RECORDING_ENABLED=true` with the `AGORA_REST_*` and `AGORA_RECORDING_*` variables.
 
 6. **Coaching Time Constraints** (optional, defaults are production-safe):
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
@@ -106,7 +108,9 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 4. Automated **reminders** are sent at 24 h, 1 h, and 15 min before the session (driven by GCP Cloud Scheduler polling every 5 min).
 5. Within the connect window (default 15 min before start), a **Join** button appears on the dashboard.
 6. Clicking Join calls the connect endpoint, which validates the booking and generates an **Agora RTC token**.
-7. The Angular app joins the Agora channel and renders a **full-screen video call** page.
+7. If enabled, the API starts **Agora Cloud Recording** for the booking before returning join data.
+8. The Angular app joins the Agora channel and renders a **full-screen video call** page.
+9. Leaving the call asks the API to stop the active recording; an internal cleanup endpoint can also stop recordings after their scheduled end.
 
 ### API Examples
 
@@ -157,9 +161,11 @@ graph TD
     API -->|Auth| WorkOS[WorkOS]
     API -->|Video API| Mux[Mux]
     Web -->|Direct Upload| Mux
-    API -->|RTC Tokens| Agora[Agora]
+    API -->|RTC Tokens + Cloud Recording REST| Agora[Agora]
+    Agora -->|Recording files| Storage[(Cloud Storage)]
     Web -->|Video Call| Agora
     Scheduler[GCP Cloud Scheduler] -->|POST /internal/coaching/reminders| API
+    Scheduler -->|POST /internal/coaching/recordings/cleanup| API
 ```
 
 ### Video Call Sequence
@@ -176,9 +182,18 @@ sequenceDiagram
     W->>A: GET /groups/{gid}/coaching/bookings/{id}/connect
     A->>D: Validate booking (participant + time window)
     A->>AG: Generate RTC Token (go-tokenbuilder)
+    opt Recording enabled
+        A->>AG: Acquire recording resource
+        A->>AG: Start cloud recording
+        A->>D: Store resourceId, sid, recording status
+    end
     A-->>W: { app_id, channel, token, uid }
     W->>AG: Join Agora Channel (agora-rtc-sdk-ng)
     Note over U,AG: 1-on-1 Video Call
+    U->>W: Leave call
+    W->>A: POST /groups/{gid}/coaching/bookings/{id}/recording/stop
+    A->>AG: Stop cloud recording
+    A->>D: Mark recording stopped
 ```
 
 ### Email Reminders Architecture
@@ -402,6 +417,21 @@ erDiagram
         string cancelled_by
         string notes
         timestamp created_at
+        timestamp updated_at
+    }
+
+    coaching_booking_recordings {
+        uuid booking_id PK, FK
+        enum status "starting, started, stopping, stopped, failed"
+        string resource_id "Agora resourceId"
+        string sid "Agora recording sid"
+        string uid "Agora recording bot UID"
+        string_array file_prefix
+        timestamptz started_at
+        timestamptz stopped_at
+        string error
+        timestamp created_at
+        timestamp updated_at
     }
 
     coaching_booking_reminders {
@@ -418,5 +448,6 @@ erDiagram
     users ||--o{ coaching_blocked_slots : creates
     coaching_session_types ||--o{ coaching_bookings : booked_as
     groups ||--o{ coaching_bookings : contains
+    coaching_bookings ||--o| coaching_booking_recordings : records
     coaching_bookings ||--o{ coaching_booking_reminders : has
 ```

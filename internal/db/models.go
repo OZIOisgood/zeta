@@ -54,6 +54,51 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
+type CoachingRecordingStatus string
+
+const (
+	CoachingRecordingStatusStarting CoachingRecordingStatus = "starting"
+	CoachingRecordingStatusStarted  CoachingRecordingStatus = "started"
+	CoachingRecordingStatusStopping CoachingRecordingStatus = "stopping"
+	CoachingRecordingStatusStopped  CoachingRecordingStatus = "stopped"
+	CoachingRecordingStatusFailed   CoachingRecordingStatus = "failed"
+)
+
+func (e *CoachingRecordingStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CoachingRecordingStatus(s)
+	case string:
+		*e = CoachingRecordingStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CoachingRecordingStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCoachingRecordingStatus struct {
+	CoachingRecordingStatus CoachingRecordingStatus `json:"coaching_recording_status"`
+	Valid                   bool                    `json:"valid"` // Valid is true if CoachingRecordingStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCoachingRecordingStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CoachingRecordingStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CoachingRecordingStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCoachingRecordingStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CoachingRecordingStatus), nil
+}
+
 type InvitationStatus string
 
 const (
@@ -229,6 +274,20 @@ type CoachingBooking struct {
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type CoachingBookingRecording struct {
+	BookingID  pgtype.UUID             `json:"booking_id"`
+	Status     CoachingRecordingStatus `json:"status"`
+	ResourceID pgtype.Text             `json:"resource_id"`
+	Sid        pgtype.Text             `json:"sid"`
+	Uid        pgtype.Text             `json:"uid"`
+	FilePrefix []string                `json:"file_prefix"`
+	StartedAt  pgtype.Timestamptz      `json:"started_at"`
+	StoppedAt  pgtype.Timestamptz      `json:"stopped_at"`
+	Error      pgtype.Text             `json:"error"`
+	CreatedAt  pgtype.Timestamptz      `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz      `json:"updated_at"`
 }
 
 type CoachingBookingReminder struct {

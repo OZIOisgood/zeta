@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -74,9 +75,33 @@ func (s *Server) routes() {
 	invitationsHandler := invitations.NewHandler(queries, emailService, workosClient, s.Logger, frontendBaseURL())
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
+	recordingEnabled := parseBool(os.Getenv("AGORA_CLOUD_RECORDING_ENABLED"))
+	var recordingClient coaching.RecordingClient
+	if recordingEnabled {
+		recordingClient = coaching.NewAgoraCloudRecordingClient(s.Logger, coaching.AgoraCloudRecordingConfig{
+			AppID:              os.Getenv("AGORA_APP_ID"),
+			CustomerID:         os.Getenv("AGORA_REST_CUSTOMER_ID"),
+			CustomerSecret:     os.Getenv("AGORA_REST_CUSTOMER_SECRET"),
+			BaseURL:            os.Getenv("AGORA_CLOUD_RECORDING_BASE_URL"),
+			Mode:               envOrDefault(os.Getenv("AGORA_RECORDING_MODE"), "mix"),
+			StorageVendor:      parseIntOrDefault(os.Getenv("AGORA_RECORDING_STORAGE_VENDOR"), 1),
+			StorageRegion:      parseIntOrDefault(os.Getenv("AGORA_RECORDING_STORAGE_REGION"), 0),
+			StorageBucket:      os.Getenv("AGORA_RECORDING_STORAGE_BUCKET"),
+			StorageAccessKey:   os.Getenv("AGORA_RECORDING_STORAGE_ACCESS_KEY"),
+			StorageSecretKey:   os.Getenv("AGORA_RECORDING_STORAGE_SECRET_KEY"),
+			FileNamePrefix:     splitCSV(os.Getenv("AGORA_RECORDING_FILE_PREFIX")),
+			MaxIdleTime:        parseIntOrDefault(os.Getenv("AGORA_RECORDING_MAX_IDLE_TIME"), 30),
+			TranscodingWidth:   parseIntOrDefault(os.Getenv("AGORA_RECORDING_TRANSCODING_WIDTH"), 640),
+			TranscodingHeight:  parseIntOrDefault(os.Getenv("AGORA_RECORDING_TRANSCODING_HEIGHT"), 360),
+			TranscodingBitrate: parseIntOrDefault(os.Getenv("AGORA_RECORDING_TRANSCODING_BITRATE"), 1500),
+			TranscodingFPS:     parseIntOrDefault(os.Getenv("AGORA_RECORDING_TRANSCODING_FPS"), 30),
+		})
+	}
 	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, workosClient, s.Logger, coaching.HandlerConfig{
 		AgoraAppID:          os.Getenv("AGORA_APP_ID"),
-		AgoraAppCertificate:  os.Getenv("AGORA_APP_CERTIFICATE"),
+		AgoraAppCertificate: os.Getenv("AGORA_APP_CERTIFICATE"),
+		RecordingEnabled:    recordingEnabled,
+		RecordingClient:     recordingClient,
 		SchedulerSecret:     os.Getenv("SCHEDULER_SECRET"),
 		AppBaseURL:          frontendBaseURL(),
 		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
@@ -132,6 +157,7 @@ func (s *Server) routes() {
 
 	// Internal routes (not behind user auth — protected by scheduler secret)
 	s.Router.Post("/internal/coaching/reminders", coachingHandler.ProcessReminders)
+	s.Router.Post("/internal/coaching/recordings/cleanup", coachingHandler.CleanupFinishedRecordings)
 }
 
 // allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)
@@ -157,6 +183,43 @@ func parseDurationOrDefault(s string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return d
+}
+
+func parseBool(s string) bool {
+	v, err := strconv.ParseBool(s)
+	return err == nil && v
+}
+
+func parseIntOrDefault(s string, fallback int) int {
+	if s == "" {
+		return fallback
+	}
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		return fallback
+	}
+	return v
+}
+
+func envOrDefault(s, fallback string) string {
+	if s == "" {
+		return fallback
+	}
+	return s
+}
+
+func splitCSV(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	values := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if value := strings.TrimSpace(part); value != "" {
+			values = append(values, value)
+		}
+	}
+	return values
 }
 
 func frontendBaseURL() string {

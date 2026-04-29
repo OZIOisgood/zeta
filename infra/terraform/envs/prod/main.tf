@@ -150,3 +150,19 @@ resource "google_cloud_scheduler_job" "coaching_reminders" {
     }
   }
 }
+
+resource "google_cloud_scheduler_job" "coaching_recordings_cleanup" {
+  name             = "coaching-recordings-cleanup"
+  region           = var.region
+  schedule         = "*/5 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "30s"
+
+  http_target {
+    uri         = "${module.cloud_run.service_url}/internal/coaching/recordings/cleanup"
+    http_method = "POST"
+    headers = {
+      "Authorization" = "Bearer ${var.scheduler_secret}"
+    }
+  }
+}

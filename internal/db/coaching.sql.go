@@ -335,6 +335,87 @@ func (q *Queries) GetBooking(ctx context.Context, arg GetBookingParams) (Coachin
 	return i, err
 }
 
+const getBookingForRecordingUpdate = `-- name: GetBookingForRecordingUpdate :one
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings
+WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
+FOR UPDATE
+`
+
+type GetBookingForRecordingUpdateParams struct {
+	ID       pgtype.UUID `json:"id"`
+	ExpertID string      `json:"expert_id"`
+}
+
+func (q *Queries) GetBookingForRecordingUpdate(ctx context.Context, arg GetBookingForRecordingUpdateParams) (CoachingBooking, error) {
+	row := q.db.QueryRow(ctx, getBookingForRecordingUpdate, arg.ID, arg.ExpertID)
+	var i CoachingBooking
+	err := row.Scan(
+		&i.ID,
+		&i.ExpertID,
+		&i.StudentID,
+		&i.GroupID,
+		&i.SessionTypeID,
+		&i.ScheduledAt,
+		&i.DurationMinutes,
+		&i.IsCancelled,
+		&i.CancellationReason,
+		&i.CancelledBy,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getBookingRecording = `-- name: GetBookingRecording :one
+SELECT booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at FROM coaching_booking_recordings
+WHERE booking_id = $1
+`
+
+func (q *Queries) GetBookingRecording(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, getBookingRecording, bookingID)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ResourceID,
+		&i.Sid,
+		&i.Uid,
+		&i.FilePrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getBookingRecordingForUpdate = `-- name: GetBookingRecordingForUpdate :one
+SELECT booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at FROM coaching_booking_recordings
+WHERE booking_id = $1
+FOR UPDATE
+`
+
+func (q *Queries) GetBookingRecordingForUpdate(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, getBookingRecordingForUpdate, bookingID)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ResourceID,
+		&i.Sid,
+		&i.Uid,
+		&i.FilePrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getSessionType = `-- name: GetSessionType :one
 SELECT id, expert_id, group_id, name, description, duration_minutes, is_active, created_at, updated_at FROM coaching_session_types WHERE id = $1 AND group_id = $2
 `
@@ -847,6 +928,48 @@ func (q *Queries) ListPendingReminders(ctx context.Context) ([]ListPendingRemind
 	return items, nil
 }
 
+const listRecordingsPastEnd = `-- name: ListRecordingsPastEnd :many
+SELECT r.booking_id, r.status, r.resource_id, r.sid, r.uid, r.file_prefix, r.started_at, r.stopped_at, r.error, r.created_at, r.updated_at
+FROM coaching_booking_recordings r
+JOIN coaching_bookings b ON b.id = r.booking_id
+WHERE r.status IN ('starting', 'started', 'stopping')
+  AND b.scheduled_at + (b.duration_minutes * interval '1 minute') <= NOW()
+ORDER BY b.scheduled_at
+LIMIT $1
+`
+
+func (q *Queries) ListRecordingsPastEnd(ctx context.Context, limit int32) ([]CoachingBookingRecording, error) {
+	rows, err := q.db.Query(ctx, listRecordingsPastEnd, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CoachingBookingRecording
+	for rows.Next() {
+		var i CoachingBookingRecording
+		if err := rows.Scan(
+			&i.BookingID,
+			&i.Status,
+			&i.ResourceID,
+			&i.Sid,
+			&i.Uid,
+			&i.FilePrefix,
+			&i.StartedAt,
+			&i.StoppedAt,
+			&i.Error,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSessionTypesByExpertGroup = `-- name: ListSessionTypesByExpertGroup :many
 SELECT id, expert_id, group_id, name, description, duration_minutes, is_active, created_at, updated_at FROM coaching_session_types
 WHERE expert_id = $1 AND group_id = $2 AND is_active = true
@@ -922,6 +1045,141 @@ func (q *Queries) ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UU
 		return nil, err
 	}
 	return items, nil
+}
+
+const markBookingRecordingFailed = `-- name: MarkBookingRecordingFailed :exec
+INSERT INTO coaching_booking_recordings (booking_id, status, error)
+VALUES ($1, 'failed', $2)
+ON CONFLICT (booking_id) DO UPDATE SET
+    status = 'failed',
+    error = EXCLUDED.error,
+    updated_at = NOW()
+`
+
+type MarkBookingRecordingFailedParams struct {
+	BookingID pgtype.UUID `json:"booking_id"`
+	Error     pgtype.Text `json:"error"`
+}
+
+func (q *Queries) MarkBookingRecordingFailed(ctx context.Context, arg MarkBookingRecordingFailedParams) error {
+	_, err := q.db.Exec(ctx, markBookingRecordingFailed, arg.BookingID, arg.Error)
+	return err
+}
+
+const markBookingRecordingStarted = `-- name: MarkBookingRecordingStarted :one
+INSERT INTO coaching_booking_recordings (
+    booking_id,
+    status,
+    resource_id,
+    sid,
+    uid,
+    file_prefix,
+    started_at,
+    stopped_at,
+    error
+)
+VALUES ($1, 'started', $2, $3, $4, $5, NOW(), NULL, NULL)
+ON CONFLICT (booking_id) DO UPDATE SET
+    status = 'started',
+    resource_id = EXCLUDED.resource_id,
+    sid = EXCLUDED.sid,
+    uid = EXCLUDED.uid,
+    file_prefix = EXCLUDED.file_prefix,
+    started_at = NOW(),
+    stopped_at = NULL,
+    error = NULL,
+    updated_at = NOW()
+RETURNING booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at
+`
+
+type MarkBookingRecordingStartedParams struct {
+	BookingID  pgtype.UUID `json:"booking_id"`
+	ResourceID pgtype.Text `json:"resource_id"`
+	Sid        pgtype.Text `json:"sid"`
+	Uid        pgtype.Text `json:"uid"`
+	FilePrefix []string    `json:"file_prefix"`
+}
+
+func (q *Queries) MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, markBookingRecordingStarted,
+		arg.BookingID,
+		arg.ResourceID,
+		arg.Sid,
+		arg.Uid,
+		arg.FilePrefix,
+	)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ResourceID,
+		&i.Sid,
+		&i.Uid,
+		&i.FilePrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const markBookingRecordingStopped = `-- name: MarkBookingRecordingStopped :one
+UPDATE coaching_booking_recordings
+SET status = 'stopped',
+    stopped_at = NOW(),
+    error = NULL,
+    updated_at = NOW()
+WHERE booking_id = $1
+RETURNING booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at
+`
+
+func (q *Queries) MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, markBookingRecordingStopped, bookingID)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ResourceID,
+		&i.Sid,
+		&i.Uid,
+		&i.FilePrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const markBookingRecordingStopping = `-- name: MarkBookingRecordingStopping :one
+UPDATE coaching_booking_recordings
+SET status = 'stopping',
+    updated_at = NOW()
+WHERE booking_id = $1
+  AND status IN ('starting', 'started')
+RETURNING booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at
+`
+
+func (q *Queries) MarkBookingRecordingStopping(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, markBookingRecordingStopping, bookingID)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ResourceID,
+		&i.Sid,
+		&i.Uid,
+		&i.FilePrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const markReminderSent = `-- name: MarkReminderSent :exec

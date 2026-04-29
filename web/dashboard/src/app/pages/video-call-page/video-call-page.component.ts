@@ -39,6 +39,9 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   protected error = signal<string | null>(null);
   protected connecting = signal(true);
   protected showDevicePanel = signal(false);
+  private groupId: string | null = null;
+  private bookingId: string | null = null;
+  private recordingStopRequested = false;
 
   protected get audioEnabled() {
     return this.agoraService.audioEnabled;
@@ -74,6 +77,8 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const groupId = this.route.snapshot.paramMap.get('groupId');
     const bookingId = this.route.snapshot.paramMap.get('bookingId');
+    this.groupId = groupId;
+    this.bookingId = bookingId;
 
     if (!groupId || !bookingId) {
       this.error.set('Missing booking information');
@@ -101,6 +106,7 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopRecording();
     this.agoraService.leave();
   }
 
@@ -113,8 +119,22 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   }
 
   protected leave(): void {
+    this.stopRecording();
     this.agoraService.leave().then(() => {
       this.router.navigate(['/sessions']);
+    });
+  }
+
+  private stopRecording(): void {
+    if (!this.groupId || !this.bookingId || this.recordingStopRequested) {
+      return;
+    }
+
+    this.recordingStopRequested = true;
+    this.coachingService.stopBookingRecording(this.groupId, this.bookingId).subscribe({
+      error: () => {
+        this.recordingStopRequested = false;
+      },
     });
   }
 

@@ -40,6 +40,9 @@ type Querier interface {
 	GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (AssetStatus, error)
 	GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]GetAssetVideosRow, error)
 	GetBooking(ctx context.Context, arg GetBookingParams) (CoachingBooking, error)
+	GetBookingForRecordingUpdate(ctx context.Context, arg GetBookingForRecordingUpdateParams) (CoachingBooking, error)
+	GetBookingRecording(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
+	GetBookingRecordingForUpdate(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
 	GetGroup(ctx context.Context, id pgtype.UUID) (Group, error)
 	GetGroupInvitationByCode(ctx context.Context, code string) (GroupInvitation, error)
 	GetGroupInvitationByID(ctx context.Context, arg GetGroupInvitationByIDParams) (GroupInvitation, error)
@@ -61,10 +64,15 @@ type Querier interface {
 	ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error)
 	ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error)
 	ListPendingReminders(ctx context.Context) ([]ListPendingRemindersRow, error)
+	ListRecordingsPastEnd(ctx context.Context, limit int32) ([]CoachingBookingRecording, error)
 	ListSessionTypesByExpertGroup(ctx context.Context, arg ListSessionTypesByExpertGroupParams) ([]CoachingSessionType, error)
 	ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UUID) ([]CoachingSessionType, error)
 	ListUserGroups(ctx context.Context, userID string) ([]ListUserGroupsRow, error)
 	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]VideoReview, error)
+	MarkBookingRecordingFailed(ctx context.Context, arg MarkBookingRecordingFailedParams) error
+	MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error)
+	MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
+	MarkBookingRecordingStopping(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
 	SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error)

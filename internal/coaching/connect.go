@@ -1,8 +1,6 @@
 package coaching
 
 import (
-	"encoding/binary"
-	"hash/fnv"
 	"log/slog"
 	"net/http"
 	"time"
@@ -80,7 +78,7 @@ func (h *Handler) ConnectToBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	channelName := "coaching_" + uuidToString(booking.ID)
-	uid := userIDToUID(user.ID)
+	uid := participantUIDForBooking(user.ID, booking)
 
 	token, err := rtctokenbuilder.BuildTokenWithUid(
 		h.agoraAppID,
@@ -100,6 +98,16 @@ func (h *Handler) ConnectToBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.ensureRecordingStarted(ctx, booking, user.ID, channelName); err != nil {
+		log.ErrorContext(ctx, "booking_recording_start_failed",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(booking.ID)),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to start recording", http.StatusInternalServerError)
+		return
+	}
+
 	log.InfoContext(ctx, "agora_token_issued",
 		slog.String("component", "coaching"),
 		slog.String("booking_id", uuidToString(booking.ID)),
@@ -113,13 +121,4 @@ func (h *Handler) ConnectToBooking(w http.ResponseWriter, r *http.Request) {
 		Token:   token,
 		UID:     uid,
 	})
-}
-
-// userIDToUID produces a deterministic uint32 from a WorkOS user ID string
-// using FNV-1a hashing. This gives each user a stable Agora UID.
-func userIDToUID(userID string) uint32 {
-	h := fnv.New32a()
-	h.Write([]byte(userID))
-	b := h.Sum(nil)
-	return binary.BigEndian.Uint32(b)
 }
