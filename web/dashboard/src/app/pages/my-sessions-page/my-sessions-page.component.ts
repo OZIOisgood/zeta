@@ -180,4 +180,44 @@ export class MySessionsPageComponent implements OnInit {
   protected joinSession(booking: CoachingBooking): void {
     this.router.navigate(['/sessions', booking.group_id, booking.id, 'call']);
   }
+
+  protected recordingReady(booking: CoachingBooking): boolean {
+    return booking.recording?.status === 'ready' && !!booking.recording.asset_id;
+  }
+
+  protected recordingStatusLabel(booking: CoachingBooking): string {
+    switch (booking.recording?.status) {
+      case 'ready':
+        return 'recording ready';
+      case 'failed':
+        return 'recording failed';
+      case 'pending':
+      case 'importing':
+      case 'processing':
+        return 'recording processing';
+      case 'starting':
+      case 'started':
+      case 'stopping':
+      case 'stopped':
+        return 'recording captured';
+      default:
+        return 'recording';
+    }
+  }
+
+  protected recordingStatusClass(booking: CoachingBooking): string {
+    switch (booking.recording?.status) {
+      case 'ready':
+        return 'status-badge--recording-ready';
+      case 'failed':
+        return 'status-badge--recording-failed';
+      default:
+        return 'status-badge--recording-processing';
+    }
+  }
+
+  protected openRecording(booking: CoachingBooking): void {
+    if (!booking.recording?.asset_id) return;
+    this.router.navigate(['/asset', booking.recording.asset_id]);
+  }
 }

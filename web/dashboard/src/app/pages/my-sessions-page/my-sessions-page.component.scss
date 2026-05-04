@@ -123,6 +123,21 @@
     background: rgba(234, 179, 8, 0.15);
     color: #ca8a04;
   }
+
+  &--recording-ready {
+    background: rgba(20, 184, 166, 0.15);
+    color: #0f766e;
+  }
+
+  &--recording-processing {
+    background: rgba(99, 102, 241, 0.14);
+    color: #4f46e5;
+  }
+
+  &--recording-failed {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+  }
 }
 
 @media (max-width: 47.9375em) {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -77,6 +78,7 @@ func (s *Server) routes() {
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	recordingEnabled := parseBool(os.Getenv("AGORA_CLOUD_RECORDING_ENABLED"))
 	var recordingClient coaching.RecordingClient
+	var recordingStore coaching.RecordingObjectStore
 	if recordingEnabled {
 		recordingClient = coaching.NewAgoraCloudRecordingClient(s.Logger, coaching.AgoraCloudRecordingConfig{
 			AppID:              os.Getenv("AGORA_APP_ID"),
@@ -96,12 +98,26 @@ func (s *Server) routes() {
 			TranscodingBitrate: parseIntOrDefault(os.Getenv("AGORA_RECORDING_TRANSCODING_BITRATE"), 1500),
 			TranscodingFPS:     parseIntOrDefault(os.Getenv("AGORA_RECORDING_TRANSCODING_FPS"), 30),
 		})
+		if bucket := os.Getenv("AGORA_RECORDING_STORAGE_BUCKET"); bucket != "" {
+			store, err := coaching.NewGCSRecordingObjectStore(
+				context.Background(),
+				bucket,
+				os.Getenv("GCS_SIGNING_SERVICE_ACCOUNT"),
+			)
+			if err != nil {
+				s.Logger.Error("recording_store_init_failed", slog.Any("err", err))
+			} else {
+				recordingStore = store
+			}
+		}
 	}
 	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, workosClient, s.Logger, coaching.HandlerConfig{
 		AgoraAppID:          os.Getenv("AGORA_APP_ID"),
 		AgoraAppCertificate: os.Getenv("AGORA_APP_CERTIFICATE"),
 		RecordingEnabled:    recordingEnabled,
 		RecordingClient:     recordingClient,
+		RecordingStore:      recordingStore,
+		RecordingMux:        muxClient,
 		SchedulerSecret:     os.Getenv("SCHEDULER_SECRET"),
 		AppBaseURL:          frontendBaseURL(),
 		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
@@ -158,6 +174,7 @@ func (s *Server) routes() {
 	// Internal routes (not behind user auth — protected by scheduler secret)
 	s.Router.Post("/internal/coaching/reminders", coachingHandler.ProcessReminders)
 	s.Router.Post("/internal/coaching/recordings/cleanup", coachingHandler.CleanupFinishedRecordings)
+	s.Router.Post("/internal/coaching/recordings/process", coachingHandler.ProcessRecordingImports)
 }
 
 // allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)

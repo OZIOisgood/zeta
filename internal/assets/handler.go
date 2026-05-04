@@ -136,7 +136,7 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 	resp := make([]AssetItem, len(assets))
 	for i, a := range assets {
 		var thumb string
-		
+
 		playbackID := a.PlaybackID
 		if playbackID == "" && a.MuxUploadID != "" {
 			// Try to fetch from Mux if we have an upload ID but no playback ID yet
@@ -149,18 +149,18 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 				playbackID = pid
 				// Update DB so we don't fetch again
 				err = h.q.UpdateVideoStatus(ctx, db.UpdateVideoStatusParams{
-					MuxUploadID: a.MuxUploadID,
-					MuxAssetID:  pgtype.Text{String: "", Valid: false}, 
+					MuxUploadID: pgtype.Text{String: a.MuxUploadID, Valid: true},
+					MuxAssetID:  pgtype.Text{String: "", Valid: false},
 					PlaybackID:  pgtype.Text{String: pid, Valid: true},
 				})
-                if err != nil {
-                    // Log error but continue
-                    log.ErrorContext(ctx, "asset_video_status_update_failed",
-                    	slog.String("component", "assets"),
-                    	slog.String("mux_upload_id", a.MuxUploadID),
-                    	slog.Any("err", err),
-                    )
-                }
+				if err != nil {
+					// Log error but continue
+					log.ErrorContext(ctx, "asset_video_status_update_failed",
+						slog.String("component", "assets"),
+						slog.String("mux_upload_id", a.MuxUploadID),
+						slog.Any("err", err),
+					)
+				}
 			}
 		}
 
@@ -225,12 +225,16 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Handle pending videos
-		if playbackID == "" && v.MuxUploadID != "" {
-			pid, err := h.fetchPlaybackIDFromMux(ctx, v.MuxUploadID)
+		uploadID := ""
+		if v.MuxUploadID.Valid {
+			uploadID = v.MuxUploadID.String
+		}
+		if playbackID == "" && uploadID != "" {
+			pid, err := h.fetchPlaybackIDFromMux(ctx, uploadID)
 			if err == nil && pid != "" {
 				playbackID = pid
 				h.q.UpdateVideoStatusByUploadID(ctx, db.UpdateVideoStatusByUploadIDParams{
-					MuxUploadID: v.MuxUploadID,
+					MuxUploadID: pgtype.Text{String: uploadID, Valid: true},
 					MuxAssetID:  pgtype.Text{String: "", Valid: false},
 					PlaybackID:  pgtype.Text{String: pid, Valid: true},
 				})
@@ -299,14 +303,14 @@ func (h *Handler) fetchPlaybackIDFromMux(ctx context.Context, uploadID string) (
 		if err != nil {
 			return "", err
 		}
-		
+
 		for _, pid := range asset.Data.PlaybackIds {
 			if pid.Policy == muxgo.PUBLIC {
 				return pid.Id, nil
 			}
 		}
 	}
-	
+
 	return "", fmt.Errorf("playback id not found")
 }
 
@@ -319,7 +323,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    if !permissions.HasPermission(userCtx.Permissions, permissions.AssetsCreate) {
+	if !permissions.HasPermission(userCtx.Permissions, permissions.AssetsCreate) {
 		log.WarnContext(ctx, "asset_create_permission_denied",
 			slog.String("component", "assets"),
 			slog.String("user_id", userCtx.ID),
@@ -409,7 +413,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			slog.String("component", "assets"),
 			slog.String("asset_id", pgutil.UUIDToString(asset.ID)),
 		)
-		
+
 		// Fetch group to find owner
 		group, err := h.q.GetGroup(bgCtx, asset.GroupID)
 		if err != nil {
@@ -428,7 +432,6 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Check feature flags on Owner - Removed as per requirements, emails sent always
-
 
 		// Fetch Owner Email from WorkOS
 		owner, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
@@ -487,7 +490,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		// Save video metadata to DB
 		video, err := h.q.CreateVideo(ctx, db.CreateVideoParams{
 			AssetID:     asset.ID,
-			MuxUploadID: upload.Data.Id,
+			MuxUploadID: pgtype.Text{String: upload.Data.Id, Valid: true},
 			Status:      db.VideoStatusWaitingUpload,
 		})
 		if err != nil {
@@ -522,7 +525,7 @@ func (h *Handler) createMuxUpload(ctx context.Context) (*muxgo.UploadResponse, e
 		},
 		CorsOrigin: "*",
 	}
-	
+
 	// Execute the request
 	upload, err := h.mux.CreateDirectUpload(request)
 	return &upload, err

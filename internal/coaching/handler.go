@@ -30,6 +30,8 @@ type Handler struct {
 	agoraAppCertificate string
 	recordingEnabled    bool
 	recordingClient     RecordingClient
+	recordingStore      RecordingObjectStore
+	recordingMux        RecordingMuxClient
 	schedulerSecret     string
 	appBaseURL          string
 	minBookingNotice    time.Duration
@@ -43,6 +45,8 @@ type HandlerConfig struct {
 	AgoraAppCertificate string
 	RecordingEnabled    bool
 	RecordingClient     RecordingClient
+	RecordingStore      RecordingObjectStore
+	RecordingMux        RecordingMuxClient
 	SchedulerSecret     string
 	AppBaseURL          string        // base URL of the frontend app (e.g. https://app.example.com)
 	MinBookingNotice    time.Duration // default: 2h
@@ -61,6 +65,8 @@ func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, wor
 		agoraAppCertificate: cfg.AgoraAppCertificate,
 		recordingEnabled:    cfg.RecordingEnabled,
 		recordingClient:     cfg.RecordingClient,
+		recordingStore:      cfg.RecordingStore,
+		recordingMux:        cfg.RecordingMux,
 		schedulerSecret:     cfg.SchedulerSecret,
 		appBaseURL:          cfg.AppBaseURL,
 		minBookingNotice:    cfg.MinBookingNotice,

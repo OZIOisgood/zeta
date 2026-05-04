@@ -40,6 +40,21 @@ func (m *MockMuxClient) EXPECT() *MockMuxClientMockRecorder {
 	return m.recorder
 }
 
+// CreateAsset mocks base method.
+func (m *MockMuxClient) CreateAsset(req muxgo.CreateAssetRequest) (muxgo.AssetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAsset", req)
+	ret0, _ := ret[0].(muxgo.AssetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAsset indicates an expected call of CreateAsset.
+func (mr *MockMuxClientMockRecorder) CreateAsset(req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAsset", reflect.TypeOf((*MockMuxClient)(nil).CreateAsset), req)
+}
+
 // CreateDirectUpload mocks base method.
 func (m *MockMuxClient) CreateDirectUpload(req muxgo.CreateUploadRequest) (muxgo.UploadResponse, error) {
 	m.ctrl.T.Helper()

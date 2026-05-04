@@ -220,6 +220,21 @@ func (mr *MockQuerierMockRecorder) CreateGroupInvitation(ctx, arg any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroupInvitation", reflect.TypeOf((*MockQuerier)(nil).CreateGroupInvitation), ctx, arg)
 }
 
+// CreateMissingRecordingImports mocks base method.
+func (m *MockQuerier) CreateMissingRecordingImports(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateMissingRecordingImports", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateMissingRecordingImports indicates an expected call of CreateMissingRecordingImports.
+func (mr *MockQuerierMockRecorder) CreateMissingRecordingImports(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMissingRecordingImports", reflect.TypeOf((*MockQuerier)(nil).CreateMissingRecordingImports), ctx)
+}
+
 // CreateSessionType mocks base method.
 func (m *MockQuerier) CreateSessionType(ctx context.Context, arg db.CreateSessionTypeParams) (db.CoachingSessionType, error) {
 	m.ctrl.T.Helper()
@@ -248,6 +263,21 @@ func (m *MockQuerier) CreateVideo(ctx context.Context, arg db.CreateVideoParams)
 func (mr *MockQuerierMockRecorder) CreateVideo(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateVideo", reflect.TypeOf((*MockQuerier)(nil).CreateVideo), ctx, arg)
+}
+
+// CreateVideoFromMuxAsset mocks base method.
+func (m *MockQuerier) CreateVideoFromMuxAsset(ctx context.Context, arg db.CreateVideoFromMuxAssetParams) (db.Video, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateVideoFromMuxAsset", ctx, arg)
+	ret0, _ := ret[0].(db.Video)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateVideoFromMuxAsset indicates an expected call of CreateVideoFromMuxAsset.
+func (mr *MockQuerierMockRecorder) CreateVideoFromMuxAsset(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateVideoFromMuxAsset", reflect.TypeOf((*MockQuerier)(nil).CreateVideoFromMuxAsset), ctx, arg)
 }
 
 // CreateVideoReview mocks base method.
@@ -336,6 +366,21 @@ func (m *MockQuerier) DeleteVideoReview(ctx context.Context, id pgtype.UUID) err
 func (mr *MockQuerierMockRecorder) DeleteVideoReview(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVideoReview", reflect.TypeOf((*MockQuerier)(nil).DeleteVideoReview), ctx, id)
+}
+
+// EnsureRecordingImportPending mocks base method.
+func (m *MockQuerier) EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (db.CoachingRecordingImport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureRecordingImportPending", ctx, bookingID)
+	ret0, _ := ret[0].(db.CoachingRecordingImport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnsureRecordingImportPending indicates an expected call of EnsureRecordingImportPending.
+func (mr *MockQuerierMockRecorder) EnsureRecordingImportPending(ctx, bookingID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureRecordingImportPending", reflect.TypeOf((*MockQuerier)(nil).EnsureRecordingImportPending), ctx, bookingID)
 }
 
 // GetAsset mocks base method.
@@ -728,6 +773,21 @@ func (mr *MockQuerierMockRecorder) ListMyBookings(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMyBookings", reflect.TypeOf((*MockQuerier)(nil).ListMyBookings), ctx, arg)
 }
 
+// ListPendingRecordingImports mocks base method.
+func (m *MockQuerier) ListPendingRecordingImports(ctx context.Context, limit int32) ([]db.ListPendingRecordingImportsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPendingRecordingImports", ctx, limit)
+	ret0, _ := ret[0].([]db.ListPendingRecordingImportsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPendingRecordingImports indicates an expected call of ListPendingRecordingImports.
+func (mr *MockQuerierMockRecorder) ListPendingRecordingImports(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPendingRecordingImports", reflect.TypeOf((*MockQuerier)(nil).ListPendingRecordingImports), ctx, limit)
+}
+
 // ListPendingReminders mocks base method.
 func (m *MockQuerier) ListPendingReminders(ctx context.Context) ([]db.ListPendingRemindersRow, error) {
 	m.ctrl.T.Helper()
@@ -875,6 +935,65 @@ func (m *MockQuerier) MarkBookingRecordingStopping(ctx context.Context, bookingI
 func (mr *MockQuerierMockRecorder) MarkBookingRecordingStopping(ctx, bookingID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkBookingRecordingStopping", reflect.TypeOf((*MockQuerier)(nil).MarkBookingRecordingStopping), ctx, bookingID)
+}
+
+// MarkRecordingImportFailed mocks base method.
+func (m *MockQuerier) MarkRecordingImportFailed(ctx context.Context, arg db.MarkRecordingImportFailedParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRecordingImportFailed", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkRecordingImportFailed indicates an expected call of MarkRecordingImportFailed.
+func (mr *MockQuerierMockRecorder) MarkRecordingImportFailed(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingImportFailed", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingImportFailed), ctx, arg)
+}
+
+// MarkRecordingImportImporting mocks base method.
+func (m *MockQuerier) MarkRecordingImportImporting(ctx context.Context, bookingID pgtype.UUID) (db.CoachingRecordingImport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRecordingImportImporting", ctx, bookingID)
+	ret0, _ := ret[0].(db.CoachingRecordingImport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkRecordingImportImporting indicates an expected call of MarkRecordingImportImporting.
+func (mr *MockQuerierMockRecorder) MarkRecordingImportImporting(ctx, bookingID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingImportImporting", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingImportImporting), ctx, bookingID)
+}
+
+// MarkRecordingImportMuxCreated mocks base method.
+func (m *MockQuerier) MarkRecordingImportMuxCreated(ctx context.Context, arg db.MarkRecordingImportMuxCreatedParams) (db.CoachingRecordingImport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRecordingImportMuxCreated", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingRecordingImport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkRecordingImportMuxCreated indicates an expected call of MarkRecordingImportMuxCreated.
+func (mr *MockQuerierMockRecorder) MarkRecordingImportMuxCreated(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingImportMuxCreated", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingImportMuxCreated), ctx, arg)
+}
+
+// MarkRecordingImportReady mocks base method.
+func (m *MockQuerier) MarkRecordingImportReady(ctx context.Context, arg db.MarkRecordingImportReadyParams) (db.CoachingRecordingImport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRecordingImportReady", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingRecordingImport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkRecordingImportReady indicates an expected call of MarkRecordingImportReady.
+func (mr *MockQuerierMockRecorder) MarkRecordingImportReady(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingImportReady", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingImportReady), ctx, arg)
 }
 
 // MarkReminderSent mocks base method.

@@ -10,6 +10,7 @@ import (
 // MuxClient abstracts the Mux video API for testability.
 type MuxClient interface {
 	CreateDirectUpload(req muxgo.CreateUploadRequest) (muxgo.UploadResponse, error)
+	CreateAsset(req muxgo.CreateAssetRequest) (muxgo.AssetResponse, error)
 	GetDirectUpload(uploadID string) (muxgo.UploadResponse, error)
 	GetAsset(assetID string) (muxgo.AssetResponse, error)
 }
@@ -31,6 +32,10 @@ func NewMuxClient() MuxClient {
 
 func (m *muxClient) CreateDirectUpload(req muxgo.CreateUploadRequest) (muxgo.UploadResponse, error) {
 	return m.client.DirectUploadsApi.CreateDirectUpload(req)
+}
+
+func (m *muxClient) CreateAsset(req muxgo.CreateAssetRequest) (muxgo.AssetResponse, error) {
+	return m.client.AssetsApi.CreateAsset(req)
 }
 
 func (m *muxClient) GetDirectUpload(uploadID string) (muxgo.UploadResponse, error) {

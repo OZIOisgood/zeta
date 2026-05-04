@@ -505,7 +505,24 @@ func (h *Handler) CleanupFinishedRecordings(w http.ResponseWriter, r *http.Reque
 		stopped++
 	}
 
-	writeJSON(w, http.StatusOK, map[string]int{"processed": len(bookings), "stopped": stopped})
+	imports, err := h.processPendingRecordingImports(ctx, maxRecordingImportsPerRun)
+	if err != nil {
+		log.ErrorContext(ctx, "recording_import_cleanup_process_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to process recording imports", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]int{
+		"processed":        len(bookings),
+		"stopped":          stopped,
+		"imports":          imports.Processed,
+		"imports_ready":    imports.Ready,
+		"imports_deferred": imports.Deferred,
+		"imports_failed":   imports.Failed,
+	})
 }
 
 func (h *Handler) stopRecordingForBooking(ctx context.Context, bookingID pgtype.UUID) error {
@@ -546,7 +563,14 @@ func (h *Handler) stopRecordingForBooking(ctx context.Context, bookingID pgtype.
 	}
 
 	_, err = h.q.MarkBookingRecordingStopped(ctx, stopping.BookingID)
-	return err
+	if err != nil {
+		return err
+	}
+	if err := h.enqueueRecordingImport(ctx, stopping.BookingID); err != nil {
+		return err
+	}
+	h.kickRecordingImportProcessing(ctx)
+	return nil
 }
 
 func recordingAlreadyStarted(recording db.CoachingBookingRecording) bool {

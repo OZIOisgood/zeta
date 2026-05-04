@@ -57,7 +57,7 @@ func TestBuildBookingResponse(t *testing.T) {
 			id, expertID, studentID, groupID, sessionTypeID, "Quick Call",
 			scheduledAt, 60, false,
 			pgtype.Text{}, pgtype.Text{}, pgtype.Text{},
-			createdAt, users,
+			createdAt, users, "", pgtype.UUID{}, pgtype.UUID{},
 		)
 		if resp.ExpertName != "Anna Smith" {
 			t.Errorf("ExpertName = %q, want %q", resp.ExpertName, "Anna Smith")
@@ -72,7 +72,7 @@ func TestBuildBookingResponse(t *testing.T) {
 			id, expertID, studentID, groupID, sessionTypeID, "",
 			scheduledAt, 60, false,
 			pgtype.Text{}, pgtype.Text{}, pgtype.Text{},
-			createdAt, users,
+			createdAt, users, "", pgtype.UUID{}, pgtype.UUID{},
 		)
 		if resp.CancellationReason != nil {
 			t.Errorf("CancellationReason: want nil, got %v", resp.CancellationReason)
@@ -94,7 +94,7 @@ func TestBuildBookingResponse(t *testing.T) {
 			id, expertID, studentID, groupID, sessionTypeID, "",
 			scheduledAt, 60, true,
 			reason, by, notes,
-			createdAt, users,
+			createdAt, users, "", pgtype.UUID{}, pgtype.UUID{},
 		)
 		if resp.CancellationReason == nil || *resp.CancellationReason != "conflict" {
 			t.Errorf("CancellationReason = %v, want %q", resp.CancellationReason, "conflict")

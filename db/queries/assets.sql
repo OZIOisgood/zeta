@@ -4,6 +4,11 @@ INSERT INTO assets (name, description, group_id, owner_id) VALUES ($1, $2, $3, $
 -- name: CreateVideo :one
 INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNING *;
 
+-- name: CreateVideoFromMuxAsset :one
+INSERT INTO videos (asset_id, mux_upload_id, mux_asset_id, playback_id, status)
+VALUES ($1, '', $2, $3, 'ready')
+RETURNING *;
+
 -- name: UpdateAssetStatus :exec
 UPDATE assets SET status = $2, updated_at = NOW() WHERE id = $1;
 

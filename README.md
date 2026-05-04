@@ -16,7 +16,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Secure Authentication**: Enterprise-grade auth via WorkOS.
 - **Video Reviews**: Add comments and feedback directly to video clips.
 - **Live Video Coaching**: 1-on-1 Agora-powered video calls with booking, availability management, and automated email reminders.
-- **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle.
+- **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle and automatic import into the review flow.
 
 ## How to start
 
@@ -55,6 +55,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - Set `AGORA_APP_ID` and `AGORA_APP_CERTIFICATE` in `.env`.
    - To enable recording locally, enable Cloud Recording in Agora Console, create REST credentials, configure object storage that Agora can write to directly, and set `AGORA_CLOUD_RECORDING_ENABLED=true` with the `AGORA_REST_*` and `AGORA_RECORDING_*` variables.
    - In deployed `dev` and `prod`, Terraform provisions a Google Cloud Storage bucket plus HMAC credentials for Agora Cloud Recording. The deploy workflow injects static recording config as Cloud Run env vars and injects the generated HMAC credentials through Secret Manager.
+   - Cloud Run receives read access to the private recording bucket and signs short-lived GCS URLs so Mux can import completed MP4 recordings. Users never receive direct GCS object access.
 
 6. **Coaching Time Constraints** (optional, defaults are production-safe):
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
@@ -112,6 +113,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 7. If enabled, the API starts **Agora Cloud Recording** for the booking before returning join data.
 8. The Angular app joins the Agora channel and renders a **full-screen video call** page.
 9. Leaving the call asks the API to stop the active recording; an internal cleanup endpoint can also stop recordings after their scheduled end.
+10. Stopped recordings are queued for post-processing. The API locates the final MP4 in GCS, gives Mux a short-lived signed URL, creates a normal reviewable asset/video, and links it back to the booking.
 
 ### API Examples
 
@@ -164,9 +166,11 @@ graph TD
     Web -->|Direct Upload| Mux
     API -->|RTC Tokens + Cloud Recording REST| Agora[Agora]
     Agora -->|Recording files| Storage[(Cloud Storage)]
+    API -->|List objects + signed URLs| Storage
+    Mux -->|Pull recording MP4| Storage
     Web -->|Video Call| Agora
     Scheduler[GCP Cloud Scheduler] -->|POST /internal/coaching/reminders| API
-    Scheduler -->|POST /internal/coaching/recordings/cleanup| API
+    Scheduler -->|POST /internal/coaching/recordings/cleanup/process| API
 ```
 
 ### Video Call Sequence
@@ -194,7 +198,32 @@ sequenceDiagram
     U->>W: Leave call
     W->>A: POST /groups/{gid}/coaching/bookings/{id}/recording/stop
     A->>AG: Stop cloud recording
-    A->>D: Mark recording stopped
+    A->>D: Mark recording stopped and import pending
+```
+
+### Recording Post-Processing
+
+```mermaid
+sequenceDiagram
+    participant S as Cloud Scheduler
+    participant A as Go API
+    participant D as PostgreSQL
+    participant G as GCS
+    participant M as Mux
+    participant W as Angular App
+
+    S->>A: POST /internal/coaching/recordings/cleanup or /process
+    A->>D: Find stopped recordings without ready imports
+    A->>G: Locate final MP4 below Agora file prefix
+    A->>G: Sign short-lived GET URL
+    A->>M: Create asset from signed URL
+    A->>D: Store Mux asset ID and processing state
+    S->>A: Retry while Mux prepares
+    A->>M: Get asset status and playback ID
+    A->>D: Create asset/video rows and mark import ready
+    W->>A: List sessions
+    A-->>W: Booking includes recording asset link
+    W->>A: Open review asset
 ```
 
 ### Email Reminders Architecture
@@ -355,7 +384,7 @@ erDiagram
     videos {
         uuid id PK
         uuid asset_id FK
-        string mux_upload_id
+        string mux_upload_id "nullable for system imports"
         string mux_asset_id
         string playback_id
         enum status
@@ -435,6 +464,22 @@ erDiagram
         timestamp updated_at
     }
 
+    coaching_recording_imports {
+        uuid booking_id PK, FK
+        enum status "pending, importing, processing, ready, failed"
+        string gcs_object_name
+        string mux_asset_id
+        string mux_playback_id
+        uuid asset_id FK
+        uuid video_id FK
+        int attempts
+        timestamptz last_attempt_at
+        timestamptz imported_at
+        string error
+        timestamp created_at
+        timestamp updated_at
+    }
+
     coaching_booking_reminders {
         uuid id PK
         uuid booking_id FK
@@ -450,5 +495,8 @@ erDiagram
     coaching_session_types ||--o{ coaching_bookings : booked_as
     groups ||--o{ coaching_bookings : contains
     coaching_bookings ||--o| coaching_booking_recordings : records
+    coaching_booking_recordings ||--o| coaching_recording_imports : imports
+    assets ||--o{ coaching_recording_imports : "created by"
+    videos ||--o{ coaching_recording_imports : "created by"
     coaching_bookings ||--o{ coaching_booking_reminders : has
 ```

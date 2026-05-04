@@ -26,15 +26,18 @@ type Querier interface {
 	CreateBookingReminder(ctx context.Context, arg CreateBookingReminderParams) error
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateGroupInvitation(ctx context.Context, arg CreateGroupInvitationParams) (GroupInvitation, error)
+	CreateMissingRecordingImports(ctx context.Context) (int64, error)
 	// === Session Types ===
 	CreateSessionType(ctx context.Context, arg CreateSessionTypeParams) (CoachingSessionType, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
+	CreateVideoFromMuxAsset(ctx context.Context, arg CreateVideoFromMuxAssetParams) (Video, error)
 	CreateVideoReview(ctx context.Context, arg CreateVideoReviewParams) (VideoReview, error)
 	DeactivateSessionType(ctx context.Context, arg DeactivateSessionTypeParams) (int64, error)
 	DeleteAvailability(ctx context.Context, arg DeleteAvailabilityParams) (int64, error)
 	DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotParams) (int64, error)
 	DeleteGroup(ctx context.Context, arg DeleteGroupParams) error
 	DeleteVideoReview(ctx context.Context, id pgtype.UUID) error
+	EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error)
 	GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error)
 	GetAssetOwnerByVideoID(ctx context.Context, id pgtype.UUID) (GetAssetOwnerByVideoIDRow, error)
 	GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (AssetStatus, error)
@@ -63,6 +66,7 @@ type Querier interface {
 	ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error)
 	ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error)
 	ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error)
+	ListPendingRecordingImports(ctx context.Context, limit int32) ([]ListPendingRecordingImportsRow, error)
 	ListPendingReminders(ctx context.Context) ([]ListPendingRemindersRow, error)
 	ListRecordingsPastEnd(ctx context.Context, limit int32) ([]CoachingBookingRecording, error)
 	ListSessionTypesByExpertGroup(ctx context.Context, arg ListSessionTypesByExpertGroupParams) ([]CoachingSessionType, error)
@@ -73,6 +77,10 @@ type Querier interface {
 	MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopping(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
+	MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error
+	MarkRecordingImportImporting(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error)
+	MarkRecordingImportMuxCreated(ctx context.Context, arg MarkRecordingImportMuxCreatedParams) (CoachingRecordingImport, error)
+	MarkRecordingImportReady(ctx context.Context, arg MarkRecordingImportReadyParams) (CoachingRecordingImport, error)
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
 	SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error)

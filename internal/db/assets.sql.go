@@ -49,12 +49,40 @@ INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNI
 
 type CreateVideoParams struct {
 	AssetID     pgtype.UUID `json:"asset_id"`
-	MuxUploadID string      `json:"mux_upload_id"`
+	MuxUploadID pgtype.Text `json:"mux_upload_id"`
 	Status      VideoStatus `json:"status"`
 }
 
 func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error) {
 	row := q.db.QueryRow(ctx, createVideo, arg.AssetID, arg.MuxUploadID, arg.Status)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.AssetID,
+		&i.MuxUploadID,
+		&i.MuxAssetID,
+		&i.PlaybackID,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createVideoFromMuxAsset = `-- name: CreateVideoFromMuxAsset :one
+INSERT INTO videos (asset_id, mux_upload_id, mux_asset_id, playback_id, status)
+VALUES ($1, '', $2, $3, 'ready')
+RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at
+`
+
+type CreateVideoFromMuxAssetParams struct {
+	AssetID    pgtype.UUID `json:"asset_id"`
+	MuxAssetID pgtype.Text `json:"mux_asset_id"`
+	PlaybackID pgtype.Text `json:"playback_id"`
+}
+
+func (q *Queries) CreateVideoFromMuxAsset(ctx context.Context, arg CreateVideoFromMuxAssetParams) (Video, error) {
+	row := q.db.QueryRow(ctx, createVideoFromMuxAsset, arg.AssetID, arg.MuxAssetID, arg.PlaybackID)
 	var i Video
 	err := row.Scan(
 		&i.ID,
@@ -121,7 +149,7 @@ ORDER BY v.created_at ASC
 
 type GetAssetVideosRow struct {
 	ID          pgtype.UUID        `json:"id"`
-	MuxUploadID string             `json:"mux_upload_id"`
+	MuxUploadID pgtype.Text        `json:"mux_upload_id"`
 	MuxAssetID  pgtype.Text        `json:"mux_asset_id"`
 	PlaybackID  pgtype.Text        `json:"playback_id"`
 	Status      VideoStatus        `json:"status"`
@@ -238,7 +266,7 @@ UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated
 `
 
 type UpdateVideoStatusParams struct {
-	MuxUploadID string      `json:"mux_upload_id"`
+	MuxUploadID pgtype.Text `json:"mux_upload_id"`
 	MuxAssetID  pgtype.Text `json:"mux_asset_id"`
 	PlaybackID  pgtype.Text `json:"playback_id"`
 }
@@ -253,7 +281,7 @@ UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated
 `
 
 type UpdateVideoStatusByUploadIDParams struct {
-	MuxUploadID string      `json:"mux_upload_id"`
+	MuxUploadID pgtype.Text `json:"mux_upload_id"`
 	MuxAssetID  pgtype.Text `json:"mux_asset_id"`
 	PlaybackID  pgtype.Text `json:"playback_id"`
 }

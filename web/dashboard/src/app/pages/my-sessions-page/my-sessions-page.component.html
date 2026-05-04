@@ -124,6 +124,18 @@
                   }}</span>
                 }
                 <span class="status-badge status-badge--done">done</span>
+                @if (booking.recording) {
+                  <span class="status-badge" [ngClass]="recordingStatusClass(booking)">
+                    {{ recordingStatusLabel(booking) }}
+                  </span>
+                }
+              </div>
+              <div class="session-actions">
+                @if (recordingReady(booking)) {
+                  <button tuiButton appearance="primary" size="s" (click)="openRecording(booking)">
+                    Review
+                  </button>
+                }
               </div>
             </div>
           }

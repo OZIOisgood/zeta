@@ -19,21 +19,28 @@ import (
 // --- DTO ---
 
 type bookingResponse struct {
-	ID                 string    `json:"id"`
-	ExpertID           string    `json:"expert_id"`
-	ExpertName         string    `json:"expert_name"`
-	StudentID          string    `json:"student_id"`
-	StudentName        string    `json:"student_name"`
-	GroupID            string    `json:"group_id"`
-	SessionTypeID      string    `json:"session_type_id"`
-	SessionTypeName    string    `json:"session_type_name,omitempty"`
-	ScheduledAt        time.Time `json:"scheduled_at"`
-	DurationMinutes    int32     `json:"duration_minutes"`
-	Status             string    `json:"status"` // "pending" | "done" | "cancelled"
-	CancellationReason *string   `json:"cancellation_reason,omitempty"`
-	CancelledBy        *string   `json:"cancelled_by,omitempty"`
-	Notes              *string   `json:"notes,omitempty"`
-	CreatedAt          time.Time `json:"created_at"`
+	ID                 string                    `json:"id"`
+	ExpertID           string                    `json:"expert_id"`
+	ExpertName         string                    `json:"expert_name"`
+	StudentID          string                    `json:"student_id"`
+	StudentName        string                    `json:"student_name"`
+	GroupID            string                    `json:"group_id"`
+	SessionTypeID      string                    `json:"session_type_id"`
+	SessionTypeName    string                    `json:"session_type_name,omitempty"`
+	ScheduledAt        time.Time                 `json:"scheduled_at"`
+	DurationMinutes    int32                     `json:"duration_minutes"`
+	Status             string                    `json:"status"` // "pending" | "done" | "cancelled"
+	CancellationReason *string                   `json:"cancellation_reason,omitempty"`
+	CancelledBy        *string                   `json:"cancelled_by,omitempty"`
+	Notes              *string                   `json:"notes,omitempty"`
+	Recording          *bookingRecordingResponse `json:"recording,omitempty"`
+	CreatedAt          time.Time                 `json:"created_at"`
+}
+
+type bookingRecordingResponse struct {
+	Status  string `json:"status"`
+	AssetID string `json:"asset_id,omitempty"`
+	VideoID string `json:"video_id,omitempty"`
 }
 
 // bookingStatus derives the logical status from stored data.
@@ -62,6 +69,8 @@ func buildBookingResponse(
 	cancellationReason, cancelledBy, notes pgtype.Text,
 	createdAt pgtype.Timestamptz,
 	users map[string]userInfo,
+	recordingStatus string,
+	recordingAssetID, recordingVideoID pgtype.UUID,
 ) bookingResponse {
 	expertUser := users[expertID]
 	studentUser := users[studentID]
@@ -89,6 +98,9 @@ func buildBookingResponse(
 	if notes.Valid {
 		resp.Notes = &notes.String
 	}
+	if recording := buildBookingRecordingResponse(recordingStatus, recordingAssetID, recordingVideoID); recording != nil {
+		resp.Recording = recording
+	}
 	return resp
 }
 
@@ -99,6 +111,7 @@ func toBookingResponse(b db.CoachingBooking, users map[string]userInfo, sessionT
 		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
 		b.CancellationReason, b.CancelledBy, b.Notes,
 		b.CreatedAt, users,
+		"", pgtype.UUID{}, pgtype.UUID{},
 	)
 }
 
@@ -109,6 +122,7 @@ func toBookingResponseFromRow(b db.ListMyBookingsRow, users map[string]userInfo)
 		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
 		b.CancellationReason, b.CancelledBy, b.Notes,
 		b.CreatedAt, users,
+		b.RecordingStatus, b.RecordingAssetID, b.RecordingVideoID,
 	)
 }
 
@@ -119,6 +133,7 @@ func toBookingResponseFromAllRow(b db.ListAllMyBookingsRow, users map[string]use
 		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
 		b.CancellationReason, b.CancelledBy, b.Notes,
 		b.CreatedAt, users,
+		b.RecordingStatus, b.RecordingAssetID, b.RecordingVideoID,
 	)
 }
 
@@ -129,7 +144,22 @@ func toBookingResponseFromGroupRow(b db.ListGroupBookingsRow, users map[string]u
 		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
 		b.CancellationReason, b.CancelledBy, b.Notes,
 		b.CreatedAt, users,
+		b.RecordingStatus, b.RecordingAssetID, b.RecordingVideoID,
 	)
+}
+
+func buildBookingRecordingResponse(status string, assetID, videoID pgtype.UUID) *bookingRecordingResponse {
+	if status == "" {
+		return nil
+	}
+	recording := &bookingRecordingResponse{Status: status}
+	if assetID.Valid {
+		recording.AssetID = uuidToString(assetID)
+	}
+	if videoID.Valid {
+		recording.VideoID = uuidToString(videoID)
+	}
+	return recording
 }
 
 // --- Handlers ---
@@ -487,4 +517,3 @@ func (h *Handler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 	users := h.resolveUsers(ctx, []string{updated.ExpertID, updated.StudentID})
 	writeJSON(w, http.StatusOK, toBookingResponse(updated, users, ""))
 }
-

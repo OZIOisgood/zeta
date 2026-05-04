@@ -58,7 +58,14 @@ export interface CoachingBooking {
   cancellation_reason?: string;
   cancelled_by?: string;
   notes?: string;
+  recording?: CoachingBookingRecording;
   created_at: string;
+}
+
+export interface CoachingBookingRecording {
+  status: 'starting' | 'started' | 'stopping' | 'stopped' | 'pending' | 'importing' | 'processing' | 'ready' | 'failed';
+  asset_id?: string;
+  video_id?: string;
 }
 
 export interface ExpertInfo {

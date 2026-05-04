@@ -19,6 +19,14 @@ provider "google" {
   region  = var.region
 }
 
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
+locals {
+  cloud_run_runtime_service_account = "${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
 variable "project_id" {
   type = string
 }
@@ -85,6 +93,18 @@ module "agora_recording_storage" {
   force_destroy = false
 
   depends_on = [module.github_wif]
+}
+
+resource "google_storage_bucket_iam_member" "api_recording_storage_viewer" {
+  bucket = module.agora_recording_storage.bucket_name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${local.cloud_run_runtime_service_account}"
+}
+
+resource "google_service_account_iam_member" "api_recording_signed_url_token_creator" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${local.cloud_run_runtime_service_account}"
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${local.cloud_run_runtime_service_account}"
 }
 
 output "service_url" {

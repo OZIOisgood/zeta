@@ -54,6 +54,51 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
+type CoachingRecordingImportStatus string
+
+const (
+	CoachingRecordingImportStatusPending    CoachingRecordingImportStatus = "pending"
+	CoachingRecordingImportStatusImporting  CoachingRecordingImportStatus = "importing"
+	CoachingRecordingImportStatusProcessing CoachingRecordingImportStatus = "processing"
+	CoachingRecordingImportStatusReady      CoachingRecordingImportStatus = "ready"
+	CoachingRecordingImportStatusFailed     CoachingRecordingImportStatus = "failed"
+)
+
+func (e *CoachingRecordingImportStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CoachingRecordingImportStatus(s)
+	case string:
+		*e = CoachingRecordingImportStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CoachingRecordingImportStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCoachingRecordingImportStatus struct {
+	CoachingRecordingImportStatus CoachingRecordingImportStatus `json:"coaching_recording_import_status"`
+	Valid                         bool                          `json:"valid"` // Valid is true if CoachingRecordingImportStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCoachingRecordingImportStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CoachingRecordingImportStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CoachingRecordingImportStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCoachingRecordingImportStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CoachingRecordingImportStatus), nil
+}
+
 type CoachingRecordingStatus string
 
 const (
@@ -298,6 +343,22 @@ type CoachingBookingReminder struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type CoachingRecordingImport struct {
+	BookingID     pgtype.UUID                   `json:"booking_id"`
+	Status        CoachingRecordingImportStatus `json:"status"`
+	GcsObjectName pgtype.Text                   `json:"gcs_object_name"`
+	MuxAssetID    pgtype.Text                   `json:"mux_asset_id"`
+	MuxPlaybackID pgtype.Text                   `json:"mux_playback_id"`
+	AssetID       pgtype.UUID                   `json:"asset_id"`
+	VideoID       pgtype.UUID                   `json:"video_id"`
+	Attempts      int32                         `json:"attempts"`
+	LastAttemptAt pgtype.Timestamptz            `json:"last_attempt_at"`
+	ImportedAt    pgtype.Timestamptz            `json:"imported_at"`
+	Error         pgtype.Text                   `json:"error"`
+	CreatedAt     pgtype.Timestamptz            `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz            `json:"updated_at"`
+}
+
 type CoachingSessionType struct {
 	ID              pgtype.UUID        `json:"id"`
 	ExpertID        string             `json:"expert_id"`
@@ -348,7 +409,7 @@ type UserPreference struct {
 type Video struct {
 	ID          pgtype.UUID        `json:"id"`
 	AssetID     pgtype.UUID        `json:"asset_id"`
-	MuxUploadID string             `json:"mux_upload_id"`
+	MuxUploadID pgtype.Text        `json:"mux_upload_id"`
 	MuxAssetID  pgtype.Text        `json:"mux_asset_id"`
 	PlaybackID  pgtype.Text        `json:"playback_id"`
 	Status      VideoStatus        `json:"status"`

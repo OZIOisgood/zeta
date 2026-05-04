@@ -171,6 +171,93 @@ SET status = 'stopped',
 WHERE booking_id = $1
 RETURNING *;
 
+-- name: EnsureRecordingImportPending :one
+INSERT INTO coaching_recording_imports (booking_id, status, error)
+VALUES ($1, 'pending', NULL)
+ON CONFLICT (booking_id) DO UPDATE SET
+    status = CASE
+        WHEN coaching_recording_imports.status = 'ready' THEN coaching_recording_imports.status
+        ELSE 'pending'
+    END,
+    error = NULL,
+    updated_at = NOW()
+RETURNING *;
+
+-- name: CreateMissingRecordingImports :execrows
+INSERT INTO coaching_recording_imports (booking_id, status)
+SELECT r.booking_id, 'pending'
+FROM coaching_booking_recordings r
+LEFT JOIN coaching_recording_imports ri ON ri.booking_id = r.booking_id
+WHERE r.status = 'stopped'
+  AND ri.booking_id IS NULL
+ON CONFLICT (booking_id) DO NOTHING;
+
+-- name: ListPendingRecordingImports :many
+SELECT
+    ri.*,
+    r.file_prefix,
+    b.student_id,
+    b.group_id,
+    b.scheduled_at,
+    b.duration_minutes,
+    cst.name AS session_type_name
+FROM coaching_recording_imports ri
+JOIN coaching_booking_recordings r ON r.booking_id = ri.booking_id
+JOIN coaching_bookings b ON b.id = ri.booking_id
+JOIN coaching_session_types cst ON cst.id = b.session_type_id
+WHERE r.status = 'stopped'
+  AND ri.status IN ('pending', 'processing', 'failed')
+  AND ri.attempts < 5
+  AND (
+    ri.last_attempt_at IS NULL
+    OR ri.last_attempt_at <= NOW() - interval '1 minute'
+  )
+ORDER BY ri.created_at
+LIMIT $1;
+
+-- name: MarkRecordingImportImporting :one
+UPDATE coaching_recording_imports
+SET status = 'importing',
+    attempts = attempts + 1,
+    last_attempt_at = NOW(),
+    error = NULL,
+    updated_at = NOW()
+WHERE booking_id = $1
+  AND status IN ('pending', 'processing', 'failed')
+RETURNING *;
+
+-- name: MarkRecordingImportMuxCreated :one
+UPDATE coaching_recording_imports
+SET status = 'processing',
+    gcs_object_name = $2,
+    mux_asset_id = $3,
+    mux_playback_id = $4,
+    error = NULL,
+    updated_at = NOW()
+WHERE booking_id = $1
+RETURNING *;
+
+-- name: MarkRecordingImportReady :one
+UPDATE coaching_recording_imports
+SET status = 'ready',
+    gcs_object_name = $2,
+    mux_asset_id = $3,
+    mux_playback_id = $4,
+    asset_id = $5,
+    video_id = $6,
+    imported_at = NOW(),
+    error = NULL,
+    updated_at = NOW()
+WHERE booking_id = $1
+RETURNING *;
+
+-- name: MarkRecordingImportFailed :exec
+UPDATE coaching_recording_imports
+SET status = 'failed',
+    error = $2,
+    updated_at = NOW()
+WHERE booking_id = $1;
+
 -- name: ListRecordingsPastEnd :many
 SELECT r.*
 FROM coaching_booking_recordings r
@@ -181,23 +268,38 @@ ORDER BY b.scheduled_at
 LIMIT $1;
 
 -- name: ListMyBookings :many
-SELECT cb.*, cst.name AS session_type_name
+SELECT cb.*, cst.name AS session_type_name,
+       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
+       ri.asset_id AS recording_asset_id,
+       ri.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
+LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
 WHERE (cb.expert_id = $1 OR cb.student_id = $1) AND cb.group_id = $2
 ORDER BY cb.scheduled_at DESC;
 
 -- name: ListGroupBookings :many
-SELECT cb.*, cst.name AS session_type_name
+SELECT cb.*, cst.name AS session_type_name,
+       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
+       ri.asset_id AS recording_asset_id,
+       ri.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
+LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
 WHERE cb.group_id = $1
 ORDER BY cb.scheduled_at;
 
 -- name: ListAllMyBookings :many
-SELECT cb.*, cst.name AS session_type_name
+SELECT cb.*, cst.name AS session_type_name,
+       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
+       ri.asset_id AS recording_asset_id,
+       ri.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
+LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
 WHERE cb.expert_id = $1 OR cb.student_id = $1
 ORDER BY cb.scheduled_at ASC;
 

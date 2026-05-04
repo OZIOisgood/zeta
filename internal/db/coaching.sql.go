@@ -213,6 +213,24 @@ func (q *Queries) CreateBookingReminder(ctx context.Context, arg CreateBookingRe
 	return err
 }
 
+const createMissingRecordingImports = `-- name: CreateMissingRecordingImports :execrows
+INSERT INTO coaching_recording_imports (booking_id, status)
+SELECT r.booking_id, 'pending'
+FROM coaching_booking_recordings r
+LEFT JOIN coaching_recording_imports ri ON ri.booking_id = r.booking_id
+WHERE r.status = 'stopped'
+  AND ri.booking_id IS NULL
+ON CONFLICT (booking_id) DO NOTHING
+`
+
+func (q *Queries) CreateMissingRecordingImports(ctx context.Context) (int64, error) {
+	result, err := q.db.Exec(ctx, createMissingRecordingImports)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const createSessionType = `-- name: CreateSessionType :one
 
 INSERT INTO coaching_session_types (expert_id, group_id, name, description, duration_minutes)
@@ -303,6 +321,40 @@ func (q *Queries) DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotPa
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const ensureRecordingImportPending = `-- name: EnsureRecordingImportPending :one
+INSERT INTO coaching_recording_imports (booking_id, status, error)
+VALUES ($1, 'pending', NULL)
+ON CONFLICT (booking_id) DO UPDATE SET
+    status = CASE
+        WHEN coaching_recording_imports.status = 'ready' THEN coaching_recording_imports.status
+        ELSE 'pending'
+    END,
+    error = NULL,
+    updated_at = NOW()
+RETURNING booking_id, status, gcs_object_name, mux_asset_id, mux_playback_id, asset_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at
+`
+
+func (q *Queries) EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error) {
+	row := q.db.QueryRow(ctx, ensureRecordingImportPending, bookingID)
+	var i CoachingRecordingImport
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.GcsObjectName,
+		&i.MuxAssetID,
+		&i.MuxPlaybackID,
+		&i.AssetID,
+		&i.VideoID,
+		&i.Attempts,
+		&i.LastAttemptAt,
+		&i.ImportedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getBooking = `-- name: GetBooking :one
@@ -481,9 +533,14 @@ func (q *Queries) ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.U
 }
 
 const listAllMyBookings = `-- name: ListAllMyBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
+       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
+       ri.asset_id AS recording_asset_id,
+       ri.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
+LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
 WHERE cb.expert_id = $1 OR cb.student_id = $1
 ORDER BY cb.scheduled_at ASC
 `
@@ -503,6 +560,9 @@ type ListAllMyBookingsRow struct {
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 	SessionTypeName    string             `json:"session_type_name"`
+	RecordingStatus    string             `json:"recording_status"`
+	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
+	RecordingVideoID   pgtype.UUID        `json:"recording_video_id"`
 }
 
 func (q *Queries) ListAllMyBookings(ctx context.Context, expertID string) ([]ListAllMyBookingsRow, error) {
@@ -529,6 +589,9 @@ func (q *Queries) ListAllMyBookings(ctx context.Context, expertID string) ([]Lis
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.SessionTypeName,
+			&i.RecordingStatus,
+			&i.RecordingAssetID,
+			&i.RecordingVideoID,
 		); err != nil {
 			return nil, err
 		}
@@ -751,9 +814,14 @@ func (q *Queries) ListBookingsByExpertInRange(ctx context.Context, arg ListBooki
 }
 
 const listGroupBookings = `-- name: ListGroupBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
+       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
+       ri.asset_id AS recording_asset_id,
+       ri.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
+LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
 WHERE cb.group_id = $1
 ORDER BY cb.scheduled_at
 `
@@ -773,6 +841,9 @@ type ListGroupBookingsRow struct {
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 	SessionTypeName    string             `json:"session_type_name"`
+	RecordingStatus    string             `json:"recording_status"`
+	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
+	RecordingVideoID   pgtype.UUID        `json:"recording_video_id"`
 }
 
 func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error) {
@@ -799,6 +870,9 @@ func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.SessionTypeName,
+			&i.RecordingStatus,
+			&i.RecordingAssetID,
+			&i.RecordingVideoID,
 		); err != nil {
 			return nil, err
 		}
@@ -811,9 +885,14 @@ func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([
 }
 
 const listMyBookings = `-- name: ListMyBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
+       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
+       ri.asset_id AS recording_asset_id,
+       ri.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
+LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
 WHERE (cb.expert_id = $1 OR cb.student_id = $1) AND cb.group_id = $2
 ORDER BY cb.scheduled_at DESC
 `
@@ -838,6 +917,9 @@ type ListMyBookingsRow struct {
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 	SessionTypeName    string             `json:"session_type_name"`
+	RecordingStatus    string             `json:"recording_status"`
+	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
+	RecordingVideoID   pgtype.UUID        `json:"recording_video_id"`
 }
 
 func (q *Queries) ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error) {
@@ -863,6 +945,95 @@ func (q *Queries) ListMyBookings(ctx context.Context, arg ListMyBookingsParams) 
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SessionTypeName,
+			&i.RecordingStatus,
+			&i.RecordingAssetID,
+			&i.RecordingVideoID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPendingRecordingImports = `-- name: ListPendingRecordingImports :many
+SELECT
+    ri.booking_id, ri.status, ri.gcs_object_name, ri.mux_asset_id, ri.mux_playback_id, ri.asset_id, ri.video_id, ri.attempts, ri.last_attempt_at, ri.imported_at, ri.error, ri.created_at, ri.updated_at,
+    r.file_prefix,
+    b.student_id,
+    b.group_id,
+    b.scheduled_at,
+    b.duration_minutes,
+    cst.name AS session_type_name
+FROM coaching_recording_imports ri
+JOIN coaching_booking_recordings r ON r.booking_id = ri.booking_id
+JOIN coaching_bookings b ON b.id = ri.booking_id
+JOIN coaching_session_types cst ON cst.id = b.session_type_id
+WHERE r.status = 'stopped'
+  AND ri.status IN ('pending', 'processing', 'failed')
+  AND ri.attempts < 5
+  AND (
+    ri.last_attempt_at IS NULL
+    OR ri.last_attempt_at <= NOW() - interval '1 minute'
+  )
+ORDER BY ri.created_at
+LIMIT $1
+`
+
+type ListPendingRecordingImportsRow struct {
+	BookingID       pgtype.UUID                   `json:"booking_id"`
+	Status          CoachingRecordingImportStatus `json:"status"`
+	GcsObjectName   pgtype.Text                   `json:"gcs_object_name"`
+	MuxAssetID      pgtype.Text                   `json:"mux_asset_id"`
+	MuxPlaybackID   pgtype.Text                   `json:"mux_playback_id"`
+	AssetID         pgtype.UUID                   `json:"asset_id"`
+	VideoID         pgtype.UUID                   `json:"video_id"`
+	Attempts        int32                         `json:"attempts"`
+	LastAttemptAt   pgtype.Timestamptz            `json:"last_attempt_at"`
+	ImportedAt      pgtype.Timestamptz            `json:"imported_at"`
+	Error           pgtype.Text                   `json:"error"`
+	CreatedAt       pgtype.Timestamptz            `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz            `json:"updated_at"`
+	FilePrefix      []string                      `json:"file_prefix"`
+	StudentID       string                        `json:"student_id"`
+	GroupID         pgtype.UUID                   `json:"group_id"`
+	ScheduledAt     pgtype.Timestamptz            `json:"scheduled_at"`
+	DurationMinutes int32                         `json:"duration_minutes"`
+	SessionTypeName string                        `json:"session_type_name"`
+}
+
+func (q *Queries) ListPendingRecordingImports(ctx context.Context, limit int32) ([]ListPendingRecordingImportsRow, error) {
+	rows, err := q.db.Query(ctx, listPendingRecordingImports, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPendingRecordingImportsRow
+	for rows.Next() {
+		var i ListPendingRecordingImportsRow
+		if err := rows.Scan(
+			&i.BookingID,
+			&i.Status,
+			&i.GcsObjectName,
+			&i.MuxAssetID,
+			&i.MuxPlaybackID,
+			&i.AssetID,
+			&i.VideoID,
+			&i.Attempts,
+			&i.LastAttemptAt,
+			&i.ImportedAt,
+			&i.Error,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.FilePrefix,
+			&i.StudentID,
+			&i.GroupID,
+			&i.ScheduledAt,
+			&i.DurationMinutes,
 			&i.SessionTypeName,
 		); err != nil {
 			return nil, err
@@ -1175,6 +1346,154 @@ func (q *Queries) MarkBookingRecordingStopping(ctx context.Context, bookingID pg
 		&i.FilePrefix,
 		&i.StartedAt,
 		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const markRecordingImportFailed = `-- name: MarkRecordingImportFailed :exec
+UPDATE coaching_recording_imports
+SET status = 'failed',
+    error = $2,
+    updated_at = NOW()
+WHERE booking_id = $1
+`
+
+type MarkRecordingImportFailedParams struct {
+	BookingID pgtype.UUID `json:"booking_id"`
+	Error     pgtype.Text `json:"error"`
+}
+
+func (q *Queries) MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error {
+	_, err := q.db.Exec(ctx, markRecordingImportFailed, arg.BookingID, arg.Error)
+	return err
+}
+
+const markRecordingImportImporting = `-- name: MarkRecordingImportImporting :one
+UPDATE coaching_recording_imports
+SET status = 'importing',
+    attempts = attempts + 1,
+    last_attempt_at = NOW(),
+    error = NULL,
+    updated_at = NOW()
+WHERE booking_id = $1
+  AND status IN ('pending', 'processing', 'failed')
+RETURNING booking_id, status, gcs_object_name, mux_asset_id, mux_playback_id, asset_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at
+`
+
+func (q *Queries) MarkRecordingImportImporting(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error) {
+	row := q.db.QueryRow(ctx, markRecordingImportImporting, bookingID)
+	var i CoachingRecordingImport
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.GcsObjectName,
+		&i.MuxAssetID,
+		&i.MuxPlaybackID,
+		&i.AssetID,
+		&i.VideoID,
+		&i.Attempts,
+		&i.LastAttemptAt,
+		&i.ImportedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const markRecordingImportMuxCreated = `-- name: MarkRecordingImportMuxCreated :one
+UPDATE coaching_recording_imports
+SET status = 'processing',
+    gcs_object_name = $2,
+    mux_asset_id = $3,
+    mux_playback_id = $4,
+    error = NULL,
+    updated_at = NOW()
+WHERE booking_id = $1
+RETURNING booking_id, status, gcs_object_name, mux_asset_id, mux_playback_id, asset_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at
+`
+
+type MarkRecordingImportMuxCreatedParams struct {
+	BookingID     pgtype.UUID `json:"booking_id"`
+	GcsObjectName pgtype.Text `json:"gcs_object_name"`
+	MuxAssetID    pgtype.Text `json:"mux_asset_id"`
+	MuxPlaybackID pgtype.Text `json:"mux_playback_id"`
+}
+
+func (q *Queries) MarkRecordingImportMuxCreated(ctx context.Context, arg MarkRecordingImportMuxCreatedParams) (CoachingRecordingImport, error) {
+	row := q.db.QueryRow(ctx, markRecordingImportMuxCreated,
+		arg.BookingID,
+		arg.GcsObjectName,
+		arg.MuxAssetID,
+		arg.MuxPlaybackID,
+	)
+	var i CoachingRecordingImport
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.GcsObjectName,
+		&i.MuxAssetID,
+		&i.MuxPlaybackID,
+		&i.AssetID,
+		&i.VideoID,
+		&i.Attempts,
+		&i.LastAttemptAt,
+		&i.ImportedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const markRecordingImportReady = `-- name: MarkRecordingImportReady :one
+UPDATE coaching_recording_imports
+SET status = 'ready',
+    gcs_object_name = $2,
+    mux_asset_id = $3,
+    mux_playback_id = $4,
+    asset_id = $5,
+    video_id = $6,
+    imported_at = NOW(),
+    error = NULL,
+    updated_at = NOW()
+WHERE booking_id = $1
+RETURNING booking_id, status, gcs_object_name, mux_asset_id, mux_playback_id, asset_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at
+`
+
+type MarkRecordingImportReadyParams struct {
+	BookingID     pgtype.UUID `json:"booking_id"`
+	GcsObjectName pgtype.Text `json:"gcs_object_name"`
+	MuxAssetID    pgtype.Text `json:"mux_asset_id"`
+	MuxPlaybackID pgtype.Text `json:"mux_playback_id"`
+	AssetID       pgtype.UUID `json:"asset_id"`
+	VideoID       pgtype.UUID `json:"video_id"`
+}
+
+func (q *Queries) MarkRecordingImportReady(ctx context.Context, arg MarkRecordingImportReadyParams) (CoachingRecordingImport, error) {
+	row := q.db.QueryRow(ctx, markRecordingImportReady,
+		arg.BookingID,
+		arg.GcsObjectName,
+		arg.MuxAssetID,
+		arg.MuxPlaybackID,
+		arg.AssetID,
+		arg.VideoID,
+	)
+	var i CoachingRecordingImport
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.GcsObjectName,
+		&i.MuxAssetID,
+		&i.MuxPlaybackID,
+		&i.AssetID,
+		&i.VideoID,
+		&i.Attempts,
+		&i.LastAttemptAt,
+		&i.ImportedAt,
 		&i.Error,
 		&i.CreatedAt,
 		&i.UpdatedAt,
