@@ -20,12 +20,13 @@ export class InviteDialogComponent {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  protected readonly emailControl = new FormControl('', [Validators.required, Validators.email]);
+  protected readonly emailControl = new FormControl('', [Validators.email]);
   protected isSubmitting = false;
   protected errorMessage = '';
   protected qrImageUrl: SafeUrl | null = null;
   protected inviteLink = '';
   protected linkCopied = false;
+  protected invitationSentByEmail = false;
   private qrBlobUrl: string | null = null;
 
   protected onSubmit(): void {
@@ -37,10 +38,11 @@ export class InviteDialogComponent {
     this.errorMessage = '';
 
     const groupId = this.context.data;
-    const email = this.emailControl.value!;
+    const email = this.emailControl.value?.trim() || undefined;
 
     this.invitationsService.create(groupId, email).subscribe({
       next: (result) => {
+        this.invitationSentByEmail = !!email;
         this.inviteLink = `${window.location.origin}/groups?invite=${result.code}`;
         this.invitationsService.getQrCode(groupId, result.id).subscribe({
           next: (blob) => {
@@ -57,8 +59,8 @@ export class InviteDialogComponent {
         });
       },
       error: (err) => {
-        console.error('Failed to send invitation:', err);
-        this.errorMessage = 'Failed to send invitation. Please try again.';
+        console.error('Failed to create invitation:', err);
+        this.errorMessage = 'Failed to create invitation. Please try again.';
         this.isSubmitting = false;
       },
     });

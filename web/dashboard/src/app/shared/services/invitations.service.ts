@@ -19,7 +19,7 @@ export class InvitationsService {
     return `${this.env.apiUrl}/groups`;
   }
 
-  create(groupId: string, email: string): Observable<{ id: string; code: string }> {
+  create(groupId: string, email?: string): Observable<{ id: string; code: string }> {
     return this.http.post<{ id: string; code: string }>(`${this.apiUrl}/${groupId}/invitations`, {
       email,
     });

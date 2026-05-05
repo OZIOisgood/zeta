@@ -80,7 +80,7 @@ VALUES ($1, $2, $3, $4) RETURNING id, group_id, inviter_id, email, code, status,
 type CreateGroupInvitationParams struct {
 	GroupID   pgtype.UUID `json:"group_id"`
 	InviterID string      `json:"inviter_id"`
-	Email     string      `json:"email"`
+	Email     pgtype.Text `json:"email"`
 	Code      string      `json:"code"`
 }
 

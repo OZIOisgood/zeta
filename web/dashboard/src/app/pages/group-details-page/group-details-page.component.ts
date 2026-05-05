@@ -189,13 +189,13 @@ export class GroupDetailsPageComponent {
   openInviteDialog(groupId: string): void {
     this.dialogs
       .open<boolean>(new PolymorpheusComponent(InviteDialogComponent), {
-        label: 'Invite User',
+        label: 'Create Invitation',
         size: 's',
         data: groupId,
       })
       .pipe(take(1), filter(Boolean))
       .subscribe(() => {
-        this.alerts.open('Invitation sent', { appearance: 'positive' }).subscribe();
+        this.alerts.open('Invitation ready', { appearance: 'positive' }).subscribe();
       });
   }
 

@@ -32,7 +32,7 @@ func NewService(logger *slog.Logger) *Service {
 func (s *Service) Send(to []string, subject string, text string) error {
 	s.logger.Info("email_send_initiated",
 		slog.String("component", "email_service"),
-		slog.Any("to", to),
+		slog.Int("recipient_count", len(to)),
 		slog.String("subject", subject),
 	)
 
@@ -48,7 +48,7 @@ func (s *Service) Send(to []string, subject string, text string) error {
 		s.logger.Error("email_send_failed",
 			slog.String("component", "email_service"),
 			slog.Any("err", err),
-			slog.Any("to", to),
+			slog.Int("recipient_count", len(to)),
 		)
 		return fmt.Errorf("send email: %w", err)
 	}

@@ -385,7 +385,7 @@ type GroupInvitation struct {
 	ID        pgtype.UUID        `json:"id"`
 	GroupID   pgtype.UUID        `json:"group_id"`
 	InviterID string             `json:"inviter_id"`
-	Email     string             `json:"email"`
+	Email     pgtype.Text        `json:"email"`
 	Code      string             `json:"code"`
 	Status    InvitationStatus   `json:"status"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`

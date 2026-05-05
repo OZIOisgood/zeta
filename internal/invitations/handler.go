@@ -8,8 +8,9 @@ import (
 	"log/slog"
 	"math/big"
 	"net/http"
-	"os"
+	"net/mail"
 	"strconv"
+	"strings"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -100,9 +101,14 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Email == "" {
-		http.Error(w, "Email is required", http.StatusBadRequest)
-		return
+	emailAddress := strings.TrimSpace(req.Email)
+	invitationEmail := pgtype.Text{}
+	if emailAddress != "" {
+		if _, err := mail.ParseAddress(emailAddress); err != nil {
+			http.Error(w, "Invalid email address", http.StatusBadRequest)
+			return
+		}
+		invitationEmail = pgtype.Text{String: emailAddress, Valid: true}
 	}
 
 	code, err := generateCode(6)
@@ -118,7 +124,7 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 	invitation, err := h.q.CreateGroupInvitation(ctx, db.CreateGroupInvitationParams{
 		GroupID:   pgGroupID,
 		InviterID: user.ID,
-		Email:     req.Email,
+		Email:     invitationEmail,
 		Code:      code,
 	})
 	if err != nil {
@@ -132,37 +138,31 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send invitation email
-	mobileBase := os.Getenv("MOBILE_INVITE_BASE_URL")
-	if mobileBase == "" {
-		mobileBase = "zeta://invite/"
-	}
-	inviteLink := fmt.Sprintf("%s%s", mobileBase, code)
-	inviterName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
-	subject := "You've been invited to join a group on Zeta"
-	text := fmt.Sprintf("%s has invited you to join a group.\n\nClick the link below to accept:\n%s", inviterName, inviteLink)
+	inviteLink := h.inviteURL(code)
+	if emailAddress != "" {
+		inviterName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+		subject := "You've been invited to join a group on Zeta"
+		text := fmt.Sprintf("%s has invited you to join a group.\n\nClick the link below to accept:\n%s", inviterName, inviteLink)
 
-	go func() {
-		if err := h.email.Send([]string{req.Email}, subject, text); err != nil {
-			h.logger.Error("invitation_email_send_failed",
-				slog.String("component", "invitations"),
-				slog.String("email", req.Email),
-				slog.Any("err", err),
-			)
-		} else {
-			h.logger.Info("invitation_email_sent",
-				slog.String("component", "invitations"),
-				slog.String("email", req.Email),
-				slog.String("code", code),
-			)
-		}
-	}()
+		go func(to string) {
+			if err := h.email.Send([]string{to}, subject, text); err != nil {
+				h.logger.Error("invitation_email_send_failed",
+					slog.String("component", "invitations"),
+					slog.Any("err", err),
+				)
+			} else {
+				h.logger.Info("invitation_email_sent",
+					slog.String("component", "invitations"),
+				)
+			}
+		}(emailAddress)
+	}
 
 	log.InfoContext(ctx, "invitation_created",
 		slog.String("component", "invitations"),
 		slog.String("user_id", user.ID),
 		slog.String("group_id", groupIDStr),
-		slog.String("invitee_email", req.Email),
+		slog.String("delivery", invitationDelivery(invitationEmail)),
 	)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -187,7 +187,6 @@ func (h *Handler) GetInvitationInfo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.WarnContext(ctx, "invitation_info_not_found",
 			slog.String("component", "invitations"),
-			slog.String("code", code),
 			slog.Any("err", err),
 		)
 		http.Error(w, "Invitation not found", http.StatusNotFound)
@@ -243,7 +242,6 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.WarnContext(ctx, "invitation_accept_not_found",
 			slog.String("component", "invitations"),
-			slog.String("code", req.Code),
 			slog.Any("err", err),
 		)
 		http.Error(w, "Invitation not found", http.StatusNotFound)
@@ -270,64 +268,70 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Mark invitation as accepted
-	err = h.q.UpdateGroupInvitationStatus(ctx, db.UpdateGroupInvitationStatusParams{
-		ID:     invitation.ID,
-		Status: db.InvitationStatusAccepted,
-	})
-	if err != nil {
-		log.ErrorContext(ctx, "invitation_status_update_failed",
-			slog.String("component", "invitations"),
-			slog.Any("err", err),
-		)
+	if invitationHasEmail(invitation) {
+		// Email-specific invitations are single-use. Generic link/QR invitations
+		// remain pending so multiple users can join from the same shared link.
+		err = h.q.UpdateGroupInvitationStatus(ctx, db.UpdateGroupInvitationStatusParams{
+			ID:     invitation.ID,
+			Status: db.InvitationStatusAccepted,
+		})
+		if err != nil {
+			log.ErrorContext(ctx, "invitation_status_update_failed",
+				slog.String("component", "invitations"),
+				slog.Any("err", err),
+			)
+		}
 	}
 
 	// Get group ID for redirect
 	groupIDBytes := invitation.GroupID.Bytes
 	groupIDStr := fmt.Sprintf("%x-%x-%x-%x-%x", groupIDBytes[0:4], groupIDBytes[4:6], groupIDBytes[6:8], groupIDBytes[8:10], groupIDBytes[10:16])
 
-	// Notify inviter that their invitation was accepted
-	go func() {
-		bgCtx := context.Background()
-		bgLog := h.logger.With(
-			slog.String("component", "invitations"),
-			slog.String("inviter_id", invitation.InviterID),
-		)
-
-		inviter, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
-			User: invitation.InviterID,
-		})
-		if err != nil {
-			bgLog.ErrorContext(bgCtx, "invitation_accepted_inviter_fetch_failed",
-				slog.Any("err", err),
+	if invitationHasEmail(invitation) {
+		// Notify inviter for direct invitations. Generic link/QR invitations may be
+		// used many times, so they do not send an email on every acceptance.
+		go func() {
+			bgCtx := context.Background()
+			bgLog := h.logger.With(
+				slog.String("component", "invitations"),
+				slog.String("inviter_id", invitation.InviterID),
 			)
-			return
-		}
 
-		if inviter.Email == "" {
-			bgLog.WarnContext(bgCtx, "invitation_accepted_inviter_no_email")
-			return
-		}
+			inviter, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
+				User: invitation.InviterID,
+			})
+			if err != nil {
+				bgLog.ErrorContext(bgCtx, "invitation_accepted_inviter_fetch_failed",
+					slog.Any("err", err),
+				)
+				return
+			}
 
-		group, err := h.q.GetGroup(bgCtx, invitation.GroupID)
-		if err != nil {
-			bgLog.ErrorContext(bgCtx, "invitation_accepted_group_fetch_failed",
-				slog.Any("err", err),
-			)
-			return
-		}
+			if inviter.Email == "" {
+				bgLog.WarnContext(bgCtx, "invitation_accepted_inviter_no_email")
+				return
+			}
 
-		joinerName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
-		subject := "Your invitation was accepted"
-		text := fmt.Sprintf("%s accepted your invitation and joined the group '%s'.", joinerName, group.Name)
-		if err := h.email.Send([]string{inviter.Email}, subject, text); err != nil {
-			bgLog.ErrorContext(bgCtx, "invitation_accepted_notification_send_failed",
-				slog.Any("err", err),
-			)
-		} else {
-			bgLog.InfoContext(bgCtx, "invitation_accepted_notification_sent")
-		}
-	}()
+			group, err := h.q.GetGroup(bgCtx, invitation.GroupID)
+			if err != nil {
+				bgLog.ErrorContext(bgCtx, "invitation_accepted_group_fetch_failed",
+					slog.Any("err", err),
+				)
+				return
+			}
+
+			joinerName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+			subject := "Your invitation was accepted"
+			text := fmt.Sprintf("%s accepted your invitation and joined the group '%s'.", joinerName, group.Name)
+			if err := h.email.Send([]string{inviter.Email}, subject, text); err != nil {
+				bgLog.ErrorContext(bgCtx, "invitation_accepted_notification_send_failed",
+					slog.Any("err", err),
+				)
+			} else {
+				bgLog.InfoContext(bgCtx, "invitation_accepted_notification_sent")
+			}
+		}()
+	}
 
 	log.InfoContext(ctx, "invitation_accepted",
 		slog.String("component", "invitations"),
@@ -416,7 +420,7 @@ func (h *Handler) GetInvitationQR(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	inviteURL := fmt.Sprintf("%s/groups?invite=%s", h.webInviteBaseURL, invitation.Code)
+	inviteURL := h.inviteURL(invitation.Code)
 
 	png, err := qrcode.Encode(inviteURL, qrcode.Medium, size)
 	if err != nil {
@@ -439,6 +443,21 @@ func (h *Handler) GetInvitationQR(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Cache-Control", "private, max-age=3600")
 	w.Write(png)
+}
+
+func (h *Handler) inviteURL(code string) string {
+	return fmt.Sprintf("%s/groups?invite=%s", h.webInviteBaseURL, code)
+}
+
+func invitationHasEmail(invitation db.GroupInvitation) bool {
+	return invitation.Email.Valid && strings.TrimSpace(invitation.Email.String) != ""
+}
+
+func invitationDelivery(email pgtype.Text) string {
+	if email.Valid && strings.TrimSpace(email.String) != "" {
+		return "email"
+	}
+	return "link"
 }
 
 const codeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"

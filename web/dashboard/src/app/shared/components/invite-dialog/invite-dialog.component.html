@@ -2,7 +2,7 @@
   @if (!inviteLink) {
     <div class="form-field">
       <tui-textfield>
-        <label tuiLabel>Email Address</label>
+        <label tuiLabel>Email Address (optional)</label>
         <input
           [formControl]="emailControl"
           tuiTextfield
@@ -23,7 +23,7 @@
         (click)="onSubmit()"
         [disabled]="emailControl.invalid || isSubmitting"
       >
-        Send Invitation
+        Create Invitation
       </button>
       <button
         tuiButton
@@ -36,7 +36,9 @@
       </button>
     </div>
   } @else {
-    <p class="success-message">Invitation sent successfully!</p>
+    <p class="success-message">
+      {{ invitationSentByEmail ? 'Invitation sent successfully!' : 'Invitation link created!' }}
+    </p>
 
     @if (qrImageUrl) {
       <div class="qr-section">
