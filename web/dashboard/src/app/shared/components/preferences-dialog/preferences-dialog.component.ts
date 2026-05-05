@@ -97,10 +97,11 @@ export class PreferencesDialogComponent implements OnInit {
     if (!user) {
       return null;
     }
-    const url = user.avatar;
-    return url.startsWith('http') || url.startsWith('data:')
-      ? url
-      : `data:image/jpeg;base64,${url}`;
+    const avatar = user.avatar;
+    if (!avatar) {
+      return null;
+    }
+    return avatar.startsWith('data:') ? avatar : `data:image/jpeg;base64,${avatar}`;
   }
 
   protected onAvatarChange(base64: string | null): void {

@@ -2,9 +2,11 @@ package coaching
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
@@ -43,12 +45,20 @@ func (h *Handler) resolveUsers(ctx context.Context, userIDs []string) map[string
 				mu.Unlock()
 				return
 			}
+			prefs, err := h.q.GetUserPreferences(ctx, id)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				h.logger.WarnContext(ctx, "resolve_user_preferences_failed",
+					slog.String("component", "coaching"),
+					slog.String("user_id", id),
+					slog.Any("err", err),
+				)
+			}
 			mu.Lock()
 			result[id] = userInfo{
 				ID:        u.ID,
 				FirstName: u.FirstName,
 				LastName:  u.LastName,
-				Avatar:    u.ProfilePictureURL,
+				Avatar:    prefs.Avatar,
 			}
 			mu.Unlock()
 		}(uid)

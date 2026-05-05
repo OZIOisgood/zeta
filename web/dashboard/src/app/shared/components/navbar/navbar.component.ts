@@ -62,10 +62,11 @@ export class NavbarComponent {
       return '';
     }
 
-    const url = user.avatar;
-    return url.startsWith('http') || url.startsWith('data:')
-      ? url
-      : `data:image/jpeg;base64,${url}`;
+    const avatar = user.avatar;
+    if (!avatar || avatar.startsWith('data:')) {
+      return avatar;
+    }
+    return `data:image/jpeg;base64,${avatar}`;
   });
 
   protected openPreferences(): void {

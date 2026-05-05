@@ -8,7 +8,7 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
-  profile_picture_url?: string;
+  avatar?: string;
   role?: 'admin' | 'expert' | 'student';
   name: string;
 }

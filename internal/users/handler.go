@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -15,18 +16,19 @@ import (
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
 // groupUser is the JSON shape returned to the frontend.
 type groupUser struct {
-	ID                string `json:"id"`
-	Email             string `json:"email"`
-	FirstName         string `json:"first_name"`
-	LastName          string `json:"last_name"`
-	ProfilePictureURL string `json:"profile_picture_url"`
-	Role              string `json:"role"`
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Avatar    string `json:"avatar,omitempty"`
+	Role      string `json:"role"`
 }
 
 type Handler struct {
@@ -113,7 +115,8 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Fetch user details from WorkOS in parallel
+	// Fetch user details from WorkOS in parallel; local preferences remain the
+	// source of truth for display avatars.
 	type result struct {
 		user groupUser
 		err  error
@@ -132,14 +135,22 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 				results[idx] = result{err: err}
 				return
 			}
+			prefs, err := h.q.GetUserPreferences(ctx, userID)
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				h.logger.WarnContext(ctx, "users_get_preferences_failed",
+					slog.String("component", "users"),
+					slog.String("target_user_id", userID),
+					slog.Any("err", err),
+				)
+			}
 			results[idx] = result{
 				user: groupUser{
-					ID:                u.ID,
-					Email:             u.Email,
-					FirstName:         u.FirstName,
-					LastName:          u.LastName,
-					ProfilePictureURL: u.ProfilePictureURL,
-					Role:              roleByUserID[userID],
+					ID:        u.ID,
+					Email:     u.Email,
+					FirstName: u.FirstName,
+					LastName:  u.LastName,
+					Avatar:    prefs.Avatar,
+					Role:      roleByUserID[userID],
 				},
 			}
 		}(i, uid)

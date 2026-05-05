@@ -13,7 +13,7 @@
           <td tuiTd>
             <div [tuiCell]="size">
               <tui-avatar
-                [src]="item.profile_picture_url || (item.name | tuiInitials)"
+                [src]="item.avatar ? 'data:image/jpeg;base64,' + item.avatar : (item.name | tuiInitials)"
                 [style.background]="item.name | tuiAutoColor"
               />
               <span tuiTitle>

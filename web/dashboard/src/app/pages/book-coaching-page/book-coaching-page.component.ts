@@ -324,7 +324,7 @@ export class BookCoachingPageComponent implements OnInit {
 
   protected expertAvatarSrc(expert: ExpertInfo): string {
     if (!expert.avatar) return '@tui.user-round';
-    if (expert.avatar.startsWith('http') || expert.avatar.startsWith('data:')) {
+    if (expert.avatar.startsWith('data:')) {
       return expert.avatar;
     }
     return `data:image/jpeg;base64,${expert.avatar}`;
