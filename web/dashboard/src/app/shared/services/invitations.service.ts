@@ -5,8 +5,10 @@ import { EnvService } from './env.service';
 
 export interface InvitationInfo {
   code: string;
+  group_id: string;
   group_name: string;
   group_avatar: string | null;
+  already_member: boolean;
 }
 
 @Injectable({

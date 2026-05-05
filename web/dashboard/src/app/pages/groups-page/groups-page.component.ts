@@ -10,7 +10,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
-import { switchMap, take, tap } from 'rxjs';
+import { of, switchMap, take, tap } from 'rxjs';
 import { AcceptInviteDialogComponent } from '../../shared/components/accept-invite-dialog/accept-invite-dialog.component';
 import { GroupsListComponent } from '../../shared/components/groups-list/groups-list.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -47,13 +47,20 @@ export class GroupsPageComponent implements OnInit {
     this.invitationsService
       .getInfo(inviteCode)
       .pipe(
-        switchMap((info: InvitationInfo) =>
-          this.dialogs.open<string | null>(new PolymorpheusComponent(AcceptInviteDialogComponent), {
-            label: 'Group Invitation',
-            size: 's',
-            data: info,
-          }),
-        ),
+        switchMap((info: InvitationInfo) => {
+          if (info.already_member) {
+            return of(info.group_id);
+          }
+
+          return this.dialogs.open<string | null>(
+            new PolymorpheusComponent(AcceptInviteDialogComponent),
+            {
+              label: 'Group Invitation',
+              size: 's',
+              data: info,
+            },
+          );
+        }),
         take(1),
       )
       .subscribe({

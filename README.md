@@ -99,9 +99,10 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 2. A dialog accepts an optional invitee email address.
 3. The backend generates a unique 6-character code and, when an email is provided, sends an email with the invite link (`/groups?invite=<CODE>`).
 4. The dialog displays a **QR code** (server-generated PNG) encoding the invite URL, with options to copy the link or download the QR image.
-5. When the recipient opens the link (or scans the QR code), a confirmation dialog shows the group name and avatar.
+5. When a non-member opens the link (or scans the QR code), a confirmation dialog shows the group name and avatar.
 6. On acceptance, the user is added to the group and redirected to the group details page.
-7. Email-specific invitations are single-use. Email-less invitation links remain reusable for sharing in print, on walls, or in group chats.
+7. If the current user already belongs to the group, the dashboard skips the invitation dialog and opens the group directly.
+8. Email-specific invitations are single-use. Email-less invitation links remain reusable for sharing in print, on walls, or in group chats.
 
 ### Live Coaching Flow
 

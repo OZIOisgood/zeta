@@ -176,6 +176,11 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetInvitationInfo(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	code := chi.URLParam(r, "code")
 	if code == "" {
@@ -193,11 +198,6 @@ func (h *Handler) GetInvitationInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if invitation.Status != db.InvitationStatusPending {
-		http.Error(w, "Invitation already used", http.StatusBadRequest)
-		return
-	}
-
 	group, err := h.q.GetGroup(ctx, invitation.GroupID)
 	if err != nil {
 		log.ErrorContext(ctx, "invitation_info_group_fetch_failed",
@@ -208,11 +208,32 @@ func (h *Handler) GetInvitationInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isMember, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{
+		UserID:  user.ID,
+		GroupID: invitation.GroupID,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "invitation_info_membership_check_failed",
+			slog.String("component", "invitations"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to verify group membership", http.StatusInternalServerError)
+		return
+	}
+
+	if invitation.Status != db.InvitationStatusPending && !isMember {
+		http.Error(w, "Invitation already used", http.StatusBadRequest)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"code":         invitation.Code,
-		"group_name":   group.Name,
-		"group_avatar": group.Avatar,
+		"code":           invitation.Code,
+		"group_id":       pgutil.UUIDToString(invitation.GroupID),
+		"group_name":     group.Name,
+		"group_avatar":   group.Avatar,
+		"already_member": isMember,
 	})
 }
 
@@ -248,12 +269,38 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	groupIDStr := pgutil.UUIDToString(invitation.GroupID)
+	isMember, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{
+		UserID:  user.ID,
+		GroupID: invitation.GroupID,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "invitation_accept_membership_check_failed",
+			slog.String("component", "invitations"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to verify group membership", http.StatusInternalServerError)
+		return
+	}
+	if isMember {
+		log.InfoContext(ctx, "invitation_accept_already_member",
+			slog.String("component", "invitations"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+		)
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"group_id": groupIDStr,
+		})
+		return
+	}
 	if invitation.Status != db.InvitationStatusPending {
 		http.Error(w, "Invitation already used", http.StatusBadRequest)
 		return
 	}
 
-	// Add user to group
 	err = h.q.AddUserToGroup(ctx, db.AddUserToGroupParams{
 		UserID:  user.ID,
 		GroupID: invitation.GroupID,
@@ -282,10 +329,6 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 			)
 		}
 	}
-
-	// Get group ID for redirect
-	groupIDBytes := invitation.GroupID.Bytes
-	groupIDStr := fmt.Sprintf("%x-%x-%x-%x-%x", groupIDBytes[0:4], groupIDBytes[4:6], groupIDBytes[6:8], groupIDBytes[8:10], groupIDBytes[10:16])
 
 	if invitationHasEmail(invitation) {
 		// Notify inviter for direct invitations. Generic link/QR invitations may be

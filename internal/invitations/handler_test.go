@@ -133,6 +133,10 @@ func TestAcceptInvitationKeepsGenericInvitationPending(t *testing.T) {
 		Code:      "AbC123",
 		Status:    db.InvitationStatusPending,
 	}, nil)
+	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{
+		UserID:  "user-2",
+		GroupID: groupID,
+	}).Return(false, nil)
 	q.EXPECT().AddUserToGroup(gomock.Any(), db.AddUserToGroupParams{
 		UserID:  "user-2",
 		GroupID: groupID,
@@ -144,6 +148,109 @@ func TestAcceptInvitationKeepsGenericInvitationPending(t *testing.T) {
 		FirstName: "Test",
 		LastName:  "Student",
 	}))
+	rec := httptest.NewRecorder()
+
+	h.AcceptInvitation(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got status %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	var body struct {
+		GroupID string `json:"group_id"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if body.GroupID != "11111111-1111-1111-1111-111111111111" {
+		t.Fatalf("got group_id %q, want group uuid", body.GroupID)
+	}
+}
+
+func TestGetInvitationInfoMarksExistingMember(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	sender := emailmocks.NewMockSender(ctrl)
+	h := NewHandler(q, sender, nil, slog.Default(), "http://localhost:4200")
+
+	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
+	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
+
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+		ID:        invitationID,
+		GroupID:   groupID,
+		InviterID: "user-1",
+		Email:     pgtype.Text{},
+		Code:      "AbC123",
+		Status:    db.InvitationStatusAccepted,
+	}, nil)
+	q.EXPECT().GetGroup(gomock.Any(), groupID).Return(db.Group{
+		ID:     groupID,
+		Name:   "Group Chrome",
+		Avatar: "avatar-data",
+	}, nil)
+	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{
+		UserID:  "user-2",
+		GroupID: groupID,
+	}).Return(true, nil)
+
+	router := chi.NewRouter()
+	router.Get("/groups/invitations/{code}", h.GetInvitationInfo)
+	req := httptest.NewRequest(http.MethodGet, "/groups/invitations/AbC123", nil)
+	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{ID: "user-2"}))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got status %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	var body struct {
+		Code          string `json:"code"`
+		GroupID       string `json:"group_id"`
+		GroupName     string `json:"group_name"`
+		GroupAvatar   string `json:"group_avatar"`
+		AlreadyMember bool   `json:"already_member"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !body.AlreadyMember {
+		t.Fatalf("expected already_member to be true")
+	}
+	if body.GroupID != "11111111-1111-1111-1111-111111111111" {
+		t.Fatalf("got group_id %q, want group uuid", body.GroupID)
+	}
+	if body.GroupName != "Group Chrome" {
+		t.Fatalf("got group_name %q, want Group Chrome", body.GroupName)
+	}
+}
+
+func TestAcceptInvitationReturnsExistingMemberGroup(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	sender := emailmocks.NewMockSender(ctrl)
+	h := NewHandler(q, sender, nil, slog.Default(), "http://localhost:4200")
+
+	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
+	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
+
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+		ID:        invitationID,
+		GroupID:   groupID,
+		InviterID: "user-1",
+		Email:     pgtype.Text{},
+		Code:      "AbC123",
+		Status:    db.InvitationStatusAccepted,
+	}, nil)
+	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{
+		UserID:  "user-2",
+		GroupID: groupID,
+	}).Return(true, nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/groups/invitations/accept", strings.NewReader(`{"code":"AbC123"}`))
+	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{ID: "user-2"}))
 	rec := httptest.NewRecorder()
 
 	h.AcceptInvitation(rec, req)
