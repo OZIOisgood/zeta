@@ -25,8 +25,10 @@ import (
 )
 
 const (
-	recordingBotUID    = "3"
-	recordingBotUIDNum = uint32(3)
+	studentParticipantUID = "1"
+	expertParticipantUID  = "2"
+	recordingBotUID       = "3"
+	recordingBotUIDNum    = uint32(3)
 )
 
 // RecordingClient abstracts Agora Cloud Recording for tests and for keeping
@@ -150,7 +152,7 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 				StreamTypes:        2,
 				VideoStreamType:    0,
 				SubscribeAudioUIDs: []string{"#allstream#"},
-				SubscribeVideoUIDs: []string{"1"},
+				SubscribeVideoUIDs: []string{studentParticipantUID, expertParticipantUID},
 				AudioProfile:       1,
 				TranscodingConfig: transcodingConfig{
 					Width:            c.cfg.TranscodingWidth,
