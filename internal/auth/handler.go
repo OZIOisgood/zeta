@@ -39,6 +39,31 @@ func cookieSameSite() http.SameSite {
 	return http.SameSiteNoneMode
 }
 
+func setSessionCookies(w http.ResponseWriter, accessToken, refreshToken string, includeExpires bool) {
+	accessCookie := &http.Cookie{
+		Name:     CookieName,
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
+	}
+	refreshCookie := &http.Cookie{
+		Name:     RefreshCookieName,
+		Value:    refreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
+	}
+	if includeExpires {
+		accessCookie.Expires = time.Now().Add(24 * time.Hour)
+		refreshCookie.Expires = time.Now().Add(7 * 24 * time.Hour)
+	}
+	http.SetCookie(w, accessCookie)
+	http.SetCookie(w, refreshCookie)
+}
+
 type Handler struct {
 	logger *slog.Logger
 	q      db.Querier
@@ -106,9 +131,37 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	accessToken := resp.AccessToken
+	refreshToken := resp.RefreshToken
+
+	if resp.OrganizationID == "" {
+		if _, _, err := h.ensureUserInOrg(ctx, resp.User.ID); err != nil {
+			h.logger.ErrorContext(ctx, "auth_ensure_org_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", resp.User.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to prepare user organization", http.StatusInternalServerError)
+			return
+		}
+
+		scoped, err := h.refreshSessionForDefaultOrg(ctx, refreshToken)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_org_session_refresh_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", resp.User.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to prepare user session", http.StatusInternalServerError)
+			return
+		}
+		accessToken = scoped.AccessToken
+		refreshToken = scoped.RefreshToken
+	}
+
 	// Extract Session ID from WorkOS Access Token (needed for logout URL later)
 	var claims jwt.MapClaims
-	_, _, err = jwt.NewParser().ParseUnverified(resp.AccessToken, &claims)
+	_, _, err = jwt.NewParser().ParseUnverified(accessToken, &claims)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "auth_token_parse_failed",
 			slog.String("component", "auth"),
@@ -167,30 +220,8 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Set WorkOS Access Token directly as the session cookie.
-	// The middleware validates it via JWKS — no local signing needed.
-	// Expires matches the WorkOS access token duration (1 day).
-	http.SetCookie(w, &http.Cookie{
-		Name:     CookieName,
-		Value:    resp.AccessToken,
-		Path:     "/",
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-		Secure:   cookieSecure(),
-		SameSite: cookieSameSite(),
-	})
-
-	// Store the refresh token in a separate HttpOnly cookie for token rotation on profile updates.
-	// Expires matches the WorkOS maximum session length (7 days).
-	http.SetCookie(w, &http.Cookie{
-		Name:     RefreshCookieName,
-		Value:    resp.RefreshToken,
-		Path:     "/",
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HttpOnly: true,
-		Secure:   cookieSecure(),
-		SameSite: cookieSameSite(),
-	})
+	// Store WorkOS tokens directly. The middleware validates the access token via JWKS.
+	setSessionCookies(w, accessToken, refreshToken, true)
 
 	h.logger.InfoContext(ctx, "auth_login_succeeded",
 		slog.String("component", "auth"),
@@ -282,11 +313,30 @@ func (h *Handler) getDefaultOrgID() string {
 	return os.Getenv("DEFAULT_ORG_ID")
 }
 
+func (h *Handler) refreshSessionForDefaultOrg(ctx context.Context, refreshToken string) (usermanagement.RefreshAuthenticationResponse, error) {
+	defaultOrgID := h.getDefaultOrgID()
+	if defaultOrgID == "" {
+		return usermanagement.RefreshAuthenticationResponse{}, fmt.Errorf("DEFAULT_ORG_ID is not configured")
+	}
+	if refreshToken == "" {
+		return usermanagement.RefreshAuthenticationResponse{}, fmt.Errorf("refresh token is empty")
+	}
+
+	return h.workos.AuthenticateWithRefreshToken(ctx, usermanagement.AuthenticateWithRefreshTokenOpts{
+		ClientID:       os.Getenv("WORKOS_CLIENT_ID"),
+		RefreshToken:   refreshToken,
+		OrganizationID: defaultOrgID,
+	})
+}
+
 // getPermissionsForRole fetches the permissions for a given role slug from WorkOS.
 // The Go SDK's roles.Role struct does not include Permissions, so we call the
 // WorkOS REST API directly and decode into a custom response struct.
 func (h *Handler) getPermissionsForRole(ctx context.Context, roleSlug string) ([]string, error) {
 	orgID := h.getDefaultOrgID()
+	if orgID == "" {
+		return nil, fmt.Errorf("DEFAULT_ORG_ID is not configured")
+	}
 	apiKey := os.Getenv("WORKOS_API_KEY")
 
 	url := fmt.Sprintf("https://api.workos.com/organizations/%s/roles", orgID)
@@ -326,9 +376,15 @@ func (h *Handler) getPermissionsForRole(ctx context.Context, roleSlug string) ([
 }
 
 func (h *Handler) ensureUserInOrg(ctx context.Context, userID string) (string, []string, error) {
+	defaultOrgID := h.getDefaultOrgID()
+	if defaultOrgID == "" {
+		return "", nil, fmt.Errorf("DEFAULT_ORG_ID is not configured")
+	}
+
 	// 1. Check existing memberships
 	memberships, err := h.workos.ListOrganizationMemberships(ctx, usermanagement.ListOrganizationMembershipsOpts{
-		UserID: userID,
+		OrganizationID: defaultOrgID,
+		UserID:         userID,
 	})
 	if err != nil {
 		return "", nil, err
@@ -344,7 +400,6 @@ func (h *Handler) ensureUserInOrg(ctx context.Context, userID string) (string, [
 	}
 
 	// 2. Add to Default Org
-	defaultOrgID := h.getDefaultOrgID()
 	role := permissions.RoleStudent
 
 	_, err = h.workos.CreateOrganizationMembership(ctx, usermanagement.CreateOrganizationMembershipOpts{
@@ -386,6 +441,16 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 				slog.String("user_id", user.ID),
 				slog.Any("err", err),
 			)
+		} else if refreshCookie, cookieErr := r.Cookie(RefreshCookieName); cookieErr == nil && refreshCookie.Value != "" {
+			if refreshResp, refreshErr := h.refreshSessionForDefaultOrg(ctx, refreshCookie.Value); refreshErr != nil {
+				h.logger.WarnContext(ctx, "auth_org_session_refresh_failed",
+					slog.String("component", "auth"),
+					slog.String("user_id", user.ID),
+					slog.Any("err", refreshErr),
+				)
+			} else {
+				setSessionCookies(w, refreshResp.AccessToken, refreshResp.RefreshToken, true)
+			}
 		}
 	} else {
 		newRole = currentRole
@@ -564,22 +629,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 				slog.Any("err", err),
 			)
 		} else {
-			http.SetCookie(w, &http.Cookie{
-				Name:     CookieName,
-				Value:    refreshResp.AccessToken,
-				Path:     "/",
-				HttpOnly: true,
-				Secure:   cookieSecure(),
-				SameSite: cookieSameSite(),
-			})
-			http.SetCookie(w, &http.Cookie{
-				Name:     RefreshCookieName,
-				Value:    refreshResp.RefreshToken,
-				Path:     "/",
-				HttpOnly: true,
-				Secure:   cookieSecure(),
-				SameSite: cookieSameSite(),
-			})
+			setSessionCookies(w, refreshResp.AccessToken, refreshResp.RefreshToken, false)
 		}
 	}
 
