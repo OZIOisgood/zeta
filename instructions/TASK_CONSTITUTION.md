@@ -61,6 +61,7 @@ Fill out `README.md` with:
 
 - Implement the changes.
 - Before implementing, explicitly assess whether automated tests must be added or updated for the affected behavior. Document that decision in the task README when it is not obvious.
+- For dashboard UI work, explicitly assess whether the change introduces or touches asynchronous content loading states. Follow the project skeleton-placeholder pattern and avoid visible loading-status text for content placeholders.
 - Follow the **Project Constitution** for coding standards and QA.
 
 ### 4. Resolution

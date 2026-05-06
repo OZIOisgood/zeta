@@ -15,6 +15,8 @@
 
 - **Reference**: Follow patterns from another pages `web/dashboard/src/app/pages` for example.
 
+- **Loading States**: Use Taiga UI skeleton placeholders for asynchronous content loading states. Do not show visible loading-status text for page sections, lists, cards, tables, or other content placeholders unless the state is a non-content operation that cannot be represented as a skeleton.
+
 ## 4. Quality Assurance
 
 - **Build Check**: Always run a build (`make api:build` or `make web:build`) before marking a task as complete.
