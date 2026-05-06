@@ -194,31 +194,3 @@
     }
   }
 </app-page-container>
-
-@if (cancelDialogOpen && cancelTarget) {
-  <div class="dialog-overlay" (click)="closeCancelDialog()">
-    <div class="dialog-card" (click)="$event.stopPropagation()">
-      <h3 class="tui-text_h4">Cancel Session</h3>
-      <p class="tui-text_body-m dialog-desc">
-        Are you sure you want to cancel your session with
-        <strong>{{ otherParty(cancelTarget) }}</strong>
-        on {{ formatDateTime(cancelTarget.scheduled_at) }}?
-      </p>
-      <label class="tui-text_body-s dialog-label">Reason (optional)</label>
-      <textarea
-        class="dialog-textarea"
-        rows="3"
-        placeholder="Let them know why you're cancelling..."
-        [(ngModel)]="cancelReason"
-      ></textarea>
-      <div class="dialog-actions">
-        <button tuiButton appearance="destructive" size="m" (click)="confirmCancel()">
-          Cancel Session
-        </button>
-        <button tuiButton appearance="flat" size="m" (click)="closeCancelDialog()">
-          Keep Session
-        </button>
-      </div>
-    </div>
-  </div>
-}

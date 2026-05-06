@@ -8,16 +8,20 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
+import { TuiAlertService, TuiButton, TuiDialogService, TuiIcon } from '@taiga-ui/core';
 import { TuiSkeleton } from '@taiga-ui/kit';
+import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { AuthService } from '../../shared/services/auth.service';
 import { CoachingBooking, CoachingService } from '../../shared/services/coaching.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
+import {
+  CancelSessionDialogComponent,
+  CancelSessionDialogResult,
+} from './ui/cancel-session-dialog/cancel-session-dialog.component';
 
 type TabKey = 'upcoming' | 'past' | 'cancelled';
 
@@ -26,7 +30,6 @@ type TabKey = 'upcoming' | 'past' | 'cancelled';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     PageContainerComponent,
     TuiButton,
     TuiIcon,
@@ -43,6 +46,7 @@ export class MySessionsPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly permissionsService = inject(PermissionsService);
   private readonly alerts = inject(TuiAlertService);
+  private readonly dialogs = inject(TuiDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
 
@@ -117,45 +121,38 @@ export class MySessionsPageComponent implements OnInit {
     return booking.expert_id === this.currentUserId();
   }
 
-  // Cancel dialog
-  protected cancelDialogOpen = false;
-  protected cancelTarget: CoachingBooking | null = null;
-  protected cancelReason = '';
-
   protected openCancelDialog(booking: CoachingBooking): void {
-    this.cancelTarget = booking;
-    this.cancelReason = '';
-    this.cancelDialogOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  protected closeCancelDialog(): void {
-    this.cancelDialogOpen = false;
-    this.cancelTarget = null;
-    this.cdr.markForCheck();
-  }
-
-  protected confirmCancel(): void {
-    if (!this.cancelTarget) return;
-    this.coachingService
-      .cancelBooking(
-        this.cancelTarget.group_id,
-        this.cancelTarget.id,
-        this.cancelReason || undefined,
+    this.dialogs
+      .open<CancelSessionDialogResult | null>(
+        new PolymorpheusComponent(CancelSessionDialogComponent),
+        {
+          label: 'Cancel Session',
+          size: 's',
+          data: {
+            otherParty: this.otherParty(booking),
+            scheduledAt: this.formatDateTime(booking.scheduled_at),
+          },
+        },
       )
-      .subscribe({
-        next: (updated) => {
-          this.allBookings.update((list) => list.map((b) => (b.id === updated.id ? updated : b)));
-          this.closeCancelDialog();
-        },
-        error: (err) => {
-          const msg =
-            err.status === 400
-              ? 'Cancellations must be made at least 1 hour before the session.'
-              : 'Failed to cancel booking.';
-          this.alerts.open(msg, { appearance: 'negative' }).subscribe();
-          this.closeCancelDialog();
-        },
+      .subscribe((result) => {
+        if (!result) return;
+
+        this.coachingService
+          .cancelBooking(booking.group_id, booking.id, result.cancellation_reason)
+          .subscribe({
+            next: (updated) => {
+              this.allBookings.update((list) =>
+                list.map((b) => (b.id === updated.id ? updated : b)),
+              );
+            },
+            error: (err) => {
+              const msg =
+                err.status === 400
+                  ? 'Cancellations must be made at least 1 hour before the session.'
+                  : 'Failed to cancel booking.';
+              this.alerts.open(msg, { appearance: 'negative' }).subscribe();
+            },
+          });
       });
   }
 
