@@ -47,7 +47,24 @@
   </div>
 
   @if (loading()) {
-    <p class="tui-text_body-m loading-text">Loading sessions...</p>
+    <div class="session-list">
+      @for (_ of [1, 2, 3]; track _) {
+        <div class="session-card session-card--skeleton">
+          <div class="session-info">
+            <div class="session-party-info">
+              <span class="session-party" [tuiSkeleton]="true">&nbsp;</span>
+              <span class="session-role" [tuiSkeleton]="true">&nbsp;</span>
+            </div>
+            <span class="session-meta" [tuiSkeleton]="true">&nbsp;</span>
+            <span class="session-meta session-meta--duration" [tuiSkeleton]="true">&nbsp;</span>
+            <span class="status-badge" [tuiSkeleton]="true">&nbsp;</span>
+          </div>
+          <div class="session-actions">
+            <span class="session-action-placeholder" [tuiSkeleton]="true">&nbsp;</span>
+          </div>
+        </div>
+      }
+    </div>
   } @else {
     @if (activeTab() === 'upcoming') {
       @if (upcoming().length === 0) {

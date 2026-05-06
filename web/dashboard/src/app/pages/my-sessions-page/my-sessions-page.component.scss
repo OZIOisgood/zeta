@@ -36,11 +36,6 @@
   font-weight: 500;
 }
 
-.loading-text {
-  color: var(--tui-text-secondary);
-  padding: 1rem 0;
-}
-
 .session-list {
   display: flex;
   flex-direction: column;
@@ -56,6 +51,10 @@
   background: var(--tui-background-neutral-1);
   border-radius: 0.75rem;
   flex-wrap: wrap;
+}
+
+.session-card--skeleton {
+  pointer-events: none;
 }
 
 .session-info {
@@ -80,6 +79,37 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.session-card--skeleton .session-party {
+  width: 8rem;
+  height: 1rem;
+}
+
+.session-card--skeleton .session-role {
+  width: 4.5rem;
+  height: 0.75rem;
+}
+
+.session-card--skeleton .session-meta {
+  width: 11rem;
+  height: 1rem;
+}
+
+.session-card--skeleton .session-meta--duration {
+  width: 3rem;
+}
+
+.session-card--skeleton .status-badge {
+  width: 5rem;
+  height: 1.25rem;
+}
+
+.session-action-placeholder {
+  display: inline-block;
+  width: 4rem;
+  height: 2rem;
+  border-radius: var(--tui-radius-m);
 }
 
 .session-meta {

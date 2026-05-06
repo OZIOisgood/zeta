@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core';
+import { TuiSkeleton } from '@taiga-ui/kit';
 import { tap } from 'rxjs';
 import { AssetListComponent } from '../../shared/components/asset-list/asset-list.component';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
@@ -28,6 +29,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     PageContainerComponent,
     AssetListComponent,
     TuiButton,
+    TuiSkeleton,
     SectionHeaderComponent,
     IllustratedMessageComponent,
   ],

@@ -138,9 +138,13 @@
               ></div>
               <div class="slots-panel">
                 <div class="slots-panel-placeholder">
-                  <span class="tui-text_body-m" style="color: var(--tui-text-tertiary)"
-                    >Loading available times...</span
-                  >
+                  <div class="slot-chips slot-chips--skeleton">
+                    @for (_ of [1, 2, 3, 4]; track _) {
+                      <span class="slot-chip slot-chip--skeleton" [tuiSkeleton]="true"
+                        >&nbsp;</span
+                      >
+                    }
+                  </div>
                 </div>
               </div>
             </div>

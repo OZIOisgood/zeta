@@ -5,7 +5,16 @@
         <a tuiButton appearance="flat" size="s" routerLink="/sessions">View all</a>
       </app-section-header>
       @if (bookingsLoading()) {
-        <p class="tui-text_body-m widget-empty">Loading…</p>
+        <div class="sessions-list">
+          @for (_ of [1, 2, 3]; track _) {
+            <div class="session-row session-row--skeleton">
+              <span class="session-row__party" [tuiSkeleton]="true">&nbsp;</span>
+              <span class="session-row__date" [tuiSkeleton]="true">&nbsp;</span>
+              <span class="session-row__duration" [tuiSkeleton]="true">&nbsp;</span>
+              <span class="status-badge" [tuiSkeleton]="true">&nbsp;</span>
+            </div>
+          }
+        </div>
       } @else if (upcomingBookings().length === 0) {
         <app-illustrated-message
           illustrationSrc="/illustrations/live-coaching.png"
