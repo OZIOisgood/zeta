@@ -11,6 +11,9 @@ api\:build:
 api\:start:
 	go run ./cmd/api
 
+api\:dev:
+	go tool air -c .air.toml
+
 api\:stop:
 	@kill $$(lsof -ti :8080) 2>/dev/null || true
 
@@ -71,4 +74,3 @@ test\:coverage:
 
 mocks:
 	go generate ./internal/...
-

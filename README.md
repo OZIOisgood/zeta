@@ -86,6 +86,12 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    ```bash
    make api:start
    ```
+   For live reload during Go API development, run:
+   ```bash
+   make api:dev
+   ```
+   This uses the project-pinned Air tool through `go tool air`.
+
 4. **Run Frontend**:
    ```bash
    make web:start
