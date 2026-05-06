@@ -1,10 +1,41 @@
 <app-page-container>
-  <app-asset-list
-    [assets]="(assets$ | async) || []"
-    [loading]="loading()"
-    [showAddTile]="showUploadVideo()"
-    [role]="auth.user()?.role"
-    title="Videos"
-    (addVideo)="onAddVideo()"
-  ></app-asset-list>
+  @if (showReviewStatusBuckets()) {
+    @if (reviewStatusBuckets$ | async; as buckets) {
+      <app-asset-list
+        [assets]="buckets.inReview"
+        [loading]="loading()"
+        [role]="auth.user()?.role"
+        title="In review"
+        emptyHeading="No videos in review"
+        emptyDescription="Videos with started reviews will appear here."
+      ></app-asset-list>
+
+      <app-asset-list
+        [assets]="buckets.toReview"
+        [loading]="loading()"
+        [role]="auth.user()?.role"
+        title="To review"
+        emptyHeading="No videos to review"
+        emptyDescription="New videos without comments will appear here."
+      ></app-asset-list>
+
+      <app-asset-list
+        [assets]="buckets.reviewed"
+        [loading]="loading()"
+        [role]="auth.user()?.role"
+        title="Reviewed"
+        emptyHeading="No reviewed videos"
+        emptyDescription="Completed video reviews will appear here."
+      ></app-asset-list>
+    }
+  } @else {
+    <app-asset-list
+      [assets]="(assets$ | async) || []"
+      [loading]="loading()"
+      [showAddTile]="showUploadVideo()"
+      [role]="auth.user()?.role"
+      title="Videos"
+      (addVideo)="onAddVideo()"
+    ></app-asset-list>
+  }
 </app-page-container>

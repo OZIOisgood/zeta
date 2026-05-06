@@ -3,3 +3,8 @@
   min-height: 100%;
   box-sizing: border-box;
 }
+
+app-asset-list + app-asset-list {
+  display: block;
+  margin-top: 2rem;
+}

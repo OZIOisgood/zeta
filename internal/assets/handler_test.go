@@ -52,6 +52,7 @@ func TestListAssets_StudentUsesOwnerVisibilityScope(t *testing.T) {
 			Status:      db.AssetStatusPending,
 			OwnerID:     user.ID,
 			PlaybackID:  "playback-1",
+			ReviewCount: 2,
 		},
 	}, nil)
 
@@ -70,6 +71,9 @@ func TestListAssets_StudentUsesOwnerVisibilityScope(t *testing.T) {
 	}
 	if len(resp) != 1 || resp[0].OwnerID != user.ID {
 		t.Fatalf("got %+v, want one owned asset", resp)
+	}
+	if resp[0].ReviewCount != 2 {
+		t.Fatalf("got review_count %d, want 2", resp[0].ReviewCount)
 	}
 }
 

@@ -24,11 +24,12 @@
   *ngIf="!loading && assets.length === 0 && !showAddTile"
   illustrationSrc="/illustrations/bored-horse.png"
   illustrationAlt="No videos yet"
-  heading="No videos yet"
+  [heading]="emptyHeading"
   [description]="
-    role === 'expert'
+    emptyDescription ||
+    (role === 'expert'
       ? 'Your students haven\'t uploaded any videos yet.'
-      : 'There are no videos here yet.'
+      : 'There are no videos here yet.')
   "
 ></app-illustrated-message>
 

@@ -110,6 +110,7 @@ type AssetItem struct {
 	Status      string      `json:"status"`
 	Thumbnail   string      `json:"thumbnail,omitempty"`
 	PlaybackID  string      `json:"playback_id,omitempty"`
+	ReviewCount int64       `json:"review_count"`
 	Videos      []VideoItem `json:"videos,omitempty"`
 	Group       *GroupInfo  `json:"group,omitempty"`
 }
@@ -187,6 +188,7 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 			Status:      string(a.Status),
 			Thumbnail:   thumb,
 			PlaybackID:  playbackID,
+			ReviewCount: a.ReviewCount,
 		}
 	}
 

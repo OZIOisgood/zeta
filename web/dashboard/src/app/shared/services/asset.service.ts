@@ -35,6 +35,7 @@ export interface Asset {
   description: string;
   owner_id: string;
   status: AssetStatus;
+  review_count: number;
   thumbnail?: string;
   playback_id?: string;
   videos?: VideoItem[];

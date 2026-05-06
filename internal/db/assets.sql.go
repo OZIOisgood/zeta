@@ -255,7 +255,18 @@ func (q *Queries) GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams
 }
 
 const listVisibleAssets = `-- name: ListVisibleAssets :many
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id
+SELECT
+    a.id,
+    a.name,
+    a.description,
+    a.status,
+    a.created_at,
+    a.updated_at,
+    a.owner_id,
+    COALESCE(v.playback_id, '') as playback_id,
+    COALESCE(v.mux_upload_id, '') as mux_upload_id,
+    COALESCE(v.mux_asset_id, '') as mux_asset_id,
+    COALESCE(rv.review_count, 0)::bigint as review_count
 FROM assets a
 LEFT JOIN LATERAL (
     SELECT playback_id, mux_upload_id, mux_asset_id
@@ -264,6 +275,12 @@ LEFT JOIN LATERAL (
     ORDER BY created_at ASC
     LIMIT 1
 ) v ON true
+LEFT JOIN LATERAL (
+    SELECT COUNT(r.id) as review_count
+    FROM videos review_videos
+    LEFT JOIN video_reviews r ON r.video_id = review_videos.id
+    WHERE review_videos.asset_id = a.id
+) rv ON true
 WHERE a.status != 'waiting_upload'
   AND (
     ($1::boolean AND a.owner_id = $2)
@@ -296,6 +313,7 @@ type ListVisibleAssetsRow struct {
 	PlaybackID  string             `json:"playback_id"`
 	MuxUploadID string             `json:"mux_upload_id"`
 	MuxAssetID  string             `json:"mux_asset_id"`
+	ReviewCount int64              `json:"review_count"`
 }
 
 func (q *Queries) ListVisibleAssets(ctx context.Context, arg ListVisibleAssetsParams) ([]ListVisibleAssetsRow, error) {
@@ -318,6 +336,7 @@ func (q *Queries) ListVisibleAssets(ctx context.Context, arg ListVisibleAssetsPa
 			&i.PlaybackID,
 			&i.MuxUploadID,
 			&i.MuxAssetID,
+			&i.ReviewCount,
 		); err != nil {
 			return nil, err
 		}

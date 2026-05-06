@@ -9,7 +9,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 ## Key Features
 
 - **Remote Video Analysis**: Students upload videos of their practice; experts provide detailed feedback.
-- **Professional Dashboard**: Manage students, videos, and reviews in one place.
+- **Professional Dashboard**: Manage students, videos, and reviews in one place. Experts see the Videos page grouped into To review, In review, and Reviewed lists.
 - **Groups Management**: Create and manage user groups.
 - **Group Invitations**: Invite users to groups via email or reusable generic invitation links with QR code generation and confirmation flow.
 - **Seamless Uploads**: Direct high-quality video uploads powered by Mux.
