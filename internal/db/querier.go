@@ -14,6 +14,7 @@ type Querier interface {
 	AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error
 	CancelBooking(ctx context.Context, arg CancelBookingParams) (CoachingBooking, error)
 	CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) (bool, error)
+	CheckVideoVisibleToUser(ctx context.Context, arg CheckVideoVisibleToUserParams) (bool, error)
 	CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error)
 	CountVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (int64, error)
 	CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error)
@@ -36,7 +37,7 @@ type Querier interface {
 	DeleteAvailability(ctx context.Context, arg DeleteAvailabilityParams) (int64, error)
 	DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotParams) (int64, error)
 	DeleteGroup(ctx context.Context, arg DeleteGroupParams) error
-	DeleteVideoReview(ctx context.Context, id pgtype.UUID) error
+	DeleteVideoReview(ctx context.Context, arg DeleteVideoReviewParams) error
 	EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error)
 	GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error)
 	GetAssetOwnerByVideoID(ctx context.Context, id pgtype.UUID) (GetAssetOwnerByVideoIDRow, error)
@@ -53,10 +54,10 @@ type Querier interface {
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
 	// === Timezone ===
 	GetUserTimezone(ctx context.Context, userID string) (string, error)
+	GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams) (GetVisibleAssetRow, error)
 	HasVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (bool, error)
 	ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.UUID) ([]string, error)
 	ListAllMyBookings(ctx context.Context, expertID string) ([]ListAllMyBookingsRow, error)
-	ListAssets(ctx context.Context) ([]ListAssetsRow, error)
 	ListAvailabilityByExpertGroup(ctx context.Context, arg ListAvailabilityByExpertGroupParams) ([]CoachingAvailability, error)
 	ListAvailabilityByExpertGroupDay(ctx context.Context, arg ListAvailabilityByExpertGroupDayParams) ([]CoachingAvailability, error)
 	ListAvailabilityByGroup(ctx context.Context, groupID pgtype.UUID) ([]CoachingAvailability, error)
@@ -73,6 +74,7 @@ type Querier interface {
 	ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UUID) ([]CoachingSessionType, error)
 	ListUserGroups(ctx context.Context, userID string) ([]ListUserGroupsRow, error)
 	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]VideoReview, error)
+	ListVisibleAssets(ctx context.Context, arg ListVisibleAssetsParams) ([]ListVisibleAssetsRow, error)
 	MarkBookingRecordingFailed(ctx context.Context, arg MarkBookingRecordingFailedParams) error
 	MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)

@@ -46,6 +46,14 @@ func testUUID() pgtype.UUID {
 	return u
 }
 
+func expectVideoVisible(q *dbmocks.MockQuerier, videoID pgtype.UUID, user *auth.UserContext) {
+	q.EXPECT().CheckVideoVisibleToUser(gomock.Any(), db.CheckVideoVisibleToUserParams{
+		VideoID:   videoID,
+		IsStudent: user.Role == permissions.RoleStudent,
+		UserID:    user.ID,
+	}).Return(true, nil)
+}
+
 func TestListReviews_Unauthorized(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
@@ -93,6 +101,8 @@ func TestListReviews_Success(t *testing.T) {
 	reviewID := pgtype.UUID{Valid: true}
 	copy(reviewID.Bytes[:], []byte{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1})
 
+	user := reviewUser()
+	expectVideoVisible(q, videoID, user)
 	q.EXPECT().ListVideoReviews(gomock.Any(), videoID).Return([]db.VideoReview{
 		{
 			ID:               reviewID,
@@ -103,7 +113,6 @@ func TestListReviews_Success(t *testing.T) {
 		},
 	}, nil)
 
-	user := reviewUser()
 	videoIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
 	req := httptest.NewRequest(http.MethodGet, "/videos/"+videoIDStr+"/reviews", nil)
 	req = withChiURLParam(req, "id", videoIDStr)
@@ -125,6 +134,33 @@ func TestListReviews_Success(t *testing.T) {
 	}
 	if reviews[0].Content != "Great form!" {
 		t.Errorf("got content %q, want %q", reviews[0].Content, "Great form!")
+	}
+}
+
+func TestListReviews_NotVisible(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	llmMock := llmmocks.NewMockEnhancer(ctrl)
+	h := NewHandler(q, slog.Default(), llmMock)
+
+	videoID := testUUID()
+	user := reviewUser()
+	q.EXPECT().CheckVideoVisibleToUser(gomock.Any(), db.CheckVideoVisibleToUserParams{
+		VideoID:   videoID,
+		IsStudent: false,
+		UserID:    user.ID,
+	}).Return(false, nil)
+
+	videoIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
+	req := httptest.NewRequest(http.MethodGet, "/videos/"+videoIDStr+"/reviews", nil)
+	req = withChiURLParam(req, "id", videoIDStr)
+	req = req.WithContext(testUserCtx(req.Context(), user))
+	rec := httptest.NewRecorder()
+
+	h.ListReviews(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("got %d, want %d", rec.Code, http.StatusNotFound)
 	}
 }
 
@@ -159,6 +195,8 @@ func TestCreateReview_Success(t *testing.T) {
 	now := time.Now()
 	videoIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
 
+	user := reviewUser()
+	expectVideoVisible(q, videoID, user)
 	q.EXPECT().GetAssetStatusByVideoID(gomock.Any(), videoID).Return(db.AssetStatusPending, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), gomock.Any()).Return(db.VideoReview{
 		ID:        reviewID,
@@ -168,7 +206,6 @@ func TestCreateReview_Success(t *testing.T) {
 	}, nil)
 
 	body := `{"content":"Nice technique"}`
-	user := reviewUser()
 	req := httptest.NewRequest(http.MethodPost, "/videos/"+videoIDStr+"/reviews", strings.NewReader(body))
 	req = withChiURLParam(req, "id", videoIDStr)
 	req = req.WithContext(testUserCtx(req.Context(), user))
@@ -198,10 +235,11 @@ func TestCreateReview_CompletedAsset(t *testing.T) {
 	videoID := testUUID()
 	videoIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
 
+	user := reviewUser()
+	expectVideoVisible(q, videoID, user)
 	q.EXPECT().GetAssetStatusByVideoID(gomock.Any(), videoID).Return(db.AssetStatusCompleted, nil)
 
 	body := `{"content":"Too late"}`
-	user := reviewUser()
 	req := httptest.NewRequest(http.MethodPost, "/videos/"+videoIDStr+"/reviews", strings.NewReader(body))
 	req = withChiURLParam(req, "id", videoIDStr)
 	req = req.WithContext(testUserCtx(req.Context(), user))
@@ -223,10 +261,11 @@ func TestCreateReview_EmptyContent(t *testing.T) {
 	videoID := testUUID()
 	videoIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
 
+	user := reviewUser()
+	expectVideoVisible(q, videoID, user)
 	q.EXPECT().GetAssetStatusByVideoID(gomock.Any(), videoID).Return(db.AssetStatusPending, nil)
 
 	body := `{"content":""}`
-	user := reviewUser()
 	req := httptest.NewRequest(http.MethodPost, "/videos/"+videoIDStr+"/reviews", strings.NewReader(body))
 	req = withChiURLParam(req, "id", videoIDStr)
 	req = req.WithContext(testUserCtx(req.Context(), user))
@@ -248,11 +287,12 @@ func TestCreateReview_DBError(t *testing.T) {
 	videoID := testUUID()
 	videoIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
 
+	user := reviewUser()
+	expectVideoVisible(q, videoID, user)
 	q.EXPECT().GetAssetStatusByVideoID(gomock.Any(), videoID).Return(db.AssetStatusPending, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), gomock.Any()).Return(db.VideoReview{}, errors.New("db error"))
 
 	body := `{"content":"Good content"}`
-	user := reviewUser()
 	req := httptest.NewRequest(http.MethodPost, "/videos/"+videoIDStr+"/reviews", strings.NewReader(body))
 	req = withChiURLParam(req, "id", videoIDStr)
 	req = req.WithContext(testUserCtx(req.Context(), user))

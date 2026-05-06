@@ -185,11 +185,107 @@ func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]Ge
 	return items, nil
 }
 
-const listAssets = `-- name: ListAssets :many
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true WHERE a.status != 'waiting_upload' ORDER BY a.created_at DESC
+const getVisibleAsset = `-- name: GetVisibleAsset :one
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar
+FROM assets a
+LEFT JOIN LATERAL (
+    SELECT playback_id, mux_upload_id, mux_asset_id
+    FROM videos
+    WHERE asset_id = a.id
+    ORDER BY created_at ASC
+    LIMIT 1
+) v ON true
+LEFT JOIN groups g ON g.id = a.group_id
+WHERE a.id = $1
+  AND (
+    ($2::boolean AND a.owner_id = $3)
+    OR (
+      NOT $2::boolean
+      AND EXISTS (
+        SELECT 1
+        FROM user_groups ug
+        WHERE ug.user_id = $3
+          AND ug.group_id = a.group_id
+      )
+    )
+  )
 `
 
-type ListAssetsRow struct {
+type GetVisibleAssetParams struct {
+	AssetID   pgtype.UUID `json:"asset_id"`
+	IsStudent bool        `json:"is_student"`
+	UserID    string      `json:"user_id"`
+}
+
+type GetVisibleAssetRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Status      AssetStatus        `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	OwnerID     string             `json:"owner_id"`
+	GroupID     pgtype.UUID        `json:"group_id"`
+	PlaybackID  string             `json:"playback_id"`
+	MuxUploadID string             `json:"mux_upload_id"`
+	MuxAssetID  string             `json:"mux_asset_id"`
+	GroupName   pgtype.Text        `json:"group_name"`
+	GroupAvatar pgtype.Text        `json:"group_avatar"`
+}
+
+func (q *Queries) GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams) (GetVisibleAssetRow, error) {
+	row := q.db.QueryRow(ctx, getVisibleAsset, arg.AssetID, arg.IsStudent, arg.UserID)
+	var i GetVisibleAssetRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.OwnerID,
+		&i.GroupID,
+		&i.PlaybackID,
+		&i.MuxUploadID,
+		&i.MuxAssetID,
+		&i.GroupName,
+		&i.GroupAvatar,
+	)
+	return i, err
+}
+
+const listVisibleAssets = `-- name: ListVisibleAssets :many
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id
+FROM assets a
+LEFT JOIN LATERAL (
+    SELECT playback_id, mux_upload_id, mux_asset_id
+    FROM videos
+    WHERE asset_id = a.id
+    ORDER BY created_at ASC
+    LIMIT 1
+) v ON true
+WHERE a.status != 'waiting_upload'
+  AND (
+    ($1::boolean AND a.owner_id = $2)
+    OR (
+      NOT $1::boolean
+      AND EXISTS (
+        SELECT 1
+        FROM user_groups ug
+        WHERE ug.user_id = $2
+          AND ug.group_id = a.group_id
+      )
+    )
+  )
+ORDER BY a.created_at DESC
+`
+
+type ListVisibleAssetsParams struct {
+	IsStudent bool   `json:"is_student"`
+	UserID    string `json:"user_id"`
+}
+
+type ListVisibleAssetsRow struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
@@ -202,15 +298,15 @@ type ListAssetsRow struct {
 	MuxAssetID  string             `json:"mux_asset_id"`
 }
 
-func (q *Queries) ListAssets(ctx context.Context) ([]ListAssetsRow, error) {
-	rows, err := q.db.Query(ctx, listAssets)
+func (q *Queries) ListVisibleAssets(ctx context.Context, arg ListVisibleAssetsParams) ([]ListVisibleAssetsRow, error) {
+	rows, err := q.db.Query(ctx, listVisibleAssets, arg.IsStudent, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListAssetsRow
+	var items []ListVisibleAssetsRow
 	for rows.Next() {
-		var i ListAssetsRow
+		var i ListVisibleAssetsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,

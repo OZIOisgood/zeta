@@ -123,10 +123,20 @@ type VideoItem struct {
 func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-	assets, err := h.q.ListAssets(ctx)
+	userInfo := auth.GetUser(ctx)
+	if userInfo == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	assets, err := h.q.ListVisibleAssets(ctx, db.ListVisibleAssetsParams{
+		UserID:    userInfo.ID,
+		IsStudent: isStudent(userInfo),
+	})
 	if err != nil {
 		log.ErrorContext(ctx, "asset_list_failed",
 			slog.String("component", "assets"),
+			slog.String("user_id", userInfo.ID),
 			slog.Any("err", err),
 		)
 		http.Error(w, "Failed to list assets", http.StatusInternalServerError)
@@ -194,11 +204,22 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-	asset, err := h.q.GetAsset(ctx, uuid)
+	userInfo := auth.GetUser(ctx)
+	if userInfo == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	asset, err := h.q.GetVisibleAsset(ctx, db.GetVisibleAssetParams{
+		AssetID:   uuid,
+		UserID:    userInfo.ID,
+		IsStudent: isStudent(userInfo),
+	})
 	if err != nil {
 		log.ErrorContext(ctx, "asset_get_failed",
 			slog.String("component", "assets"),
 			slog.String("asset_id", idStr),
+			slog.String("user_id", userInfo.ID),
 			slog.Any("err", err),
 		)
 		http.Error(w, "Asset not found", http.StatusNotFound)
@@ -290,6 +311,10 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func isStudent(user *auth.UserContext) bool {
+	return user.Role == permissions.RoleStudent
 }
 
 func (h *Handler) fetchPlaybackIDFromMux(ctx context.Context, uploadID string) (string, error) {
@@ -553,6 +578,23 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	asset, err := h.q.GetVisibleAsset(ctx, db.GetVisibleAssetParams{
+		AssetID:   assetID,
+		UserID:    userInfo.ID,
+		IsStudent: isStudent(userInfo),
+	})
+	if err != nil {
+		log.WarnContext(ctx, "finalize_asset_visibility_denied",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.String("user_id", userInfo.ID),
+			slog.String("role", userInfo.Role),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Asset not found", http.StatusNotFound)
+		return
+	}
+
 	// Check if all videos have at least one review
 	hasUnreviewed, err := h.q.HasVideosWithoutReviews(ctx, assetID)
 	if err != nil {
@@ -588,39 +630,29 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch asset details to notify owner
-	asset, err := h.q.GetAsset(ctx, assetID)
-	if err != nil {
-		log.ErrorContext(ctx, "finalize_asset_fetch_failed",
-			slog.String("component", "assets"),
-			slog.String("asset_id", idStr),
-			slog.Any("err", err),
-		)
-	} else {
-		// Only send email if the person finalizing is not the owner
-		if asset.OwnerID != userInfo.ID {
-			owner, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
-				User: asset.OwnerID,
-			})
+	// Only send email if the person finalizing is not the owner
+	if asset.OwnerID != userInfo.ID {
+		owner, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
+			User: asset.OwnerID,
+		})
+		if err != nil {
+			log.ErrorContext(ctx, "finalize_asset_owner_fetch_failed",
+				slog.String("component", "assets"),
+				slog.String("asset_id", idStr),
+				slog.String("owner_id", asset.OwnerID),
+				slog.Any("err", err),
+			)
+		} else {
+			subject := "Your video has been reviewed"
+			text := fmt.Sprintf("Your video %s has been reviewed and is now finalized.", asset.Name)
+			err = h.email.Send([]string{owner.Email}, subject, text)
 			if err != nil {
-				log.ErrorContext(ctx, "finalize_asset_owner_fetch_failed",
+				log.ErrorContext(ctx, "finalize_asset_email_send_failed",
 					slog.String("component", "assets"),
 					slog.String("asset_id", idStr),
-					slog.String("owner_id", asset.OwnerID),
+					slog.String("to", owner.Email),
 					slog.Any("err", err),
 				)
-			} else {
-				subject := "Your video has been reviewed"
-				text := fmt.Sprintf("Your video %s has been reviewed and is now finalized.", asset.Name)
-				err = h.email.Send([]string{owner.Email}, subject, text)
-				if err != nil {
-					log.ErrorContext(ctx, "finalize_asset_email_send_failed",
-						slog.String("component", "assets"),
-						slog.String("asset_id", idStr),
-						slog.String("to", owner.Email),
-						slog.Any("err", err),
-					)
-				}
 			}
 		}
 	}

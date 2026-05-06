@@ -75,6 +75,10 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !h.ensureVideoVisible(w, r, log, userInfo, videoID, idStr) {
+		return
+	}
+
 	reviews, err := h.q.ListVideoReviews(ctx, videoID)
 	if err != nil {
 		log.ErrorContext(ctx, "list_reviews_failed",
@@ -129,6 +133,10 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	var videoID pgtype.UUID
 	if err := videoID.Scan(idStr); err != nil {
 		http.Error(w, "Invalid video ID", http.StatusBadRequest)
+		return
+	}
+
+	if !h.ensureVideoVisible(w, r, log, userInfo, videoID, idStr) {
 		return
 	}
 
@@ -222,6 +230,10 @@ func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !h.ensureVideoVisible(w, r, log, userInfo, videoID, idStr) {
+		return
+	}
+
 	// Check if asset is completed
 	assetStatus, err := h.q.GetAssetStatusByVideoID(ctx, videoID)
 	if err != nil {
@@ -260,6 +272,7 @@ func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 	review, err := h.q.UpdateVideoReview(ctx, db.UpdateVideoReviewParams{
 		ID:      reviewID,
 		Content: req.Content,
+		VideoID: videoID,
 	})
 	if err != nil {
 		log.ErrorContext(ctx, "update_review_failed",
@@ -302,6 +315,10 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !h.ensureVideoVisible(w, r, log, userInfo, videoID, idStr) {
+		return
+	}
+
 	// Check if asset is completed
 	assetStatus, err := h.q.GetAssetStatusByVideoID(ctx, videoID)
 	if err != nil {
@@ -326,7 +343,10 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.q.DeleteVideoReview(ctx, reviewID)
+	err = h.q.DeleteVideoReview(ctx, db.DeleteVideoReviewParams{
+		ID:      reviewID,
+		VideoID: videoID,
+	})
 	if err != nil {
 		log.ErrorContext(ctx, "delete_review_failed",
 			slog.String("component", "reviews"),
@@ -338,6 +358,36 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) ensureVideoVisible(w http.ResponseWriter, r *http.Request, log *slog.Logger, user *auth.UserContext, videoID pgtype.UUID, videoIDStr string) bool {
+	ctx := r.Context()
+	visible, err := h.q.CheckVideoVisibleToUser(ctx, db.CheckVideoVisibleToUserParams{
+		VideoID:   videoID,
+		UserID:    user.ID,
+		IsStudent: user.Role == permissions.RoleStudent,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "video_visibility_check_failed",
+			slog.String("component", "reviews"),
+			slog.String("video_id", videoIDStr),
+			slog.String("user_id", user.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to check video access", http.StatusInternalServerError)
+		return false
+	}
+	if !visible {
+		log.WarnContext(ctx, "video_visibility_denied",
+			slog.String("component", "reviews"),
+			slog.String("video_id", videoIDStr),
+			slog.String("user_id", user.ID),
+			slog.String("role", user.Role),
+		)
+		http.Error(w, "Video not found", http.StatusNotFound)
+		return false
+	}
+	return true
 }
 
 type EnhanceTextRequest struct {
@@ -398,5 +448,3 @@ func (h *Handler) EnhanceText(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
-
-

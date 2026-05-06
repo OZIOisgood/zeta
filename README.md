@@ -98,6 +98,13 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - Login: Click "Login via WorkOS" -> Redirects to WorkOS AuthKit -> Callback -> Logged In.
 - **Redirect Preservation**: When an unauthenticated user accesses a deep link (e.g., an invite URL), the initial path is captured to `localStorage` (with a 5-minute expiry) in `main.ts` before Angular bootstraps—ensuring route guards cannot redirect away before the path is saved. After successful authentication, the shell component reads and consumes the saved path, navigating the user back to the intended page.
 
+### Asset Visibility
+
+- Students can only see assets and videos they uploaded themselves.
+- Experts and administrators can only see assets and videos submitted to groups where they are members.
+- Video review endpoints require both the relevant `reviews:*` permission and visibility of the target video.
+- Asset finalization requires both `assets:finalize` and visibility of the target asset.
+
 ### Group Invitation Flow
 
 1. An admin or expert opens the group details page and clicks "Invite".

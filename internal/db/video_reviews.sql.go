@@ -11,6 +11,40 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const checkVideoVisibleToUser = `-- name: CheckVideoVisibleToUser :one
+SELECT EXISTS (
+    SELECT 1
+    FROM videos v
+    INNER JOIN assets a ON a.id = v.asset_id
+    WHERE v.id = $1
+      AND (
+        ($2::boolean AND a.owner_id = $3)
+        OR (
+          NOT $2::boolean
+          AND EXISTS (
+            SELECT 1
+            FROM user_groups ug
+            WHERE ug.user_id = $3
+              AND ug.group_id = a.group_id
+          )
+        )
+      )
+) as visible
+`
+
+type CheckVideoVisibleToUserParams struct {
+	VideoID   pgtype.UUID `json:"video_id"`
+	IsStudent bool        `json:"is_student"`
+	UserID    string      `json:"user_id"`
+}
+
+func (q *Queries) CheckVideoVisibleToUser(ctx context.Context, arg CheckVideoVisibleToUserParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkVideoVisibleToUser, arg.VideoID, arg.IsStudent, arg.UserID)
+	var visible bool
+	err := row.Scan(&visible)
+	return visible, err
+}
+
 const countVideosWithoutReviews = `-- name: CountVideosWithoutReviews :one
 SELECT COUNT(*) as count
 FROM videos v
@@ -60,11 +94,16 @@ func (q *Queries) CreateVideoReview(ctx context.Context, arg CreateVideoReviewPa
 
 const deleteVideoReview = `-- name: DeleteVideoReview :exec
 DELETE FROM video_reviews
-WHERE id = $1
+WHERE id = $1 AND video_id = $2
 `
 
-func (q *Queries) DeleteVideoReview(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteVideoReview, id)
+type DeleteVideoReviewParams struct {
+	ID      pgtype.UUID `json:"id"`
+	VideoID pgtype.UUID `json:"video_id"`
+}
+
+func (q *Queries) DeleteVideoReview(ctx context.Context, arg DeleteVideoReviewParams) error {
+	_, err := q.db.Exec(ctx, deleteVideoReview, arg.ID, arg.VideoID)
 	return err
 }
 
@@ -162,17 +201,18 @@ func (q *Queries) ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]
 const updateVideoReview = `-- name: UpdateVideoReview :one
 UPDATE video_reviews
 SET content = $2, updated_at = NOW()
-WHERE id = $1
+WHERE id = $1 AND video_id = $3
 RETURNING id, video_id, content, timestamp_seconds, created_at, updated_at
 `
 
 type UpdateVideoReviewParams struct {
 	ID      pgtype.UUID `json:"id"`
 	Content string      `json:"content"`
+	VideoID pgtype.UUID `json:"video_id"`
 }
 
 func (q *Queries) UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewParams) (VideoReview, error) {
-	row := q.db.QueryRow(ctx, updateVideoReview, arg.ID, arg.Content)
+	row := q.db.QueryRow(ctx, updateVideoReview, arg.ID, arg.Content, arg.VideoID)
 	var i VideoReview
 	err := row.Scan(
 		&i.ID,
