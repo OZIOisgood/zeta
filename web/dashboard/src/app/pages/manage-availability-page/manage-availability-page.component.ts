@@ -44,7 +44,7 @@ import {
   SessionTypeDialogResult,
 } from './ui/session-type-dialog/session-type-dialog.component';
 
-const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
+const DURATION_OPTIONS = Array.from({ length: 22 }, (_, index) => 15 + index * 5);
 
 @Component({
   selector: 'app-manage-availability-page',

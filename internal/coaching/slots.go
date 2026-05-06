@@ -169,6 +169,9 @@ func computeSlots(
 	durationMinutes int32,
 ) []SlotResponse {
 	duration := time.Duration(durationMinutes) * time.Minute
+	if duration <= 0 {
+		return nil
+	}
 
 	// Index availability by day_of_week.
 	byDay := make(map[int16][]db.CoachingAvailability)
@@ -202,7 +205,7 @@ func computeSlots(
 			windowStart := time.Date(d.Year(), d.Month(), d.Day(), startH, startM, 0, 0, loc).UTC()
 			windowEnd := time.Date(d.Year(), d.Month(), d.Day(), endH, endM, 0, 0, loc).UTC()
 
-			for slotStart := windowStart; !slotStart.Add(duration).After(windowEnd); slotStart = slotStart.Add(duration) {
+			for slotStart := alignSlotStartToDurationGrid(windowStart, duration, loc); !slotStart.Add(duration).After(windowEnd); slotStart = slotStart.Add(duration) {
 				slotEnd := slotStart.Add(duration)
 
 				// Skip slots that start before the minimum booking notice deadline.
@@ -229,6 +232,22 @@ func computeSlots(
 	}
 
 	return slots
+}
+
+func alignSlotStartToDurationGrid(windowStart time.Time, duration time.Duration, loc *time.Location) time.Time {
+	if duration <= 0 {
+		return windowStart
+	}
+
+	localStart := windowStart.In(loc)
+	localMidnight := time.Date(localStart.Year(), localStart.Month(), localStart.Day(), 0, 0, 0, 0, loc)
+	elapsed := localStart.Sub(localMidnight)
+	remainder := elapsed % duration
+	if remainder == 0 {
+		return windowStart
+	}
+
+	return localMidnight.Add(elapsed + duration - remainder).UTC()
 }
 
 func isBlocked(slotStart, slotEnd time.Time, blockedSlots []db.CoachingBlockedSlot, loc *time.Location) bool {

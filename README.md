@@ -106,7 +106,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 
 ### Live Coaching Flow
 
-1. An expert creates **session types** (name, duration 15–120 min) for a group and sets **weekly availability**.
+1. An expert creates **session types** (name, duration 15–120 min in 5-minute increments) for a group and sets **weekly availability**.
 2. A student browses available experts, picks a session type, and books a free slot.
 3. Both participants receive a **booking confirmation email** via Resend.
 4. Automated **reminders** are sent at 24 h, 1 h, and 15 min before the session (driven by GCP Cloud Scheduler polling every 5 min).

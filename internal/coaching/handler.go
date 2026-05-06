@@ -18,6 +18,7 @@ const (
 	BlockedSlotRangeMonths = 3
 	MinSessionDuration     = int32(15)
 	MaxSessionDuration     = int32(120)
+	SessionDurationStep    = int32(5)
 )
 
 type Handler struct {

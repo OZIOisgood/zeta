@@ -94,6 +94,21 @@ func slotStarts(slots []SlotResponse) []time.Time {
 	return out
 }
 
+func TestAlignSlotStartToDurationGridUsesLocalDay(t *testing.T) {
+	loc, err := time.LoadLocation("Europe/Rome")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	windowStart := time.Date(2025, 1, 20, 16, 1, 0, 0, loc).UTC()
+	got := alignSlotStartToDurationGrid(windowStart, 15*time.Minute, loc)
+	want := time.Date(2025, 1, 20, 16, 15, 0, 0, loc).UTC()
+
+	if !got.Equal(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+}
+
 func TestComputeSlots(t *testing.T) {
 	loc := time.UTC
 
@@ -103,8 +118,13 @@ func TestComputeSlots(t *testing.T) {
 	rangeEnd := monday.AddDate(0, 0, 1)
 
 	start900, _ := parseTime("09:00")
+	start1333, _ := parseTime("13:33")
+	start1601, _ := parseTime("16:01")
+	start1646, _ := parseTime("16:46")
 	end1200, _ := parseTime("12:00")
 	end1030, _ := parseTime("10:30")
+	end1400, _ := parseTime("14:00")
+	end1700, _ := parseTime("17:00")
 
 	// Availability: Monday 09:00–12:00 UTC, yields three 60-min slots.
 	mondayAvail := []db.CoachingAvailability{{
@@ -194,6 +214,46 @@ func TestComputeSlots(t *testing.T) {
 			wantStarts: []time.Time{
 				time.Date(2025, 1, 20, 9, 0, 0, 0, time.UTC),
 				time.Date(2025, 1, 20, 11, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			name: "15-minute slots align odd availability starts to the next duration boundary",
+			avail: []db.CoachingAvailability{{
+				ExpertID: "expert-1", DayOfWeek: 1,
+				StartTime: start1601, EndTime: end1700,
+			}},
+			minNotice: monday,
+			duration:  15,
+			wantStarts: []time.Time{
+				time.Date(2025, 1, 20, 16, 15, 0, 0, time.UTC),
+				time.Date(2025, 1, 20, 16, 30, 0, 0, time.UTC),
+				time.Date(2025, 1, 20, 16, 45, 0, 0, time.UTC),
+			},
+		},
+		{
+			name: "5-minute slots align to minute values ending in 0 or 5",
+			avail: []db.CoachingAvailability{{
+				ExpertID: "expert-1", DayOfWeek: 1,
+				StartTime: start1646, EndTime: end1700,
+			}},
+			minNotice: monday,
+			duration:  5,
+			wantStarts: []time.Time{
+				time.Date(2025, 1, 20, 16, 50, 0, 0, time.UTC),
+				time.Date(2025, 1, 20, 16, 55, 0, 0, time.UTC),
+			},
+		},
+		{
+			name: "10-minute slots align to ten-minute boundaries",
+			avail: []db.CoachingAvailability{{
+				ExpertID: "expert-1", DayOfWeek: 1,
+				StartTime: start1333, EndTime: end1400,
+			}},
+			minNotice: monday,
+			duration:  10,
+			wantStarts: []time.Time{
+				time.Date(2025, 1, 20, 13, 40, 0, 0, time.UTC),
+				time.Date(2025, 1, 20, 13, 50, 0, 0, time.UTC),
 			},
 		},
 	}
