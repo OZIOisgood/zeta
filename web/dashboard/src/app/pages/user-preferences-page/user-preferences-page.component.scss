@@ -1,0 +1,52 @@
+.preferences-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.content {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.tabs-nav {
+  min-inline-size: 10rem;
+  inline-size: 10rem;
+  flex-shrink: 0;
+}
+
+.tab-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.preferences-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 47.9375em) {
+  .content {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .tabs-nav {
+    min-inline-size: 100%;
+    inline-size: 100%;
+  }
+}

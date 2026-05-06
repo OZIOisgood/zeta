@@ -1,21 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   TuiAutoColorPipe,
   TuiButton,
   TuiDataList,
-  TuiDialogService,
   TuiDropdown,
   TuiIcon,
 } from '@taiga-ui/core';
 import { TuiAvatar, TuiTabs } from '@taiga-ui/kit';
-import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
-import { take } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
 import { DrawerComponent } from '../drawer/drawer.component';
-import { PreferencesDialogComponent } from '../preferences-dialog/preferences-dialog.component';
 
 @Component({
   selector: 'app-navbar',
@@ -40,7 +36,7 @@ import { PreferencesDialogComponent } from '../preferences-dialog/preferences-di
 export class NavbarComponent {
   private readonly auth = inject(AuthService);
   private readonly permissionsService = inject(PermissionsService);
-  private readonly dialogs = inject(TuiDialogService);
+  private readonly router = inject(Router);
 
   protected readonly mobileMenuOpen = signal(false);
 
@@ -71,13 +67,7 @@ export class NavbarComponent {
 
   protected openPreferences(): void {
     this.mobileMenuOpen.set(false);
-    this.dialogs
-      .open(new PolymorpheusComponent(PreferencesDialogComponent), {
-        label: 'Preferences',
-        size: 'm',
-      })
-      .pipe(take(1))
-      .subscribe();
+    this.router.navigate(['/preferences']);
   }
 
   protected logout(): void {
