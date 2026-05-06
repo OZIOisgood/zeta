@@ -54,6 +54,7 @@ export class HomePageComponent {
   public canBook = computed(() => this.permissionsService.hasPermission('coaching:book'));
   public upcomingBookings = signal<CoachingBooking[]>([]);
   public bookingsLoading = signal(false);
+  private readonly currentUserId = computed(() => this.auth.user()?.id ?? '');
 
   constructor() {
     if (this.permissionsService.hasPermission('coaching:bookings:read')) {
@@ -98,7 +99,21 @@ export class HomePageComponent {
     this.router.navigate(['/sessions', session.group_id, session.id, 'call']);
   }
 
+  otherParty(session: CoachingBooking): string {
+    return this.isExpertForBooking(session)
+      ? session.student_name || session.student_id
+      : session.expert_name || session.expert_id;
+  }
+
+  otherPartyRole(session: CoachingBooking): string {
+    return this.isExpertForBooking(session) ? 'Student' : 'Expert';
+  }
+
   onAddVideo() {
     this.router.navigate(['/upload-video']);
+  }
+
+  private isExpertForBooking(session: CoachingBooking): boolean {
+    return session.expert_id === this.currentUserId();
   }
 }

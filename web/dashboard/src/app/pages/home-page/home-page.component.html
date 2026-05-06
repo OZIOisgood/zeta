@@ -5,13 +5,21 @@
         <a tuiButton appearance="flat" size="s" routerLink="/sessions">View all</a>
       </app-section-header>
       @if (bookingsLoading()) {
-        <div class="sessions-list">
+        <div class="session-list">
           @for (_ of [1, 2, 3]; track _) {
-            <div class="session-row session-row--skeleton">
-              <span class="session-row__party" [tuiSkeleton]="true">&nbsp;</span>
-              <span class="session-row__date" [tuiSkeleton]="true">&nbsp;</span>
-              <span class="session-row__duration" [tuiSkeleton]="true">&nbsp;</span>
-              <span class="status-badge" [tuiSkeleton]="true">&nbsp;</span>
+            <div class="session-card session-card--skeleton">
+              <div class="session-info">
+                <div class="session-party-info">
+                  <span class="session-party" [tuiSkeleton]="true">&nbsp;</span>
+                  <span class="session-role" [tuiSkeleton]="true">&nbsp;</span>
+                </div>
+                <span class="session-meta" [tuiSkeleton]="true">&nbsp;</span>
+                <span class="session-meta session-meta--duration" [tuiSkeleton]="true">&nbsp;</span>
+                <span class="status-badge" [tuiSkeleton]="true">&nbsp;</span>
+              </div>
+              <div class="session-actions">
+                <span class="session-action-placeholder" [tuiSkeleton]="true">&nbsp;</span>
+              </div>
             </div>
           }
         </div>
@@ -34,24 +42,32 @@
           "
         ></app-illustrated-message>
       } @else {
-        <div class="sessions-list">
+        <div class="session-list">
           @for (session of upcomingBookings(); track session.id) {
-            <div class="session-row">
-              <span class="session-row__party">{{
-                session.expert_name || session.student_name
-              }}</span>
-              <span class="session-row__date">{{
-                formatSessionDateTime(session.scheduled_at)
-              }}</span>
-              <span class="session-row__duration">{{ session.duration_minutes }} min</span>
-              <span class="status-badge status-badge--{{ session.status }}">{{
-                session.status
-              }}</span>
-              @if (canJoinSession(session)) {
-                <button tuiButton appearance="primary" size="xs" (click)="joinSession(session)">
-                  Join
-                </button>
-              }
+            <div class="session-card">
+              <div class="session-info">
+                <div class="session-party-info">
+                  <span class="tui-text_body-m session-party">{{ otherParty(session) }}</span>
+                  <span class="tui-text_body-s session-role">{{ otherPartyRole(session) }}</span>
+                </div>
+                <span class="tui-text_body-s session-meta">{{
+                  formatSessionDateTime(session.scheduled_at)
+                }}</span>
+                <span class="tui-text_body-s session-meta">{{ session.duration_minutes }} min</span>
+                @if (session.session_type_name) {
+                  <span class="tui-text_body-s session-meta session-type">{{
+                    session.session_type_name
+                  }}</span>
+                }
+                <span class="status-badge status-badge--pending">upcoming</span>
+              </div>
+              <div class="session-actions">
+                @if (canJoinSession(session)) {
+                  <button tuiButton appearance="primary" size="s" (click)="joinSession(session)">
+                    Join
+                  </button>
+                }
+              </div>
             </div>
           }
         </div>
