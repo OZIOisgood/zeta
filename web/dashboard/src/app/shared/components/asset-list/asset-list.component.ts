@@ -34,6 +34,8 @@ export class AssetListComponent {
   @Input() showAddTile = false;
   @Input() loading = false;
   @Input() title = 'All my videos';
+  @Input() headerActionLabel = '';
+  @Input() headerActionRouterLink = '';
   @Input() role: string | undefined;
   @Output() addVideo = new EventEmitter<void>();
 

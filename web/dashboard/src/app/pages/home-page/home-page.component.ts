@@ -10,7 +10,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiSkeleton } from '@taiga-ui/kit';
-import { tap } from 'rxjs';
+import { map, tap } from 'rxjs';
 import { AssetListComponent } from '../../shared/components/asset-list/asset-list.component';
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -46,8 +46,15 @@ export class HomePageComponent {
   private readonly coachingService = inject(CoachingService);
 
   public loading = signal(true);
-  public assets$ = this.assetService.getAssets().pipe(tap(() => this.loading.set(false)));
+  public assets$ = this.assetService.getAssets().pipe(
+    map((assets) => assets.slice(0, this.recentVideosLimit())),
+    tap({
+      next: () => this.loading.set(false),
+      error: () => this.loading.set(false),
+    }),
+  );
   public showUploadVideo = computed(() => this.permissionsService.hasPermission('assets:create'));
+  public recentVideosLimit = computed(() => (this.showUploadVideo() ? 11 : 12));
   public showCoachingWidget = computed(() =>
     this.permissionsService.hasPermission('coaching:bookings:read'),
   );

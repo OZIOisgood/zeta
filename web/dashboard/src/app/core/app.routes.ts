@@ -11,6 +11,7 @@ import { MySessionsPageComponent } from '../pages/my-sessions-page/my-sessions-p
 import { UploadVideoPageComponent } from '../pages/upload-video-page/upload-video-page.component';
 import { UserPreferencesPageComponent } from '../pages/user-preferences-page/user-preferences-page.component';
 import { VideoCallPageComponent } from '../pages/video-call-page/video-call-page.component';
+import { VideosPageComponent } from '../pages/videos-page/videos-page.component';
 import { ShellComponent } from '../shared/components/shell/shell.component';
 import { permissionGuard } from './guards/permission.guard';
 
@@ -20,6 +21,7 @@ export const routes: Routes = [
     component: ShellComponent,
     children: [
       { path: '', component: HomePageComponent },
+      { path: 'videos', component: VideosPageComponent },
       { path: 'preferences', redirectTo: 'preferences/personal-data', pathMatch: 'full' },
       { path: 'preferences/:tab', component: UserPreferencesPageComponent },
       {

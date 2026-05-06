@@ -1,4 +1,14 @@
-<app-section-header *ngIf="title" [title]="title" [loading]="loading"></app-section-header>
+<app-section-header *ngIf="title" [title]="title" [loading]="loading">
+  <a
+    *ngIf="headerActionLabel && headerActionRouterLink && !loading"
+    tuiButton
+    appearance="flat"
+    size="s"
+    [routerLink]="headerActionRouterLink"
+  >
+    {{ headerActionLabel }}
+  </a>
+</app-section-header>
 
 <div class="grid" *ngIf="loading">
   <div

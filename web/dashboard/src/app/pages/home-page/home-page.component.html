@@ -80,7 +80,9 @@
     [loading]="loading()"
     [showAddTile]="showUploadVideo()"
     [role]="auth.user()?.role"
-    [title]="'All my videos'"
+    [title]="'Latest videos'"
+    headerActionLabel="View all"
+    headerActionRouterLink="/videos"
     (addVideo)="onAddVideo()"
   >
   </app-asset-list>
