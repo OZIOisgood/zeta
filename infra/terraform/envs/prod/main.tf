@@ -25,6 +25,9 @@ data "google_project" "current" {
 
 locals {
   cloud_run_runtime_service_account = "${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+  dashboard_domain                  = "zeta.m4xon.com"
+  api_domain                        = "api.zeta.m4xon.com"
+  resend_from_email                 = "notifications@${local.dashboard_domain}"
 }
 
 variable "project_id" {
@@ -134,7 +137,7 @@ module "domain_mapping_dashboard" {
 
   project_id   = var.project_id
   region       = var.region
-  domain       = "zeta.m4xon.com"
+  domain       = local.dashboard_domain
   service_name = "zeta-dashboard"
 }
 
@@ -143,7 +146,7 @@ module "domain_mapping_api" {
 
   project_id   = var.project_id
   region       = var.region
-  domain       = "api.zeta.m4xon.com"
+  domain       = local.api_domain
   service_name = "zeta-api"
 }
 
@@ -152,11 +155,15 @@ output "dashboard_url" {
 }
 
 output "dashboard_domain" {
-  value = "zeta.m4xon.com"
+  value = local.dashboard_domain
 }
 
 output "api_domain" {
-  value = "api.zeta.m4xon.com"
+  value = local.api_domain
+}
+
+output "resend_from_email" {
+  value = local.resend_from_email
 }
 
 # /* --------------------------------- CLOUD SCHEDULER --------------------------------- */

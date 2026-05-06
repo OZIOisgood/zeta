@@ -50,14 +50,19 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 4. **Mux Configuration**:
    - Create an Access Token in Mux Dashboard.
 
-5. **Agora Configuration**:
+5. **Resend Configuration**:
+   - Create a Resend API key and set `RESEND_API_KEY`.
+   - Verify the sender domain in Resend.
+   - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@dev.zeta.m4xon.com` for the deployed development environment.
+
+6. **Agora Configuration**:
    - Create a project in [Agora Console](https://console.agora.io/).
    - Set `AGORA_APP_ID` and `AGORA_APP_CERTIFICATE` in `.env`.
    - To enable recording locally, enable Cloud Recording in Agora Console, create REST credentials, configure object storage that Agora can write to directly, and set `AGORA_CLOUD_RECORDING_ENABLED=true` with the `AGORA_REST_*` and `AGORA_RECORDING_*` variables.
    - In deployed `dev` and `prod`, Terraform provisions a Google Cloud Storage bucket plus HMAC credentials for Agora Cloud Recording. The deploy workflow injects static recording config as Cloud Run env vars and injects the generated HMAC credentials through Secret Manager.
    - Cloud Run receives read access to the private recording bucket and signs short-lived GCS URLs so Mux can import completed MP4 recordings. Users never receive direct GCS object access.
 
-6. **Coaching Time Constraints** (optional, defaults are production-safe):
+7. **Coaching Time Constraints** (optional, defaults are production-safe):
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
    - `CANCELLATION_NOTICE` — minimum notice to cancel (default: `1h`)
    - `CONNECT_WINDOW` — how early participants can join a call (default: `15m`)

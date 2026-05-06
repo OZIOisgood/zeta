@@ -18,14 +18,17 @@ type Sender interface {
 type Service struct {
 	client *resend.Client
 	logger *slog.Logger
+	from   string
 }
 
 func NewService(logger *slog.Logger) *Service {
 	apiKey := tools.GetEnv("RESEND_API_KEY")
+	from := tools.GetEnv("RESEND_FROM_EMAIL")
 	client := resend.NewClient(apiKey)
 	return &Service{
 		client: client,
 		logger: logger,
+		from:   from,
 	}
 }
 
@@ -37,7 +40,7 @@ func (s *Service) Send(to []string, subject string, text string) error {
 	)
 
 	params := &resend.SendEmailRequest{
-		From:    "onboarding@resend.dev",
+		From:    s.from,
 		To:      to,
 		Subject: subject,
 		Text:    text,
