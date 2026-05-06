@@ -13,6 +13,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
+	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	muxgo "github.com/muxinc/mux-go"
@@ -456,7 +457,12 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Check feature flags on Owner - Removed as per requirements, emails sent always
+		if !preferences.AllowsUserEmail(bgCtx, h.q, h.logger, group.OwnerID, preferences.EmailCategoryAssetUploads) {
+			bgLog.InfoContext(bgCtx, "asset_notification_skipped_by_preferences",
+				slog.String("owner_id", group.OwnerID),
+			)
+			return
+		}
 
 		// Fetch Owner Email from WorkOS
 		owner, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
@@ -632,27 +638,35 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 
 	// Only send email if the person finalizing is not the owner
 	if asset.OwnerID != userInfo.ID {
-		owner, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
-			User: asset.OwnerID,
-		})
-		if err != nil {
-			log.ErrorContext(ctx, "finalize_asset_owner_fetch_failed",
+		if !preferences.AllowsUserEmail(ctx, h.q, h.logger, asset.OwnerID, preferences.EmailCategoryAssetReviews) {
+			log.InfoContext(ctx, "finalize_asset_email_skipped_by_preferences",
 				slog.String("component", "assets"),
 				slog.String("asset_id", idStr),
 				slog.String("owner_id", asset.OwnerID),
-				slog.Any("err", err),
 			)
 		} else {
-			subject := "Your video has been reviewed"
-			text := fmt.Sprintf("Your video %s has been reviewed and is now finalized.", asset.Name)
-			err = h.email.Send([]string{owner.Email}, subject, text)
+			owner, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
+				User: asset.OwnerID,
+			})
 			if err != nil {
-				log.ErrorContext(ctx, "finalize_asset_email_send_failed",
+				log.ErrorContext(ctx, "finalize_asset_owner_fetch_failed",
 					slog.String("component", "assets"),
 					slog.String("asset_id", idStr),
-					slog.String("to", owner.Email),
+					slog.String("owner_id", asset.OwnerID),
 					slog.Any("err", err),
 				)
+			} else {
+				subject := "Your video has been reviewed"
+				text := fmt.Sprintf("Your video %s has been reviewed and is now finalized.", asset.Name)
+				err = h.email.Send([]string{owner.Email}, subject, text)
+				if err != nil {
+					log.ErrorContext(ctx, "finalize_asset_email_send_failed",
+						slog.String("component", "assets"),
+						slog.String("asset_id", idStr),
+						slog.String("owner_id", asset.OwnerID),
+						slog.Any("err", err),
+					)
+				}
 			}
 		}
 	}

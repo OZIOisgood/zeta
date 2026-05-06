@@ -398,12 +398,19 @@ type UserGroup struct {
 }
 
 type UserPreference struct {
-	UserID    string           `json:"user_id"`
-	Language  LanguageCode     `json:"language"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
-	Avatar    string           `json:"avatar"`
-	Timezone  string           `json:"timezone"`
+	UserID                             string           `json:"user_id"`
+	Language                           LanguageCode     `json:"language"`
+	CreatedAt                          pgtype.Timestamp `json:"created_at"`
+	UpdatedAt                          pgtype.Timestamp `json:"updated_at"`
+	Avatar                             string           `json:"avatar"`
+	Timezone                           string           `json:"timezone"`
+	EmailNotificationsEnabled          bool             `json:"email_notifications_enabled"`
+	EmailAssetUploadsEnabled           bool             `json:"email_asset_uploads_enabled"`
+	EmailAssetReviewsEnabled           bool             `json:"email_asset_reviews_enabled"`
+	EmailInvitationUpdatesEnabled      bool             `json:"email_invitation_updates_enabled"`
+	EmailGroupMembershipUpdatesEnabled bool             `json:"email_group_membership_updates_enabled"`
+	EmailCoachingBookingUpdatesEnabled bool             `json:"email_coaching_booking_updates_enabled"`
+	EmailCoachingRemindersEnabled      bool             `json:"email_coaching_reminders_enabled"`
 }
 
 type Video struct {

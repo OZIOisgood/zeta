@@ -11,11 +11,12 @@
         (activeItemIndexChange)="activeTabIndex.set($event)"
       >
         <button tuiTab type="button">Personal data</button>
+        <button tuiTab type="button">Email preferences</button>
       </nav>
 
       <div class="tab-content">
-        @if (activeTabIndex() === 0) {
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="preferences-form">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="preferences-form">
+          @if (activeTabIndex() === 0) {
             <div class="form-field">
               <tui-textfield>
                 <label tuiLabel>First Name</label>
@@ -71,12 +72,77 @@
               [disabled]="isSubmitting"
               (avatarChange)="onAvatarChange($event)"
             ></app-avatar-selector>
+          }
 
-            <div class="form-actions">
-              <button tuiButton type="submit" [disabled]="isSaveDisabled">Save</button>
+          @if (activeTabIndex() === 1) {
+            <div formGroupName="email_preferences" class="email-preferences">
+              <label tuiLabel class="email-option email-option--primary">
+                <input tuiCheckbox type="checkbox" formControlName="notifications_enabled" />
+                All notification emails
+              </label>
+
+              <div class="email-option-grid">
+                @if (canReceiveAssetUploadEmails()) {
+                  <label tuiLabel class="email-option">
+                    <input tuiCheckbox type="checkbox" formControlName="asset_uploads_enabled" />
+                    New videos uploaded to groups you own
+                  </label>
+                }
+
+                @if (canReceiveAssetReviewEmails()) {
+                  <label tuiLabel class="email-option">
+                    <input tuiCheckbox type="checkbox" formControlName="asset_reviews_enabled" />
+                    Reviewed videos
+                  </label>
+                }
+
+                @if (canReceiveInvitationEmails()) {
+                  <label tuiLabel class="email-option">
+                    <input
+                      tuiCheckbox
+                      type="checkbox"
+                      formControlName="invitation_updates_enabled"
+                    />
+                    Invitation activity
+                  </label>
+                }
+
+                <label tuiLabel class="email-option">
+                  <input
+                    tuiCheckbox
+                    type="checkbox"
+                    formControlName="group_membership_updates_enabled"
+                  />
+                  Group membership updates
+                </label>
+
+                @if (canReceiveCoachingEmails()) {
+                  <label tuiLabel class="email-option">
+                    <input
+                      tuiCheckbox
+                      type="checkbox"
+                      formControlName="coaching_booking_updates_enabled"
+                    />
+                    Coaching bookings and cancellations
+                  </label>
+
+                  <label tuiLabel class="email-option">
+                    <input
+                      tuiCheckbox
+                      type="checkbox"
+                      formControlName="coaching_reminders_enabled"
+                    />
+                    Coaching reminders
+                  </label>
+                }
+              </div>
             </div>
-          </form>
-        }
+          }
+
+          <div class="form-actions">
+            <button tuiButton type="submit" [disabled]="isSaveDisabled">Save</button>
+          </div>
+        </form>
       </div>
     </section>
   </div>

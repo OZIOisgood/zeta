@@ -51,6 +51,7 @@ type Querier interface {
 	GetGroupInvitationByCode(ctx context.Context, code string) (GroupInvitation, error)
 	GetGroupInvitationByID(ctx context.Context, arg GetGroupInvitationByIDParams) (GroupInvitation, error)
 	GetSessionType(ctx context.Context, arg GetSessionTypeParams) (CoachingSessionType, error)
+	GetUserEmailPreferences(ctx context.Context, userID string) (GetUserEmailPreferencesRow, error)
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
 	// === Timezone ===
 	GetUserTimezone(ctx context.Context, userID string) (string, error)
@@ -92,6 +93,7 @@ type Querier interface {
 	UpdateGroupInvitationStatus(ctx context.Context, arg UpdateGroupInvitationStatusParams) error
 	UpdateSessionType(ctx context.Context, arg UpdateSessionTypeParams) (CoachingSessionType, error)
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error)
+	UpdateUserEmailPreferences(ctx context.Context, arg UpdateUserEmailPreferencesParams) (UserPreference, error)
 	UpdateVideoMuxAssetID(ctx context.Context, arg UpdateVideoMuxAssetIDParams) error
 	UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewParams) (VideoReview, error)
 	UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusParams) error

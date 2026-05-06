@@ -9,6 +9,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -58,7 +59,20 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 			body += "\n\nYour session is about to start. Join now:\n" + joinURL
 		}
 
-		recipients := h.resolveEmails(ctx, []string{rem.ExpertID, rem.StudentID})
+		recipientIDs := make([]string, 0, 2)
+		for _, userID := range []string{rem.ExpertID, rem.StudentID} {
+			if preferences.AllowsUserEmail(ctx, h.q, h.logger, userID, preferences.EmailCategoryCoachingReminders) {
+				recipientIDs = append(recipientIDs, userID)
+			} else {
+				log.InfoContext(ctx, "reminder_email_skipped_by_preferences",
+					slog.String("component", "coaching"),
+					slog.String("reminder_id", uuidToString(rem.ID)),
+					slog.String("user_id", userID),
+				)
+			}
+		}
+
+		recipients := h.resolveEmails(ctx, recipientIDs)
 		if len(recipients) > 0 {
 			if err := h.emailService.Send(recipients, subject, body); err != nil {
 				log.ErrorContext(ctx, "reminder_email_failed",

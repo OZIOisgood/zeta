@@ -9,8 +9,46 @@ import (
 	"context"
 )
 
+const getUserEmailPreferences = `-- name: GetUserEmailPreferences :one
+SELECT
+    email_notifications_enabled,
+    email_asset_uploads_enabled,
+    email_asset_reviews_enabled,
+    email_invitation_updates_enabled,
+    email_group_membership_updates_enabled,
+    email_coaching_booking_updates_enabled,
+    email_coaching_reminders_enabled
+FROM user_preferences
+WHERE user_id = $1
+`
+
+type GetUserEmailPreferencesRow struct {
+	EmailNotificationsEnabled          bool `json:"email_notifications_enabled"`
+	EmailAssetUploadsEnabled           bool `json:"email_asset_uploads_enabled"`
+	EmailAssetReviewsEnabled           bool `json:"email_asset_reviews_enabled"`
+	EmailInvitationUpdatesEnabled      bool `json:"email_invitation_updates_enabled"`
+	EmailGroupMembershipUpdatesEnabled bool `json:"email_group_membership_updates_enabled"`
+	EmailCoachingBookingUpdatesEnabled bool `json:"email_coaching_booking_updates_enabled"`
+	EmailCoachingRemindersEnabled      bool `json:"email_coaching_reminders_enabled"`
+}
+
+func (q *Queries) GetUserEmailPreferences(ctx context.Context, userID string) (GetUserEmailPreferencesRow, error) {
+	row := q.db.QueryRow(ctx, getUserEmailPreferences, userID)
+	var i GetUserEmailPreferencesRow
+	err := row.Scan(
+		&i.EmailNotificationsEnabled,
+		&i.EmailAssetUploadsEnabled,
+		&i.EmailAssetReviewsEnabled,
+		&i.EmailInvitationUpdatesEnabled,
+		&i.EmailGroupMembershipUpdatesEnabled,
+		&i.EmailCoachingBookingUpdatesEnabled,
+		&i.EmailCoachingRemindersEnabled,
+	)
+	return i, err
+}
+
 const getUserPreferences = `-- name: GetUserPreferences :one
-SELECT user_id, language, created_at, updated_at, avatar, timezone FROM user_preferences WHERE user_id = $1
+SELECT user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled FROM user_preferences WHERE user_id = $1
 `
 
 func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPreference, error) {
@@ -23,6 +61,13 @@ func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPr
 		&i.UpdatedAt,
 		&i.Avatar,
 		&i.Timezone,
+		&i.EmailNotificationsEnabled,
+		&i.EmailAssetUploadsEnabled,
+		&i.EmailAssetReviewsEnabled,
+		&i.EmailInvitationUpdatesEnabled,
+		&i.EmailGroupMembershipUpdatesEnabled,
+		&i.EmailCoachingBookingUpdatesEnabled,
+		&i.EmailCoachingRemindersEnabled,
 	)
 	return i, err
 }
@@ -34,7 +79,7 @@ ON CONFLICT (user_id) DO UPDATE
 SET language   = EXCLUDED.language,
     timezone   = EXCLUDED.timezone,
     updated_at = NOW()
-RETURNING user_id, language, created_at, updated_at, avatar, timezone
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled
 `
 
 type SeedUserPreferencesParams struct {
@@ -53,6 +98,13 @@ func (q *Queries) SeedUserPreferences(ctx context.Context, arg SeedUserPreferenc
 		&i.UpdatedAt,
 		&i.Avatar,
 		&i.Timezone,
+		&i.EmailNotificationsEnabled,
+		&i.EmailAssetUploadsEnabled,
+		&i.EmailAssetReviewsEnabled,
+		&i.EmailInvitationUpdatesEnabled,
+		&i.EmailGroupMembershipUpdatesEnabled,
+		&i.EmailCoachingBookingUpdatesEnabled,
+		&i.EmailCoachingRemindersEnabled,
 	)
 	return i, err
 }
@@ -62,7 +114,7 @@ UPDATE user_preferences
 SET avatar     = $2,
     updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, language, created_at, updated_at, avatar, timezone
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled
 `
 
 type UpdateUserAvatarParams struct {
@@ -80,6 +132,78 @@ func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarPara
 		&i.UpdatedAt,
 		&i.Avatar,
 		&i.Timezone,
+		&i.EmailNotificationsEnabled,
+		&i.EmailAssetUploadsEnabled,
+		&i.EmailAssetReviewsEnabled,
+		&i.EmailInvitationUpdatesEnabled,
+		&i.EmailGroupMembershipUpdatesEnabled,
+		&i.EmailCoachingBookingUpdatesEnabled,
+		&i.EmailCoachingRemindersEnabled,
+	)
+	return i, err
+}
+
+const updateUserEmailPreferences = `-- name: UpdateUserEmailPreferences :one
+INSERT INTO user_preferences (
+    user_id,
+    email_notifications_enabled,
+    email_asset_uploads_enabled,
+    email_asset_reviews_enabled,
+    email_invitation_updates_enabled,
+    email_group_membership_updates_enabled,
+    email_coaching_booking_updates_enabled,
+    email_coaching_reminders_enabled
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (user_id) DO UPDATE
+SET email_notifications_enabled = EXCLUDED.email_notifications_enabled,
+    email_asset_uploads_enabled = EXCLUDED.email_asset_uploads_enabled,
+    email_asset_reviews_enabled = EXCLUDED.email_asset_reviews_enabled,
+    email_invitation_updates_enabled = EXCLUDED.email_invitation_updates_enabled,
+    email_group_membership_updates_enabled = EXCLUDED.email_group_membership_updates_enabled,
+    email_coaching_booking_updates_enabled = EXCLUDED.email_coaching_booking_updates_enabled,
+    email_coaching_reminders_enabled = EXCLUDED.email_coaching_reminders_enabled,
+    updated_at = NOW()
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled
+`
+
+type UpdateUserEmailPreferencesParams struct {
+	UserID                             string `json:"user_id"`
+	EmailNotificationsEnabled          bool   `json:"email_notifications_enabled"`
+	EmailAssetUploadsEnabled           bool   `json:"email_asset_uploads_enabled"`
+	EmailAssetReviewsEnabled           bool   `json:"email_asset_reviews_enabled"`
+	EmailInvitationUpdatesEnabled      bool   `json:"email_invitation_updates_enabled"`
+	EmailGroupMembershipUpdatesEnabled bool   `json:"email_group_membership_updates_enabled"`
+	EmailCoachingBookingUpdatesEnabled bool   `json:"email_coaching_booking_updates_enabled"`
+	EmailCoachingRemindersEnabled      bool   `json:"email_coaching_reminders_enabled"`
+}
+
+func (q *Queries) UpdateUserEmailPreferences(ctx context.Context, arg UpdateUserEmailPreferencesParams) (UserPreference, error) {
+	row := q.db.QueryRow(ctx, updateUserEmailPreferences,
+		arg.UserID,
+		arg.EmailNotificationsEnabled,
+		arg.EmailAssetUploadsEnabled,
+		arg.EmailAssetReviewsEnabled,
+		arg.EmailInvitationUpdatesEnabled,
+		arg.EmailGroupMembershipUpdatesEnabled,
+		arg.EmailCoachingBookingUpdatesEnabled,
+		arg.EmailCoachingRemindersEnabled,
+	)
+	var i UserPreference
+	err := row.Scan(
+		&i.UserID,
+		&i.Language,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Avatar,
+		&i.Timezone,
+		&i.EmailNotificationsEnabled,
+		&i.EmailAssetUploadsEnabled,
+		&i.EmailAssetReviewsEnabled,
+		&i.EmailInvitationUpdatesEnabled,
+		&i.EmailGroupMembershipUpdatesEnabled,
+		&i.EmailCoachingBookingUpdatesEnabled,
+		&i.EmailCoachingRemindersEnabled,
 	)
 	return i, err
 }
@@ -90,7 +214,7 @@ VALUES ($1, 'en', $2)
 ON CONFLICT (user_id) DO UPDATE
 SET avatar     = EXCLUDED.avatar,
     updated_at = NOW()
-RETURNING user_id, language, created_at, updated_at, avatar, timezone
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled
 `
 
 type UpsertUserAvatarParams struct {
@@ -108,6 +232,13 @@ func (q *Queries) UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarPara
 		&i.UpdatedAt,
 		&i.Avatar,
 		&i.Timezone,
+		&i.EmailNotificationsEnabled,
+		&i.EmailAssetUploadsEnabled,
+		&i.EmailAssetReviewsEnabled,
+		&i.EmailInvitationUpdatesEnabled,
+		&i.EmailGroupMembershipUpdatesEnabled,
+		&i.EmailCoachingBookingUpdatesEnabled,
+		&i.EmailCoachingRemindersEnabled,
 	)
 	return i, err
 }
@@ -118,7 +249,7 @@ VALUES ($1, $2)
 ON CONFLICT (user_id) DO UPDATE
 SET language = EXCLUDED.language,
     updated_at = NOW()
-RETURNING user_id, language, created_at, updated_at, avatar, timezone
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled
 `
 
 type UpsertUserPreferencesParams struct {
@@ -136,6 +267,13 @@ func (q *Queries) UpsertUserPreferences(ctx context.Context, arg UpsertUserPrefe
 		&i.UpdatedAt,
 		&i.Avatar,
 		&i.Timezone,
+		&i.EmailNotificationsEnabled,
+		&i.EmailAssetUploadsEnabled,
+		&i.EmailAssetReviewsEnabled,
+		&i.EmailInvitationUpdatesEnabled,
+		&i.EmailGroupMembershipUpdatesEnabled,
+		&i.EmailCoachingBookingUpdatesEnabled,
+		&i.EmailCoachingRemindersEnabled,
 	)
 	return i, err
 }

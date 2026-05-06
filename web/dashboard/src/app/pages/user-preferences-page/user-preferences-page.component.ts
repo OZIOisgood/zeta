@@ -4,17 +4,26 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiLabel, TuiTextfield } from '@taiga-ui/core';
-import { TuiChevron, TuiComboBox, TuiDataListWrapper, TuiSelect, TuiTabs } from '@taiga-ui/kit';
+import {
+  TuiCheckbox,
+  TuiChevron,
+  TuiComboBox,
+  TuiDataListWrapper,
+  TuiSelect,
+  TuiTabs,
+} from '@taiga-ui/kit';
 import { AvatarSelectorComponent } from '../../shared/components/avatar-selector/avatar-selector.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { AuthService } from '../../shared/services/auth.service';
+import { PermissionsService } from '../../shared/services/permissions.service';
 
 @Component({
   selector: 'app-user-preferences-page',
@@ -31,6 +40,7 @@ import { AuthService } from '../../shared/services/auth.service';
     TuiSelect,
     TuiChevron,
     TuiComboBox,
+    TuiCheckbox,
     TuiDataListWrapper,
     AvatarSelectorComponent,
   ],
@@ -40,6 +50,7 @@ import { AuthService } from '../../shared/services/auth.service';
 })
 export class UserPreferencesPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly permissions = inject(PermissionsService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly alerts = inject(TuiAlertService);
 
@@ -47,6 +58,27 @@ export class UserPreferencesPageComponent implements OnInit {
 
   protected readonly activeTabIndex = signal(0);
   protected readonly filteredTimezones = signal<string[]>(this.allTimezones);
+  protected readonly canReceiveAssetUploadEmails = computed(() =>
+    this.permissions.hasPermission('groups:create'),
+  );
+  protected readonly canReceiveAssetReviewEmails = computed(() =>
+    this.permissions.hasPermission('assets:create'),
+  );
+  protected readonly canReceiveInvitationEmails = computed(() =>
+    this.permissions.hasPermission('groups:invites:create'),
+  );
+  protected readonly canReceiveCoachingEmails = computed(() =>
+    this.permissions.hasPermission('coaching:bookings:read'),
+  );
+  private readonly defaultEmailPreferences = {
+    notifications_enabled: true,
+    asset_uploads_enabled: true,
+    asset_reviews_enabled: true,
+    invitation_updates_enabled: true,
+    group_membership_updates_enabled: true,
+    coaching_booking_updates_enabled: true,
+    coaching_reminders_enabled: true,
+  };
 
   protected readonly languages = [
     { code: 'en', name: 'English' },
@@ -74,6 +106,15 @@ export class UserPreferencesPageComponent implements OnInit {
     last_name: new FormControl('', [Validators.required]),
     language: new FormControl(this.languages[0], [Validators.required]),
     timezone: new FormControl<string | null>(null, [Validators.required]),
+    email_preferences: new FormGroup({
+      notifications_enabled: new FormControl(true, { nonNullable: true }),
+      asset_uploads_enabled: new FormControl(true, { nonNullable: true }),
+      asset_reviews_enabled: new FormControl(true, { nonNullable: true }),
+      invitation_updates_enabled: new FormControl(true, { nonNullable: true }),
+      group_membership_updates_enabled: new FormControl(true, { nonNullable: true }),
+      coaching_booking_updates_enabled: new FormControl(true, { nonNullable: true }),
+      coaching_reminders_enabled: new FormControl(true, { nonNullable: true }),
+    }),
   });
 
   protected isSubmitting = false;
@@ -90,6 +131,10 @@ export class UserPreferencesPageComponent implements OnInit {
         language:
           this.languages.find((l) => l.code === (user.language || 'en')) || this.languages[0],
         timezone: user.timezone,
+        email_preferences: {
+          ...this.defaultEmailPreferences,
+          ...(user.email_preferences ?? {}),
+        },
       });
       this.form.markAsPristine();
     }
@@ -130,6 +175,7 @@ export class UserPreferencesPageComponent implements OnInit {
     const last_name = this.form.controls.last_name.value;
     const languageObj = this.form.controls.language.value;
     const timezone = this.form.controls.timezone.value;
+    const email_preferences = this.form.controls.email_preferences.getRawValue();
 
     if (!first_name || !last_name || !languageObj || !timezone) return;
 
@@ -141,6 +187,7 @@ export class UserPreferencesPageComponent implements OnInit {
         last_name,
         language: languageObj.code,
         timezone,
+        email_preferences,
         ...(this.avatarChanged && this.newAvatarBase64 ? { avatar: this.newAvatarBase64 } : {}),
       })
       .subscribe({

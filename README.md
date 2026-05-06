@@ -17,6 +17,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Video Reviews**: Add comments and feedback directly to video clips.
 - **Live Video Coaching**: 1-on-1 Agora-powered video calls with booking, availability management, and automated email reminders.
 - **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle and automatic import into the review flow.
+- **Notification Preferences**: Users can control all email notifications or individual email categories from their Preferences page.
 
 ## How to start
 
@@ -135,6 +136,35 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 8. The Angular app joins the Agora channel and renders a **full-screen video call** page.
 9. Leaving the call asks the API to stop the active recording; an internal cleanup endpoint can also stop recordings after their scheduled end.
 10. Stopped recordings are queued for post-processing. The API locates the final MP4 in GCS, gives Mux a short-lived signed URL, creates a normal reviewable asset/video, and links it back to the booking.
+
+### Notification Preferences Flow
+
+1. A signed-in user opens the Preferences page.
+2. The dashboard reads `/auth/me`, including the user's email notification preferences.
+3. The user updates the master email setting or an individual notification category.
+4. The dashboard saves the settings with `PUT /auth/me`.
+5. Before sending account-owned notification emails, the API checks the recipient's `user_preferences` row.
+6. Explicit invitation delivery to an entered email address remains tied to the inviter's send action and is not suppressed by a recipient preference.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant W as Angular Dashboard
+    participant A as Go API
+    participant D as PostgreSQL
+    participant E as Resend
+
+    U->>W: Update Email Preferences
+    W->>A: PUT /auth/me
+    A->>D: Update user_preferences email columns
+    A-->>W: Updated preferences
+    A->>D: Read recipient email preferences before notification
+    alt Notification allowed
+        A->>E: Send email
+    else Notification disabled
+        A-->>A: Skip email
+    end
+```
 
 ### API Examples
 
@@ -358,6 +388,15 @@ erDiagram
     user_preferences {
         string user_id PK, FK "WorkOS User ID ref"
         enum language "en, de, fr"
+        string timezone
+        string avatar
+        boolean email_notifications_enabled
+        boolean email_asset_uploads_enabled
+        boolean email_asset_reviews_enabled
+        boolean email_invitation_updates_enabled
+        boolean email_group_membership_updates_enabled
+        boolean email_coaching_booking_updates_enabled
+        boolean email_coaching_reminders_enabled
         timestamp created_at
         timestamp updated_at
     }

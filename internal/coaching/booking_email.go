@@ -7,6 +7,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
@@ -68,12 +69,13 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 	}
 
 	type emailTarget struct {
+		userID  string
 		addr    string
 		partner string
 	}
 	targets := []emailTarget{
-		{addr: student.email, partner: expert.name},
-		{addr: expert.email, partner: student.name},
+		{userID: b.StudentID, addr: student.email, partner: expert.name},
+		{userID: b.ExpertID, addr: expert.email, partner: student.name},
 	}
 
 	sentCount := 0
@@ -81,10 +83,18 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 		if t.addr == "" {
 			continue
 		}
+		if !preferences.AllowsUserEmail(ctx, h.q, h.logger, t.userID, preferences.EmailCategoryCoachingBookingUpdates) {
+			log.InfoContext(ctx, "booking_created_email_skipped_by_preferences",
+				slog.String("component", "coaching"),
+				slog.String("booking_id", uuidToString(b.ID)),
+				slog.String("user_id", t.userID),
+			)
+			continue
+		}
 		if err := h.emailService.Send([]string{t.addr}, subject, buildBody(t.partner)); err != nil {
 			log.ErrorContext(ctx, "booking_created_email_failed",
 				slog.String("component", "coaching"),
-				slog.String("recipient", t.addr),
+				slog.String("user_id", t.userID),
 				slog.Any("err", err),
 			)
 			continue
@@ -143,10 +153,20 @@ func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBookin
 
 	// Notify the other party (the one who didn't cancel).
 	otherEmail := student.email
+	otherID := b.StudentID
 	if cancelledByID == b.StudentID {
 		otherEmail = expert.email
+		otherID = b.ExpertID
 	}
 	if otherEmail == "" {
+		return
+	}
+	if !preferences.AllowsUserEmail(ctx, h.q, h.logger, otherID, preferences.EmailCategoryCoachingBookingUpdates) {
+		log.InfoContext(ctx, "booking_cancellation_email_skipped_by_preferences",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(b.ID)),
+			slog.String("user_id", otherID),
+		)
 		return
 	}
 

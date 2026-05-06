@@ -18,6 +18,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
+	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -339,6 +340,11 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 				slog.String("component", "invitations"),
 				slog.String("inviter_id", invitation.InviterID),
 			)
+
+			if !preferences.AllowsUserEmail(bgCtx, h.q, h.logger, invitation.InviterID, preferences.EmailCategoryInvitationUpdates) {
+				bgLog.InfoContext(bgCtx, "invitation_accepted_notification_skipped_by_preferences")
+				return
+			}
 
 			inviter, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
 				User: invitation.InviterID,

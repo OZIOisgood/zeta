@@ -14,6 +14,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -276,6 +277,11 @@ func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {
 			slog.String("component", "users"),
 			slog.String("target_user_id", targetUserID),
 		)
+
+		if !preferences.AllowsUserEmail(bgCtx, h.q, h.logger, targetUserID, preferences.EmailCategoryGroupMembershipUpdates) {
+			bgLog.InfoContext(bgCtx, "users_remove_notification_skipped_by_preferences")
+			return
+		}
 
 		removedUser, err := h.workos.GetUser(bgCtx, usermanagement.GetUserOpts{
 			User: targetUserID,

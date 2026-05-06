@@ -12,8 +12,19 @@ export interface User {
   language: string;
   avatar: string;
   timezone: string;
+  email_preferences: EmailPreferences;
   role: string;
   permissions: string[];
+}
+
+export interface EmailPreferences {
+  notifications_enabled: boolean;
+  asset_uploads_enabled: boolean;
+  asset_reviews_enabled: boolean;
+  invitation_updates_enabled: boolean;
+  group_membership_updates_enabled: boolean;
+  coaching_booking_updates_enabled: boolean;
+  coaching_reminders_enabled: boolean;
 }
 
 @Injectable({
@@ -97,6 +108,7 @@ export class AuthService {
     last_name: string;
     language: string;
     timezone: string;
+    email_preferences: EmailPreferences;
     avatar?: string;
   }): Observable<User> {
     return this.http.put<User>(`${this.baseUrl}/me`, data).pipe(tap((user) => this.user.set(user)));

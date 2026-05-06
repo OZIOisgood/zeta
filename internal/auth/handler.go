@@ -13,6 +13,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
@@ -504,15 +505,16 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 
 	// Construct response combining WorkOS data (from JWT) and Local Preferences
 	resp := map[string]interface{}{
-		"id":          user.ID,
-		"first_name":  user.FirstName,
-		"last_name":   user.LastName,
-		"email":       user.Email,
-		"language":    prefs.Language,
-		"avatar":      prefs.Avatar,
-		"timezone":    prefs.Timezone,
-		"role":        user.Role,
-		"permissions": user.Permissions,
+		"id":                user.ID,
+		"first_name":        user.FirstName,
+		"last_name":         user.LastName,
+		"email":             user.Email,
+		"language":          prefs.Language,
+		"avatar":            prefs.Avatar,
+		"timezone":          prefs.Timezone,
+		"email_preferences": preferences.FromUserPreferences(prefs),
+		"role":              user.Role,
+		"permissions":       user.Permissions,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -520,11 +522,12 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateUserRequest struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Language  string `json:"language"`
-	Avatar    string `json:"avatar"`
-	Timezone  string `json:"timezone"`
+	FirstName        string                        `json:"first_name"`
+	LastName         string                        `json:"last_name"`
+	Language         string                        `json:"language"`
+	Avatar           string                        `json:"avatar"`
+	Timezone         string                        `json:"timezone"`
+	EmailPreferences *preferences.EmailPreferences `json:"email_preferences"`
 }
 
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
@@ -571,7 +574,22 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Failed to update timezone", http.StatusInternalServerError)
 				return
 			}
+			prefs.Timezone = req.Timezone
 		}
+	}
+
+	if req.EmailPreferences != nil {
+		updated, err := h.q.UpdateUserEmailPreferences(ctx, preferences.ToUpdateParams(user.ID, *req.EmailPreferences))
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_update_email_preferences_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to update email preferences", http.StatusInternalServerError)
+			return
+		}
+		prefs = updated
 	}
 
 	// Update avatar if provided
@@ -634,14 +652,16 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := map[string]interface{}{
-		"id":          user.ID,
-		"first_name":  req.FirstName,
-		"last_name":   req.LastName,
-		"email":       user.Email,
-		"language":    prefs.Language,
-		"avatar":      prefs.Avatar,
-		"role":        user.Role,
-		"permissions": user.Permissions,
+		"id":                user.ID,
+		"first_name":        req.FirstName,
+		"last_name":         req.LastName,
+		"email":             user.Email,
+		"language":          prefs.Language,
+		"avatar":            prefs.Avatar,
+		"timezone":          prefs.Timezone,
+		"email_preferences": preferences.FromUserPreferences(prefs),
+		"role":              user.Role,
+		"permissions":       user.Permissions,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

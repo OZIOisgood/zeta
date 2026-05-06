@@ -578,6 +578,21 @@ func (mr *MockQuerierMockRecorder) GetSessionType(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionType", reflect.TypeOf((*MockQuerier)(nil).GetSessionType), ctx, arg)
 }
 
+// GetUserEmailPreferences mocks base method.
+func (m *MockQuerier) GetUserEmailPreferences(ctx context.Context, userID string) (db.GetUserEmailPreferencesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserEmailPreferences", ctx, userID)
+	ret0, _ := ret[0].(db.GetUserEmailPreferencesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserEmailPreferences indicates an expected call of GetUserEmailPreferences.
+func (mr *MockQuerierMockRecorder) GetUserEmailPreferences(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserEmailPreferences", reflect.TypeOf((*MockQuerier)(nil).GetUserEmailPreferences), ctx, userID)
+}
+
 // GetUserPreferences mocks base method.
 func (m *MockQuerier) GetUserPreferences(ctx context.Context, userID string) (db.UserPreference, error) {
 	m.ctrl.T.Helper()
@@ -1155,6 +1170,21 @@ func (m *MockQuerier) UpdateUserAvatar(ctx context.Context, arg db.UpdateUserAva
 func (mr *MockQuerierMockRecorder) UpdateUserAvatar(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserAvatar", reflect.TypeOf((*MockQuerier)(nil).UpdateUserAvatar), ctx, arg)
+}
+
+// UpdateUserEmailPreferences mocks base method.
+func (m *MockQuerier) UpdateUserEmailPreferences(ctx context.Context, arg db.UpdateUserEmailPreferencesParams) (db.UserPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserEmailPreferences", ctx, arg)
+	ret0, _ := ret[0].(db.UserPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUserEmailPreferences indicates an expected call of UpdateUserEmailPreferences.
+func (mr *MockQuerierMockRecorder) UpdateUserEmailPreferences(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserEmailPreferences", reflect.TypeOf((*MockQuerier)(nil).UpdateUserEmailPreferences), ctx, arg)
 }
 
 // UpdateVideoMuxAssetID mocks base method.
