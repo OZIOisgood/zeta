@@ -21,6 +21,7 @@ import { GroupsListComponent } from '../../shared/components/groups-list/groups-
 import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
+import { AuthService } from '../../shared/services/auth.service';
 import {
   CoachingAvailability,
   CoachingBlockedSlot,
@@ -29,6 +30,7 @@ import {
 } from '../../shared/services/coaching.service';
 import { Group, GroupsService } from '../../shared/services/groups.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
+import { resolveFirstDayOfWeek, WEEKDAY_NAMES } from '../../shared/utils/weekdays';
 import {
   AvailabilityDialogComponent,
   AvailabilityDialogResult,
@@ -42,7 +44,6 @@ import {
   SessionTypeDialogResult,
 } from './ui/session-type-dialog/session-type-dialog.component';
 
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
 @Component({
@@ -68,6 +69,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   private readonly coachingService = inject(CoachingService);
   private readonly groupsService = inject(GroupsService);
   private readonly permissionsService = inject(PermissionsService);
+  private readonly auth = inject(AuthService);
   private readonly alerts = inject(TuiAlertService);
   private readonly dialogs = inject(TuiDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -94,7 +96,11 @@ export class ManageAvailabilityPageComponent implements OnInit {
   protected sessionTypes = signal<SessionType[]>([]);
   protected availability = signal<CoachingAvailability[]>([]);
   protected blockedSlots = signal<CoachingBlockedSlot[]>([]);
-  protected readonly dayNames = DAY_NAMES;
+  protected readonly firstDayOfWeek = computed(() => {
+    const user = this.auth.user();
+
+    return resolveFirstDayOfWeek(user?.timezone, user?.language);
+  });
 
   ngOnInit(): void {
     this.loading.set(true);
@@ -235,7 +241,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
 
   // Availability
   protected dayName(dow: number): string {
-    return DAY_NAMES[dow] ?? '';
+    return WEEKDAY_NAMES[dow] ?? '';
   }
 
   protected openAvailabilityDialog(availability: CoachingAvailability | null = null): void {
@@ -245,7 +251,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
         {
           label: availability ? 'Edit Availability' : 'Add Availability',
           size: 's',
-          data: { availability },
+          data: { availability, firstDayOfWeek: this.firstDayOfWeek() },
         },
       )
       .subscribe((result) => {

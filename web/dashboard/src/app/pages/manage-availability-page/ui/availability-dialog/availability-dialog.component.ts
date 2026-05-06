@@ -6,11 +6,11 @@ import { TuiButton, TuiDialogContext, TuiLabel, TuiTextfield } from '@taiga-ui/c
 import { TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
 import { injectContext } from '@taiga-ui/polymorpheus';
 import { CoachingAvailability } from '../../../../shared/services/coaching.service';
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+import { orderedWeekdayValues, WEEKDAY_NAMES } from '../../../../shared/utils/weekdays';
 
 export interface AvailabilityDialogData {
   availability: CoachingAvailability | null;
+  firstDayOfWeek: number;
 }
 
 export interface AvailabilityDialogResult {
@@ -43,8 +43,9 @@ export class AvailabilityDialogComponent {
     return !!this.context.data.availability;
   }
 
-  protected readonly dayOptions = DAY_NAMES.map((name, index) => index);
-  protected readonly dayStringify: TuiStringHandler<number> = (val: number) => DAY_NAMES[val] ?? '';
+  protected readonly dayOptions = orderedWeekdayValues(this.context.data.firstDayOfWeek);
+  protected readonly dayStringify: TuiStringHandler<number> = (val: number) =>
+    WEEKDAY_NAMES[val] ?? '';
 
   protected readonly form = new FormGroup({
     day_of_week: new FormControl(this.context.data.availability?.day_of_week ?? 1, [
