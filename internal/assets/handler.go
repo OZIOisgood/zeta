@@ -68,7 +68,7 @@ func (h *Handler) CompleteUpload(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	var uuid pgtype.UUID
 	if err := uuid.Scan(idStr); err != nil {
-		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		http.Error(w, "Invalid video ID", http.StatusBadRequest)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (h *Handler) CompleteUpload(w http.ResponseWriter, r *http.Request) {
 			slog.String("asset_id", idStr),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Failed to update asset status", http.StatusInternalServerError)
+		http.Error(w, "Failed to update video status", http.StatusInternalServerError)
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 			slog.String("user_id", userInfo.ID),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Failed to list assets", http.StatusInternalServerError)
+		http.Error(w, "Failed to list videos", http.StatusInternalServerError)
 		return
 	}
 
@@ -199,7 +199,7 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 
 	var uuid pgtype.UUID
 	if err := uuid.Scan(idStr); err != nil {
-		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		http.Error(w, "Invalid video ID", http.StatusBadRequest)
 		return
 	}
 
@@ -223,7 +223,7 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 			slog.String("user_id", userInfo.ID),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Asset not found", http.StatusNotFound)
+		http.Error(w, "Video not found", http.StatusNotFound)
 		return
 	}
 
@@ -420,7 +420,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			slog.String("group_id", req.GroupID),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Failed to create asset", http.StatusInternalServerError)
+		http.Error(w, "Failed to create video", http.StatusInternalServerError)
 		return
 	}
 
@@ -487,7 +487,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 		// Send Email
 		userName := fmt.Sprintf("%s %s", userCtx.FirstName, userCtx.LastName)
 		msg := fmt.Sprintf("User %s uploaded a new video '%s' to group '%s'.", userName, asset.Name, group.Name)
-		err = h.email.Send([]string{emailAddr}, "New Asset Uploaded", msg)
+		err = h.email.Send([]string{emailAddr}, "New Video Uploaded", msg)
 		if err != nil {
 			bgLog.ErrorContext(bgCtx, "asset_notification_send_failed",
 				slog.String("owner_id", group.OwnerID),
@@ -531,7 +531,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 				slog.String("filename", filename),
 				slog.Any("err", err),
 			)
-			http.Error(w, "Failed to create video record", http.StatusInternalServerError)
+			http.Error(w, "Failed to create video part", http.StatusInternalServerError)
 			return
 		}
 
@@ -580,7 +580,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	var assetID pgtype.UUID
 	if err := assetID.Scan(idStr); err != nil {
-		http.Error(w, "Invalid asset ID", http.StatusBadRequest)
+		http.Error(w, "Invalid video ID", http.StatusBadRequest)
 		return
 	}
 
@@ -597,7 +597,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 			slog.String("role", userInfo.Role),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Asset not found", http.StatusNotFound)
+		http.Error(w, "Video not found", http.StatusNotFound)
 		return
 	}
 
@@ -618,7 +618,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 			slog.String("component", "assets"),
 			slog.String("asset_id", idStr),
 		)
-		http.Error(w, "Cannot finalize asset: all videos must have at least one review", http.StatusBadRequest)
+		http.Error(w, "Cannot mark video as reviewed: all video parts must have at least one review", http.StatusBadRequest)
 		return
 	}
 
@@ -632,7 +632,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 			slog.String("asset_id", idStr),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Failed to finalize asset", http.StatusInternalServerError)
+		http.Error(w, "Failed to mark video as reviewed", http.StatusInternalServerError)
 		return
 	}
 

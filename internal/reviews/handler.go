@@ -148,12 +148,12 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 			slog.String("video_id", idStr),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Failed to check asset status", http.StatusInternalServerError)
+		http.Error(w, "Failed to check video status", http.StatusInternalServerError)
 		return
 	}
 
 	if assetStatus == db.AssetStatusCompleted {
-		http.Error(w, "Cannot add reviews to completed asset", http.StatusForbidden)
+		http.Error(w, "Cannot add reviews to a completed video", http.StatusForbidden)
 		return
 	}
 
@@ -242,12 +242,12 @@ func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 			slog.String("video_id", idStr),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Failed to check asset status", http.StatusInternalServerError)
+		http.Error(w, "Failed to check video status", http.StatusInternalServerError)
 		return
 	}
 
 	if assetStatus == db.AssetStatusCompleted {
-		http.Error(w, "Cannot edit reviews on completed asset", http.StatusForbidden)
+		http.Error(w, "Cannot edit reviews on a completed video", http.StatusForbidden)
 		return
 	}
 
@@ -327,12 +327,12 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 			slog.String("video_id", idStr),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Failed to check asset status", http.StatusInternalServerError)
+		http.Error(w, "Failed to check video status", http.StatusInternalServerError)
 		return
 	}
 
 	if assetStatus == db.AssetStatusCompleted {
-		http.Error(w, "Cannot delete reviews from completed asset", http.StatusForbidden)
+		http.Error(w, "Cannot delete reviews from a completed video", http.StatusForbidden)
 		return
 	}
 

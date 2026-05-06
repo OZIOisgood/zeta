@@ -188,7 +188,7 @@ export class UploadVideoPageComponent implements OnInit {
         });
       },
       error: (err: unknown) => {
-        console.error('Failed to create asset', err);
+        console.error('Failed to create video', err);
         this.isUploading = false;
         this.activeIndex = 1; // Go back to details
         this.cdr.markForCheck();
