@@ -54,6 +54,7 @@ export class GroupPreferencesPageComponent implements OnInit {
   private readonly dialogs = inject(TuiDialogService);
   private readonly alerts = inject(TuiAlertService);
 
+  private readonly tabs = ['general', 'danger-zone'] as const;
   protected readonly group = signal<Group | null>(null);
   protected readonly loading = signal(true);
   protected readonly activeTabIndex = signal(0);
@@ -83,6 +84,10 @@ export class GroupPreferencesPageComponent implements OnInit {
   protected avatarChanged = false;
 
   ngOnInit(): void {
+    this.route.paramMap.subscribe((params) => {
+      this.applyTab(params.get('tab'));
+    });
+
     this.route.paramMap
       .pipe(
         map((p) => p.get('id')),
@@ -99,6 +104,7 @@ export class GroupPreferencesPageComponent implements OnInit {
             description: group.description || '',
           });
           this.form.markAsPristine();
+          this.ensureTabAllowed();
         },
         error: () => {
           this.loading.set(false);
@@ -115,6 +121,15 @@ export class GroupPreferencesPageComponent implements OnInit {
   protected onAvatarChange(base64: string | null): void {
     this.newAvatarBase64 = base64 ? base64.split(',')[1] || base64 : null;
     this.avatarChanged = true;
+  }
+
+  protected onTabIndexChange(index: number): void {
+    const tab = this.tabs[index] ?? this.tabs[0];
+    const groupID = this.route.snapshot.paramMap.get('id');
+
+    if (!groupID) return;
+
+    void this.router.navigate(['/groups', groupID, 'preferences', tab]);
   }
 
   protected get isSaveDisabled(): boolean {
@@ -193,5 +208,35 @@ export class GroupPreferencesPageComponent implements OnInit {
           this.alerts.open('Failed to delete group', { appearance: 'negative' }).subscribe();
         },
       });
+  }
+
+  private applyTab(tab: string | null): void {
+    const index = this.tabs.findIndex((candidate) => candidate === tab);
+
+    if (index === -1) {
+      this.navigateToDefaultTab();
+      return;
+    }
+
+    this.activeTabIndex.set(index);
+    this.ensureTabAllowed();
+  }
+
+  private ensureTabAllowed(): void {
+    if (!this.group()) return;
+
+    if (this.activeTabIndex() === 1 && !this.isOwner()) {
+      this.navigateToDefaultTab();
+    }
+  }
+
+  private navigateToDefaultTab(): void {
+    const groupID = this.route.snapshot.paramMap.get('id');
+
+    if (!groupID) return;
+
+    void this.router.navigate(['/groups', groupID, 'preferences', this.tabs[0]], {
+      replaceUrl: true,
+    });
   }
 }

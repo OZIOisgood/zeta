@@ -15,7 +15,7 @@
           vertical="left"
           class="tabs-nav"
           [activeItemIndex]="activeTabIndex()"
-          (activeItemIndexChange)="activeTabIndex.set($event)"
+          (activeItemIndexChange)="onTabIndexChange($event)"
         >
           <button tuiTab type="button">Preferences</button>
           @if (isOwner()) {

@@ -45,6 +45,7 @@ import {
 } from './ui/session-type-dialog/session-type-dialog.component';
 
 const DURATION_OPTIONS = Array.from({ length: 22 }, (_, index) => 15 + index * 5);
+type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
 
 @Component({
   selector: 'app-manage-availability-page',
@@ -78,7 +79,8 @@ export class ManageAvailabilityPageComponent implements OnInit {
   protected groups = signal<Group[]>([]);
   protected selectedGroup: Group | null = null;
   protected canCreateGroup = computed(() => this.permissionsService.hasPermission('groups:create'));
-  protected activeTab = signal<'session-types' | 'schedule' | 'blocked'>('session-types');
+  protected activeTab = signal<AvailabilityTab>('session-types');
+  private readonly tabs: AvailabilityTab[] = ['session-types', 'schedule', 'blocked'];
 
   get breadcrumbItems(): BreadcrumbItem[] {
     const items: BreadcrumbItem[] = [{ label: 'Sessions', routerLink: '/sessions' }];
@@ -103,6 +105,10 @@ export class ManageAvailabilityPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.route.paramMap.subscribe((params) => {
+      this.applyTab(params.get('tab'));
+    });
+
     this.loading.set(true);
     this.groupsService.list().subscribe({
       next: (groups) => {
@@ -135,8 +141,13 @@ export class ManageAvailabilityPageComponent implements OnInit {
     this.router.navigate(['/sessions/settings', groupId]);
   }
 
-  protected setTab(tab: 'session-types' | 'schedule' | 'blocked'): void {
-    this.activeTab.set(tab);
+  protected setTab(tab: AvailabilityTab): void {
+    if (!this.selectedGroup) {
+      this.activeTab.set(tab);
+      return;
+    }
+
+    void this.router.navigate(['/sessions', 'settings', this.selectedGroup.id, tab]);
   }
 
   private loadAll(): void {
@@ -349,5 +360,25 @@ export class ManageAvailabilityPageComponent implements OnInit {
       day: 'numeric',
       year: 'numeric',
     });
+  }
+
+  private applyTab(tab: string | null): void {
+    if (!this.isTab(tab)) {
+      const groupID = this.route.snapshot.paramMap.get('groupId');
+
+      if (groupID) {
+        void this.router.navigate(['/sessions', 'settings', groupID, this.tabs[0]], {
+          replaceUrl: true,
+        });
+      }
+
+      return;
+    }
+
+    this.activeTab.set(tab);
+  }
+
+  private isTab(tab: string | null): tab is AvailabilityTab {
+    return this.tabs.includes(tab as AvailabilityTab);
   }
 }

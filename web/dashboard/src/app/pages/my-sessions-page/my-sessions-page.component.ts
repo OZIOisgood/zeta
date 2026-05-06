@@ -8,7 +8,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiDialogService, TuiIcon } from '@taiga-ui/core';
 import { TuiSkeleton } from '@taiga-ui/kit';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
@@ -42,6 +42,7 @@ type TabKey = 'upcoming' | 'past' | 'cancelled';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MySessionsPageComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
   private readonly coachingService = inject(CoachingService);
   private readonly auth = inject(AuthService);
   private readonly permissionsService = inject(PermissionsService);
@@ -49,6 +50,7 @@ export class MySessionsPageComponent implements OnInit {
   private readonly dialogs = inject(TuiDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
+  private readonly tabs: TabKey[] = ['upcoming', 'past', 'cancelled'];
 
   protected loading = signal(true);
   protected allBookings = signal<CoachingBooking[]>([]);
@@ -77,6 +79,10 @@ export class MySessionsPageComponent implements OnInit {
   protected cancelled = computed(() => this.allBookings().filter((b) => b.status === 'cancelled'));
 
   ngOnInit(): void {
+    this.route.paramMap.subscribe((params) => {
+      this.applyTab(params.get('tab'));
+    });
+
     this.coachingService.listAllMyBookings().subscribe({
       next: (bookings) => {
         this.allBookings.set(bookings ?? []);
@@ -91,7 +97,7 @@ export class MySessionsPageComponent implements OnInit {
   }
 
   protected setTab(tab: TabKey): void {
-    this.activeTab.set(tab);
+    void this.router.navigate(['/sessions', tab]);
   }
 
   protected bookSession(): void {
@@ -218,5 +224,18 @@ export class MySessionsPageComponent implements OnInit {
   protected openRecording(booking: CoachingBooking): void {
     if (!booking.recording?.asset_id) return;
     this.router.navigate(['/asset', booking.recording.asset_id]);
+  }
+
+  private applyTab(tab: string | null): void {
+    if (!this.isTabKey(tab)) {
+      void this.router.navigate(['/sessions', 'upcoming'], { replaceUrl: true });
+      return;
+    }
+
+    this.activeTab.set(tab);
+  }
+
+  private isTabKey(tab: string | null): tab is TabKey {
+    return this.tabs.includes(tab as TabKey);
   }
 }

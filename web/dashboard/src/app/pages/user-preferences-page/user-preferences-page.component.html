@@ -8,7 +8,7 @@
         vertical="left"
         class="tabs-nav"
         [activeItemIndex]="activeTabIndex()"
-        (activeItemIndexChange)="activeTabIndex.set($event)"
+        (activeItemIndexChange)="onTabIndexChange($event)"
       >
         <button tuiTab type="button">Personal data</button>
         <button tuiTab type="button">Email preferences</button>

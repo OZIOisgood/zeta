@@ -20,7 +20,8 @@ export const routes: Routes = [
     component: ShellComponent,
     children: [
       { path: '', component: HomePageComponent },
-      { path: 'preferences', component: UserPreferencesPageComponent },
+      { path: 'preferences', redirectTo: 'preferences/personal-data', pathMatch: 'full' },
+      { path: 'preferences/:tab', component: UserPreferencesPageComponent },
       {
         path: 'upload-video',
         component: UploadVideoPageComponent,
@@ -48,6 +49,11 @@ export const routes: Routes = [
       },
       {
         path: 'groups/:id/preferences',
+        redirectTo: 'groups/:id/preferences/general',
+        pathMatch: 'full',
+      },
+      {
+        path: 'groups/:id/preferences/:tab',
         component: GroupPreferencesPageComponent,
         canActivate: [permissionGuard],
         data: { permission: 'groups:preferences:edit' },
@@ -55,18 +61,15 @@ export const routes: Routes = [
       // Sessions hub — visible to both students and experts
       {
         path: 'sessions',
-        component: MySessionsPageComponent,
-        canActivate: [permissionGuard],
-        data: { permission: 'coaching:bookings:read' },
+        redirectTo: 'sessions/upcoming',
+        pathMatch: 'full',
       },
-      // Book a session wizard (students)
       {
         path: 'sessions/book',
         component: BookCoachingPageComponent,
         canActivate: [permissionGuard],
         data: { permission: 'coaching:book' },
       },
-      // Manage availability / session types / blocked slots (experts)
       {
         path: 'sessions/settings',
         component: ManageAvailabilityPageComponent,
@@ -75,9 +78,20 @@ export const routes: Routes = [
       },
       {
         path: 'sessions/settings/:groupId',
+        redirectTo: 'sessions/settings/:groupId/session-types',
+        pathMatch: 'full',
+      },
+      {
+        path: 'sessions/settings/:groupId/:tab',
         component: ManageAvailabilityPageComponent,
         canActivate: [permissionGuard],
         data: { permission: 'coaching:availability:manage' },
+      },
+      {
+        path: 'sessions/:tab',
+        component: MySessionsPageComponent,
+        canActivate: [permissionGuard],
+        data: { permission: 'coaching:bookings:read' },
       },
       // Legacy redirects
       { path: 'my-sessions', redirectTo: 'sessions', pathMatch: 'full' },

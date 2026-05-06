@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import {
@@ -49,12 +50,15 @@ import { PermissionsService } from '../../shared/services/permissions.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserPreferencesPageComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly permissions = inject(PermissionsService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly alerts = inject(TuiAlertService);
 
   private readonly allTimezones: string[] = Intl.supportedValuesOf('timeZone');
+  private readonly tabs = ['personal-data', 'email-preferences'] as const;
 
   protected readonly activeTabIndex = signal(0);
   protected readonly filteredTimezones = signal<string[]>(this.allTimezones);
@@ -122,6 +126,10 @@ export class UserPreferencesPageComponent implements OnInit {
   protected avatarChanged = false;
 
   ngOnInit(): void {
+    this.route.paramMap.subscribe((params) => {
+      this.applyTab(params.get('tab'));
+    });
+
     const user = this.auth.user();
 
     if (user) {
@@ -151,6 +159,11 @@ export class UserPreferencesPageComponent implements OnInit {
       q ? this.allTimezones.filter((tz) => tz.toLowerCase().includes(q)) : this.allTimezones,
     );
     this.cdr.markForCheck();
+  }
+
+  protected onTabIndexChange(index: number): void {
+    const tab = this.tabs[index] ?? this.tabs[0];
+    void this.router.navigate(['/preferences', tab]);
   }
 
   protected getInitialAvatar(): string | null {
@@ -208,5 +221,16 @@ export class UserPreferencesPageComponent implements OnInit {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  private applyTab(tab: string | null): void {
+    const index = this.tabs.findIndex((candidate) => candidate === tab);
+
+    if (index === -1) {
+      void this.router.navigate(['/preferences', this.tabs[0]], { replaceUrl: true });
+      return;
+    }
+
+    this.activeTabIndex.set(index);
   }
 }
