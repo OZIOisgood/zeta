@@ -81,4 +81,4 @@ Fill out `RESOLUTION.md` with:
   - Add or update `sequenceDiagram` / `graph` blocks for new flows.
   - Update feature descriptions and setup instructions as needed.
 - Mark the item as done in `ISSUES.md` if applicable.
-- Commit the task folder along with the code changes.
+- Commit the task folder along with the code changes using the Conventional Commits format required by the Project Constitution.
