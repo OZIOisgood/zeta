@@ -39,6 +39,7 @@ export class NavbarComponent {
   private readonly router = inject(Router);
 
   protected readonly mobileMenuOpen = signal(false);
+  protected readonly userDropdownOpen = signal(false);
 
   protected readonly showGroups = computed(() =>
     this.permissionsService.hasPermission('groups:read'),
@@ -67,6 +68,7 @@ export class NavbarComponent {
 
   protected openPreferences(): void {
     this.mobileMenuOpen.set(false);
+    this.userDropdownOpen.set(false);
     this.router.navigate(['/preferences']);
   }
 

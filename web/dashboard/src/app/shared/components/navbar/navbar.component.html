@@ -17,7 +17,12 @@
   </tui-tabs>
 
   <ng-container *ngIf="user() as u">
-    <div class="user-menu desktop-user-menu" [tuiDropdown]="dropdown" tuiDropdownOpen>
+    <div
+      class="user-menu desktop-user-menu"
+      [tuiDropdown]="dropdown"
+      [tuiDropdownOpen]="userDropdownOpen()"
+      (tuiDropdownOpenChange)="userDropdownOpen.set($event)"
+    >
       <button appearance="icon" tuiIconButton size="s" type="button" class="avatar-button">
         <tui-avatar
           size="s"

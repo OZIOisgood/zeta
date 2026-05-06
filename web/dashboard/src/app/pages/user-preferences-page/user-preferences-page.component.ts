@@ -12,7 +12,6 @@ import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiChevron, TuiComboBox, TuiDataListWrapper, TuiSelect, TuiTabs } from '@taiga-ui/kit';
 import { AvatarSelectorComponent } from '../../shared/components/avatar-selector/avatar-selector.component';
-import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
 import { AuthService } from '../../shared/services/auth.service';
@@ -24,7 +23,6 @@ import { AuthService } from '../../shared/services/auth.service';
     CommonModule,
     ReactiveFormsModule,
     PageContainerComponent,
-    BreadcrumbsComponent,
     SectionHeaderComponent,
     TuiTabs,
     TuiButton,
@@ -49,7 +47,6 @@ export class UserPreferencesPageComponent implements OnInit {
 
   protected readonly activeTabIndex = signal(0);
   protected readonly filteredTimezones = signal<string[]>(this.allTimezones);
-  protected readonly breadcrumbs = [{ label: 'Preferences' }];
 
   protected readonly languages = [
     { code: 'en', name: 'English' },
