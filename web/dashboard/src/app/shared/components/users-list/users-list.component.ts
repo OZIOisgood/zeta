@@ -12,12 +12,12 @@ import {
   TuiInitialsPipe,
   TuiTitle,
 } from '@taiga-ui/core';
-import { TUI_CONFIRM, TuiAvatar, TuiSkeleton, TuiStatus, type TuiConfirmData } from '@taiga-ui/kit';
+import { TUI_CONFIRM, TuiAvatar, TuiSkeleton, type TuiConfirmData } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiCell } from '@taiga-ui/layout';
 import { BehaviorSubject, filter, of, switchMap } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
-import { UsersService } from '../../services/users.service';
+import { GroupUsersListKind, UsersService } from '../../services/users.service';
 
 @Component({
   selector: 'app-users-list',
@@ -35,7 +35,6 @@ import { UsersService } from '../../services/users.service';
     TuiDropdown,
     TuiIcon,
     TuiInitialsPipe,
-    TuiStatus,
     TuiTable,
     TuiCardLarge,
     TuiTitle,
@@ -58,10 +57,12 @@ export class UsersListComponent {
   @Input() set groupId(value: string | null) {
     this.groupIdSubject.next(value);
   }
+  @Input() listKind: GroupUsersListKind = 'students';
+  @Input() emptyMessage = 'No members in this group yet.';
 
   readonly users$ = this.refresh$.pipe(
     switchMap(() => this.groupIdSubject),
-    switchMap((id) => (id ? this.usersService.list(id) : of([]))),
+    switchMap((id) => (id ? this.usersService.list(id, this.listKind) : of([]))),
   );
 
   readonly canDeleteUsers = computed(() =>
@@ -69,35 +70,6 @@ export class UsersListComponent {
   );
 
   protected readonly size = 'l';
-
-  getRoleIcon(role: string | undefined): string {
-    switch (role) {
-      case 'admin':
-        return '@tui.user-star';
-      case 'expert':
-        return '@tui.user-star';
-      case 'student':
-      default:
-        return '@tui.graduation-cap';
-    }
-  }
-
-  getRoleColor(role: string | undefined): string {
-    switch (role) {
-      case 'admin':
-        return 'var(--tui-status-negative)'; // Red-ish for admin?
-      case 'expert':
-        return 'var(--tui-status-warning)';
-      case 'student':
-      default:
-        return 'var(--tui-status-info)';
-    }
-  }
-
-  formatRole(role: string | undefined): string {
-    if (!role) return 'Student';
-    return role.charAt(0).toUpperCase() + role.slice(1);
-  }
 
   isCurrentUser(userId: string): boolean {
     return this.auth.user()?.id === userId;

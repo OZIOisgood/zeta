@@ -116,6 +116,13 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 7. If the current user already belongs to the group, the dashboard skips the invitation dialog and opens the group directly.
 8. Email-specific invitations are single-use. Email-less invitation links remain reusable for sharing in print, on walls, or in group chats.
 
+### Group Member Visibility
+
+- The group details page separates members into Students and Experts lists.
+- `GET /groups/{groupID}/users` returns students only and requires `groups:user-list:read`.
+- `GET /groups/{groupID}/experts` returns experts and administrators and requires `groups:expert-list:read`.
+- Expert and administrator roles should have both permissions. Student roles should only have `groups:expert-list:read`.
+
 ### Live Coaching Flow
 
 1. An expert creates **session types** (name, duration 15–120 min in 5-minute increments) for a group and sets **weekly availability**.

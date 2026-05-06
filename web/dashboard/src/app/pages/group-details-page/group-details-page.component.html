@@ -41,9 +41,9 @@
       </tui-elastic-container>
     </section>
 
-    <div *ngIf="showUsersList()" class="users-section">
+    <div *ngIf="showUsersList() || showExpertsList()" class="users-section">
       <div class="users-header">
-        <h2 class="tui-text_h3">Users</h2>
+        <h2 class="tui-text_h3">Members</h2>
         @if (showInviteButton()) {
           <button
             tuiButton
@@ -56,7 +56,30 @@
           </button>
         }
       </div>
-      <app-users-list [groupId]="group.id"></app-users-list>
+
+      <div class="member-lists">
+        @if (showUsersList()) {
+          <section class="member-list">
+            <h3 class="tui-text_h4">Students</h3>
+            <app-users-list
+              [groupId]="group.id"
+              listKind="students"
+              emptyMessage="No students in this group yet."
+            ></app-users-list>
+          </section>
+        }
+
+        @if (showExpertsList()) {
+          <section class="member-list">
+            <h3 class="tui-text_h4">Experts</h3>
+            <app-users-list
+              [groupId]="group.id"
+              listKind="experts"
+              emptyMessage="No experts in this group yet."
+            ></app-users-list>
+          </section>
+        }
+      </div>
     </div>
   }
 </app-page-container>

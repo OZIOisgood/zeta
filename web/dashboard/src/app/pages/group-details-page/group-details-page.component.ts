@@ -61,6 +61,9 @@ export class GroupDetailsPageComponent {
   readonly showUsersList = computed(() =>
     this.permissionsService.hasPermission('groups:user-list:read'),
   );
+  readonly showExpertsList = computed(() =>
+    this.permissionsService.hasPermission('groups:expert-list:read'),
+  );
   readonly showInviteButton = computed(() =>
     this.permissionsService.hasPermission('groups:invites:create'),
   );

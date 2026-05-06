@@ -13,6 +13,8 @@ export interface User {
   name: string;
 }
 
+export type GroupUsersListKind = 'students' | 'experts';
+
 interface ListUsersResponse {
   data: Omit<User, 'name'>[];
 }
@@ -27,8 +29,10 @@ export class UsersService {
     return `${this.env.apiUrl}/groups`;
   }
 
-  list(groupId: string): Observable<User[]> {
-    return this.http.get<ListUsersResponse>(`${this.apiUrl}/${groupId}/users`).pipe(
+  list(groupId: string, kind: GroupUsersListKind = 'students'): Observable<User[]> {
+    const segment = kind === 'experts' ? 'experts' : 'users';
+
+    return this.http.get<ListUsersResponse>(`${this.apiUrl}/${groupId}/${segment}`).pipe(
       map((response) =>
         response.data.map((u) => ({
           ...u,

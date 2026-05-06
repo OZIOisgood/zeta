@@ -79,6 +79,17 @@
   }
 }
 
+.member-lists {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.member-list {
+  h3 {
+    margin: 0 0 0.75rem;
+  }
+}
+
 .coaching-section {
   margin-top: 1.5rem;
 }

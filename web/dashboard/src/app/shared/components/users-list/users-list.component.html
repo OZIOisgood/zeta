@@ -4,7 +4,6 @@
       <thead>
         <tr>
           <th tuiTh>User</th>
-          <th tuiTh>Role</th>
           <th tuiTh [style.width.rem]="3">Actions</th>
         </tr>
       </thead>
@@ -21,12 +20,6 @@
                 <span tuiSubtitle>{{ item.email }}</span>
               </span>
             </div>
-          </td>
-          <td tuiTd>
-            <span tuiStatus [style.color]="getRoleColor(item.role)">
-              <tui-icon [icon]="getRoleIcon(item.role)" [style.height.rem]="1" />
-              {{ formatRole(item.role) }}
-            </span>
           </td>
           <td tuiTd>
             <div
@@ -62,7 +55,7 @@
       class="tui-text_body-l"
       style="text-align: center; padding: 2rem 0; color: var(--tui-text-secondary)"
     >
-      No members in this group yet.
+      {{ emptyMessage }}
     </p>
   </ng-template>
 </ng-container>
@@ -73,7 +66,6 @@
       <thead>
         <tr>
           <th tuiTh>User</th>
-          <th tuiTh>Role</th>
           <th tuiTh [style.width.rem]="3">Actions</th>
         </tr>
       </thead>
@@ -87,7 +79,6 @@
               >
             </div>
           </td>
-          <td tuiTd><span [tuiSkeleton]="true">Member role</span></td>
           <td tuiTd><span [tuiSkeleton]="true">...</span></td>
         </tr>
       </tbody>

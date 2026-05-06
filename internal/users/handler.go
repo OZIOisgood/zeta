@@ -48,6 +48,18 @@ func NewHandler(logger *slog.Logger, q db.Querier, emailService email.Sender, wo
 }
 
 func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
+	h.listGroupMembers(w, r, permissions.GroupsUserListRead, func(role string) bool {
+		return role == permissions.RoleStudent
+	})
+}
+
+func (h *Handler) ListGroupExperts(w http.ResponseWriter, r *http.Request) {
+	h.listGroupMembers(w, r, permissions.GroupsExpertListRead, func(role string) bool {
+		return role == permissions.RoleExpert || role == permissions.RoleAdmin
+	})
+}
+
+func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requiredPermission string, includeRole func(string) bool) {
 	ctx := r.Context()
 	user := auth.GetUser(ctx)
 	if user == nil {
@@ -62,7 +74,7 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(user.Permissions, permissions.GroupsUserListRead) {
+	if !permissions.HasPermission(user.Permissions, requiredPermission) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
@@ -102,17 +114,31 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 		Limit:          100,
 	})
 	if err != nil {
-		h.logger.WarnContext(ctx, "users_list_org_memberships_failed",
+		h.logger.ErrorContext(ctx, "users_list_org_memberships_failed",
 			slog.String("component", "users"),
 			slog.Any("err", err),
 		)
-		// Continue without roles — they'll default to empty
-	} else {
-		for _, m := range memberships.Data {
-			if _, ok := memberSet[m.UserID]; ok {
-				roleByUserID[m.UserID] = m.Role.Slug
-			}
+		http.Error(w, "Failed to list group members", http.StatusInternalServerError)
+		return
+	}
+	for _, m := range memberships.Data {
+		if _, ok := memberSet[m.UserID]; ok {
+			roleByUserID[m.UserID] = m.Role.Slug
 		}
+	}
+
+	filteredMemberIDs := make([]string, 0, len(memberIDs))
+	for _, id := range memberIDs {
+		if includeRole(roleByUserID[id]) {
+			filteredMemberIDs = append(filteredMemberIDs, id)
+		}
+	}
+	if len(filteredMemberIDs) == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"data": []groupUser{},
+		})
+		return
 	}
 
 	// Fetch user details from WorkOS in parallel; local preferences remain the
@@ -121,10 +147,10 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 		user groupUser
 		err  error
 	}
-	results := make([]result, len(memberIDs))
+	results := make([]result, len(filteredMemberIDs))
 	var wg sync.WaitGroup
 
-	for i, uid := range memberIDs {
+	for i, uid := range filteredMemberIDs {
 		wg.Add(1)
 		go func(idx int, userID string) {
 			defer wg.Done()
@@ -157,7 +183,7 @@ func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	wg.Wait()
 
-	users := make([]groupUser, 0, len(memberIDs))
+	users := make([]groupUser, 0, len(filteredMemberIDs))
 	for _, r := range results {
 		if r.err != nil {
 			h.logger.WarnContext(ctx, "users_get_workos_user_failed",

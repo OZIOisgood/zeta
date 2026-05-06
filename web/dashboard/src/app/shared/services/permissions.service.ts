@@ -11,6 +11,7 @@ export type Permission =
   | 'reviews:delete'
   | 'assets:finalize'
   | 'groups:user-list:read'
+  | 'groups:expert-list:read'
   | 'groups:user-list:delete'
   | 'groups:invites:create'
   | 'groups:preferences:edit'
