@@ -13,7 +13,21 @@
         <nav
           tuiTabs
           vertical="left"
-          class="tabs-nav"
+          class="tabs-nav tabs-nav--desktop"
+          [activeItemIndex]="activeTabIndex()"
+          (activeItemIndexChange)="onTabIndexChange($event)"
+        >
+          <button tuiTab type="button">Preferences</button>
+          @if (isOwner()) {
+            <button tuiTab type="button">Danger Zone</button>
+          }
+        </nav>
+
+        <nav
+          tuiTabs
+          size="m"
+          class="tabs-nav tabs-nav--mobile"
+          [underline]="true"
           [activeItemIndex]="activeTabIndex()"
           (activeItemIndexChange)="onTabIndexChange($event)"
         >
