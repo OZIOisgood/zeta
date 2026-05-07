@@ -1,0 +1,36 @@
+<section class="first-steps" aria-labelledby="first-steps-title">
+  <div class="first-steps__intro">
+    <p class="first-steps__eyebrow">Welcome to Zeta</p>
+    <h2 id="first-steps-title" class="tui-text_h4">First steps</h2>
+    <p class="tui-text_body-m">
+      Complete the basics to start sharing videos and working with your coaching group.
+    </p>
+  </div>
+
+  <ol class="first-steps__list">
+    @for (step of steps; track step.title) {
+      <li class="first-step" [class.first-step--completed]="step.completed">
+        <span class="first-step__status" aria-hidden="true">
+          <tui-icon [icon]="step.completed ? '@tui.check' : step.icon"></tui-icon>
+        </span>
+
+        <div class="first-step__content">
+          <h3 class="tui-text_body-l">{{ step.title }}</h3>
+          <p class="tui-text_body-s">{{ step.description }}</p>
+        </div>
+
+        @if (!step.completed && step.actionLabel) {
+          @if (step.disabled) {
+            <button tuiButton appearance="secondary" size="s" type="button" disabled>
+              {{ step.actionLabel }}
+            </button>
+          } @else if (step.actionRouterLink) {
+            <a tuiButton appearance="primary" size="s" [routerLink]="step.actionRouterLink">
+              {{ step.actionLabel }}
+            </a>
+          }
+        }
+      </li>
+    }
+  </ol>
+</section>
