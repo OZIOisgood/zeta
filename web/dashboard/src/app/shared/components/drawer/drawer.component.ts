@@ -11,11 +11,11 @@ import { TuiButton } from '@taiga-ui/core';
       <div class="drawer">
         <div class="drawer-header">
           <div class="header-title">{{ title() }}</div>
-          <button 
-            tuiIconButton 
-            appearance="secondary" 
-            iconStart="@tui.material.sharp.close" 
-            size="s" 
+          <button
+            tuiIconButton
+            appearance="secondary"
+            iconStart="@tui.x"
+            size="s"
             (click)="close.emit()"
             class="close-btn"
           ></button>
