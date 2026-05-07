@@ -83,6 +83,7 @@ export class UsersListComponent {
       content: `Are you sure you want to remove ${name} from this group?`,
       yes: 'Remove',
       no: 'Cancel',
+      appearance: 'destructive',
     };
 
     this.dialogs

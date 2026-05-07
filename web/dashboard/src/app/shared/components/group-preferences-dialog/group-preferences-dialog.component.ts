@@ -98,6 +98,7 @@ export class GroupPreferencesDialogComponent {
       content: 'This action cannot be undone. All group data will be permanently deleted.',
       yes: 'Delete Group',
       no: 'Cancel',
+      appearance: 'destructive',
     };
 
     this.dialogs

@@ -181,7 +181,7 @@ export class GroupPreferencesPageComponent implements OnInit {
       content: 'This action cannot be undone. All group data will be permanently deleted.',
       yes: 'Delete Group',
       no: 'Cancel',
-      appearance: 'accent',
+      appearance: 'destructive',
     };
 
     this.dialogs

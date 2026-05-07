@@ -235,6 +235,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
       content: 'This action cannot be undone.',
       yes: 'Delete',
       no: 'Cancel',
+      appearance: 'destructive',
     };
     this.dialogs
       .open<boolean>(TUI_CONFIRM, { label: 'Delete Session Type', size: 's', data })
@@ -295,6 +296,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
       content: 'This action cannot be undone.',
       yes: 'Delete',
       no: 'Cancel',
+      appearance: 'destructive',
     };
     this.dialogs
       .open<boolean>(TUI_CONFIRM, { label: 'Delete Availability', size: 's', data })
@@ -336,6 +338,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
       content: 'This action cannot be undone.',
       yes: 'Delete',
       no: 'Cancel',
+      appearance: 'destructive',
     };
     this.dialogs
       .open<boolean>(TUI_CONFIRM, { label: 'Delete Blocked Date', size: 's', data })

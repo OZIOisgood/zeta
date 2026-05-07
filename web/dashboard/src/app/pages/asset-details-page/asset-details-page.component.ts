@@ -258,6 +258,7 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
       content: 'Are you sure you want to delete this comment? This action cannot be undone.',
       yes: 'Delete',
       no: 'Cancel',
+      appearance: 'destructive',
     };
 
     this.dialogs
