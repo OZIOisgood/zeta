@@ -20,19 +20,19 @@
       <button
         tuiButton
         type="button"
-        (click)="onSubmit()"
-        [disabled]="emailControl.invalid || isSubmitting"
-      >
-        Create Invitation
-      </button>
-      <button
-        tuiButton
-        type="button"
         appearance="secondary"
         (click)="onClose()"
         [disabled]="isSubmitting"
       >
         Cancel
+      </button>
+      <button
+        tuiButton
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="emailControl.invalid || isSubmitting"
+      >
+        Create Invitation
       </button>
     </div>
   } @else {
@@ -73,7 +73,6 @@
           Download QR
         </button>
       }
-      <span class="spacer"></span>
       <button
         tuiButton
         type="button"

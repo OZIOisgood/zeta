@@ -21,7 +21,6 @@
     ></app-avatar-selector>
 
     <div class="form-actions">
-      <button tuiButton type="submit" [disabled]="form.invalid || isSubmitting">Save</button>
       <button
         tuiButton
         type="button"
@@ -31,6 +30,7 @@
       >
         Cancel
       </button>
+      <button tuiButton type="submit" [disabled]="form.invalid || isSubmitting">Save</button>
     </div>
   </form>
 

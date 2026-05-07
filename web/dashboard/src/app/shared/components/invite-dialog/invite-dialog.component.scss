@@ -49,8 +49,6 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
-}
-
-.spacer {
-  flex: 1;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
