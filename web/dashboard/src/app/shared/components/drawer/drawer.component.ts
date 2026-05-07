@@ -13,7 +13,7 @@ import { TuiButton } from '@taiga-ui/core';
           <div class="header-title">{{ title() }}</div>
           <button 
             tuiIconButton 
-            appearance="flat" 
+            appearance="secondary" 
             iconStart="@tui.material.sharp.close" 
             size="s" 
             (click)="close.emit()"

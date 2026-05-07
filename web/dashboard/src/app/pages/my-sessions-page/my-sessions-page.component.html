@@ -4,7 +4,7 @@
       @if (canManageAvailability()) {
         <button
           tuiIconButton
-          appearance="flat"
+          appearance="secondary"
           size="m"
           title="Manage availability"
           (click)="manageAvailability()"
@@ -15,7 +15,7 @@
       @if (canBook()) {
         <button
           tuiIconButton
-          appearance="flat"
+          appearance="secondary"
           size="m"
           title="Book a session"
           (click)="bookSession()"
@@ -103,7 +103,12 @@
                   </button>
                 }
                 @if (canCancel(booking)) {
-                  <button tuiButton appearance="flat" size="s" (click)="openCancelDialog(booking)">
+                  <button
+                    tuiButton
+                    appearance="secondary"
+                    size="s"
+                    (click)="openCancelDialog(booking)"
+                  >
                     Cancel
                   </button>
                 }

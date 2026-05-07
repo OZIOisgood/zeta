@@ -94,7 +94,7 @@
                   tuiDropdownAlign="right"
                 >
                   <button
-                    appearance="flat"
+                    appearance="secondary"
                     iconStart="@tui.ellipsis"
                     tuiIconButton
                     type="button"
@@ -214,7 +214,7 @@
       <button
         type="button"
         tuiIconButton
-        appearance="flat"
+        appearance="secondary"
         size="s"
         iconStart="@tui.star"
         [disabled]="!editReviewControl.value || enhancingText"
@@ -235,7 +235,7 @@
         AI is enhancing your text...
       </small>
       <div style="display: flex; gap: 0.5rem; margin-left: auto">
-        <button tuiButton appearance="flat" type="button" (click)="editDialogOpen = false">
+        <button tuiButton appearance="secondary" type="button" (click)="editDialogOpen = false">
           Cancel
         </button>
         <button tuiButton type="submit" [disabled]="enhancingText">Save</button>

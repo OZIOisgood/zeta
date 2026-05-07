@@ -6,7 +6,7 @@ import { TuiBlockStatus } from '@taiga-ui/layout';
 
 export interface IllustratedMessageButton {
   label: string;
-  appearance?: 'primary' | 'secondary' | 'outline' | 'flat' | 'destructive';
+  appearance?: 'primary' | 'secondary' | 'outline' | 'destructive';
   routerLink?: string | string[];
 }
 

@@ -43,7 +43,9 @@
       <button tuiButton type="submit" [disabled]="form.invalid">
         {{ isEditing ? 'Save' : 'Create' }}
       </button>
-      <button tuiButton type="button" appearance="flat" (click)="onCancel()">Cancel</button>
+      <button tuiButton type="button" appearance="secondary" (click)="onCancel()">
+        Cancel
+      </button>
     </div>
   </form>
 </div>

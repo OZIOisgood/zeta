@@ -5,7 +5,7 @@
     @if (showCoachingWidget()) {
       <div class="coaching-widget">
         <app-section-header title="Upcoming Coaching Sessions">
-          <a tuiButton appearance="flat" size="s" routerLink="/sessions">View all</a>
+          <a tuiButton appearance="secondary" size="s" routerLink="/sessions">View all</a>
         </app-section-header>
         @if (bookingsLoading()) {
           <div class="session-list">
