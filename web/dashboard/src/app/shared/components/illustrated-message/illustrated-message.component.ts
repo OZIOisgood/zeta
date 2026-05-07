@@ -22,13 +22,19 @@ export interface IllustratedMessageButton {
       <div *ngIf="buttons.length > 0" tuiSlot="action" class="actions">
         @for (btn of buttons; track btn.label) {
           @if (btn.routerLink) {
-            <a tuiButton [appearance]="btn.appearance || 'primary'" [routerLink]="btn.routerLink">
+            <a
+              tuiButton
+              size="m"
+              [appearance]="btn.appearance || 'primary'"
+              [routerLink]="btn.routerLink"
+            >
               {{ btn.label }}
             </a>
           } @else {
             <button
               tuiButton
               type="button"
+              size="m"
               [appearance]="btn.appearance || 'primary'"
               (click)="buttonClick.emit(btn)"
             >
