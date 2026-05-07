@@ -10,8 +10,8 @@
   <tui-tabs [underline]="false" class="desktop-tabs">
     <a tuiTab routerLink="/" routerLinkActive [routerLinkActiveOptions]="{ exact: true }"> Home </a>
     <a tuiTab routerLink="/videos" routerLinkActive> Videos </a>
-    <a *ngIf="showGroups()" tuiTab routerLink="/groups" routerLinkActive> Groups </a>
     <a *ngIf="showSessions()" tuiTab routerLink="/sessions" routerLinkActive> Sessions </a>
+    <a *ngIf="showGroups()" tuiTab routerLink="/groups" routerLinkActive> Groups </a>
   </tui-tabs>
 
   <ng-container *ngIf="user() as u">
@@ -85,16 +85,6 @@
       Videos
     </a>
     <a
-      *ngIf="showGroups()"
-      class="mobile-nav-item"
-      routerLink="/groups"
-      routerLinkActive="active"
-      (click)="mobileMenuOpen.set(false)"
-    >
-      <tui-icon icon="@tui.users" [style.height.rem]="1.25"></tui-icon>
-      Groups
-    </a>
-    <a
       *ngIf="showSessions()"
       class="mobile-nav-item"
       routerLink="/sessions"
@@ -103,6 +93,16 @@
     >
       <tui-icon icon="@tui.calendar-check" [style.height.rem]="1.25"></tui-icon>
       Sessions
+    </a>
+    <a
+      *ngIf="showGroups()"
+      class="mobile-nav-item"
+      routerLink="/groups"
+      routerLinkActive="active"
+      (click)="mobileMenuOpen.set(false)"
+    >
+      <tui-icon icon="@tui.users" [style.height.rem]="1.25"></tui-icon>
+      Groups
     </a>
   </nav>
 
