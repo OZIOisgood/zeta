@@ -44,9 +44,6 @@ export class NavbarComponent {
   protected readonly showGroups = computed(() =>
     this.permissionsService.hasPermission('groups:read'),
   );
-  protected readonly showUploadVideo = computed(() =>
-    this.permissionsService.hasPermission('assets:create'),
-  );
   protected readonly showSessions = computed(() =>
     this.permissionsService.hasPermission('coaching:bookings:read'),
   );

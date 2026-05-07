@@ -11,9 +11,6 @@
     <a tuiTab routerLink="/" routerLinkActive [routerLinkActiveOptions]="{ exact: true }"> Home </a>
     <a tuiTab routerLink="/videos" routerLinkActive> Videos </a>
     <a *ngIf="showGroups()" tuiTab routerLink="/groups" routerLinkActive> Groups </a>
-    <a *ngIf="showUploadVideo()" tuiTab routerLink="/upload-video" routerLinkActive>
-      Upload video
-    </a>
     <a *ngIf="showSessions()" tuiTab routerLink="/sessions" routerLinkActive> Sessions </a>
   </tui-tabs>
 
@@ -96,16 +93,6 @@
     >
       <tui-icon icon="@tui.users" [style.height.rem]="1.25"></tui-icon>
       Groups
-    </a>
-    <a
-      *ngIf="showUploadVideo()"
-      class="mobile-nav-item"
-      routerLink="/upload-video"
-      routerLinkActive="active"
-      (click)="mobileMenuOpen.set(false)"
-    >
-      <tui-icon icon="@tui.upload-cloud" [style.height.rem]="1.25"></tui-icon>
-      Upload video
     </a>
     <a
       *ngIf="showSessions()"
