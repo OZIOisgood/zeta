@@ -4,7 +4,14 @@
   box-sizing: border-box;
 }
 
-app-asset-list + app-asset-list {
-  display: block;
-  margin-top: 2rem;
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: -0.5rem 0 1.5rem;
+}
+
+.review-status-filter {
+  min-width: 0;
 }

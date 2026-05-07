@@ -1,36 +1,39 @@
 <app-page-container>
-  @if (showReviewStatusBuckets()) {
-    @if (reviewStatusBuckets$ | async; as buckets) {
-      <app-asset-list
-        [assets]="buckets.inReview"
-        [loading]="loading()"
-        [role]="auth.user()?.role"
-        title="In review"
-        emptyHeading="No videos in review"
-        emptyDescription="Videos with started reviews will appear here."
-      ></app-asset-list>
+  @if (showReviewStatusFilters()) {
+    <app-section-header title="Videos" [loading]="loading()"></app-section-header>
 
-      <app-asset-list
-        [assets]="buckets.toReview"
-        [loading]="loading()"
-        [role]="auth.user()?.role"
-        title="To review"
-        emptyHeading="No videos to review"
-        emptyDescription="New videos without comments will appear here."
-      ></app-asset-list>
-
-      <app-asset-list
-        [assets]="buckets.reviewed"
-        [loading]="loading()"
-        [role]="auth.user()?.role"
-        title="Reviewed"
-        emptyHeading="No reviewed videos"
-        emptyDescription="Completed video reviews will appear here."
-      ></app-asset-list>
+    @if (!loading() && assets().length > 0) {
+      <div class="filter-bar">
+        <button
+          tuiButton
+          type="button"
+          size="s"
+          [appearance]="selectedReviewStatusFilters().length === 0 ? 'primary' : 'flat'"
+          (click)="clearReviewStatusFilters()"
+        >
+          All
+        </button>
+        <tui-filter
+          class="review-status-filter"
+          size="s"
+          [formControl]="reviewStatusFilter"
+          [items]="reviewStatusFilterItems"
+          [badgeHandler]="reviewStatusBadgeHandler"
+        />
+      </div>
     }
+
+    <app-asset-list
+      [assets]="filteredReviewStatusAssets()"
+      [loading]="loading()"
+      [role]="auth.user()?.role"
+      title=""
+      [emptyHeading]="reviewStatusEmptyHeading()"
+      [emptyDescription]="reviewStatusEmptyDescription()"
+    ></app-asset-list>
   } @else {
     <app-asset-list
-      [assets]="(assets$ | async) || []"
+      [assets]="assets()"
       [loading]="loading()"
       [showAddTile]="showUploadVideo()"
       [role]="auth.user()?.role"

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Asset } from '../../shared/services/asset.service';
-import { splitAssetsByReviewStatus } from './videos-page.utils';
+import { countAssetsByReviewStatus, filterAssetsByReviewStatus } from './videos-page.utils';
 
 function asset(id: string, status: Asset['status'], reviewCount: number): Asset {
   return {
@@ -13,16 +13,50 @@ function asset(id: string, status: Asset['status'], reviewCount: number): Asset 
   };
 }
 
-describe('splitAssetsByReviewStatus', () => {
-  it('groups pending videos by review progress and completed videos separately', () => {
-    const buckets = splitAssetsByReviewStatus([
+describe('review status filters', () => {
+  it('filters pending videos by review progress and completed videos separately', () => {
+    const assets = [
+      asset('not-started', 'pending', 0),
+      asset('started', 'pending', 2),
+      asset('done', 'completed', 1),
+    ];
+
+    expect(filterAssetsByReviewStatus(assets, ['To review']).map((item) => item.id)).toEqual([
+      'not-started',
+    ]);
+    expect(filterAssetsByReviewStatus(assets, ['In review']).map((item) => item.id)).toEqual([
+      'started',
+    ]);
+    expect(filterAssetsByReviewStatus(assets, ['Reviewed']).map((item) => item.id)).toEqual([
+      'done',
+    ]);
+  });
+
+  it('shows all videos when no review status filter is selected', () => {
+    const assets = [
+      asset('not-started', 'pending', 0),
+      asset('started', 'pending', 2),
+      asset('done', 'completed', 1),
+    ];
+
+    expect(filterAssetsByReviewStatus(assets, []).map((item) => item.id)).toEqual([
+      'not-started',
+      'started',
+      'done',
+    ]);
+  });
+
+  it('counts videos for filter badges', () => {
+    const counts = countAssetsByReviewStatus([
       asset('not-started', 'pending', 0),
       asset('started', 'pending', 2),
       asset('done', 'completed', 1),
     ]);
 
-    expect(buckets.toReview.map((item) => item.id)).toEqual(['not-started']);
-    expect(buckets.inReview.map((item) => item.id)).toEqual(['started']);
-    expect(buckets.reviewed.map((item) => item.id)).toEqual(['done']);
+    expect(counts).toEqual({
+      'To review': 1,
+      'In review': 1,
+      Reviewed: 1,
+    });
   });
 });
