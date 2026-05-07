@@ -1,6 +1,6 @@
 <app-page-container *ngIf="asset$ | async as asset; else loadingSkeleton">
   <app-breadcrumbs
-    [items]="[{ label: 'Home', routerLink: '/' }, { label: asset.title }]"
+    [items]="[{ label: 'Videos', routerLink: '/videos' }, { label: asset.title }]"
   ></app-breadcrumbs>
 
   <div class="content-body">
