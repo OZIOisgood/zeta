@@ -41,45 +41,55 @@
       </tui-elastic-container>
     </section>
 
-    <div *ngIf="showUsersList() || showExpertsList()" class="users-section">
-      <div class="users-header">
-        <h2 class="tui-text_h3">Members</h2>
-        @if (showInviteButton()) {
-          <button
-            tuiButton
-            appearance="secondary"
-            size="s"
-            iconStart="@tui.mail"
-            (click)="openInviteDialog(group.id)"
-          >
-            Invite
-          </button>
-        }
-      </div>
+    <div *ngIf="showMembersSection()" class="users-section">
+      @if (showStudentsSection() || showExpertsSection()) {
+        <div class="member-lists">
+          @if (showExpertsSection()) {
+            <section class="member-list">
+              <h2 class="tui-text_h3">Experts</h2>
+              <app-users-list
+                [groupId]="group.id"
+                listKind="experts"
+                (usersLoaded)="onExpertsLoaded($event)"
+              ></app-users-list>
+            </section>
+          }
 
-      <div class="member-lists">
-        @if (showUsersList()) {
-          <section class="member-list">
-            <h3 class="tui-text_h4">Students</h3>
-            <app-users-list
-              [groupId]="group.id"
-              listKind="students"
-              emptyMessage="No students in this group yet."
-            ></app-users-list>
-          </section>
-        }
-
-        @if (showExpertsList()) {
-          <section class="member-list">
-            <h3 class="tui-text_h4">Experts</h3>
-            <app-users-list
-              [groupId]="group.id"
-              listKind="experts"
-              emptyMessage="No experts in this group yet."
-            ></app-users-list>
-          </section>
-        }
-      </div>
+          @if (showStudentsSection()) {
+            <section class="member-list">
+              <div class="member-list-header">
+                <h2 class="tui-text_h3">Students</h2>
+                @if (showInviteButton()) {
+                  <button
+                    tuiButton
+                    appearance="secondary"
+                    size="s"
+                    iconStart="@tui.mail"
+                    (click)="openInviteDialog(group.id)"
+                  >
+                    Invite
+                  </button>
+                }
+              </div>
+              <app-users-list
+                [groupId]="group.id"
+                listKind="students"
+                (usersLoaded)="onStudentsLoaded($event)"
+              ></app-users-list>
+              @if (showEmptyStudentsInvite()) {
+                <app-illustrated-message
+                  illustrationSrc="/illustrations/lonely-horse.png"
+                  illustrationAlt="No students yet"
+                  heading="No students yet"
+                  description="Invite students to join this group."
+                  [buttons]="[{ label: 'Invite student', appearance: 'primary' }]"
+                  (buttonClick)="openInviteDialog(group.id)"
+                ></app-illustrated-message>
+              }
+            </section>
+          }
+        </div>
+      }
     </div>
   }
 </app-page-container>

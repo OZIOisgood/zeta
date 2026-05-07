@@ -1,5 +1,5 @@
 <ng-container *ngIf="users$ | async as users; else loading">
-  <section tuiCardLarge *ngIf="users.length; else empty">
+  <section tuiCardLarge *ngIf="users.length">
     <table tuiTable [size]="size" [style.width.%]="100">
       <thead>
         <tr>
@@ -49,15 +49,6 @@
       </tbody>
     </table>
   </section>
-
-  <ng-template #empty>
-    <p
-      class="tui-text_body-l"
-      style="text-align: center; padding: 2rem 0; color: var(--tui-text-secondary)"
-    >
-      {{ emptyMessage }}
-    </p>
-  </ng-template>
 </ng-container>
 
 <ng-template #loading>

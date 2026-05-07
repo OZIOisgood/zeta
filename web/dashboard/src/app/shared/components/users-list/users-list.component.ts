@@ -1,5 +1,13 @@
 import { AsyncPipe, CommonModule, NgForOf, NgIf } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  EventEmitter,
+  inject,
+  Input,
+  Output,
+} from '@angular/core';
 import { TuiTable } from '@taiga-ui/addon-table';
 import {
   TuiAlertService,
@@ -14,7 +22,7 @@ import {
 } from '@taiga-ui/core';
 import { TUI_CONFIRM, TuiAvatar, TuiSkeleton, type TuiConfirmData } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiCell } from '@taiga-ui/layout';
-import { BehaviorSubject, filter, of, switchMap } from 'rxjs';
+import { BehaviorSubject, filter, of, switchMap, tap } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { PermissionsService } from '../../services/permissions.service';
 import { GroupUsersListKind, UsersService } from '../../services/users.service';
@@ -58,11 +66,12 @@ export class UsersListComponent {
     this.groupIdSubject.next(value);
   }
   @Input() listKind: GroupUsersListKind = 'students';
-  @Input() emptyMessage = 'No members in this group yet.';
+  @Output() usersLoaded = new EventEmitter<number>(true);
 
   readonly users$ = this.refresh$.pipe(
     switchMap(() => this.groupIdSubject),
     switchMap((id) => (id ? this.usersService.list(id, this.listKind) : of([]))),
+    tap((users) => this.usersLoaded.emit(users.length)),
   );
 
   readonly canDeleteUsers = computed(() =>

@@ -1,12 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
 import { TuiElasticContainer } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
-import { Observable, catchError, filter, map, of, startWith, switchMap, take } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  distinctUntilChanged,
+  filter,
+  map,
+  of,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { BreadcrumbsComponent } from '../../shared/components/breadcrumbs/breadcrumbs.component';
+import { IllustratedMessageComponent } from '../../shared/components/illustrated-message/illustrated-message.component';
 import { InviteDialogComponent } from '../../shared/components/invite-dialog/invite-dialog.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { UsersListComponent } from '../../shared/components/users-list/users-list.component';
@@ -24,6 +37,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiCardLarge,
     TuiElasticContainer,
     BreadcrumbsComponent,
+    IllustratedMessageComponent,
   ],
   templateUrl: './group-details-page.component.html',
   styleUrls: ['./group-details-page.component.scss'],
@@ -37,9 +51,15 @@ export class GroupDetailsPageComponent {
   private readonly dialogs = inject(TuiDialogService);
   private readonly alerts = inject(TuiAlertService);
 
-  constructor() {}
+  private readonly studentsListState = signal({ loaded: false, count: 0 });
+  private readonly expertsListState = signal({ loaded: false, count: 0 });
 
-  readonly groupId$ = this.route.paramMap.pipe(map((params) => params.get('id')));
+  readonly groupId$ = this.route.paramMap.pipe(
+    map((params) => params.get('id')),
+    distinctUntilChanged(),
+    tap(() => this.resetMemberListStates()),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
   readonly group$ = this.groupId$.pipe(
     filter((id): id is string => !!id),
     switchMap((id) => this.groupsService.get(id)),
@@ -69,6 +89,27 @@ export class GroupDetailsPageComponent {
   );
   readonly showPrefsButton = computed(() =>
     this.permissionsService.hasPermission('groups:preferences:edit'),
+  );
+  readonly showStudentsSection = computed(
+    () =>
+      this.showUsersList() &&
+      (!this.studentsListState().loaded ||
+        this.studentsListState().count > 0 ||
+        this.showInviteButton()),
+  );
+  readonly showExpertsSection = computed(
+    () =>
+      this.showExpertsList() &&
+      (!this.expertsListState().loaded || this.expertsListState().count > 0),
+  );
+  readonly showMembersSection = computed(
+    () => this.showStudentsSection() || this.showExpertsSection(),
+  );
+  readonly showEmptyStudentsInvite = computed(
+    () =>
+      this.showInviteButton() &&
+      this.studentsListState().loaded &&
+      this.studentsListState().count === 0,
   );
 
   protected descriptionExpanded = false;
@@ -187,6 +228,19 @@ export class GroupDetailsPageComponent {
 
   toggleDescription(): void {
     this.descriptionExpanded = !this.descriptionExpanded;
+  }
+
+  onStudentsLoaded(count: number): void {
+    this.studentsListState.set({ loaded: true, count });
+  }
+
+  onExpertsLoaded(count: number): void {
+    this.expertsListState.set({ loaded: true, count });
+  }
+
+  private resetMemberListStates(): void {
+    this.studentsListState.set({ loaded: false, count: 0 });
+    this.expertsListState.set({ loaded: false, count: 0 });
   }
 
   openInviteDialog(groupId: string): void {

@@ -68,7 +68,7 @@
   margin-top: 0.5rem;
 }
 
-.users-header {
+.member-list-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -85,8 +85,12 @@
 }
 
 .member-list {
-  h3 {
+  h2 {
     margin: 0 0 0.75rem;
+  }
+
+  .member-list-header h2 {
+    margin-bottom: 0;
   }
 }
 
