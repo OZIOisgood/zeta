@@ -76,6 +76,7 @@ Fill out `RESOLUTION.md` with:
 ### 5. Completion
 
 - **Test Verification**: Run tests (e.g., `make test:unit` `make test:integration`) before considering the task complete. If the target is missing or broken, fix it as part of the task or explicitly record the blocker in `RESOLUTION.md`.
+- **Configuration Parity**: If the task adds, removes, or renames an environment variable or application configuration value, update the matching Terraform declaration and wiring under `infra/terraform/` in the same task. Also update `.env.example` and any setup documentation affected by the change.
 - **Update root `README.md`**: If the task introduces or modifies database tables, API flows, system architecture, or user journeys, update the corresponding Mermaid diagrams and documentation in the root `README.md`. This is the single source of truth for the project's architecture.
   - Add new entities to the `erDiagram` block.
   - Add or update `sequenceDiagram` / `graph` blocks for new flows.

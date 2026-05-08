@@ -16,6 +16,7 @@
 ## 3. Database & Infrastructure
 
 - **Environment**: We frequently restart the Docker environment (`make infra:restart`).
+- **Configuration Parity**: When adding, removing, or renaming an environment variable or application configuration value, update every deployment surface in the same task. This includes `.env.example`, local setup docs when relevant, and Terraform files under `infra/terraform/` that declare, pass, or expose the value to Cloud Run or other managed resources.
 
 ## 4. Frontend & Design (Dashboard)
 
