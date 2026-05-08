@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -47,8 +48,15 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 
 		scheduledStr := rem.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
 		subject := "Coaching Session Reminder"
-		body := "You have an upcoming coaching session.\n\nDate & Time: " + scheduledStr +
-			"\nDuration: " + formatDuration(rem.DurationMinutes)
+		message := email.Message{
+			Preheader: "You have an upcoming coaching session.",
+			Heading:   "Coaching session reminder",
+			Intro:     "You have an upcoming coaching session.",
+			Details: []email.Detail{
+				{Label: "Date and time", Value: scheduledStr},
+				{Label: "Duration", Value: formatDuration(rem.DurationMinutes)},
+			},
+		}
 
 		// For the 15-min reminder, append a direct "Join" link.
 		diff := rem.ScheduledAt.Time.Sub(rem.RemindAt.Time)
@@ -56,7 +64,11 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 			groupID := uuidToString(rem.GroupID)
 			bookingID := uuidToString(rem.BookingID)
 			joinURL := h.appBaseURL + "/sessions/" + groupID + "/" + bookingID + "/call"
-			body += "\n\nYour session is about to start. Join now:\n" + joinURL
+			message.Intro = "Your session is about to start."
+			message.Action = &email.Action{
+				Label: "Join session",
+				URL:   joinURL,
+			}
 		}
 
 		recipientIDs := make([]string, 0, 2)
@@ -74,7 +86,7 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 
 		recipients := h.resolveEmails(ctx, recipientIDs)
 		if len(recipients) > 0 {
-			if err := h.emailService.Send(recipients, subject, body); err != nil {
+			if err := h.emailService.SendTemplate(recipients, subject, email.TemplateNotification, message); err != nil {
 				log.ErrorContext(ctx, "reminder_email_failed",
 					slog.String("component", "coaching"),
 					slog.String("reminder_id", uuidToString(rem.ID)),

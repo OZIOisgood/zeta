@@ -488,8 +488,17 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 
 		// Send Email
 		userName := fmt.Sprintf("%s %s", userCtx.FirstName, userCtx.LastName)
-		msg := fmt.Sprintf("User %s uploaded a new video '%s' to group '%s'.", userName, asset.Name, group.Name)
-		err = h.email.Send([]string{emailAddr}, "New Video Uploaded", msg)
+		message := email.Message{
+			Preheader: fmt.Sprintf("%s uploaded a new video.", userName),
+			Heading:   "New video uploaded",
+			Intro:     fmt.Sprintf("%s uploaded a new video to your group.", userName),
+			Details: []email.Detail{
+				{Label: "Video", Value: asset.Name},
+				{Label: "Group", Value: group.Name},
+				{Label: "Uploaded by", Value: userName},
+			},
+		}
+		err = h.email.SendTemplate([]string{emailAddr}, "New Video Uploaded", email.TemplateNotification, message)
 		if err != nil {
 			bgLog.ErrorContext(bgCtx, "asset_notification_send_failed",
 				slog.String("owner_id", group.OwnerID),
@@ -659,8 +668,15 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 				)
 			} else {
 				subject := "Your video has been reviewed"
-				text := fmt.Sprintf("Your video %s has been reviewed and is now finalized.", asset.Name)
-				err = h.email.Send([]string{owner.Email}, subject, text)
+				message := email.Message{
+					Preheader: fmt.Sprintf("Your video %s has been reviewed.", asset.Name),
+					Heading:   "Your video has been reviewed",
+					Intro:     "Your video has been reviewed and is now finalized.",
+					Details: []email.Detail{
+						{Label: "Video", Value: asset.Name},
+					},
+				}
+				err = h.email.SendTemplate([]string{owner.Email}, subject, email.TemplateNotification, message)
 				if err != nil {
 					log.ErrorContext(ctx, "finalize_asset_email_send_failed",
 						slog.String("component", "assets"),

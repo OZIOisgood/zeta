@@ -1,0 +1,41 @@
+{{define "layout.start"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>{{.Message.Heading}}</title>
+    <style type="text/css">{{.Styles}}</style>
+  </head>
+  <body>
+    <span class="preheader">{{.Message.Preheader}}</span>
+    <table role="presentation" class="email-shell" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center">
+          <table role="presentation" class="email-card" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="email-header">
+                <img class="brand-logo" src="{{.LogoURL}}" width="124" alt="{{.BrandName}}">
+              </td>
+            </tr>
+            <tr>
+              <td class="email-content">
+{{end}}
+
+{{define "layout.end"}}
+              </td>
+            </tr>
+            <tr>
+              <td class="email-footer">
+                <div>{{.BrandName}} remote video coaching</div>
+                <div>&copy; {{.Year}} {{.BrandName}}</div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+{{end}}

@@ -13,6 +13,7 @@ import (
 // Sender is the interface for sending emails.
 type Sender interface {
 	Send(to []string, subject string, text string) error
+	SendTemplate(to []string, subject string, templateName TemplateName, message Message) error
 }
 
 type Service struct {
@@ -33,10 +34,23 @@ func NewService(logger *slog.Logger) *Service {
 }
 
 func (s *Service) Send(to []string, subject string, text string) error {
+	return s.send(to, subject, text, "")
+}
+
+func (s *Service) SendTemplate(to []string, subject string, templateName TemplateName, message Message) error {
+	rendered, err := RenderTemplate(templateName, message)
+	if err != nil {
+		return fmt.Errorf("render email template %q: %w", templateName, err)
+	}
+	return s.send(to, subject, rendered.Text, rendered.HTML)
+}
+
+func (s *Service) send(to []string, subject string, text string, html string) error {
 	s.logger.Info("email_send_initiated",
 		slog.String("component", "email_service"),
 		slog.Int("recipient_count", len(to)),
 		slog.String("subject", subject),
+		slog.Bool("has_html", html != ""),
 	)
 
 	params := &resend.SendEmailRequest{
@@ -44,6 +58,7 @@ func (s *Service) Send(to []string, subject string, text string) error {
 		To:      to,
 		Subject: subject,
 		Text:    text,
+		Html:    html,
 	}
 
 	resp, err := s.client.Emails.Send(params)

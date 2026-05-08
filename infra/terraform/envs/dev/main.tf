@@ -28,6 +28,7 @@ locals {
   dashboard_domain                  = "dev.zeta.m4xon.com"
   api_domain                        = "api.dev.zeta.m4xon.com"
   resend_from_email                 = "notifications@${local.dashboard_domain}"
+  email_logo_url                    = "https://${local.dashboard_domain}/app-full-icon.png"
 }
 
 variable "project_id" {
@@ -214,4 +215,8 @@ output "api_domain" {
 
 output "resend_from_email" {
   value = local.resend_from_email
+}
+
+output "email_logo_url" {
+  value = local.email_logo_url
 }

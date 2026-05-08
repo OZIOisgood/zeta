@@ -17,6 +17,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Video Reviews**: Add comments and feedback directly to video clips.
 - **Live Video Coaching**: 1-on-1 Agora-powered video calls with booking, availability management, and automated email reminders.
 - **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle and automatic import into the review flow.
+- **Templated Email Notifications**: Transactional emails use embedded Go HTML templates, a shared Zeta layout, and CSS inlining before delivery through Resend.
 - **Notification Preferences**: Users can control all email notifications or individual email categories from their Preferences page.
 
 ## How to start
@@ -55,6 +56,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - Create a Resend API key and set `RESEND_API_KEY`.
    - Verify the sender domain in Resend.
    - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@dev.zeta.m4xon.com` for the deployed development environment.
+   - Optionally set `EMAIL_LOGO_URL` to the absolute hosted app icon URL used in HTML emails. If unset, emails use `FRONTEND_URL + /app-full-icon.png`, then `https://dev.zeta.m4xon.com/app-full-icon.png`.
+   - To render local email previews with fake data, run `make email:preview`. Final inlined HTML files are written to `build/email-previews/`.
 
 6. **Agora Configuration**:
    - Create a project in [Agora Console](https://console.agora.io/).

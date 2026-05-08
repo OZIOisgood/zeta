@@ -143,10 +143,22 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 	if emailAddress != "" {
 		inviterName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 		subject := "You've been invited to join a group on Zeta"
-		text := fmt.Sprintf("%s has invited you to join a group.\n\nClick the link below to accept:\n%s", inviterName, inviteLink)
+		message := email.Message{
+			Preheader: fmt.Sprintf("%s invited you to join a group on Zeta.", inviterName),
+			Heading:   "You have been invited to join a group",
+			Intro:     fmt.Sprintf("%s invited you to join a group on Zeta.", inviterName),
+			Details: []email.Detail{
+				{Label: "Invitation link", Value: inviteLink},
+			},
+			Action: &email.Action{
+				Label: "Accept invitation",
+				URL:   inviteLink,
+			},
+			FooterNote: "This invitation was sent from Zeta because someone entered this email address while sharing a group.",
+		}
 
 		go func(to string) {
-			if err := h.email.Send([]string{to}, subject, text); err != nil {
+			if err := h.email.SendTemplate([]string{to}, subject, email.TemplateNotification, message); err != nil {
 				h.logger.Error("invitation_email_send_failed",
 					slog.String("component", "invitations"),
 					slog.Any("err", err),
@@ -371,8 +383,16 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 
 			joinerName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 			subject := "Your invitation was accepted"
-			text := fmt.Sprintf("%s accepted your invitation and joined the group '%s'.", joinerName, group.Name)
-			if err := h.email.Send([]string{inviter.Email}, subject, text); err != nil {
+			message := email.Message{
+				Preheader: fmt.Sprintf("%s accepted your invitation.", joinerName),
+				Heading:   "Your invitation was accepted",
+				Intro:     fmt.Sprintf("%s accepted your invitation and joined the group.", joinerName),
+				Details: []email.Detail{
+					{Label: "Group", Value: group.Name},
+					{Label: "New member", Value: joinerName},
+				},
+			}
+			if err := h.email.SendTemplate([]string{inviter.Email}, subject, email.TemplateNotification, message); err != nil {
 				bgLog.ErrorContext(bgCtx, "invitation_accepted_notification_send_failed",
 					slog.Any("err", err),
 				)

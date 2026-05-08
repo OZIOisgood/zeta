@@ -8,6 +8,7 @@ import (
 	authmocks "github.com/OZIOisgood/zeta/internal/auth/mocks"
 	"github.com/OZIOisgood/zeta/internal/db"
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
+	"github.com/OZIOisgood/zeta/internal/email"
 	emailmocks "github.com/OZIOisgood/zeta/internal/email/mocks"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
@@ -58,7 +59,7 @@ func TestSendBookingCreatedEmailSkipsDisabledRecipient(t *testing.T) {
 		},
 		nil,
 	)
-	sender.EXPECT().Send([]string{"expert@example.com"}, gomock.Any(), gomock.Any()).Return(nil)
+	sender.EXPECT().SendTemplate([]string{"expert@example.com"}, gomock.Any(), email.TemplateNotification, gomock.Any()).Return(nil)
 
 	h.sendBookingCreatedEmail(t.Context(), booking, "Private Session")
 }

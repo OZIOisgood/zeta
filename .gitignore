@@ -12,6 +12,7 @@
 # Binaries
 bin/
 api
+build/
 
 # IDE
 .idea/

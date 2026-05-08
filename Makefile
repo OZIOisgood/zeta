@@ -14,6 +14,9 @@ api\:start:
 api\:dev:
 	go tool air -c .air.toml
 
+email\:preview:
+	go run ./cmd/email-preview
+
 api\:stop:
 	@kill $$(lsof -ti :8080) 2>/dev/null || true
 

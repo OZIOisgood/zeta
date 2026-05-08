@@ -299,8 +299,15 @@ func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		subject := fmt.Sprintf("You have been removed from group '%s'", group.Name)
-		text := fmt.Sprintf("You have been removed from the group '%s'.", group.Name)
-		if err := h.email.Send([]string{removedUser.Email}, subject, text); err != nil {
+		message := email.Message{
+			Preheader: fmt.Sprintf("You have been removed from %s.", group.Name),
+			Heading:   "Group membership updated",
+			Intro:     "You have been removed from a group.",
+			Details: []email.Detail{
+				{Label: "Group", Value: group.Name},
+			},
+		}
+		if err := h.email.SendTemplate([]string{removedUser.Email}, subject, email.TemplateNotification, message); err != nil {
 			bgLog.ErrorContext(bgCtx, "users_remove_notification_send_failed",
 				slog.Any("err", err),
 			)
