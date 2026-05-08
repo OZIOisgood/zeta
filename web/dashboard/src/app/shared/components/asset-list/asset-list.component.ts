@@ -32,6 +32,7 @@ import { SectionHeaderComponent } from '../section-header/section-header.compone
 export class AssetListComponent {
   @Input() assets: Asset[] = [];
   @Input() showAddTile = false;
+  @Input() showAddTileWhenEmpty = false;
   @Input() loading = false;
   @Input() title = 'All my videos';
   @Input() headerActionLabel = '';

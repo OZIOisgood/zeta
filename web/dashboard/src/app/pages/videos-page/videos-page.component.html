@@ -26,10 +26,13 @@
     <app-asset-list
       [assets]="filteredReviewStatusAssets()"
       [loading]="loading()"
+      [showAddTile]="showUploadVideo()"
+      [showAddTileWhenEmpty]="true"
       [role]="auth.user()?.role"
       title=""
       [emptyHeading]="reviewStatusEmptyHeading()"
       [emptyDescription]="reviewStatusEmptyDescription()"
+      (addVideo)="onAddVideo()"
     ></app-asset-list>
   } @else {
     <app-asset-list

@@ -34,7 +34,7 @@
 ></app-illustrated-message>
 
 <app-illustrated-message
-  *ngIf="!loading && assets.length === 0 && showAddTile"
+  *ngIf="!loading && assets.length === 0 && showAddTile && !showAddTileWhenEmpty"
   illustrationSrc="/illustrations/bored-horse.png"
   illustrationAlt="No videos yet"
   heading="Upload your first video"
@@ -43,7 +43,10 @@
   (buttonClick)="addVideo.emit()"
 ></app-illustrated-message>
 
-<div class="grid" *ngIf="!loading && assets.length > 0">
+<div
+  class="grid"
+  *ngIf="!loading && (assets.length > 0 || (showAddTile && showAddTileWhenEmpty))"
+>
   <div
     *ngIf="showAddTile"
     tuiAppearance="neutral"
