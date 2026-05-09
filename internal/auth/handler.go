@@ -706,6 +706,183 @@ func (h *Handler) DevToken(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"token": resp.AccessToken})
 }
 
+// MobileAuthURL returns a WorkOS authorization URL for the mobile OAuth flow.
+// The mobile app opens this URL in an in-app browser; on completion WorkOS
+// redirects to the MOBILE_REDIRECT_URI deep link with a ?code= query parameter.
+//
+// GET /auth/mobile/auth-url
+func (h *Handler) MobileAuthURL(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	clientID := os.Getenv("WORKOS_CLIENT_ID")
+	redirectURI := os.Getenv("MOBILE_REDIRECT_URI")
+	if redirectURI == "" {
+		h.logger.ErrorContext(ctx, "auth_mobile_auth_url_missing_redirect",
+			slog.String("component", "auth"),
+		)
+		http.Error(w, "MOBILE_REDIRECT_URI is not configured", http.StatusInternalServerError)
+		return
+	}
+
+	url, err := h.workos.GetAuthorizationURL(usermanagement.GetAuthorizationURLOpts{
+		ClientID:    clientID,
+		RedirectURI: redirectURI,
+		Provider:    "authkit",
+	})
+	if err != nil {
+		h.logger.ErrorContext(ctx, "auth_mobile_auth_url_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"url": url.String()})
+}
+
+// MobileExchange exchanges a WorkOS authorization code for access + refresh tokens.
+// Unlike the web Callback handler it returns JSON tokens instead of setting cookies,
+// so the mobile app can store them securely in the device keychain/keystore.
+//
+// POST /auth/mobile/exchange
+// Body: {"code": "..."}
+func (h *Handler) MobileExchange(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Code == "" {
+		http.Error(w, "code is required", http.StatusBadRequest)
+		return
+	}
+
+	clientID := os.Getenv("WORKOS_CLIENT_ID")
+	resp, err := h.workos.AuthenticateWithCode(ctx, usermanagement.AuthenticateWithCodeOpts{
+		ClientID: clientID,
+		Code:     req.Code,
+	})
+	if err != nil {
+		h.logger.ErrorContext(ctx, "auth_mobile_exchange_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Authentication failed: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	accessToken := resp.AccessToken
+	refreshToken := resp.RefreshToken
+
+	// Ensure the user belongs to the default org. If not, add them and obtain
+	// an org-scoped token pair (same logic as the web Callback handler).
+	if resp.OrganizationID == "" {
+		if _, _, err := h.ensureUserInOrg(ctx, resp.User.ID); err != nil {
+			h.logger.ErrorContext(ctx, "auth_mobile_ensure_org_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", resp.User.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to prepare user organization", http.StatusInternalServerError)
+			return
+		}
+
+		scoped, err := h.refreshSessionForDefaultOrg(ctx, refreshToken)
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_mobile_org_session_refresh_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", resp.User.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to prepare user session", http.StatusInternalServerError)
+			return
+		}
+		accessToken = scoped.AccessToken
+		refreshToken = scoped.RefreshToken
+	}
+
+	// Seed avatar from WorkOS on first sign-in (async, non-blocking).
+	go func() {
+		_, err := h.q.GetUserPreferences(context.Background(), resp.User.ID)
+		if err == nil {
+			return
+		}
+		if err != pgx.ErrNoRows {
+			h.logger.WarnContext(context.Background(), "auth_mobile_seed_avatar_check_failed",
+				slog.String("user_id", resp.User.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
+		if resp.User.ProfilePictureURL == "" {
+			return
+		}
+		avatarB64, err := h.fetchURLAsBase64(resp.User.ProfilePictureURL)
+		if err != nil {
+			h.logger.WarnContext(context.Background(), "auth_mobile_seed_avatar_fetch_failed",
+				slog.String("user_id", resp.User.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
+		_, err = h.q.UpsertUserAvatar(context.Background(), db.UpsertUserAvatarParams{
+			UserID: resp.User.ID,
+			Avatar: avatarB64,
+		})
+		if err != nil {
+			h.logger.WarnContext(context.Background(), "auth_mobile_seed_avatar_save_failed",
+				slog.String("user_id", resp.User.ID),
+				slog.Any("err", err),
+			)
+		}
+	}()
+
+	h.logger.InfoContext(ctx, "auth_mobile_exchange_succeeded",
+		slog.String("component", "auth"),
+		slog.String("user_id", resp.User.ID),
+	)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	})
+}
+
+// MobileRefresh exchanges a refresh token for a new access + refresh token pair.
+//
+// POST /auth/mobile/refresh
+// Body: {"refresh_token": "..."}
+func (h *Handler) MobileRefresh(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RefreshToken == "" {
+		http.Error(w, "refresh_token is required", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.refreshSessionForDefaultOrg(ctx, req.RefreshToken)
+	if err != nil {
+		h.logger.WarnContext(ctx, "auth_mobile_refresh_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Token refresh failed: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"access_token":  resp.AccessToken,
+		"refresh_token": resp.RefreshToken,
+	})
+}
+
 // fetchURLAsBase64 downloads the content at url and returns it as a base64-encoded string.
 func (h *Handler) fetchURLAsBase64(url string) (string, error) {
 	resp, err := http.Get(url) // #nosec G107 — URL comes from WorkOS API response

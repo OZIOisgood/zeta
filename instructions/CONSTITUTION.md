@@ -76,3 +76,4 @@
   - **Agora**: `https://docs.agora.io/en/llms.txt`
   - **WorkOS**: `https://workos.com/docs/llms.txt` and `https://workos.com/docs/llms-full.txt`
   - **Resend**: `https://resend.com/docs/llms.txt` and `https://resend.com/docs/llms-full.txt`
+  - **Expo**: `https://docs.expo.dev/llms.txt` and `https://docs.expo.dev/llms-full.txt`
