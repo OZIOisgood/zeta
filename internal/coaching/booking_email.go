@@ -5,8 +5,11 @@ import (
 	"log/slog"
 	"strings"
 
+	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"
+
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
+	"github.com/OZIOisgood/zeta/internal/i18n"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
@@ -54,24 +57,25 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 
 	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
 	durationStr := formatDuration(b.DurationMinutes)
-	subject := "Live Coaching Session Confirmed"
 
-	buildMessage := func(partnerName string) email.Message {
+	buildMessage := func(loc *goi18n.Localizer, partnerName string) email.Message {
 		details := []email.Detail{
-			{Label: "Session", Value: sessionTypeName},
-			{Label: "With", Value: partnerName},
-			{Label: "Group", Value: groupName},
-			{Label: "Date and time", Value: scheduledStr},
-			{Label: "Duration", Value: durationStr},
+			{Label: i18n.T(loc, "email.detail.session"), Value: sessionTypeName},
+			{Label: i18n.T(loc, "email.detail.with"), Value: partnerName},
+			{Label: i18n.T(loc, "email.detail.group"), Value: groupName},
+			{Label: i18n.T(loc, "email.detail.date_and_time"), Value: scheduledStr},
+			{Label: i18n.T(loc, "email.detail.duration"), Value: durationStr},
 		}
 		if b.Notes.Valid && b.Notes.String != "" {
-			details = append(details, email.Detail{Label: "Notes", Value: b.Notes.String})
+			details = append(details, email.Detail{Label: i18n.T(loc, "email.detail.notes"), Value: b.Notes.String})
 		}
 		return email.Message{
-			Preheader: "Your live coaching session has been confirmed.",
-			Heading:   "Live coaching session confirmed",
-			Intro:     "Your live coaching session has been confirmed.",
-			Details:   details,
+			Copy: email.Copy{
+				Preheader: i18n.T(loc, "email.booking_confirmed.preheader"),
+				Title:     i18n.T(loc, "email.booking_confirmed.title"),
+				Intro:     i18n.T(loc, "email.booking_confirmed.intro"),
+			},
+			Details: details,
 		}
 	}
 
@@ -98,7 +102,9 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 			)
 			continue
 		}
-		if err := h.emailService.SendTemplate([]string{t.addr}, subject, email.TemplateNotification, buildMessage(t.partner)); err != nil {
+		loc := i18n.For(preferences.UserLang(ctx, h.q, h.logger, t.userID))
+		subject := i18n.T(loc, "email.booking_confirmed.subject")
+		if err := h.emailService.SendTemplate([]string{t.addr}, subject, email.TemplateNotification, buildMessage(loc, t.partner)); err != nil {
 			log.ErrorContext(ctx, "booking_created_email_failed",
 				slog.String("component", "coaching"),
 				slog.String("user_id", t.userID),
@@ -178,22 +184,25 @@ func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBookin
 	}
 
 	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
-	subject := "Live Coaching Session Cancelled"
+	loc := i18n.For(preferences.UserLang(ctx, h.q, h.logger, otherID))
 	details := []email.Detail{
-		{Label: "Session", Value: sessionTypeName},
-		{Label: "Group", Value: groupName},
-		{Label: "Date and time", Value: scheduledStr},
-		{Label: "Duration", Value: formatDuration(b.DurationMinutes)},
-		{Label: "Cancelled by", Value: cancellerName},
+		{Label: i18n.T(loc, "email.detail.session"), Value: sessionTypeName},
+		{Label: i18n.T(loc, "email.detail.group"), Value: groupName},
+		{Label: i18n.T(loc, "email.detail.date_and_time"), Value: scheduledStr},
+		{Label: i18n.T(loc, "email.detail.duration"), Value: formatDuration(b.DurationMinutes)},
+		{Label: i18n.T(loc, "email.detail.cancelled_by"), Value: cancellerName},
 	}
 	if reason := b.CancellationReason.String; reason != "" {
-		details = append(details, email.Detail{Label: "Reason", Value: reason})
+		details = append(details, email.Detail{Label: i18n.T(loc, "email.detail.reason"), Value: reason})
 	}
+	subject := i18n.T(loc, "email.booking_cancelled.subject")
 	message := email.Message{
-		Preheader: "A coaching session has been cancelled.",
-		Heading:   "Live coaching session cancelled",
-		Intro:     "A coaching session has been cancelled.",
-		Details:   details,
+		Copy: email.Copy{
+			Preheader: i18n.T(loc, "email.booking_cancelled.preheader"),
+			Title:     i18n.T(loc, "email.booking_cancelled.title"),
+			Intro:     i18n.T(loc, "email.booking_cancelled.intro"),
+		},
+		Details: details,
 	}
 
 	if err := h.emailService.SendTemplate([]string{otherEmail}, subject, email.TemplateNotification, message); err != nil {
@@ -212,3 +221,5 @@ func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBookin
 		slog.String("scheduled_at", scheduledStr),
 	)
 }
+
+

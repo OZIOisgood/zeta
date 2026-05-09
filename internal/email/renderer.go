@@ -19,9 +19,19 @@ type TemplateName string
 
 const TemplateNotification TemplateName = "notification"
 
+// Copy holds all translated text for an outgoing email.
+// Fields are fully-rendered strings (template variables already substituted).
+type Copy struct {
+	Preheader  string
+	Title      string
+	Intro      string
+	Button     string // CTA button label; used when Action != nil
+	FooterNote string
+}
+
+// Action is the call-to-action button data.
 type Action struct {
-	Label string
-	URL   string
+	URL string
 }
 
 type Detail struct {
@@ -29,13 +39,11 @@ type Detail struct {
 	Value string
 }
 
+// Message carries Copy, structured key/value details, and an optional CTA action.
 type Message struct {
-	Preheader  string
-	Heading    string
-	Intro      string
-	Details    []Detail
-	Action     *Action
-	FooterNote string
+	Copy    Copy
+	Details []Detail
+	Action  *Action
 }
 
 type RenderedEmail struct {
@@ -48,7 +56,9 @@ type templateEnvelope struct {
 	LogoURL   string
 	Year      int
 	Styles    template.CSS
-	Message   Message
+	Copy      Copy
+	Details   []Detail
+	Action    *Action
 }
 
 func RenderTemplate(templateName TemplateName, message Message) (RenderedEmail, error) {
@@ -68,7 +78,9 @@ func RenderTemplate(templateName TemplateName, message Message) (RenderedEmail, 
 		LogoURL:   logoURL(),
 		Year:      time.Now().Year(),
 		Styles:    template.CSS(string(styles)),
-		Message:   message,
+		Copy:      message.Copy,
+		Details:   message.Details,
+		Action:    message.Action,
 	}
 
 	var rawHTML bytes.Buffer

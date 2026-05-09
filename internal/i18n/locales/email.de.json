@@ -1,0 +1,58 @@
+{
+  "email.invitation.subject": "Du wurdest eingeladen, einer Gruppe auf Zeta beizutreten",
+  "email.invitation.preheader": "{{.InviterName}} hat dich eingeladen, einer Gruppe auf Zeta beizutreten.",
+  "email.invitation.title": "Du wurdest eingeladen, einer Gruppe beizutreten",
+  "email.invitation.intro": "{{.InviterName}} hat dich eingeladen, einer Gruppe auf Zeta beizutreten.",
+  "email.invitation.button": "Einladung annehmen",
+  "email.invitation.footer": "Diese Einladung wurde von Zeta gesendet, weil jemand diese E-Mail-Adresse beim Teilen einer Gruppe eingegeben hat.",
+
+  "email.invitation_accepted.subject": "Deine Einladung wurde angenommen",
+  "email.invitation_accepted.preheader": "{{.JoinerName}} hat deine Einladung angenommen.",
+  "email.invitation_accepted.title": "Deine Einladung wurde angenommen",
+  "email.invitation_accepted.intro": "{{.JoinerName}} hat deine Einladung angenommen und ist der Gruppe beigetreten.",
+
+  "email.member_removed.subject": "Du wurdest aus der Gruppe '{{.GroupName}}' entfernt",
+  "email.member_removed.preheader": "Du wurdest aus {{.GroupName}} entfernt.",
+  "email.member_removed.title": "Gruppenmitgliedschaft aktualisiert",
+  "email.member_removed.intro": "Du wurdest aus einer Gruppe entfernt.",
+
+  "email.video_uploaded.subject": "Neues Video hochgeladen",
+  "email.video_uploaded.preheader": "{{.UploaderName}} hat ein neues Video hochgeladen.",
+  "email.video_uploaded.title": "Neues Video hochgeladen",
+  "email.video_uploaded.intro": "{{.UploaderName}} hat ein neues Video in deine Gruppe hochgeladen.",
+
+  "email.video_reviewed.subject": "Dein Video wurde bewertet",
+  "email.video_reviewed.preheader": "Dein Video {{.VideoName}} wurde bewertet.",
+  "email.video_reviewed.title": "Dein Video wurde bewertet",
+  "email.video_reviewed.intro": "Dein Video wurde bewertet und ist jetzt abgeschlossen.",
+
+  "email.booking_confirmed.subject": "Live-Coaching-Sitzung bestätigt",
+  "email.booking_confirmed.preheader": "Deine Live-Coaching-Sitzung wurde bestätigt.",
+  "email.booking_confirmed.title": "Live-Coaching-Sitzung bestätigt",
+  "email.booking_confirmed.intro": "Deine Live-Coaching-Sitzung wurde bestätigt.",
+
+  "email.booking_cancelled.subject": "Live-Coaching-Sitzung abgesagt",
+  "email.booking_cancelled.preheader": "Eine Coaching-Sitzung wurde abgesagt.",
+  "email.booking_cancelled.title": "Live-Coaching-Sitzung abgesagt",
+  "email.booking_cancelled.intro": "Eine Coaching-Sitzung wurde abgesagt.",
+
+  "email.reminder.subject": "Erinnerung an Coaching-Sitzung",
+  "email.reminder.preheader": "Du hast eine bevorstehende Coaching-Sitzung.",
+  "email.reminder.title": "Erinnerung an Coaching-Sitzung",
+  "email.reminder.intro": "Du hast eine bevorstehende Coaching-Sitzung.",
+  "email.reminder.intro_imminent": "Deine Sitzung beginnt gleich.",
+  "email.reminder.button": "Sitzung beitreten",
+
+  "email.detail.session": "Sitzung",
+  "email.detail.with": "Mit",
+  "email.detail.group": "Gruppe",
+  "email.detail.date_and_time": "Datum und Uhrzeit",
+  "email.detail.duration": "Dauer",
+  "email.detail.notes": "Notizen",
+  "email.detail.cancelled_by": "Abgesagt von",
+  "email.detail.reason": "Grund",
+  "email.detail.video": "Video",
+  "email.detail.uploaded_by": "Hochgeladen von",
+  "email.detail.invitation_link": "Einladungslink",
+  "email.detail.new_member": "Neues Mitglied"
+}

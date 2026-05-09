@@ -10,6 +10,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
+	"github.com/OZIOisgood/zeta/internal/i18n"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
@@ -488,17 +489,21 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 
 		// Send Email
 		userName := fmt.Sprintf("%s %s", userCtx.FirstName, userCtx.LastName)
+		loc := i18n.For(preferences.UserLang(bgCtx, h.q, bgLog, group.OwnerID))
 		message := email.Message{
-			Preheader: fmt.Sprintf("%s uploaded a new video.", userName),
-			Heading:   "New video uploaded",
-			Intro:     fmt.Sprintf("%s uploaded a new video to your group.", userName),
+			Copy: email.Copy{
+				Preheader: i18n.T(loc, "email.video_uploaded.preheader", map[string]any{"UploaderName": userName}),
+				Title:     i18n.T(loc, "email.video_uploaded.title"),
+				Intro:     i18n.T(loc, "email.video_uploaded.intro", map[string]any{"UploaderName": userName}),
+			},
 			Details: []email.Detail{
-				{Label: "Video", Value: asset.Name},
-				{Label: "Group", Value: group.Name},
-				{Label: "Uploaded by", Value: userName},
+				{Label: i18n.T(loc, "email.detail.video"), Value: asset.Name},
+				{Label: i18n.T(loc, "email.detail.group"), Value: group.Name},
+				{Label: i18n.T(loc, "email.detail.uploaded_by"), Value: userName},
 			},
 		}
-		err = h.email.SendTemplate([]string{emailAddr}, "New Video Uploaded", email.TemplateNotification, message)
+		subject := i18n.T(loc, "email.video_uploaded.subject")
+		err = h.email.SendTemplate([]string{emailAddr}, subject, email.TemplateNotification, message)
 		if err != nil {
 			bgLog.ErrorContext(bgCtx, "asset_notification_send_failed",
 				slog.String("owner_id", group.OwnerID),
@@ -667,13 +672,16 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 					slog.Any("err", err),
 				)
 			} else {
-				subject := "Your video has been reviewed"
+				loc := i18n.For(preferences.UserLang(ctx, h.q, log, asset.OwnerID))
+				subject := i18n.T(loc, "email.video_reviewed.subject")
 				message := email.Message{
-					Preheader: fmt.Sprintf("Your video %s has been reviewed.", asset.Name),
-					Heading:   "Your video has been reviewed",
-					Intro:     "Your video has been reviewed and is now finalized.",
+					Copy: email.Copy{
+						Preheader: i18n.T(loc, "email.video_reviewed.preheader", map[string]any{"VideoName": asset.Name}),
+						Title:     i18n.T(loc, "email.video_reviewed.title"),
+						Intro:     i18n.T(loc, "email.video_reviewed.intro"),
+					},
 					Details: []email.Detail{
-						{Label: "Video", Value: asset.Name},
+						{Label: i18n.T(loc, "email.detail.video"), Value: asset.Name},
 					},
 				}
 				err = h.email.SendTemplate([]string{owner.Email}, subject, email.TemplateNotification, message)

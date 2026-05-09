@@ -83,22 +83,41 @@ func previewScenarios() []scenario {
 		{
 			name: "group-invitation",
 			message: email.Message{
-				Preheader: "Alex Morgan invited you to join a group on Zeta.",
-				Heading:   "You have been invited to join a group",
-				Intro:     "Alex Morgan invited you to join a group on Zeta.",
+				Copy: email.Copy{
+					Preheader:  "Alex Morgan invited you to join a group on Zeta.",
+					Title:      "You have been invited to join a group",
+					Intro:      "Alex Morgan invited you to join a group on Zeta.",
+					Button:     "Accept invitation",
+					FooterNote: "This invitation was sent from Zeta because someone entered this email address while sharing a group.",
+				},
 				Details: []email.Detail{
 					{Label: "Invitation link", Value: "http://localhost:4200/groups?invite=AbC123"},
 				},
-				Action:     &email.Action{Label: "Accept invitation", URL: "http://localhost:4200/groups?invite=AbC123"},
-				FooterNote: "This invitation was sent from Zeta because someone entered this email address while sharing a group.",
+				Action: &email.Action{URL: "http://localhost:4200/groups?invite=AbC123"},
+			},
+		},
+		{
+			name: "invitation-accepted",
+			message: email.Message{
+				Copy: email.Copy{
+					Preheader: "Jamie Lee has accepted your invitation and joined Advanced Tennis.",
+					Title:     "Invitation accepted",
+					Intro:     "Jamie Lee has accepted your invitation and joined Advanced Tennis.",
+				},
+				Details: []email.Detail{
+					{Label: "Member", Value: "Jamie Lee"},
+					{Label: "Group", Value: "Advanced Tennis"},
+				},
 			},
 		},
 		{
 			name: "video-uploaded",
 			message: email.Message{
-				Preheader: "Jamie Lee uploaded a new video.",
-				Heading:   "New video uploaded",
-				Intro:     "Jamie Lee uploaded a new video to your group.",
+				Copy: email.Copy{
+					Preheader: "Jamie Lee uploaded a new video.",
+					Title:     "New video uploaded",
+					Intro:     "Jamie Lee uploaded a new video to your group.",
+				},
 				Details: []email.Detail{
 					{Label: "Video", Value: "Backhand drill, set 3"},
 					{Label: "Group", Value: "Advanced Tennis"},
@@ -109,9 +128,11 @@ func previewScenarios() []scenario {
 		{
 			name: "video-reviewed",
 			message: email.Message{
-				Preheader: "Your video Backhand drill, set 3 has been reviewed.",
-				Heading:   "Your video has been reviewed",
-				Intro:     "Your video has been reviewed and is now finalized.",
+				Copy: email.Copy{
+					Preheader: "Your video Backhand drill, set 3 has been reviewed.",
+					Title:     "Your video has been reviewed",
+					Intro:     "Your video has been reviewed and is now finalized.",
+				},
 				Details: []email.Detail{
 					{Label: "Video", Value: "Backhand drill, set 3"},
 				},
@@ -120,9 +141,11 @@ func previewScenarios() []scenario {
 		{
 			name: "booking-confirmed",
 			message: email.Message{
-				Preheader: "Your live coaching session has been confirmed.",
-				Heading:   "Live coaching session confirmed",
-				Intro:     "Your live coaching session has been confirmed.",
+				Copy: email.Copy{
+					Preheader: "Your live coaching session has been confirmed.",
+					Title:     "Live coaching session confirmed",
+					Intro:     "Your live coaching session has been confirmed.",
+				},
 				Details: []email.Detail{
 					{Label: "Session", Value: "Technique review"},
 					{Label: "With", Value: "Alex Morgan"},
@@ -136,9 +159,11 @@ func previewScenarios() []scenario {
 		{
 			name: "booking-cancelled",
 			message: email.Message{
-				Preheader: "A coaching session has been cancelled.",
-				Heading:   "Live coaching session cancelled",
-				Intro:     "A coaching session has been cancelled.",
+				Copy: email.Copy{
+					Preheader: "A coaching session has been cancelled.",
+					Title:     "Live coaching session cancelled",
+					Intro:     "A coaching session has been cancelled.",
+				},
 				Details: []email.Detail{
 					{Label: "Session", Value: "Technique review"},
 					{Label: "Group", Value: "Advanced Tennis"},
@@ -152,22 +177,27 @@ func previewScenarios() []scenario {
 		{
 			name: "coaching-reminder",
 			message: email.Message{
-				Preheader: "You have an upcoming coaching session.",
-				Heading:   "Coaching session reminder",
-				Intro:     "Your session is about to start.",
+				Copy: email.Copy{
+					Preheader: "You have an upcoming coaching session.",
+					Title:     "Coaching session reminder",
+					Intro:     "Your session starts in 1 hour.",
+					Button:    "Join session",
+				},
 				Details: []email.Detail{
 					{Label: "Date and time", Value: "Friday, May 8, 2026 at 15:00 UTC"},
 					{Label: "Duration", Value: "45 min"},
 				},
-				Action: &email.Action{Label: "Join session", URL: "http://localhost:4200/sessions/group-id/booking-id/call"},
+				Action: &email.Action{URL: "http://localhost:4200/sessions/group-id/booking-id/call"},
 			},
 		},
 		{
 			name: "group-member-removed",
 			message: email.Message{
-				Preheader: "You have been removed from Advanced Tennis.",
-				Heading:   "Group membership updated",
-				Intro:     "You have been removed from a group.",
+				Copy: email.Copy{
+					Preheader: "You have been removed from Advanced Tennis.",
+					Title:     "Group membership updated",
+					Intro:     "You have been removed from a group.",
+				},
 				Details: []email.Detail{
 					{Label: "Group", Value: "Advanced Tennis"},
 				},

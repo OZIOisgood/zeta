@@ -59,6 +59,10 @@ func TestSendBookingCreatedEmailSkipsDisabledRecipient(t *testing.T) {
 		},
 		nil,
 	)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(
+		db.UserPreference{Language: db.LanguageCodeEn},
+		nil,
+	)
 	sender.EXPECT().SendTemplate([]string{"expert@example.com"}, gomock.Any(), email.TemplateNotification, gomock.Any()).Return(nil)
 
 	h.sendBookingCreatedEmail(t.Context(), booking, "Private Session")

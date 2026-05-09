@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"os"
 
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/jackc/pgx/v5"
@@ -94,4 +95,32 @@ func Allows(prefs db.GetUserEmailPreferencesRow, category EmailCategory) bool {
 	default:
 		return true
 	}
+}
+
+// UserLang returns the language preference for a registered user (e.g. "en", "de", "fr").
+// When the preferences row is absent it falls back to DEFAULT_LANGUAGE or "en".
+func UserLang(ctx context.Context, q db.Querier, log *slog.Logger, userID string) string {
+	prefs, err := q.GetUserPreferences(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return defaultLang()
+	}
+	if err != nil {
+		log.WarnContext(ctx, "user_lang_fetch_failed",
+			slog.String("component", "preferences"),
+			slog.String("user_id", userID),
+			slog.Any("err", err),
+		)
+		return defaultLang()
+	}
+	if prefs.Language == "" {
+		return defaultLang()
+	}
+	return string(prefs.Language)
+}
+
+func defaultLang() string {
+	if v := os.Getenv("DEFAULT_LANGUAGE"); v != "" {
+		return v
+	}
+	return "en"
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
+	"github.com/OZIOisgood/zeta/internal/i18n"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/go-chi/chi/v5"
@@ -298,13 +298,16 @@ func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		subject := fmt.Sprintf("You have been removed from group '%s'", group.Name)
+		loc := i18n.For(preferences.UserLang(bgCtx, h.q, h.logger, targetUserID))
+		subject := i18n.T(loc, "email.member_removed.subject", map[string]any{"GroupName": group.Name})
 		message := email.Message{
-			Preheader: fmt.Sprintf("You have been removed from %s.", group.Name),
-			Heading:   "Group membership updated",
-			Intro:     "You have been removed from a group.",
+			Copy: email.Copy{
+				Preheader: i18n.T(loc, "email.member_removed.preheader", map[string]any{"GroupName": group.Name}),
+				Title:     i18n.T(loc, "email.member_removed.title"),
+				Intro:     i18n.T(loc, "email.member_removed.intro"),
+			},
 			Details: []email.Detail{
-				{Label: "Group", Value: group.Name},
+				{Label: i18n.T(loc, "email.detail.group"), Value: group.Name},
 			},
 		}
 		if err := h.email.SendTemplate([]string{removedUser.Email}, subject, email.TemplateNotification, message); err != nil {

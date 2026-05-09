@@ -19,13 +19,15 @@ func TestNewServiceReadsConfiguredSender(t *testing.T) {
 
 func TestRenderNotificationTemplateInlinesCSS(t *testing.T) {
 	rendered, err := RenderTemplate(TemplateNotification, Message{
-		Preheader: "Your video has been reviewed.",
-		Heading:   "Your video has been reviewed",
-		Intro:     "Your video has been reviewed and is now finalized.",
+		Copy: Copy{
+			Preheader: "Your video has been reviewed.",
+			Title:     "Your video has been reviewed",
+			Intro:     "Your video has been reviewed and is now finalized.",
+		},
 		Details: []Detail{
 			{Label: "Video", Value: "Backhand drill"},
 		},
-		Action: &Action{Label: "Open Zeta", URL: "http://localhost:4200"},
+		Action: &Action{URL: "http://localhost:4200"},
 	})
 	if err != nil {
 		t.Fatalf("render template: %v", err)
@@ -52,8 +54,10 @@ func TestRenderTemplateUsesConfiguredLogoURL(t *testing.T) {
 	t.Setenv("EMAIL_LOGO_URL", "https://example.com/logo.png")
 
 	rendered, err := RenderTemplate(TemplateNotification, Message{
-		Heading: "Configured logo",
-		Intro:   "Logo URL should be configurable.",
+		Copy: Copy{
+			Title: "Configured logo",
+			Intro: "Logo URL should be configurable.",
+		},
 	})
 	if err != nil {
 		t.Fatalf("render template: %v", err)

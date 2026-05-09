@@ -1,0 +1,58 @@
+{
+  "email.invitation.subject": "You've been invited to join a group on Zeta",
+  "email.invitation.preheader": "{{.InviterName}} invited you to join a group on Zeta.",
+  "email.invitation.title": "You have been invited to join a group",
+  "email.invitation.intro": "{{.InviterName}} invited you to join a group on Zeta.",
+  "email.invitation.button": "Accept invitation",
+  "email.invitation.footer": "This invitation was sent from Zeta because someone entered this email address while sharing a group.",
+
+  "email.invitation_accepted.subject": "Your invitation was accepted",
+  "email.invitation_accepted.preheader": "{{.JoinerName}} accepted your invitation.",
+  "email.invitation_accepted.title": "Your invitation was accepted",
+  "email.invitation_accepted.intro": "{{.JoinerName}} accepted your invitation and joined the group.",
+
+  "email.member_removed.subject": "You have been removed from group '{{.GroupName}}'",
+  "email.member_removed.preheader": "You have been removed from {{.GroupName}}.",
+  "email.member_removed.title": "Group membership updated",
+  "email.member_removed.intro": "You have been removed from a group.",
+
+  "email.video_uploaded.subject": "New Video Uploaded",
+  "email.video_uploaded.preheader": "{{.UploaderName}} uploaded a new video.",
+  "email.video_uploaded.title": "New video uploaded",
+  "email.video_uploaded.intro": "{{.UploaderName}} uploaded a new video to your group.",
+
+  "email.video_reviewed.subject": "Your video has been reviewed",
+  "email.video_reviewed.preheader": "Your video {{.VideoName}} has been reviewed.",
+  "email.video_reviewed.title": "Your video has been reviewed",
+  "email.video_reviewed.intro": "Your video has been reviewed and is now finalized.",
+
+  "email.booking_confirmed.subject": "Live Coaching Session Confirmed",
+  "email.booking_confirmed.preheader": "Your live coaching session has been confirmed.",
+  "email.booking_confirmed.title": "Live coaching session confirmed",
+  "email.booking_confirmed.intro": "Your live coaching session has been confirmed.",
+
+  "email.booking_cancelled.subject": "Live Coaching Session Cancelled",
+  "email.booking_cancelled.preheader": "A coaching session has been cancelled.",
+  "email.booking_cancelled.title": "Live coaching session cancelled",
+  "email.booking_cancelled.intro": "A coaching session has been cancelled.",
+
+  "email.reminder.subject": "Coaching Session Reminder",
+  "email.reminder.preheader": "You have an upcoming coaching session.",
+  "email.reminder.title": "Coaching session reminder",
+  "email.reminder.intro": "You have an upcoming coaching session.",
+  "email.reminder.intro_imminent": "Your session is about to start.",
+  "email.reminder.button": "Join session",
+
+  "email.detail.session": "Session",
+  "email.detail.with": "With",
+  "email.detail.group": "Group",
+  "email.detail.date_and_time": "Date and time",
+  "email.detail.duration": "Duration",
+  "email.detail.notes": "Notes",
+  "email.detail.cancelled_by": "Cancelled by",
+  "email.detail.reason": "Reason",
+  "email.detail.video": "Video",
+  "email.detail.uploaded_by": "Uploaded by",
+  "email.detail.invitation_link": "Invitation link",
+  "email.detail.new_member": "New member"
+}

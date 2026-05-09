@@ -9,9 +9,11 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
+	"github.com/OZIOisgood/zeta/internal/i18n"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
 
 // ProcessReminders is an internal endpoint called by Cloud Scheduler.
@@ -47,53 +49,76 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 		}
 
 		scheduledStr := rem.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
-		subject := "Coaching Session Reminder"
-		message := email.Message{
-			Preheader: "You have an upcoming coaching session.",
-			Heading:   "Coaching session reminder",
-			Intro:     "You have an upcoming coaching session.",
-			Details: []email.Detail{
-				{Label: "Date and time", Value: scheduledStr},
-				{Label: "Duration", Value: formatDuration(rem.DurationMinutes)},
-			},
-		}
 
-		// For the 15-min reminder, append a direct "Join" link.
+		// isImminent is true for the ≤20-min reminder that includes a join link.
 		diff := rem.ScheduledAt.Time.Sub(rem.RemindAt.Time)
-		if diff <= 20*time.Minute && h.appBaseURL != "" {
+		isImminent := diff <= 20*time.Minute
+
+		var joinURL string
+		if isImminent && h.appBaseURL != "" {
 			groupID := uuidToString(rem.GroupID)
 			bookingID := uuidToString(rem.BookingID)
-			joinURL := h.appBaseURL + "/sessions/" + groupID + "/" + bookingID + "/call"
-			message.Intro = "Your session is about to start."
-			message.Action = &email.Action{
-				Label: "Join session",
-				URL:   joinURL,
-			}
+			joinURL = h.appBaseURL + "/sessions/" + groupID + "/" + bookingID + "/call"
 		}
 
-		recipientIDs := make([]string, 0, 2)
+		// Send a separate, language-aware email per recipient.
+		// If any send errors we skip the MarkReminderSent so it is retried.
+		sendFailed := false
 		for _, userID := range []string{rem.ExpertID, rem.StudentID} {
-			if preferences.AllowsUserEmail(ctx, h.q, h.logger, userID, preferences.EmailCategoryCoachingReminders) {
-				recipientIDs = append(recipientIDs, userID)
-			} else {
+			if !preferences.AllowsUserEmail(ctx, h.q, h.logger, userID, preferences.EmailCategoryCoachingReminders) {
 				log.InfoContext(ctx, "reminder_email_skipped_by_preferences",
 					slog.String("component", "coaching"),
 					slog.String("reminder_id", uuidToString(rem.ID)),
 					slog.String("user_id", userID),
 				)
+				continue
 			}
-		}
 
-		recipients := h.resolveEmails(ctx, recipientIDs)
-		if len(recipients) > 0 {
-			if err := h.emailService.SendTemplate(recipients, subject, email.TemplateNotification, message); err != nil {
+			u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{User: userID})
+			if err != nil || u.Email == "" {
+				log.WarnContext(ctx, "reminder_email_resolve_user_failed",
+					slog.String("component", "coaching"),
+					slog.String("user_id", userID),
+					slog.Any("err", err),
+				)
+				continue
+			}
+
+			loc := i18n.For(preferences.UserLang(ctx, h.q, h.logger, userID))
+			introKey := "email.reminder.intro"
+			if isImminent {
+				introKey = "email.reminder.intro_imminent"
+			}
+			msg := email.Message{
+				Copy: email.Copy{
+					Preheader: i18n.T(loc, "email.reminder.preheader"),
+					Title:     i18n.T(loc, "email.reminder.title"),
+					Intro:     i18n.T(loc, introKey),
+				},
+				Details: []email.Detail{
+					{Label: i18n.T(loc, "email.detail.date_and_time"), Value: scheduledStr},
+					{Label: i18n.T(loc, "email.detail.duration"), Value: formatDuration(rem.DurationMinutes)},
+				},
+			}
+			if joinURL != "" {
+				msg.Copy.Button = i18n.T(loc, "email.reminder.button")
+				msg.Action = &email.Action{URL: joinURL}
+			}
+
+			subject := i18n.T(loc, "email.reminder.subject")
+			if err := h.emailService.SendTemplate([]string{u.Email}, subject, email.TemplateNotification, msg); err != nil {
 				log.ErrorContext(ctx, "reminder_email_failed",
 					slog.String("component", "coaching"),
 					slog.String("reminder_id", uuidToString(rem.ID)),
+					slog.String("user_id", userID),
 					slog.Any("err", err),
 				)
-				continue // don't mark as sent so it's retried
+				sendFailed = true
 			}
+		}
+
+		if sendFailed {
+			continue // don't mark as sent so it is retried on the next poll
 		}
 
 		if err := h.q.MarkReminderSent(ctx, rem.ID); err != nil {

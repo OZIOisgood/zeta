@@ -15,6 +15,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
+	"github.com/OZIOisgood/zeta/internal/i18n"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
@@ -142,19 +143,21 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 	inviteLink := h.inviteURL(code)
 	if emailAddress != "" {
 		inviterName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
-		subject := "You've been invited to join a group on Zeta"
+		// External invitation: recipient user ID unknown — use DEFAULT_LANGUAGE.
+		loc := i18n.Default()
+		subject := i18n.T(loc, "email.invitation.subject")
 		message := email.Message{
-			Preheader: fmt.Sprintf("%s invited you to join a group on Zeta.", inviterName),
-			Heading:   "You have been invited to join a group",
-			Intro:     fmt.Sprintf("%s invited you to join a group on Zeta.", inviterName),
+			Copy: email.Copy{
+				Preheader:  i18n.T(loc, "email.invitation.preheader", map[string]any{"InviterName": inviterName}),
+				Title:      i18n.T(loc, "email.invitation.title"),
+				Intro:      i18n.T(loc, "email.invitation.intro", map[string]any{"InviterName": inviterName}),
+				Button:     i18n.T(loc, "email.invitation.button"),
+				FooterNote: i18n.T(loc, "email.invitation.footer"),
+			},
 			Details: []email.Detail{
-				{Label: "Invitation link", Value: inviteLink},
+				{Label: i18n.T(loc, "email.detail.invitation_link"), Value: inviteLink},
 			},
-			Action: &email.Action{
-				Label: "Accept invitation",
-				URL:   inviteLink,
-			},
-			FooterNote: "This invitation was sent from Zeta because someone entered this email address while sharing a group.",
+			Action: &email.Action{URL: inviteLink},
 		}
 
 		go func(to string) {
@@ -382,14 +385,17 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 			}
 
 			joinerName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
-			subject := "Your invitation was accepted"
+			loc := i18n.For(preferences.UserLang(bgCtx, h.q, bgLog, invitation.InviterID))
+			subject := i18n.T(loc, "email.invitation_accepted.subject")
 			message := email.Message{
-				Preheader: fmt.Sprintf("%s accepted your invitation.", joinerName),
-				Heading:   "Your invitation was accepted",
-				Intro:     fmt.Sprintf("%s accepted your invitation and joined the group.", joinerName),
+				Copy: email.Copy{
+					Preheader: i18n.T(loc, "email.invitation_accepted.preheader", map[string]any{"JoinerName": joinerName}),
+					Title:     i18n.T(loc, "email.invitation_accepted.title"),
+					Intro:     i18n.T(loc, "email.invitation_accepted.intro", map[string]any{"JoinerName": joinerName}),
+				},
 				Details: []email.Detail{
-					{Label: "Group", Value: group.Name},
-					{Label: "New member", Value: joinerName},
+					{Label: i18n.T(loc, "email.detail.group"), Value: group.Name},
+					{Label: i18n.T(loc, "email.detail.new_member"), Value: joinerName},
 				},
 			}
 			if err := h.email.SendTemplate([]string{inviter.Email}, subject, email.TemplateNotification, message); err != nil {
