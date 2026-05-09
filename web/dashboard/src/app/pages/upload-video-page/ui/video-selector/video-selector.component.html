@@ -4,7 +4,7 @@
     <div *ngIf="dragged; else base" class="content">
       <tui-avatar appearance="secondary" src="@tui.droplet" />
       <div>
-        Drop videos here!
+        {{ 'upload.dropVideos' | translate }}
         <br />
         <br />
       </div>
@@ -13,8 +13,8 @@
       <div class="content">
         <tui-avatar appearance="secondary" src="@tui.cloud-upload" />
         <div>
-          Drag and drop videos here or
-          <a tuiLink>click to upload</a>
+          {{ 'upload.dragDrop' | translate }}
+          <a tuiLink>{{ 'upload.clickUpload' | translate }}</a>
         </div>
       </div>
     </ng-template>

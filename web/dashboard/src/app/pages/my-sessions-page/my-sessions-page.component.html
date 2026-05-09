@@ -1,12 +1,12 @@
 <app-page-container>
-  <app-section-header title="Sessions">
+  <app-section-header title="sessions.title">
     <div class="header-actions">
       @if (canManageAvailability()) {
         <button
           tuiIconButton
           appearance="secondary"
           size="m"
-          title="Manage availability"
+          [title]="'common.aria.manageAvailability' | translate"
           (click)="manageAvailability()"
         >
           <tui-icon icon="@tui.settings"></tui-icon>
@@ -17,7 +17,7 @@
           tuiIconButton
           appearance="secondary"
           size="m"
-          title="Book a session"
+          [title]="'common.aria.bookSession' | translate"
           (click)="bookSession()"
         >
           <tui-icon icon="@tui.plus"></tui-icon>
@@ -32,17 +32,17 @@
       [class.tab--active]="activeTab() === 'upcoming'"
       (click)="setTab('upcoming')"
     >
-      Upcoming ({{ upcoming().length }})
+      {{ 'sessions.tabs.upcoming' | translate: { count: upcoming().length } }}
     </button>
     <button class="tab" [class.tab--active]="activeTab() === 'past'" (click)="setTab('past')">
-      Past ({{ past().length }})
+      {{ 'sessions.tabs.past' | translate: { count: past().length } }}
     </button>
     <button
       class="tab"
       [class.tab--active]="activeTab() === 'cancelled'"
       (click)="setTab('cancelled')"
     >
-      Cancelled ({{ cancelled().length }})
+      {{ 'sessions.tabs.cancelled' | translate: { count: cancelled().length } }}
     </button>
   </div>
 
@@ -70,10 +70,10 @@
       @if (upcoming().length === 0) {
         <app-illustrated-message
           illustrationSrc="illustrations/live-coaching.png"
-          illustrationAlt="No upcoming sessions"
-          heading="No upcoming sessions"
-          description="You don't have any sessions scheduled yet."
-          [buttons]="canBook() ? [{ label: 'Book a session', appearance: 'primary' }] : []"
+          illustrationAlt="sessions.empty.upcomingAlt"
+          heading="sessions.empty.upcomingHeading"
+          description="sessions.empty.upcomingDescription"
+          [buttons]="canBook() ? [{ label: 'common.actions.bookSession', appearance: 'primary' }] : []"
           (buttonClick)="bookSession()"
         />
       } @else {
@@ -88,18 +88,22 @@
                 <span class="tui-text_body-s session-meta">{{
                   formatDateTime(booking.scheduled_at)
                 }}</span>
-                <span class="tui-text_body-s session-meta">{{ booking.duration_minutes }} min</span>
+                <span class="tui-text_body-s session-meta">
+                  {{ 'common.labels.minutesShort' | translate: { count: booking.duration_minutes } }}
+                </span>
                 @if (booking.session_type_name) {
                   <span class="tui-text_body-s session-meta session-type">{{
                     booking.session_type_name
                   }}</span>
                 }
-                <span class="status-badge status-badge--pending">upcoming</span>
+                <span class="status-badge status-badge--pending">
+                  {{ 'common.status.upcoming' | translate }}
+                </span>
               </div>
               <div class="session-actions">
                 @if (canJoin(booking)) {
                   <button tuiButton appearance="primary" size="s" (click)="joinSession(booking)">
-                    Join
+                    {{ 'common.actions.join' | translate }}
                   </button>
                 }
                 @if (canCancel(booking)) {
@@ -109,7 +113,7 @@
                     size="s"
                     (click)="openCancelDialog(booking)"
                   >
-                    Cancel
+                    {{ 'common.actions.cancel' | translate }}
                   </button>
                 }
               </div>
@@ -123,9 +127,9 @@
       @if (past().length === 0) {
         <app-illustrated-message
           illustrationSrc="illustrations/live-coaching.png"
-          illustrationAlt="No past sessions"
-          heading="No past sessions"
-          description="Your completed sessions will appear here."
+          illustrationAlt="sessions.empty.pastAlt"
+          heading="sessions.empty.pastHeading"
+          description="sessions.empty.pastDescription"
         />
       } @else {
         <div class="session-list">
@@ -139,13 +143,17 @@
                 <span class="tui-text_body-s session-meta">{{
                   formatDateTime(booking.scheduled_at)
                 }}</span>
-                <span class="tui-text_body-s session-meta">{{ booking.duration_minutes }} min</span>
+                <span class="tui-text_body-s session-meta">
+                  {{ 'common.labels.minutesShort' | translate: { count: booking.duration_minutes } }}
+                </span>
                 @if (booking.session_type_name) {
                   <span class="tui-text_body-s session-meta session-type">{{
                     booking.session_type_name
                   }}</span>
                 }
-                <span class="status-badge status-badge--done">done</span>
+                <span class="status-badge status-badge--done">
+                  {{ 'common.status.done' | translate }}
+                </span>
                 @if (booking.recording) {
                   <span class="status-badge" [ngClass]="recordingStatusClass(booking)">
                     {{ recordingStatusLabel(booking) }}
@@ -155,7 +163,7 @@
               <div class="session-actions">
                 @if (recordingReady(booking)) {
                   <button tuiButton appearance="primary" size="s" (click)="openRecording(booking)">
-                    Review
+                    {{ 'common.actions.review' | translate }}
                   </button>
                 }
               </div>
@@ -169,9 +177,9 @@
       @if (cancelled().length === 0) {
         <app-illustrated-message
           illustrationSrc="illustrations/live-coaching.png"
-          illustrationAlt="No cancelled sessions"
-          heading="No cancelled sessions"
-          description="You haven't cancelled any sessions."
+          illustrationAlt="sessions.empty.cancelledAlt"
+          heading="sessions.empty.cancelledHeading"
+          description="sessions.empty.cancelledDescription"
         />
       } @else {
         <div class="session-list">
@@ -187,10 +195,15 @@
                 }}</span>
                 @if (booking.cancellation_reason) {
                   <span class="tui-text_body-s session-meta"
-                    >Reason: {{ booking.cancellation_reason }}</span
+                    >{{
+                      'common.labels.reason'
+                        | translate: { reason: booking.cancellation_reason }
+                    }}</span
                   >
                 }
-                <span class="status-badge status-badge--cancelled">cancelled</span>
+                <span class="status-badge status-badge--cancelled">
+                  {{ 'common.status.cancelled' | translate }}
+                </span>
               </div>
             </div>
           }

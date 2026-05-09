@@ -1,16 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiButton } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-drawer',
   standalone: true,
-  imports: [CommonModule, TuiButton],
+  imports: [CommonModule, TuiButton, TranslatePipe],
   template: `
     <div class="backdrop" *ngIf="isOpen()" (click)="onBackdropClick($event)">
       <div class="drawer">
         <div class="drawer-header">
-          <div class="header-title">{{ title() }}</div>
+          <div class="header-title">{{ title() | translate }}</div>
           <button
             tuiIconButton
             appearance="secondary"

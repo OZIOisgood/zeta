@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiButton } from '@taiga-ui/core';
-import { TuiFilter } from '@taiga-ui/kit/components/filter';
 import { startWith, tap } from 'rxjs';
 import { AssetListComponent } from '../../shared/components/asset-list/asset-list.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
@@ -24,12 +24,11 @@ import {
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     TuiButton,
-    TuiFilter,
     PageContainerComponent,
     SectionHeaderComponent,
     AssetListComponent,
+    TranslatePipe,
   ],
   templateUrl: './videos-page.component.html',
   styleUrls: ['./videos-page.component.scss'],
@@ -39,6 +38,7 @@ export class VideosPageComponent {
   private readonly router = inject(Router);
   private readonly assetService = inject(AssetService);
   private readonly permissionsService = inject(PermissionsService);
+  private readonly translate = inject(TranslateService);
   public readonly auth = inject(AuthService);
 
   public readonly loading = signal(true);
@@ -70,6 +70,23 @@ export class VideosPageComponent {
     this.permissionsService.hasPermission('assets:finalize'),
   );
 
+  reviewStatusLabel(filter: ReviewStatusFilter): string {
+    return this.translate.instant(`videos.reviewStatus.${filter}`);
+  }
+
+  isReviewStatusSelected(filter: ReviewStatusFilter): boolean {
+    return this.selectedReviewStatusFilters().includes(filter);
+  }
+
+  toggleReviewStatusFilter(filter: ReviewStatusFilter): void {
+    const selected = this.selectedReviewStatusFilters();
+    this.reviewStatusFilter.setValue(
+      selected.includes(filter)
+        ? selected.filter((current) => current !== filter)
+        : [...selected, filter],
+    );
+  }
+
   onAddVideo(): void {
     this.router.navigate(['/upload-video']);
   }
@@ -79,12 +96,12 @@ export class VideosPageComponent {
   }
 
   reviewStatusEmptyHeading(): string {
-    return this.assets().length === 0 ? 'No videos yet' : 'No videos match these filters';
+    return this.assets().length === 0 ? 'videos.noVideosYet' : 'videos.noVideosMatch';
   }
 
   reviewStatusEmptyDescription(): string {
     return this.assets().length === 0
-      ? "Your students haven't uploaded any videos yet."
-      : 'No videos are available for the selected review statuses.';
+      ? 'videos.noStudentVideos'
+      : 'videos.noVideosForStatuses';
   }
 }

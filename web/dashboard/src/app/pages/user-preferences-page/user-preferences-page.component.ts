@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import {
@@ -23,8 +24,11 @@ import {
 import { AvatarSelectorComponent } from '../../shared/components/avatar-selector/avatar-selector.component';
 import { PageContainerComponent } from '../../shared/components/page-container/page-container.component';
 import { SectionHeaderComponent } from '../../shared/components/section-header/section-header.component';
+import { DASHBOARD_LANGUAGES } from '../../shared/i18n/dashboard-i18n.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
+
+type LanguageOption = (typeof DASHBOARD_LANGUAGES)[number];
 
 @Component({
   selector: 'app-user-preferences-page',
@@ -44,6 +48,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiCheckbox,
     TuiDataListWrapper,
     AvatarSelectorComponent,
+    TranslatePipe,
   ],
   templateUrl: './user-preferences-page.component.html',
   styleUrls: ['./user-preferences-page.component.scss'],
@@ -56,6 +61,7 @@ export class UserPreferencesPageComponent implements OnInit {
   private readonly permissions = inject(PermissionsService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly alerts = inject(TuiAlertService);
+  private readonly translate = inject(TranslateService);
 
   private readonly allTimezones: string[] = Intl.supportedValuesOf('timeZone');
   private readonly tabs = ['personal-data', 'email-preferences'] as const;
@@ -84,14 +90,10 @@ export class UserPreferencesPageComponent implements OnInit {
     coaching_reminders_enabled: true,
   };
 
-  protected readonly languages = [
-    { code: 'en', name: 'English' },
-    { code: 'de', name: 'German' },
-    { code: 'fr', name: 'French' },
-  ];
+  protected readonly languages = DASHBOARD_LANGUAGES;
 
-  protected readonly stringifyLanguage: TuiStringHandler<{ code: string; name: string }> = (item) =>
-    item.name;
+  protected readonly stringifyLanguage: TuiStringHandler<LanguageOption> = (item) =>
+    this.translate.instant(item.nameKey);
 
   protected readonly timezoneStringify = (tz: string): string => {
     try {
@@ -108,7 +110,7 @@ export class UserPreferencesPageComponent implements OnInit {
   protected readonly form = new FormGroup({
     first_name: new FormControl('', [Validators.required]),
     last_name: new FormControl('', [Validators.required]),
-    language: new FormControl(this.languages[0], [Validators.required]),
+    language: new FormControl<LanguageOption | null>(this.languages[0], [Validators.required]),
     timezone: new FormControl<string | null>(null, [Validators.required]),
     email_preferences: new FormGroup({
       notifications_enabled: new FormControl(true, { nonNullable: true }),
@@ -210,14 +212,16 @@ export class UserPreferencesPageComponent implements OnInit {
           this.newAvatarBase64 = null;
           this.form.markAsPristine();
           this.alerts
-            .open('Preferences updated successfully', { appearance: 'positive' })
+            .open(this.translate.instant('preferences.saveSuccess'), { appearance: 'positive' })
             .subscribe();
           this.cdr.markForCheck();
         },
         error: (error) => {
           console.error('Failed to save preferences:', error);
           this.isSubmitting = false;
-          this.alerts.open('Failed to update preferences', { appearance: 'negative' }).subscribe();
+          this.alerts
+            .open(this.translate.instant('preferences.saveFailed'), { appearance: 'negative' })
+            .subscribe();
           this.cdr.markForCheck();
         },
       });

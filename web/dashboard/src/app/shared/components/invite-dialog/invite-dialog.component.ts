@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiButton, TuiDialogContext, TuiIcon, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { injectContext } from '@taiga-ui/polymorpheus';
 import { InvitationsService } from '../../services/invitations.service';
@@ -9,7 +10,15 @@ import { InvitationsService } from '../../services/invitations.service';
 @Component({
   selector: 'app-invite-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TuiButton, TuiIcon, TuiLabel, TuiTextfield],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    TuiButton,
+    TuiIcon,
+    TuiLabel,
+    TuiTextfield,
+    TranslatePipe,
+  ],
   templateUrl: './invite-dialog.component.html',
   styleUrls: ['./invite-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,6 +28,7 @@ export class InviteDialogComponent {
   private readonly context = injectContext<TuiDialogContext<boolean, string>>();
   private readonly sanitizer = inject(DomSanitizer);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   protected readonly emailControl = new FormControl('', [Validators.email]);
   protected isSubmitting = false;
@@ -60,7 +70,7 @@ export class InviteDialogComponent {
       },
       error: (err) => {
         console.error('Failed to create invitation:', err);
-        this.errorMessage = 'Failed to create invitation. Please try again.';
+        this.errorMessage = this.translate.instant('groups.inviteDialog.failed');
         this.isSubmitting = false;
       },
     });

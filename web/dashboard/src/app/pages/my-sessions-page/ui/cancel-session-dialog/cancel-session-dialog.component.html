@@ -1,28 +1,34 @@
 <div class="dialog-form">
   <p class="dialog-description">
-    This will cancel the session with <strong>{{ data.otherParty }}</strong> on
-    {{ data.scheduledAt }}.
+    <span
+      [innerHTML]="
+        'sessions.cancel.description'
+          | translate: { otherParty: data.otherParty, scheduledAt: data.scheduledAt }
+      "
+    ></span>
   </p>
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="form-field">
       <tui-textfield [tuiTextfieldCleaner]="false">
-        <label tuiLabel>Reason (optional)</label>
+        <label tuiLabel>{{ 'common.fields.reasonOptional' | translate }}</label>
         <textarea
           tuiTextarea
           formControlName="cancellation_reason"
           [min]="3"
           [max]="8"
-          placeholder="Let them know why you are cancelling..."
+          [placeholder]="'sessions.cancel.placeholder' | translate"
         ></textarea>
       </tui-textfield>
     </div>
 
     <div class="form-actions">
       <button tuiButton type="button" appearance="secondary" (click)="onCancel()">
-        Keep Session
+        {{ 'sessions.cancel.keep' | translate }}
       </button>
-      <button tuiButton type="submit" appearance="destructive">Cancel Session</button>
+      <button tuiButton type="submit" appearance="destructive">
+        {{ 'sessions.cancel.title' | translate }}
+      </button>
     </div>
   </form>
 </div>

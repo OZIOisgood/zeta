@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiButton, TuiDialogContext, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiCheckbox } from '@taiga-ui/kit';
 import { injectContext } from '@taiga-ui/polymorpheus';
@@ -15,7 +16,15 @@ export interface BlockedSlotDialogResult {
 @Component({
   selector: 'app-blocked-slot-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TuiButton, TuiLabel, TuiTextfield, TuiCheckbox],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    TuiButton,
+    TuiLabel,
+    TuiTextfield,
+    TuiCheckbox,
+    TranslatePipe,
+  ],
   templateUrl: './blocked-slot-dialog.component.html',
   styleUrls: ['./blocked-slot-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

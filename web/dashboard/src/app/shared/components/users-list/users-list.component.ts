@@ -8,6 +8,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiTable } from '@taiga-ui/addon-table';
 import {
   TuiAlertService,
@@ -47,6 +48,7 @@ import { GroupUsersListKind, UsersService } from '../../services/users.service';
     TuiCardLarge,
     TuiTitle,
     TuiSkeleton,
+    TranslatePipe,
   ],
   templateUrl: './users-list.component.html',
   styleUrls: ['./users-list.component.scss'],
@@ -58,6 +60,7 @@ export class UsersListComponent {
   private readonly auth = inject(AuthService);
   private readonly alerts = inject(TuiAlertService);
   private readonly dialogs = inject(TuiDialogService);
+  private readonly translate = inject(TranslateService);
 
   private readonly groupIdSubject = new BehaviorSubject<string | null>(null);
   private readonly refresh$ = new BehaviorSubject<void>(void 0);
@@ -89,15 +92,15 @@ export class UsersListComponent {
     if (!groupId) return;
 
     const data: TuiConfirmData = {
-      content: `Are you sure you want to remove ${name} from this group?`,
-      yes: 'Remove',
-      no: 'Cancel',
+      content: this.translate.instant('groups.users.confirmRemove', { name }),
+      yes: this.translate.instant('common.actions.remove'),
+      no: this.translate.instant('common.actions.cancel'),
       appearance: 'destructive',
     };
 
     this.dialogs
       .open<boolean>(TUI_CONFIRM, {
-        label: 'Remove User',
+        label: this.translate.instant('groups.users.removeUser'),
         size: 's',
         data,
       })
@@ -108,12 +111,12 @@ export class UsersListComponent {
       .subscribe({
         next: () => {
           this.alerts
-            .open(`${name} has been removed from the group`, { appearance: 'positive' })
+            .open(this.translate.instant('groups.users.removed', { name }), { appearance: 'positive' })
             .subscribe();
           this.refresh$.next();
         },
         error: (err) => {
-          const msg = err?.error || 'Failed to remove user';
+          const msg = err?.error || this.translate.instant('groups.users.removeFailed');
           this.alerts.open(msg, { appearance: 'negative' }).subscribe();
         },
       });

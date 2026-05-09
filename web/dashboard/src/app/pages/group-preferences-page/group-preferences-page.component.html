@@ -2,7 +2,7 @@
   <div class="preferences-page">
     <app-breadcrumbs [items]="breadcrumbs()"></app-breadcrumbs>
 
-    <app-section-header title="Group Preferences"></app-section-header>
+    <app-section-header title="groups.preferences"></app-section-header>
 
     @if (loading()) {
       <div class="loading-placeholder">
@@ -17,9 +17,9 @@
           [activeItemIndex]="activeTabIndex()"
           (activeItemIndexChange)="onTabIndexChange($event)"
         >
-          <button tuiTab type="button">Preferences</button>
+          <button tuiTab type="button">{{ 'groups.preferencesTab' | translate }}</button>
           @if (isOwner()) {
-            <button tuiTab type="button">Danger Zone</button>
+            <button tuiTab type="button">{{ 'groups.dangerZone' | translate }}</button>
           }
         </nav>
 
@@ -31,9 +31,9 @@
           [activeItemIndex]="activeTabIndex()"
           (activeItemIndexChange)="onTabIndexChange($event)"
         >
-          <button tuiTab type="button">Preferences</button>
+          <button tuiTab type="button">{{ 'groups.preferencesTab' | translate }}</button>
           @if (isOwner()) {
-            <button tuiTab type="button">Danger Zone</button>
+            <button tuiTab type="button">{{ 'groups.dangerZone' | translate }}</button>
           }
         </nav>
 
@@ -42,14 +42,14 @@
             <form [formGroup]="form" (ngSubmit)="onSubmit()" class="preferences-form">
               <div class="form-field">
                 <tui-textfield>
-                  <label tuiLabel>Name</label>
+                  <label tuiLabel>{{ 'common.fields.name' | translate }}</label>
                   <input formControlName="name" tuiTextfield type="text" />
                 </tui-textfield>
               </div>
 
               <div class="form-field">
                 <tui-textfield>
-                  <label tuiLabel>Description</label>
+                  <label tuiLabel>{{ 'common.fields.description' | translate }}</label>
                   <textarea
                     tuiTextarea
                     formControlName="description"
@@ -66,20 +66,20 @@
               ></app-avatar-selector>
 
               <div class="form-actions">
-                <button tuiButton type="submit" [disabled]="isSaveDisabled">Save</button>
+                <button tuiButton type="submit" [disabled]="isSaveDisabled">
+                  {{ 'common.actions.save' | translate }}
+                </button>
               </div>
             </form>
           }
 
           @if (activeTabIndex() === 1 && isOwner()) {
             <div class="danger-zone">
-              <h4 class="danger-zone__title">Danger Zone</h4>
+              <h4 class="danger-zone__title">{{ 'groups.dangerZone' | translate }}</h4>
               <div class="danger-zone__row">
                 <div class="danger-zone__description">
-                  <strong>Delete this group</strong>
-                  <p>
-                    Permanently delete this group and all its members, invitations, and content.
-                  </p>
+                  <strong>{{ 'groups.deleteThisGroup' | translate }}</strong>
+                  <p>{{ 'groups.deleteDescription' | translate }}</p>
                 </div>
                 <button
                   tuiButton
@@ -89,7 +89,7 @@
                   [disabled]="isDeleting"
                   (click)="onDeleteGroup()"
                 >
-                  Delete Group
+                  {{ 'groups.deleteGroup' | translate }}
                 </button>
               </div>
             </div>

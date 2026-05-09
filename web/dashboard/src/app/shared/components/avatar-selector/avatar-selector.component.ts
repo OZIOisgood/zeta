@@ -7,19 +7,23 @@ import {
   OnChanges,
   Output,
   signal,
+  inject,
   SimpleChanges,
 } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiButton, TuiLabel } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-avatar-selector',
   standalone: true,
-  imports: [CommonModule, TuiButton, TuiLabel],
+  imports: [CommonModule, TuiButton, TuiLabel, TranslatePipe],
   templateUrl: './avatar-selector.component.html',
   styleUrls: ['./avatar-selector.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AvatarSelectorComponent implements OnChanges {
+  private readonly translate = inject(TranslateService);
+
   @Input() initialAvatar: string | null = null;
   @Input() disabled = false;
   @Output() avatarChange = new EventEmitter<string | null>();
@@ -54,7 +58,7 @@ export class AvatarSelectorComponent implements OnChanges {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      this.compressionError.set('Please select a valid image file');
+      this.compressionError.set(this.translate.instant('avatar.invalidImage'));
       return;
     }
 
@@ -75,7 +79,9 @@ export class AvatarSelectorComponent implements OnChanges {
         const sizeInBytes = Math.ceil((base64.length * 3) / 4);
         if (sizeInBytes > this.MAX_AVATAR_SIZE) {
           this.compressionError.set(
-            `Image size ${(sizeInBytes / 1024).toFixed(2)}KB exceeds 300KB limit`,
+            this.translate.instant('avatar.sizeExceeded', {
+              size: (sizeInBytes / 1024).toFixed(2),
+            }),
           );
           this.selectedFile.set(null);
           this.avatarPreview.set(null);
@@ -89,7 +95,7 @@ export class AvatarSelectorComponent implements OnChanges {
       };
 
       img.onerror = () => {
-        this.compressionError.set('Failed to load image');
+        this.compressionError.set(this.translate.instant('avatar.loadFailed'));
         this.selectedFile.set(null);
       };
 
@@ -97,7 +103,7 @@ export class AvatarSelectorComponent implements OnChanges {
     };
 
     reader.onerror = () => {
-      this.compressionError.set('Failed to read file');
+      this.compressionError.set(this.translate.instant('avatar.readFailed'));
       this.selectedFile.set(null);
     };
 

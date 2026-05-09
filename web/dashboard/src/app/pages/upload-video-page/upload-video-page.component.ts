@@ -14,6 +14,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TuiButton, TuiTextfield } from '@taiga-ui/core';
 import {
@@ -62,6 +63,7 @@ import { VideoSelectorComponent } from './ui/video-selector/video-selector.compo
     TuiAvatar,
     VideoSelectorComponent,
     VideoDetailsComponent,
+    TranslatePipe,
   ],
   templateUrl: './upload-video-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

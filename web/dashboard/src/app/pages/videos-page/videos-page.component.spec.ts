@@ -21,13 +21,13 @@ describe('review status filters', () => {
       asset('done', 'completed', 1),
     ];
 
-    expect(filterAssetsByReviewStatus(assets, ['To review']).map((item) => item.id)).toEqual([
+    expect(filterAssetsByReviewStatus(assets, ['toReview']).map((item) => item.id)).toEqual([
       'not-started',
     ]);
-    expect(filterAssetsByReviewStatus(assets, ['In review']).map((item) => item.id)).toEqual([
+    expect(filterAssetsByReviewStatus(assets, ['inReview']).map((item) => item.id)).toEqual([
       'started',
     ]);
-    expect(filterAssetsByReviewStatus(assets, ['Reviewed']).map((item) => item.id)).toEqual([
+    expect(filterAssetsByReviewStatus(assets, ['reviewed']).map((item) => item.id)).toEqual([
       'done',
     ]);
   });
@@ -54,9 +54,9 @@ describe('review status filters', () => {
     ]);
 
     expect(counts).toEqual({
-      'To review': 1,
-      'In review': 1,
-      Reviewed: 1,
+      toReview: 1,
+      inReview: 1,
+      reviewed: 1,
     });
   });
 });

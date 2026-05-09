@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiDay, TuiMonth } from '@taiga-ui/cdk/date-time';
 import {
   TuiAlertService,
@@ -56,6 +57,7 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiTextarea,
     GroupsListComponent,
     IllustratedMessageComponent,
+    TranslatePipe,
   ],
   templateUrl: './book-coaching-page.component.html',
   styleUrl: './book-coaching-page.component.scss',
@@ -67,6 +69,7 @@ export class BookCoachingPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly alerts = inject(TuiAlertService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   protected activeIndex = 0;
   protected slideDirection = 1;
@@ -154,7 +157,11 @@ export class BookCoachingPageComponent implements OnInit {
       error: () => {
         this.expertsLoading.set(false);
         this.cdr.markForCheck();
-        this.alerts.open('Failed to load experts', { appearance: 'negative' }).subscribe();
+        this.alerts
+          .open(this.translate.instant('sessions.book.loadExpertsFailed'), {
+            appearance: 'negative',
+          })
+          .subscribe();
       },
     });
   }
@@ -180,7 +187,11 @@ export class BookCoachingPageComponent implements OnInit {
       error: () => {
         this.sessionTypesLoading.set(false);
         this.cdr.markForCheck();
-        this.alerts.open('Failed to load session types', { appearance: 'negative' }).subscribe();
+        this.alerts
+          .open(this.translate.instant('sessions.book.loadSessionTypesFailed'), {
+            appearance: 'negative',
+          })
+          .subscribe();
       },
     });
   }
@@ -217,7 +228,9 @@ export class BookCoachingPageComponent implements OnInit {
           this.slotsLoading.set(false);
           this.cdr.markForCheck();
           this.alerts
-            .open('Failed to load available slots', { appearance: 'negative' })
+            .open(this.translate.instant('sessions.book.loadSlotsFailed'), {
+              appearance: 'negative',
+            })
             .subscribe();
         },
       });
@@ -230,7 +243,7 @@ export class BookCoachingPageComponent implements OnInit {
       const d = new Date(slot.starts_at);
       const dateKey = this.toDateKey(d);
       daySet.add(dateKey);
-      const label = d.toLocaleDateString(undefined, {
+      const label = d.toLocaleDateString(this.translate.currentLang || undefined, {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
@@ -285,7 +298,7 @@ export class BookCoachingPageComponent implements OnInit {
   protected get selectedDateLabel(): string {
     if (!this.selectedCalendarDate) return '';
     const d = this.selectedCalendarDate.toLocalNativeDate();
-    return d.toLocaleDateString(undefined, {
+    return d.toLocaleDateString(this.translate.currentLang || undefined, {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
@@ -298,7 +311,7 @@ export class BookCoachingPageComponent implements OnInit {
   }
 
   protected formatTime(isoString: string): string {
-    return new Date(isoString).toLocaleTimeString(undefined, {
+    return new Date(isoString).toLocaleTimeString(this.translate.currentLang || undefined, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -307,19 +320,23 @@ export class BookCoachingPageComponent implements OnInit {
   protected formatSlotDateTime(slot: CoachingSlot): string {
     const start = new Date(slot.starts_at);
     return (
-      start.toLocaleString(undefined, {
+      start.toLocaleString(this.translate.currentLang || undefined, {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-      }) + ` – ${this.formatTime(slot.ends_at)} (your local time)`
+      }) +
+      ` – ${this.formatTime(slot.ends_at)} (${this.translate.instant('common.labels.yourLocalTime')})`
     );
   }
 
   protected get selectedExpertName(): string {
     if (!this.selectedExpert) return '';
-    return `${this.selectedExpert.first_name} ${this.selectedExpert.last_name}`.trim() || 'Expert';
+    return (
+      `${this.selectedExpert.first_name} ${this.selectedExpert.last_name}`.trim() ||
+      this.translate.instant('common.labels.expert')
+    );
   }
 
   protected expertAvatarSrc(expert: ExpertInfo): string {
@@ -360,8 +377,8 @@ export class BookCoachingPageComponent implements OnInit {
 
           const msg =
             err.status === 409
-              ? 'That slot was just taken. Please choose another.'
-              : 'Failed to book session. Please try again.';
+              ? this.translate.instant('sessions.book.slotTaken')
+              : this.translate.instant('sessions.book.failed');
           this.alerts.open(msg, { appearance: 'negative' }).subscribe();
           if (err.status === 409) {
             // Refresh slots

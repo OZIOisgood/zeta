@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   TuiAlertService,
   TuiButton,
@@ -41,6 +42,7 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiTextfield,
     TuiTextarea,
     AvatarSelectorComponent,
+    TranslatePipe,
   ],
   templateUrl: './group-preferences-page.component.html',
   styleUrls: ['./group-preferences-page.component.scss'],
@@ -53,6 +55,7 @@ export class GroupPreferencesPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(TuiDialogService);
   private readonly alerts = inject(TuiAlertService);
+  private readonly translate = inject(TranslateService);
 
   private readonly tabs = ['general', 'danger-zone'] as const;
   protected readonly group = signal<Group | null>(null);
@@ -67,9 +70,9 @@ export class GroupPreferencesPageComponent implements OnInit {
   protected readonly breadcrumbs = computed(() => {
     const group = this.group();
     return [
-      { label: 'Groups', routerLink: '/groups' },
+      { label: 'common.nav.groups', routerLink: '/groups' },
       { label: group?.name ?? '...', routerLink: group ? `/groups/${group.id}` : undefined },
-      { label: 'Preferences' },
+      { label: 'common.actions.preferences' },
     ];
   });
 
@@ -161,12 +164,12 @@ export class GroupPreferencesPageComponent implements OnInit {
           this.avatarChanged = false;
           this.newAvatarBase64 = null;
           this.form.markAsPristine();
-          this.alerts.open('Group updated successfully', { appearance: 'positive' }).subscribe();
+          this.alerts.open(this.translate.instant('groups.updated'), { appearance: 'positive' }).subscribe();
         },
         error: (err) => {
           console.error('Failed to update group:', err);
           this.isSubmitting = false;
-          this.alerts.open('Failed to update group', { appearance: 'negative' }).subscribe();
+          this.alerts.open(this.translate.instant('groups.updateFailed'), { appearance: 'negative' }).subscribe();
         },
       });
   }
@@ -178,15 +181,15 @@ export class GroupPreferencesPageComponent implements OnInit {
     if (!group) return;
 
     const data: TuiConfirmData = {
-      content: 'This action cannot be undone. All group data will be permanently deleted.',
-      yes: 'Delete Group',
-      no: 'Cancel',
+      content: this.translate.instant('groups.deleteConfirm'),
+      yes: this.translate.instant('groups.deleteGroup'),
+      no: this.translate.instant('common.actions.cancel'),
       appearance: 'destructive',
     };
 
     this.dialogs
       .open<boolean>(TUI_CONFIRM, {
-        label: 'Delete Group',
+        label: this.translate.instant('groups.deleteGroup'),
         size: 's',
         data,
       })
@@ -199,13 +202,13 @@ export class GroupPreferencesPageComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.alerts.open('Group deleted', { appearance: 'positive' }).subscribe();
+          this.alerts.open(this.translate.instant('groups.deleted'), { appearance: 'positive' }).subscribe();
           this.router.navigate(['/groups']);
         },
         error: (err) => {
           console.error('Failed to delete group:', err);
           this.isDeleting = false;
-          this.alerts.open('Failed to delete group', { appearance: 'negative' }).subscribe();
+          this.alerts.open(this.translate.instant('groups.deleteFailed'), { appearance: 'negative' }).subscribe();
         },
       });
   }

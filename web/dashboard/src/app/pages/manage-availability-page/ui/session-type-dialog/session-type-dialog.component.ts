@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiButton, TuiDialogContext, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
 import { injectContext } from '@taiga-ui/polymorpheus';
@@ -28,6 +29,7 @@ export interface SessionTypeDialogResult {
     TuiTextfield,
     TuiSelect,
     TuiDataListWrapper,
+    TranslatePipe,
   ],
   templateUrl: './session-type-dialog.component.html',
   styleUrls: ['./session-type-dialog.component.scss'],
@@ -36,6 +38,7 @@ export interface SessionTypeDialogResult {
 export class SessionTypeDialogComponent {
   private readonly context =
     injectContext<TuiDialogContext<SessionTypeDialogResult | null, SessionTypeDialogData>>();
+  private readonly translate = inject(TranslateService);
 
   protected get isEditing(): boolean {
     return !!this.context.data.sessionType;
@@ -43,7 +46,8 @@ export class SessionTypeDialogComponent {
 
   protected readonly durationOptions = this.context.data.durationOptions;
 
-  protected readonly durationStringify = (val: number): string => `${val} min`;
+  protected readonly durationStringify = (val: number): string =>
+    this.translate.instant('common.labels.minutesShort', { count: val });
 
   protected readonly form = new FormGroup({
     name: new FormControl(this.context.data.sessionType?.name ?? '', [Validators.required]),

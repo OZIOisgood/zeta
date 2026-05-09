@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiButton, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiTextarea } from '@taiga-ui/kit';
 import { AvatarSelectorComponent } from '../../shared/components/avatar-selector/avatar-selector.component';
@@ -24,6 +25,7 @@ import { GroupsService } from '../../shared/services/groups.service';
     TuiTextfield,
     TuiTextarea,
     AvatarSelectorComponent,
+    TranslatePipe,
   ],
   templateUrl: './create-group-page.component.html',
   styleUrls: ['./create-group-page.component.scss'],

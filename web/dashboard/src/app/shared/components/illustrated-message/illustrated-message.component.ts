@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiBlockStatus } from '@taiga-ui/layout';
 
@@ -13,12 +14,17 @@ export interface IllustratedMessageButton {
 @Component({
   selector: 'app-illustrated-message',
   standalone: true,
-  imports: [CommonModule, TuiBlockStatus, TuiButton, RouterLink],
+  imports: [CommonModule, TuiBlockStatus, TuiButton, RouterLink, TranslatePipe],
   template: `
     <tui-block-status size="m">
-      <img [alt]="illustrationAlt" [src]="illustrationSrc" tuiSlot="top" class="illustration" />
-      <h4>{{ heading }}</h4>
-      <span *ngIf="description">{{ description }}</span>
+      <img
+        [alt]="illustrationAlt | translate"
+        [src]="illustrationSrc"
+        tuiSlot="top"
+        class="illustration"
+      />
+      <h4>{{ heading | translate }}</h4>
+      <span *ngIf="description">{{ description | translate }}</span>
       <div *ngIf="buttons.length > 0" tuiSlot="action" class="actions">
         @for (btn of buttons; track btn.label) {
           @if (btn.routerLink) {
@@ -28,7 +34,7 @@ export interface IllustratedMessageButton {
               [appearance]="btn.appearance || 'primary'"
               [routerLink]="btn.routerLink"
             >
-              {{ btn.label }}
+              {{ btn.label | translate }}
             </a>
           } @else {
             <button
@@ -38,7 +44,7 @@ export interface IllustratedMessageButton {
               [appearance]="btn.appearance || 'primary'"
               (click)="buttonClick.emit(btn)"
             >
-              {{ btn.label }}
+              {{ btn.label | translate }}
             </button>
           }
         }

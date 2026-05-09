@@ -13,18 +13,18 @@
 <app-illustrated-message
   *ngIf="!loading && groups.length === 0 && !showCreateTile"
   illustrationSrc="/illustrations/lonely-horse.png"
-  illustrationAlt="No groups yet"
-  heading="No groups yet"
-  description="You haven't joined any groups yet."
+  illustrationAlt="groups.noGroupsYet"
+  heading="groups.noGroupsYet"
+  description="groups.noGroupsJoined"
 ></app-illustrated-message>
 
 <app-illustrated-message
   *ngIf="!loading && groups.length === 0 && showCreateTile"
   illustrationSrc="/illustrations/lonely-horse.png"
-  illustrationAlt="No groups yet"
-  heading="Create your first group"
-  description="Get started by creating a group for your students."
-  [buttons]="[{ label: 'Create group', appearance: 'primary' }]"
+  illustrationAlt="groups.noGroupsYet"
+  heading="groups.createFirst"
+  description="groups.createFirstDescription"
+  [buttons]="[{ label: 'common.actions.createGroup', appearance: 'primary' }]"
   (buttonClick)="createGroup.emit()"
 ></app-illustrated-message>
 
@@ -42,8 +42,8 @@
     <tui-avatar src="@tui.plus" class="plus"></tui-avatar>
 
     <h2 tuiTitle>
-      Add
-      <span tuiSubtitle>Create a new group</span>
+      {{ 'common.actions.add' | translate }}
+      <span tuiSubtitle>{{ 'groups.createNew' | translate }}</span>
     </h2>
   </div>
 

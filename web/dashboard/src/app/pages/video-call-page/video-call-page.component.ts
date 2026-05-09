@@ -13,6 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiButton, TuiIcon } from '@taiga-ui/core';
 import { AgoraService } from '../../shared/services/agora.service';
 import { CoachingService } from '../../shared/services/coaching.service';
@@ -20,7 +21,7 @@ import { CoachingService } from '../../shared/services/coaching.service';
 @Component({
   selector: 'app-video-call-page',
   standalone: true,
-  imports: [CommonModule, TuiButton, TuiIcon],
+  imports: [CommonModule, TuiButton, TuiIcon, TranslatePipe],
   templateUrl: './video-call-page.component.html',
   styleUrls: ['./video-call-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +31,7 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly coachingService = inject(CoachingService);
   protected readonly agoraService = inject(AgoraService);
+  private readonly translate = inject(TranslateService);
 
   private readonly localVideoEl = viewChild<ElementRef<HTMLDivElement>>('localVideo');
   private readonly remoteVideoEl = viewChild<ElementRef<HTMLDivElement>>('remoteVideo');
@@ -81,7 +83,7 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
     this.bookingId = bookingId;
 
     if (!groupId || !bookingId) {
-      this.error.set('Missing booking information');
+      this.error.set(this.translate.instant('sessions.call.missingBooking'));
       this.connecting.set(false);
       return;
     }
@@ -94,12 +96,12 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
             this.connecting.set(false);
           })
           .catch((err) => {
-            this.error.set(err.message || 'Failed to join video call');
+            this.error.set(err.message || this.translate.instant('sessions.call.joinFailed'));
             this.connecting.set(false);
           });
       },
       error: (err) => {
-        this.error.set(err.error || 'Failed to connect to session');
+        this.error.set(err.error || this.translate.instant('sessions.call.connectFailed'));
         this.connecting.set(false);
       },
     });

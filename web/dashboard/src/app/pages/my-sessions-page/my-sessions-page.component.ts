@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiAlertService, TuiButton, TuiDialogService, TuiIcon } from '@taiga-ui/core';
 import { TuiSkeleton } from '@taiga-ui/kit';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
@@ -36,6 +37,7 @@ type TabKey = 'upcoming' | 'past' | 'cancelled';
     TuiSkeleton,
     SectionHeaderComponent,
     IllustratedMessageComponent,
+    TranslatePipe,
   ],
   templateUrl: './my-sessions-page.component.html',
   styleUrls: ['./my-sessions-page.component.scss'],
@@ -50,6 +52,7 @@ export class MySessionsPageComponent implements OnInit {
   private readonly dialogs = inject(TuiDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly tabs: TabKey[] = ['upcoming', 'past', 'cancelled'];
 
   protected loading = signal(true);
@@ -109,7 +112,7 @@ export class MySessionsPageComponent implements OnInit {
   }
 
   protected formatDateTime(isoString: string): string {
-    return new Date(isoString).toLocaleString(undefined, {
+    return new Date(isoString).toLocaleString(this.translate.currentLang || undefined, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -132,7 +135,7 @@ export class MySessionsPageComponent implements OnInit {
       .open<CancelSessionDialogResult | null>(
         new PolymorpheusComponent(CancelSessionDialogComponent),
         {
-          label: 'Cancel Session',
+          label: this.translate.instant('sessions.cancel.title'),
           size: 's',
           data: {
             otherParty: this.otherParty(booking),
@@ -154,8 +157,8 @@ export class MySessionsPageComponent implements OnInit {
             error: (err) => {
               const msg =
                 err.status === 400
-                  ? 'Cancellations must be made at least 1 hour before the session.'
-                  : 'Failed to cancel booking.';
+                  ? this.translate.instant('sessions.cancel.tooLate')
+                  : this.translate.instant('sessions.cancel.failed');
               this.alerts.open(msg, { appearance: 'negative' }).subscribe();
             },
           });
@@ -169,7 +172,9 @@ export class MySessionsPageComponent implements OnInit {
   }
 
   protected otherPartyRole(booking: CoachingBooking): string {
-    return this.isExpertForBooking(booking) ? 'Student' : 'Expert';
+    return this.translate.instant(
+      this.isExpertForBooking(booking) ? 'common.labels.student' : 'common.labels.expert',
+    );
   }
 
   protected canJoin(booking: CoachingBooking): boolean {
@@ -193,20 +198,20 @@ export class MySessionsPageComponent implements OnInit {
   protected recordingStatusLabel(booking: CoachingBooking): string {
     switch (booking.recording?.status) {
       case 'ready':
-        return 'recording ready';
+        return this.translate.instant('common.status.recordingReady');
       case 'failed':
-        return 'recording failed';
+        return this.translate.instant('common.status.recordingFailed');
       case 'pending':
       case 'importing':
       case 'processing':
-        return 'recording processing';
+        return this.translate.instant('common.status.recordingProcessing');
       case 'starting':
       case 'started':
       case 'stopping':
       case 'stopped':
-        return 'recording captured';
+        return this.translate.instant('common.status.recordingCaptured');
       default:
-        return 'recording';
+        return this.translate.instant('common.status.recording');
     }
   }
 

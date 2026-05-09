@@ -6,7 +6,7 @@
     size="s"
     [routerLink]="headerActionRouterLink"
   >
-    {{ headerActionLabel }}
+    {{ headerActionLabel | translate }}
   </a>
 </app-section-header>
 
@@ -23,23 +23,23 @@
 <app-illustrated-message
   *ngIf="!loading && assets.length === 0 && !showAddTile"
   illustrationSrc="/illustrations/bored-horse.png"
-  illustrationAlt="No videos yet"
+  illustrationAlt="videos.noVideosYet"
   [heading]="emptyHeading"
   [description]="
     emptyDescription ||
     (role === 'expert'
-      ? 'Your students haven\'t uploaded any videos yet.'
-      : 'There are no videos here yet.')
+      ? 'videos.noStudentVideos'
+      : 'videos.noVideosHere')
   "
 ></app-illustrated-message>
 
 <app-illustrated-message
   *ngIf="!loading && assets.length === 0 && showAddTile && !showAddTileWhenEmpty"
   illustrationSrc="/illustrations/bored-horse.png"
-  illustrationAlt="No videos yet"
-  heading="Upload your first video"
-  description="Get started by uploading a video for review."
-  [buttons]="[{ label: 'Upload video', appearance: 'primary' }]"
+  illustrationAlt="videos.noVideosYet"
+  heading="videos.uploadFirst"
+  description="videos.uploadFirstDescription"
+  [buttons]="[{ label: 'common.actions.uploadVideo', appearance: 'primary' }]"
   (buttonClick)="addVideo.emit()"
 ></app-illustrated-message>
 
@@ -60,8 +60,8 @@
     <tui-avatar src="@tui.plus" class="plus"></tui-avatar>
 
     <h2 tuiTitle>
-      Add
-      <span tuiSubtitle>Upload new video</span>
+      {{ 'common.actions.add' | translate }}
+      <span tuiSubtitle>{{ 'videos.uploadNew' | translate }}</span>
     </h2>
   </div>
 

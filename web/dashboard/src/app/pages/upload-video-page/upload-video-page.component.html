@@ -1,5 +1,5 @@
 <app-page-container>
-  <app-section-header title="Upload Video"></app-section-header>
+  <app-section-header title="upload.title"></app-section-header>
 
   <tui-stepper
     [activeItemIndex]="activeIndex"
@@ -7,16 +7,18 @@
     style="margin-bottom: 2rem"
   >
     <button tuiStep icon="@tui.upload-cloud" [disabled]="isUploading || isUploadComplete">
-      Select Video
+      {{ 'upload.selectVideo' | translate }}
     </button>
     <button
       tuiStep
       icon="@tui.file-text"
       [disabled]="!isFilesSelected || isUploading || isUploadComplete"
     >
-      Enter Details
+      {{ 'upload.enterDetails' | translate }}
     </button>
-    <button tuiStep icon="@tui.upload" [disabled]="activeIndex < 2">Upload</button>
+    <button tuiStep icon="@tui.upload" [disabled]="activeIndex < 2">
+      {{ 'upload.upload' | translate }}
+    </button>
   </tui-stepper>
 
   <div [tuiSlides]="slideDirection" style="overflow: hidden">
@@ -35,7 +37,7 @@
               [disabled]="!isFilesSelected"
               (click)="onNext()"
             >
-              Next
+              {{ 'common.actions.next' | translate }}
             </button>
           </div>
         </div>
@@ -50,9 +52,9 @@
             [stringify]="groupStringify"
             style="margin-bottom: 1.5rem"
           >
-            <label tuiLabel>Group</label>
+            <label tuiLabel>{{ 'common.fields.group' | translate }}</label>
             <input
-              placeholder="Choose a group"
+              [placeholder]="'upload.chooseGroup' | translate"
               tuiSelect
               [formControl]="detailsForm.controls.group"
             />
@@ -78,7 +80,7 @@
 
           <div style="display: flex; justify-content: flex-end; gap: 0.5rem">
             <button tuiButton appearance="secondary" size="m" type="button" (click)="onBack()">
-              Back
+              {{ 'common.actions.back' | translate }}
             </button>
             <button
               tuiButton
@@ -87,7 +89,7 @@
               [disabled]="detailsForm.invalid"
               (click)="onNext()"
             >
-              Next
+              {{ 'common.actions.next' | translate }}
             </button>
           </div>
         </div>
@@ -114,7 +116,7 @@
               [disabled]="!isUploadComplete"
               (click)="onNext()"
             >
-              Finish
+              {{ 'common.actions.finish' | translate }}
             </button>
           </div>
         </div>

@@ -2,27 +2,27 @@
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="form-field">
       <tui-textfield>
-        <label tuiLabel>Date</label>
+        <label tuiLabel>{{ 'common.fields.date' | translate }}</label>
         <input formControlName="blocked_date" tuiTextfield type="date" />
       </tui-textfield>
     </div>
 
     <label tuiLabel>
       <input tuiCheckbox type="checkbox" formControlName="full_day" />
-      Full day
+      {{ 'common.labels.fullDay' | translate }}
     </label>
 
     @if (!form.value.full_day) {
       <div class="form-row">
         <div class="form-field form-field--half">
           <tui-textfield>
-            <label tuiLabel>Start time</label>
+            <label tuiLabel>{{ 'common.fields.startTime' | translate }}</label>
             <input formControlName="start_time" tuiTextfield type="time" />
           </tui-textfield>
         </div>
         <div class="form-field form-field--half">
           <tui-textfield>
-            <label tuiLabel>End time</label>
+            <label tuiLabel>{{ 'common.fields.endTime' | translate }}</label>
             <input formControlName="end_time" tuiTextfield type="time" />
           </tui-textfield>
         </div>
@@ -31,16 +31,23 @@
 
     <div class="form-field">
       <tui-textfield>
-        <label tuiLabel>Reason (optional)</label>
-        <input formControlName="reason" tuiTextfield type="text" placeholder="e.g. Holiday" />
+        <label tuiLabel>{{ 'common.fields.reasonOptional' | translate }}</label>
+        <input
+          formControlName="reason"
+          tuiTextfield
+          type="text"
+          [placeholder]="'sessions.availability.reasonPlaceholder' | translate"
+        />
       </tui-textfield>
     </div>
 
     <div class="form-actions">
       <button tuiButton type="button" appearance="secondary" (click)="onCancel()">
-        Cancel
+        {{ 'common.actions.cancel' | translate }}
       </button>
-      <button tuiButton type="submit" [disabled]="form.invalid">Block</button>
+      <button tuiButton type="submit" [disabled]="form.invalid">
+        {{ 'common.actions.block' | translate }}
+      </button>
     </div>
   </form>
 </div>

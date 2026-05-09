@@ -2,7 +2,7 @@
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="form-field">
       <tui-textfield tuiChevron [stringify]="dayStringify">
-        <label tuiLabel>Day</label>
+        <label tuiLabel>{{ 'common.labels.day' | translate }}</label>
         <input tuiSelect formControlName="day_of_week" />
         <tui-data-list-wrapper
           *tuiTextfieldDropdown
@@ -20,13 +20,13 @@
     <div class="form-row">
       <div class="form-field form-field--half">
         <tui-textfield>
-          <label tuiLabel>Start time</label>
+          <label tuiLabel>{{ 'common.fields.startTime' | translate }}</label>
           <input formControlName="start_time" tuiTextfield type="time" />
         </tui-textfield>
       </div>
       <div class="form-field form-field--half">
         <tui-textfield>
-          <label tuiLabel>End time</label>
+          <label tuiLabel>{{ 'common.fields.endTime' | translate }}</label>
           <input formControlName="end_time" tuiTextfield type="time" />
         </tui-textfield>
       </div>
@@ -34,10 +34,10 @@
 
     <div class="form-actions">
       <button tuiButton type="button" appearance="secondary" (click)="onCancel()">
-        Cancel
+        {{ 'common.actions.cancel' | translate }}
       </button>
       <button tuiButton type="submit" [disabled]="form.invalid">
-        {{ isEditing ? 'Save' : 'Create' }}
+        {{ (isEditing ? 'common.actions.save' : 'common.actions.create') | translate }}
       </button>
     </div>
   </form>

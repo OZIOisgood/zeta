@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { TuiAppearance, TuiButton, TuiSurface, TuiTitle } from '@taiga-ui/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TuiAppearance, TuiSurface, TuiTitle } from '@taiga-ui/core';
 import { TuiAvatar, TuiSkeleton } from '@taiga-ui/kit';
 import { TuiCardMedium } from '@taiga-ui/layout';
 import { Group } from '../../services/groups.service';
@@ -16,11 +17,11 @@ import { SectionHeaderComponent } from '../section-header/section-header.compone
     TuiSurface,
     TuiTitle,
     TuiAvatar,
-    TuiButton,
     TuiSkeleton,
     TuiAppearance,
     SectionHeaderComponent,
     IllustratedMessageComponent,
+    TranslatePipe,
   ],
   templateUrl: './groups-list.component.html',
   styleUrls: ['./groups-list.component.scss'],
@@ -30,7 +31,7 @@ export class GroupsListComponent {
   @Input() groups: Group[] = [];
   @Input() showCreateTile = false;
   @Input() loading = false;
-  @Input() title = 'My Groups';
+  @Input() title = 'groups.myGroups';
   @Output() createGroup = new EventEmitter<void>();
   @Output() selectGroup = new EventEmitter<string>();
 

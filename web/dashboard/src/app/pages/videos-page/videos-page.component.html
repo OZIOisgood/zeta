@@ -1,6 +1,6 @@
 <app-page-container>
   @if (showReviewStatusFilters()) {
-    <app-section-header title="Videos" [loading]="loading()"></app-section-header>
+    <app-section-header title="videos.title" [loading]="loading()"></app-section-header>
 
     @if (!loading() && assets().length > 0) {
       <div class="filter-bar">
@@ -11,15 +11,19 @@
           [appearance]="selectedReviewStatusFilters().length === 0 ? 'primary' : 'secondary'"
           (click)="clearReviewStatusFilters()"
         >
-          All
+          {{ 'videos.all' | translate }}
         </button>
-        <tui-filter
-          class="review-status-filter"
-          size="s"
-          [formControl]="reviewStatusFilter"
-          [items]="reviewStatusFilterItems"
-          [badgeHandler]="reviewStatusBadgeHandler"
-        />
+        @for (filter of reviewStatusFilterItems; track filter) {
+          <button
+            tuiButton
+            type="button"
+            size="s"
+            [appearance]="isReviewStatusSelected(filter) ? 'primary' : 'secondary'"
+            (click)="toggleReviewStatusFilter(filter)"
+          >
+            {{ reviewStatusLabel(filter) }} ({{ reviewStatusBadgeHandler(filter) }})
+          </button>
+        }
       </div>
     }
 
@@ -40,7 +44,7 @@
       [loading]="loading()"
       [showAddTile]="showUploadVideo()"
       [role]="auth.user()?.role"
-      title="Videos"
+      title="videos.title"
       (addVideo)="onAddVideo()"
     ></app-asset-list>
   }

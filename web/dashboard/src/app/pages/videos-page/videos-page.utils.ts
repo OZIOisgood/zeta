@@ -1,26 +1,26 @@
 import { Asset } from '../../shared/services/asset.service';
 
-export type ReviewStatusFilter = 'To review' | 'In review' | 'Reviewed';
+export type ReviewStatusFilter = 'toReview' | 'inReview' | 'reviewed';
 
 export const REVIEW_STATUS_FILTERS: readonly ReviewStatusFilter[] = [
-  'To review',
-  'In review',
-  'Reviewed',
+  'toReview',
+  'inReview',
+  'reviewed',
 ];
 
 export type ReviewStatusCounts = Record<ReviewStatusFilter, number>;
 
 export function getAssetReviewStatusFilter(asset: Asset): ReviewStatusFilter | null {
   if (asset.status === 'pending' && asset.review_count === 0) {
-    return 'To review';
+    return 'toReview';
   }
 
   if (asset.status === 'pending' && asset.review_count > 0) {
-    return 'In review';
+    return 'inReview';
   }
 
   if (asset.status === 'completed') {
-    return 'Reviewed';
+    return 'reviewed';
   }
 
   return null;
@@ -45,10 +45,8 @@ export function filterAssetsByReviewStatus(
 
 export function countAssetsByReviewStatus(assets: Asset[]): ReviewStatusCounts {
   return {
-    'To review': assets.filter((asset) => getAssetReviewStatusFilter(asset) === 'To review')
-      .length,
-    'In review': assets.filter((asset) => getAssetReviewStatusFilter(asset) === 'In review')
-      .length,
-    Reviewed: assets.filter((asset) => getAssetReviewStatusFilter(asset) === 'Reviewed').length,
+    toReview: assets.filter((asset) => getAssetReviewStatusFilter(asset) === 'toReview').length,
+    inReview: assets.filter((asset) => getAssetReviewStatusFilter(asset) === 'inReview').length,
+    reviewed: assets.filter((asset) => getAssetReviewStatusFilter(asset) === 'reviewed').length,
   };
 }

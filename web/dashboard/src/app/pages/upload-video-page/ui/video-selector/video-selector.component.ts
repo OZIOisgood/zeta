@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiLink } from '@taiga-ui/core';
 import {
   TuiAvatar,
@@ -21,6 +22,7 @@ import {
     TuiLink,
     TuiInputFiles,
     TuiInputFilesDirective,
+    TranslatePipe,
   ],
   templateUrl: './video-selector.component.html',
   styleUrl: './video-selector.component.scss',

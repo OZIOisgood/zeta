@@ -14,6 +14,7 @@ import {
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import '@mux/mux-player';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiResponsiveDialogService } from '@taiga-ui/addon-mobile';
 import { TuiAutoFocus } from '@taiga-ui/cdk';
 import {
@@ -78,6 +79,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     BreadcrumbsComponent,
     IllustratedMessageComponent,
     SectionHeaderComponent,
+    TranslatePipe,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './asset-details-page.component.html',
@@ -91,6 +93,7 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
   readonly auth = inject(AuthService);
   private readonly alerts = inject(TuiAlertService);
   private readonly dialogs = inject(TuiResponsiveDialogService);
+  private readonly translate = inject(TranslateService);
 
   @ViewChild('muxPlayer') muxPlayerRef!: ElementRef;
 
@@ -255,15 +258,15 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
     if (!video || !this.canDeleteReviews()) return;
 
     const data: TuiConfirmData = {
-      content: 'Are you sure you want to delete this comment? This action cannot be undone.',
-      yes: 'Delete',
-      no: 'Cancel',
+      content: this.translate.instant('videos.confirmDeleteComment'),
+      yes: this.translate.instant('common.actions.delete'),
+      no: this.translate.instant('common.actions.cancel'),
       appearance: 'destructive',
     };
 
     this.dialogs
       .open<boolean>(TUI_CONFIRM, {
-        label: 'Delete Comment',
+        label: this.translate.instant('videos.deleteComment'),
         size: 's',
         data,
       })
@@ -281,12 +284,14 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
           const currentCount = this.videoReviewCounts.get(video.id) || 0;
           this.videoReviewCounts.set(video.id, Math.max(0, currentCount - 1));
           this.loadReviews(video.id);
-          this.alerts.open('Comment deleted successfully').subscribe();
+          this.alerts.open(this.translate.instant('videos.commentDeleted')).subscribe();
         },
         error: (err: Error) => {
           if (err.message !== 'Cancelled') {
             console.error('Failed to delete review', err);
-            this.alerts.open('Failed to delete comment', { appearance: 'error' }).subscribe();
+            this.alerts
+              .open(this.translate.instant('videos.commentDeleteFailed'), { appearance: 'error' })
+              .subscribe();
           }
         },
       });
@@ -326,7 +331,9 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
         },
         error: (err) => {
           console.error('Failed to update review', err);
-          this.alerts.open('Failed to update review', { appearance: 'error' }).subscribe();
+          this.alerts
+            .open(this.translate.instant('videos.reviewUpdateFailed'), { appearance: 'error' })
+            .subscribe();
         },
       });
   }
@@ -341,13 +348,13 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
       next: (response) => {
         this.editReviewControl.setValue(response.enhanced_text);
         this.enhancingText = false;
-        this.alerts.open('Text enhanced successfully', { appearance: 'positive' }).subscribe();
+        this.alerts.open(this.translate.instant('videos.textEnhanced'), { appearance: 'positive' }).subscribe();
       },
       error: (err) => {
         console.error('Failed to enhance text', err);
         this.enhancingText = false;
         this.alerts
-          .open('Failed to enhance text. Please try again.', { appearance: 'error' })
+          .open(this.translate.instant('videos.textEnhanceFailed'), { appearance: 'error' })
           .subscribe();
       },
     });
@@ -385,9 +392,9 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
       // Show error dialog - cannot proceed
       this.dialogs
         .open<boolean>(
-          'Cannot mark as reviewed: All videos must have at least one review before finalizing.',
+          this.translate.instant('videos.cannotMarkReviewed'),
           {
-            label: 'Cannot Mark as Reviewed',
+            label: this.translate.instant('videos.cannotMarkReviewedTitle'),
             size: 'm',
           },
         )
@@ -397,15 +404,14 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
 
     // Show confirmation dialog - can proceed
     const data: TuiConfirmData = {
-      content:
-        'Are you sure you want to mark this video as reviewed? No more comments can be added, edited, or deleted.',
-      yes: 'Mark as Reviewed',
-      no: 'Cancel',
+      content: this.translate.instant('videos.confirmMarkReviewed'),
+      yes: this.translate.instant('videos.markReviewed'),
+      no: this.translate.instant('common.actions.cancel'),
     };
 
     this.dialogs
       .open<boolean>(TUI_CONFIRM, {
-        label: 'Mark Video as Reviewed',
+        label: this.translate.instant('videos.markVideoReviewed'),
         size: 'm',
         data,
       })
@@ -420,13 +426,13 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
       .subscribe({
         next: () => {
           this.refresh$.next();
-          this.alerts.open('Video marked as reviewed successfully').subscribe();
+          this.alerts.open(this.translate.instant('videos.markedReviewed')).subscribe();
         },
         error: (err: Error) => {
           if (err.message !== 'Cancelled') {
             console.error('Failed to mark video as reviewed', err);
             this.alerts
-              .open('Failed to mark video as reviewed', { appearance: 'error' })
+              .open(this.translate.instant('videos.markReviewedFailed'), { appearance: 'error' })
               .subscribe();
           }
         },
@@ -446,10 +452,10 @@ export class AssetDetailsPageComponent implements OnInit, AfterViewInit {
 
   formatStatus(status: string): string {
     if (status === 'pending') {
-      return 'In review';
+      return this.translate.instant('common.status.inReview');
     }
     if (status === 'completed') {
-      return 'Reviewed';
+      return this.translate.instant('common.status.reviewed');
     }
     return status.replace('_', ' ');
   }

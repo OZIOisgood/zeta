@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
   TuiAutoColorPipe,
   TuiButton,
@@ -28,6 +29,7 @@ import { DrawerComponent } from '../drawer/drawer.component';
     TuiAutoColorPipe,
     TuiTabs,
     DrawerComponent,
+    TranslatePipe,
   ],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],

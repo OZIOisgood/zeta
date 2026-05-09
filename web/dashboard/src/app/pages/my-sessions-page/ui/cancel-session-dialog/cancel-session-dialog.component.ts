@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiButton, TuiDialogContext, TuiLabel, TuiTextfield } from '@taiga-ui/core';
 import { TuiTextarea } from '@taiga-ui/kit';
 import { injectContext } from '@taiga-ui/polymorpheus';
@@ -17,7 +18,15 @@ export interface CancelSessionDialogResult {
 @Component({
   selector: 'app-cancel-session-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TuiButton, TuiLabel, TuiTextfield, TuiTextarea],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    TuiButton,
+    TuiLabel,
+    TuiTextfield,
+    TuiTextarea,
+    TranslatePipe,
+  ],
   templateUrl: './cancel-session-dialog.component.html',
   styleUrls: ['./cancel-session-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

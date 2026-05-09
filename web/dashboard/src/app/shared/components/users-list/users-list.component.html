@@ -3,8 +3,8 @@
     <table tuiTable [size]="size" [style.width.%]="100">
       <thead>
         <tr>
-          <th tuiTh>User</th>
-          <th tuiTh [style.width.rem]="3">Actions</th>
+          <th tuiTh>{{ 'common.labels.user' | translate }}</th>
+          <th tuiTh [style.width.rem]="3">{{ 'common.labels.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody tuiTbody>
@@ -39,7 +39,7 @@
                 <tui-data-list>
                   <button tuiOption (click)="removeUser(item.id, item.name)">
                     <tui-icon icon="@tui.trash" [style.height.rem]="1"></tui-icon>
-                    Remove
+                    {{ 'common.actions.remove' | translate }}
                   </button>
                 </tui-data-list>
               </ng-template>
@@ -56,8 +56,8 @@
     <table tuiTable [size]="size" [style.width.%]="100">
       <thead>
         <tr>
-          <th tuiTh>User</th>
-          <th tuiTh [style.width.rem]="3">Actions</th>
+          <th tuiTh>{{ 'common.labels.user' | translate }}</th>
+          <th tuiTh [style.width.rem]="3">{{ 'common.labels.actions' | translate }}</th>
         </tr>
       </thead>
       <tbody tuiTbody>

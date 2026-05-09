@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiSkeleton } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-section-header',
   standalone: true,
-  imports: [TuiSkeleton],
+  imports: [TuiSkeleton, TranslatePipe],
   template: `
     <h2 class="section-title tui-text_h4" [tuiSkeleton]="loading ? title : ''">
-      {{ loading ? '' : title }}
+      {{ loading ? '' : (title | translate) }}
     </h2>
     <ng-content></ng-content>
   `,

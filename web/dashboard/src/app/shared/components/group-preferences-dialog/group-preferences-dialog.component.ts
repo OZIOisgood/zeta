@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   TuiAlertService,
   TuiButton,
@@ -27,6 +28,7 @@ import { AvatarSelectorComponent } from '../avatar-selector/avatar-selector.comp
     TuiTextfield,
     TuiTextarea,
     AvatarSelectorComponent,
+    TranslatePipe,
   ],
   templateUrl: './group-preferences-dialog.component.html',
   styleUrls: ['./group-preferences-dialog.component.scss'],
@@ -37,6 +39,7 @@ export class GroupPreferencesDialogComponent {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(TuiDialogService);
   private readonly alerts = inject(TuiAlertService);
+  private readonly translate = inject(TranslateService);
   private readonly context = injectContext<TuiDialogContext<Group | null, Group>>();
 
   protected get group(): Group {
@@ -95,15 +98,15 @@ export class GroupPreferencesDialogComponent {
     if (this.isDeleting) return;
 
     const data: TuiConfirmData = {
-      content: 'This action cannot be undone. All group data will be permanently deleted.',
-      yes: 'Delete Group',
-      no: 'Cancel',
+      content: this.translate.instant('groups.deleteConfirm'),
+      yes: this.translate.instant('groups.deleteGroup'),
+      no: this.translate.instant('common.actions.cancel'),
       appearance: 'destructive',
     };
 
     this.dialogs
       .open<boolean>(TUI_CONFIRM, {
-        label: 'Delete Group',
+        label: this.translate.instant('groups.deleteGroup'),
         size: 's',
         data,
       })
@@ -121,7 +124,7 @@ export class GroupPreferencesDialogComponent {
         error: (err) => {
           console.error('Failed to delete group:', err);
           this.isDeleting = false;
-          this.alerts.open('Failed to delete group', { appearance: 'negative' }).subscribe();
+          this.alerts.open(this.translate.instant('groups.deleteFailed'), { appearance: 'negative' }).subscribe();
         },
       });
   }

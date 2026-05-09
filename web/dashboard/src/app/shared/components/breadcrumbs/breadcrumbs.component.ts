@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TuiItem } from '@taiga-ui/cdk';
 import { TuiLink } from '@taiga-ui/core';
 import { TuiBreadcrumbs } from '@taiga-ui/kit';
@@ -13,12 +14,12 @@ export interface BreadcrumbItem {
 @Component({
   selector: 'app-breadcrumbs',
   standalone: true,
-  imports: [CommonModule, RouterLink, TuiBreadcrumbs, TuiItem, TuiLink],
+  imports: [CommonModule, RouterLink, TuiBreadcrumbs, TuiItem, TuiLink, TranslatePipe],
   template: `
     <tui-breadcrumbs size="l">
       <ng-container *ngFor="let item of items; let last = last">
         <a *tuiItem tuiLink [routerLink]="item.routerLink" [class.last]="last">
-          {{ item.label }}
+          {{ item.label | translate }}
         </a>
       </ng-container>
     </tui-breadcrumbs>

@@ -2,31 +2,31 @@
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="form-field">
       <tui-textfield>
-        <label tuiLabel>Name</label>
+        <label tuiLabel>{{ 'common.fields.name' | translate }}</label>
         <input
           formControlName="name"
           tuiTextfield
           type="text"
-          placeholder="e.g. Strategy Session"
+          [placeholder]="'sessions.availability.namePlaceholder' | translate"
         />
       </tui-textfield>
     </div>
 
     <div class="form-field">
       <tui-textfield>
-        <label tuiLabel>Description (optional)</label>
+        <label tuiLabel>{{ 'sessions.availability.descriptionOptional' | translate }}</label>
         <input
           formControlName="description"
           tuiTextfield
           type="text"
-          placeholder="Short description"
+          [placeholder]="'sessions.availability.descriptionPlaceholder' | translate"
         />
       </tui-textfield>
     </div>
 
     <div class="form-field">
       <tui-textfield [stringify]="durationStringify">
-        <label tuiLabel>Duration</label>
+        <label tuiLabel>{{ 'common.fields.duration' | translate }}</label>
         <input tuiSelect formControlName="duration_minutes" />
         <tui-data-list-wrapper
           *tuiTextfieldDropdown
@@ -36,15 +36,17 @@
         />
       </tui-textfield>
 
-      <ng-template #durationContent let-item> {{ item }} min </ng-template>
+      <ng-template #durationContent let-item>
+        {{ 'common.labels.minutesShort' | translate: { count: item } }}
+      </ng-template>
     </div>
 
     <div class="form-actions">
       <button tuiButton type="button" appearance="secondary" (click)="onCancel()">
-        Cancel
+        {{ 'common.actions.cancel' | translate }}
       </button>
       <button tuiButton type="submit" [disabled]="form.invalid">
-        {{ isEditing ? 'Save' : 'Create' }}
+        {{ (isEditing ? 'common.actions.save' : 'common.actions.create') | translate }}
       </button>
     </div>
   </form>

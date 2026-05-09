@@ -4,8 +4,10 @@
   } @else {
     @if (showCoachingWidget()) {
       <div class="coaching-widget">
-        <app-section-header title="Upcoming Coaching Sessions">
-          <a tuiButton appearance="secondary" size="s" routerLink="/sessions">View all</a>
+        <app-section-header title="home.upcomingCoachingSessions">
+          <a tuiButton appearance="secondary" size="s" routerLink="/sessions">
+            {{ 'common.actions.viewAll' | translate }}
+          </a>
         </app-section-header>
         @if (bookingsLoading()) {
           <div class="session-list">
@@ -31,14 +33,14 @@
         } @else if (upcomingBookings().length === 0) {
           <app-illustrated-message
             illustrationSrc="/illustrations/live-coaching.png"
-            illustrationAlt="No upcoming coaching sessions"
-            heading="No upcoming coaching sessions"
-            description="Book a live coaching session to get personalized feedback."
+            illustrationAlt="home.emptyCoaching.alt"
+            heading="home.emptyCoaching.heading"
+            description="home.emptyCoaching.description"
             [buttons]="
               canBook()
                 ? [
                     {
-                      label: 'Book Live Coaching',
+                      label: 'home.emptyCoaching.button',
                       appearance: 'primary',
                       routerLink: '/sessions/book',
                     },
@@ -59,19 +61,21 @@
                     {{ formatSessionDateTime(session.scheduled_at) }}
                   </span>
                   <span class="tui-text_body-s session-meta">
-                    {{ session.duration_minutes }} min
+                    {{ 'common.labels.minutesShort' | translate: { count: session.duration_minutes } }}
                   </span>
                   @if (session.session_type_name) {
                     <span class="tui-text_body-s session-meta session-type">
                       {{ session.session_type_name }}
                     </span>
                   }
-                  <span class="status-badge status-badge--pending">upcoming</span>
+                  <span class="status-badge status-badge--pending">
+                    {{ 'common.status.upcoming' | translate }}
+                  </span>
                 </div>
                 <div class="session-actions">
                   @if (canJoinSession(session)) {
                     <button tuiButton appearance="primary" size="s" (click)="joinSession(session)">
-                      Join
+                      {{ 'common.actions.join' | translate }}
                     </button>
                   }
                 </div>
@@ -87,8 +91,8 @@
       [loading]="loading()"
       [showAddTile]="showUploadVideo()"
       [role]="auth.user()?.role"
-      [title]="'Latest videos'"
-      headerActionLabel="View all"
+      [title]="'home.latestVideos'"
+      headerActionLabel="common.actions.viewAll"
       headerActionRouterLink="/videos"
       (addVideo)="onAddVideo()"
     >

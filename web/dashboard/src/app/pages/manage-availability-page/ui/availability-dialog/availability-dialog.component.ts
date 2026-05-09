@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TuiButton, TuiDialogContext, TuiLabel, TuiTextfield } from '@taiga-ui/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiDataListWrapper, TuiSelect } from '@taiga-ui/kit';
 import { injectContext } from '@taiga-ui/polymorpheus';
 import { CoachingAvailability } from '../../../../shared/services/coaching.service';
-import { orderedWeekdayValues, WEEKDAY_NAMES } from '../../../../shared/utils/weekdays';
+import { orderedWeekdayValues } from '../../../../shared/utils/weekdays';
 
 export interface AvailabilityDialogData {
   availability: CoachingAvailability | null;
@@ -30,6 +31,7 @@ export interface AvailabilityDialogResult {
     TuiTextfield,
     TuiSelect,
     TuiDataListWrapper,
+    TranslatePipe,
   ],
   templateUrl: './availability-dialog.component.html',
   styleUrls: ['./availability-dialog.component.scss'],
@@ -38,6 +40,7 @@ export interface AvailabilityDialogResult {
 export class AvailabilityDialogComponent {
   private readonly context =
     injectContext<TuiDialogContext<AvailabilityDialogResult | null, AvailabilityDialogData>>();
+  private readonly translate = inject(TranslateService);
 
   protected get isEditing(): boolean {
     return !!this.context.data.availability;
@@ -45,7 +48,7 @@ export class AvailabilityDialogComponent {
 
   protected readonly dayOptions = orderedWeekdayValues(this.context.data.firstDayOfWeek);
   protected readonly dayStringify: TuiStringHandler<number> = (val: number) =>
-    WEEKDAY_NAMES[val] ?? '';
+    this.translate.instant(`weekdays.${val}`);
 
   protected readonly form = new FormGroup({
     day_of_week: new FormControl(this.context.data.availability?.day_of_week ?? 1, [

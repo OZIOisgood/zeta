@@ -2,7 +2,7 @@
   @if (!inviteLink) {
     <div class="form-field">
       <tui-textfield>
-        <label tuiLabel>Email Address (optional)</label>
+        <label tuiLabel>{{ 'common.fields.emailAddressOptional' | translate }}</label>
         <input
           [formControl]="emailControl"
           tuiTextfield
@@ -24,7 +24,7 @@
         (click)="onClose()"
         [disabled]="isSubmitting"
       >
-        Cancel
+        {{ 'common.actions.cancel' | translate }}
       </button>
       <button
         tuiButton
@@ -32,17 +32,20 @@
         (click)="onSubmit()"
         [disabled]="emailControl.invalid || isSubmitting"
       >
-        Create Invitation
+        {{ 'common.actions.createInvitation' | translate }}
       </button>
     </div>
   } @else {
     <p class="success-message">
-      {{ invitationSentByEmail ? 'Invitation sent successfully!' : 'Invitation link created!' }}
+      {{
+        (invitationSentByEmail ? 'groups.inviteDialog.sent' : 'groups.inviteDialog.linkCreated')
+          | translate
+      }}
     </p>
 
     @if (qrImageUrl) {
       <div class="qr-section">
-        <img [src]="qrImageUrl" alt="Invitation QR Code" class="qr-image" />
+        <img [src]="qrImageUrl" [alt]="'groups.inviteDialog.qrAlt' | translate" class="qr-image" />
       </div>
     }
 
@@ -59,7 +62,7 @@
         (click)="onCopyLink()"
       >
         <tui-icon icon="@tui.copy" />
-        {{ linkCopied ? 'Copied!' : 'Copy Link' }}
+        {{ (linkCopied ? 'common.actions.copied' : 'common.actions.copyLink') | translate }}
       </button>
       @if (qrImageUrl) {
         <button
@@ -70,7 +73,7 @@
           (click)="onDownloadQr()"
         >
           <tui-icon icon="@tui.download" />
-          Download QR
+          {{ 'common.actions.downloadQr' | translate }}
         </button>
       }
       <button
@@ -78,7 +81,7 @@
         type="button"
         (click)="onClose()"
       >
-        Done
+        {{ 'common.actions.done' | translate }}
       </button>
     </div>
   }

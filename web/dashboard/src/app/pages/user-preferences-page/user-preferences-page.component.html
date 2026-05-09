@@ -1,6 +1,6 @@
 <app-page-container>
   <div class="preferences-page">
-    <app-section-header title="Preferences"></app-section-header>
+    <app-section-header title="preferences.title"></app-section-header>
 
     <section class="content">
       <nav
@@ -10,8 +10,8 @@
         [activeItemIndex]="activeTabIndex()"
         (activeItemIndexChange)="onTabIndexChange($event)"
       >
-        <button tuiTab type="button">Personal data</button>
-        <button tuiTab type="button">Email preferences</button>
+        <button tuiTab type="button">{{ 'preferences.personalData' | translate }}</button>
+        <button tuiTab type="button">{{ 'preferences.emailPreferences' | translate }}</button>
       </nav>
 
       <nav
@@ -22,8 +22,8 @@
         [activeItemIndex]="activeTabIndex()"
         (activeItemIndexChange)="onTabIndexChange($event)"
       >
-        <button tuiTab type="button">Personal data</button>
-        <button tuiTab type="button">Email preferences</button>
+        <button tuiTab type="button">{{ 'preferences.personalData' | translate }}</button>
+        <button tuiTab type="button">{{ 'preferences.emailPreferences' | translate }}</button>
       </nav>
 
       <div class="tab-content">
@@ -31,21 +31,21 @@
           @if (activeTabIndex() === 0) {
             <div class="form-field">
               <tui-textfield>
-                <label tuiLabel>First Name</label>
+                <label tuiLabel>{{ 'preferences.firstName' | translate }}</label>
                 <input formControlName="first_name" tuiTextfield type="text" />
               </tui-textfield>
             </div>
 
             <div class="form-field">
               <tui-textfield>
-                <label tuiLabel>Last Name</label>
+                <label tuiLabel>{{ 'preferences.lastName' | translate }}</label>
                 <input formControlName="last_name" tuiTextfield type="text" />
               </tui-textfield>
             </div>
 
             <div class="form-field">
               <tui-textfield tuiChevron [stringify]="stringifyLanguage">
-                <label tuiLabel>Language</label>
+                <label tuiLabel>{{ 'common.fields.language' | translate }}</label>
                 <input tuiSelect formControlName="language" />
                 <tui-data-list-wrapper
                   *tuiTextfieldDropdown
@@ -55,13 +55,13 @@
                 ></tui-data-list-wrapper>
               </tui-textfield>
               <ng-template #languageContent let-data>
-                {{ data.name }}
+                {{ data.nameKey | translate }}
               </ng-template>
             </div>
 
             <div class="form-field">
               <tui-textfield tuiChevron [stringify]="timezoneStringify">
-                <label tuiLabel>Timezone</label>
+                <label tuiLabel>{{ 'common.fields.timezone' | translate }}</label>
                 <input
                   tuiComboBox
                   [formControl]="form.controls.timezone"
@@ -90,21 +90,21 @@
             <div formGroupName="email_preferences" class="email-preferences">
               <label tuiLabel class="email-option email-option--primary">
                 <input tuiCheckbox type="checkbox" formControlName="notifications_enabled" />
-                All notification emails
+                {{ 'preferences.email.all' | translate }}
               </label>
 
               <div class="email-option-grid">
                 @if (canReceiveAssetUploadEmails()) {
                   <label tuiLabel class="email-option">
                     <input tuiCheckbox type="checkbox" formControlName="asset_uploads_enabled" />
-                    New videos uploaded to groups you own
+                    {{ 'preferences.email.newVideos' | translate }}
                   </label>
                 }
 
                 @if (canReceiveAssetReviewEmails()) {
                   <label tuiLabel class="email-option">
                     <input tuiCheckbox type="checkbox" formControlName="asset_reviews_enabled" />
-                    Reviewed videos
+                    {{ 'preferences.email.reviewedVideos' | translate }}
                   </label>
                 }
 
@@ -115,7 +115,7 @@
                       type="checkbox"
                       formControlName="invitation_updates_enabled"
                     />
-                    Invitation activity
+                    {{ 'preferences.email.invitationActivity' | translate }}
                   </label>
                 }
 
@@ -125,7 +125,7 @@
                     type="checkbox"
                     formControlName="group_membership_updates_enabled"
                   />
-                  Group membership updates
+                  {{ 'preferences.email.groupMembership' | translate }}
                 </label>
 
                 @if (canReceiveCoachingEmails()) {
@@ -135,7 +135,7 @@
                       type="checkbox"
                       formControlName="coaching_booking_updates_enabled"
                     />
-                    Coaching bookings and cancellations
+                    {{ 'preferences.email.coachingBookings' | translate }}
                   </label>
 
                   <label tuiLabel class="email-option">
@@ -144,7 +144,7 @@
                       type="checkbox"
                       formControlName="coaching_reminders_enabled"
                     />
-                    Coaching reminders
+                    {{ 'preferences.email.coachingReminders' | translate }}
                   </label>
                 }
               </div>
@@ -152,7 +152,9 @@
           }
 
           <div class="form-actions">
-            <button tuiButton type="submit" [disabled]="isSaveDisabled">Save</button>
+            <button tuiButton type="submit" [disabled]="isSaveDisabled">
+              {{ 'common.actions.save' | translate }}
+            </button>
           </div>
         </form>
       </div>

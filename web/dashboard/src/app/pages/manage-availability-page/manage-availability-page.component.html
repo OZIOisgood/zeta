@@ -2,7 +2,7 @@
   <div class="availability-page">
     <app-breadcrumbs [items]="breadcrumbItems"></app-breadcrumbs>
 
-    <app-section-header title="Manage Availability"></app-section-header>
+    <app-section-header title="sessions.availability.title"></app-section-header>
 
     @if (loading()) {
       <div class="group-list">
@@ -17,14 +17,14 @@
     } @else if (groups().length === 0) {
       <app-illustrated-message
         illustrationSrc="/illustrations/lonely-horse.png"
-        illustrationAlt="No groups"
-        heading="No Groups Yet"
-        description="You are not a member of any group. Create or join a group to start managing your availability."
+        illustrationAlt="sessions.availability.noGroups"
+        heading="sessions.availability.noGroups"
+        description="sessions.availability.noGroupsDescription"
         [buttons]="
           canCreateGroup()
             ? [
                 {
-                  label: 'Create group',
+                  label: 'common.actions.createGroup',
                   appearance: 'primary',
                   routerLink: '/create-group',
                 },
@@ -46,21 +46,21 @@
           [class.tab--active]="activeTab() === 'session-types'"
           (click)="setTab('session-types')"
         >
-          Session Types ({{ sessionTypes().length }})
+          {{ 'sessions.availability.sessionTypes' | translate: { count: sessionTypes().length } }}
         </button>
         <button
           class="tab"
           [class.tab--active]="activeTab() === 'schedule'"
           (click)="setTab('schedule')"
         >
-          Weekly Schedule ({{ availability().length }})
+          {{ 'sessions.availability.weeklySchedule' | translate: { count: availability().length } }}
         </button>
         <button
           class="tab"
           [class.tab--active]="activeTab() === 'blocked'"
           (click)="setTab('blocked')"
         >
-          Blocked Dates ({{ blockedSlots().length }})
+          {{ 'sessions.availability.blockedDates' | translate: { count: blockedSlots().length } }}
         </button>
       </div>
 
@@ -74,15 +74,15 @@
             iconStart="@tui.plus"
             (click)="openSessionTypeDialog()"
           >
-            Add Session Type
+            {{ 'sessions.availability.addSessionType' | translate }}
           </button>
         </div>
 
         @if (sessionTypes().length === 0) {
           <app-illustrated-message
             illustrationSrc="/illustrations/lonely-horse.png"
-            heading="No session types yet"
-            description="Add a session type so students can book with you."
+            heading="sessions.availability.noSessionTypes"
+            description="sessions.availability.noSessionTypesDescription"
           ></app-illustrated-message>
         }
 
@@ -91,7 +91,8 @@
             <div class="availability-item">
               <div>
                 <span class="tui-text_body-m availability-label">
-                  {{ st.name }} &nbsp;&bull;&nbsp; {{ st.duration_minutes }} min
+                  {{ st.name }} &nbsp;&bull;&nbsp;
+                  {{ 'common.labels.minutesShort' | translate: { count: st.duration_minutes } }}
                 </span>
                 @if (st.description) {
                   <p class="tui-text_body-s session-type-desc">{{ st.description }}</p>
@@ -105,7 +106,7 @@
                   iconStart="@tui.pencil"
                   (click)="openSessionTypeDialog(st)"
                 >
-                  Edit
+                  {{ 'common.actions.edit' | translate }}
                 </button>
                 <button
                   tuiButton
@@ -114,7 +115,7 @@
                   iconStart="@tui.trash-2"
                   (click)="deleteSessionType(st.id)"
                 >
-                  Delete
+                  {{ 'common.actions.delete' | translate }}
                 </button>
               </div>
             </div>
@@ -132,15 +133,15 @@
             iconStart="@tui.plus"
             (click)="openAvailabilityDialog()"
           >
-            Add Availability
+            {{ 'sessions.availability.addAvailability' | translate }}
           </button>
         </div>
 
         @if (availability().length === 0) {
           <app-illustrated-message
             illustrationSrc="/illustrations/lonely-horse.png"
-            heading="No availability yet"
-            description="Add availability blocks to start accepting bookings."
+            heading="sessions.availability.noAvailability"
+            description="sessions.availability.noAvailabilityDescription"
           ></app-illustrated-message>
         }
 
@@ -159,7 +160,7 @@
                   iconStart="@tui.pencil"
                   (click)="openAvailabilityDialog(a)"
                 >
-                  Edit
+                  {{ 'common.actions.edit' | translate }}
                 </button>
                 <button
                   tuiButton
@@ -168,7 +169,7 @@
                   iconStart="@tui.trash-2"
                   (click)="deleteAvailability(a.id)"
                 >
-                  Delete
+                  {{ 'common.actions.delete' | translate }}
                 </button>
               </div>
             </div>
@@ -186,15 +187,15 @@
             iconStart="@tui.plus"
             (click)="openBlockedSlotDialog()"
           >
-            Add Block Time
+            {{ 'sessions.availability.addBlockTime' | translate }}
           </button>
         </div>
 
         @if (blockedSlots().length === 0) {
           <app-illustrated-message
             illustrationSrc="/illustrations/bored-horse.png"
-            heading="No blocked dates"
-            description="Block specific dates or times when you're unavailable."
+            heading="sessions.availability.noBlockedDates"
+            description="sessions.availability.noBlockedDatesDescription"
           ></app-illustrated-message>
         }
 
@@ -203,7 +204,7 @@
             <span class="tui-text_body-m availability-label">
               {{ formatBlockedDate(slot.blocked_date) }}
               @if (!slot.start_time) {
-                &nbsp;&bull;&nbsp;Full day
+                &nbsp;&bull;&nbsp;{{ 'common.labels.fullDay' | translate }}
               } @else {
                 &nbsp;&bull;&nbsp;{{ slot.start_time }} – {{ slot.end_time }}
               }
@@ -218,7 +219,7 @@
               iconStart="@tui.trash-2"
               (click)="deleteBlockedSlot(slot.id)"
             >
-              Delete
+              {{ 'common.actions.delete' | translate }}
             </button>
           </div>
         }

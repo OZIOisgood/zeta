@@ -1,16 +1,24 @@
 <app-page-container>
-  <app-section-header title="Book Live Coaching"></app-section-header>
+  <app-section-header title="sessions.bookLive"></app-section-header>
 
   <tui-stepper
     [activeItemIndex]="activeIndex"
     (activeItemIndexChange)="onActiveIndexChange($event)"
     style="margin-bottom: 2rem"
   >
-    <button tuiStep icon="@tui.users">Select Group</button>
-    <button tuiStep icon="@tui.user" [disabled]="activeIndex < 1">Select Expert</button>
-    <button tuiStep icon="@tui.layers" [disabled]="activeIndex < 2">Session Type</button>
-    <button tuiStep icon="@tui.calendar" [disabled]="activeIndex < 3">Select Time</button>
-    <button tuiStep icon="@tui.check" [disabled]="activeIndex < 4">Confirm</button>
+    <button tuiStep icon="@tui.users">{{ 'sessions.book.selectGroup' | translate }}</button>
+    <button tuiStep icon="@tui.user" [disabled]="activeIndex < 1">
+      {{ 'sessions.book.selectExpert' | translate }}
+    </button>
+    <button tuiStep icon="@tui.layers" [disabled]="activeIndex < 2">
+      {{ 'sessions.book.sessionType' | translate }}
+    </button>
+    <button tuiStep icon="@tui.calendar" [disabled]="activeIndex < 3">
+      {{ 'sessions.book.selectTime' | translate }}
+    </button>
+    <button tuiStep icon="@tui.check" [disabled]="activeIndex < 4">
+      {{ 'common.actions.confirm' | translate }}
+    </button>
   </tui-stepper>
 
   <div [tuiSlides]="slideDirection" style="overflow: hidden">
@@ -19,7 +27,7 @@
       @case (0) {
         <div>
           <p class="tui-text_body-m step-description">
-            Select a group to book a coaching session in.
+            {{ 'sessions.book.selectGroupDescription' | translate }}
           </p>
           <app-groups-list
             [groups]="groups()"
@@ -34,7 +42,9 @@
       @case (1) {
         <div>
           @if (expertsLoading()) {
-            <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
+            <p class="tui-text_body-m step-description">
+              {{ 'sessions.book.selectExpertDescription' | translate }}
+            </p>
             <div class="experts-grid">
               @for (_ of [1, 2, 3]; track _) {
                 <div
@@ -48,12 +58,14 @@
           } @else if (experts().length === 0) {
             <app-illustrated-message
               illustrationSrc="illustrations/lonely-horse.png"
-              illustrationAlt="No experts available"
-              heading="No experts available"
-              description="There are no experts with availability in this group yet. Please check back later or try another group."
+              illustrationAlt="sessions.book.noExperts"
+              heading="sessions.book.noExperts"
+              description="sessions.book.noExpertsDescription"
             />
           } @else {
-            <p class="tui-text_body-m step-description">Choose an expert to book a session with.</p>
+            <p class="tui-text_body-m step-description">
+              {{ 'sessions.book.selectExpertDescription' | translate }}
+            </p>
             <div class="experts-grid">
               @for (expert of experts(); track expert.expert_id) {
                 <button class="expert-card" type="button" (click)="selectExpert(expert)">
@@ -67,7 +79,7 @@
           }
           <div class="step-nav">
             <button tuiButton appearance="secondary" size="m" type="button" (click)="onBack()">
-              Back
+              {{ 'common.actions.back' | translate }}
             </button>
           </div>
         </div>
@@ -78,7 +90,7 @@
         <div>
           @if (sessionTypesLoading()) {
             <p class="tui-text_body-m step-description">
-              Choose the type of session you'd like to book.
+              {{ 'sessions.book.sessionTypeDescription' | translate }}
             </p>
             <div class="session-types-list">
               @for (_ of [1, 2, 3]; track _) {
@@ -90,13 +102,13 @@
           } @else if (sessionTypes().length === 0) {
             <app-illustrated-message
               illustrationSrc="illustrations/lonely-horse.png"
-              illustrationAlt="No session types"
-              heading="No session types configured"
-              description="The expert hasn't set up any session types yet. Please check back later or contact your coach."
+              illustrationAlt="sessions.book.noSessionTypes"
+              heading="sessions.book.noSessionTypes"
+              description="sessions.book.noSessionTypesDescription"
             />
           } @else {
             <p class="tui-text_body-m step-description">
-              Choose the type of session you'd like to book.
+              {{ 'sessions.book.sessionTypeDescription' | translate }}
             </p>
             <div class="session-types-list">
               @for (type of sessionTypes(); track type.id) {
@@ -108,7 +120,7 @@
                     }
                   </div>
                   <span class="tui-text_body-s session-type-duration"
-                    >{{ type.duration_minutes }} min</span
+                    >{{ 'common.labels.minutesShort' | translate: { count: type.duration_minutes } }}</span
                   >
                 </button>
               }
@@ -117,7 +129,7 @@
 
           <div class="step-nav">
             <button tuiButton appearance="secondary" size="m" type="button" (click)="onBack()">
-              Back
+              {{ 'common.actions.back' | translate }}
             </button>
           </div>
         </div>
@@ -128,7 +140,7 @@
         <div>
           @if (slotsLoading()) {
             <p class="tui-text_body-m step-description">
-              Pick a date and time that works for you. All times are in your local timezone.
+              {{ 'sessions.book.selectSlotDescription' | translate }}
             </p>
             <div class="calendar-layout">
               <div
@@ -151,13 +163,13 @@
           } @else if (slots().length === 0) {
             <app-illustrated-message
               illustrationSrc="illustrations/lonely-horse.png"
-              illustrationAlt="No available times"
-              heading="No available times"
-              description="This expert doesn't have any open slots right now. Try a different session type or check back later."
+              illustrationAlt="sessions.book.noTimes"
+              heading="sessions.book.noTimes"
+              description="sessions.book.noTimesDescription"
             />
           } @else {
             <p class="tui-text_body-m step-description">
-              Pick a date and time that works for you. All times are in your local timezone.
+              {{ 'sessions.book.selectSlotDescription' | translate }}
             </p>
             <div class="calendar-layout">
               <div class="calendar-panel">
@@ -185,7 +197,7 @@
                 } @else {
                   <div class="slots-panel-placeholder">
                     <span class="tui-text_body-m" style="color: var(--tui-text-tertiary)"
-                      >Select a date to see available times</span
+                      >{{ 'sessions.book.selectDate' | translate }}</span
                     >
                   </div>
                 }
@@ -195,7 +207,7 @@
 
           <div class="step-nav">
             <button tuiButton appearance="secondary" size="m" type="button" (click)="onBack()">
-              Back
+              {{ 'common.actions.back' | translate }}
             </button>
           </div>
         </div>
@@ -207,61 +219,63 @@
           @if (booked) {
             <app-illustrated-message
               illustrationSrc="illustrations/live-coaching-done.png"
-              illustrationAlt="Session booked"
-              heading="Session booked!"
-              description="Your coaching session has been successfully scheduled."
-              [buttons]="[{ label: 'View My Sessions', appearance: 'primary' }]"
+              illustrationAlt="sessions.book.bookedAlt"
+              heading="sessions.book.bookedHeading"
+              description="sessions.book.bookedDescription"
+              [buttons]="[{ label: 'sessions.book.viewSessions', appearance: 'primary' }]"
               (buttonClick)="goToSessions()"
             />
           } @else if (selectedSlot) {
             <p class="tui-text_body-m step-description">
-              Review your session details and confirm your booking.
+              {{ 'sessions.book.confirmDescription' | translate }}
             </p>
 
             <div class="confirm-summary">
               <div class="confirm-row">
-                <span class="confirm-label">Group</span>
+                <span class="confirm-label">{{ 'common.fields.group' | translate }}</span>
                 <span>{{ selectedGroup?.name }}</span>
               </div>
               <div class="confirm-row">
-                <span class="confirm-label">Expert</span>
+                <span class="confirm-label">{{ 'common.labels.expert' | translate }}</span>
                 <span>{{ selectedExpertName }}</span>
               </div>
               @if (selectedSessionType) {
                 <div class="confirm-row">
-                  <span class="confirm-label">Session</span>
+                  <span class="confirm-label">{{ 'sessions.book.sessionType' | translate }}</span>
                   <span>{{ selectedSessionType.name }}</span>
                 </div>
               }
               <div class="confirm-row">
-                <span class="confirm-label">Date & Time</span>
+                <span class="confirm-label">{{ 'sessions.book.dateTime' | translate }}</span>
                 <span>{{ formatSlotDateTime(selectedSlot) }}</span>
               </div>
               <div class="confirm-row">
-                <span class="confirm-label">Duration</span>
-                <span
-                  >{{
-                    selectedSessionType?.duration_minutes ?? selectedSlot.duration_minutes
-                  }}
-                  minutes</span
-                >
+                <span class="confirm-label">{{ 'common.fields.duration' | translate }}</span>
+                <span>{{
+                  'common.labels.minutes'
+                    | translate
+                      : {
+                          count:
+                            selectedSessionType?.duration_minutes ?? selectedSlot.duration_minutes,
+                        }
+                }}</span>
               </div>
             </div>
 
             <tui-textfield style="margin-top: 1.5rem">
-              <label tuiLabel>Notes (optional)</label>
+              <label tuiLabel>{{ 'sessions.book.notes' | translate }}</label>
               <textarea
                 tuiTextarea
                 [(ngModel)]="notes"
                 [min]="5"
                 [max]="15"
-                placeholder="Anything you'd like to share with the expert..."
+                [placeholder]="'sessions.book.notesPlaceholder' | translate"
               ></textarea>
             </tui-textfield>
 
             <div class="step-nav">
               <button tuiButton appearance="secondary" size="m" type="button" (click)="onBack()">
-                Back
+                {{ 'common.actions.back' | translate }}
               </button>
               <button
                 tuiButton
@@ -270,7 +284,7 @@
                 [disabled]="booking"
                 (click)="confirmBooking()"
               >
-                {{ booking ? 'Booking...' : 'Book Session' }}
+                {{ (booking ? 'sessions.book.booking' : 'sessions.book.bookSession') | translate }}
               </button>
             </div>
           }

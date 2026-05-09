@@ -1,14 +1,14 @@
 <app-page-container>
   <app-breadcrumbs
-    [items]="[{ label: 'Groups', routerLink: '/groups' }, { label: 'Create Group' }]"
+    [items]="[{ label: 'common.nav.groups', routerLink: '/groups' }, { label: 'groups.create' }]"
   ></app-breadcrumbs>
 
-  <app-section-header title="Create Group"></app-section-header>
+  <app-section-header title="groups.create"></app-section-header>
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="create-group-form">
     <div class="form-field">
       <tui-textfield>
-        <label tuiLabel>Group Name</label>
+        <label tuiLabel>{{ 'groups.groupName' | translate }}</label>
         <input formControlName="name" tuiTextfield type="text" />
       </tui-textfield>
 
@@ -16,13 +16,13 @@
         *ngIf="form.get('name')?.invalid && form.get('name')?.touched"
         class="tui-text_body-s error-message"
       >
-        Group name is required
+        {{ 'groups.groupNameRequired' | translate }}
       </div>
     </div>
 
     <div class="form-field">
       <tui-textfield>
-        <label tuiLabel>Description</label>
+        <label tuiLabel>{{ 'common.fields.description' | translate }}</label>
         <textarea tuiTextarea formControlName="description" [min]="3" [max]="10"></textarea>
       </tui-textfield>
     </div>
@@ -41,7 +41,7 @@
         size="m"
         [disabled]="isSubmitting"
       >
-        Cancel
+        {{ 'common.actions.cancel' | translate }}
       </button>
       <button
         type="submit"
@@ -49,7 +49,7 @@
         tuiButton
         size="m"
       >
-        {{ isSubmitting ? 'Creating...' : 'Create' }}
+        {{ (isSubmitting ? 'groups.creating' : 'common.actions.create') | translate }}
       </button>
     </div>
   </form>

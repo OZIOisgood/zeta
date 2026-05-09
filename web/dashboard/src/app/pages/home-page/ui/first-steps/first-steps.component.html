@@ -1,9 +1,11 @@
 <section class="first-steps" aria-labelledby="first-steps-title">
   <div class="first-steps__intro">
-    <p class="first-steps__eyebrow">Welcome to Zeta</p>
-    <h2 id="first-steps-title" class="tui-text_h4">First steps</h2>
+    <p class="first-steps__eyebrow">{{ 'home.firstSteps.eyebrow' | translate }}</p>
+    <h2 id="first-steps-title" class="tui-text_h4">
+      {{ 'home.firstSteps.title' | translate }}
+    </h2>
     <p class="tui-text_body-m">
-      Complete the basics to start sharing videos and working with your coaching group.
+      {{ 'home.firstSteps.description' | translate }}
     </p>
   </div>
 
@@ -15,18 +17,18 @@
         </span>
 
         <div class="first-step__content">
-          <h3 class="tui-text_body-l">{{ step.title }}</h3>
-          <p class="tui-text_body-s">{{ step.description }}</p>
+          <h3 class="tui-text_body-l">{{ step.title | translate }}</h3>
+          <p class="tui-text_body-s">{{ step.description | translate }}</p>
         </div>
 
         @if (!step.completed && step.actionLabel) {
           @if (step.disabled) {
             <button tuiButton appearance="secondary" size="s" type="button" disabled>
-              {{ step.actionLabel }}
+              {{ step.actionLabel | translate }}
             </button>
           } @else if (step.actionRouterLink) {
             <a tuiButton appearance="primary" size="s" [routerLink]="step.actionRouterLink">
-              {{ step.actionLabel }}
+              {{ step.actionLabel | translate }}
             </a>
           }
         }

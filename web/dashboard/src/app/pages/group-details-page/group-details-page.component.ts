@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
 import { TuiElasticContainer } from '@taiga-ui/kit';
 import { TuiCardLarge } from '@taiga-ui/layout';
@@ -38,6 +39,7 @@ import { PermissionsService } from '../../shared/services/permissions.service';
     TuiElasticContainer,
     BreadcrumbsComponent,
     IllustratedMessageComponent,
+    TranslatePipe,
   ],
   templateUrl: './group-details-page.component.html',
   styleUrls: ['./group-details-page.component.scss'],
@@ -50,6 +52,7 @@ export class GroupDetailsPageComponent {
   private readonly groupsService = inject(GroupsService);
   private readonly dialogs = inject(TuiDialogService);
   private readonly alerts = inject(TuiAlertService);
+  private readonly translate = inject(TranslateService);
 
   private readonly studentsListState = signal({ loaded: false, count: 0 });
   private readonly expertsListState = signal({ loaded: false, count: 0 });
@@ -246,13 +249,15 @@ export class GroupDetailsPageComponent {
   openInviteDialog(groupId: string): void {
     this.dialogs
       .open<boolean>(new PolymorpheusComponent(InviteDialogComponent), {
-        label: 'Create Invitation',
+        label: this.translate.instant('groups.createInvitationTitle'),
         size: 's',
         data: groupId,
       })
       .pipe(take(1), filter(Boolean))
       .subscribe(() => {
-        this.alerts.open('Invitation ready', { appearance: 'positive' }).subscribe();
+        this.alerts
+          .open(this.translate.instant('groups.invitationReady'), { appearance: 'positive' })
+          .subscribe();
       });
   }
 

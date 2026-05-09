@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { TuiDialogService } from '@taiga-ui/core';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
 import { of, switchMap, take, tap } from 'rxjs';
@@ -31,6 +32,7 @@ export class GroupsPageComponent implements OnInit {
   private readonly permissionsService = inject(PermissionsService);
   private readonly invitationsService = inject(InvitationsService);
   private readonly dialogs = inject(TuiDialogService);
+  private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -55,7 +57,7 @@ export class GroupsPageComponent implements OnInit {
           return this.dialogs.open<string | null>(
             new PolymorpheusComponent(AcceptInviteDialogComponent),
             {
-              label: 'Group Invitation',
+              label: this.translate.instant('groups.invitationDialog.title'),
               size: 's',
               data: info,
             },

@@ -1,5 +1,5 @@
 <div class="avatar-selector-container">
-  <label tuiLabel>Avatar</label>
+  <label tuiLabel>{{ 'common.fields.avatar' | translate }}</label>
   <input #fileInput type="file" accept="image/*" hidden (change)="onFileInputChange($event)" />
 
   <div class="actions">
@@ -12,7 +12,7 @@
       [disabled]="disabled"
       class="select-image-button"
     >
-      Select Image
+      {{ 'avatar.selectImage' | translate }}
     </button>
   </div>
 
@@ -21,7 +21,11 @@
   </div>
 
   <div *ngIf="avatarPreview()" class="avatar-preview-container">
-    <img [src]="avatarPreview()" alt="Avatar preview" class="avatar-preview" />
-    <p class="tui-text_body-xs preview-label">Preview</p>
+    <img
+      [src]="avatarPreview()"
+      [alt]="'common.aria.avatarPreview' | translate"
+      class="avatar-preview"
+    />
+    <p class="tui-text_body-xs preview-label">{{ 'common.labels.preview' | translate }}</p>
   </div>
 </div>

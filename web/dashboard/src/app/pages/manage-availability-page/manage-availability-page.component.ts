@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TuiAlertService, TuiButton, TuiDialogService } from '@taiga-ui/core';
 import { TUI_CONFIRM, TuiConfirmData, TuiSkeleton } from '@taiga-ui/kit';
 import { PolymorpheusComponent } from '@taiga-ui/polymorpheus';
@@ -30,7 +31,7 @@ import {
 } from '../../shared/services/coaching.service';
 import { Group, GroupsService } from '../../shared/services/groups.service';
 import { PermissionsService } from '../../shared/services/permissions.service';
-import { resolveFirstDayOfWeek, WEEKDAY_NAMES } from '../../shared/utils/weekdays';
+import { resolveFirstDayOfWeek } from '../../shared/utils/weekdays';
 import {
   AvailabilityDialogComponent,
   AvailabilityDialogResult,
@@ -59,6 +60,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
     GroupsListComponent,
     TuiButton,
     TuiSkeleton,
+    TranslatePipe,
   ],
   templateUrl: './manage-availability-page.component.html',
   styleUrls: ['./manage-availability-page.component.scss'],
@@ -74,6 +76,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   private readonly alerts = inject(TuiAlertService);
   private readonly dialogs = inject(TuiDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   // Group selection
   protected groups = signal<Group[]>([]);
@@ -83,12 +86,12 @@ export class ManageAvailabilityPageComponent implements OnInit {
   private readonly tabs: AvailabilityTab[] = ['session-types', 'schedule', 'blocked'];
 
   get breadcrumbItems(): BreadcrumbItem[] {
-    const items: BreadcrumbItem[] = [{ label: 'Sessions', routerLink: '/sessions' }];
+    const items: BreadcrumbItem[] = [{ label: 'sessions.title', routerLink: '/sessions' }];
     if (this.selectedGroup) {
-      items.push({ label: 'Manage Availability', routerLink: '/sessions/settings' });
+      items.push({ label: 'sessions.availability.title', routerLink: '/sessions/settings' });
       items.push({ label: this.selectedGroup.name });
     } else {
-      items.push({ label: 'Manage Availability' });
+      items.push({ label: 'sessions.availability.title' });
     }
     return items;
   }
@@ -192,7 +195,11 @@ export class ManageAvailabilityPageComponent implements OnInit {
   protected openSessionTypeDialog(sessionType: SessionType | null = null): void {
     this.dialogs
       .open<SessionTypeDialogResult | null>(new PolymorpheusComponent(SessionTypeDialogComponent), {
-        label: sessionType ? 'Edit Session Type' : 'Add Session Type',
+        label: this.translate.instant(
+          sessionType
+            ? 'sessions.availability.editSessionType'
+            : 'sessions.availability.addSessionType',
+        ),
         size: 's',
         data: { sessionType, durationOptions: DURATION_OPTIONS },
       })
@@ -204,7 +211,9 @@ export class ManageAvailabilityPageComponent implements OnInit {
             next: () => this.refreshSessionTypes(),
             error: () => {
               this.alerts
-                .open('Failed to update session type', { appearance: 'negative' })
+                .open(this.translate.instant('sessions.availability.failedUpdateSessionType'), {
+                  appearance: 'negative',
+                })
                 .subscribe();
             },
           });
@@ -213,7 +222,9 @@ export class ManageAvailabilityPageComponent implements OnInit {
             next: () => this.refreshSessionTypes(),
             error: () => {
               this.alerts
-                .open('Failed to create session type', { appearance: 'negative' })
+                .open(this.translate.instant('sessions.availability.failedCreateSessionType'), {
+                  appearance: 'negative',
+                })
                 .subscribe();
             },
           });
@@ -232,13 +243,17 @@ export class ManageAvailabilityPageComponent implements OnInit {
 
   protected deleteSessionType(id: string): void {
     const data: TuiConfirmData = {
-      content: 'This action cannot be undone.',
-      yes: 'Delete',
-      no: 'Cancel',
+      content: this.translate.instant('sessions.availability.confirmDelete'),
+      yes: this.translate.instant('common.actions.delete'),
+      no: this.translate.instant('common.actions.cancel'),
       appearance: 'destructive',
     };
     this.dialogs
-      .open<boolean>(TUI_CONFIRM, { label: 'Delete Session Type', size: 's', data })
+      .open<boolean>(TUI_CONFIRM, {
+        label: this.translate.instant('sessions.availability.deleteSessionType'),
+        size: 's',
+        data,
+      })
       .pipe(
         filter(Boolean),
         switchMap(() => this.coachingService.deleteSessionType(this.groupId, id)),
@@ -246,14 +261,18 @@ export class ManageAvailabilityPageComponent implements OnInit {
       .subscribe({
         next: () => this.refreshSessionTypes(),
         error: () => {
-          this.alerts.open('Failed to delete session type', { appearance: 'negative' }).subscribe();
+          this.alerts
+            .open(this.translate.instant('sessions.availability.failedDeleteSessionType'), {
+              appearance: 'negative',
+            })
+            .subscribe();
         },
       });
   }
 
   // Availability
   protected dayName(dow: number): string {
-    return WEEKDAY_NAMES[dow] ?? '';
+    return this.translate.instant(`weekdays.${dow}`);
   }
 
   protected openAvailabilityDialog(availability: CoachingAvailability | null = null): void {
@@ -261,7 +280,11 @@ export class ManageAvailabilityPageComponent implements OnInit {
       .open<AvailabilityDialogResult | null>(
         new PolymorpheusComponent(AvailabilityDialogComponent),
         {
-          label: availability ? 'Edit Availability' : 'Add Availability',
+          label: this.translate.instant(
+            availability
+              ? 'sessions.availability.editAvailability'
+              : 'sessions.availability.addAvailability',
+          ),
           size: 's',
           data: { availability, firstDayOfWeek: this.firstDayOfWeek() },
         },
@@ -274,7 +297,9 @@ export class ManageAvailabilityPageComponent implements OnInit {
             next: () => this.loadData(),
             error: () => {
               this.alerts
-                .open('Failed to update availability block', { appearance: 'negative' })
+                .open(this.translate.instant('sessions.availability.failedUpdateAvailability'), {
+                  appearance: 'negative',
+                })
                 .subscribe();
             },
           });
@@ -283,7 +308,9 @@ export class ManageAvailabilityPageComponent implements OnInit {
             next: () => this.loadData(),
             error: () => {
               this.alerts
-                .open('Failed to add availability block', { appearance: 'negative' })
+                .open(this.translate.instant('sessions.availability.failedAddAvailability'), {
+                  appearance: 'negative',
+                })
                 .subscribe();
             },
           });
@@ -293,13 +320,17 @@ export class ManageAvailabilityPageComponent implements OnInit {
 
   protected deleteAvailability(id: string): void {
     const data: TuiConfirmData = {
-      content: 'This action cannot be undone.',
-      yes: 'Delete',
-      no: 'Cancel',
+      content: this.translate.instant('sessions.availability.confirmDelete'),
+      yes: this.translate.instant('common.actions.delete'),
+      no: this.translate.instant('common.actions.cancel'),
       appearance: 'destructive',
     };
     this.dialogs
-      .open<boolean>(TUI_CONFIRM, { label: 'Delete Availability', size: 's', data })
+      .open<boolean>(TUI_CONFIRM, {
+        label: this.translate.instant('sessions.availability.deleteAvailability'),
+        size: 's',
+        data,
+      })
       .pipe(
         filter(Boolean),
         switchMap(() => this.coachingService.deleteAvailability(this.groupId, id)),
@@ -308,7 +339,9 @@ export class ManageAvailabilityPageComponent implements OnInit {
         next: () => this.loadData(),
         error: () => {
           this.alerts
-            .open('Failed to delete availability block', { appearance: 'negative' })
+            .open(this.translate.instant('sessions.availability.failedDeleteAvailability'), {
+              appearance: 'negative',
+            })
             .subscribe();
         },
       });
@@ -318,7 +351,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   protected openBlockedSlotDialog(): void {
     this.dialogs
       .open<BlockedSlotDialogResult | null>(new PolymorpheusComponent(BlockedSlotDialogComponent), {
-        label: 'Block Time',
+        label: this.translate.instant('sessions.availability.blockTime'),
         size: 's',
       })
       .subscribe((result) => {
@@ -327,7 +360,11 @@ export class ManageAvailabilityPageComponent implements OnInit {
         this.coachingService.createBlockedSlot(this.groupId, result).subscribe({
           next: () => this.loadBlockedSlots(),
           error: () => {
-            this.alerts.open('Failed to block time', { appearance: 'negative' }).subscribe();
+            this.alerts
+              .open(this.translate.instant('sessions.availability.failedBlockTime'), {
+                appearance: 'negative',
+              })
+              .subscribe();
           },
         });
       });
@@ -335,13 +372,17 @@ export class ManageAvailabilityPageComponent implements OnInit {
 
   protected deleteBlockedSlot(id: string): void {
     const data: TuiConfirmData = {
-      content: 'This action cannot be undone.',
-      yes: 'Delete',
-      no: 'Cancel',
+      content: this.translate.instant('sessions.availability.confirmDelete'),
+      yes: this.translate.instant('common.actions.delete'),
+      no: this.translate.instant('common.actions.cancel'),
       appearance: 'destructive',
     };
     this.dialogs
-      .open<boolean>(TUI_CONFIRM, { label: 'Delete Blocked Date', size: 's', data })
+      .open<boolean>(TUI_CONFIRM, {
+        label: this.translate.instant('sessions.availability.deleteBlockedDate'),
+        size: 's',
+        data,
+      })
       .pipe(
         filter(Boolean),
         switchMap(() => this.coachingService.deleteBlockedSlot(this.groupId, id)),
@@ -349,7 +390,11 @@ export class ManageAvailabilityPageComponent implements OnInit {
       .subscribe({
         next: () => this.loadBlockedSlots(),
         error: () => {
-          this.alerts.open('Failed to remove blocked slot', { appearance: 'negative' }).subscribe();
+          this.alerts
+            .open(this.translate.instant('sessions.availability.failedRemoveBlocked'), {
+              appearance: 'negative',
+            })
+            .subscribe();
         },
       });
   }
@@ -357,7 +402,7 @@ export class ManageAvailabilityPageComponent implements OnInit {
   protected formatBlockedDate(isoDate: string): string {
     const [y, m, d] = isoDate.split('-').map(Number);
     const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString(undefined, {
+    return date.toLocaleDateString(this.translate.currentLang || undefined, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
