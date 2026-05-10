@@ -103,13 +103,23 @@ func (s *Service) EnhanceReviewText(ctx context.Context, originalText string) (s
 	return enhanced, nil
 }
 
-// detectLanguage asks the model to identify the dominant language of the text.
-// It falls back to "English" on error.
+// detectLanguage asks the model to return a JSON map of language→word-percentage,
+// then picks the language with the highest share in Go — not the model.
+// This correctly handles mixed-language input (e.g. mostly English + one forgotten foreign word).
+// Falls back to "English" on any error.
 func (s *Service) detectLanguage(ctx context.Context, text string) string {
-	lang, err := s.callAPI(ctx, []Message{
+	raw, err := s.callAPI(ctx, []Message{
 		{
 			Role: "system",
-			Content: "You are a language identification tool. Identify the single dominant language that the author primarily intended to write in — ignore any stray words in other languages. Reply with ONLY the language name in English (e.g. 'English', 'Russian', 'Ukrainian', 'Spanish', 'French', 'Arabic'). Output nothing else.",
+			Content: `You are a language identification tool. Analyze the given text word by word and return a JSON object that maps each detected language name to the approximate percentage of words written in that language.
+
+Rules:
+- Count every word individually.
+- Percentages must sum to 100.
+- Use full English language names as keys (e.g. "English", "Russian", "Ukrainian", "Spanish").
+- Return ONLY valid JSON — no markdown, no explanation.
+
+Example output: {"English": 85, "Russian": 15}`,
 		},
 		{Role: "user", Content: text},
 	})
@@ -120,7 +130,25 @@ func (s *Service) detectLanguage(ctx context.Context, text string) string {
 		)
 		return "English"
 	}
-	return strings.TrimSpace(lang)
+
+	var shares map[string]float64
+	if err := json.Unmarshal([]byte(strings.TrimSpace(raw)), &shares); err != nil {
+		s.logger.WarnContext(ctx, "llm_detect_language_parse_failed",
+			slog.String("component", "llm"),
+			slog.String("raw", raw),
+			slog.Any("err", err),
+		)
+		return "English"
+	}
+
+	best, bestPct := "English", -1.0
+	for lang, pct := range shares {
+		if pct > bestPct {
+			bestPct = pct
+			best = lang
+		}
+	}
+	return best
 }
 
 // callAPI sends messages to the OpenRouter API and returns the text of the first choice.
