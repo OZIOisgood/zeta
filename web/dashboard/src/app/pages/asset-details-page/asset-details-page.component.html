@@ -138,9 +138,7 @@
             illustrationAlt="videos.noComments"
             heading="videos.noComments"
             [description]="
-              auth.user()?.role === 'expert'
-                ? 'videos.leaveComment'
-                : 'videos.reviewerNoComments'
+              auth.user()?.role === 'expert' ? 'videos.leaveComment' : 'videos.reviewerNoComments'
             "
           ></app-illustrated-message>
         </div>
@@ -159,6 +157,7 @@
     transform: translateX(-50%);
     width: 100%;
     max-width: 800px;
+    box-sizing: border-box;
     background: var(--tui-background-base);
     border: 1px solid var(--tui-border-normal);
     border-bottom: none;
