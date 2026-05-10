@@ -12,6 +12,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 0 0.75rem 1.25rem;
+  flex-wrap: wrap;
 }
 
 .avatar-image {
@@ -58,6 +59,11 @@
 .prefs-button {
   flex-shrink: 0;
   margin-left: auto;
+
+  @media (max-width: 47.9375em) {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 .description-section {
