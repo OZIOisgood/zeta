@@ -75,10 +75,19 @@
                   type="button"
                   (click)="selectExpert(expert)"
                 >
-                  <tui-avatar [src]="expertAvatarSrc(expert)" size="l"></tui-avatar>
-                  <span class="tui-text_body-m expert-name"
-                    >{{ expert.first_name }} {{ expert.last_name }}</span
-                  >
+                  <h2 tuiTitle>{{ expert.first_name }} {{ expert.last_name }}</h2>
+                  @if (expert.avatar) {
+                    <div
+                      class="expert-avatar"
+                      [style.background-image]="'url(' + expertAvatarSrc(expert) + ')'"
+                    ></div>
+                  } @else {
+                    <tui-avatar
+                      class="expert-avatar-icon"
+                      src="@tui.user-round"
+                      size="xl"
+                    ></tui-avatar>
+                  }
                 </button>
               }
             </div>
@@ -118,13 +127,7 @@
             </p>
             <div class="session-types-list">
               @for (type of sessionTypes(); track type.id) {
-                <button
-                  tuiCardMedium
-                  tuiSurface
-                  class="session-type-row"
-                  type="button"
-                  (click)="selectSessionType(type)"
-                >
+                <button class="session-type-row" type="button" (click)="selectSessionType(type)">
                   <div class="session-type-info">
                     <span class="tui-text_body-m session-type-name">{{ type.name }}</span>
                     @if (type.description) {
