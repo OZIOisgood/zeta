@@ -68,7 +68,13 @@
             </p>
             <div class="experts-grid">
               @for (expert of experts(); track expert.expert_id) {
-                <button class="expert-card" type="button" (click)="selectExpert(expert)">
+                <button
+                  tuiCardMedium
+                  tuiSurface
+                  class="expert-card"
+                  type="button"
+                  (click)="selectExpert(expert)"
+                >
                   <tui-avatar [src]="expertAvatarSrc(expert)" size="l"></tui-avatar>
                   <span class="tui-text_body-m expert-name"
                     >{{ expert.first_name }} {{ expert.last_name }}</span
@@ -112,16 +118,22 @@
             </p>
             <div class="session-types-list">
               @for (type of sessionTypes(); track type.id) {
-                <button class="session-type-row" type="button" (click)="selectSessionType(type)">
+                <button
+                  tuiCardMedium
+                  tuiSurface
+                  class="session-type-row"
+                  type="button"
+                  (click)="selectSessionType(type)"
+                >
                   <div class="session-type-info">
                     <span class="tui-text_body-m session-type-name">{{ type.name }}</span>
                     @if (type.description) {
                       <span class="tui-text_body-s session-type-desc">{{ type.description }}</span>
                     }
                   </div>
-                  <span class="tui-text_body-s session-type-duration"
-                    >{{ 'common.labels.minutesShort' | translate: { count: type.duration_minutes } }}</span
-                  >
+                  <span class="tui-text_body-s session-type-duration">{{
+                    'common.labels.minutesShort' | translate: { count: type.duration_minutes }
+                  }}</span>
                 </button>
               }
             </div>
@@ -152,9 +164,7 @@
                 <div class="slots-panel-placeholder">
                   <div class="slot-chips slot-chips--skeleton">
                     @for (_ of [1, 2, 3, 4]; track _) {
-                      <span class="slot-chip slot-chip--skeleton" [tuiSkeleton]="true"
-                        >&nbsp;</span
-                      >
+                      <span class="slot-chip slot-chip--skeleton" [tuiSkeleton]="true">&nbsp;</span>
                     }
                   </div>
                 </div>
@@ -196,9 +206,9 @@
                   </div>
                 } @else {
                   <div class="slots-panel-placeholder">
-                    <span class="tui-text_body-m" style="color: var(--tui-text-tertiary)"
-                      >{{ 'sessions.book.selectDate' | translate }}</span
-                    >
+                    <span class="tui-text_body-m" style="color: var(--tui-text-tertiary)">{{
+                      'sessions.book.selectDate' | translate
+                    }}</span>
                   </div>
                 }
               </div>

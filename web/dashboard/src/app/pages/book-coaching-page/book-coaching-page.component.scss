@@ -24,7 +24,6 @@
   flex-wrap: wrap;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  background: var(--tui-background-neutral-1);
   border: none;
   outline: none;
   border-radius: 0.75rem;
@@ -35,10 +34,10 @@
   font-family: inherit;
   font-size: inherit;
   color: inherit;
-  transition: background 0.15s;
+  transition: transform 0.2s;
 
   &:hover {
-    background: var(--tui-background-neutral-2);
+    transform: translateY(-2px);
   }
 }
 
@@ -77,14 +76,19 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1.5rem 1rem;
-  background: var(--tui-background-neutral-1);
-  border: 1px solid var(--tui-border-normal);
+  border: none;
+  outline: none;
   border-radius: 0.75rem;
   cursor: pointer;
-  transition: border-color 0.15s;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  transition: transform 0.2s;
 
   &:hover {
-    border-color: var(--tui-border-focus);
+    transform: translateY(-2px);
   }
 }
 

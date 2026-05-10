@@ -19,6 +19,7 @@ import {
   TuiButton,
   TuiCalendar,
   TuiLabel,
+  TuiSurface,
   TuiTextfield,
 } from '@taiga-ui/core';
 import { TuiAvatar, TuiSkeleton, TuiSlides, TuiStep, TuiStepper, TuiTextarea } from '@taiga-ui/kit';
@@ -51,6 +52,7 @@ import { Group, GroupsService } from '../../shared/services/groups.service';
     TuiSkeleton,
     TuiAppearance,
     TuiCardMedium,
+    TuiSurface,
     TuiCalendar,
     TuiTextfield,
     TuiLabel,
