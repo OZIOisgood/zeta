@@ -23,6 +23,15 @@ import { TuiSkeleton } from '@taiga-ui/kit';
 
       .section-title {
         margin: 0;
+        min-width: 0;
+      }
+
+      @media (max-width: 47.9375em) {
+        :host {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.75rem;
+        }
       }
     `,
   ],
