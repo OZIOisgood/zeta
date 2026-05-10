@@ -39,3 +39,10 @@ tui-file {
   max-width: 100%;
   min-width: 0;
 }
+
+/* Prevent tui-container from overflowing narrow viewports */
+.tui-container,
+[class*='tui-container'] {
+  box-sizing: border-box;
+  max-inline-size: 100%;
+}
