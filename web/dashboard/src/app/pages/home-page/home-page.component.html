@@ -61,7 +61,9 @@
                     {{ formatSessionDateTime(session.scheduled_at) }}
                   </span>
                   <span class="tui-text_body-s session-meta">
-                    {{ 'common.labels.minutesShort' | translate: { count: session.duration_minutes } }}
+                    {{
+                      'common.labels.minutesShort' | translate: { count: session.duration_minutes }
+                    }}
                   </span>
                   @if (session.session_type_name) {
                     <span class="tui-text_body-s session-meta session-type">
@@ -88,7 +90,7 @@
 
     <app-asset-list
       [assets]="(assets$ | async) || []"
-      [loading]="loading()"
+      [loading]="loading() || bookingsLoading() || groupsLoading()"
       [showAddTile]="showUploadVideo()"
       [role]="auth.user()?.role"
       [title]="'home.latestVideos'"
