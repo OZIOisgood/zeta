@@ -3,11 +3,31 @@
     "brand": "Zeta",
     "tagline": "Video coaching workspace"
   },
+  "common": {
+    "closeNavigation": "Close navigation",
+    "dismiss": "Dismiss",
+    "language": "Language",
+    "notifications": "Notifications",
+    "openNavigation": "Open navigation",
+    "preferences": "Preferences",
+    "search": "Search"
+  },
   "home": {
+    "badge": "Workspace preview",
     "kicker": "Today",
     "title": "Coach videos, groups, and live sessions from one focused workspace.",
     "summary": "Review submitted videos, prepare upcoming sessions, and keep group activity moving without losing the thread.",
     "primaryAction": "Upload video",
+    "empty": {
+      "title": "No urgent messages",
+      "description": "Conversation and review alerts will land here once live data is connected.",
+      "action": "View inbox"
+    },
+    "error": {
+      "badge": "Fallback state",
+      "title": "Review data is unavailable",
+      "description": "If a product endpoint fails later, this compact state keeps the page useful without exposing technical details."
+    },
     "nextWork": {
       "title": "Next work",
       "summary": "A compact queue for reviews, sessions, and group actions."
@@ -19,5 +39,14 @@
     "skeleton": {
       "title": "Recent activity"
     }
+  },
+  "toast": {
+    "title": "Brand direction saved",
+    "message": "The first logo mark is noted as the preferred candidate for review."
+  },
+  "user": {
+    "initials": "ZT",
+    "name": "Zeta Team",
+    "role": "Product workspace"
   }
 }

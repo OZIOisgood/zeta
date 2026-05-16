@@ -5,6 +5,7 @@ type NavigationItem = {
   id: string;
   label: string;
   href: string;
+  icon: 'home' | 'videos' | 'groups' | 'sessions';
 };
 
 type WorkQueueItem = {
@@ -22,19 +23,29 @@ type OverviewCard = {
 
 type AppShellState = {
   activeLanguage: 'en';
+  activeSection: string;
+  isNavigationOpen: boolean;
+  isUserMenuOpen: boolean;
+  isToastVisible: boolean;
   navigation: NavigationItem[];
+  languages: { value: 'en'; label: string }[];
   overviewCards: OverviewCard[];
   workQueue: WorkQueueItem[];
 };
 
 const initialState: AppShellState = {
   activeLanguage: 'en',
+  activeSection: 'home',
+  isNavigationOpen: false,
+  isUserMenuOpen: false,
+  isToastVisible: true,
   navigation: [
-    { id: 'home', label: 'Home', href: '/' },
-    { id: 'videos', label: 'Videos', href: '/' },
-    { id: 'groups', label: 'Groups', href: '/' },
-    { id: 'sessions', label: 'Sessions', href: '/' },
+    { id: 'home', label: 'Home', href: '/', icon: 'home' },
+    { id: 'videos', label: 'Videos', href: '/', icon: 'videos' },
+    { id: 'groups', label: 'Groups', href: '/', icon: 'groups' },
+    { id: 'sessions', label: 'Sessions', href: '/', icon: 'sessions' },
   ],
+  languages: [{ value: 'en', label: 'EN' }],
   overviewCards: [
     { label: 'Videos waiting', value: '12', delta: '+3' },
     { label: 'Reviews active', value: '5', delta: 'Today' },
@@ -67,10 +78,36 @@ export const AppShellStore = signalStore(
   withState(initialState),
   withComputed((store) => ({
     openWorkCount: computed(() => store.workQueue().length),
+    activeNavigationItem: computed(() =>
+      store.navigation().find((item) => item.id === store.activeSection()),
+    ),
   })),
   withMethods((store) => ({
-    setLanguage(language: AppShellState['activeLanguage']): void {
-      patchState(store, { activeLanguage: language });
+    closeNavigation(): void {
+      patchState(store, { isNavigationOpen: false });
+    },
+    closeUserMenu(): void {
+      patchState(store, { isUserMenuOpen: false });
+    },
+    dismissToast(): void {
+      patchState(store, { isToastVisible: false });
+    },
+    selectSection(section: string): void {
+      patchState(store, {
+        activeSection: section,
+        isNavigationOpen: false,
+      });
+    },
+    setLanguage(language: string): void {
+      if (language === 'en') {
+        patchState(store, { activeLanguage: language });
+      }
+    },
+    toggleNavigation(): void {
+      patchState(store, { isNavigationOpen: !store.isNavigationOpen() });
+    },
+    toggleUserMenu(): void {
+      patchState(store, { isUserMenuOpen: !store.isUserMenuOpen() });
     },
   })),
 );

@@ -21,4 +21,31 @@ describe('AppShellStore', () => {
 
     expect(store.activeLanguage()).toBe('en');
   });
+
+  it('controls mobile navigation state and active section', () => {
+    const store = TestBed.inject(AppShellStore);
+
+    store.toggleNavigation();
+    expect(store.isNavigationOpen()).toBe(true);
+
+    store.selectSection('videos');
+
+    expect(store.activeSection()).toBe('videos');
+    expect(store.activeNavigationItem()?.label).toBe('Videos');
+    expect(store.isNavigationOpen()).toBe(false);
+  });
+
+  it('controls user menu and toast visibility', () => {
+    const store = TestBed.inject(AppShellStore);
+
+    store.toggleUserMenu();
+    store.dismissToast();
+
+    expect(store.isUserMenuOpen()).toBe(true);
+    expect(store.isToastVisible()).toBe(false);
+
+    store.closeUserMenu();
+
+    expect(store.isUserMenuOpen()).toBe(false);
+  });
 });

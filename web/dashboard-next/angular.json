@@ -27,6 +27,15 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets",
+                "ignore": [
+                  "**/candidates/logo-candidate-sheet-01.png",
+                  "**/candidates/illustration-candidate-sheet-01.png"
+                ]
               }
             ],
             "styles": ["src/tailwind.css", "src/styles.scss"]
