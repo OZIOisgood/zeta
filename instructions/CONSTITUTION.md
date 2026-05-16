@@ -70,7 +70,10 @@
 
 ## 11. Documentation Resources
 
-- **LLM Docs**: Use these `llms.txt` or `llms-full.txt` resources for comprehensive documentation:
+- **LLM Docs**: Use these `llms.txt` or `llms-full.txt` (e.g. if you need to download it and do a search in the whole documentation) resources for comprehensive documentation:
+  - **Angular**: `https://angular.dev/llms.txt` and `https://angular.dev/assets/context/llms-full.txt`
+  - **Angular Primitives**: `https://angularprimitives.com/assets/llms/llms.txt` and `https://angularprimitives.com/assets/llms/llms-full.txt`
+  - **Storybook**: `https://storybook.js.org/llms.txt` and `https://storybook.js.org/llms-full.txt`
   - **Taiga UI**: `https://taiga-ui.dev/v4/llms.txt` and `https://taiga-ui.dev/v4/llms-full.txt`
   - **Mux**: `https://www.mux.com/llms.txt` and `https://www.mux.com/llms-full.txt`
   - **Agora**: `https://docs.agora.io/en/llms.txt`
