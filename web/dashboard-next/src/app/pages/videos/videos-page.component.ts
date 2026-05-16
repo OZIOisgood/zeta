@@ -119,7 +119,7 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
               </span>
               <span class="min-w-0">
                 <span class="block truncate text-base font-semibold">{{ asset.title }}</span>
-                <span class="mt-1 block line-clamp-2 text-sm leading-5 text-[var(--z-muted)]">
+                <span class="mt-1 block truncate text-sm text-[var(--z-muted)]">
                   {{
                     asset.description || asset.group?.name || ('videos.noVideosHere' | transloco)
                   }}
