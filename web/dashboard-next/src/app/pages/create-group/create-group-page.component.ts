@@ -3,12 +3,11 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
-import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 
 @Component({
   selector: 'app-create-group-page',
-  imports: [ReactiveFormsModule, TranslocoPipe, ZBadgeComponent, ZButtonComponent],
+  imports: [ReactiveFormsModule, TranslocoPipe, ZButtonComponent],
   template: `
     <form
       class="mx-auto grid max-w-2xl gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm"
@@ -16,8 +15,7 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
       (ngSubmit)="submit()"
     >
       <div>
-        <z-badge tone="primary">{{ 'groups.create' | transloco }}</z-badge>
-        <h2 class="mt-3 text-2xl font-semibold">{{ 'groups.createNew' | transloco }}</h2>
+        <h2 class="text-2xl font-semibold">{{ 'groups.createNew' | transloco }}</h2>
         <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
           {{ 'groups.createFirstDescription' | transloco }}
         </p>

@@ -37,8 +37,7 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
   template: `
     <div class="grid min-w-0 gap-6">
       <section class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
-        <z-badge tone="primary">{{ 'upload.title' | transloco }}</z-badge>
-        <h2 class="mt-3 text-2xl font-semibold sm:text-3xl">{{ 'upload.title' | transloco }}</h2>
+        <h2 class="text-2xl font-semibold sm:text-3xl">{{ 'upload.title' | transloco }}</h2>
         <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
           {{ 'upload.summary' | transloco }}
         </p>

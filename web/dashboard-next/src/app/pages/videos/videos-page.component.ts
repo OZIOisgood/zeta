@@ -29,11 +29,10 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
   template: `
     <div class="grid gap-6">
       <section
-        class="grid gap-4 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-end"
+        class="grid gap-4 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-start"
       >
         <div>
-          <z-badge tone="primary">{{ 'videos.title' | transloco }}</z-badge>
-          <h2 class="mt-3 text-2xl font-semibold sm:text-3xl">
+          <h2 class="text-2xl font-semibold sm:text-3xl">
             {{ 'videos.allMyVideos' | transloco }}
           </h2>
           <p class="mt-2 max-w-2xl text-sm leading-6 text-[var(--z-muted)]">

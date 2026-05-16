@@ -10,7 +10,6 @@ import {
 } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
-import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 
@@ -19,7 +18,6 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
   imports: [
     RouterLink,
     TranslocoPipe,
-    ZBadgeComponent,
     ZEmptyStateComponent,
     ZSkeletonComponent,
     LucideArrowLeft,
@@ -58,8 +56,7 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
               }
             </span>
             <div class="min-w-0">
-              <z-badge tone="primary">{{ 'groups.myGroups' | transloco }}</z-badge>
-              <h2 class="mt-3 text-2xl font-semibold sm:text-3xl">{{ group.name }}</h2>
+              <h2 class="text-2xl font-semibold sm:text-3xl">{{ group.name }}</h2>
               <p class="mt-3 max-w-3xl text-sm leading-6 text-[var(--z-muted)]">
                 {{ group.description || ('groups.phase4.noDescription' | transloco) }}
               </p>

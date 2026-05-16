@@ -35,10 +35,9 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div class="flex min-w-0 flex-col gap-6">
         <section class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
-          <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
             <div>
-              <z-badge tone="primary">{{ 'home.badge' | transloco }}</z-badge>
-              <h2 class="mt-3 max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl">
+              <h2 class="max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl">
                 {{ 'home.title' | transloco }}
               </h2>
               <p class="mt-3 max-w-2xl text-sm leading-6 text-[var(--z-muted)] sm:text-base">

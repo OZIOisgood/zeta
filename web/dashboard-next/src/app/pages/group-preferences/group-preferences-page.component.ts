@@ -5,7 +5,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LucideArrowLeft } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
-import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 
@@ -15,7 +14,6 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
     ReactiveFormsModule,
     RouterLink,
     TranslocoPipe,
-    ZBadgeComponent,
     ZButtonComponent,
     ZSkeletonComponent,
     LucideArrowLeft,
@@ -39,8 +37,7 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
           (ngSubmit)="submit()"
         >
           <div>
-            <z-badge tone="primary">{{ 'groups.preferences' | transloco }}</z-badge>
-            <h2 class="mt-3 text-2xl font-semibold">{{ 'groups.preferences' | transloco }}</h2>
+            <h2 class="text-2xl font-semibold">{{ 'groups.preferences' | transloco }}</h2>
             <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
               {{ 'groups.phase4.preferencesSummary' | transloco }}
             </p>
