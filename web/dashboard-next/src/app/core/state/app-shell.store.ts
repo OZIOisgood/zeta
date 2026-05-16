@@ -1,9 +1,15 @@
-import { computed } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  DASHBOARD_LANGUAGES,
+  DashboardLanguage,
+  DashboardLocalizationService,
+} from '../i18n/dashboard-localization.service';
 
 type NavigationItem = {
   id: string;
   label: string;
+  labelKey: string;
   href: string;
   icon: 'home' | 'videos' | 'groups' | 'sessions';
 };
@@ -22,13 +28,13 @@ type OverviewCard = {
 };
 
 type AppShellState = {
-  activeLanguage: 'en';
+  activeLanguage: DashboardLanguage;
   activeSection: string;
   isNavigationOpen: boolean;
   isUserMenuOpen: boolean;
   isToastVisible: boolean;
   navigation: NavigationItem[];
-  languages: { value: 'en'; label: string }[];
+  languages: { value: DashboardLanguage; label: string }[];
   overviewCards: OverviewCard[];
   workQueue: WorkQueueItem[];
 };
@@ -40,12 +46,18 @@ const initialState: AppShellState = {
   isUserMenuOpen: false,
   isToastVisible: true,
   navigation: [
-    { id: 'home', label: 'Home', href: '/', icon: 'home' },
-    { id: 'videos', label: 'Videos', href: '/', icon: 'videos' },
-    { id: 'groups', label: 'Groups', href: '/', icon: 'groups' },
-    { id: 'sessions', label: 'Sessions', href: '/', icon: 'sessions' },
+    { id: 'home', label: 'Home', labelKey: 'common.nav.home', href: '/', icon: 'home' },
+    { id: 'videos', label: 'Videos', labelKey: 'common.nav.videos', href: '/', icon: 'videos' },
+    { id: 'groups', label: 'Groups', labelKey: 'common.nav.groups', href: '/', icon: 'groups' },
+    {
+      id: 'sessions',
+      label: 'Sessions',
+      labelKey: 'common.nav.sessions',
+      href: '/',
+      icon: 'sessions',
+    },
   ],
-  languages: [{ value: 'en', label: 'EN' }],
+  languages: DASHBOARD_LANGUAGES.map(({ value, label }) => ({ value, label })),
   overviewCards: [
     { label: 'Videos waiting', value: '12', delta: '+3' },
     { label: 'Reviews active', value: '5', delta: 'Today' },
@@ -82,7 +94,7 @@ export const AppShellStore = signalStore(
       store.navigation().find((item) => item.id === store.activeSection()),
     ),
   })),
-  withMethods((store) => ({
+  withMethods((store, localization = inject(DashboardLocalizationService)) => ({
     closeNavigation(): void {
       patchState(store, { isNavigationOpen: false });
     },
@@ -99,8 +111,9 @@ export const AppShellStore = signalStore(
       });
     },
     setLanguage(language: string): void {
-      if (language === 'en') {
-        patchState(store, { activeLanguage: language });
+      if (localization.isSupportedLanguage(language)) {
+        const activeLanguage = localization.useLanguage(language);
+        patchState(store, { activeLanguage });
       }
     },
     toggleNavigation(): void {

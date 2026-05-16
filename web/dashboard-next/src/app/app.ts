@@ -18,6 +18,7 @@ import {
   LucideX,
 } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { DashboardLocalizationService } from './core/i18n/dashboard-localization.service';
 import { AppShellStore } from './core/state/app-shell.store';
 import { ZBadgeComponent } from './shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from './shared/ui/button/z-button.component';
@@ -61,4 +62,9 @@ import { ZToastComponent } from './shared/ui/toast/z-toast.component';
 })
 export class App {
   protected readonly shell = inject(AppShellStore);
+  private readonly localization = inject(DashboardLocalizationService);
+
+  constructor() {
+    this.shell.setLanguage(this.localization.currentLanguage());
+  }
 }

@@ -20,6 +20,12 @@ describe('App', () => {
                 openNavigation: 'Open navigation',
                 preferences: 'Preferences',
                 search: 'Search',
+                nav: {
+                  groups: 'Groups',
+                  home: 'Home',
+                  sessions: 'Sessions',
+                  videos: 'Videos',
+                },
               },
               home: {
                 badge: 'Workspace preview',
@@ -60,8 +66,9 @@ describe('App', () => {
             },
           },
           translocoConfig: {
-            availableLangs: ['en'],
+            availableLangs: ['en', 'de', 'fr'],
             defaultLang: 'en',
+            fallbackLang: 'en',
           },
           preloadLangs: true,
         }),

@@ -43,7 +43,7 @@
                 <svg lucideCalendarDays class="size-4" aria-hidden="true"></svg>
               }
             }
-            <span>{{ item.label }}</span>
+            <span>{{ item.labelKey | transloco }}</span>
           </button>
         }
       </nav>
@@ -68,7 +68,7 @@
                 {{ 'home.kicker' | transloco }}
               </p>
               <h1 class="truncate text-lg font-semibold sm:text-xl">
-                {{ shell.activeNavigationItem()?.label ?? ('app.brand' | transloco) }}
+                {{ shell.activeNavigationItem()?.labelKey ?? 'app.brand' | transloco }}
               </h1>
             </div>
           </div>
@@ -198,7 +198,7 @@
                       <svg lucideCalendarDays class="size-4" aria-hidden="true"></svg>
                     }
                   }
-                  <span>{{ item.label }}</span>
+                  <span>{{ item.labelKey | transloco }}</span>
                 </button>
               }
             </nav>
