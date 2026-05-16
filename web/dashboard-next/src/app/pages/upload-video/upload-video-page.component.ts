@@ -3,7 +3,13 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideAlertCircle, LucideCheck, LucideFileVideo, LucideUpload } from '@lucide/angular';
+import {
+  LucideAlertCircle,
+  LucideCheck,
+  LucideFileVideo,
+  LucideUpload,
+  LucideX,
+} from '@lucide/angular';
 import { forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AssetsApiClient } from '../../core/http/assets-api.service';
@@ -14,6 +20,8 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZComboboxComponent } from '../../shared/ui/combobox/z-combobox.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZStepperComponent, type StepperStep } from '../../shared/ui/stepper/z-stepper.component';
+import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
+import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 
 type UploadStep = 'files' | 'details' | 'review';
 type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
@@ -29,10 +37,13 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
     ZComboboxComponent,
     ZSkeletonComponent,
     ZStepperComponent,
+    ZTextInputComponent,
+    ZTextareaComponent,
     LucideAlertCircle,
     LucideCheck,
     LucideFileVideo,
     LucideUpload,
+    LucideX,
   ],
   template: `
     <div class="grid min-w-0 gap-6">
@@ -87,6 +98,14 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
                   ></svg>
                   <span class="min-w-0 flex-1 truncate text-sm font-semibold">{{ file.name }}</span>
                   <z-badge>{{ sizeLabel(file.size) }}</z-badge>
+                  <button
+                    type="button"
+                    class="grid size-8 shrink-0 place-items-center rounded-md text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                    [attr.aria-label]="'common.actions.remove' | transloco"
+                    (click)="removeFile(file)"
+                  >
+                    <svg lucideX class="size-4" aria-hidden="true"></svg>
+                  </button>
                 </div>
               }
             </div>
@@ -107,19 +126,18 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
         >
           <label class="grid gap-2">
             <span class="text-sm font-semibold">{{ 'common.fields.title' | transloco }}</span>
-            <input
-              class="min-h-11 rounded-md border border-[var(--z-border)] bg-white px-3 text-sm outline-none transition focus:border-[var(--z-primary)] focus:ring-2 focus:ring-orange-100"
+            <z-text-input
               formControlName="title"
-              type="text"
+              [placeholder]="'upload.titlePlaceholder' | transloco"
             />
           </label>
 
           <label class="grid gap-2">
             <span class="text-sm font-semibold">{{ 'common.fields.description' | transloco }}</span>
-            <textarea
-              class="min-h-28 rounded-md border border-[var(--z-border)] bg-white px-3 py-2 text-sm outline-none transition focus:border-[var(--z-primary)] focus:ring-2 focus:ring-orange-100"
+            <z-textarea
               formControlName="description"
-            ></textarea>
+              [placeholder]="'upload.descriptionPlaceholder' | transloco"
+            />
           </label>
 
           <div class="grid gap-2">
@@ -405,7 +423,24 @@ export class UploadVideoPageComponent {
 
   protected onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.files.set(Array.from(input.files ?? []));
+    const selectedFiles = Array.from(input.files ?? []);
+
+    this.files.update((currentFiles) => {
+      const fileMap = new Map(currentFiles.map((file) => [this.fileKey(file), file]));
+
+      for (const file of selectedFiles) {
+        fileMap.set(this.fileKey(file), file);
+      }
+
+      return Array.from(fileMap.values());
+    });
+
+    input.value = '';
+  }
+
+  protected removeFile(fileToRemove: File): void {
+    const fileKey = this.fileKey(fileToRemove);
+    this.files.update((files) => files.filter((file) => this.fileKey(file) !== fileKey));
   }
 
   protected sizeLabel(size: number): string {
@@ -417,5 +452,9 @@ export class UploadVideoPageComponent {
       this.groups.groups().find((group) => group.id === this.form.controls.groupId.value)?.name ||
       ''
     );
+  }
+
+  private fileKey(file: File): string {
+    return `${file.name}:${file.size}:${file.lastModified}`;
   }
 }

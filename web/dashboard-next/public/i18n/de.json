@@ -249,7 +249,9 @@
       "membersPlaceholder": "Mitgliederlisten werden im Einladungs- und Mitglieder-Schritt mit den bestehenden Endpunkten verbunden.",
       "invitePlaceholder": "Einladungslinks und QR-Codes nutzen im nächsten Gruppen-Schritt die bestehenden Einladungsendpunkte.",
       "preferencesSummary": "Aktualisiere Gruppennamen und Beschreibung. Avatar, Gefahrenbereich und erweiterte Berechtigungen folgen später."
-    }
+    },
+    "namePlaceholder": "z. B. Academy-Gruppe",
+    "descriptionPlaceholder": "Beschreibe, für wen diese Gruppe gedacht ist."
   },
   "upload": {
     "title": "Video hochladen",
@@ -270,7 +272,9 @@
     "uploadSuccessDescription": "Dein Video wird verarbeitet und erscheint bald in deiner Bibliothek.",
     "viewVideo": "Video ansehen",
     "uploadFailed": "Hochladen fehlgeschlagen",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "titlePlaceholder": "z. B. Sprunglinie Versuch 2",
+    "descriptionPlaceholder": "Füge Kontext, Ziele oder Hinweise für die Prüfung hinzu."
   },
   "sessions": {
     "title": "Termine",

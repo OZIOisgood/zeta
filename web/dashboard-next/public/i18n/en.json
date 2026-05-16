@@ -277,7 +277,9 @@
       "membersPlaceholder": "Member lists will connect to the existing student and expert endpoints in the invitation/member-management slice.",
       "invitePlaceholder": "Invitation links and QR codes will use the existing invitation endpoints in the next group-flow slice.",
       "preferencesSummary": "Update the group name and description. Avatar, danger zone, and advanced permissions will follow the deeper preferences migration."
-    }
+    },
+    "namePlaceholder": "e.g. Academy Group",
+    "descriptionPlaceholder": "Describe who this group is for."
   },
   "upload": {
     "title": "Upload Video",
@@ -298,7 +300,9 @@
     "uploadSuccessDescription": "Your video is being processed and will appear in your library shortly.",
     "viewVideo": "View video",
     "uploadFailed": "Upload failed",
-    "retry": "Try again"
+    "retry": "Try again",
+    "titlePlaceholder": "e.g. Jump line take 2",
+    "descriptionPlaceholder": "Add context, goals, or notes for the reviewer."
   },
   "sessions": {
     "title": "Sessions",

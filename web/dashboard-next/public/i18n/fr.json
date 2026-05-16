@@ -277,7 +277,9 @@
       "membersPlaceholder": "Les listes de membres seront connectées aux points d’API étudiants et experts dans la prochaine tranche.",
       "invitePlaceholder": "Les liens d’invitation et QR codes utiliseront les points d’API existants dans la prochaine tranche groupe.",
       "preferencesSummary": "Mettez à jour le nom et la description du groupe. Avatar, zone sensible et permissions avancées suivront ensuite."
-    }
+    },
+    "namePlaceholder": "p. ex. Groupe Academy",
+    "descriptionPlaceholder": "Décrivez à qui ce groupe est destiné."
   },
   "upload": {
     "title": "Téléverser une vidéo",
@@ -298,7 +300,9 @@
     "uploadSuccessDescription": "Votre vidéo est en cours de traitement et apparaîtra bientôt dans votre bibliothèque.",
     "viewVideo": "Voir la vidéo",
     "uploadFailed": "Échec du téléversement",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "titlePlaceholder": "p. ex. Ligne de saut prise 2",
+    "descriptionPlaceholder": "Ajoutez le contexte, les objectifs ou des notes pour la revue."
   },
   "sessions": {
     "title": "Séances",

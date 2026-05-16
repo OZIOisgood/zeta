@@ -7,6 +7,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
+import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
+import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 
 @Component({
   selector: 'app-group-preferences-page',
@@ -16,6 +18,8 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
     TranslocoPipe,
     ZButtonComponent,
     ZSkeletonComponent,
+    ZTextInputComponent,
+    ZTextareaComponent,
     LucideArrowLeft,
   ],
   template: `
@@ -45,19 +49,18 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
 
           <label class="grid gap-2">
             <span class="text-sm font-semibold">{{ 'groups.groupName' | transloco }}</span>
-            <input
-              class="min-h-11 rounded-md border border-[var(--z-border)] bg-white px-3 text-sm outline-none transition focus:border-[var(--z-primary)] focus:ring-2 focus:ring-orange-100"
+            <z-text-input
               formControlName="name"
-              type="text"
+              [placeholder]="'groups.namePlaceholder' | transloco"
             />
           </label>
 
           <label class="grid gap-2">
             <span class="text-sm font-semibold">{{ 'common.fields.description' | transloco }}</span>
-            <textarea
-              class="min-h-28 rounded-md border border-[var(--z-border)] bg-white px-3 py-2 text-sm outline-none transition focus:border-[var(--z-primary)] focus:ring-2 focus:ring-orange-100"
+            <z-textarea
               formControlName="description"
-            ></textarea>
+              [placeholder]="'groups.descriptionPlaceholder' | transloco"
+            />
           </label>
 
           @if (store.mutationStatus() === 'error') {

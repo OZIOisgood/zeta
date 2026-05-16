@@ -12,6 +12,8 @@ import { ZButtonComponent } from '../shared/ui/button/z-button.component';
 import { ZComboboxComponent } from '../shared/ui/combobox/z-combobox.component';
 import { ZEmptyStateComponent } from '../shared/ui/empty-state/z-empty-state.component';
 import { ZSkeletonComponent } from '../shared/ui/skeleton/z-skeleton.component';
+import { ZTextInputComponent } from '../shared/ui/text-input/z-text-input.component';
+import { ZTextareaComponent } from '../shared/ui/textarea/z-textarea.component';
 
 const meta: Meta = {
   title: 'Pages/Core Flow States',
@@ -28,6 +30,8 @@ const meta: Meta = {
         ZComboboxComponent,
         ZEmptyStateComponent,
         ZSkeletonComponent,
+        ZTextInputComponent,
+        ZTextareaComponent,
       ],
     }),
   ],
@@ -112,7 +116,14 @@ const meta: Meta = {
               <z-badge tone="primary">Step 2 · Details</z-badge>
               <div class="grid gap-2">
                 <span class="text-sm font-semibold">Title</span>
-                <div class="min-h-11 rounded-md border border-[var(--z-border)] bg-white px-3 py-2.5 text-sm text-[var(--z-muted)]">Jump line take 2</div>
+                <z-text-input placeholder="e.g. Jump line take 2" />
+              </div>
+              <div class="grid gap-2">
+                <span class="text-sm font-semibold">Description</span>
+                <z-textarea
+                  [rows]="3"
+                  placeholder="Add context, goals, or notes for the reviewer."
+                />
               </div>
               <div class="grid gap-2">
                 <span class="text-sm font-semibold">Group</span>

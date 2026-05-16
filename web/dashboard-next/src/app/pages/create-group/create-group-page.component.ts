@@ -4,10 +4,18 @@ import { Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
+import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 
 @Component({
   selector: 'app-create-group-page',
-  imports: [ReactiveFormsModule, TranslocoPipe, ZButtonComponent],
+  imports: [
+    ReactiveFormsModule,
+    TranslocoPipe,
+    ZButtonComponent,
+    ZTextInputComponent,
+    ZTextareaComponent,
+  ],
   template: `
     <form
       class="mx-auto grid max-w-2xl gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm"
@@ -23,19 +31,15 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 
       <label class="grid gap-2">
         <span class="text-sm font-semibold">{{ 'groups.groupName' | transloco }}</span>
-        <input
-          class="min-h-11 rounded-md border border-[var(--z-border)] bg-white px-3 text-sm outline-none transition focus:border-[var(--z-primary)] focus:ring-2 focus:ring-orange-100"
-          formControlName="name"
-          type="text"
-        />
+        <z-text-input formControlName="name" [placeholder]="'groups.namePlaceholder' | transloco" />
       </label>
 
       <label class="grid gap-2">
         <span class="text-sm font-semibold">{{ 'common.fields.description' | transloco }}</span>
-        <textarea
-          class="min-h-28 rounded-md border border-[var(--z-border)] bg-white px-3 py-2 text-sm outline-none transition focus:border-[var(--z-primary)] focus:ring-2 focus:ring-orange-100"
+        <z-textarea
           formControlName="description"
-        ></textarea>
+          [placeholder]="'groups.descriptionPlaceholder' | transloco"
+        />
       </label>
 
       @if (store.mutationStatus() === 'error') {
