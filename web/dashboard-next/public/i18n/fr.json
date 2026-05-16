@@ -28,7 +28,8 @@
       "save": "Enregistrer",
       "signOut": "Se déconnecter",
       "uploadVideo": "Téléverser une vidéo",
-      "viewAll": "Voir tout"
+      "viewAll": "Voir tout",
+      "retry": "Réessayer"
     },
     "aria": {
       "appLogo": "Logo de l'application",
@@ -209,7 +210,18 @@
     "confirmMarkReviewed": "Êtes-vous sûr de vouloir marquer cette vidéo comme révisée ? Aucun commentaire ne pourra plus être ajouté, modifié ou supprimé.",
     "markVideoReviewed": "Marquer la vidéo comme révisée",
     "markedReviewed": "Vidéo marquée comme révisée avec succès",
-    "markReviewedFailed": "Échec du marquage de la vidéo comme révisée"
+    "markReviewedFailed": "Échec du marquage de la vidéo comme révisée",
+    "phase4": {
+      "summary": "Révisez les vidéos soumises, filtrez par progression et ouvrez les détails depuis l’espace principal.",
+      "loadFailed": "Impossible de charger les vidéos",
+      "detailFailed": "Impossible de charger la vidéo",
+      "playerReady": "La lecture vidéo apparaîtra ici",
+      "noDescription": "Aucune description n’a été ajoutée pour cette vidéo.",
+      "videoParts": "Parties de la vidéo",
+      "videoPart": "Partie {{count}}",
+      "noVideoParts": "Aucune partie vidéo n’est encore attachée.",
+      "reviewPlaceholder": "Les commentaires horodatés, l’édition et la finalisation seront approfondis dans la prochaine tranche de révision vidéo."
+    }
   },
   "groups": {
     "myGroups": "Mes groupes",
@@ -256,6 +268,15 @@
       "confirmRemove": "Êtes-vous sûr de vouloir retirer {{name}} de ce groupe ?",
       "removed": "{{name}} a été retiré du groupe",
       "removeFailed": "Échec du retrait de l'utilisateur"
+    },
+    "phase4": {
+      "summary": "Parcourez les groupes de coaching, ouvrez les espaces de groupe et préparez les invitations sur mobile.",
+      "loadFailed": "Impossible de charger les groupes",
+      "detailFailed": "Impossible de charger le groupe",
+      "noDescription": "Aucune description n’a été ajoutée pour ce groupe.",
+      "membersPlaceholder": "Les listes de membres seront connectées aux points d’API étudiants et experts dans la prochaine tranche.",
+      "invitePlaceholder": "Les liens d’invitation et QR codes utiliseront les points d’API existants dans la prochaine tranche groupe.",
+      "preferencesSummary": "Mettez à jour le nom et la description du groupe. Avatar, zone sensible et permissions avancées suivront ensuite."
     }
   },
   "upload": {
@@ -266,7 +287,18 @@
     "chooseGroup": "Choisissez un groupe",
     "dropVideos": "Déposez les vidéos ici !",
     "dragDrop": "Glissez-déposez des vidéos ici ou",
-    "clickUpload": "cliquez pour téléverser"
+    "clickUpload": "cliquez pour téléverser",
+    "summary": "Préparez les fichiers et le contexte d'une vidéo d'élève.",
+    "multiPartHint": "Vous pouvez sélectionner une vidéo ou plusieurs clips appartenant à la même révision.",
+    "readyTitle": "Dossier vidéo prêt",
+    "readySummary": "Vérifiez les détails ci-dessous puis cliquez sur Téléverser.",
+    "startUpload": "Téléverser",
+    "uploading": "Téléversement en cours…",
+    "uploadSuccess": "Vidéo téléversée",
+    "uploadSuccessDescription": "Votre vidéo est en cours de traitement et apparaîtra bientôt dans votre bibliothèque.",
+    "viewVideo": "Voir la vidéo",
+    "uploadFailed": "Échec du téléversement",
+    "retry": "Réessayer"
   },
   "sessions": {
     "title": "Séances",

@@ -9,6 +9,6 @@ type ZetaWindow = Window & {
 @Injectable({ providedIn: 'root' })
 export class EnvService {
   get apiUrl(): string {
-    return (window as ZetaWindow).__env?.apiUrl ?? '';
+    return (window as ZetaWindow).__env?.apiUrl ?? '/api';
   }
 }

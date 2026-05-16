@@ -28,7 +28,8 @@
       "save": "Speichern",
       "signOut": "Abmelden",
       "uploadVideo": "Video hochladen",
-      "viewAll": "Alle ansehen"
+      "viewAll": "Alle ansehen",
+      "retry": "Erneut versuchen"
     },
     "aria": {
       "appLogo": "App-Logo",
@@ -192,7 +193,18 @@
     "leaveComment": "Hinterlasse einen Kommentar, um Feedback zu diesem Video zu geben.",
     "reviewerNoComments": "Dein Prüfer hat noch keine Kommentare hinterlassen.",
     "showLess": "Weniger anzeigen",
-    "showMore": "Mehr anzeigen"
+    "showMore": "Mehr anzeigen",
+    "phase4": {
+      "summary": "Prüfe eingereichte Videos, filtere nach Prüfstatus und öffne Details direkt im Arbeitsbereich.",
+      "loadFailed": "Videos konnten nicht geladen werden",
+      "detailFailed": "Video konnte nicht geladen werden",
+      "playerReady": "Die Videowiedergabe erscheint hier",
+      "noDescription": "Für dieses Video wurde keine Beschreibung hinzugefügt.",
+      "videoParts": "Videoteile",
+      "videoPart": "Teil {{count}}",
+      "noVideoParts": "Es sind noch keine Videoteile angehängt.",
+      "reviewPlaceholder": "Zeitmarkierte Kommentare, Bearbeitung und Abschluss werden im nächsten Video-Review-Schritt vertieft."
+    }
   },
   "groups": {
     "myGroups": "Meine Gruppen",
@@ -228,6 +240,15 @@
       "linkCreated": "Einladungslink erstellt!",
       "qrAlt": "Einladungs-QR-Code",
       "failed": "Einladung konnte nicht erstellt werden. Bitte versuche es erneut."
+    },
+    "phase4": {
+      "summary": "Durchsuche Coaching-Gruppen, öffne Gruppenbereiche und bereite Einladungen in einem mobilen Layout vor.",
+      "loadFailed": "Gruppen konnten nicht geladen werden",
+      "detailFailed": "Gruppe konnte nicht geladen werden",
+      "noDescription": "Für diese Gruppe wurde keine Beschreibung hinzugefügt.",
+      "membersPlaceholder": "Mitgliederlisten werden im Einladungs- und Mitglieder-Schritt mit den bestehenden Endpunkten verbunden.",
+      "invitePlaceholder": "Einladungslinks und QR-Codes nutzen im nächsten Gruppen-Schritt die bestehenden Einladungsendpunkte.",
+      "preferencesSummary": "Aktualisiere Gruppennamen und Beschreibung. Avatar, Gefahrenbereich und erweiterte Berechtigungen folgen später."
     }
   },
   "upload": {
@@ -238,7 +259,18 @@
     "chooseGroup": "Gruppe auswählen",
     "dropVideos": "Videos hier ablegen!",
     "dragDrop": "Videos hierher ziehen oder",
-    "clickUpload": "zum Hochladen klicken"
+    "clickUpload": "zum Hochladen klicken",
+    "summary": "Bereite Dateien und Kontext für ein Schülervideo vor.",
+    "multiPartHint": "Du kannst ein Video oder mehrere Clips auswählen, die zu derselben Prüfung gehören.",
+    "readyTitle": "Videopaket bereit",
+    "readySummary": "Überprüfe die Details unten und klicke auf Hochladen.",
+    "startUpload": "Hochladen",
+    "uploading": "Wird hochgeladen…",
+    "uploadSuccess": "Video hochgeladen",
+    "uploadSuccessDescription": "Dein Video wird verarbeitet und erscheint bald in deiner Bibliothek.",
+    "viewVideo": "Video ansehen",
+    "uploadFailed": "Hochladen fehlgeschlagen",
+    "retry": "Erneut versuchen"
   },
   "sessions": {
     "title": "Termine",

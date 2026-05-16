@@ -4,7 +4,7 @@ import { ZButtonComponent } from '../button/z-button.component';
 import { ZEmptyStateComponent } from './z-empty-state.component';
 
 const meta: Meta<ZEmptyStateComponent> = {
-  title: 'Zeta UI/Empty State',
+  title: 'UI/Empty State',
   component: ZEmptyStateComponent,
   decorators: [
     moduleMetadata({

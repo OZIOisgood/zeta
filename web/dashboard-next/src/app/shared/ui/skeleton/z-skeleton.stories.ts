@@ -3,7 +3,7 @@ import { moduleMetadata } from '@storybook/angular';
 import { ZSkeletonComponent } from './z-skeleton.component';
 
 const meta: Meta<ZSkeletonComponent> = {
-  title: 'Zeta UI/Skeleton',
+  title: 'UI/Skeleton',
   component: ZSkeletonComponent,
   decorators: [
     moduleMetadata({

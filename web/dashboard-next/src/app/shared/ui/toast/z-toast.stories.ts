@@ -3,7 +3,7 @@ import { moduleMetadata } from '@storybook/angular';
 import { ZToastComponent } from './z-toast.component';
 
 const meta: Meta<ZToastComponent> = {
-  title: 'Zeta UI/Toast',
+  title: 'UI/Toast',
   component: ZToastComponent,
   decorators: [
     moduleMetadata({
@@ -11,8 +11,8 @@ const meta: Meta<ZToastComponent> = {
     }),
   ],
   args: {
-    title: 'Brand direction saved',
-    message: 'The first logo mark is noted as the preferred candidate for review.',
+    title: 'Saved',
+    message: 'Your changes have been saved.',
     closeLabel: 'Dismiss',
   },
   render: (args) => ({

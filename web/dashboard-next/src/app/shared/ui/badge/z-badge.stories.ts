@@ -3,7 +3,7 @@ import { moduleMetadata } from '@storybook/angular';
 import { ZBadgeComponent } from './z-badge.component';
 
 const meta: Meta<ZBadgeComponent> = {
-  title: 'Zeta UI/Badge',
+  title: 'UI/Badge',
   component: ZBadgeComponent,
   decorators: [
     moduleMetadata({

@@ -1,10 +1,10 @@
+import { LucideBell, LucideMenu, LucideSearch } from '@lucide/angular';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { LucideBell, LucideMenu, LucideSearch } from '@lucide/angular';
 import { ZIconButtonComponent } from './z-icon-button.component';
 
 const meta: Meta<ZIconButtonComponent> = {
-  title: 'Zeta UI/Icon Button',
+  title: 'UI/Icon Button',
   component: ZIconButtonComponent,
   decorators: [
     moduleMetadata({

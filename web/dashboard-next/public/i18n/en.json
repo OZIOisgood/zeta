@@ -28,7 +28,8 @@
       "save": "Save",
       "signOut": "Sign out",
       "uploadVideo": "Upload video",
-      "viewAll": "View all"
+      "viewAll": "View all",
+      "retry": "Retry"
     },
     "aria": {
       "appLogo": "App Logo",
@@ -209,7 +210,18 @@
     "confirmMarkReviewed": "Are you sure you want to mark this video as reviewed? No more comments can be added, edited, or deleted.",
     "markVideoReviewed": "Mark Video as Reviewed",
     "markedReviewed": "Video marked as reviewed successfully",
-    "markReviewedFailed": "Failed to mark video as reviewed"
+    "markReviewedFailed": "Failed to mark video as reviewed",
+    "phase4": {
+      "summary": "Review submitted videos, filter by review progress, and open details without leaving the core workspace.",
+      "loadFailed": "Videos could not be loaded",
+      "detailFailed": "Video could not be loaded",
+      "playerReady": "Video playback will render here",
+      "noDescription": "No description was added for this video.",
+      "videoParts": "Video parts",
+      "videoPart": "Part {{count}}",
+      "noVideoParts": "No video parts are attached yet.",
+      "reviewPlaceholder": "Timestamped review comments, editing, and finalization controls will be deepened in the next video-review slice."
+    }
   },
   "groups": {
     "myGroups": "My Groups",
@@ -256,6 +268,15 @@
       "confirmRemove": "Are you sure you want to remove {{name}} from this group?",
       "removed": "{{name}} has been removed from the group",
       "removeFailed": "Failed to remove user"
+    },
+    "phase4": {
+      "summary": "Browse coaching groups, open group workspaces, and prepare invitations from a mobile-first layout.",
+      "loadFailed": "Groups could not be loaded",
+      "detailFailed": "Group could not be loaded",
+      "noDescription": "No description was added for this group.",
+      "membersPlaceholder": "Member lists will connect to the existing student and expert endpoints in the invitation/member-management slice.",
+      "invitePlaceholder": "Invitation links and QR codes will use the existing invitation endpoints in the next group-flow slice.",
+      "preferencesSummary": "Update the group name and description. Avatar, danger zone, and advanced permissions will follow the deeper preferences migration."
     }
   },
   "upload": {
@@ -266,7 +287,18 @@
     "chooseGroup": "Choose a group",
     "dropVideos": "Drop videos here!",
     "dragDrop": "Drag and drop videos here or",
-    "clickUpload": "click to upload"
+    "clickUpload": "click to upload",
+    "summary": "Prepare the files and context for a student video.",
+    "multiPartHint": "You can select one video or multiple clips that belong to the same review.",
+    "readyTitle": "Video package ready",
+    "readySummary": "Review the details below then click Upload to start.",
+    "startUpload": "Upload",
+    "uploading": "Uploading…",
+    "uploadSuccess": "Video uploaded",
+    "uploadSuccessDescription": "Your video is being processed and will appear in your library shortly.",
+    "viewVideo": "View video",
+    "uploadFailed": "Upload failed",
+    "retry": "Try again"
   },
   "sessions": {
     "title": "Sessions",
@@ -419,8 +451,8 @@
     "tagline": "Video coaching workspace"
   },
   "toast": {
-    "title": "Brand direction saved",
-    "message": "The first logo mark is noted as the preferred candidate for review."
+    "title": "Saved",
+    "message": "Your changes have been saved."
   },
   "user": {
     "initials": "ZT",

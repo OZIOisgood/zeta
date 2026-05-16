@@ -3,7 +3,7 @@ import { moduleMetadata } from '@storybook/angular';
 import { ZButtonComponent } from './z-button.component';
 
 const meta: Meta<ZButtonComponent> = {
-  title: 'Zeta UI/Button',
+  title: 'UI/Button',
   component: ZButtonComponent,
   decorators: [
     moduleMetadata({

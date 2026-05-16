@@ -11,11 +11,21 @@ import {
 } from '../../core/state/async-state';
 
 type GroupsState = AsyncSlice & {
+  detailError: string | null;
+  detailStatus: AsyncSlice['status'];
+  mutationError: string | null;
+  mutationStatus: AsyncSlice['status'];
+  activeGroup: Group | null;
   groups: Group[];
 };
 
 const initialState: GroupsState = {
   ...idleAsyncSlice(),
+  detailError: null,
+  detailStatus: 'idle',
+  mutationError: null,
+  mutationStatus: 'idle',
+  activeGroup: null,
   groups: [],
 };
 
@@ -25,6 +35,7 @@ export const GroupsStore = signalStore(
   withComputed((store) => ({
     groupCount: computed(() => store.groups().length),
     hasGroups: computed(() => store.groups().length > 0),
+    firstGroup: computed(() => store.groups()[0] ?? null),
   })),
   withMethods((store, api = inject(GroupsApiClient)) => ({
     async loadGroups(): Promise<void> {
@@ -38,6 +49,83 @@ export const GroupsStore = signalStore(
         });
       } catch (error) {
         patchState(store, errorAsyncSlice(error));
+      }
+    },
+    async loadGroup(groupId: string): Promise<void> {
+      patchState(store, {
+        detailStatus: 'loading',
+        detailError: null,
+        activeGroup: null,
+      });
+
+      try {
+        const activeGroup = await firstValueFrom(api.getGroup(groupId));
+        patchState(store, {
+          detailStatus: 'success',
+          detailError: null,
+          activeGroup,
+        });
+      } catch (error) {
+        const errorState = errorAsyncSlice(error);
+        patchState(store, {
+          detailStatus: errorState.status,
+          detailError: errorState.error,
+          activeGroup: null,
+        });
+      }
+    },
+    async createGroup(data: {
+      name: string;
+      description?: string;
+      avatar?: string;
+    }): Promise<Group | null> {
+      patchState(store, {
+        mutationStatus: 'loading',
+        mutationError: null,
+      });
+
+      try {
+        const group = await firstValueFrom(api.createGroup(data));
+        patchState(store, {
+          mutationStatus: 'success',
+          mutationError: null,
+          groups: [group, ...store.groups()],
+        });
+        return group;
+      } catch (error) {
+        const errorState = errorAsyncSlice(error);
+        patchState(store, {
+          mutationStatus: errorState.status,
+          mutationError: errorState.error,
+        });
+        return null;
+      }
+    },
+    async updateGroup(
+      id: string,
+      data: { name: string; description?: string; avatar?: string },
+    ): Promise<Group | null> {
+      patchState(store, {
+        mutationStatus: 'loading',
+        mutationError: null,
+      });
+
+      try {
+        const group = await firstValueFrom(api.updateGroup(id, data));
+        patchState(store, {
+          mutationStatus: 'success',
+          mutationError: null,
+          activeGroup: group,
+          groups: store.groups().map((current) => (current.id === group.id ? group : current)),
+        });
+        return group;
+      } catch (error) {
+        const errorState = errorAsyncSlice(error);
+        patchState(store, {
+          mutationStatus: errorState.status,
+          mutationError: errorState.error,
+        });
+        return null;
       }
     },
   })),

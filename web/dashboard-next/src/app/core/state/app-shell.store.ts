@@ -47,13 +47,25 @@ const initialState: AppShellState = {
   isToastVisible: true,
   navigation: [
     { id: 'home', label: 'Home', labelKey: 'common.nav.home', href: '/', icon: 'home' },
-    { id: 'videos', label: 'Videos', labelKey: 'common.nav.videos', href: '/', icon: 'videos' },
-    { id: 'groups', label: 'Groups', labelKey: 'common.nav.groups', href: '/', icon: 'groups' },
+    {
+      id: 'videos',
+      label: 'Videos',
+      labelKey: 'common.nav.videos',
+      href: '/videos',
+      icon: 'videos',
+    },
+    {
+      id: 'groups',
+      label: 'Groups',
+      labelKey: 'common.nav.groups',
+      href: '/groups',
+      icon: 'groups',
+    },
     {
       id: 'sessions',
       label: 'Sessions',
       labelKey: 'common.nav.sessions',
-      href: '/',
+      href: '/sessions',
       icon: 'sessions',
     },
   ],
@@ -105,6 +117,23 @@ export const AppShellStore = signalStore(
       patchState(store, { isToastVisible: false });
     },
     selectSection(section: string): void {
+      patchState(store, {
+        activeSection: section,
+        isNavigationOpen: false,
+      });
+    },
+    selectSectionForUrl(url: string): void {
+      const firstSegment = url.split('?')[0].split('/').filter(Boolean)[0] ?? 'home';
+      const sectionAliases: Record<string, string> = {
+        asset: 'videos',
+        'upload-video': 'videos',
+        'create-group': 'groups',
+      };
+      const aliasedSection = sectionAliases[firstSegment] ?? firstSegment;
+      const section = store.navigation().some((item) => item.id === aliasedSection)
+        ? aliasedSection
+        : 'home';
+
       patchState(store, {
         activeSection: section,
         isNavigationOpen: false,

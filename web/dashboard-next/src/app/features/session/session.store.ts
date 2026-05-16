@@ -1,7 +1,15 @@
 import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 import { AuthApiClient, User } from '../../core/http/auth-api.service';
+import { DashboardLocalizationService } from '../../core/i18n/dashboard-localization.service';
 import {
   AsyncSlice,
   errorAsyncSlice,
@@ -9,7 +17,6 @@ import {
   loadingAsyncSlice,
   successAsyncSlice,
 } from '../../core/state/async-state';
-import { DashboardLocalizationService } from '../../core/i18n/dashboard-localization.service';
 
 type SessionState = AsyncSlice & {
   user: User | null;
@@ -38,6 +45,7 @@ export const SessionStore = signalStore(
       hasPermission(permission: string): boolean {
         return store.permissions().has(permission);
       },
+
       async loadCurrentUser(): Promise<void> {
         patchState(store, loadingAsyncSlice());
 
@@ -57,6 +65,26 @@ export const SessionStore = signalStore(
           });
         }
       },
+
+      login(): void {
+        window.location.href = '/api/auth/login';
+      },
+
+      logout(): void {
+        api.logout().subscribe({
+          next: ({ logoutUrl }) => {
+            window.location.href = logoutUrl;
+          },
+          error: () => {
+            patchState(store, { ...idleAsyncSlice(), user: null, unauthenticated: true });
+          },
+        });
+      },
     }),
   ),
+  withHooks({
+    onInit(store) {
+      void store.loadCurrentUser();
+    },
+  }),
 );

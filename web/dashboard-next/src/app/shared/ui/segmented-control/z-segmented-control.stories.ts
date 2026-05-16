@@ -3,7 +3,7 @@ import { moduleMetadata } from '@storybook/angular';
 import { ZSegmentedControlComponent } from './z-segmented-control.component';
 
 const meta: Meta<ZSegmentedControlComponent> = {
-  title: 'Zeta UI/Segmented Control',
+  title: 'UI/Segmented Control',
   component: ZSegmentedControlComponent,
   decorators: [
     moduleMetadata({

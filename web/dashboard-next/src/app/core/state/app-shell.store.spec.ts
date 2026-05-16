@@ -57,6 +57,22 @@ describe('AppShellStore', () => {
     expect(store.isNavigationOpen()).toBe(false);
   });
 
+  it('selects the main section for nested feature routes', () => {
+    const store = TestBed.inject(AppShellStore);
+
+    store.selectSectionForUrl('/asset/asset-1');
+    expect(store.activeSection()).toBe('videos');
+
+    store.selectSectionForUrl('/upload-video');
+    expect(store.activeSection()).toBe('videos');
+
+    store.selectSectionForUrl('/create-group');
+    expect(store.activeSection()).toBe('groups');
+
+    store.selectSectionForUrl('/groups/group-1/preferences/general');
+    expect(store.activeSection()).toBe('groups');
+  });
+
   it('controls user menu and toast visibility', () => {
     const store = TestBed.inject(AppShellStore);
 
