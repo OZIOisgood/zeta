@@ -1,0 +1,155 @@
+<main class="min-h-dvh bg-[var(--z-bg)] text-[var(--z-text)]">
+  <div class="mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
+    <header
+      class="flex items-center justify-between gap-3 border-b border-[var(--z-border)] pb-4"
+      aria-label="Primary"
+    >
+      <a class="flex min-w-0 items-center gap-3" routerLink="/" aria-label="Zeta dashboard home">
+        <span
+          class="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--z-primary)] text-sm font-bold text-white shadow-sm"
+          aria-hidden="true"
+        >
+          Z
+        </span>
+        <span class="min-w-0">
+          <span class="block text-sm font-semibold leading-5">{{ 'app.brand' | transloco }}</span>
+          <span class="block truncate text-xs leading-4 text-[var(--z-muted)]">
+            {{ 'app.tagline' | transloco }}
+          </span>
+        </span>
+      </a>
+
+      <nav class="hidden items-center gap-1 md:flex" aria-label="Dashboard sections">
+        @for (item of shell.navigation(); track item.id) {
+          <a
+            class="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)]"
+            [routerLink]="item.href"
+          >
+            {{ item.label }}
+          </a>
+        }
+      </nav>
+
+      <z-button variant="secondary" size="sm" (pressed)="shell.setLanguage('en')">
+        {{ shell.activeLanguage().toUpperCase() }}
+      </z-button>
+    </header>
+
+    <section class="grid flex-1 gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:py-8">
+      <div class="flex min-w-0 flex-col gap-6">
+        <div class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
+          <p class="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--z-primary)]">
+            {{ 'home.kicker' | transloco }}
+          </p>
+          <div class="mt-3 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <div>
+              <h1 class="max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl">
+                {{ 'home.title' | transloco }}
+              </h1>
+              <p class="mt-3 max-w-2xl text-sm leading-6 text-[var(--z-muted)] sm:text-base">
+                {{ 'home.summary' | transloco }}
+              </p>
+            </div>
+
+            <z-button>
+              <span>{{ 'home.primaryAction' | transloco }}</span>
+              <svg lucideArrowRight class="size-4" aria-hidden="true"></svg>
+            </z-button>
+          </div>
+        </div>
+
+        <section class="grid gap-3 sm:grid-cols-3" aria-label="Dashboard overview">
+          @for (card of shell.overviewCards(); track card.label) {
+            <article class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-sm font-medium text-[var(--z-muted)]">{{ card.label }}</p>
+                <span
+                  class="rounded-md bg-[var(--z-primary-soft)] px-2 py-1 text-xs text-[var(--z-primary-strong)]"
+                >
+                  {{ card.delta }}
+                </span>
+              </div>
+              <p class="mt-4 text-3xl font-semibold">{{ card.value }}</p>
+            </article>
+          }
+        </section>
+
+        <section class="rounded-lg border border-[var(--z-border)] bg-white shadow-sm">
+          <div
+            class="flex items-center justify-between gap-3 border-b border-[var(--z-border)] p-4"
+          >
+            <div>
+              <h2 class="text-base font-semibold">{{ 'home.nextWork.title' | transloco }}</h2>
+              <p class="mt-1 text-sm text-[var(--z-muted)]">
+                {{ 'home.nextWork.summary' | transloco }}
+              </p>
+            </div>
+            <svg lucideSparkles class="size-5 text-[var(--z-primary)]" aria-hidden="true"></svg>
+          </div>
+
+          <div class="divide-y divide-[var(--z-border)]">
+            @for (item of shell.workQueue(); track item.title) {
+              <article
+                class="grid gap-3 p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
+              >
+                <span
+                  class="grid size-10 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
+                >
+                  @switch (item.icon) {
+                    @case ('video') {
+                      <svg lucideVideo class="size-5" aria-hidden="true"></svg>
+                    }
+                    @case ('sessions') {
+                      <svg lucideCalendarDays class="size-5" aria-hidden="true"></svg>
+                    }
+                    @default {
+                      <svg lucideUsers class="size-5" aria-hidden="true"></svg>
+                    }
+                  }
+                </span>
+                <div class="min-w-0">
+                  <h3 class="truncate text-sm font-semibold">{{ item.title }}</h3>
+                  <p class="mt-1 text-sm text-[var(--z-muted)]">{{ item.meta }}</p>
+                </div>
+                <span
+                  class="w-fit rounded-md border border-[var(--z-border)] px-2 py-1 text-xs font-medium text-[var(--z-muted)]"
+                >
+                  {{ item.status }}
+                </span>
+              </article>
+            }
+          </div>
+        </section>
+      </div>
+
+      <aside class="flex flex-col gap-4">
+        <section class="rounded-lg border border-[var(--z-border)] bg-[var(--z-surface-warm)] p-4">
+          <div class="flex items-center gap-3">
+            <span
+              class="grid size-10 place-items-center rounded-md bg-white text-[var(--z-primary)]"
+            >
+              <svg lucideUpload class="size-5" aria-hidden="true"></svg>
+            </span>
+            <div>
+              <h2 class="text-sm font-semibold">{{ 'home.upload.title' | transloco }}</h2>
+              <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
+                {{ 'home.upload.summary' | transloco }}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
+          <h2 class="text-sm font-semibold">{{ 'home.skeleton.title' | transloco }}</h2>
+          <div class="mt-4 space-y-3" aria-hidden="true">
+            <z-skeleton class="block h-4 w-4/5"></z-skeleton>
+            <z-skeleton class="block h-4 w-3/5"></z-skeleton>
+            <z-skeleton class="block h-20 w-full"></z-skeleton>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </div>
+</main>
+
+<router-outlet />

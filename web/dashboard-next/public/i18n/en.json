@@ -1,0 +1,23 @@
+{
+  "app": {
+    "brand": "Zeta",
+    "tagline": "Video coaching workspace"
+  },
+  "home": {
+    "kicker": "Today",
+    "title": "Coach videos, groups, and live sessions from one focused workspace.",
+    "summary": "Review submitted videos, prepare upcoming sessions, and keep group activity moving without losing the thread.",
+    "primaryAction": "Upload video",
+    "nextWork": {
+      "title": "Next work",
+      "summary": "A compact queue for reviews, sessions, and group actions."
+    },
+    "upload": {
+      "title": "New student video",
+      "summary": "Capture the context experts need before a review begins."
+    },
+    "skeleton": {
+      "title": "Recent activity"
+    }
+  }
+}
