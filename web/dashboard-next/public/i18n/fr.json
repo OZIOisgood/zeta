@@ -220,7 +220,8 @@
       "videoParts": "Parties de la vidéo",
       "videoPart": "Partie {{count}}",
       "noVideoParts": "Aucune partie vidéo n’est encore attachée.",
-      "reviewPlaceholder": "Les commentaires horodatés, l’édition et la finalisation seront approfondis dans la prochaine tranche de révision vidéo."
+      "reviewPlaceholder": "Les commentaires horodatés, l’édition et la finalisation seront approfondis dans la prochaine tranche de révision vidéo.",
+      "commentsFailed": "Impossible de charger les commentaires."
     }
   },
   "groups": {

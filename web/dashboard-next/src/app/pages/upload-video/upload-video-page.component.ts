@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe, translateSignal } from '@jsverse/transloco';
 import {
   LucideAlertCircle,
   LucideCheck,
@@ -301,19 +301,11 @@ export class UploadVideoPageComponent {
   private readonly assets = inject(AssetsApiClient);
   private readonly surge = inject(SurgeService);
   private readonly router = inject(Router);
-  private readonly t = inject(TranslocoService);
 
   protected readonly groupOptions = computed(() =>
     this.groups.groups().map((g) => ({ value: g.id, label: g.name })),
   );
   protected readonly activeStep = signal<UploadStep>('files');
-  protected readonly stepperSteps = computed<StepperStep[]>(() => {
-    const activeIndex = this.steps.findIndex((s) => s.value === this.activeStep());
-    return this.steps.map((s, i) => ({
-      label: this.t.translate(s.labelKey),
-      state: i < activeIndex ? 'completed' : i === activeIndex ? 'active' : 'upcoming',
-    }));
-  });
   protected readonly files = signal<File[]>([]);
   protected readonly uploadPhase = signal<UploadPhase>('idle');
   protected readonly uploadError = signal<string | null>(null);
@@ -324,6 +316,16 @@ export class UploadVideoPageComponent {
     { value: 'details', labelKey: 'upload.enterDetails' },
     { value: 'review', labelKey: 'upload.upload' },
   ];
+  private readonly stepLabels = translateSignal(this.steps.map((step) => step.labelKey));
+  protected readonly stepperSteps = computed<StepperStep[]>(() => {
+    const activeIndex = this.steps.findIndex((s) => s.value === this.activeStep());
+    const labels = this.stepLabels();
+
+    return this.steps.map((s, i) => ({
+      label: labels[i] ?? s.labelKey,
+      state: i < activeIndex ? 'completed' : i === activeIndex ? 'active' : 'upcoming',
+    }));
+  });
   protected readonly form = new FormGroup({
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     description: new FormControl('', { nonNullable: true }),

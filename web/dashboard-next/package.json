@@ -22,6 +22,7 @@
     "@angular/router": "^21.2.0",
     "@jsverse/transloco": "^8.3.0",
     "@lucide/angular": "^1.16.0",
+    "@mux/mux-player": "^3.13.0",
     "@ngrx/signals": "^21.1.0",
     "ng-primitives": "^0.120.2",
     "rxjs": "~7.8.0",

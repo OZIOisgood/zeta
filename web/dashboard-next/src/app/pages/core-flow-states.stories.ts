@@ -90,6 +90,50 @@ const meta: Meta = {
         </section>
 
         <section class="grid gap-3">
+          <h2 class="text-base font-semibold">Video detail — review state</h2>
+          <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            <div class="grid gap-3">
+              <div class="grid aspect-video place-items-center rounded-lg border border-[var(--z-border)] bg-black text-white">
+                <span class="grid gap-2 text-center">
+                  <svg lucideVideo class="mx-auto size-10" aria-hidden="true"></svg>
+                  <span class="text-sm font-semibold">Mux player surface</span>
+                </span>
+              </div>
+              <div class="rounded-lg border border-[var(--z-border)] bg-white p-4">
+                <z-badge tone="primary">In review</z-badge>
+                <h3 class="mt-3 text-lg font-semibold">Jump line review</h3>
+                <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">Two clips from today's arena session.</p>
+              </div>
+            </div>
+            <div class="grid content-start gap-3">
+              <div class="rounded-lg border border-[var(--z-border)] bg-white p-4">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-semibold">Video parts</h3>
+                  <z-badge>2</z-badge>
+                </div>
+                <div class="mt-3 grid gap-2">
+                  <button class="flex items-center justify-between rounded-md border border-[var(--z-primary)] bg-[var(--z-surface-warm)] p-3 text-left">
+                    <span class="text-sm font-semibold">Part 1</span>
+                    <z-badge>1</z-badge>
+                  </button>
+                  <button class="flex items-center justify-between rounded-md border border-[var(--z-border)] p-3 text-left">
+                    <span class="text-sm font-semibold">Part 2</span>
+                    <z-badge>0</z-badge>
+                  </button>
+                </div>
+              </div>
+              <div class="rounded-lg border border-[var(--z-border)] bg-white p-4">
+                <h3 class="text-sm font-semibold">Comments</h3>
+                <article class="mt-3 rounded-md border border-[var(--z-border)] bg-[var(--z-bg)] p-3">
+                  <p class="text-sm leading-6">Great rhythm through the corner.</p>
+                  <p class="mt-2 text-xs text-[var(--z-muted)]">00:12</p>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="grid gap-3">
           <h2 class="text-base font-semibold">Upload video — step states</h2>
           <div class="grid gap-4 lg:grid-cols-3">
 

@@ -203,7 +203,8 @@
       "videoParts": "Videoteile",
       "videoPart": "Teil {{count}}",
       "noVideoParts": "Es sind noch keine Videoteile angehängt.",
-      "reviewPlaceholder": "Zeitmarkierte Kommentare, Bearbeitung und Abschluss werden im nächsten Video-Review-Schritt vertieft."
+      "reviewPlaceholder": "Zeitmarkierte Kommentare, Bearbeitung und Abschluss werden im nächsten Video-Review-Schritt vertieft.",
+      "commentsFailed": "Kommentare konnten nicht geladen werden."
     }
   },
   "groups": {

@@ -65,6 +65,20 @@ const meta: Meta = {
             <z-text-input [(ngModel)]="email" type="email" placeholder="name@example.com" autocomplete="email" />
           </label>
         </section>
+
+        <section class="grid gap-4 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
+          <h2 class="text-base font-semibold">Auto-resizing textarea</h2>
+          <label class="grid gap-2">
+            <span class="text-sm font-semibold">Comment</span>
+            <z-textarea
+              [(ngModel)]="description"
+              [autoResize]="true"
+              [maxRows]="6"
+              [rows]="1"
+              placeholder="Add timestamped feedback."
+            />
+          </label>
+        </section>
       </div>
     `,
   }),

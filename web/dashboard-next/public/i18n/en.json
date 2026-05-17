@@ -220,7 +220,8 @@
       "videoParts": "Video parts",
       "videoPart": "Part {{count}}",
       "noVideoParts": "No video parts are attached yet.",
-      "reviewPlaceholder": "Timestamped review comments, editing, and finalization controls will be deepened in the next video-review slice."
+      "reviewPlaceholder": "Timestamped review comments, editing, and finalization controls will be deepened in the next video-review slice.",
+      "commentsFailed": "Comments could not be loaded."
     }
   },
   "groups": {
