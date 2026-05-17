@@ -17,7 +17,7 @@ import { SurgeService } from '../../core/http/surge.service';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
-import { ZComboboxComponent } from '../../shared/ui/combobox/z-combobox.component';
+import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZStepperComponent, type StepperStep } from '../../shared/ui/stepper/z-stepper.component';
 import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
@@ -34,7 +34,7 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
     TranslocoPipe,
     ZBadgeComponent,
     ZButtonComponent,
-    ZComboboxComponent,
+    ZSelectComponent,
     ZSkeletonComponent,
     ZStepperComponent,
     ZTextInputComponent,
@@ -145,7 +145,7 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
             @if (groups.status() === 'loading') {
               <z-skeleton class="block h-11 w-full"></z-skeleton>
             } @else {
-              <z-combobox
+              <z-select
                 [value]="form.controls.groupId.value"
                 [options]="groupOptions()"
                 [placeholder]="'upload.chooseGroup' | transloco"

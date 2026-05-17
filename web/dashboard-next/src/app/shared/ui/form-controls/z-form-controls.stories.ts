@@ -1,7 +1,7 @@
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { ZComboboxComponent } from '../combobox/z-combobox.component';
+import { ZSelectComponent } from '../select/z-select.component';
 import { ZTextInputComponent } from '../text-input/z-text-input.component';
 import { ZTextareaComponent } from '../textarea/z-textarea.component';
 
@@ -15,7 +15,7 @@ const meta: Meta = {
   title: 'UI/Form Controls',
   decorators: [
     moduleMetadata({
-      imports: [FormsModule, ZComboboxComponent, ZTextInputComponent, ZTextareaComponent],
+      imports: [FormsModule, ZSelectComponent, ZTextInputComponent, ZTextareaComponent],
     }),
   ],
   render: () => ({
@@ -41,7 +41,7 @@ const meta: Meta = {
           </label>
           <label class="grid gap-2">
             <span class="text-sm font-semibold">Group</span>
-            <z-combobox [options]="groupOptions" [value]="group" placeholder="Choose a group" />
+            <z-select [options]="groupOptions" [value]="group" placeholder="Choose a group" />
           </label>
         </section>
 

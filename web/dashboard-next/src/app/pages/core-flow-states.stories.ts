@@ -9,8 +9,8 @@ import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
 import { ZBadgeComponent } from '../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../shared/ui/button/z-button.component';
-import { ZComboboxComponent } from '../shared/ui/combobox/z-combobox.component';
 import { ZEmptyStateComponent } from '../shared/ui/empty-state/z-empty-state.component';
+import { ZSelectComponent } from '../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../shared/ui/skeleton/z-skeleton.component';
 import { ZTextInputComponent } from '../shared/ui/text-input/z-text-input.component';
 import { ZTextareaComponent } from '../shared/ui/textarea/z-textarea.component';
@@ -27,8 +27,8 @@ const meta: Meta = {
         LucideVideo,
         ZBadgeComponent,
         ZButtonComponent,
-        ZComboboxComponent,
         ZEmptyStateComponent,
+        ZSelectComponent,
         ZSkeletonComponent,
         ZTextInputComponent,
         ZTextareaComponent,
@@ -111,7 +111,7 @@ const meta: Meta = {
               </div>
             </div>
 
-            <!-- Step 2: Details form with group combobox -->
+            <!-- Step 2: Details form with group select -->
             <div class="grid gap-4 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
               <z-badge tone="primary">Step 2 · Details</z-badge>
               <div class="grid gap-2">
@@ -127,7 +127,7 @@ const meta: Meta = {
               </div>
               <div class="grid gap-2">
                 <span class="text-sm font-semibold">Group</span>
-                <z-combobox [options]="groupOptions" [value]="selectedGroup" placeholder="Select a group" />
+                <z-select [options]="groupOptions" [value]="selectedGroup" placeholder="Select a group" />
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
-import { ZComboboxComponent } from './z-combobox.component';
+import { ZSelectComponent } from './z-select.component';
 
 const SAMPLE_OPTIONS = [
   { value: 'academy', label: 'Academy Group' },
@@ -10,31 +10,37 @@ const SAMPLE_OPTIONS = [
   { value: 'elite', label: 'Elite Squad' },
 ];
 
-const meta: Meta<ZComboboxComponent> = {
-  title: 'UI/Combobox',
-  component: ZComboboxComponent,
+const meta: Meta<ZSelectComponent> = {
+  title: 'UI/Select',
+  component: ZSelectComponent,
   decorators: [
     moduleMetadata({
-      imports: [ZComboboxComponent],
+      imports: [ZSelectComponent],
     }),
   ],
   args: {
     options: SAMPLE_OPTIONS,
     placeholder: 'Select a group',
     value: undefined,
+    disabled: false,
   },
   render: (args) => ({
     props: args,
     template: `
       <div class="max-w-sm bg-[var(--z-bg)] p-6">
-        <z-combobox [options]="options" [placeholder]="placeholder" [value]="value" />
+        <z-select
+          [options]="options"
+          [placeholder]="placeholder"
+          [value]="value"
+          [disabled]="disabled"
+        />
       </div>
     `,
   }),
 };
 
 export default meta;
-type Story = StoryObj<ZComboboxComponent>;
+type Story = StoryObj<ZSelectComponent>;
 
 export const Default: Story = {};
 
@@ -61,5 +67,11 @@ export const NoOptions: Story = {
   args: {
     options: [],
     placeholder: 'No groups available',
+  },
+};
+
+export const Disabled: Story = {
+  args: {
+    disabled: true,
   },
 };
