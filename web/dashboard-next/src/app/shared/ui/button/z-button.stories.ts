@@ -18,7 +18,7 @@ const meta: Meta<ZButtonComponent> = {
   argTypes: {
     variant: {
       control: 'radio',
-      options: ['primary', 'secondary', 'ghost'],
+      options: ['primary', 'secondary', 'ghost', 'danger'],
     },
     size: {
       control: 'radio',
@@ -34,6 +34,7 @@ const meta: Meta<ZButtonComponent> = {
         </z-button>
         <z-button variant="secondary" [size]="size">Manage group</z-button>
         <z-button variant="ghost" [size]="size">View sessions</z-button>
+        <z-button variant="danger" [size]="size">Delete comment</z-button>
       </div>
     `,
   }),

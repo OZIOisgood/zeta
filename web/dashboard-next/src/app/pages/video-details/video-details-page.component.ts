@@ -13,6 +13,7 @@ import {
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import {
   LucideArrowLeft,
   LucideCheck,
@@ -23,11 +24,12 @@ import {
   LucideTrash,
   LucideVideo,
 } from '@lucide/angular';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { SessionStore } from '../../features/session/session.store';
 import { VideosStore } from '../../features/videos/videos.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
@@ -39,9 +41,11 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
     NgClass,
     ReactiveFormsModule,
     RouterLink,
+    NgpDialogTrigger,
     TranslocoPipe,
     ZBadgeComponent,
     ZButtonComponent,
+    ZDialogPanelComponent,
     ZEmptyStateComponent,
     ZIconButtonComponent,
     ZSkeletonComponent,
@@ -202,10 +206,21 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                 </z-icon-button>
                               }
                               @if (canDeleteReviews()) {
+                                <ng-template #deleteCommentDialog let-close="close">
+                                  <z-dialog-panel
+                                    [title]="'videos.deleteComment' | transloco"
+                                    [description]="'videos.confirmDeleteComment' | transloco"
+                                    tone="danger"
+                                    [confirmLabel]="'common.actions.delete' | transloco"
+                                    [cancelLabel]="'common.actions.cancel' | transloco"
+                                    [close]="close"
+                                  />
+                                </ng-template>
                                 <z-icon-button
                                   [label]="'common.actions.delete' | transloco"
                                   size="sm"
-                                  (pressed)="deleteReview(review.id)"
+                                  [ngpDialogTrigger]="deleteCommentDialog"
+                                  (ngpDialogTriggerClosed)="confirmDeleteReview($event, review.id)"
                                 >
                                   <svg lucideTrash class="size-4" aria-hidden="true"></svg>
                                 </z-icon-button>
@@ -273,10 +288,41 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                   }
                 </div>
                 @if (canFinalize() && !isFinalized()) {
-                  <z-button size="sm" (pressed)="finalizeVideo()">
-                    <svg lucideCheck class="size-4" aria-hidden="true"></svg>
-                    <span>{{ 'videos.markReviewed' | transloco }}</span>
-                  </z-button>
+                  @if (hasUnreviewedParts()) {
+                    <ng-template #cannotMarkReviewedDialog let-close="close">
+                      <z-dialog-panel
+                        [title]="'videos.cannotMarkReviewedTitle' | transloco"
+                        [description]="'videos.cannotMarkReviewed' | transloco"
+                        tone="info"
+                        [confirmOnly]="true"
+                        [confirmLabel]="'common.actions.done' | transloco"
+                        [close]="close"
+                      />
+                    </ng-template>
+                    <z-button size="sm" [ngpDialogTrigger]="cannotMarkReviewedDialog">
+                      <svg lucideCheck class="size-4" aria-hidden="true"></svg>
+                      <span>{{ 'videos.markReviewed' | transloco }}</span>
+                    </z-button>
+                  } @else {
+                    <ng-template #markReviewedDialog let-close="close">
+                      <z-dialog-panel
+                        [title]="'videos.markVideoReviewed' | transloco"
+                        [description]="'videos.confirmMarkReviewed' | transloco"
+                        tone="warning"
+                        [confirmLabel]="'videos.markReviewed' | transloco"
+                        [cancelLabel]="'common.actions.cancel' | transloco"
+                        [close]="close"
+                      />
+                    </ng-template>
+                    <z-button
+                      size="sm"
+                      [ngpDialogTrigger]="markReviewedDialog"
+                      (ngpDialogTriggerClosed)="confirmFinalizeVideo($event)"
+                    >
+                      <svg lucideCheck class="size-4" aria-hidden="true"></svg>
+                      <span>{{ 'videos.markReviewed' | transloco }}</span>
+                    </z-button>
+                  }
                 }
               </div>
 
@@ -325,7 +371,6 @@ export class VideoDetailsPageComponent {
   protected readonly session = inject(SessionStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly transloco = inject(TranslocoService);
   private readonly muxPlayer = viewChild<ElementRef<HTMLElement>>('muxPlayer');
 
   protected readonly currentTimestamp = signal(0);
@@ -341,6 +386,9 @@ export class VideoDetailsPageComponent {
 
   protected readonly playbackId = computed(
     () => this.selectedVideo()?.playback_id || this.store.activeAsset()?.playback_id || null,
+  );
+  protected readonly hasUnreviewedParts = computed(
+    () => this.store.activeAsset()?.videos?.some((video) => video.review_count === 0) ?? false,
   );
 
   constructor() {
@@ -460,26 +508,20 @@ export class VideoDetailsPageComponent {
     }
   }
 
-  protected async deleteReview(reviewId: string): Promise<void> {
+  protected async confirmDeleteReview(result: unknown, reviewId: string): Promise<void> {
+    if (result !== true) return;
+
     const video = this.selectedVideo();
     if (!video || this.isFinalized()) return;
-
-    if (!window.confirm(this.transloco.translate('videos.confirmDeleteComment'))) return;
 
     await this.store.deleteReview(video.id, reviewId);
   }
 
-  protected finalizeVideo(): void {
+  protected confirmFinalizeVideo(result: unknown): void {
+    if (result !== true) return;
+
     const asset = this.store.activeAsset();
     if (!asset || this.isFinalized()) return;
-
-    const hasUnreviewedParts = asset.videos?.some((video) => video.review_count === 0);
-    if (hasUnreviewedParts) {
-      window.alert(this.transloco.translate('videos.cannotMarkReviewed'));
-      return;
-    }
-
-    if (!window.confirm(this.transloco.translate('videos.confirmMarkReviewed'))) return;
 
     void this.store.finalizeVideo(asset.id);
   }

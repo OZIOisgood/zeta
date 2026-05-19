@@ -2,7 +2,7 @@ import { NgClass } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import { NgpButton } from 'ng-primitives/button';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md';
 
 @Component({
@@ -39,6 +39,8 @@ export class ZButtonComponent {
         return 'border-[var(--z-border)] bg-white text-[var(--z-text)] hover:bg-[var(--z-surface-warm)] focus-visible:outline-[var(--z-primary)]';
       case 'ghost':
         return 'border-transparent bg-transparent text-[var(--z-muted)] hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)] focus-visible:outline-[var(--z-primary)]';
+      case 'danger':
+        return 'border-rose-700 bg-rose-700 text-white hover:bg-rose-800 focus-visible:outline-rose-700';
       default:
         return 'border-[var(--z-primary)] bg-[var(--z-primary)] text-white hover:bg-[var(--z-primary-strong)] focus-visible:outline-[var(--z-primary)]';
     }
