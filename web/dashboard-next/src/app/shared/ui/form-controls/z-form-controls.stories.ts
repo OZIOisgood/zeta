@@ -2,6 +2,8 @@ import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
 import { ZAvatarInputComponent } from '../avatar-input/z-avatar-input.component';
+import { ZCheckboxComponent } from '../checkbox/z-checkbox.component';
+import { ZComboboxComponent } from '../combobox/z-combobox.component';
 import { ZSelectComponent } from '../select/z-select.component';
 import { ZTextInputComponent } from '../text-input/z-text-input.component';
 import { ZTextareaComponent } from '../textarea/z-textarea.component';
@@ -19,6 +21,8 @@ const meta: Meta = {
       imports: [
         FormsModule,
         ZAvatarInputComponent,
+        ZCheckboxComponent,
+        ZComboboxComponent,
         ZSelectComponent,
         ZTextInputComponent,
         ZTextareaComponent,
@@ -33,6 +37,7 @@ const meta: Meta = {
       filled: 'Academy video review',
       group: '',
       groupOptions: GROUP_OPTIONS,
+      notifications: true,
       title: '',
     },
     template: `
@@ -57,6 +62,29 @@ const meta: Meta = {
           <label class="grid gap-2">
             <span class="text-sm font-semibold">Group</span>
             <z-select [options]="groupOptions" [value]="group" placeholder="Choose a group" />
+          </label>
+        </section>
+
+        <section class="grid gap-4 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
+          <h2 class="text-base font-semibold">Angular Primitives controls</h2>
+          <label class="grid gap-2">
+            <span class="text-sm font-semibold">Searchable group</span>
+            <z-combobox
+              [options]="groupOptions"
+              [value]="group"
+              label="Search groups"
+              placeholder="Search groups"
+              toggleLabel="Toggle group options"
+              (valueChange)="group = $event"
+            />
+          </label>
+          <label class="flex items-center gap-3">
+            <z-checkbox
+              label="Notification emails"
+              [checked]="notifications"
+              (checkedChange)="notifications = $event"
+            />
+            <span class="text-sm font-semibold">Notification emails</span>
           </label>
         </section>
 

@@ -8,6 +8,7 @@ import { GroupsPageComponent } from './pages/groups/groups-page.component';
 import { HomePageComponent } from './pages/home/home-page.component';
 import { BookCoachingPageComponent } from './pages/book-coaching/book-coaching-page.component';
 import { ManageAvailabilityPageComponent } from './pages/manage-availability/manage-availability-page.component';
+import { PreferencesPageComponent } from './pages/preferences/preferences-page.component';
 import { SessionsPageComponent } from './pages/sessions/sessions-page.component';
 import { UploadVideoPageComponent } from './pages/upload-video/upload-video-page.component';
 import { VideoCallPageComponent } from './pages/video-call/video-call-page.component';
@@ -28,6 +29,8 @@ export const routes: Routes = [
     children: [
       { path: '', component: HomePageComponent, title: 'Zeta' },
       { path: 'videos', component: VideosPageComponent, title: 'Zeta Videos' },
+      { path: 'preferences', redirectTo: 'preferences/personal-data', pathMatch: 'full' },
+      { path: 'preferences/:tab', component: PreferencesPageComponent, title: 'Preferences' },
       { path: 'upload-video', component: UploadVideoPageComponent, title: 'Upload video' },
       { path: 'asset/:id', component: VideoDetailsPageComponent, title: 'Video details' },
       { path: 'groups', component: GroupsPageComponent, title: 'Zeta Groups' },

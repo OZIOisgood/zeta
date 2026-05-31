@@ -2,10 +2,9 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideImage, LucideTriangleAlert, LucideTrash2 } from '@lucide/angular';
+import { LucideTrash2 } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
-import { NgpTabButton, NgpTabList, NgpTabPanel, NgpTabset } from 'ng-primitives/tabs';
 import { SessionStore } from '../../features/session/session.store';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { ZAvatarInputComponent } from '../../shared/ui/avatar-input/z-avatar-input.component';
@@ -14,6 +13,8 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
 import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
+import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
+import { ZTabsComponent } from '../../shared/ui/tabs/z-tabs.component';
 import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 
@@ -29,10 +30,6 @@ type GroupPreferencesFormValue = {
   imports: [
     ReactiveFormsModule,
     NgpDialogTrigger,
-    NgpTabButton,
-    NgpTabList,
-    NgpTabPanel,
-    NgpTabset,
     TranslocoPipe,
     ZAvatarInputComponent,
     ZBreadcrumbsComponent,
@@ -40,10 +37,10 @@ type GroupPreferencesFormValue = {
     ZDialogPanelComponent,
     ZFieldLabelComponent,
     ZSkeletonComponent,
+    ZTabPanelComponent,
+    ZTabsComponent,
     ZTextInputComponent,
     ZTextareaComponent,
-    LucideImage,
-    LucideTriangleAlert,
     LucideTrash2,
   ],
   template: `
@@ -63,174 +60,154 @@ type GroupPreferencesFormValue = {
       @if (store.detailStatus() === 'loading') {
         <z-skeleton class="block h-96 w-full"></z-skeleton>
       } @else {
-        <div
-          ngpTabset
-          [ngpTabsetValue]="activeTab()"
-          (ngpTabsetValueChange)="selectTab($event)"
-          class="grid gap-4"
-        >
-          <div
-            ngpTabList
-            class="flex overflow-x-auto rounded-lg border border-[var(--z-border)] bg-white p-1 shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            <button
-              ngpTabButton
-              ngpTabButtonValue="general"
-              type="button"
-              class="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-transparent px-3 text-sm font-semibold text-[var(--z-muted)] transition data-[active]:border-[var(--z-primary)] data-[active]:bg-[var(--z-primary)] data-[active]:text-white data-[focus-visible]:outline data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-[var(--z-primary)] data-[hover]:bg-[var(--z-surface-warm)] data-[active]:data-[hover]:bg-[var(--z-primary)]"
-            >
-              <svg lucideImage class="size-4" aria-hidden="true"></svg>
-              <span>{{ 'groups.generalTab' | transloco }}</span>
-            </button>
-            <button
-              ngpTabButton
-              ngpTabButtonValue="delete"
-              type="button"
-              class="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-transparent px-3 text-sm font-semibold text-[var(--z-muted)] transition data-[active]:border-rose-700 data-[active]:bg-rose-700 data-[active]:text-white data-[focus-visible]:outline data-[focus-visible]:outline-2 data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-rose-700 data-[hover]:bg-rose-50 data-[hover]:text-rose-700 data-[active]:data-[hover]:bg-rose-700 data-[active]:data-[hover]:text-white"
-            >
-              <svg lucideTriangleAlert class="size-4" aria-hidden="true"></svg>
-              <span>{{ 'groups.deleteTab' | transloco }}</span>
-            </button>
-          </div>
+        <div class="grid gap-4">
+          <z-tabs
+            tabsId="group-preferences-tabs"
+            [label]="'groups.preferences' | transloco"
+            [value]="activeTab()"
+            [options]="[
+              { value: 'general', label: ('groups.generalTab' | transloco) },
+              { value: 'delete', label: ('groups.deleteTab' | transloco) },
+            ]"
+            (valueChange)="selectTab($event)"
+          />
 
-          <section
-            ngpTabPanel
-            ngpTabPanelValue="general"
-            [class.hidden]="activeTab() !== 'general'"
-          >
-            <form
-              class="grid gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm"
-              [formGroup]="form"
-              (ngSubmit)="submit()"
-            >
-              <div>
-                <h2 class="text-2xl font-semibold">{{ 'groups.preferences' | transloco }}</h2>
-                <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
-                  {{ 'groups.phase4.preferencesSummary' | transloco }}
-                </p>
-              </div>
+          @if (activeTab() === 'general') {
+            <z-tab-panel tabsId="group-preferences-tabs" value="general">
+              <form
+                class="grid gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm"
+                [formGroup]="form"
+                (ngSubmit)="submit()"
+              >
+                <div>
+                  <h2 class="text-2xl font-semibold">{{ 'groups.preferences' | transloco }}</h2>
+                  <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
+                    {{ 'groups.phase4.preferencesSummary' | transloco }}
+                  </p>
+                </div>
 
-              <label class="grid gap-2">
-                <z-field-label
-                  [label]="'groups.groupName' | transloco"
-                  [control]="form.controls.name"
-                />
-                <z-text-input
-                  formControlName="name"
-                  [placeholder]="'groups.namePlaceholder' | transloco"
-                />
-              </label>
-
-              <label class="grid gap-2">
-                <z-field-label
-                  [label]="'common.fields.description' | transloco"
-                  [control]="form.controls.description"
-                />
-                <z-textarea
-                  formControlName="description"
-                  [placeholder]="'groups.descriptionPlaceholder' | transloco"
-                />
-              </label>
-
-              <z-avatar-input
-                formControlName="avatar"
-                [label]="'common.fields.avatar' | transloco"
-                [helperTitle]="'groups.avatarTitle' | transloco"
-                [helperText]="'avatar.requirement' | transloco"
-                [previewLabel]="'common.aria.avatarPreview' | transloco"
-                [selectLabel]="'avatar.selectImage' | transloco"
-                [invalidImageMessage]="'avatar.invalidImage' | transloco"
-                [sizeExceededMessage]="'avatar.sizeExceeded' | transloco"
-                [loadFailedMessage]="'avatar.loadFailed' | transloco"
-                [readFailedMessage]="'avatar.readFailed' | transloco"
-                [disabled]="store.mutationStatus() === 'loading'"
-              />
-
-              @if (store.mutationStatus() === 'error' && activeMutation() === 'general') {
-                <p class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                  {{ store.mutationError() }}
-                </p>
-              }
-              @if (saveSucceeded()) {
-                <p
-                  class="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800"
-                >
-                  {{ 'groups.updated' | transloco }}
-                </p>
-              }
-
-              <div class="flex justify-end">
-                <z-button
-                  type="submit"
-                  [disabled]="form.invalid || !hasFormChanges() || store.mutationStatus() === 'loading'"
-                >
-                  {{ 'common.actions.save' | transloco }}
-                </z-button>
-              </div>
-            </form>
-          </section>
-
-          <section
-            ngpTabPanel
-            ngpTabPanelValue="delete"
-            [class.hidden]="activeTab() !== 'delete'"
-          >
-            <div class="grid gap-5 rounded-lg border border-rose-200 bg-white p-5 shadow-sm">
-              <div>
-                <h2 class="text-2xl font-semibold text-[var(--z-text)]">
-                  {{ 'groups.deleteGroup' | transloco }}
-                </h2>
-                <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
-                  {{ 'groups.deleteDescription' | transloco }}
-                </p>
-              </div>
-
-              @if (store.mutationStatus() === 'error' && activeMutation() === 'delete') {
-                <p class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                  {{ store.mutationError() }}
-                </p>
-              }
-
-              @if (canDeleteGroup()) {
-                <ng-template #deleteGroupDialog let-close="close">
-                  <z-dialog-panel
-                    [title]="'groups.deleteGroup' | transloco"
-                    [description]="'groups.deleteConfirm' | transloco"
-                    tone="danger"
-                    [confirmLabel]="'groups.deleteGroup' | transloco"
-                    [cancelLabel]="'common.actions.cancel' | transloco"
-                    [close]="close"
+                <label class="grid gap-2">
+                  <z-field-label
+                    [label]="'groups.groupName' | transloco"
+                    [control]="form.controls.name"
                   />
-                </ng-template>
-                <div
-                  class="flex flex-col gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <h3 class="text-sm font-semibold text-rose-950">
-                      {{ 'groups.deleteThisGroup' | transloco }}
-                    </h3>
-                    <p class="mt-1 text-sm leading-6 text-rose-800">
-                      {{ 'groups.deleteSummary' | transloco }}
-                    </p>
-                  </div>
-                  <z-button
-                    variant="danger"
-                    type="button"
-                    [disabled]="store.mutationStatus() === 'loading'"
-                    [ngpDialogTrigger]="deleteGroupDialog"
-                    (ngpDialogTriggerClosed)="confirmDelete($event)"
+                  <z-text-input
+                    formControlName="name"
+                    [placeholder]="'groups.namePlaceholder' | transloco"
+                  />
+                </label>
+
+                <label class="grid gap-2">
+                  <z-field-label
+                    [label]="'common.fields.description' | transloco"
+                    [control]="form.controls.description"
+                  />
+                  <z-textarea
+                    formControlName="description"
+                    [placeholder]="'groups.descriptionPlaceholder' | transloco"
+                  />
+                </label>
+
+                <z-avatar-input
+                  formControlName="avatar"
+                  [label]="'common.fields.avatar' | transloco"
+                  [helperTitle]="'groups.avatarTitle' | transloco"
+                  [helperText]="'avatar.requirement' | transloco"
+                  [previewLabel]="'common.aria.avatarPreview' | transloco"
+                  [selectLabel]="'avatar.selectImage' | transloco"
+                  [invalidImageMessage]="'avatar.invalidImage' | transloco"
+                  [sizeExceededMessage]="'avatar.sizeExceeded' | transloco"
+                  [loadFailedMessage]="'avatar.loadFailed' | transloco"
+                  [readFailedMessage]="'avatar.readFailed' | transloco"
+                  [disabled]="store.mutationStatus() === 'loading'"
+                />
+
+                @if (store.mutationStatus() === 'error' && activeMutation() === 'general') {
+                  <p class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+                    {{ store.mutationError() }}
+                  </p>
+                }
+                @if (saveSucceeded()) {
+                  <p
+                    class="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800"
                   >
-                    <svg lucideTrash2 class="size-4" aria-hidden="true"></svg>
-                    <span>{{ 'groups.deleteGroup' | transloco }}</span>
+                    {{ 'groups.updated' | transloco }}
+                  </p>
+                }
+
+                <div class="flex justify-end">
+                  <z-button
+                    type="submit"
+                    [disabled]="
+                      form.invalid || !hasFormChanges() || store.mutationStatus() === 'loading'
+                    "
+                  >
+                    {{ 'common.actions.save' | transloco }}
                   </z-button>
                 </div>
-              } @else {
-                <p class="rounded-md border border-[var(--z-border)] bg-[var(--z-bg)] p-4 text-sm leading-6 text-[var(--z-muted)]">
-                  {{ 'groups.deleteUnavailable' | transloco }}
-                </p>
-              }
-            </div>
-          </section>
+              </form>
+            </z-tab-panel>
+          } @else {
+            <z-tab-panel tabsId="group-preferences-tabs" value="delete">
+              <div class="grid gap-5 rounded-lg border border-rose-200 bg-white p-5 shadow-sm">
+                <div>
+                  <h2 class="text-2xl font-semibold text-[var(--z-text)]">
+                    {{ 'groups.deleteGroup' | transloco }}
+                  </h2>
+                  <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
+                    {{ 'groups.deleteDescription' | transloco }}
+                  </p>
+                </div>
+
+                @if (store.mutationStatus() === 'error' && activeMutation() === 'delete') {
+                  <p class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+                    {{ store.mutationError() }}
+                  </p>
+                }
+
+                @if (canDeleteGroup()) {
+                  <ng-template #deleteGroupDialog let-close="close">
+                    <z-dialog-panel
+                      [title]="'groups.deleteGroup' | transloco"
+                      [description]="'groups.deleteConfirm' | transloco"
+                      tone="danger"
+                      [confirmLabel]="'groups.deleteGroup' | transloco"
+                      [cancelLabel]="'common.actions.cancel' | transloco"
+                      [close]="close"
+                    />
+                  </ng-template>
+                  <div
+                    class="flex flex-col gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <h3 class="text-sm font-semibold text-rose-950">
+                        {{ 'groups.deleteThisGroup' | transloco }}
+                      </h3>
+                      <p class="mt-1 text-sm leading-6 text-rose-800">
+                        {{ 'groups.deleteSummary' | transloco }}
+                      </p>
+                    </div>
+                    <z-button
+                      variant="danger"
+                      type="button"
+                      [disabled]="store.mutationStatus() === 'loading'"
+                      [ngpDialogTrigger]="deleteGroupDialog"
+                      (ngpDialogTriggerClosed)="confirmDelete($event)"
+                    >
+                      <svg lucideTrash2 class="size-4" aria-hidden="true"></svg>
+                      <span>{{ 'groups.deleteGroup' | transloco }}</span>
+                    </z-button>
+                  </div>
+                } @else {
+                  <p
+                    class="rounded-md border border-[var(--z-border)] bg-[var(--z-bg)] p-4 text-sm leading-6 text-[var(--z-muted)]"
+                  >
+                    {{ 'groups.deleteUnavailable' | transloco }}
+                  </p>
+                }
+              </div>
+            </z-tab-panel>
+          }
         </div>
       }
     </div>
@@ -252,10 +229,7 @@ export class GroupPreferencesPageComponent {
     const user = this.session.user();
 
     return (
-      !!group &&
-      !!user &&
-      group.owner_id === user.id &&
-      this.session.hasPermission('groups:delete')
+      !!group && !!user && group.owner_id === user.id && this.session.hasPermission('groups:delete')
     );
   });
   protected readonly hasFormChanges = computed(() => {
@@ -361,7 +335,10 @@ export class GroupPreferencesPageComponent {
     };
   }
 
-  private sameFormValue(left: GroupPreferencesFormValue, right: GroupPreferencesFormValue): boolean {
+  private sameFormValue(
+    left: GroupPreferencesFormValue,
+    right: GroupPreferencesFormValue,
+  ): boolean {
     return (
       left.name === right.name &&
       left.description === right.description &&

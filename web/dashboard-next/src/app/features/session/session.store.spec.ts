@@ -82,4 +82,46 @@ describe('SessionStore', () => {
     expect(store.unauthenticated()).toBe(true);
     expect(store.user()).toBeNull();
   });
+
+  it('updates the current user and reapplies localization preferences', async () => {
+    const updatedUser = {
+      ...user,
+      first_name: 'Grace',
+      language: 'de',
+      timezone: 'Europe/Berlin',
+    };
+    const localization = {
+      useUserPreferences: vi.fn(() => 'de'),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: AuthApiClient,
+          useValue: {
+            getCurrentUser: () => of(user),
+            updateCurrentUser: () => of(updatedUser),
+          },
+        },
+        {
+          provide: DashboardLocalizationService,
+          useValue: localization,
+        },
+      ],
+    });
+
+    const store = TestBed.inject(SessionStore);
+
+    await store.updateCurrentUser({
+      first_name: 'Grace',
+      last_name: 'Coach',
+      language: 'de',
+      timezone: 'Europe/Berlin',
+      email_preferences: user.email_preferences,
+    });
+
+    expect(store.mutationStatus()).toBe('success');
+    expect(store.displayName()).toBe('Grace Coach');
+    expect(localization.useUserPreferences).toHaveBeenCalledWith('de', 'Europe/Berlin');
+  });
 });

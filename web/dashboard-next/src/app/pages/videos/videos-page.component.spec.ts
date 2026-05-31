@@ -22,6 +22,7 @@ describe('VideosPageComponent', () => {
                 all: 'All',
                 allMyVideos: 'All my videos',
                 comments: 'Comments',
+                filtersLabel: 'Filter videos',
                 noVideosForStatuses: 'No videos are available for the selected review statuses.',
                 noVideosMatch: 'No videos match these filters',
                 noVideosYet: 'No videos yet',

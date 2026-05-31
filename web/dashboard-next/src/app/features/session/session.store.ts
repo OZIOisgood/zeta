@@ -8,7 +8,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
-import { AuthApiClient, User } from '../../core/http/auth-api.service';
+import { AuthApiClient, UpdateUserRequest, User } from '../../core/http/auth-api.service';
 import { DashboardLocalizationService } from '../../core/i18n/dashboard-localization.service';
 import {
   AsyncSlice,
@@ -19,12 +19,16 @@ import {
 } from '../../core/state/async-state';
 
 type SessionState = AsyncSlice & {
+  mutationError: string | null;
+  mutationStatus: AsyncSlice['status'];
   user: User | null;
   unauthenticated: boolean;
 };
 
 const initialState: SessionState = {
   ...idleAsyncSlice(),
+  mutationError: null,
+  mutationStatus: 'idle',
   user: null,
   unauthenticated: false,
 };
@@ -63,6 +67,31 @@ export const SessionStore = signalStore(
             user: null,
             unauthenticated: true,
           });
+        }
+      },
+
+      async updateCurrentUser(data: UpdateUserRequest): Promise<User | null> {
+        patchState(store, {
+          mutationError: null,
+          mutationStatus: 'loading',
+        });
+
+        try {
+          const user = await firstValueFrom(api.updateCurrentUser(data));
+          localization.useUserPreferences(user.language, user.timezone);
+          patchState(store, {
+            mutationError: null,
+            mutationStatus: 'success',
+            user,
+          });
+          return user;
+        } catch (error) {
+          const errorState = errorAsyncSlice(error);
+          patchState(store, {
+            mutationError: errorState.error,
+            mutationStatus: errorState.status,
+          });
+          return null;
         }
       },
 

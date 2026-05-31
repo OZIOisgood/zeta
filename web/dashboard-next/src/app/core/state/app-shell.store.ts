@@ -33,6 +33,8 @@ type AppShellState = {
   isNavigationOpen: boolean;
   isUserMenuOpen: boolean;
   isToastVisible: boolean;
+  toastMessage: string;
+  toastTitle: string;
   navigation: NavigationItem[];
   languages: { value: DashboardLanguage; label: string }[];
   overviewCards: OverviewCard[];
@@ -44,7 +46,9 @@ const initialState: AppShellState = {
   activeSection: 'home',
   isNavigationOpen: false,
   isUserMenuOpen: false,
-  isToastVisible: true,
+  isToastVisible: false,
+  toastMessage: '',
+  toastTitle: '',
   navigation: [
     { id: 'home', label: 'Home', labelKey: 'common.nav.home', href: '/', icon: 'home' },
     {
@@ -106,50 +110,69 @@ export const AppShellStore = signalStore(
       store.navigation().find((item) => item.id === store.activeSection()),
     ),
   })),
-  withMethods((store, localization = inject(DashboardLocalizationService)) => ({
-    closeNavigation(): void {
-      patchState(store, { isNavigationOpen: false });
-    },
-    closeUserMenu(): void {
-      patchState(store, { isUserMenuOpen: false });
-    },
-    dismissToast(): void {
-      patchState(store, { isToastVisible: false });
-    },
-    selectSection(section: string): void {
-      patchState(store, {
-        activeSection: section,
-        isNavigationOpen: false,
-      });
-    },
-    selectSectionForUrl(url: string): void {
-      const firstSegment = url.split('?')[0].split('/').filter(Boolean)[0] ?? 'home';
-      const sectionAliases: Record<string, string> = {
-        asset: 'videos',
-        'upload-video': 'videos',
-        'create-group': 'groups',
-      };
-      const aliasedSection = sectionAliases[firstSegment] ?? firstSegment;
-      const section = store.navigation().some((item) => item.id === aliasedSection)
-        ? aliasedSection
-        : 'home';
+  withMethods((store, localization = inject(DashboardLocalizationService)) => {
+    let toastTimeout: ReturnType<typeof setTimeout> | undefined;
 
-      patchState(store, {
-        activeSection: section,
-        isNavigationOpen: false,
-      });
-    },
-    setLanguage(language: string): void {
-      if (localization.isSupportedLanguage(language)) {
-        const activeLanguage = localization.useLanguage(language);
-        patchState(store, { activeLanguage });
+    const dismissToast = (): void => {
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+        toastTimeout = undefined;
       }
-    },
-    toggleNavigation(): void {
-      patchState(store, { isNavigationOpen: !store.isNavigationOpen() });
-    },
-    toggleUserMenu(): void {
-      patchState(store, { isUserMenuOpen: !store.isUserMenuOpen() });
-    },
-  })),
+      patchState(store, { isToastVisible: false });
+    };
+
+    return {
+      closeNavigation(): void {
+        patchState(store, { isNavigationOpen: false });
+      },
+      closeUserMenu(): void {
+        patchState(store, { isUserMenuOpen: false });
+      },
+      dismissToast,
+      showToast(title: string, message: string): void {
+        dismissToast();
+        patchState(store, {
+          isToastVisible: true,
+          toastMessage: message,
+          toastTitle: title,
+        });
+        toastTimeout = setTimeout(dismissToast, 4000);
+      },
+      selectSection(section: string): void {
+        patchState(store, {
+          activeSection: section,
+          isNavigationOpen: false,
+        });
+      },
+      selectSectionForUrl(url: string): void {
+        const firstSegment = url.split('?')[0].split('/').filter(Boolean)[0] ?? 'home';
+        const sectionAliases: Record<string, string> = {
+          asset: 'videos',
+          'upload-video': 'videos',
+          'create-group': 'groups',
+        };
+        const aliasedSection = sectionAliases[firstSegment] ?? firstSegment;
+        const section = store.navigation().some((item) => item.id === aliasedSection)
+          ? aliasedSection
+          : 'home';
+
+        patchState(store, {
+          activeSection: section,
+          isNavigationOpen: false,
+        });
+      },
+      setLanguage(language: string): void {
+        if (localization.isSupportedLanguage(language)) {
+          const activeLanguage = localization.useLanguage(language);
+          patchState(store, { activeLanguage });
+        }
+      },
+      toggleNavigation(): void {
+        patchState(store, { isNavigationOpen: !store.isNavigationOpen() });
+      },
+      toggleUserMenu(): void {
+        patchState(store, { isUserMenuOpen: !store.isUserMenuOpen() });
+      },
+    };
+  }),
 );

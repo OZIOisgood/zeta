@@ -167,6 +167,7 @@
     }
   },
   "videos": {
+    "filtersLabel": "Filtrer les vidéos",
     "title": "Vidéos",
     "all": "Toutes",
     "allMyVideos": "Toutes mes vidéos",
@@ -316,9 +317,9 @@
     "summary": "Suivez les séances de coaching à venir, passées et annulées.",
     "bookLive": "Réserver un coaching en direct",
     "tabs": {
-      "upcoming": "À venir ({{count}})",
-      "past": "Passées ({{count}})",
-      "cancelled": "Annulées ({{count}})"
+      "upcoming": "À venir",
+      "past": "Passées",
+      "cancelled": "Annulées"
     },
     "empty": {
       "upcomingAlt": "Aucune séance à venir",
@@ -376,9 +377,9 @@
       "title": "Gérer les disponibilités",
       "noGroups": "Aucun groupe pour le moment",
       "noGroupsDescription": "Vous n'êtes membre d'aucun groupe. Créez ou rejoignez un groupe pour commencer à gérer vos disponibilités.",
-      "sessionTypes": "Types de séances ({{count}})",
-      "weeklySchedule": "Planning hebdomadaire ({{count}})",
-      "blockedDates": "Dates bloquées ({{count}})",
+      "sessionTypes": "Types de séances",
+      "weeklySchedule": "Planning hebdomadaire",
+      "blockedDates": "Dates bloquées",
       "addSessionType": "Ajouter un type de séance",
       "editSessionType": "Modifier le type de séance",
       "noSessionTypes": "Aucun type de séance pour le moment",
@@ -422,14 +423,24 @@
   },
   "preferences": {
     "title": "Préférences",
+    "summary": "Tenez à jour votre profil, votre heure locale, votre langue et vos paramètres de notification.",
     "personalData": "Données personnelles",
+    "personalSummary": "Mettez à jour les informations utilisées dans votre tableau de bord et vos séances de coaching.",
     "emailPreferences": "Préférences e-mail",
+    "emailSummary": "Choisissez les activités Zeta qui doivent arriver dans votre boîte de réception.",
     "firstName": "Prénom",
     "lastName": "Nom de famille",
+    "selectLanguage": "Sélectionner une langue",
+    "searchTimezones": "Rechercher des fuseaux horaires",
+    "toggleTimezones": "Afficher ou masquer les fuseaux horaires",
+    "noTimezones": "Aucun fuseau horaire correspondant",
+    "avatarTitle": "Image de profil",
+    "saving": "Enregistrement...",
     "saveSuccess": "Préférences mises à jour avec succès",
     "saveFailed": "Échec de la mise à jour des préférences",
     "email": {
       "all": "Tous les e-mails de notification",
+      "allDescription": "Désactivez tous les e-mails de notification du compte tout en conservant vos choix de catégories.",
       "newVideos": "Nouvelles vidéos téléversées dans vos groupes",
       "reviewedVideos": "Vidéos révisées",
       "invitationActivity": "Activité des invitations",
@@ -446,6 +457,7 @@
   "avatar": {
     "selectImage": "Sélectionner une image",
     "requirement": "Obligatoire. Utilisez un JPG ou PNG carré. Les grandes images sont compressées automatiquement.",
+    "optionalRequirement": "Facultatif. Utilisez un JPG ou PNG carré. Les grandes images sont compressées automatiquement.",
     "invalidImage": "Veuillez sélectionner un fichier image valide",
     "sizeExceeded": "La taille de l'image {{size}} Ko dépasse la limite de 300 Ko",
     "loadFailed": "Échec du chargement de l'image",

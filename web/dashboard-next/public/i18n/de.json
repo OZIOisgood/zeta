@@ -167,6 +167,7 @@
     }
   },
   "videos": {
+    "filtersLabel": "Videos filtern",
     "title": "Videos",
     "all": "Alle",
     "allMyVideos": "Alle meine Videos",
@@ -316,9 +317,9 @@
     "summary": "Behalte bevorstehende, vergangene und abgesagte Coaching-Termine im Blick.",
     "bookLive": "Live-Coaching buchen",
     "tabs": {
-      "upcoming": "Bevorstehend ({{count}})",
-      "past": "Vergangen ({{count}})",
-      "cancelled": "Abgesagt ({{count}})"
+      "upcoming": "Bevorstehend",
+      "past": "Vergangen",
+      "cancelled": "Abgesagt"
     },
     "empty": {
       "upcomingAlt": "Keine bevorstehenden Termine",
@@ -376,9 +377,9 @@
       "title": "Verfügbarkeit verwalten",
       "noGroups": "Noch keine Gruppen",
       "noGroupsDescription": "Du bist in keiner Gruppe Mitglied. Erstelle eine Gruppe oder tritt einer bei, um deine Verfügbarkeit zu verwalten.",
-      "sessionTypes": "Terminarten ({{count}})",
-      "weeklySchedule": "Wochenplan ({{count}})",
-      "blockedDates": "Blockierte Daten ({{count}})",
+      "sessionTypes": "Terminarten",
+      "weeklySchedule": "Wochenplan",
+      "blockedDates": "Blockierte Daten",
       "addSessionType": "Terminart hinzufügen",
       "editSessionType": "Terminart bearbeiten",
       "noSessionTypes": "Noch keine Terminarten",
@@ -422,14 +423,24 @@
   },
   "preferences": {
     "title": "Einstellungen",
+    "summary": "Halte dein Profil, deine Ortszeit, Sprache und Benachrichtigungseinstellungen aktuell.",
     "personalData": "Persönliche Daten",
+    "personalSummary": "Aktualisiere die Angaben, die im Dashboard und in Coaching-Terminen verwendet werden.",
     "emailPreferences": "E-Mail-Einstellungen",
+    "emailSummary": "Wähle aus, welche Zeta-Aktivitäten dein Postfach erreichen sollen.",
     "firstName": "Vorname",
     "lastName": "Nachname",
+    "selectLanguage": "Sprache auswählen",
+    "searchTimezones": "Zeitzonen durchsuchen",
+    "toggleTimezones": "Zeitzonenoptionen ein- oder ausblenden",
+    "noTimezones": "Keine passenden Zeitzonen",
+    "avatarTitle": "Profilbild",
+    "saving": "Wird gespeichert...",
     "saveSuccess": "Einstellungen erfolgreich aktualisiert",
     "saveFailed": "Einstellungen konnten nicht aktualisiert werden",
     "email": {
       "all": "Alle Benachrichtigungs-E-Mails",
+      "allDescription": "Deaktiviere alle Konto-Benachrichtigungen und behalte deine Kategorieauswahl für später bei.",
       "newVideos": "Neue Videos in Gruppen, die dir gehören",
       "reviewedVideos": "Überprüfte Videos",
       "invitationActivity": "Einladungsaktivität",
@@ -446,6 +457,7 @@
   "avatar": {
     "selectImage": "Bild auswählen",
     "requirement": "Erforderlich. Verwende ein quadratisches JPG oder PNG. Große Bilder werden automatisch komprimiert.",
+    "optionalRequirement": "Optional. Verwende ein quadratisches JPG oder PNG. Große Bilder werden automatisch komprimiert.",
     "invalidImage": "Bitte wähle eine gültige Bilddatei",
     "sizeExceeded": "Bildgröße {{size}} KB überschreitet das Limit von 300 KB",
     "loadFailed": "Bild konnte nicht geladen werden",

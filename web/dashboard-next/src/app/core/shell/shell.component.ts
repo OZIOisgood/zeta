@@ -1,12 +1,11 @@
 import { NgClass } from '@angular/common';
-import { Component, ElementRef, HostListener, computed, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, effect, inject, viewChild } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   LucideCalendarDays,
   LucideChevronDown,
   LucideHome,
-  LucideLanguages,
   LucideLogOut,
   LucideMenu,
   LucideSettings,
@@ -18,7 +17,7 @@ import { filter } from 'rxjs';
 import { SessionStore } from '../../features/session/session.store';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
-import { ZSegmentedControlComponent } from '../../shared/ui/segmented-control/z-segmented-control.component';
+import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
 import { DashboardLocalizationService } from '../i18n/dashboard-localization.service';
 import { AppShellStore } from '../state/app-shell.store';
 
@@ -31,11 +30,10 @@ import { AppShellStore } from '../state/app-shell.store';
     TranslocoPipe,
     ZButtonComponent,
     ZIconButtonComponent,
-    ZSegmentedControlComponent,
+    ZToastComponent,
     LucideCalendarDays,
     LucideChevronDown,
     LucideHome,
-    LucideLanguages,
     LucideLogOut,
     LucideMenu,
     LucideSettings,
@@ -62,7 +60,9 @@ export class ShellComponent {
   private readonly router = inject(Router);
 
   constructor() {
-    this.shell.setLanguage(this.localization.currentLanguage());
+    effect(() => {
+      this.shell.setLanguage(this.localization.currentLanguage());
+    });
     this.shell.selectSectionForUrl(this.router.url);
 
     this.router.events

@@ -38,7 +38,7 @@ func TestRenderNotificationTemplateInlinesCSS(t *testing.T) {
 		"Your video has been reviewed",
 		"Backhand drill",
 		"style=",
-		"#526ed3",
+		"#ea580c",
 		"text-align:center",
 	} {
 		if !strings.Contains(rendered.HTML, want) {

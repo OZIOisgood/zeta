@@ -77,13 +77,17 @@ describe('AppShellStore', () => {
     const store = TestBed.inject(AppShellStore);
 
     store.toggleUserMenu();
-    store.dismissToast();
+    store.showToast('Saved', 'Preferences updated successfully');
 
     expect(store.isUserMenuOpen()).toBe(true);
-    expect(store.isToastVisible()).toBe(false);
+    expect(store.isToastVisible()).toBe(true);
+    expect(store.toastTitle()).toBe('Saved');
+    expect(store.toastMessage()).toBe('Preferences updated successfully');
 
     store.closeUserMenu();
+    store.dismissToast();
 
     expect(store.isUserMenuOpen()).toBe(false);
+    expect(store.isToastVisible()).toBe(false);
   });
 });

@@ -167,6 +167,7 @@
     }
   },
   "videos": {
+    "filtersLabel": "Filter videos",
     "title": "Videos",
     "all": "All",
     "allMyVideos": "All my videos",
@@ -316,9 +317,9 @@
     "summary": "Track upcoming, past, and cancelled coaching sessions.",
     "bookLive": "Book Live Coaching",
     "tabs": {
-      "upcoming": "Upcoming ({{count}})",
-      "past": "Past ({{count}})",
-      "cancelled": "Cancelled ({{count}})"
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "cancelled": "Cancelled"
     },
     "empty": {
       "upcomingAlt": "No upcoming sessions",
@@ -376,9 +377,9 @@
       "title": "Manage Availability",
       "noGroups": "No Groups Yet",
       "noGroupsDescription": "You are not a member of any group. Create or join a group to start managing your availability.",
-      "sessionTypes": "Session Types ({{count}})",
-      "weeklySchedule": "Weekly Schedule ({{count}})",
-      "blockedDates": "Blocked Dates ({{count}})",
+      "sessionTypes": "Session Types",
+      "weeklySchedule": "Weekly Schedule",
+      "blockedDates": "Blocked Dates",
       "addSessionType": "Add Session Type",
       "editSessionType": "Edit Session Type",
       "noSessionTypes": "No session types yet",
@@ -422,14 +423,24 @@
   },
   "preferences": {
     "title": "Preferences",
+    "summary": "Keep your profile, local time, language, and notification settings up to date.",
     "personalData": "Personal data",
+    "personalSummary": "Update the details used across your dashboard and coaching sessions.",
     "emailPreferences": "Email preferences",
+    "emailSummary": "Choose which Zeta activity should reach your inbox.",
     "firstName": "First Name",
     "lastName": "Last Name",
+    "selectLanguage": "Select a language",
+    "searchTimezones": "Search timezones",
+    "toggleTimezones": "Toggle timezone options",
+    "noTimezones": "No matching timezones",
+    "avatarTitle": "Profile image",
+    "saving": "Saving...",
     "saveSuccess": "Preferences updated successfully",
     "saveFailed": "Failed to update preferences",
     "email": {
       "all": "All notification emails",
+      "allDescription": "Turn off all account notification emails while keeping your category choices for later.",
       "newVideos": "New videos uploaded to groups you own",
       "reviewedVideos": "Reviewed videos",
       "invitationActivity": "Invitation activity",
@@ -446,6 +457,7 @@
   "avatar": {
     "selectImage": "Select Image",
     "requirement": "Required. Use a square JPG or PNG. Large images are compressed automatically.",
+    "optionalRequirement": "Optional. Use a square JPG or PNG. Large images are compressed automatically.",
     "invalidImage": "Please select a valid image file",
     "sizeExceeded": "Image size {{size}}KB exceeds 300KB limit",
     "loadFailed": "Failed to load image",

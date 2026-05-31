@@ -86,21 +86,7 @@
                     <p class="text-sm font-semibold">{{ session.displayName() }}</p>
                     <p class="mt-1 text-xs text-[var(--z-muted)]">{{ session.user()?.email }}</p>
                   </div>
-                  <div class="mt-3 grid gap-3">
-                    <div class="flex items-center gap-2 text-sm font-semibold">
-                      <svg
-                        lucideLanguages
-                        class="size-4 text-[var(--z-primary)]"
-                        aria-hidden="true"
-                      ></svg>
-                      <span>{{ 'common.language' | transloco }}</span>
-                    </div>
-                    <z-segmented-control
-                      [label]="'common.language' | transloco"
-                      [options]="shell.languages()"
-                      [value]="shell.activeLanguage()"
-                      (valueChange)="shell.setLanguage($event)"
-                    />
+                  <div class="mt-3 grid gap-1">
                     <a
                       routerLink="/preferences/personal-data"
                       class="flex min-h-9 items-center gap-2 rounded-md px-2 text-sm font-semibold text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)]"
@@ -207,6 +193,21 @@
           <router-outlet />
         </div>
       </section>
+
+      @if (shell.isToastVisible()) {
+        <div
+          class="fixed bottom-4 right-4 z-50 w-[min(24rem,calc(100vw-2rem))]"
+          animate.enter="z-toast-enter"
+          animate.leave="z-toast-leave"
+        >
+          <z-toast
+            [title]="shell.toastTitle()"
+            [message]="shell.toastMessage()"
+            [closeLabel]="'common.dismiss' | transloco"
+            (dismissed)="shell.dismissToast()"
+          />
+        </div>
+      }
     </div>
   </div>
 </main>

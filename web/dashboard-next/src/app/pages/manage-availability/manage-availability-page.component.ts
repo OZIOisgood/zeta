@@ -22,9 +22,10 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
 import { ZFormDialogComponent } from '../../shared/ui/dialog/z-form-dialog.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
-import { ZSegmentedControlComponent } from '../../shared/ui/segmented-control/z-segmented-control.component';
 import { SelectOption, ZSelectComponent } from '../../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
+import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
+import { ZTabsComponent } from '../../shared/ui/tabs/z-tabs.component';
 import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 import { orderedWeekdayValues, resolveFirstDayOfWeek } from '../../shared/utils/weekdays';
@@ -43,9 +44,10 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
     ZDialogPanelComponent,
     ZFormDialogComponent,
     ZEmptyStateComponent,
-    ZSegmentedControlComponent,
     ZSelectComponent,
     ZSkeletonComponent,
+    ZTabPanelComponent,
+    ZTabsComponent,
     ZTextInputComponent,
     ZTextareaComponent,
     LucideCalendarOff,
@@ -147,19 +149,22 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
           }
         </section>
       } @else {
-        <z-segmented-control
+        <z-tabs
+          tabsId="availability-tabs"
+          [label]="'sessions.availability.title' | transloco"
           [value]="activeTab()"
           [options]="tabOptions()"
           (valueChange)="setTab($event)"
         />
 
-        @if (store.mutationStatus() === 'error') {
-          <p class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {{ store.mutationError() }}
-          </p>
-        }
+        <z-tab-panel tabsId="availability-tabs" [value]="activeTab()">
+          @if (store.mutationStatus() === 'error') {
+            <p class="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {{ store.mutationError() }}
+            </p>
+          }
 
-        @switch (activeTab()) {
+          @switch (activeTab()) {
           @case ('session-types') {
             <div class="grid gap-3">
               @for (type of store.sessionTypes(); track type.id) {
@@ -331,7 +336,8 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
               }
             </div>
           }
-        }
+          }
+        </z-tab-panel>
       }
 
       <ng-template #sessionTypeDialog let-close="close">
@@ -476,21 +482,18 @@ export class ManageAvailabilityPageComponent {
     return [
       {
         value: 'session-types',
-        label: this.transloco.translate('sessions.availability.sessionTypes', {
-          count: this.store.sessionTypes().length,
-        }),
+        label: this.transloco.translate('sessions.availability.sessionTypes'),
+        badge: this.store.sessionTypes().length,
       },
       {
         value: 'schedule',
-        label: this.transloco.translate('sessions.availability.weeklySchedule', {
-          count: this.store.availability().length,
-        }),
+        label: this.transloco.translate('sessions.availability.weeklySchedule'),
+        badge: this.store.availability().length,
       },
       {
         value: 'blocked',
-        label: this.transloco.translate('sessions.availability.blockedDates', {
-          count: this.store.blockedSlots().length,
-        }),
+        label: this.transloco.translate('sessions.availability.blockedDates'),
+        badge: this.store.blockedSlots().length,
       },
     ];
   });
