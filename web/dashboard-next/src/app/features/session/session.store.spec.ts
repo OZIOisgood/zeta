@@ -28,7 +28,7 @@ const user: User = {
 describe('SessionStore', () => {
   it('loads the current user and applies the user language', async () => {
     const localization = {
-      useLanguage: vi.fn(() => 'fr'),
+      useUserPreferences: vi.fn(() => 'fr'),
     };
 
     TestBed.configureTestingModule({
@@ -53,7 +53,7 @@ describe('SessionStore', () => {
     expect(store.status()).toBe('success');
     expect(store.displayName()).toBe('Ada Coach');
     expect(store.hasPermission('assets:create')).toBe(true);
-    expect(localization.useLanguage).toHaveBeenCalledWith('fr');
+    expect(localization.useUserPreferences).toHaveBeenCalledWith('fr', 'Europe/Rome');
   });
 
   it('marks the session unauthenticated when user loading fails', async () => {
@@ -68,7 +68,7 @@ describe('SessionStore', () => {
         {
           provide: DashboardLocalizationService,
           useValue: {
-            useLanguage: vi.fn(),
+            useUserPreferences: vi.fn(),
           },
         },
       ],

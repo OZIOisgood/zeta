@@ -30,7 +30,7 @@ const mockUser: User = {
 
 const translocoLangs = {
   en: {
-    app: { brand: 'Zeta', tagline: 'Video coaching workspace' },
+    app: { brand: 'Zeta', tagline: 'Video coaching' },
     auth: { logout: 'Sign out' },
     common: {
       closeNavigation: 'Close navigation',
@@ -78,6 +78,7 @@ describe('ShellComponent', () => {
           useValue: {
             currentLanguage: () => 'en',
             useLanguage: () => {},
+            useUserPreferences: () => {},
             isSupportedLanguage: () => true,
           },
         },
@@ -110,5 +111,26 @@ describe('ShellComponent', () => {
     fixture.detectChanges();
 
     expect(el.querySelector('aside[aria-label="Mobile navigation"]')).toBeTruthy();
+  });
+
+  it('should close the user menu when clicking outside', async () => {
+    const fixture = TestBed.createComponent(ShellComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const menuButton = Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
+      button.textContent?.includes('Ada Coach'),
+    );
+
+    menuButton?.click();
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('ada@example.com');
+
+    document.body.click();
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('ada@example.com');
   });
 });

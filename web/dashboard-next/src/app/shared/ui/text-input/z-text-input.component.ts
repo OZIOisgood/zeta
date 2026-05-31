@@ -27,7 +27,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   `,
 })
 export class ZTextInputComponent implements ControlValueAccessor {
-  readonly type = input<'text' | 'email' | 'password' | 'search' | 'tel' | 'url'>('text');
+  readonly type = input<
+    'text' | 'email' | 'password' | 'search' | 'tel' | 'url' | 'date' | 'number' | 'time'
+  >('text');
   readonly placeholder = input('');
   readonly autocomplete = input('');
   readonly inputMode = input('');

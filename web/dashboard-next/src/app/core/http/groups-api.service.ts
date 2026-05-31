@@ -30,11 +30,11 @@ export class GroupsApiClient {
     return this.http.get<Group>(`${this.apiUrl}/${id}`);
   }
 
-  createGroup(data: { name: string; description?: string; avatar?: string }): Observable<Group> {
+  createGroup(data: { name: string; description?: string; avatar: string }): Observable<Group> {
     return this.http.post<Group>(this.apiUrl, {
       name: data.name,
       description: data.description || null,
-      avatar: data.avatar || null,
+      avatar: data.avatar,
     });
   }
 

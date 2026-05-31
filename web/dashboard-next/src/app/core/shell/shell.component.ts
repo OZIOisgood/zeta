@@ -1,16 +1,14 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, viewChild } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
-  LucideBell,
   LucideCalendarDays,
   LucideChevronDown,
   LucideHome,
   LucideLanguages,
   LucideLogOut,
   LucideMenu,
-  LucideSearch,
   LucideSettings,
   LucideUsers,
   LucideVideo,
@@ -34,14 +32,12 @@ import { AppShellStore } from '../state/app-shell.store';
     ZButtonComponent,
     ZIconButtonComponent,
     ZSegmentedControlComponent,
-    LucideBell,
     LucideCalendarDays,
     LucideChevronDown,
     LucideHome,
     LucideLanguages,
     LucideLogOut,
     LucideMenu,
-    LucideSearch,
     LucideSettings,
     LucideUsers,
     LucideVideo,
@@ -52,6 +48,7 @@ import { AppShellStore } from '../state/app-shell.store';
 export class ShellComponent {
   protected readonly shell = inject(AppShellStore);
   protected readonly session = inject(SessionStore);
+  private readonly userMenu = viewChild<ElementRef<HTMLElement>>('userMenu');
   protected readonly initials = computed(() => {
     return this.session
       .displayName()
@@ -70,6 +67,24 @@ export class ShellComponent {
 
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => this.shell.selectSectionForUrl(event.urlAfterRedirects));
+      .subscribe((event) => {
+        this.shell.selectSectionForUrl(event.urlAfterRedirects);
+        this.shell.closeUserMenu();
+      });
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected onDocumentClick(event: MouseEvent): void {
+    if (!this.shell.isUserMenuOpen()) return;
+    const target = event.target as Node | null;
+    const menu = this.userMenu()?.nativeElement;
+    if (target && menu && !menu.contains(target)) {
+      this.shell.closeUserMenu();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  protected onEscape(): void {
+    this.shell.closeUserMenu();
   }
 }

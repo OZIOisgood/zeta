@@ -101,7 +101,7 @@
   },
   "home": {
     "latestVideos": "Latest videos",
-    "upcomingCoachingSessions": "Upcoming Coaching Sessions",
+    "upcomingCoachingSessions": "Upcoming Sessions",
     "emptyCoaching": {
       "alt": "No upcoming coaching sessions",
       "heading": "No upcoming coaching sessions",
@@ -139,9 +139,9 @@
       "manageAvailability": "Manage availability",
       "openVideos": "Open videos"
     },
-    "badge": "Workspace preview",
+    "badge": "Dashboard preview",
     "kicker": "Today",
-    "title": "Coach videos, groups, and live sessions from one focused workspace.",
+    "title": "Coach videos, groups, and live sessions from one focused place.",
     "summary": "Review submitted videos, prepare upcoming sessions, and keep group activity moving without losing the thread.",
     "primaryAction": "Upload video",
     "empty": {
@@ -212,7 +212,7 @@
     "markedReviewed": "Video marked as reviewed successfully",
     "markReviewedFailed": "Failed to mark video as reviewed",
     "phase4": {
-      "summary": "Review submitted videos, filter by review progress, and open details without leaving the core workspace.",
+      "summary": "Review submitted videos, filter by review progress, and open details from one focused view.",
       "loadFailed": "Videos could not be loaded",
       "detailFailed": "Video could not be loaded",
       "playerReady": "Video playback will render here",
@@ -229,17 +229,23 @@
     "create": "Create Group",
     "groupName": "Group Name",
     "groupNameRequired": "Group name is required",
+    "avatarTitle": "Group image",
+    "avatarRequired": "Group avatar is required.",
     "creating": "Creating...",
     "noGroupsYet": "No groups yet",
     "noGroupsJoined": "You haven't joined any groups yet.",
     "createFirst": "Create your first group",
     "createFirstDescription": "Get started by creating a group for your students.",
     "createNew": "Create a new group",
+    "generalTab": "General",
+    "deleteTab": "Danger Zone",
     "preferences": "Group Preferences",
     "preferencesTab": "Preferences",
     "dangerZone": "Danger Zone",
     "deleteThisGroup": "Delete this group",
     "deleteDescription": "Permanently delete this group and all its members, invitations, and content.",
+    "deleteSummary": "This removes the group for every member and cannot be undone.",
+    "deleteUnavailable": "Only the group owner can delete this group.",
     "deleteGroup": "Delete Group",
     "deleteConfirm": "This action cannot be undone. All group data will be permanently deleted.",
     "updated": "Group updated successfully",
@@ -271,13 +277,13 @@
       "removeFailed": "Failed to remove user"
     },
     "phase4": {
-      "summary": "Browse coaching groups, open group workspaces, and prepare invitations from a mobile-first layout.",
+      "summary": "Browse coaching groups, open group pages, and prepare invitations.",
       "loadFailed": "Groups could not be loaded",
       "detailFailed": "Group could not be loaded",
       "noDescription": "No description was added for this group.",
       "membersPlaceholder": "Member lists will connect to the existing student and expert endpoints in the invitation/member-management slice.",
       "invitePlaceholder": "Invitation links and QR codes will use the existing invitation endpoints in the next group-flow slice.",
-      "preferencesSummary": "Update the group name and description. Avatar, danger zone, and advanced permissions will follow the deeper preferences migration."
+      "preferencesSummary": "Update the group name, description, and image."
     },
     "namePlaceholder": "e.g. Academy Group",
     "descriptionPlaceholder": "Describe who this group is for."
@@ -307,6 +313,7 @@
   },
   "sessions": {
     "title": "Sessions",
+    "summary": "Track upcoming, past, and cancelled coaching sessions.",
     "bookLive": "Book Live Coaching",
     "tabs": {
       "upcoming": "Upcoming ({{count}})",
@@ -359,6 +366,7 @@
     "cancel": {
       "title": "Cancel Session",
       "description": "This will cancel the session with <strong>{{otherParty}}</strong> on {{scheduledAt}}.",
+      "descriptionText": "This will cancel the session with {{otherParty}} on {{scheduledAt}}.",
       "placeholder": "Let them know why you are cancelling...",
       "keep": "Keep Session",
       "tooLate": "Cancellations must be made at least 1 hour before the session.",
@@ -437,6 +445,7 @@
   },
   "avatar": {
     "selectImage": "Select Image",
+    "requirement": "Required. Use a square JPG or PNG. Large images are compressed automatically.",
     "invalidImage": "Please select a valid image file",
     "sizeExceeded": "Image size {{size}}KB exceeds 300KB limit",
     "loadFailed": "Failed to load image",
@@ -453,7 +462,7 @@
   },
   "app": {
     "brand": "Zeta",
-    "tagline": "Video coaching workspace"
+    "tagline": "Video coaching"
   },
   "toast": {
     "title": "Saved",
@@ -462,6 +471,6 @@
   "user": {
     "initials": "ZT",
     "name": "Zeta Team",
-    "role": "Product workspace"
+    "role": "Zeta"
   }
 }

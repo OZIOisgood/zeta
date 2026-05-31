@@ -13,6 +13,7 @@ type ButtonSize = 'sm' | 'md';
       ngpButton
       [type]="type()"
       [disabled]="disabled()"
+      [attr.aria-label]="ariaLabel()"
       [ngClass]="classes()"
       (click)="pressed.emit()"
     >
@@ -25,13 +26,23 @@ export class ZButtonComponent {
   readonly size = input<ButtonSize>('md');
   readonly type = input<'button' | 'submit' | 'reset'>('button');
   readonly disabled = input(false);
+  readonly ariaLabel = input<string | null>(null);
+  readonly iconOnly = input(false);
   readonly pressed = output<void>();
 
   protected readonly classes = computed(() => [
     'inline-flex items-center justify-center gap-2 rounded-md border font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-    this.size() === 'sm' ? 'min-h-9 px-3 text-sm' : 'min-h-11 px-4 text-sm',
+    this.sizeClasses(),
     this.variantClasses(),
   ]);
+
+  private sizeClasses(): string {
+    if (this.iconOnly()) {
+      return this.size() === 'sm' ? 'size-9 p-0 text-sm' : 'size-11 p-0 text-sm';
+    }
+
+    return this.size() === 'sm' ? 'min-h-9 px-3 text-sm' : 'min-h-11 px-4 text-sm';
+  }
 
   private variantClasses(): string {
     switch (this.variant()) {

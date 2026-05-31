@@ -1,5 +1,6 @@
 import {
   LucideCheck,
+  LucideCalendarClock,
   LucideFileVideo,
   LucideUpload,
   LucideUsers,
@@ -21,6 +22,7 @@ const meta: Meta = {
     moduleMetadata({
       imports: [
         LucideCheck,
+        LucideCalendarClock,
         LucideFileVideo,
         LucideUpload,
         LucideUsers,
@@ -195,6 +197,44 @@ const meta: Meta = {
               <z-button size="sm">Start upload</z-button>
             </div>
 
+          </div>
+        </section>
+
+        <section class="grid gap-3">
+          <h2 class="text-base font-semibold">Live coaching — booking and sessions</h2>
+          <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <z-badge tone="primary">Upcoming</z-badge>
+                  <h3 class="mt-3 text-lg font-semibold">Strategy Session</h3>
+                  <p class="mt-1 text-sm leading-6 text-[var(--z-muted)]">Wed, May 20, 14:30 · 45 min</p>
+                  <p class="text-sm leading-6 text-[var(--z-muted)]">Expert: Ada Coach</p>
+                </div>
+                <z-button size="sm">
+                  <svg lucideVideo class="size-4" aria-hidden="true"></svg>
+                  Join
+                </z-button>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
+              <div class="flex items-center gap-3">
+                <span class="grid size-10 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]">
+                  <svg lucideCalendarClock class="size-5" aria-hidden="true"></svg>
+                </span>
+                <div>
+                  <h3 class="text-sm font-semibold">Booking step</h3>
+                  <p class="mt-1 text-sm text-[var(--z-muted)]">Choose a date to see available times.</p>
+                </div>
+              </div>
+              <div class="mt-4 grid grid-cols-2 gap-2">
+                <button class="rounded-md border border-[var(--z-primary)] bg-[var(--z-surface-warm)] px-3 py-2 text-left text-sm font-semibold text-[var(--z-primary-strong)]">Wed, May 20</button>
+                <button class="rounded-md border border-[var(--z-border)] px-3 py-2 text-left text-sm font-semibold">Thu, May 21</button>
+                <button class="rounded-md border border-[var(--z-border)] px-3 py-2 text-left text-sm font-semibold">14:30</button>
+                <button class="rounded-md border border-[var(--z-border)] px-3 py-2 text-left text-sm font-semibold">16:00</button>
+              </div>
+            </div>
           </div>
         </section>
 

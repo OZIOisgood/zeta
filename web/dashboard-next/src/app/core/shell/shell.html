@@ -69,13 +69,7 @@
           </div>
 
           <div class="flex items-center gap-1 sm:gap-2">
-            <z-icon-button [label]="'common.search' | transloco">
-              <svg lucideSearch class="size-5" aria-hidden="true"></svg>
-            </z-icon-button>
-            <z-icon-button [label]="'common.notifications' | transloco">
-              <svg lucideBell class="size-5" aria-hidden="true"></svg>
-            </z-icon-button>
-            <div class="relative">
+            <div #userMenu class="relative">
               <z-button variant="secondary" size="sm" (pressed)="shell.toggleUserMenu()">
                 <span class="hidden sm:inline">{{ session.displayName() }}</span>
                 <span class="sm:hidden">{{ initials() }}</span>

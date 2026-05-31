@@ -101,7 +101,7 @@
   },
   "home": {
     "latestVideos": "Neueste Videos",
-    "upcomingCoachingSessions": "Bevorstehende Coaching-Termine",
+    "upcomingCoachingSessions": "Bevorstehende Termine",
     "emptyCoaching": {
       "alt": "Keine bevorstehenden Coaching-Termine",
       "heading": "Keine bevorstehenden Coaching-Termine",
@@ -139,9 +139,9 @@
       "manageAvailability": "Verfügbarkeit verwalten",
       "openVideos": "Videos öffnen"
     },
-    "badge": "Arbeitsbereich-Vorschau",
+    "badge": "Dashboard-Vorschau",
     "kicker": "Heute",
-    "title": "Videos, Gruppen und Live-Termine in einem fokussierten Arbeitsbereich betreuen.",
+    "title": "Videos, Gruppen und Live-Termine an einem fokussierten Ort betreuen.",
     "summary": "Überprüfe eingereichte Videos, bereite kommende Termine vor und halte Gruppenaktivität im Blick.",
     "primaryAction": "Video hochladen",
     "empty": {
@@ -212,7 +212,7 @@
     "showLess": "Weniger anzeigen",
     "showMore": "Mehr anzeigen",
     "phase4": {
-      "summary": "Prüfe eingereichte Videos, filtere nach Prüfstatus und öffne Details direkt im Arbeitsbereich.",
+      "summary": "Prüfe eingereichte Videos, filtere nach Prüfstatus und öffne Details in einer fokussierten Ansicht.",
       "loadFailed": "Videos konnten nicht geladen werden",
       "detailFailed": "Video konnte nicht geladen werden",
       "playerReady": "Die Videowiedergabe erscheint hier",
@@ -229,17 +229,23 @@
     "create": "Gruppe erstellen",
     "groupName": "Gruppenname",
     "groupNameRequired": "Gruppenname ist erforderlich",
+    "avatarTitle": "Gruppenbild",
+    "avatarRequired": "Ein Gruppenavatar ist erforderlich.",
     "creating": "Wird erstellt...",
     "noGroupsYet": "Noch keine Gruppen",
     "noGroupsJoined": "Du bist noch keiner Gruppe beigetreten.",
     "createFirst": "Erstelle deine erste Gruppe",
     "createFirstDescription": "Erstelle eine Gruppe für deine Schüler, um zu starten.",
     "createNew": "Neue Gruppe erstellen",
+    "generalTab": "Allgemein",
+    "deleteTab": "Gefahrenbereich",
     "preferences": "Gruppeneinstellungen",
     "preferencesTab": "Einstellungen",
     "dangerZone": "Gefahrenbereich",
     "deleteThisGroup": "Diese Gruppe löschen",
     "deleteDescription": "Diese Gruppe und alle Mitglieder, Einladungen und Inhalte dauerhaft löschen.",
+    "deleteSummary": "Dadurch wird die Gruppe für alle Mitglieder entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteUnavailable": "Nur der Gruppeneigentümer kann diese Gruppe löschen.",
     "deleteGroup": "Gruppe löschen",
     "deleteConfirm": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Gruppendaten werden dauerhaft gelöscht.",
     "updated": "Gruppe erfolgreich aktualisiert",
@@ -271,13 +277,13 @@
       "removeFailed": "Benutzer konnte nicht entfernt werden"
     },
     "phase4": {
-      "summary": "Durchsuche Coaching-Gruppen, öffne Gruppenbereiche und bereite Einladungen in einem mobilen Layout vor.",
+      "summary": "Durchsuche Coaching-Gruppen, öffne Gruppenseiten und bereite Einladungen vor.",
       "loadFailed": "Gruppen konnten nicht geladen werden",
       "detailFailed": "Gruppe konnte nicht geladen werden",
       "noDescription": "Für diese Gruppe wurde keine Beschreibung hinzugefügt.",
       "membersPlaceholder": "Mitgliederlisten werden im Einladungs- und Mitglieder-Schritt mit den bestehenden Endpunkten verbunden.",
       "invitePlaceholder": "Einladungslinks und QR-Codes nutzen im nächsten Gruppen-Schritt die bestehenden Einladungsendpunkte.",
-      "preferencesSummary": "Aktualisiere Gruppennamen und Beschreibung. Avatar, Gefahrenbereich und erweiterte Berechtigungen folgen später."
+      "preferencesSummary": "Aktualisiere Gruppennamen, Beschreibung und Bild."
     },
     "namePlaceholder": "z. B. Academy-Gruppe",
     "descriptionPlaceholder": "Beschreibe, für wen diese Gruppe gedacht ist."
@@ -307,6 +313,7 @@
   },
   "sessions": {
     "title": "Termine",
+    "summary": "Behalte bevorstehende, vergangene und abgesagte Coaching-Termine im Blick.",
     "bookLive": "Live-Coaching buchen",
     "tabs": {
       "upcoming": "Bevorstehend ({{count}})",
@@ -359,6 +366,7 @@
     "cancel": {
       "title": "Termin absagen",
       "description": "Dies sagt den Termin mit <strong>{{otherParty}}</strong> am {{scheduledAt}} ab.",
+      "descriptionText": "Dies sagt den Termin mit {{otherParty}} am {{scheduledAt}} ab.",
       "placeholder": "Teile mit, warum du absagst...",
       "keep": "Termin behalten",
       "tooLate": "Absagen müssen mindestens 1 Stunde vor dem Termin erfolgen.",
@@ -437,6 +445,7 @@
   },
   "avatar": {
     "selectImage": "Bild auswählen",
+    "requirement": "Erforderlich. Verwende ein quadratisches JPG oder PNG. Große Bilder werden automatisch komprimiert.",
     "invalidImage": "Bitte wähle eine gültige Bilddatei",
     "sizeExceeded": "Bildgröße {{size}} KB überschreitet das Limit von 300 KB",
     "loadFailed": "Bild konnte nicht geladen werden",
@@ -453,7 +462,7 @@
   },
   "app": {
     "brand": "Zeta",
-    "tagline": "Video-Coaching-Arbeitsbereich"
+    "tagline": "Video-Coaching"
   },
   "toast": {
     "title": "Markenrichtung gespeichert",
@@ -462,6 +471,6 @@
   "user": {
     "initials": "ZT",
     "name": "Zeta Team",
-    "role": "Produktarbeitsbereich"
+    "role": "Zeta"
   }
 }

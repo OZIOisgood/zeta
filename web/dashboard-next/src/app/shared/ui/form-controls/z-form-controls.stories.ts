@@ -1,6 +1,7 @@
 import { FormsModule } from '@angular/forms';
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { ZAvatarInputComponent } from '../avatar-input/z-avatar-input.component';
 import { ZSelectComponent } from '../select/z-select.component';
 import { ZTextInputComponent } from '../text-input/z-text-input.component';
 import { ZTextareaComponent } from '../textarea/z-textarea.component';
@@ -15,12 +16,19 @@ const meta: Meta = {
   title: 'UI/Form Controls',
   decorators: [
     moduleMetadata({
-      imports: [FormsModule, ZSelectComponent, ZTextInputComponent, ZTextareaComponent],
+      imports: [
+        FormsModule,
+        ZAvatarInputComponent,
+        ZSelectComponent,
+        ZTextInputComponent,
+        ZTextareaComponent,
+      ],
     }),
   ],
   render: () => ({
     props: {
       description: '',
+      avatar: null,
       email: '',
       filled: 'Academy video review',
       group: '',
@@ -31,6 +39,13 @@ const meta: Meta = {
       <div class="grid max-w-2xl gap-6 bg-[var(--z-bg)] p-6 text-[var(--z-text)]">
         <section class="grid gap-4 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
           <h2 class="text-base font-semibold">Default form</h2>
+          <z-avatar-input
+            [(ngModel)]="avatar"
+            label="Avatar"
+            helperTitle="Group image"
+            helperText="Upload a square image. It will be compressed before saving."
+            [required]="true"
+          />
           <label class="grid gap-2">
             <span class="text-sm font-semibold">Title</span>
             <z-text-input [(ngModel)]="title" placeholder="e.g. Jump line take 2" />

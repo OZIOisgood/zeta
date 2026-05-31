@@ -77,7 +77,7 @@ export const GroupsStore = signalStore(
     async createGroup(data: {
       name: string;
       description?: string;
-      avatar?: string;
+      avatar: string;
     }): Promise<Group | null> {
       patchState(store, {
         mutationStatus: 'loading',
@@ -126,6 +126,30 @@ export const GroupsStore = signalStore(
           mutationError: errorState.error,
         });
         return null;
+      }
+    },
+    async deleteGroup(id: string): Promise<boolean> {
+      patchState(store, {
+        mutationStatus: 'loading',
+        mutationError: null,
+      });
+
+      try {
+        await firstValueFrom(api.deleteGroup(id));
+        patchState(store, {
+          mutationStatus: 'success',
+          mutationError: null,
+          activeGroup: store.activeGroup()?.id === id ? null : store.activeGroup(),
+          groups: store.groups().filter((group) => group.id !== id),
+        });
+        return true;
+      } catch (error) {
+        const errorState = errorAsyncSlice(error);
+        patchState(store, {
+          mutationStatus: errorState.status,
+          mutationError: errorState.error,
+        });
+        return false;
       }
     },
   })),

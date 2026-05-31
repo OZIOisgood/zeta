@@ -51,7 +51,7 @@ export const SessionStore = signalStore(
 
         try {
           const user = await firstValueFrom(api.getCurrentUser());
-          localization.useLanguage(user.language);
+          localization.useUserPreferences(user.language, user.timezone);
           patchState(store, {
             ...successAsyncSlice(),
             user,

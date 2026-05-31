@@ -1,15 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  LucideArrowLeft,
-  LucideLink,
-  LucideQrCode,
-  LucideSettings,
-  LucideUsers,
-} from '@lucide/angular';
+import { LucideLink, LucideQrCode, LucideSettings, LucideUsers } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
+import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 
@@ -18,9 +13,9 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
   imports: [
     RouterLink,
     TranslocoPipe,
+    ZBreadcrumbsComponent,
     ZEmptyStateComponent,
     ZSkeletonComponent,
-    LucideArrowLeft,
     LucideLink,
     LucideQrCode,
     LucideSettings,
@@ -28,22 +23,32 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
   ],
   template: `
     <div class="grid gap-6">
-      <a
-        routerLink="/groups"
-        class="inline-flex items-center gap-2 text-sm font-semibold text-[var(--z-muted)] hover:text-[var(--z-text)]"
-      >
-        <svg lucideArrowLeft class="size-4" aria-hidden="true"></svg>
-        <span>{{ 'common.actions.back' | transloco }}</span>
-      </a>
-
       @if (store.detailStatus() === 'loading') {
+        <z-breadcrumbs
+          [items]="[
+            { label: 'common.nav.groups', routerLink: '/groups' },
+            { label: '...', translate: false },
+          ]"
+        />
         <z-skeleton class="block h-56 w-full"></z-skeleton>
       } @else if (store.detailStatus() === 'error') {
+        <z-breadcrumbs
+          [items]="[
+            { label: 'common.nav.groups', routerLink: '/groups' },
+            { label: 'groups.phase4.detailFailed' },
+          ]"
+        />
         <z-empty-state
           [title]="'groups.phase4.detailFailed' | transloco"
           [description]="store.detailError() || ('home.error.description' | transloco)"
         />
       } @else if (store.activeGroup(); as group) {
+        <z-breadcrumbs
+          [items]="[
+            { label: 'common.nav.groups', routerLink: '/groups' },
+            { label: group.name, translate: false },
+          ]"
+        />
         <section class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
           <div class="grid gap-5 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-start">
             <span

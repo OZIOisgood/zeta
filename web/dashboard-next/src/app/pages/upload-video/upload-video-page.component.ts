@@ -16,7 +16,9 @@ import { AssetsApiClient } from '../../core/http/assets-api.service';
 import { SurgeService } from '../../core/http/surge.service';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
+import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
 import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZStepperComponent, type StepperStep } from '../../shared/ui/stepper/z-stepper.component';
@@ -33,7 +35,9 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
     RouterLink,
     TranslocoPipe,
     ZBadgeComponent,
+    ZBreadcrumbsComponent,
     ZButtonComponent,
+    ZFieldLabelComponent,
     ZSelectComponent,
     ZSkeletonComponent,
     ZStepperComponent,
@@ -47,6 +51,13 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
   ],
   template: `
     <div class="grid min-w-0 gap-6">
+      <z-breadcrumbs
+        [items]="[
+          { label: 'common.nav.videos', routerLink: '/videos' },
+          { label: 'upload.title' },
+        ]"
+      />
+
       <section class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
         <h2 class="text-2xl font-semibold sm:text-3xl">{{ 'upload.title' | transloco }}</h2>
         <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
@@ -125,7 +136,10 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
           [formGroup]="form"
         >
           <label class="grid gap-2">
-            <span class="text-sm font-semibold">{{ 'common.fields.title' | transloco }}</span>
+            <z-field-label
+              [label]="'common.fields.title' | transloco"
+              [control]="form.controls.title"
+            />
             <z-text-input
               formControlName="title"
               [placeholder]="'upload.titlePlaceholder' | transloco"
@@ -133,7 +147,10 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
           </label>
 
           <label class="grid gap-2">
-            <span class="text-sm font-semibold">{{ 'common.fields.description' | transloco }}</span>
+            <z-field-label
+              [label]="'common.fields.description' | transloco"
+              [control]="form.controls.description"
+            />
             <z-textarea
               formControlName="description"
               [placeholder]="'upload.descriptionPlaceholder' | transloco"
@@ -141,7 +158,10 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
           </label>
 
           <div class="grid gap-2">
-            <span class="text-sm font-semibold">{{ 'common.fields.group' | transloco }}</span>
+            <z-field-label
+              [label]="'common.fields.group' | transloco"
+              [control]="form.controls.groupId"
+            />
             @if (groups.status() === 'loading') {
               <z-skeleton class="block h-11 w-full"></z-skeleton>
             } @else {

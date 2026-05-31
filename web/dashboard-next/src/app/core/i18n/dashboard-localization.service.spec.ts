@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
-import { DashboardLocalizationService } from './dashboard-localization.service';
+import { DashboardLocalizationService, resolveDateLocale } from './dashboard-localization.service';
 
 describe('DashboardLocalizationService', () => {
   beforeEach(() => {
@@ -40,5 +40,22 @@ describe('DashboardLocalizationService', () => {
 
     expect(service.useLanguage('es')).toBe('en');
     expect(service.currentLanguage()).toBe('en');
+  });
+
+  it('uses regional date locales from language and timezone preferences', () => {
+    expect(resolveDateLocale('en', 'Europe/Rome')).toBe('en-GB');
+    expect(resolveDateLocale('en', 'America/New_York')).toBe('en-US');
+    expect(resolveDateLocale('de', 'America/New_York')).toBe('de-DE');
+    expect(resolveDateLocale('fr', 'Europe/Rome')).toBe('fr-FR');
+  });
+
+  it('tracks the user timezone for date formatting', () => {
+    const service = TestBed.inject(DashboardLocalizationService);
+
+    service.useUserPreferences('en', 'Europe/Rome');
+
+    expect(service.currentLanguage()).toBe('en');
+    expect(service.timeZone()).toBe('Europe/Rome');
+    expect(service.dateLocale()).toBe('en-GB');
   });
 });

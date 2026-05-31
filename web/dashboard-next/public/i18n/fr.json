@@ -101,7 +101,7 @@
   },
   "home": {
     "latestVideos": "Dernières vidéos",
-    "upcomingCoachingSessions": "Prochaines séances de coaching",
+    "upcomingCoachingSessions": "Prochaines séances",
     "emptyCoaching": {
       "alt": "Aucune séance de coaching à venir",
       "heading": "Aucune séance de coaching à venir",
@@ -139,9 +139,9 @@
       "manageAvailability": "Gérer les disponibilités",
       "openVideos": "Ouvrir les vidéos"
     },
-    "badge": "Aperçu de l’espace de travail",
+    "badge": "Aperçu du tableau de bord",
     "kicker": "Aujourd’hui",
-    "title": "Gérez les vidéos, les groupes et les séances en direct depuis un espace ciblé.",
+    "title": "Gérez les vidéos, les groupes et les séances en direct depuis un endroit ciblé.",
     "summary": "Révisez les vidéos soumises, préparez les prochaines séances et gardez l’activité des groupes fluide.",
     "primaryAction": "Téléverser une vidéo",
     "empty": {
@@ -212,7 +212,7 @@
     "markedReviewed": "Vidéo marquée comme révisée avec succès",
     "markReviewedFailed": "Échec du marquage de la vidéo comme révisée",
     "phase4": {
-      "summary": "Révisez les vidéos soumises, filtrez par progression et ouvrez les détails depuis l’espace principal.",
+      "summary": "Révisez les vidéos soumises, filtrez par progression et ouvrez les détails depuis une vue ciblée.",
       "loadFailed": "Impossible de charger les vidéos",
       "detailFailed": "Impossible de charger la vidéo",
       "playerReady": "La lecture vidéo apparaîtra ici",
@@ -229,17 +229,23 @@
     "create": "Créer un groupe",
     "groupName": "Nom du groupe",
     "groupNameRequired": "Le nom du groupe est obligatoire",
+    "avatarTitle": "Image du groupe",
+    "avatarRequired": "L’avatar du groupe est obligatoire.",
     "creating": "Création en cours...",
     "noGroupsYet": "Aucun groupe pour le moment",
     "noGroupsJoined": "Vous n'avez encore rejoint aucun groupe.",
     "createFirst": "Créez votre premier groupe",
     "createFirstDescription": "Commencez en créant un groupe pour vos étudiants.",
     "createNew": "Créer un nouveau groupe",
+    "generalTab": "Général",
+    "deleteTab": "Zone dangereuse",
     "preferences": "Préférences du groupe",
     "preferencesTab": "Préférences",
     "dangerZone": "Zone dangereuse",
     "deleteThisGroup": "Supprimer ce groupe",
     "deleteDescription": "Supprimer définitivement ce groupe ainsi que tous ses membres, invitations et contenus.",
+    "deleteSummary": "Cela supprime le groupe pour tous les membres et ne peut pas être annulé.",
+    "deleteUnavailable": "Seul le propriétaire du groupe peut supprimer ce groupe.",
     "deleteGroup": "Supprimer le groupe",
     "deleteConfirm": "Cette action est irréversible. Toutes les données du groupe seront définitivement supprimées.",
     "updated": "Groupe mis à jour avec succès",
@@ -271,13 +277,13 @@
       "removeFailed": "Échec du retrait de l'utilisateur"
     },
     "phase4": {
-      "summary": "Parcourez les groupes de coaching, ouvrez les espaces de groupe et préparez les invitations sur mobile.",
+      "summary": "Parcourez les groupes de coaching, ouvrez les pages de groupe et préparez les invitations.",
       "loadFailed": "Impossible de charger les groupes",
       "detailFailed": "Impossible de charger le groupe",
       "noDescription": "Aucune description n’a été ajoutée pour ce groupe.",
       "membersPlaceholder": "Les listes de membres seront connectées aux points d’API étudiants et experts dans la prochaine tranche.",
       "invitePlaceholder": "Les liens d’invitation et QR codes utiliseront les points d’API existants dans la prochaine tranche groupe.",
-      "preferencesSummary": "Mettez à jour le nom et la description du groupe. Avatar, zone sensible et permissions avancées suivront ensuite."
+      "preferencesSummary": "Mettez à jour le nom, la description et l’image du groupe."
     },
     "namePlaceholder": "p. ex. Groupe Academy",
     "descriptionPlaceholder": "Décrivez à qui ce groupe est destiné."
@@ -307,6 +313,7 @@
   },
   "sessions": {
     "title": "Séances",
+    "summary": "Suivez les séances de coaching à venir, passées et annulées.",
     "bookLive": "Réserver un coaching en direct",
     "tabs": {
       "upcoming": "À venir ({{count}})",
@@ -359,6 +366,7 @@
     "cancel": {
       "title": "Annuler la séance",
       "description": "Cela annulera la séance avec <strong>{{otherParty}}</strong> le {{scheduledAt}}.",
+      "descriptionText": "Cela annulera la séance avec {{otherParty}} le {{scheduledAt}}.",
       "placeholder": "Indiquez pourquoi vous annulez...",
       "keep": "Garder la séance",
       "tooLate": "Les annulations doivent être effectuées au moins 1 heure avant la séance.",
@@ -437,6 +445,7 @@
   },
   "avatar": {
     "selectImage": "Sélectionner une image",
+    "requirement": "Obligatoire. Utilisez un JPG ou PNG carré. Les grandes images sont compressées automatiquement.",
     "invalidImage": "Veuillez sélectionner un fichier image valide",
     "sizeExceeded": "La taille de l'image {{size}} Ko dépasse la limite de 300 Ko",
     "loadFailed": "Échec du chargement de l'image",
@@ -453,7 +462,7 @@
   },
   "app": {
     "brand": "Zeta",
-    "tagline": "Espace de coaching vidéo"
+    "tagline": "Coaching vidéo"
   },
   "toast": {
     "title": "Direction de marque enregistrée",
@@ -462,6 +471,6 @@
   "user": {
     "initials": "ZT",
     "name": "Équipe Zeta",
-    "role": "Espace produit"
+    "role": "Zeta"
   }
 }

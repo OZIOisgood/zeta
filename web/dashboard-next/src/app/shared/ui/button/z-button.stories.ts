@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
 import { moduleMetadata } from '@storybook/angular';
+import { LucidePencil, LucideTrash } from '@lucide/angular';
 import { ZButtonComponent } from './z-button.component';
 
 const meta: Meta<ZButtonComponent> = {
@@ -7,7 +8,7 @@ const meta: Meta<ZButtonComponent> = {
   component: ZButtonComponent,
   decorators: [
     moduleMetadata({
-      imports: [ZButtonComponent],
+      imports: [ZButtonComponent, LucidePencil, LucideTrash],
     }),
   ],
   args: {
@@ -35,6 +36,22 @@ const meta: Meta<ZButtonComponent> = {
         <z-button variant="secondary" [size]="size">Manage group</z-button>
         <z-button variant="ghost" [size]="size">View sessions</z-button>
         <z-button variant="danger" [size]="size">Delete comment</z-button>
+        <z-button
+          variant="secondary"
+          size="sm"
+          [iconOnly]="true"
+          ariaLabel="Edit"
+        >
+          <svg lucidePencil class="size-4" aria-hidden="true"></svg>
+        </z-button>
+        <z-button
+          variant="secondary"
+          size="sm"
+          [iconOnly]="true"
+          ariaLabel="Delete"
+        >
+          <svg lucideTrash class="size-4" aria-hidden="true"></svg>
+        </z-button>
       </div>
     `,
   }),

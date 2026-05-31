@@ -11,11 +11,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import {
-  LucideArrowLeft,
   LucideCheck,
   LucideClock,
   LucideMessageCircle,
@@ -28,6 +27,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { SessionStore } from '../../features/session/session.store';
 import { VideosStore } from '../../features/videos/videos.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
+import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
@@ -40,17 +40,16 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
   imports: [
     NgClass,
     ReactiveFormsModule,
-    RouterLink,
     NgpDialogTrigger,
     TranslocoPipe,
     ZBadgeComponent,
+    ZBreadcrumbsComponent,
     ZButtonComponent,
     ZDialogPanelComponent,
     ZEmptyStateComponent,
     ZIconButtonComponent,
     ZSkeletonComponent,
     ZTextareaComponent,
-    LucideArrowLeft,
     LucideCheck,
     LucideClock,
     LucideMessageCircle,
@@ -62,25 +61,35 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="grid gap-6">
-      <a
-        routerLink="/videos"
-        class="inline-flex items-center gap-2 text-sm font-semibold text-[var(--z-muted)] hover:text-[var(--z-text)]"
-      >
-        <svg lucideArrowLeft class="size-4" aria-hidden="true"></svg>
-        <span>{{ 'common.actions.back' | transloco }}</span>
-      </a>
-
       @if (store.detailStatus() === 'loading') {
+        <z-breadcrumbs
+          [items]="[
+            { label: 'common.nav.videos', routerLink: '/videos' },
+            { label: '...', translate: false },
+          ]"
+        />
         <section class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]" aria-hidden="true">
           <z-skeleton class="block aspect-video w-full"></z-skeleton>
           <z-skeleton class="block h-64 w-full"></z-skeleton>
         </section>
       } @else if (store.detailStatus() === 'error') {
+        <z-breadcrumbs
+          [items]="[
+            { label: 'common.nav.videos', routerLink: '/videos' },
+            { label: 'videos.phase4.detailFailed' },
+          ]"
+        />
         <z-empty-state
           [title]="'videos.phase4.detailFailed' | transloco"
           [description]="store.detailError() || ('home.error.description' | transloco)"
         />
       } @else if (store.activeAsset(); as asset) {
+        <z-breadcrumbs
+          [items]="[
+            { label: 'common.nav.videos', routerLink: '/videos' },
+            { label: asset.title, translate: false },
+          ]"
+        />
         <section class="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
           <div class="grid min-w-0 gap-4">
             <div
@@ -333,7 +342,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
           </aside>
         </section>
 
-        @if (selectedVideo() && canAddReviews() && !isFinalized()) {
+        @if (showCommentBar()) {
           <form
             class="sticky bottom-0 z-20 rounded-lg border border-[var(--z-border)] bg-white p-3 shadow-lg"
             (submit)="postReview($event)"
@@ -389,6 +398,9 @@ export class VideoDetailsPageComponent {
   );
   protected readonly hasUnreviewedParts = computed(
     () => this.store.activeAsset()?.videos?.some((video) => video.review_count === 0) ?? false,
+  );
+  protected readonly showCommentBar = computed(
+    () => !!this.selectedVideo() && this.canAddReviews() && !this.isFinalized(),
   );
 
   constructor() {

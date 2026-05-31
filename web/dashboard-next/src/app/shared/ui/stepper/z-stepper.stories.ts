@@ -17,6 +17,15 @@ const uploadSteps = (activeIndex: 0 | 1 | 2): StepperStep[] => [
   },
 ];
 
+const bookingSteps = (activeIndex: 0 | 1 | 2 | 3 | 4): StepperStep[] =>
+  ['Select Group', 'Select Expert', 'Session Type', 'Select Time', 'Confirm'].map(
+    (label, index): StepperStep => ({
+      label,
+      state:
+        index < activeIndex ? 'completed' : index === activeIndex ? 'active' : 'upcoming',
+    }),
+  );
+
 const meta: Meta<ZStepperComponent> = {
   title: 'UI/Stepper',
   component: ZStepperComponent,
@@ -51,4 +60,16 @@ export const Step2Active: Story = {
 export const Step3Active: Story = {
   name: 'Step 3 — active (steps 1 & 2 completed)',
   args: { steps: uploadSteps(2) },
+};
+
+export const MobileBookingFlow: Story = {
+  args: { steps: bookingSteps(3) },
+  render: (args) => ({
+    props: args,
+    template: `
+      <div class="w-72 bg-[var(--z-bg)] p-4">
+        <z-stepper [steps]="steps" [label]="label" (stepClick)="stepClick($event)" />
+      </div>
+    `,
+  }),
 };
