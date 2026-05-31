@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucidePlus, LucideRotateCcw, LucideUsers } from '@lucide/angular';
+import { LucidePlus, LucideRotateCcw } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
+import { ZGroupCardComponent } from '../../shared/ui/group-card/z-group-card.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 
 @Component({
@@ -16,10 +17,10 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
     ZBadgeComponent,
     ZButtonComponent,
     ZEmptyStateComponent,
+    ZGroupCardComponent,
     ZSkeletonComponent,
     LucidePlus,
     LucideRotateCcw,
-    LucideUsers,
   ],
   template: `
     <div class="grid gap-6">
@@ -77,27 +78,14 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
         <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           @for (group of store.groups(); track group.id) {
             <a
-              class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm transition hover:border-[var(--z-primary-soft)] hover:bg-[var(--z-surface-warm)]"
+              class="block h-full rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
               [routerLink]="['/groups', group.id]"
               animate.enter="z-list-enter"
             >
-              <div class="flex items-start gap-3">
-                <span
-                  class="grid size-12 shrink-0 place-items-center overflow-hidden rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-                >
-                  @if (group.avatar) {
-                    <img class="size-full object-cover" [src]="avatarSrc(group.avatar)" alt="" />
-                  } @else {
-                    <svg lucideUsers class="size-6" aria-hidden="true"></svg>
-                  }
-                </span>
-                <span class="min-w-0">
-                  <span class="block truncate text-base font-semibold">{{ group.name }}</span>
-                  <span class="mt-1 line-clamp-3 block text-sm leading-5 text-[var(--z-muted)]">
-                    {{ group.description || ('groups.phase4.noDescription' | transloco) }}
-                  </span>
-                </span>
-              </div>
+              <z-group-card
+                [group]="group"
+                [noDescription]="'groups.phase4.noDescription' | transloco"
+              />
             </a>
           }
         </section>
@@ -112,9 +100,5 @@ export class GroupsPageComponent {
     if (this.store.status() === 'idle') {
       void this.store.loadGroups();
     }
-  }
-
-  protected avatarSrc(avatar: string): string {
-    return avatar.startsWith('data:') ? avatar : `data:image/jpeg;base64,${avatar}`;
   }
 }

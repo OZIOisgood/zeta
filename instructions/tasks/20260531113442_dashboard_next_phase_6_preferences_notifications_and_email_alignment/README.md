@@ -51,10 +51,12 @@ The preferences form depends on the authenticated session loaded by `SessionStor
 ## Angular Primitives Assessment
 
 - Reuse the existing `ZAvatarInputComponent` for image selection and compression.
-- Reuse the existing `ZSelectComponent`, backed by `ng-primitives/select`, for language selection.
+- Reuse the select-like button-only `ZComboboxComponent`, backed by `ng-primitives/combobox`, for language and timezone selection.
 - Add a small reusable checkbox wrapper backed by `ng-primitives/checkbox`.
-- Add a searchable combobox wrapper backed by `ng-primitives/combobox` for the timezone list.
+- Add a select-like button-only combobox wrapper backed by `ng-primitives/combobox` for the timezone list.
 - Add a shared tabs wrapper backed by `ng-primitives/tabs` for page-level view navigation.
+- Add avatar wrappers backed by `ng-primitives/avatar` for identity surfaces.
+- Use the `ng-primitives/interactions` hover directive for animated video previews without interfering with scroll gestures.
 - Keep the existing segmented control for genuinely compact toggle groups rather than page-level content sections.
 
 ## Acceptance Criteria
@@ -84,3 +86,12 @@ The preferences form depends on the authenticated session loaded by `SessionStor
 - [x] Page-level content selectors use a consistent flat tab bar with an active underline below the page header.
 - [x] Sessions, Videos, Preferences, Availability, and Group Preferences use the shared Angular Primitives-backed tabs component.
 - [x] Counted tabs render counts as compact badges instead of embedding them in labels.
+- [x] Latest Videos and All My Videos reuse a hover preview that swaps the static thumbnail for the backend-generated animated GIF without intercepting page scrolling.
+- [x] My Groups and Manage Availability reuse the same top-aligned, description-clamped group card.
+- [x] Completed First Steps no longer reserve a dashboard sidebar column.
+- [x] The navbar user menu shows an avatar beside the user's name and email.
+- [x] Group Preferences matches the user-preferences page hierarchy and does not reload group data when only the active tab changes.
+- [x] Reopening the booking page after a completed booking starts a fresh flow instead of showing the previous confirmation.
+- [x] Editing an asset review preserves the current dashboard's AI text-enhancement action.
+- [x] Language and timezone use the same button-only combobox treatment on Personal Data.
+- [x] Asset details show a linked group identity with the group's avatar.

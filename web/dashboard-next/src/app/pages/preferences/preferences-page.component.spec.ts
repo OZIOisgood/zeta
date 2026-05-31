@@ -88,15 +88,19 @@ describe('PreferencesPageComponent', () => {
                 languages: { de: 'German', en: 'English', fr: 'French' },
                 lastName: 'Last Name',
                 noTimezones: 'No matching timezones',
+                noLanguages: 'No matching languages',
                 personalData: 'Personal data',
                 personalSummary: 'Update your profile.',
                 saveFailed: 'Failed to update preferences',
                 saveSuccess: 'Preferences updated successfully',
                 saving: 'Saving...',
+                searchLanguages: 'Search languages',
                 searchTimezones: 'Search timezones',
                 selectLanguage: 'Select a language',
+                selectTimezone: 'Select a timezone',
                 summary: 'Manage your preferences.',
                 title: 'Preferences',
+                toggleLanguages: 'Toggle language options',
                 toggleTimezones: 'Toggle timezone options',
               },
               toast: { title: 'Saved' },
@@ -155,5 +159,17 @@ describe('PreferencesPageComponent', () => {
     );
     expect(shell.setLanguage).toHaveBeenCalledWith('en');
     expect(shell.showToast).toHaveBeenCalledWith('Saved', 'Preferences updated successfully');
+  });
+
+  it('uses select-like combobox controls for both language and timezone', async () => {
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+    fixture.componentInstance['activeTab'].set('personal-data');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('z-combobox')).toHaveLength(2);
+    expect(fixture.nativeElement.querySelectorAll('z-combobox input')).toHaveLength(0);
+    expect(fixture.nativeElement.querySelector('z-select')).toBeNull();
   });
 });

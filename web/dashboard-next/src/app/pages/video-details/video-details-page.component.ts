@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import {
@@ -20,12 +20,15 @@ import {
   LucideMessageCircle,
   LucidePencil,
   LucideSendHorizontal,
+  LucideSparkles,
   LucideTrash,
   LucideVideo,
 } from '@lucide/angular';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { AppShellStore } from '../../core/state/app-shell.store';
 import { SessionStore } from '../../features/session/session.store';
 import { VideosStore } from '../../features/videos/videos.store';
+import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
@@ -41,7 +44,9 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
     NgClass,
     ReactiveFormsModule,
     NgpDialogTrigger,
+    RouterLink,
     TranslocoPipe,
+    ZAvatarComponent,
     ZBadgeComponent,
     ZBreadcrumbsComponent,
     ZButtonComponent,
@@ -55,6 +60,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
     LucideMessageCircle,
     LucidePencil,
     LucideSendHorizontal,
+    LucideSparkles,
     LucideTrash,
     LucideVideo,
   ],
@@ -171,22 +177,50 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                             [placeholder]="'videos.commentPlaceholder' | transloco"
                             [rows]="4"
                           />
-                          <div class="flex justify-end gap-2">
+                          <div
+                            class="flex flex-wrap items-center justify-between gap-2"
+                            data-testid="edit-review-actions"
+                          >
                             <z-button
                               type="button"
                               size="sm"
                               variant="secondary"
-                              (pressed)="cancelEditing()"
+                              [disabled]="
+                                !editReviewControl.value.trim() ||
+                                store.enhancementStatus() === 'loading'
+                              "
+                              (pressed)="enhanceEditedReview()"
                             >
-                              {{ 'common.actions.cancel' | transloco }}
+                              <svg lucideSparkles class="size-4" aria-hidden="true"></svg>
+                              <span>
+                                {{
+                                  (store.enhancementStatus() === 'loading'
+                                    ? 'videos.enhancing'
+                                    : 'videos.enhanceText'
+                                  ) | transloco
+                                }}
+                              </span>
                             </z-button>
-                            <z-button
-                              type="submit"
-                              size="sm"
-                              [disabled]="!editReviewControl.value.trim()"
-                            >
-                              {{ 'common.actions.save' | transloco }}
-                            </z-button>
+                            <div class="ml-auto flex gap-2">
+                              <z-button
+                                type="button"
+                                size="sm"
+                                variant="secondary"
+                                (pressed)="cancelEditing()"
+                              >
+                                {{ 'common.actions.cancel' | transloco }}
+                              </z-button>
+                              <z-button
+                                type="submit"
+                                size="sm"
+                                [disabled]="
+                                  !editReviewControl.value.trim() ||
+                                  store.enhancementStatus() === 'loading'
+                                "
+                              >
+                                {{ 'common.actions.save' | transloco }}
+                              </z-button>
+                            </div>
                           </div>
                         </form>
                       } @else {
@@ -291,9 +325,18 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                   </z-badge>
                   <h2 class="mt-3 text-xl font-semibold leading-tight">{{ asset.title }}</h2>
                   @if (asset.group) {
-                    <p class="mt-1 text-sm font-semibold text-[var(--z-primary)]">
-                      {{ asset.group.name }}
-                    </p>
+                    <a
+                      class="mt-3 inline-flex max-w-full items-center gap-2 rounded-md text-sm font-semibold text-[var(--z-primary)] transition hover:text-[var(--z-primary-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                      [routerLink]="['/groups', asset.group.id]"
+                    >
+                      <z-avatar
+                        class="size-9"
+                        [image]="asset.group.avatar"
+                        [fallback]="groupInitials(asset.group.name)"
+                        [alt]="asset.group.name"
+                      />
+                      <span class="truncate">{{ asset.group.name }}</span>
+                    </a>
                   }
                 </div>
                 @if (canFinalize() && !isFinalized()) {
@@ -343,11 +386,15 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
         </section>
 
         @if (showCommentBar()) {
+          <div class="h-24" aria-hidden="true"></div>
           <form
-            class="sticky bottom-0 z-20 rounded-lg border border-[var(--z-border)] bg-white p-3 shadow-lg"
+            class="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--z-border)] bg-white/95 px-4 py-3 shadow-lg backdrop-blur sm:px-6 lg:left-64 lg:px-8"
+            data-testid="comment-composer"
             (submit)="postReview($event)"
           >
-            <div class="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end">
+            <div
+              class="mx-auto grid max-w-6xl gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end"
+            >
               <div
                 class="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-[var(--z-surface-warm)] px-3 text-sm font-semibold text-[var(--z-primary)]"
               >
@@ -378,8 +425,10 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
 export class VideoDetailsPageComponent {
   protected readonly store = inject(VideosStore);
   protected readonly session = inject(SessionStore);
+  private readonly shell = inject(AppShellStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
   private readonly muxPlayer = viewChild<ElementRef<HTMLElement>>('muxPlayer');
 
   protected readonly currentTimestamp = signal(0);
@@ -520,6 +569,26 @@ export class VideoDetailsPageComponent {
     }
   }
 
+  protected async enhanceEditedReview(): Promise<void> {
+    const content = this.editReviewControl.value.trim();
+    if (!content || this.store.enhancementStatus() === 'loading') return;
+
+    const enhancedText = await this.store.enhanceReviewText(content);
+    if (!enhancedText) {
+      this.shell.showToast(
+        this.transloco.translate('toast.errorTitle'),
+        this.transloco.translate('videos.textEnhanceFailed'),
+      );
+      return;
+    }
+
+    this.editReviewControl.setValue(enhancedText);
+    this.shell.showToast(
+      this.transloco.translate('toast.successTitle'),
+      this.transloco.translate('videos.textEnhanced'),
+    );
+  }
+
   protected async confirmDeleteReview(result: unknown, reviewId: string): Promise<void> {
     if (result !== true) return;
 
@@ -536,5 +605,17 @@ export class VideoDetailsPageComponent {
     if (!asset || this.isFinalized()) return;
 
     void this.store.finalizeVideo(asset.id);
+  }
+
+  protected groupInitials(name: string): string {
+    return (
+      name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join('')
+        .toUpperCase() || '?'
+    );
   }
 }

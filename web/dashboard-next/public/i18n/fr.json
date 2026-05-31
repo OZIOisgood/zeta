@@ -431,6 +431,10 @@
     "firstName": "Prénom",
     "lastName": "Nom de famille",
     "selectLanguage": "Sélectionner une langue",
+    "selectTimezone": "Sélectionner un fuseau horaire",
+    "searchLanguages": "Rechercher des langues",
+    "toggleLanguages": "Afficher ou masquer les langues",
+    "noLanguages": "Aucune langue correspondante",
     "searchTimezones": "Rechercher des fuseaux horaires",
     "toggleTimezones": "Afficher ou masquer les fuseaux horaires",
     "noTimezones": "Aucun fuseau horaire correspondant",
@@ -478,6 +482,8 @@
   },
   "toast": {
     "title": "Direction de marque enregistrée",
+    "successTitle": "Succès",
+    "errorTitle": "Une erreur est survenue",
     "message": "Le premier symbole est noté comme candidat préféré pour la revue."
   },
   "user": {

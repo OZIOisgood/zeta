@@ -3,13 +3,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import {
-  LucideCalendarOff,
-  LucidePencil,
-  LucidePlus,
-  LucideTrash,
-  LucideUsers,
-} from '@lucide/angular';
+import { LucideCalendarOff, LucidePencil, LucidePlus, LucideTrash } from '@lucide/angular';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import { CoachingAvailability, SessionType } from '../../core/http/coaching-api.service';
 import { Group } from '../../core/http/groups-api.service';
@@ -17,11 +11,15 @@ import { DashboardDateTimeService } from '../../core/i18n/dashboard-date-time.se
 import { DashboardLocalizationService } from '../../core/i18n/dashboard-localization.service';
 import { AvailabilityStore } from '../../features/sessions/availability.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
-import { BreadcrumbItem, ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
+import {
+  BreadcrumbItem,
+  ZBreadcrumbsComponent,
+} from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
 import { ZFormDialogComponent } from '../../shared/ui/dialog/z-form-dialog.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
+import { ZGroupCardComponent } from '../../shared/ui/group-card/z-group-card.component';
 import { SelectOption, ZSelectComponent } from '../../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
@@ -44,6 +42,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
     ZDialogPanelComponent,
     ZFormDialogComponent,
     ZEmptyStateComponent,
+    ZGroupCardComponent,
     ZSelectComponent,
     ZSkeletonComponent,
     ZTabPanelComponent,
@@ -54,7 +53,6 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
     LucidePencil,
     LucidePlus,
     LucideTrash,
-    LucideUsers,
   ],
   template: `
     <div class="grid gap-6">
@@ -120,26 +118,13 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
           @for (group of store.groups(); track group.id) {
             <button
               type="button"
-              class="rounded-lg border border-[var(--z-border)] bg-white p-4 text-left shadow-sm transition hover:border-[var(--z-primary-soft)] hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+              class="block h-full w-full rounded-lg border-0 bg-transparent p-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
               (click)="selectGroup(group)"
             >
-              <div class="flex items-start gap-3">
-                <span
-                  class="grid size-12 shrink-0 place-items-center overflow-hidden rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-                >
-                  @if (group.avatar) {
-                    <img class="size-full object-cover" [src]="avatarSrc(group.avatar)" alt="" />
-                  } @else {
-                    <svg lucideUsers class="size-6" aria-hidden="true"></svg>
-                  }
-                </span>
-                <span class="min-w-0">
-                  <span class="block truncate text-base font-semibold">{{ group.name }}</span>
-                  <span class="mt-1 line-clamp-3 block text-sm leading-5 text-[var(--z-muted)]">
-                    {{ group.description || ('groups.phase4.noDescription' | transloco) }}
-                  </span>
-                </span>
-              </div>
+              <z-group-card
+                [group]="group"
+                [noDescription]="'groups.phase4.noDescription' | transloco"
+              />
             </button>
           } @empty {
             <z-empty-state
@@ -165,177 +150,183 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
           }
 
           @switch (activeTab()) {
-          @case ('session-types') {
-            <div class="grid gap-3">
-              @for (type of store.sessionTypes(); track type.id) {
-                <article class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                      <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="font-semibold">{{ type.name }}</h2>
-                        <z-badge>{{ type.duration_minutes }} min</z-badge>
+            @case ('session-types') {
+              <div class="grid gap-3">
+                @for (type of store.sessionTypes(); track type.id) {
+                  <article
+                    class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <h2 class="font-semibold">{{ type.name }}</h2>
+                          <z-badge>{{ type.duration_minutes }} min</z-badge>
+                        </div>
+                        <p class="mt-2 line-clamp-3 text-sm leading-6 text-[var(--z-muted)]">
+                          {{ type.description }}
+                        </p>
                       </div>
-                      <p class="mt-2 line-clamp-3 text-sm leading-6 text-[var(--z-muted)]">
-                        {{ type.description }}
-                      </p>
+                      <div class="flex shrink-0 gap-2">
+                        <z-button
+                          size="sm"
+                          variant="secondary"
+                          type="button"
+                          [iconOnly]="true"
+                          [ariaLabel]="'common.actions.edit' | transloco"
+                          (pressed)="prepareSessionType(type)"
+                          [ngpDialogTrigger]="sessionTypeDialog"
+                          (ngpDialogTriggerClosed)="saveSessionType($event)"
+                        >
+                          <svg lucidePencil class="size-4" aria-hidden="true"></svg>
+                        </z-button>
+                        <ng-template #deleteTypeDialog let-close="close">
+                          <z-dialog-panel
+                            [title]="'sessions.availability.deleteSessionType' | transloco"
+                            [description]="'sessions.availability.confirmDelete' | transloco"
+                            tone="danger"
+                            [confirmLabel]="'common.actions.delete' | transloco"
+                            [cancelLabel]="'common.actions.cancel' | transloco"
+                            [close]="close"
+                          />
+                        </ng-template>
+                        <z-button
+                          size="sm"
+                          variant="secondary"
+                          type="button"
+                          [iconOnly]="true"
+                          [ariaLabel]="'common.actions.delete' | transloco"
+                          [ngpDialogTrigger]="deleteTypeDialog"
+                          (ngpDialogTriggerClosed)="deleteSessionType($event, type.id)"
+                        >
+                          <svg lucideTrash class="size-4" aria-hidden="true"></svg>
+                        </z-button>
+                      </div>
                     </div>
-                    <div class="flex shrink-0 gap-2">
-                      <z-button
-                        size="sm"
-                        variant="secondary"
-                        type="button"
-                        [iconOnly]="true"
-                        [ariaLabel]="'common.actions.edit' | transloco"
-                        (pressed)="prepareSessionType(type)"
-                        [ngpDialogTrigger]="sessionTypeDialog"
-                        (ngpDialogTriggerClosed)="saveSessionType($event)"
-                      >
-                        <svg lucidePencil class="size-4" aria-hidden="true"></svg>
-                      </z-button>
-                      <ng-template #deleteTypeDialog let-close="close">
-                        <z-dialog-panel
-                          [title]="'sessions.availability.deleteSessionType' | transloco"
-                          [description]="'sessions.availability.confirmDelete' | transloco"
-                          tone="danger"
-                          [confirmLabel]="'common.actions.delete' | transloco"
-                          [cancelLabel]="'common.actions.cancel' | transloco"
-                          [close]="close"
-                        />
-                      </ng-template>
-                      <z-button
-                        size="sm"
-                        variant="secondary"
-                        type="button"
-                        [iconOnly]="true"
-                        [ariaLabel]="'common.actions.delete' | transloco"
-                        [ngpDialogTrigger]="deleteTypeDialog"
-                        (ngpDialogTriggerClosed)="deleteSessionType($event, type.id)"
-                      >
-                        <svg lucideTrash class="size-4" aria-hidden="true"></svg>
-                      </z-button>
-                    </div>
-                  </div>
-                </article>
-              } @empty {
-                <z-empty-state
-                  [title]="'sessions.availability.noSessionTypes' | transloco"
-                  [description]="'sessions.availability.noSessionTypesDescription' | transloco"
-                />
-              }
-            </div>
-          }
-          @case ('schedule') {
-            <div class="grid gap-3">
-              @for (item of store.availability(); track item.id) {
-                <article class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-                  <div class="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 class="font-semibold">{{ dayName(item.day_of_week) }}</h2>
-                      <p class="mt-1 text-sm text-[var(--z-muted)]">
-                        {{ item.start_time }} - {{ item.end_time }}
-                      </p>
-                    </div>
-                    <div class="flex gap-2">
-                      <z-button
-                        size="sm"
-                        variant="secondary"
-                        type="button"
-                        [iconOnly]="true"
-                        [ariaLabel]="'common.actions.edit' | transloco"
-                        (pressed)="prepareAvailability(item)"
-                        [ngpDialogTrigger]="availabilityDialog"
-                        (ngpDialogTriggerClosed)="saveAvailability($event)"
-                      >
-                        <svg lucidePencil class="size-4" aria-hidden="true"></svg>
-                      </z-button>
-                      <ng-template #deleteAvailabilityDialog let-close="close">
-                        <z-dialog-panel
-                          [title]="'sessions.availability.deleteAvailability' | transloco"
-                          [description]="'sessions.availability.confirmDelete' | transloco"
-                          tone="danger"
-                          [confirmLabel]="'common.actions.delete' | transloco"
-                          [cancelLabel]="'common.actions.cancel' | transloco"
-                          [close]="close"
-                        />
-                      </ng-template>
-                      <z-button
-                        size="sm"
-                        variant="secondary"
-                        type="button"
-                        [iconOnly]="true"
-                        [ariaLabel]="'common.actions.delete' | transloco"
-                        [ngpDialogTrigger]="deleteAvailabilityDialog"
-                        (ngpDialogTriggerClosed)="deleteAvailability($event, item.id)"
-                      >
-                        <svg lucideTrash class="size-4" aria-hidden="true"></svg>
-                      </z-button>
-                    </div>
-                  </div>
-                </article>
-              } @empty {
-                <z-empty-state
-                  [title]="'sessions.availability.noAvailability' | transloco"
-                  [description]="'sessions.availability.noAvailabilityDescription' | transloco"
-                />
-              }
-            </div>
-          }
-          @case ('blocked') {
-            <div class="grid gap-3">
-              @for (slot of store.blockedSlots(); track slot.id) {
-                <article class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-                  <div class="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 class="flex items-center gap-2 font-semibold">
-                        <svg
-                          lucideCalendarOff
-                          class="size-4 text-[var(--z-primary)]"
-                          aria-hidden="true"
-                        ></svg>
-                        <span>{{ formatBlockedDate(slot.blocked_date) }}</span>
-                      </h2>
-                      @if (slot.start_time || slot.end_time) {
+                  </article>
+                } @empty {
+                  <z-empty-state
+                    [title]="'sessions.availability.noSessionTypes' | transloco"
+                    [description]="'sessions.availability.noSessionTypesDescription' | transloco"
+                  />
+                }
+              </div>
+            }
+            @case ('schedule') {
+              <div class="grid gap-3">
+                @for (item of store.availability(); track item.id) {
+                  <article
+                    class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 class="font-semibold">{{ dayName(item.day_of_week) }}</h2>
                         <p class="mt-1 text-sm text-[var(--z-muted)]">
-                          {{ slot.start_time || '00:00' }} - {{ slot.end_time || '23:59' }}
+                          {{ item.start_time }} - {{ item.end_time }}
                         </p>
-                      }
-                      @if (slot.reason) {
-                        <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
-                          {{ slot.reason }}
-                        </p>
-                      }
+                      </div>
+                      <div class="flex gap-2">
+                        <z-button
+                          size="sm"
+                          variant="secondary"
+                          type="button"
+                          [iconOnly]="true"
+                          [ariaLabel]="'common.actions.edit' | transloco"
+                          (pressed)="prepareAvailability(item)"
+                          [ngpDialogTrigger]="availabilityDialog"
+                          (ngpDialogTriggerClosed)="saveAvailability($event)"
+                        >
+                          <svg lucidePencil class="size-4" aria-hidden="true"></svg>
+                        </z-button>
+                        <ng-template #deleteAvailabilityDialog let-close="close">
+                          <z-dialog-panel
+                            [title]="'sessions.availability.deleteAvailability' | transloco"
+                            [description]="'sessions.availability.confirmDelete' | transloco"
+                            tone="danger"
+                            [confirmLabel]="'common.actions.delete' | transloco"
+                            [cancelLabel]="'common.actions.cancel' | transloco"
+                            [close]="close"
+                          />
+                        </ng-template>
+                        <z-button
+                          size="sm"
+                          variant="secondary"
+                          type="button"
+                          [iconOnly]="true"
+                          [ariaLabel]="'common.actions.delete' | transloco"
+                          [ngpDialogTrigger]="deleteAvailabilityDialog"
+                          (ngpDialogTriggerClosed)="deleteAvailability($event, item.id)"
+                        >
+                          <svg lucideTrash class="size-4" aria-hidden="true"></svg>
+                        </z-button>
+                      </div>
                     </div>
-                    <ng-template #deleteBlockedDialog let-close="close">
-                      <z-dialog-panel
-                        [title]="'sessions.availability.deleteBlockedDate' | transloco"
-                        [description]="'sessions.availability.confirmDelete' | transloco"
-                        tone="danger"
-                        [confirmLabel]="'common.actions.delete' | transloco"
-                        [cancelLabel]="'common.actions.cancel' | transloco"
-                        [close]="close"
-                      />
-                    </ng-template>
-                    <z-button
-                      size="sm"
-                      variant="secondary"
-                      type="button"
-                      [iconOnly]="true"
-                      [ariaLabel]="'common.actions.delete' | transloco"
-                      [ngpDialogTrigger]="deleteBlockedDialog"
-                      (ngpDialogTriggerClosed)="deleteBlockedSlot($event, slot.id)"
-                    >
-                      <svg lucideTrash class="size-4" aria-hidden="true"></svg>
-                    </z-button>
-                  </div>
-                </article>
-              } @empty {
-                <z-empty-state
-                  [title]="'sessions.availability.noBlockedDates' | transloco"
-                  [description]="'sessions.availability.noBlockedDatesDescription' | transloco"
-                />
-              }
-            </div>
-          }
+                  </article>
+                } @empty {
+                  <z-empty-state
+                    [title]="'sessions.availability.noAvailability' | transloco"
+                    [description]="'sessions.availability.noAvailabilityDescription' | transloco"
+                  />
+                }
+              </div>
+            }
+            @case ('blocked') {
+              <div class="grid gap-3">
+                @for (slot of store.blockedSlots(); track slot.id) {
+                  <article
+                    class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 class="flex items-center gap-2 font-semibold">
+                          <svg
+                            lucideCalendarOff
+                            class="size-4 text-[var(--z-primary)]"
+                            aria-hidden="true"
+                          ></svg>
+                          <span>{{ formatBlockedDate(slot.blocked_date) }}</span>
+                        </h2>
+                        @if (slot.start_time || slot.end_time) {
+                          <p class="mt-1 text-sm text-[var(--z-muted)]">
+                            {{ slot.start_time || '00:00' }} - {{ slot.end_time || '23:59' }}
+                          </p>
+                        }
+                        @if (slot.reason) {
+                          <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
+                            {{ slot.reason }}
+                          </p>
+                        }
+                      </div>
+                      <ng-template #deleteBlockedDialog let-close="close">
+                        <z-dialog-panel
+                          [title]="'sessions.availability.deleteBlockedDate' | transloco"
+                          [description]="'sessions.availability.confirmDelete' | transloco"
+                          tone="danger"
+                          [confirmLabel]="'common.actions.delete' | transloco"
+                          [cancelLabel]="'common.actions.cancel' | transloco"
+                          [close]="close"
+                        />
+                      </ng-template>
+                      <z-button
+                        size="sm"
+                        variant="secondary"
+                        type="button"
+                        [iconOnly]="true"
+                        [ariaLabel]="'common.actions.delete' | transloco"
+                        [ngpDialogTrigger]="deleteBlockedDialog"
+                        (ngpDialogTriggerClosed)="deleteBlockedSlot($event, slot.id)"
+                      >
+                        <svg lucideTrash class="size-4" aria-hidden="true"></svg>
+                      </z-button>
+                    </div>
+                  </article>
+                } @empty {
+                  <z-empty-state
+                    [title]="'sessions.availability.noBlockedDates' | transloco"
+                    [description]="'sessions.availability.noBlockedDatesDescription' | transloco"
+                  />
+                }
+              </div>
+            }
           }
         </z-tab-panel>
       }
@@ -499,9 +490,7 @@ export class ManageAvailabilityPageComponent {
   });
   protected readonly breadcrumbs = computed<BreadcrumbItem[]>(() => {
     const group = this.store.activeGroup();
-    const items: BreadcrumbItem[] = [
-      { label: 'sessions.title', routerLink: '/sessions/upcoming' },
-    ];
+    const items: BreadcrumbItem[] = [{ label: 'sessions.title', routerLink: '/sessions/upcoming' }];
 
     if (group) {
       items.push({
@@ -651,9 +640,5 @@ export class ManageAvailabilityPageComponent {
       day: 'numeric',
       year: 'numeric',
     });
-  }
-
-  protected avatarSrc(avatar: string): string {
-    return avatar.startsWith('data:') ? avatar : `data:image/jpeg;base64,${avatar}`;
   }
 }

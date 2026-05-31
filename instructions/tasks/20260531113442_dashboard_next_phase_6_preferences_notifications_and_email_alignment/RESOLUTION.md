@@ -8,9 +8,11 @@ Completed Phase 6 for `web/dashboard-next`: migrated the personal preferences an
 
 - Added authenticated `/preferences/personal-data` and `/preferences/email-preferences` route surfaces.
 - Added a mobile-first preferences page that preserves the current dashboard's personal-data and email-preferences tabs.
-- Reused the existing `ZAvatarInputComponent` for compressed avatar uploads and `ZSelectComponent` for language selection.
+- Reused the existing `ZAvatarInputComponent` for compressed avatar uploads.
 - Added `ZCheckboxComponent` backed by `ng-primitives/checkbox`.
-- Added `ZComboboxComponent` backed by `ng-primitives/combobox` so timezone selection remains searchable like the current dashboard.
+- Added `ZComboboxComponent` backed by the documented button-only `ng-primitives/combobox` composition so timezone selection behaves like a stable select dropdown without an editable input.
+- Reused `ZComboboxComponent` for language selection so both personal-preference dropdowns have the same select-like interaction pattern.
+- Guarded combobox portal visibility until the Angular Primitives overlay has calculated its coordinates and synchronously bound the trigger width before Floating UI's first pass. This prevents the transient horizontal overflow caused by the portalled dropdown briefly expanding from its pre-`ResizeObserver` width at stale coordinates.
 - Extended `SessionStore` with an `updateCurrentUser` mutation path that updates the stored user and reapplies language/timezone localization preferences.
 - Kept the shell language state synchronized when the localization service changes after session loading or preference saves.
 - Preserved permission-relevant visibility for notification categories.
@@ -25,6 +27,18 @@ Completed Phase 6 for `web/dashboard-next`: migrated the personal preferences an
 - Normalized page-level content navigation into a flat tabs bar with an active underline on Videos, Sessions, Preferences, Availability, and Group Preferences.
 - Kept the segmented-control wrapper available for genuinely compact toggle groups instead of using it as page navigation.
 - Rendered tab counts as compact badges on Sessions, Videos, and Availability.
+- Added `ZVideoPreviewComponent` backed by `ng-primitives/interactions` hover handling. It preserves the current dashboard's static-thumbnail to `animated.gif` swap without consuming scroll gestures.
+- Reused the preview component on Latest Videos and All My Videos.
+- Added a shared Angular Primitives-backed group card so My Groups and Manage Availability use the same top-aligned avatar, title, and clamped description treatment.
+- Moved the complete group-card surface into that shared component and added explicit ellipsis trimming so both pages render the same top-aligned card even when descriptions are unusually long.
+- Reused the shared group card for the Book Live Coaching group-selection step, including its selected state, so Groups, Availability, and Booking render one consistent card.
+- Added an Angular Primitives-backed avatar to the navbar user-menu identity block.
+- Hid the First Steps sidebar after its checklist is complete so dashboard content uses the full available width.
+- Added the missing Group Preferences page header and icon-led section headers, and stopped route-only tab changes from reloading group data.
+- Cleared the completed booking mutation whenever the booking page is entered so users can book another session without reloading.
+- Migrated the current dashboard's AI review-text enhancement action into asset-details comment editing, using a dedicated store mutation state and the shared shell toast.
+- Added the group's rounded-square avatar to asset details and made the full group identity link to its group page.
+- Moved the review AI-enhancement action into the same action row as Cancel and Save, and anchored the add-comment composer to the bottom of the viewport.
 
 ## Verification
 
@@ -54,7 +68,14 @@ Notes:
 - Added preferences component coverage for permission-relevant notification controls and Session Store-backed saves.
 - Updated the email renderer test to assert the refreshed orange primary CTA token.
 - Added shared tabs coverage for the active tab, keyboard-oriented primitive semantics, and lazy panel ARIA relationship.
-- Final dashboard-next result: 18 test files and 39 tests passed.
+- Added hover-preview coverage for animated GIF swapping without scroll capture.
+- Added Home coverage for recent previews and the completed First Steps full-width layout.
+- Added Group Preferences coverage that prevents route-only tab changes from reloading group data.
+- Added follow-up coverage for booking-flow reset, AI-enhanced review text, language combobox reuse, and linked asset group identity.
+- Added shared group-card coverage for top alignment and long-description trimming.
+- Extended follow-up coverage for booking-card selection, fixed comment composition, and edit-action grouping.
+- Added shared combobox coverage for the button-only selected-value rendering contract.
+- Final dashboard-next result: 23 test files and 49 tests passed.
 
 ## Next Steps
 

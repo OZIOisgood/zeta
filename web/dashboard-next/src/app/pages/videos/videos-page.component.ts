@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucidePlus, LucideRotateCcw, LucideVideo } from '@lucide/angular';
+import { LucidePlus, LucideRotateCcw } from '@lucide/angular';
 import { Asset } from '../../core/http/assets-api.service';
 import { VideosStore } from '../../features/videos/videos.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
@@ -11,6 +11,7 @@ import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
 import { ZTabsComponent } from '../../shared/ui/tabs/z-tabs.component';
+import { ZVideoPreviewComponent } from '../../shared/ui/video-preview/z-video-preview.component';
 
 type VideoFilter = 'all' | 'toReview' | 'reviewed';
 
@@ -25,9 +26,9 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
     ZSkeletonComponent,
     ZTabPanelComponent,
     ZTabsComponent,
+    ZVideoPreviewComponent,
     LucidePlus,
     LucideRotateCcw,
-    LucideVideo,
   ],
   template: `
     <div class="grid gap-6">
@@ -69,7 +70,9 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
         } @else if (store.status() === 'error') {
           <section class="rounded-lg border border-rose-200 bg-rose-50 p-5">
             <z-badge tone="danger">{{ 'home.error.badge' | transloco }}</z-badge>
-            <h2 class="mt-3 text-base font-semibold">{{ 'videos.phase4.loadFailed' | transloco }}</h2>
+            <h2 class="mt-3 text-base font-semibold">
+              {{ 'videos.phase4.loadFailed' | transloco }}
+            </h2>
             <p class="mt-1 text-sm text-rose-800">{{ store.error() }}</p>
             <div class="mt-4">
               <z-button variant="secondary" size="sm" (pressed)="store.loadVideos()">
@@ -98,16 +101,7 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
                 [routerLink]="['/asset', asset.id]"
                 animate.enter="z-list-enter"
               >
-                <span
-                  class="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-                  [style.background-image]="asset.thumbnail ? 'url(' + asset.thumbnail + ')' : null"
-                  [class.bg-cover]="asset.thumbnail"
-                  [class.bg-center]="asset.thumbnail"
-                >
-                  @if (!asset.thumbnail) {
-                    <svg lucideVideo class="size-6" aria-hidden="true"></svg>
-                  }
-                </span>
+                <z-video-preview class="aspect-video rounded-md" [thumbnail]="asset.thumbnail" />
                 <span class="min-w-0">
                   <span class="block truncate text-base font-semibold">{{ asset.title }}</span>
                   <span class="mt-1 block truncate text-sm text-[var(--z-muted)]">

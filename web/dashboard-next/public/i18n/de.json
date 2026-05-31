@@ -431,6 +431,10 @@
     "firstName": "Vorname",
     "lastName": "Nachname",
     "selectLanguage": "Sprache auswählen",
+    "selectTimezone": "Zeitzone auswählen",
+    "searchLanguages": "Sprachen durchsuchen",
+    "toggleLanguages": "Sprachoptionen ein- oder ausblenden",
+    "noLanguages": "Keine passenden Sprachen",
     "searchTimezones": "Zeitzonen durchsuchen",
     "toggleTimezones": "Zeitzonenoptionen ein- oder ausblenden",
     "noTimezones": "Keine passenden Zeitzonen",
@@ -478,6 +482,8 @@
   },
   "toast": {
     "title": "Markenrichtung gespeichert",
+    "successTitle": "Erfolgreich",
+    "errorTitle": "Etwas ist schiefgelaufen",
     "message": "Das erste Logo-Zeichen ist als bevorzugter Kandidat für die Prüfung notiert."
   },
   "user": {

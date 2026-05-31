@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   LucideCalendarDays,
   LucideCheckCircle2,
+  LucideCircle,
   LucideUsers,
   LucideVideo,
 } from '@lucide/angular';
@@ -13,6 +14,14 @@ import { VideosStore } from '../../features/videos/videos.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
+import { ZVideoPreviewComponent } from '../../shared/ui/video-preview/z-video-preview.component';
+
+type HomeStep = {
+  completed: boolean;
+  descriptionKey: string;
+  href: string;
+  labelKey: string;
+};
 
 @Component({
   selector: 'app-home-page',
@@ -22,13 +31,15 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
     ZBadgeComponent,
     ZEmptyStateComponent,
     ZSkeletonComponent,
+    ZVideoPreviewComponent,
     LucideCalendarDays,
     LucideCheckCircle2,
+    LucideCircle,
     LucideUsers,
     LucideVideo,
   ],
   template: `
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+    <div class="grid gap-6" [class.lg:grid-cols-[minmax(0,1fr)_22rem]]="showFirstSteps()">
       <div class="flex min-w-0 flex-col gap-6">
         <section class="grid gap-3 sm:grid-cols-3" aria-label="Dashboard overview">
           <a
@@ -115,11 +126,10 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
                   [routerLink]="['/asset', asset.id]"
                   animate.enter="z-list-enter"
                 >
-                  <span
-                    class="grid size-10 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-                  >
-                    <svg lucideVideo class="size-5" aria-hidden="true"></svg>
-                  </span>
+                  <z-video-preview
+                    class="size-14 shrink-0 rounded-md"
+                    [thumbnail]="asset.thumbnail"
+                  />
                   <span class="min-w-0">
                     <span class="block truncate text-sm font-semibold">{{ asset.title }}</span>
                     <span class="mt-1 block truncate text-sm text-[var(--z-muted)]">{{
@@ -140,29 +150,36 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
         </section>
       </div>
 
-      <aside class="flex flex-col gap-4">
-        <section class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-          <h2 class="text-sm font-semibold">{{ 'home.firstSteps.title' | transloco }}</h2>
-          <div class="mt-4 grid gap-3">
-            @for (step of steps; track step.labelKey) {
-              <a
-                class="flex items-start gap-3 rounded-md border border-[var(--z-border)] bg-white p-3 transition hover:bg-[var(--z-surface-warm)]"
-                [routerLink]="step.href"
-              >
-                <span class="mt-0.5 text-[var(--z-primary)]">
-                  <svg lucideCheckCircle2 class="size-4" aria-hidden="true"></svg>
-                </span>
-                <span>
-                  <span class="block text-sm font-semibold">{{ step.labelKey | transloco }}</span>
-                  <span class="mt-1 block text-xs leading-5 text-[var(--z-muted)]">{{
-                    step.descriptionKey | transloco
-                  }}</span>
-                </span>
-              </a>
-            }
-          </div>
-        </section>
-      </aside>
+      @if (showFirstSteps()) {
+        <aside class="flex flex-col gap-4">
+          <section class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
+            <h2 class="text-sm font-semibold">{{ 'home.firstSteps.title' | transloco }}</h2>
+            <div class="mt-4 grid gap-3">
+              @for (step of steps(); track step.labelKey) {
+                <a
+                  class="flex items-start gap-3 rounded-md border border-[var(--z-border)] bg-white p-3 transition hover:bg-[var(--z-surface-warm)]"
+                  [class.opacity-60]="step.completed"
+                  [routerLink]="step.href"
+                >
+                  <span class="mt-0.5 text-[var(--z-primary)]">
+                    @if (step.completed) {
+                      <svg lucideCheckCircle2 class="size-4" aria-hidden="true"></svg>
+                    } @else {
+                      <svg lucideCircle class="size-4" aria-hidden="true"></svg>
+                    }
+                  </span>
+                  <span>
+                    <span class="block text-sm font-semibold">{{ step.labelKey | transloco }}</span>
+                    <span class="mt-1 block text-xs leading-5 text-[var(--z-muted)]">{{
+                      step.descriptionKey | transloco
+                    }}</span>
+                  </span>
+                </a>
+              }
+            </div>
+          </section>
+        </aside>
+      }
     </div>
   `,
 })
@@ -170,23 +187,43 @@ export class HomePageComponent {
   protected readonly videos = inject(VideosStore);
   protected readonly groups = inject(GroupsStore);
   protected readonly sessions = inject(SessionsOverviewStore);
-  protected readonly steps = [
-    {
-      labelKey: 'home.firstSteps.createGroup',
-      descriptionKey: 'home.firstSteps.createGroupDescription',
-      href: '/create-group',
-    },
-    {
-      labelKey: 'home.firstSteps.uploadFirstVideo',
-      descriptionKey: 'home.firstSteps.uploadFirstVideoDescription',
-      href: '/upload-video',
-    },
-    {
-      labelKey: 'home.firstSteps.reviewVideos',
-      descriptionKey: 'home.firstSteps.reviewVideosDescription',
-      href: '/videos',
-    },
-  ];
+  protected readonly steps = computed<HomeStep[]>(() => {
+    const hasGroups = this.groups.hasGroups();
+    const hasVideos = this.videos.videoCount() > 0;
+    const hasReviewedVideos = this.videos.reviewedCount() > 0;
+
+    return [
+      {
+        completed: hasGroups,
+        labelKey: hasGroups ? 'home.firstSteps.groupCreated' : 'home.firstSteps.createGroup',
+        descriptionKey: hasGroups
+          ? 'home.firstSteps.groupCreatedDescription'
+          : 'home.firstSteps.createGroupDescription',
+        href:
+          hasGroups && this.groups.firstGroup()
+            ? `/groups/${this.groups.firstGroup()?.id}`
+            : '/create-group',
+      },
+      {
+        completed: hasVideos,
+        labelKey: hasVideos ? 'home.firstSteps.videoUploaded' : 'home.firstSteps.uploadFirstVideo',
+        descriptionKey: hasVideos
+          ? 'home.firstSteps.videoUploadedDescription'
+          : 'home.firstSteps.uploadFirstVideoDescription',
+        href: hasVideos ? '/videos' : '/upload-video',
+      },
+      {
+        completed: hasReviewedVideos,
+        labelKey: 'home.firstSteps.reviewVideos',
+        descriptionKey: 'home.firstSteps.reviewVideosDescription',
+        href: '/videos',
+      },
+    ];
+  });
+  protected readonly showFirstSteps = computed(() => {
+    const loaded = this.groups.status() === 'success' && this.videos.status() === 'success';
+    return loaded && this.steps().some((step) => !step.completed);
+  });
 
   constructor() {
     if (this.videos.status() === 'idle') {

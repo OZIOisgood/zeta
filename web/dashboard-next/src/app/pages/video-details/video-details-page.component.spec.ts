@@ -4,6 +4,7 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { BehaviorSubject, of } from 'rxjs';
 import { AuthApiClient, User } from '../../core/http/auth-api.service';
 import { AssetsApiClient } from '../../core/http/assets-api.service';
+import { AppShellStore } from '../../core/state/app-shell.store';
 import { VideoDetailsPageComponent } from './video-details-page.component';
 
 const user: User = {
@@ -36,8 +37,13 @@ const user: User = {
 describe('VideoDetailsPageComponent', () => {
   const paramMap = new BehaviorSubject(convertToParamMap({ id: 'asset-1' }));
   const queryParamMap = new BehaviorSubject(convertToParamMap({ video: '0' }));
+  const shell = {
+    showToast: vi.fn(),
+  };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     await TestBed.configureTestingModule({
       imports: [
         VideoDetailsPageComponent,
@@ -72,6 +78,11 @@ describe('VideoDetailsPageComponent', () => {
                 noComments: 'No comments yet',
                 processingUnavailable: 'Video is processing or not available.',
                 reviewerNoComments: 'No comments from your reviewer.',
+                aiEnhancing: 'AI is enhancing your text...',
+                enhanceText: 'Enhance text with AI',
+                enhancing: 'Enhancing...',
+                textEnhanced: 'Text enhanced successfully',
+                textEnhanceFailed: 'Failed to enhance text.',
                 phase4: {
                   commentsFailed: 'Comments could not be loaded.',
                   detailFailed: 'Video could not be loaded',
@@ -81,6 +92,7 @@ describe('VideoDetailsPageComponent', () => {
                   videoParts: 'Video parts',
                 },
               },
+              toast: { errorTitle: 'Something went wrong', successTitle: 'Success' },
             },
           },
           translocoConfig: {
@@ -108,6 +120,11 @@ describe('VideoDetailsPageComponent', () => {
                 owner_id: 'user-1',
                 status: 'pending',
                 review_count: 1,
+                group: {
+                  id: 'group-1',
+                  name: 'Arena Academy',
+                  avatar: 'group-avatar',
+                },
                 videos: [
                   {
                     id: 'video-1',
@@ -132,6 +149,7 @@ describe('VideoDetailsPageComponent', () => {
                   created_at: '2026-05-17T10:00:00Z',
                 },
               ]),
+            enhanceReviewText: () => of({ enhanced_text: 'Keep a steadier rhythm.' }),
           },
         },
         {
@@ -146,6 +164,10 @@ describe('VideoDetailsPageComponent', () => {
           useValue: {
             navigate: () => Promise.resolve(true),
           },
+        },
+        {
+          provide: AppShellStore,
+          useValue: shell,
         },
       ],
     }).compileComponents();
@@ -162,5 +184,36 @@ describe('VideoDetailsPageComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Part 2');
     expect(fixture.nativeElement.textContent).toContain('Great rhythm.');
     expect(fixture.nativeElement.textContent).toContain('00:12');
+
+    const composer = fixture.nativeElement.querySelector('[data-testid="comment-composer"]');
+    expect(composer.classList).toContain('fixed');
+    expect(composer.classList).toContain('bottom-0');
+  });
+
+  it('links the asset group identity and enhances an edited comment', async () => {
+    const fixture = TestBed.createComponent(VideoDetailsPageComponent);
+    const component = fixture.componentInstance;
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const groupLink = fixture.nativeElement.querySelector('z-avatar')?.closest('a');
+    expect(groupLink).toBeTruthy();
+    expect(groupLink.textContent).toContain('Arena Academy');
+    expect(groupLink.querySelector('z-avatar')).toBeTruthy();
+
+    component['startEditing']('review-1', 'keep rhythm');
+    fixture.detectChanges();
+
+    const actions = fixture.nativeElement.querySelector('[data-testid="edit-review-actions"]');
+    expect(actions.textContent).toContain('Enhance text with AI');
+    expect(actions.textContent).toContain('Cancel');
+    expect(actions.textContent).toContain('Save');
+    expect(actions.querySelectorAll('z-button')).toHaveLength(3);
+
+    await component['enhanceEditedReview']();
+
+    expect(component['editReviewControl'].value).toBe('Keep a steadier rhythm.');
+    expect(shell.showToast).toHaveBeenCalledWith('Success', 'Text enhanced successfully');
   });
 });

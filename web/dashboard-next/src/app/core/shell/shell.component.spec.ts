@@ -127,6 +127,7 @@ describe('ShellComponent', () => {
     fixture.detectChanges();
 
     expect(el.textContent).toContain('ada@example.com');
+    expect(el.querySelector('z-avatar')?.textContent).toContain('AC');
     expect(el.textContent).not.toContain('Language');
 
     document.body.click();

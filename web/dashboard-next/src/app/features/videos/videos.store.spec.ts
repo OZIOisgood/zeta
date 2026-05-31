@@ -114,4 +114,25 @@ describe('VideosStore', () => {
     expect(store.activeAsset()?.review_count).toBe(1);
     expect(store.activeAsset()?.videos?.[0].review_count).toBe(1);
   });
+
+  it('enhances review text without changing the review loading state', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: AssetsApiClient,
+          useValue: {
+            enhanceReviewText: () => of({ enhanced_text: 'Keep a steadier rhythm.' }),
+          },
+        },
+      ],
+    });
+
+    const store = TestBed.inject(VideosStore);
+
+    const enhancedText = await store.enhanceReviewText('keep rhythm');
+
+    expect(enhancedText).toBe('Keep a steadier rhythm.');
+    expect(store.enhancementStatus()).toBe('success');
+    expect(store.reviewStatus()).toBe('idle');
+  });
 });

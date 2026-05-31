@@ -1,14 +1,32 @@
-import { Component, computed, effect, input, output, signal } from '@angular/core';
+import { Component, Directive, computed, input, output } from '@angular/core';
 import { LucideChevronDown } from '@lucide/angular';
 import {
   NgpCombobox,
   NgpComboboxButton,
   NgpComboboxDropdown,
-  NgpComboboxInput,
   NgpComboboxOption,
   NgpComboboxPortal,
+  injectComboboxState,
 } from 'ng-primitives/combobox';
 import { SelectOption } from '../select/z-select.component';
+
+@Directive({
+  selector: '[zComboboxPositionedDropdown]',
+  host: {
+    '[style.width.px]': 'comboboxWidth',
+    '[style.visibility]': "positioned() ? 'visible' : 'hidden'",
+  },
+})
+export class ZComboboxPositionedDropdownDirective {
+  private readonly state = injectComboboxState();
+  protected readonly positioned = computed(() => this.state().overlay()?.isPositioned() ?? false);
+
+  // The primitive updates its width CSS variable through ResizeObserver. Bind the
+  // trigger width immediately so the first Floating UI pass uses the final geometry.
+  protected get comboboxWidth(): number {
+    return this.state().elementRef.nativeElement.getBoundingClientRect().width;
+  }
+}
 
 @Component({
   selector: 'z-combobox',
@@ -16,46 +34,43 @@ import { SelectOption } from '../select/z-select.component';
     NgpCombobox,
     NgpComboboxButton,
     NgpComboboxDropdown,
-    NgpComboboxInput,
     NgpComboboxOption,
     NgpComboboxPortal,
+    ZComboboxPositionedDropdownDirective,
     LucideChevronDown,
   ],
   template: `
     <div
       ngpCombobox
-      class="flex min-h-11 w-full items-center rounded-md border border-[var(--z-border)] bg-white transition data-[focus]:border-[var(--z-primary)] data-[focus]:ring-2 data-[focus]:ring-orange-100 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+      class="w-full"
       [ngpComboboxValue]="value()"
       [ngpComboboxDisabled]="disabled()"
       [ngpComboboxDropdownOffset]="4"
       (ngpComboboxValueChange)="selectValue($event)"
-      (ngpComboboxOpenChange)="handleOpenChange($event)"
     >
-      <input
-        ngpComboboxInput
-        class="min-h-10 min-w-0 flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-[var(--z-muted)]"
-        type="text"
-        autocomplete="off"
-        [attr.aria-label]="label()"
-        [placeholder]="placeholder()"
-        [value]="inputText()"
-        (input)="handleInput($event)"
-      />
       <button
         ngpComboboxButton
-        class="grid min-h-10 w-10 shrink-0 place-items-center text-[var(--z-muted)] outline-none"
+        class="flex min-h-11 w-full items-center justify-between gap-3 rounded-md border border-[var(--z-border)] bg-white px-3 text-left text-sm transition hover:bg-[var(--z-surface-warm)] focus-visible:border-[var(--z-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-100 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
         type="button"
         [attr.aria-label]="toggleLabel()"
       >
-        <svg lucideChevronDown class="size-4 transition data-[open]:rotate-180" aria-hidden="true"></svg>
+        <span class="truncate" [class.text-[var(--z-muted)]]="!selectedLabel()">
+          {{ selectedLabel() || placeholder() }}
+        </span>
+        <svg
+          lucideChevronDown
+          class="size-4 shrink-0 text-[var(--z-muted)] transition"
+          aria-hidden="true"
+        ></svg>
       </button>
 
       <div
         *ngpComboboxPortal
         ngpComboboxDropdown
+        zComboboxPositionedDropdown
         class="z-50 max-h-60 overflow-auto rounded-md border border-[var(--z-border)] bg-white py-1 shadow-lg shadow-orange-950/10"
       >
-        @for (option of filteredOptions(); track option.value) {
+        @for (option of options(); track option.value) {
           <div
             ngpComboboxOption
             [ngpComboboxOptionValue]="option.value"
@@ -72,10 +87,16 @@ import { SelectOption } from '../select/z-select.component';
   styles: `
     [ngpComboboxDropdown] {
       position: absolute;
+      top: 0;
+      left: 0;
       width: var(--ngp-combobox-width);
       margin-top: 4px;
       box-sizing: border-box;
       transform-origin: var(--ngp-combobox-transform-origin);
+    }
+
+    [ngpComboboxButton][data-open] svg {
+      transform: rotate(180deg);
     }
 
     [ngpComboboxDropdown][data-enter] {
@@ -119,44 +140,15 @@ export class ZComboboxComponent {
   readonly disabled = input(false);
   readonly valueChange = output<string>();
 
-  protected readonly inputText = signal('');
-  private readonly isOpen = signal(false);
-  protected readonly filteredOptions = computed(() => {
-    const query = this.inputText().trim().toLowerCase();
-
-    return query
-      ? this.options().filter((option) => option.label.toLowerCase().includes(query))
-      : this.options();
-  });
-
-  constructor() {
-    effect(() => {
-      const value = this.value();
-      const options = this.options();
-
-      if (!this.isOpen()) {
-        this.inputText.set(options.find((option) => option.value === value)?.label ?? '');
-      }
-    });
-  }
-
-  protected handleInput(event: Event): void {
-    this.inputText.set((event.target as HTMLInputElement).value);
-  }
-
-  protected handleOpenChange(isOpen: boolean): void {
-    this.isOpen.set(isOpen);
-    this.inputText.set(
-      isOpen ? '' : (this.options().find((option) => option.value === this.value())?.label ?? ''),
-    );
-  }
+  protected readonly selectedLabel = computed(
+    () => this.options().find((option) => option.value === this.value())?.label ?? '',
+  );
 
   protected selectValue(value: unknown): void {
     if (typeof value !== 'string') {
       return;
     }
 
-    this.inputText.set(this.options().find((option) => option.value === value)?.label ?? value);
     this.valueChange.emit(value);
   }
 }

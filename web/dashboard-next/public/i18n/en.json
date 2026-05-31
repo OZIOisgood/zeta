@@ -431,6 +431,10 @@
     "firstName": "First Name",
     "lastName": "Last Name",
     "selectLanguage": "Select a language",
+    "selectTimezone": "Select a timezone",
+    "searchLanguages": "Search languages",
+    "toggleLanguages": "Toggle language options",
+    "noLanguages": "No matching languages",
     "searchTimezones": "Search timezones",
     "toggleTimezones": "Toggle timezone options",
     "noTimezones": "No matching timezones",
@@ -478,6 +482,8 @@
   },
   "toast": {
     "title": "Saved",
+    "successTitle": "Success",
+    "errorTitle": "Something went wrong",
     "message": "Your changes have been saved."
   },
   "user": {

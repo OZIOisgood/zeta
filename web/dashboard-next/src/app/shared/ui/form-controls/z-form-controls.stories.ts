@@ -68,7 +68,7 @@ const meta: Meta = {
         <section class="grid gap-4 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
           <h2 class="text-base font-semibold">Angular Primitives controls</h2>
           <label class="grid gap-2">
-            <span class="text-sm font-semibold">Searchable group</span>
+            <span class="text-sm font-semibold">Select-like combobox</span>
             <z-combobox
               [options]="groupOptions"
               [value]="group"

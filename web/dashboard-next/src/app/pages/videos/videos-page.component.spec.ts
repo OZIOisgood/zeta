@@ -59,6 +59,7 @@ describe('VideosPageComponent', () => {
                   owner_id: 'user-1',
                   status: 'pending',
                   review_count: 0,
+                  thumbnail: 'https://image.mux.com/playback-id/thumbnail.jpg',
                 },
               ]),
           },
@@ -76,5 +77,6 @@ describe('VideosPageComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('All my videos');
     expect(fixture.nativeElement.textContent).toContain('Jump line');
     expect(fixture.nativeElement.textContent).toContain('In review');
+    expect(fixture.nativeElement.querySelector('z-video-preview')).toBeTruthy();
   });
 });

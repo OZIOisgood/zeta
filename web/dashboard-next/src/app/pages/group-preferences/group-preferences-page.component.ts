@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideTrash2 } from '@lucide/angular';
+import { LucideImage, LucideTriangleAlert, LucideTrash2 } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import { SessionStore } from '../../features/session/session.store';
@@ -41,6 +41,8 @@ type GroupPreferencesFormValue = {
     ZTabsComponent,
     ZTextInputComponent,
     ZTextareaComponent,
+    LucideImage,
+    LucideTriangleAlert,
     LucideTrash2,
   ],
   template: `
@@ -56,6 +58,13 @@ type GroupPreferencesFormValue = {
           { label: 'common.actions.preferences' },
         ]"
       />
+
+      <section class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
+        <h1 class="text-2xl font-semibold sm:text-3xl">{{ 'groups.preferences' | transloco }}</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-[var(--z-muted)]">
+          {{ 'groups.phase4.preferencesSummary' | transloco }}
+        </p>
+      </section>
 
       @if (store.detailStatus() === 'loading') {
         <z-skeleton class="block h-96 w-full"></z-skeleton>
@@ -79,13 +88,19 @@ type GroupPreferencesFormValue = {
                 [formGroup]="form"
                 (ngSubmit)="submit()"
               >
-                <div>
-                  <h2 class="text-2xl font-semibold">{{ 'groups.preferences' | transloco }}</h2>
-                  <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
-                    {{ 'groups.phase4.preferencesSummary' | transloco }}
-                  </p>
+                <div class="flex items-start gap-3 border-b border-[var(--z-border)] pb-4">
+                  <span
+                    class="grid size-10 shrink-0 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
+                  >
+                    <svg lucideImage class="size-5" aria-hidden="true"></svg>
+                  </span>
+                  <div>
+                    <h2 class="text-base font-semibold">{{ 'groups.generalTab' | transloco }}</h2>
+                    <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
+                      {{ 'groups.phase4.preferencesSummary' | transloco }}
+                    </p>
+                  </div>
                 </div>
-
                 <label class="grid gap-2">
                   <z-field-label
                     [label]="'groups.groupName' | transloco"
@@ -150,13 +165,20 @@ type GroupPreferencesFormValue = {
           } @else {
             <z-tab-panel tabsId="group-preferences-tabs" value="delete">
               <div class="grid gap-5 rounded-lg border border-rose-200 bg-white p-5 shadow-sm">
-                <div>
-                  <h2 class="text-2xl font-semibold text-[var(--z-text)]">
-                    {{ 'groups.deleteGroup' | transloco }}
-                  </h2>
-                  <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
-                    {{ 'groups.deleteDescription' | transloco }}
-                  </p>
+                <div class="flex items-start gap-3 border-b border-rose-200 pb-4">
+                  <span
+                    class="grid size-10 shrink-0 place-items-center rounded-md bg-rose-50 text-rose-700"
+                  >
+                    <svg lucideTriangleAlert class="size-5" aria-hidden="true"></svg>
+                  </span>
+                  <div>
+                    <h2 class="text-base font-semibold text-[var(--z-text)]">
+                      {{ 'groups.deleteGroup' | transloco }}
+                    </h2>
+                    <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
+                      {{ 'groups.deleteDescription' | transloco }}
+                    </p>
+                  </div>
                 </div>
 
                 @if (store.mutationStatus() === 'error' && activeMutation() === 'delete') {
@@ -224,6 +246,7 @@ export class GroupPreferencesPageComponent {
   protected readonly saveSucceeded = signal(false);
   private readonly formRevision = signal(0);
   private readonly initialFormValue = signal<GroupPreferencesFormValue | null>(null);
+  private initializedGroupId = '';
   protected readonly canDeleteGroup = computed(() => {
     const group = this.store.activeGroup();
     const user = this.session.user();
@@ -259,11 +282,14 @@ export class GroupPreferencesPageComponent {
         return;
       }
 
-      await this.store.loadGroup(this.groupId);
+      if (this.store.activeGroup()?.id !== this.groupId) {
+        await this.store.loadGroup(this.groupId);
+      }
+
       this.saveSucceeded.set(false);
       this.activeMutation.set(null);
       const group = this.store.activeGroup();
-      if (group) {
+      if (group && this.initializedGroupId !== group.id) {
         const formValue = {
           name: group.name,
           description: group.description ?? '',
@@ -272,6 +298,7 @@ export class GroupPreferencesPageComponent {
         this.form.patchValue(formValue, { emitEvent: false });
         this.initialFormValue.set(this.normalizeFormValue(formValue));
         this.formRevision.update((revision) => revision + 1);
+        this.initializedGroupId = group.id;
       }
     });
   }

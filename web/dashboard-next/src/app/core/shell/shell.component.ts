@@ -1,5 +1,13 @@
 import { NgClass } from '@angular/common';
-import { Component, ElementRef, HostListener, computed, effect, inject, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -16,6 +24,7 @@ import {
 import { filter } from 'rxjs';
 import { SessionStore } from '../../features/session/session.store';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
 import { DashboardLocalizationService } from '../i18n/dashboard-localization.service';
@@ -28,6 +37,7 @@ import { AppShellStore } from '../state/app-shell.store';
     RouterLink,
     RouterOutlet,
     TranslocoPipe,
+    ZAvatarComponent,
     ZButtonComponent,
     ZIconButtonComponent,
     ZToastComponent,

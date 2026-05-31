@@ -13,6 +13,8 @@ import {
 type VideosState = AsyncSlice & {
   detailError: string | null;
   detailStatus: AsyncSlice['status'];
+  enhancementError: string | null;
+  enhancementStatus: AsyncSlice['status'];
   activeAsset: Asset | null;
   assets: Asset[];
   reviewError: string | null;
@@ -24,6 +26,8 @@ const initialState: VideosState = {
   ...idleAsyncSlice(),
   detailError: null,
   detailStatus: 'idle',
+  enhancementError: null,
+  enhancementStatus: 'idle',
   activeAsset: null,
   assets: [],
   reviewError: null,
@@ -86,6 +90,8 @@ export const VideosStore = signalStore(
         detailStatus: 'loading',
         detailError: null,
         activeAsset: null,
+        enhancementError: null,
+        enhancementStatus: 'idle',
         reviewError: null,
         reviewStatus: 'idle',
         reviews: [],
@@ -197,6 +203,28 @@ export const VideosStore = signalStore(
           reviewStatus: errorState.status,
           reviewError: errorState.error,
         });
+      }
+    },
+    async enhanceReviewText(text: string): Promise<string | null> {
+      patchState(store, {
+        enhancementError: null,
+        enhancementStatus: 'loading',
+      });
+
+      try {
+        const response = await firstValueFrom(api.enhanceReviewText(text));
+        patchState(store, {
+          enhancementError: null,
+          enhancementStatus: 'success',
+        });
+        return response.enhanced_text;
+      } catch (error) {
+        const errorState = errorAsyncSlice(error);
+        patchState(store, {
+          enhancementError: errorState.error,
+          enhancementStatus: errorState.status,
+        });
+        return null;
       }
     },
     async finalizeVideo(assetId: string): Promise<void> {

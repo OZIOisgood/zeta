@@ -4,12 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import {
-  LucideCalendar,
-  LucideCheck,
-  LucideClock,
-  LucideUsers,
-} from '@lucide/angular';
+import { LucideCalendar, LucideCheck, LucideClock } from '@lucide/angular';
 import { CoachingSlot, ExpertInfo, SessionType } from '../../core/http/coaching-api.service';
 import { Group } from '../../core/http/groups-api.service';
 import { DashboardDateTimeService } from '../../core/i18n/dashboard-date-time.service';
@@ -18,6 +13,7 @@ import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
+import { ZGroupCardComponent } from '../../shared/ui/group-card/z-group-card.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { StepperStep, ZStepperComponent } from '../../shared/ui/stepper/z-stepper.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
@@ -35,13 +31,13 @@ type BookingStep = 0 | 1 | 2 | 3 | 4;
     ZBreadcrumbsComponent,
     ZButtonComponent,
     ZEmptyStateComponent,
+    ZGroupCardComponent,
     ZSkeletonComponent,
     ZStepperComponent,
     ZTextareaComponent,
     LucideCalendar,
     LucideCheck,
     LucideClock,
-    LucideUsers,
   ],
   template: `
     <div class="grid gap-6">
@@ -100,31 +96,14 @@ type BookingStep = 0 | 1 | 2 | 3 | 4;
               @for (group of store.groups(); track group.id) {
                 <button
                   type="button"
-                  class="rounded-lg border bg-white p-4 text-left shadow-sm transition hover:border-[var(--z-primary-soft)] hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
-                  [ngClass]="
-                    selectedGroup()?.id === group.id
-                      ? 'border-[var(--z-primary)]'
-                      : 'border-[var(--z-border)]'
-                  "
+                  class="block h-full w-full rounded-lg border-0 bg-transparent p-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
                   (click)="selectGroup(group)"
                 >
-                  <div class="flex items-start gap-3">
-                    <span
-                      class="grid size-12 shrink-0 place-items-center overflow-hidden rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-                    >
-                      @if (group.avatar) {
-                        <img class="size-full object-cover" [src]="avatarSrc(group.avatar)" alt="" />
-                      } @else {
-                        <svg lucideUsers class="size-6" aria-hidden="true"></svg>
-                      }
-                    </span>
-                    <span class="min-w-0">
-                      <span class="block truncate text-base font-semibold">{{ group.name }}</span>
-                      <span class="mt-1 line-clamp-3 block text-sm leading-5 text-[var(--z-muted)]">
-                        {{ group.description || ('groups.phase4.noDescription' | transloco) }}
-                      </span>
-                    </span>
-                  </div>
+                  <z-group-card
+                    [group]="group"
+                    [selected]="selectedGroup()?.id === group.id"
+                    [noDescription]="'groups.phase4.noDescription' | transloco"
+                  />
                 </button>
               } @empty {
                 <z-empty-state
@@ -155,7 +134,11 @@ type BookingStep = 0 | 1 | 2 | 3 | 4;
                         class="grid size-12 shrink-0 place-items-center overflow-hidden rounded-md bg-[var(--z-surface-warm)] text-base font-semibold text-[var(--z-primary)]"
                       >
                         @if (expert.avatar) {
-                          <img class="size-full object-cover" [src]="avatarSrc(expert.avatar)" alt="" />
+                          <img
+                            class="size-full object-cover"
+                            [src]="avatarSrc(expert.avatar)"
+                            alt=""
+                          />
                         } @else {
                           {{ expertInitials(expert) }}
                         }
@@ -385,9 +368,10 @@ export class BookCoachingPageComponent {
   );
 
   constructor() {
+    this.store.resetBooking();
+
     effect(() => {
       if (this.store.status() === 'idle') {
-        this.store.resetBooking();
         void this.store.loadGroups();
       }
     });
