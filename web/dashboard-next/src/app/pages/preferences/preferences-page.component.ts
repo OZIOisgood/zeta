@@ -16,6 +16,8 @@ import { ZAvatarInputComponent } from '../../shared/ui/avatar-input/z-avatar-inp
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZCheckboxComponent } from '../../shared/ui/checkbox/z-checkbox.component';
 import { ZComboboxComponent } from '../../shared/ui/combobox/z-combobox.component';
+import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
+import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
 import { SelectOption } from '../../shared/ui/select/z-select.component';
 import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
 import { ZTabsComponent } from '../../shared/ui/tabs/z-tabs.component';
@@ -43,6 +45,8 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
     ZButtonComponent,
     ZCheckboxComponent,
     ZComboboxComponent,
+    ZFieldErrorComponent,
+    ZFieldLabelComponent,
     ZTabPanelComponent,
     ZTabsComponent,
     ZTextInputComponent,
@@ -93,32 +97,66 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
 
               <div class="grid gap-4 sm:grid-cols-2">
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold">{{
-                    'preferences.firstName' | transloco
-                  }}</span>
+                  <z-field-label
+                    [label]="'preferences.firstName' | transloco"
+                    [control]="form.controls.first_name"
+                  />
                   <z-text-input
                     formControlName="first_name"
                     autocomplete="given-name"
-                    [invalid]="form.controls.first_name.touched && form.controls.first_name.invalid"
+                    ariaDescribedBy="preferences-first-name-error"
+                    [invalid]="
+                      (form.controls.first_name.dirty || form.controls.first_name.touched) &&
+                      form.controls.first_name.invalid
+                    "
                   />
+                  @if (
+                    (form.controls.first_name.dirty || form.controls.first_name.touched) &&
+                    form.controls.first_name.invalid
+                  ) {
+                    <z-field-error
+                      id="preferences-first-name-error"
+                      [message]="'preferences.firstNameRequired' | transloco"
+                    />
+                  }
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold">{{
-                    'preferences.lastName' | transloco
-                  }}</span>
+                  <z-field-label
+                    [label]="'preferences.lastName' | transloco"
+                    [control]="form.controls.last_name"
+                  />
                   <z-text-input
                     formControlName="last_name"
                     autocomplete="family-name"
-                    [invalid]="form.controls.last_name.touched && form.controls.last_name.invalid"
+                    ariaDescribedBy="preferences-last-name-error"
+                    [invalid]="
+                      (form.controls.last_name.dirty || form.controls.last_name.touched) &&
+                      form.controls.last_name.invalid
+                    "
                   />
+                  @if (
+                    (form.controls.last_name.dirty || form.controls.last_name.touched) &&
+                    form.controls.last_name.invalid
+                  ) {
+                    <z-field-error
+                      id="preferences-last-name-error"
+                      [message]="'preferences.lastNameRequired' | transloco"
+                    />
+                  }
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold">{{
-                    'common.fields.language' | transloco
-                  }}</span>
+                  <z-field-label
+                    [label]="'common.fields.language' | transloco"
+                    [control]="form.controls.language"
+                  />
                   <z-combobox
+                    ariaDescribedBy="preferences-language-error"
+                    [invalid]="
+                      (form.controls.language.dirty || form.controls.language.touched) &&
+                      form.controls.language.invalid
+                    "
                     [label]="'preferences.searchLanguages' | transloco"
                     [toggleLabel]="'preferences.toggleLanguages' | transloco"
                     [noOptionsLabel]="'preferences.noLanguages' | transloco"
@@ -127,13 +165,28 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
                     [placeholder]="'preferences.selectLanguage' | transloco"
                     (valueChange)="setLanguage($event)"
                   />
+                  @if (
+                    (form.controls.language.dirty || form.controls.language.touched) &&
+                    form.controls.language.invalid
+                  ) {
+                    <z-field-error
+                      id="preferences-language-error"
+                      [message]="'preferences.languageRequired' | transloco"
+                    />
+                  }
                 </label>
 
                 <label class="grid gap-2">
-                  <span class="text-sm font-semibold">{{
-                    'common.fields.timezone' | transloco
-                  }}</span>
+                  <z-field-label
+                    [label]="'common.fields.timezone' | transloco"
+                    [control]="form.controls.timezone"
+                  />
                   <z-combobox
+                    ariaDescribedBy="preferences-timezone-error"
+                    [invalid]="
+                      (form.controls.timezone.dirty || form.controls.timezone.touched) &&
+                      form.controls.timezone.invalid
+                    "
                     [label]="'preferences.searchTimezones' | transloco"
                     [toggleLabel]="'preferences.toggleTimezones' | transloco"
                     [noOptionsLabel]="'preferences.noTimezones' | transloco"
@@ -142,6 +195,15 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
                     [value]="form.controls.timezone.value || undefined"
                     (valueChange)="setTimezone($event)"
                   />
+                  @if (
+                    (form.controls.timezone.dirty || form.controls.timezone.touched) &&
+                    form.controls.timezone.invalid
+                  ) {
+                    <z-field-error
+                      id="preferences-timezone-error"
+                      [message]="'preferences.timezoneRequired' | transloco"
+                    />
+                  }
                 </label>
               </div>
 
@@ -308,8 +370,14 @@ export class PreferencesPageComponent {
   protected readonly activeTab = signal<PreferencesTab>('personal-data');
   protected readonly feedback = signal<'error' | null>(null);
   protected readonly form = new FormGroup({
-    first_name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    last_name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    first_name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/\S/)],
+    }),
+    last_name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/\S/)],
+    }),
     language: new FormControl<DashboardLanguage>('en', {
       nonNullable: true,
       validators: [Validators.required],

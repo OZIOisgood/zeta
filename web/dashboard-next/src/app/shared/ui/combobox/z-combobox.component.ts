@@ -1,3 +1,4 @@
+import { NgClass } from '@angular/common';
 import { Component, Directive, computed, input, output } from '@angular/core';
 import { LucideChevronDown } from '@lucide/angular';
 import {
@@ -37,6 +38,7 @@ export class ZComboboxPositionedDropdownDirective {
     NgpComboboxOption,
     NgpComboboxPortal,
     ZComboboxPositionedDropdownDirective,
+    NgClass,
     LucideChevronDown,
   ],
   template: `
@@ -50,7 +52,14 @@ export class ZComboboxPositionedDropdownDirective {
     >
       <button
         ngpComboboxButton
-        class="flex min-h-11 w-full items-center justify-between gap-3 rounded-md border border-[var(--z-border)] bg-white px-3 text-left text-sm transition hover:bg-[var(--z-surface-warm)] focus-visible:border-[var(--z-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-100 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+        class="flex min-h-11 w-full items-center justify-between gap-3 rounded-md border bg-white px-3 text-left text-sm transition hover:bg-[var(--z-surface-warm)] focus-visible:outline-none focus-visible:ring-2 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+        [ngClass]="
+          invalid()
+            ? 'border-rose-300 focus-visible:border-rose-500 focus-visible:ring-rose-100'
+            : 'border-[var(--z-border)] focus-visible:border-[var(--z-primary)] focus-visible:ring-orange-100'
+        "
+        [attr.aria-describedby]="ariaDescribedBy() || null"
+        [attr.aria-invalid]="invalid() || null"
         type="button"
         [attr.aria-label]="toggleLabel()"
       >
@@ -135,6 +144,8 @@ export class ZComboboxComponent {
   readonly options = input.required<SelectOption[]>();
   readonly label = input('Search options');
   readonly placeholder = input('Search options');
+  readonly ariaDescribedBy = input('');
+  readonly invalid = input(false);
   readonly toggleLabel = input('Toggle options');
   readonly noOptionsLabel = input('No options found');
   readonly disabled = input(false);

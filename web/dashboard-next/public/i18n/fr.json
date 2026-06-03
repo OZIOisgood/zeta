@@ -309,6 +309,8 @@
     "viewVideo": "Voir la vidéo",
     "uploadFailed": "Échec du téléversement",
     "retry": "Réessayer",
+    "titleRequired": "Le titre de la vidéo est obligatoire.",
+    "groupRequired": "Veuillez sélectionner un groupe.",
     "titlePlaceholder": "p. ex. Ligne de saut prise 2",
     "descriptionPlaceholder": "Ajoutez le contexte, les objectifs ou des notes pour la revue."
   },
@@ -407,7 +409,12 @@
       "namePlaceholder": "ex. Séance stratégique",
       "descriptionOptional": "Description (optionnel)",
       "descriptionPlaceholder": "Courte description",
-      "reasonPlaceholder": "ex. Vacances"
+      "reasonPlaceholder": "ex. Vacances",
+      "nameRequired": "Le nom du type de séance est obligatoire.",
+      "durationInvalid": "Saisissez une durée supérieure à zéro.",
+      "startTimeRequired": "L’heure de début est obligatoire.",
+      "endTimeRequired": "L’heure de fin est obligatoire.",
+      "dateRequired": "La date est obligatoire."
     },
     "call": {
       "connecting": "Connexion à la séance...",
@@ -429,7 +436,11 @@
     "emailPreferences": "Préférences e-mail",
     "emailSummary": "Choisissez les activités Zeta qui doivent arriver dans votre boîte de réception.",
     "firstName": "Prénom",
+    "firstNameRequired": "Le prénom est obligatoire.",
     "lastName": "Nom de famille",
+    "lastNameRequired": "Le nom de famille est obligatoire.",
+    "languageRequired": "Veuillez sélectionner une langue.",
+    "timezoneRequired": "Veuillez sélectionner un fuseau horaire.",
     "selectLanguage": "Sélectionner une langue",
     "selectTimezone": "Sélectionner un fuseau horaire",
     "searchLanguages": "Rechercher des langues",

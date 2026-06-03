@@ -119,15 +119,15 @@ describe('ShellComponent', () => {
     fixture.detectChanges();
 
     const el = fixture.nativeElement as HTMLElement;
-    const menuButton = Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
-      button.textContent?.includes('Ada Coach'),
-    );
+    const menuButton = el.querySelector<HTMLButtonElement>('button[aria-label="Ada Coach"]');
 
     menuButton?.click();
     fixture.detectChanges();
 
+    expect(menuButton?.querySelector('z-avatar')?.classList).toContain('size-8');
+    expect(menuButton?.getAttribute('aria-expanded')).toBe('true');
     expect(el.textContent).toContain('ada@example.com');
-    expect(el.querySelector('z-avatar')?.textContent).toContain('AC');
+    expect(el.querySelector('.absolute .border-b z-avatar')?.classList).toContain('size-10');
     expect(el.textContent).not.toContain('Language');
 
     document.body.click();

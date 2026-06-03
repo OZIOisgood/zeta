@@ -55,7 +55,7 @@ import { ZButtonComponent } from '../button/z-button.component';
             </p>
           }
           @if (visibleError(); as message) {
-            <p class="mt-2 text-xs font-medium text-rose-700">{{ message }}</p>
+            <p class="mt-2 text-xs font-medium text-rose-700" role="alert">{{ message }}</p>
           }
         </div>
 
@@ -191,7 +191,11 @@ export class ZAvatarInputComponent implements ControlValueAccessor {
     reader.readAsDataURL(file);
   }
 
-  private compressImage(image: HTMLImageElement, maxWidth = 256, maxHeight = 256): HTMLCanvasElement {
+  private compressImage(
+    image: HTMLImageElement,
+    maxWidth = 256,
+    maxHeight = 256,
+  ): HTMLCanvasElement {
     const canvas = document.createElement('canvas');
     let width = image.width;
     let height = image.height;

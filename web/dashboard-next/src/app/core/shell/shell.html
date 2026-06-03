@@ -70,11 +70,20 @@
 
           <div class="flex items-center gap-1 sm:gap-2">
             <div #userMenu class="relative">
-              <z-button variant="secondary" size="sm" (pressed)="shell.toggleUserMenu()">
-                <span class="hidden sm:inline">{{ session.displayName() }}</span>
-                <span class="sm:hidden">{{ initials() }}</span>
-                <svg lucideChevronDown class="size-4" aria-hidden="true"></svg>
-              </z-button>
+              <button
+                type="button"
+                class="rounded-md transition hover:ring-2 hover:ring-orange-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                [attr.aria-label]="session.displayName()"
+                [attr.aria-expanded]="shell.isUserMenuOpen()"
+                (click)="shell.toggleUserMenu()"
+              >
+                <z-avatar
+                  class="size-8"
+                  [image]="session.user()?.avatar || undefined"
+                  [fallback]="initials()"
+                  [alt]="session.displayName()"
+                />
+              </button>
 
               @if (shell.isUserMenuOpen()) {
                 <div

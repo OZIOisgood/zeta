@@ -18,6 +18,7 @@ import { GroupsStore } from '../../features/groups/groups.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
 import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
 import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
@@ -37,6 +38,7 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
     ZBadgeComponent,
     ZBreadcrumbsComponent,
     ZButtonComponent,
+    ZFieldErrorComponent,
     ZFieldLabelComponent,
     ZSelectComponent,
     ZSkeletonComponent,
@@ -52,10 +54,7 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
   template: `
     <div class="grid min-w-0 gap-6">
       <z-breadcrumbs
-        [items]="[
-          { label: 'common.nav.videos', routerLink: '/videos' },
-          { label: 'upload.title' },
-        ]"
+        [items]="[{ label: 'common.nav.videos', routerLink: '/videos' }, { label: 'upload.title' }]"
       />
 
       <section class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
@@ -143,7 +142,21 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
             <z-text-input
               formControlName="title"
               [placeholder]="'upload.titlePlaceholder' | transloco"
+              ariaDescribedBy="upload-title-error"
+              [invalid]="
+                (form.controls.title.dirty || form.controls.title.touched) &&
+                form.controls.title.invalid
+              "
             />
+            @if (
+              (form.controls.title.dirty || form.controls.title.touched) &&
+              form.controls.title.invalid
+            ) {
+              <z-field-error
+                id="upload-title-error"
+                [message]="'upload.titleRequired' | transloco"
+              />
+            }
           </label>
 
           <label class="grid gap-2">
@@ -169,8 +182,22 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
                 [value]="form.controls.groupId.value"
                 [options]="groupOptions()"
                 [placeholder]="'upload.chooseGroup' | transloco"
-                (valueChange)="form.controls.groupId.setValue($event)"
+                ariaDescribedBy="upload-group-error"
+                [invalid]="
+                  (form.controls.groupId.dirty || form.controls.groupId.touched) &&
+                  form.controls.groupId.invalid
+                "
+                (valueChange)="setGroup($event)"
               />
+              @if (
+                (form.controls.groupId.dirty || form.controls.groupId.touched) &&
+                form.controls.groupId.invalid
+              ) {
+                <z-field-error
+                  id="upload-group-error"
+                  [message]="'upload.groupRequired' | transloco"
+                />
+              }
             }
           </div>
 
@@ -178,7 +205,7 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
             <z-button variant="secondary" type="button" (pressed)="activeStep.set('files')">
               {{ 'common.actions.back' | transloco }}
             </z-button>
-            <z-button type="button" [disabled]="form.invalid" (pressed)="activeStep.set('review')">
+            <z-button type="button" (pressed)="continueToReview()">
               {{ 'common.actions.next' | transloco }}
             </z-button>
           </div>
@@ -347,7 +374,10 @@ export class UploadVideoPageComponent {
     }));
   });
   protected readonly form = new FormGroup({
-    title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/\S/)],
+    }),
     description: new FormControl('', { nonNullable: true }),
     groupId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
@@ -366,11 +396,23 @@ export class UploadVideoPageComponent {
   protected setStep(value: string): void {
     if (this.uploadPhase() === 'uploading') return;
     if (value === 'details' && this.files().length === 0) return;
-    if (value === 'review' && this.form.invalid) return;
+    if (value === 'review' && this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     if (value === 'files' || value === 'details' || value === 'review') {
       if (value !== 'review') this.uploadPhase.set('idle');
       this.activeStep.set(value);
     }
+  }
+
+  protected setGroup(groupId: string): void {
+    this.form.controls.groupId.setValue(groupId);
+    this.form.controls.groupId.markAsDirty();
+  }
+
+  protected continueToReview(): void {
+    this.setStep('review');
   }
 
   protected startUpload(): void {

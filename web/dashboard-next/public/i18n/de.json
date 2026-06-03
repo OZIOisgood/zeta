@@ -309,6 +309,8 @@
     "viewVideo": "Video ansehen",
     "uploadFailed": "Hochladen fehlgeschlagen",
     "retry": "Erneut versuchen",
+    "titleRequired": "Ein Videotitel ist erforderlich.",
+    "groupRequired": "Bitte wähle eine Gruppe aus.",
     "titlePlaceholder": "z. B. Sprunglinie Versuch 2",
     "descriptionPlaceholder": "Füge Kontext, Ziele oder Hinweise für die Prüfung hinzu."
   },
@@ -407,7 +409,12 @@
       "namePlaceholder": "z. B. Strategiegespräch",
       "descriptionOptional": "Beschreibung (optional)",
       "descriptionPlaceholder": "Kurze Beschreibung",
-      "reasonPlaceholder": "z. B. Urlaub"
+      "reasonPlaceholder": "z. B. Urlaub",
+      "nameRequired": "Der Name der Terminart ist erforderlich.",
+      "durationInvalid": "Gib eine Dauer größer als null ein.",
+      "startTimeRequired": "Die Startzeit ist erforderlich.",
+      "endTimeRequired": "Die Endzeit ist erforderlich.",
+      "dateRequired": "Das Datum ist erforderlich."
     },
     "call": {
       "connecting": "Verbindung zum Termin wird hergestellt...",
@@ -429,7 +436,11 @@
     "emailPreferences": "E-Mail-Einstellungen",
     "emailSummary": "Wähle aus, welche Zeta-Aktivitäten dein Postfach erreichen sollen.",
     "firstName": "Vorname",
+    "firstNameRequired": "Der Vorname ist erforderlich.",
     "lastName": "Nachname",
+    "lastNameRequired": "Der Nachname ist erforderlich.",
+    "languageRequired": "Bitte wähle eine Sprache aus.",
+    "timezoneRequired": "Bitte wähle eine Zeitzone aus.",
     "selectLanguage": "Sprache auswählen",
     "selectTimezone": "Zeitzone auswählen",
     "searchLanguages": "Sprachen durchsuchen",

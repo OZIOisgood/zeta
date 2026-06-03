@@ -11,6 +11,7 @@ import { ZAvatarInputComponent } from '../../shared/ui/avatar-input/z-avatar-inp
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
+import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
 import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
@@ -35,6 +36,7 @@ type GroupPreferencesFormValue = {
     ZBreadcrumbsComponent,
     ZButtonComponent,
     ZDialogPanelComponent,
+    ZFieldErrorComponent,
     ZFieldLabelComponent,
     ZSkeletonComponent,
     ZTabPanelComponent,
@@ -109,7 +111,21 @@ type GroupPreferencesFormValue = {
                   <z-text-input
                     formControlName="name"
                     [placeholder]="'groups.namePlaceholder' | transloco"
+                    ariaDescribedBy="group-preferences-name-error"
+                    [invalid]="
+                      (form.controls.name.dirty || form.controls.name.touched) &&
+                      form.controls.name.invalid
+                    "
                   />
+                  @if (
+                    (form.controls.name.dirty || form.controls.name.touched) &&
+                    form.controls.name.invalid
+                  ) {
+                    <z-field-error
+                      id="group-preferences-name-error"
+                      [message]="'groups.groupNameRequired' | transloco"
+                    />
+                  }
                 </label>
 
                 <label class="grid gap-2">
@@ -262,7 +278,10 @@ export class GroupPreferencesPageComponent {
     return !!initialValue && !this.sameFormValue(this.currentFormValue(), initialValue);
   });
   protected readonly form = new FormGroup({
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/\S/)],
+    }),
     description: new FormControl('', { nonNullable: true }),
     avatar: new FormControl<string | null>(null),
   });

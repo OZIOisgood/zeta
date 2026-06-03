@@ -12,7 +12,6 @@ import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   LucideCalendarDays,
-  LucideChevronDown,
   LucideHome,
   LucideLogOut,
   LucideMenu,
@@ -23,7 +22,6 @@ import {
 } from '@lucide/angular';
 import { filter } from 'rxjs';
 import { SessionStore } from '../../features/session/session.store';
-import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
@@ -38,11 +36,9 @@ import { AppShellStore } from '../state/app-shell.store';
     RouterOutlet,
     TranslocoPipe,
     ZAvatarComponent,
-    ZButtonComponent,
     ZIconButtonComponent,
     ZToastComponent,
     LucideCalendarDays,
-    LucideChevronDown,
     LucideHome,
     LucideLogOut,
     LucideMenu,

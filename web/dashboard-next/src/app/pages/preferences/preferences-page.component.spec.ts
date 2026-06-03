@@ -85,8 +85,11 @@ describe('PreferencesPageComponent', () => {
                 emailPreferences: 'Email preferences',
                 emailSummary: 'Choose email notifications.',
                 firstName: 'First Name',
+                firstNameRequired: 'First name is required.',
                 languages: { de: 'German', en: 'English', fr: 'French' },
                 lastName: 'Last Name',
+                lastNameRequired: 'Last name is required.',
+                languageRequired: 'Please select a language.',
                 noTimezones: 'No matching timezones',
                 noLanguages: 'No matching languages',
                 personalData: 'Personal data',
@@ -102,6 +105,7 @@ describe('PreferencesPageComponent', () => {
                 title: 'Preferences',
                 toggleLanguages: 'Toggle language options',
                 toggleTimezones: 'Toggle timezone options',
+                timezoneRequired: 'Please select a timezone.',
               },
               toast: { title: 'Saved' },
             },
@@ -171,5 +175,22 @@ describe('PreferencesPageComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('z-combobox')).toHaveLength(2);
     expect(fixture.nativeElement.querySelectorAll('z-combobox input')).toHaveLength(0);
     expect(fixture.nativeElement.querySelector('z-select')).toBeNull();
+  });
+
+  it('shows a translated inline error for a dirty invalid profile field', async () => {
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+    fixture.componentInstance['activeTab'].set('personal-data');
+    fixture.componentInstance['form'].controls.first_name.setValue('');
+    fixture.componentInstance['form'].controls.first_name.markAsDirty();
+    fixture.detectChanges();
+
+    const error = fixture.nativeElement.querySelector('#preferences-first-name-error');
+    const input = fixture.nativeElement.querySelector('z-text-input input');
+
+    expect(error?.textContent).toContain('First name is required.');
+    expect(input?.getAttribute('aria-invalid')).toBe('true');
+    expect(input?.getAttribute('aria-describedby')).toBe('preferences-first-name-error');
   });
 });

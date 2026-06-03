@@ -309,6 +309,8 @@
     "viewVideo": "View video",
     "uploadFailed": "Upload failed",
     "retry": "Try again",
+    "titleRequired": "Video title is required.",
+    "groupRequired": "Please choose a group.",
     "titlePlaceholder": "e.g. Jump line take 2",
     "descriptionPlaceholder": "Add context, goals, or notes for the reviewer."
   },
@@ -407,7 +409,12 @@
       "namePlaceholder": "e.g. Strategy Session",
       "descriptionOptional": "Description (optional)",
       "descriptionPlaceholder": "Short description",
-      "reasonPlaceholder": "e.g. Holiday"
+      "reasonPlaceholder": "e.g. Holiday",
+      "nameRequired": "Session type name is required.",
+      "durationInvalid": "Enter a duration greater than zero.",
+      "startTimeRequired": "Start time is required.",
+      "endTimeRequired": "End time is required.",
+      "dateRequired": "Date is required."
     },
     "call": {
       "connecting": "Connecting to session...",
@@ -429,7 +436,11 @@
     "emailPreferences": "Email preferences",
     "emailSummary": "Choose which Zeta activity should reach your inbox.",
     "firstName": "First Name",
+    "firstNameRequired": "First name is required.",
     "lastName": "Last Name",
+    "lastNameRequired": "Last name is required.",
+    "languageRequired": "Please select a language.",
+    "timezoneRequired": "Please select a timezone.",
     "selectLanguage": "Select a language",
     "selectTimezone": "Select a timezone",
     "searchLanguages": "Search languages",

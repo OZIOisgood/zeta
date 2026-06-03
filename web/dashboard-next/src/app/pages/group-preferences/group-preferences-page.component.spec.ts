@@ -58,6 +58,7 @@ describe('GroupPreferencesPageComponent', () => {
                 avatarTitle: 'Group image',
                 generalTab: 'General',
                 groupName: 'Group Name',
+                groupNameRequired: 'Group name is required.',
                 namePlaceholder: 'Group name',
                 descriptionPlaceholder: 'Group description',
                 preferences: 'Group Preferences',
@@ -110,5 +111,22 @@ describe('GroupPreferencesPageComponent', () => {
 
     expect(store.loadGroup).toHaveBeenCalledTimes(1);
     expect(fixture.componentInstance['activeTab']()).toBe('delete');
+  });
+
+  it('shows a translated inline error for a dirty invalid group name', async () => {
+    const fixture = TestBed.createComponent(GroupPreferencesPageComponent);
+    fixture.detectChanges();
+
+    paramMap.next(convertToParamMap({ id: 'group-1', tab: 'general' }));
+    await Promise.resolve();
+    fixture.componentInstance['form'].controls.name.setValue('');
+    fixture.componentInstance['form'].controls.name.markAsDirty();
+    fixture.detectChanges();
+
+    const error = fixture.nativeElement.querySelector('#group-preferences-name-error');
+    const input = fixture.nativeElement.querySelector('z-text-input input');
+
+    expect(error?.textContent).toContain('Group name is required.');
+    expect(input?.getAttribute('aria-invalid')).toBe('true');
   });
 });

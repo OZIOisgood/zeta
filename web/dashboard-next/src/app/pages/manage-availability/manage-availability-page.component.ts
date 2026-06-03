@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideCalendarOff, LucidePencil, LucidePlus, LucideTrash } from '@lucide/angular';
@@ -19,6 +19,8 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
 import { ZFormDialogComponent } from '../../shared/ui/dialog/z-form-dialog.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
+import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
+import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
 import { ZGroupCardComponent } from '../../shared/ui/group-card/z-group-card.component';
 import { SelectOption, ZSelectComponent } from '../../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
@@ -42,6 +44,8 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
     ZDialogPanelComponent,
     ZFormDialogComponent,
     ZEmptyStateComponent,
+    ZFieldErrorComponent,
+    ZFieldLabelComponent,
     ZGroupCardComponent,
     ZSelectComponent,
     ZSkeletonComponent,
@@ -339,14 +343,24 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
               : ('sessions.availability.addSessionType' | transloco)
           "
           (cancelled)="close(null)"
-          (saved)="close(sessionTypePayload())"
+          (saved)="closeSessionTypeDialog(close)"
         >
           <label class="grid gap-1 text-sm font-semibold">
-            <span>{{ 'common.fields.name' | transloco }}</span>
+            <z-field-label [label]="'common.fields.name' | transloco" [control]="sessionTypeName" />
             <z-text-input
               [formControl]="sessionTypeName"
               [placeholder]="'sessions.availability.namePlaceholder' | transloco"
+              ariaDescribedBy="session-type-name-error"
+              [invalid]="
+                (sessionTypeName.dirty || sessionTypeName.touched) && sessionTypeName.invalid
+              "
             />
+            @if ((sessionTypeName.dirty || sessionTypeName.touched) && sessionTypeName.invalid) {
+              <z-field-error
+                id="session-type-name-error"
+                [message]="'sessions.availability.nameRequired' | transloco"
+              />
+            }
           </label>
           <label class="grid gap-1 text-sm font-semibold">
             <span>{{ 'common.fields.description' | transloco }}</span>
@@ -357,13 +371,30 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
             />
           </label>
           <label class="grid gap-1 text-sm font-semibold">
-            <span>{{ 'common.fields.duration' | transloco }}</span>
+            <z-field-label
+              [label]="'common.fields.duration' | transloco"
+              [control]="sessionTypeDuration"
+            />
             <z-text-input
               type="number"
               [formControl]="sessionTypeDuration"
               placeholder="45"
               inputMode="numeric"
+              ariaDescribedBy="session-type-duration-error"
+              [invalid]="
+                (sessionTypeDuration.dirty || sessionTypeDuration.touched) &&
+                sessionTypeDuration.invalid
+              "
             />
+            @if (
+              (sessionTypeDuration.dirty || sessionTypeDuration.touched) &&
+              sessionTypeDuration.invalid
+            ) {
+              <z-field-error
+                id="session-type-duration-error"
+                [message]="'sessions.availability.durationInvalid' | transloco"
+              />
+            }
           </label>
         </z-form-dialog>
       </ng-template>
@@ -376,7 +407,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
               : ('sessions.availability.addAvailability' | transloco)
           "
           (cancelled)="close(null)"
-          (saved)="close(availabilityPayload())"
+          (saved)="closeAvailabilityDialog(close)"
         >
           <label class="grid gap-1 text-sm font-semibold">
             <span>{{ 'common.labels.day' | transloco }}</span>
@@ -388,12 +419,47 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
           </label>
           <div class="grid gap-3 sm:grid-cols-2">
             <label class="grid gap-1 text-sm font-semibold">
-              <span>{{ 'common.fields.startTime' | transloco }}</span>
-              <z-text-input type="time" [formControl]="availabilityStart" />
+              <z-field-label
+                [label]="'common.fields.startTime' | transloco"
+                [control]="availabilityStart"
+              />
+              <z-text-input
+                type="time"
+                [formControl]="availabilityStart"
+                ariaDescribedBy="availability-start-error"
+                [invalid]="
+                  (availabilityStart.dirty || availabilityStart.touched) &&
+                  availabilityStart.invalid
+                "
+              />
+              @if (
+                (availabilityStart.dirty || availabilityStart.touched) && availabilityStart.invalid
+              ) {
+                <z-field-error
+                  id="availability-start-error"
+                  [message]="'sessions.availability.startTimeRequired' | transloco"
+                />
+              }
             </label>
             <label class="grid gap-1 text-sm font-semibold">
-              <span>{{ 'common.fields.endTime' | transloco }}</span>
-              <z-text-input type="time" [formControl]="availabilityEnd" />
+              <z-field-label
+                [label]="'common.fields.endTime' | transloco"
+                [control]="availabilityEnd"
+              />
+              <z-text-input
+                type="time"
+                [formControl]="availabilityEnd"
+                ariaDescribedBy="availability-end-error"
+                [invalid]="
+                  (availabilityEnd.dirty || availabilityEnd.touched) && availabilityEnd.invalid
+                "
+              />
+              @if ((availabilityEnd.dirty || availabilityEnd.touched) && availabilityEnd.invalid) {
+                <z-field-error
+                  id="availability-end-error"
+                  [message]="'sessions.availability.endTimeRequired' | transloco"
+                />
+              }
             </label>
           </div>
         </z-form-dialog>
@@ -403,11 +469,22 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
         <z-form-dialog
           [title]="'sessions.availability.blockTime' | transloco"
           (cancelled)="close(null)"
-          (saved)="close(blockedPayload())"
+          (saved)="closeBlockedDialog(close)"
         >
           <label class="grid gap-1 text-sm font-semibold">
-            <span>{{ 'common.fields.date' | transloco }}</span>
-            <z-text-input type="date" [formControl]="blockedDate" />
+            <z-field-label [label]="'common.fields.date' | transloco" [control]="blockedDate" />
+            <z-text-input
+              type="date"
+              [formControl]="blockedDate"
+              ariaDescribedBy="blocked-date-error"
+              [invalid]="(blockedDate.dirty || blockedDate.touched) && blockedDate.invalid"
+            />
+            @if ((blockedDate.dirty || blockedDate.touched) && blockedDate.invalid) {
+              <z-field-error
+                id="blocked-date-error"
+                [message]="'sessions.availability.dateRequired' | transloco"
+              />
+            }
           </label>
           <div class="grid gap-3 sm:grid-cols-2">
             <label class="grid gap-1 text-sm font-semibold">
@@ -445,13 +522,31 @@ export class ManageAvailabilityPageComponent {
   protected readonly editingSessionType = signal<SessionType | null>(null);
   protected readonly editingAvailability = signal<CoachingAvailability | null>(null);
 
-  protected readonly sessionTypeName = new FormControl('', { nonNullable: true });
+  protected readonly sessionTypeName = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.pattern(/\S/)],
+  });
   protected readonly sessionTypeDescription = new FormControl('', { nonNullable: true });
-  protected readonly sessionTypeDuration = new FormControl('45', { nonNullable: true });
-  protected readonly availabilityDay = new FormControl('1', { nonNullable: true });
-  protected readonly availabilityStart = new FormControl('09:00', { nonNullable: true });
-  protected readonly availabilityEnd = new FormControl('17:00', { nonNullable: true });
-  protected readonly blockedDate = new FormControl('', { nonNullable: true });
+  protected readonly sessionTypeDuration = new FormControl('45', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.min(1)],
+  });
+  protected readonly availabilityDay = new FormControl('1', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  protected readonly availabilityStart = new FormControl('09:00', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  protected readonly availabilityEnd = new FormControl('17:00', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  protected readonly blockedDate = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
   protected readonly blockedStart = new FormControl('', { nonNullable: true });
   protected readonly blockedEnd = new FormControl('', { nonNullable: true });
   protected readonly blockedReason = new FormControl('', { nonNullable: true });
@@ -531,9 +626,14 @@ export class ManageAvailabilityPageComponent {
 
   protected prepareSessionType(type: SessionType | null): void {
     this.editingSessionType.set(type);
-    this.sessionTypeName.setValue(type?.name ?? '');
-    this.sessionTypeDescription.setValue(type?.description ?? '');
-    this.sessionTypeDuration.setValue(String(type?.duration_minutes ?? 45));
+    this.sessionTypeName.reset(type?.name ?? '');
+    this.sessionTypeDescription.reset(type?.description ?? '');
+    this.sessionTypeDuration.reset(String(type?.duration_minutes ?? 45));
+  }
+
+  protected closeSessionTypeDialog(close: (result: unknown) => void): void {
+    const payload = this.sessionTypePayload();
+    if (payload) close(payload);
   }
 
   protected sessionTypePayload(): {
@@ -543,7 +643,11 @@ export class ManageAvailabilityPageComponent {
   } | null {
     const name = this.sessionTypeName.value.trim();
     const duration = Number(this.sessionTypeDuration.value);
-    if (!name || !Number.isFinite(duration) || duration <= 0) return null;
+    if (this.sessionTypeName.invalid || this.sessionTypeDuration.invalid) {
+      this.sessionTypeName.markAsTouched();
+      this.sessionTypeDuration.markAsTouched();
+      return null;
+    }
     return {
       name,
       description: this.sessionTypeDescription.value.trim(),
@@ -563,9 +667,14 @@ export class ManageAvailabilityPageComponent {
 
   protected prepareAvailability(item: CoachingAvailability | null): void {
     this.editingAvailability.set(item);
-    this.availabilityDay.setValue(String(item?.day_of_week ?? 1));
-    this.availabilityStart.setValue(item?.start_time ?? '09:00');
-    this.availabilityEnd.setValue(item?.end_time ?? '17:00');
+    this.availabilityDay.reset(String(item?.day_of_week ?? 1));
+    this.availabilityStart.reset(item?.start_time ?? '09:00');
+    this.availabilityEnd.reset(item?.end_time ?? '17:00');
+  }
+
+  protected closeAvailabilityDialog(close: (result: unknown) => void): void {
+    const payload = this.availabilityPayload();
+    if (payload) close(payload);
   }
 
   protected availabilityPayload(): {
@@ -573,7 +682,11 @@ export class ManageAvailabilityPageComponent {
     start_time: string;
     end_time: string;
   } | null {
-    if (!this.availabilityStart.value || !this.availabilityEnd.value) return null;
+    if (this.availabilityStart.invalid || this.availabilityEnd.invalid) {
+      this.availabilityStart.markAsTouched();
+      this.availabilityEnd.markAsTouched();
+      return null;
+    }
     return {
       day_of_week: Number(this.availabilityDay.value),
       start_time: this.availabilityStart.value,
@@ -592,10 +705,15 @@ export class ManageAvailabilityPageComponent {
   }
 
   protected prepareBlockedSlot(): void {
-    this.blockedDate.setValue(new Date().toISOString().slice(0, 10));
-    this.blockedStart.setValue('');
-    this.blockedEnd.setValue('');
-    this.blockedReason.setValue('');
+    this.blockedDate.reset(new Date().toISOString().slice(0, 10));
+    this.blockedStart.reset('');
+    this.blockedEnd.reset('');
+    this.blockedReason.reset('');
+  }
+
+  protected closeBlockedDialog(close: (result: unknown) => void): void {
+    const payload = this.blockedPayload();
+    if (payload) close(payload);
   }
 
   protected blockedPayload(): {
@@ -604,7 +722,10 @@ export class ManageAvailabilityPageComponent {
     end_time?: string;
     reason?: string;
   } | null {
-    if (!this.blockedDate.value) return null;
+    if (this.blockedDate.invalid) {
+      this.blockedDate.markAsTouched();
+      return null;
+    }
     return {
       blocked_date: this.blockedDate.value,
       start_time: this.blockedStart.value || undefined,

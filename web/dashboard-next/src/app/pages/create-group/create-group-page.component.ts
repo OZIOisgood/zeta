@@ -6,6 +6,7 @@ import { GroupsStore } from '../../features/groups/groups.store';
 import { ZAvatarInputComponent } from '../../shared/ui/avatar-input/z-avatar-input.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
 import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
 import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
@@ -18,6 +19,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
     ZAvatarInputComponent,
     ZBreadcrumbsComponent,
     ZButtonComponent,
+    ZFieldErrorComponent,
     ZFieldLabelComponent,
     ZTextInputComponent,
     ZTextareaComponent,
@@ -44,14 +46,23 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
         </div>
 
         <label class="grid gap-2">
-          <z-field-label
-            [label]="'groups.groupName' | transloco"
-            [control]="form.controls.name"
-          />
+          <z-field-label [label]="'groups.groupName' | transloco" [control]="form.controls.name" />
           <z-text-input
             formControlName="name"
             [placeholder]="'groups.namePlaceholder' | transloco"
+            ariaDescribedBy="create-group-name-error"
+            [invalid]="
+              (form.controls.name.dirty || form.controls.name.touched) && form.controls.name.invalid
+            "
           />
+          @if (
+            (form.controls.name.dirty || form.controls.name.touched) && form.controls.name.invalid
+          ) {
+            <z-field-error
+              id="create-group-name-error"
+              [message]="'groups.groupNameRequired' | transloco"
+            />
+          }
         </label>
 
         <label class="grid gap-2">
@@ -95,10 +106,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
           <z-button variant="secondary" type="button" (pressed)="router.navigate(['/groups'])">
             {{ 'common.actions.cancel' | transloco }}
           </z-button>
-          <z-button
-            type="submit"
-            [disabled]="form.invalid || store.mutationStatus() === 'loading'"
-          >
+          <z-button type="submit" [disabled]="store.mutationStatus() === 'loading'">
             {{
               store.mutationStatus() === 'loading'
                 ? ('groups.creating' | transloco)
@@ -114,7 +122,10 @@ export class CreateGroupPageComponent {
   protected readonly store = inject(GroupsStore);
   protected readonly router = inject(Router);
   protected readonly form = new FormGroup({
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/\S/)],
+    }),
     description: new FormControl('', { nonNullable: true }),
     avatar: new FormControl<string | null>(null, { validators: [Validators.required] }),
   });

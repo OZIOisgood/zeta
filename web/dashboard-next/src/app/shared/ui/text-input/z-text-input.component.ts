@@ -20,6 +20,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       [disabled]="isEffectivelyDisabled()"
       [attr.autocomplete]="autocomplete() || null"
       [attr.inputmode]="inputMode() || null"
+      [attr.aria-describedby]="ariaDescribedBy() || null"
+      [attr.aria-invalid]="invalid() || null"
       [ngClass]="classes()"
       (input)="handleInput($event)"
       (blur)="handleBlur()"
@@ -33,6 +35,7 @@ export class ZTextInputComponent implements ControlValueAccessor {
   readonly placeholder = input('');
   readonly autocomplete = input('');
   readonly inputMode = input('');
+  readonly ariaDescribedBy = input('');
   readonly invalid = input(false);
   readonly disabled = input(false);
 

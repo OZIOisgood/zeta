@@ -23,7 +23,14 @@ export type SelectOption = { value: string; label: string };
   template: `
     <div
       ngpSelect
-      class="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md border border-[var(--z-border)] bg-white px-3 text-left text-sm transition hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)] data-[open]:border-[var(--z-primary)] data-[open]:ring-2 data-[open]:ring-orange-100 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+      class="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md border bg-white px-3 text-left text-sm transition hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)] data-[open]:ring-2 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+      [ngClass]="
+        invalid()
+          ? 'border-rose-300 data-[open]:border-rose-500 data-[open]:ring-rose-100'
+          : 'border-[var(--z-border)] data-[open]:border-[var(--z-primary)] data-[open]:ring-orange-100'
+      "
+      [attr.aria-describedby]="ariaDescribedBy() || null"
+      [attr.aria-invalid]="invalid() || null"
       [ngpSelectValue]="value()"
       [ngpSelectDisabled]="disabled()"
       [ngpSelectDropdownOffset]="4"
@@ -102,6 +109,8 @@ export class ZSelectComponent {
   readonly value = input<string | undefined>(undefined);
   readonly options = input.required<SelectOption[]>();
   readonly placeholder = input('Select an option');
+  readonly ariaDescribedBy = input('');
+  readonly invalid = input(false);
   readonly disabled = input(false);
   readonly valueChange = output<string>();
 

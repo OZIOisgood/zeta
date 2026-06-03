@@ -34,6 +34,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       [placeholder]="placeholder()"
       [rows]="rows()"
       [disabled]="isEffectivelyDisabled()"
+      [attr.aria-describedby]="ariaDescribedBy() || null"
+      [attr.aria-invalid]="invalid() || null"
       [ngClass]="classes()"
       (input)="handleInput($event)"
       (blur)="handleBlur()"
@@ -45,6 +47,7 @@ export class ZTextareaComponent implements ControlValueAccessor {
   readonly rows = input(4);
   readonly autoResize = input(false);
   readonly maxRows = input(8);
+  readonly ariaDescribedBy = input('');
   readonly invalid = input(false);
   readonly disabled = input(false);
 
