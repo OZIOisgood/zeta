@@ -44,6 +44,10 @@ export class AuthApiClient {
     return `${this.env.apiUrl}/auth`;
   }
 
+  getLoginUrl(): string {
+    return `${this.apiUrl}/login`;
+  }
+
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/me`);
   }
