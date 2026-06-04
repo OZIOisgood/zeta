@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
 import { Asset, AssetsApiClient, Review } from '../../core/http/assets-api.service';
 import { VideosStore } from './videos.store';
 
@@ -134,5 +135,78 @@ describe('VideosStore', () => {
     expect(enhancedText).toBe('Keep a steadier rhythm.');
     expect(store.enhancementStatus()).toBe('success');
     expect(store.reviewStatus()).toBe('idle');
+  });
+});
+
+describe('threads computed', () => {
+  it('groups replies under root, sorts roots by timestamp_seconds', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: AssetsApiClient,
+          useValue: {
+            listReviews: () =>
+              of([
+                { id: 'r2', content: 'Second root', timestamp_seconds: 5, created_at: '2026-01-01T00:01:00Z' },
+                { id: 'r1', content: 'First root', timestamp_seconds: 10, created_at: '2026-01-01T00:00:00Z' },
+                { id: 'rep1', content: 'Reply A', parent_id: 'r1', created_at: '2026-01-01T00:02:00Z' },
+                { id: 'rep2', content: 'Reply B', parent_id: 'r1', created_at: '2026-01-01T00:03:00Z' },
+              ] as Review[]),
+          },
+        },
+      ],
+    });
+
+    const store = TestBed.inject(VideosStore);
+    await store.loadReviews('video-1');
+
+    const threads = store.threads();
+    expect(threads.length).toBe(2);
+    // r2 has timestamp 5, comes first
+    expect(threads[0].root.id).toBe('r2');
+    expect(threads[0].replies.length).toBe(0);
+    // r1 has timestamp 10, comes second, with two replies in order
+    expect(threads[1].root.id).toBe('r1');
+    expect(threads[1].replies.map((r) => r.id)).toEqual(['rep1', 'rep2']);
+  });
+
+  it('createReview with parentId sends no timestamp to API', async () => {
+    const createReview = vi.fn().mockReturnValue(
+      of({ id: 'rep3', content: 'New reply', parent_id: 'r1', created_at: '2026-01-01T00:04:00Z' } as Review),
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AssetsApiClient, useValue: { createReview } },
+      ],
+    });
+
+    const store = TestBed.inject(VideosStore);
+    await store.createReview('video-1', 'New reply', 30, 'r1');
+
+    expect(createReview).toHaveBeenCalledWith('video-1', 'New reply', undefined, 'r1');
+  });
+
+  it('deleteReview also removes replies from state', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: AssetsApiClient,
+          useValue: {
+            listReviews: () =>
+              of([
+                { id: 'r1', content: 'Root', timestamp_seconds: 0, created_at: '2026-01-01T00:00:00Z' },
+                { id: 'rep1', content: 'Reply', parent_id: 'r1', created_at: '2026-01-01T00:01:00Z' },
+              ] as Review[]),
+            deleteReview: () => of(undefined),
+          },
+        },
+      ],
+    });
+
+    const store = TestBed.inject(VideosStore);
+    await store.loadReviews('video-1');
+    await store.deleteReview('video-1', 'r1');
+
+    expect(store.reviews().length).toBe(0);
   });
 });

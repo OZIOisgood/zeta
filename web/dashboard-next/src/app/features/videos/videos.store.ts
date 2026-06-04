@@ -10,6 +10,8 @@ import {
   successAsyncSlice,
 } from '../../core/state/async-state';
 
+export type Thread = { root: Review; replies: Review[] };
+
 type VideosState = AsyncSlice & {
   detailError: string | null;
   detailStatus: AsyncSlice['status'];
@@ -70,6 +72,25 @@ export const VideosStore = signalStore(
     reviewedCount: computed(
       () => store.assets().filter((asset) => asset.status === 'completed').length,
     ),
+    threads: computed<Thread[]>(() => {
+      const all = store.reviews();
+      const roots = all
+        .filter((r) => !r.parent_id)
+        .sort((a, b) => (a.timestamp_seconds ?? 0) - (b.timestamp_seconds ?? 0));
+      const byParent = new Map<string, Review[]>();
+      for (const r of all) {
+        if (!r.parent_id) continue;
+        const list = byParent.get(r.parent_id) ?? [];
+        list.push(r);
+        byParent.set(r.parent_id, list);
+      }
+      return roots.map((root) => ({
+        root,
+        replies: (byParent.get(root.id) ?? []).sort((a, b) =>
+          a.created_at.localeCompare(b.created_at),
+        ),
+      }));
+    }),
   })),
   withMethods((store, api = inject(AssetsApiClient)) => ({
     async loadVideos(): Promise<void> {
@@ -138,14 +159,17 @@ export const VideosStore = signalStore(
         });
       }
     },
-    async createReview(videoId: string, content: string, timestampSeconds?: number): Promise<void> {
-      patchState(store, {
-        reviewStatus: 'loading',
-        reviewError: null,
-      });
-
+    async createReview(
+      videoId: string,
+      content: string,
+      timestampSeconds?: number,
+      parentId?: string,
+    ): Promise<void> {
+      patchState(store, { reviewStatus: 'loading', reviewError: null });
       try {
-        const review = await firstValueFrom(api.createReview(videoId, content, timestampSeconds));
+        const review = await firstValueFrom(
+          api.createReview(videoId, content, parentId ? undefined : timestampSeconds, parentId),
+        );
         patchState(store, {
           activeAsset: updateAssetVideoReviewCount(store.activeAsset(), videoId, 1),
           reviewStatus: 'success',
@@ -153,11 +177,8 @@ export const VideosStore = signalStore(
           reviews: [...store.reviews(), review],
         });
       } catch (error) {
-        const errorState = errorAsyncSlice(error);
-        patchState(store, {
-          reviewStatus: errorState.status,
-          reviewError: errorState.error,
-        });
+        const e = errorAsyncSlice(error);
+        patchState(store, { reviewStatus: e.status, reviewError: e.error });
       }
     },
     async updateReview(videoId: string, reviewId: string, content: string): Promise<void> {
@@ -173,7 +194,9 @@ export const VideosStore = signalStore(
           reviewError: null,
           reviews: store
             .reviews()
-            .map((review) => (review.id === reviewId ? updatedReview : review)),
+            .map((review) =>
+              review.id === reviewId ? { ...review, content: updatedReview.content } : review,
+            ),
         });
       } catch (error) {
         const errorState = errorAsyncSlice(error);
@@ -184,25 +207,19 @@ export const VideosStore = signalStore(
       }
     },
     async deleteReview(videoId: string, reviewId: string): Promise<void> {
-      patchState(store, {
-        reviewStatus: 'loading',
-        reviewError: null,
-      });
-
+      patchState(store, { reviewStatus: 'loading', reviewError: null });
       try {
+        const replyCount = store.reviews().filter((r) => r.parent_id === reviewId).length;
         await firstValueFrom(api.deleteReview(videoId, reviewId));
         patchState(store, {
-          activeAsset: updateAssetVideoReviewCount(store.activeAsset(), videoId, -1),
+          activeAsset: updateAssetVideoReviewCount(store.activeAsset(), videoId, -(1 + replyCount)),
           reviewStatus: 'success',
           reviewError: null,
-          reviews: store.reviews().filter((review) => review.id !== reviewId),
+          reviews: store.reviews().filter((r) => r.id !== reviewId && r.parent_id !== reviewId),
         });
       } catch (error) {
-        const errorState = errorAsyncSlice(error);
-        patchState(store, {
-          reviewStatus: errorState.status,
-          reviewError: errorState.error,
-        });
+        const e = errorAsyncSlice(error);
+        patchState(store, { reviewStatus: e.status, reviewError: e.error });
       }
     },
     async enhanceReviewText(text: string): Promise<string | null> {
