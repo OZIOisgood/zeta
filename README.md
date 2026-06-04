@@ -97,7 +97,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 
 4. **Run Frontend**:
    ```bash
-   make web:start
+   make web-next:start
    ```
    Dashboard available at `http://localhost:4200`.
 

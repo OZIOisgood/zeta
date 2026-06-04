@@ -1,0 +1,164 @@
+:root {
+  color-scheme: light;
+  --z-bg: #fff8ed;
+  --z-surface: #ffffff;
+  --z-surface-warm: #fff1dc;
+  --z-surface-muted: #f7e4c7;
+  --z-text: #26180f;
+  --z-muted: #735f4d;
+  --z-primary: #ea580c;
+  --z-primary-strong: #c2410c;
+  --z-primary-soft: #fed7aa;
+  --z-accent: #f59e0b;
+  --z-border: #ead2b8;
+  --z-success: #15803d;
+  --z-warning: #b45309;
+  --z-danger: #be123c;
+}
+
+html {
+  min-height: 100%;
+  background: var(--z-bg);
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--z-bg);
+  color: var(--z-text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+@keyframes z-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.z-fade-enter {
+  animation: z-fade-in 160ms ease-out;
+}
+
+.z-fade-leave {
+  animation: z-fade-out 140ms ease-in;
+}
+
+.z-drawer-enter {
+  animation: z-drawer-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.z-drawer-leave {
+  animation: z-drawer-out 160ms ease-in;
+}
+
+.z-list-enter {
+  animation: z-list-in 220ms ease-out;
+}
+
+.z-pop-enter {
+  animation: z-pop-in 140ms ease-out;
+  transform-origin: top right;
+}
+
+.z-pop-leave {
+  animation: z-pop-out 120ms ease-in;
+  transform-origin: top right;
+}
+
+.z-toast-enter {
+  animation: z-toast-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.z-toast-leave {
+  animation: z-toast-out 160ms ease-in;
+}
+
+@keyframes z-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes z-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes z-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes z-drawer-out {
+  to {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes z-list-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes z-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes z-pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes z-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes z-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

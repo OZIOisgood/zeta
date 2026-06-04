@@ -20,15 +20,15 @@
 
 ## 4. Frontend & Design (Dashboard)
 
-- **Framework**: Angular with Taiga UI.
+- **Framework**: Angular with Tailwind CSS, Angular Primitives, Transloco, and NgRx Signal Store in `web/dashboard-next`.
 
-- **Reference**: Follow patterns from another pages `web/dashboard/src/app/pages` for example.
+- **Reference**: Follow established patterns in `web/dashboard-next/src/app`. The former `web/dashboard` Taiga UI application has been removed after the dashboard rewrite cutover.
 
-- **Loading States**: Use Taiga UI skeleton placeholders for asynchronous content loading states. Do not show visible loading-status text for page sections, lists, cards, tables, or other content placeholders unless the state is a non-content operation that cannot be represented as a skeleton.
+- **Loading States**: Use skeleton placeholders for asynchronous content loading states. Do not show visible loading-status text for page sections, lists, cards, tables, or other content placeholders unless the state is a non-content operation that cannot be represented as a skeleton.
 
 ## 5. Quality Assurance
 
-- **Build Check**: Always run a build (`make api:build` or `make web:build`) before marking a task as complete.
+- **Build Check**: Always run a build (`make api:build` or `make web-next:build`) before marking a task as complete.
 - **Verification**: Ensure no regressions are introduced.
 
 ## 6. Task Management
@@ -70,7 +70,10 @@
 
 ## 11. Documentation Resources
 
-- **LLM Docs**: Use these `llms.txt` or `llms-full.txt` resources for comprehensive documentation:
+- **LLM Docs**: Use these `llms.txt` or `llms-full.txt` (e.g. if you need to download it and do a search in the whole documentation) resources for comprehensive documentation:
+  - **Angular**: `https://angular.dev/llms.txt` and `https://angular.dev/assets/context/llms-full.txt`
+  - **Angular Primitives**: `https://angularprimitives.com/assets/llms/llms.txt` and `https://angularprimitives.com/assets/llms/llms-full.txt`
+  - **Storybook**: `https://storybook.js.org/llms.txt` and `https://storybook.js.org/llms-full.txt`
   - **Taiga UI**: `https://taiga-ui.dev/v4/llms.txt` and `https://taiga-ui.dev/v4/llms-full.txt`
   - **Mux**: `https://www.mux.com/llms.txt` and `https://www.mux.com/llms-full.txt`
   - **Agora**: `https://docs.agora.io/en/llms.txt`

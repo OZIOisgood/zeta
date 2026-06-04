@@ -25,11 +25,20 @@ api\:restart:
 	@sleep 1
 	go run ./cmd/api
 
-web\:build:
-	cd web/dashboard && pnpm install && pnpm run build
+web-next\:build:
+	cd web/dashboard-next && pnpm install && pnpm run build
 
-web\:start:
-	cd web/dashboard && pnpm install && pnpm run start
+web-next\:start:
+	cd web/dashboard-next && pnpm install && pnpm run start
+
+web-next\:test:
+	cd web/dashboard-next && pnpm install && pnpm run test:ci
+
+web-next\:storybook:
+	cd web/dashboard-next && pnpm install && pnpm run storybook
+
+web-next\:storybook\:build:
+	cd web/dashboard-next && pnpm install && pnpm run build-storybook
 
 infra\:up:
 	docker-compose -f ./infra/docker-compose.yml up -d --build

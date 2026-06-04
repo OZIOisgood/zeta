@@ -1,0 +1,233 @@
+<main class="min-h-dvh bg-[var(--z-bg)] text-[var(--z-text)]">
+  <div class="flex min-h-dvh w-full">
+    <aside
+      class="hidden w-64 shrink-0 border-r border-[var(--z-border)] bg-white/70 px-4 py-5 lg:sticky lg:top-0 lg:block lg:h-screen lg:overflow-y-auto"
+      aria-label="Primary navigation"
+    >
+      <a class="flex items-center gap-3" routerLink="/" aria-label="Zeta dashboard home">
+        <img
+          src="assets/brand/mark/zeta-horse-mark-orange-128.png"
+          width="40"
+          height="40"
+          class="size-10 shrink-0 rounded-lg"
+          alt=""
+          aria-hidden="true"
+        />
+        <span class="text-2xl font-semibold leading-none">{{ 'app.brand' | transloco }}</span>
+      </a>
+
+      <nav class="mt-8 space-y-1">
+        @for (item of navigation(); track item.id) {
+          <a
+            class="flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+            [routerLink]="item.href"
+            [ngClass]="
+              shell.activeSection() === item.id
+                ? 'bg-[var(--z-surface-warm)] text-[var(--z-primary-strong)]'
+                : 'text-[var(--z-muted)] hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)]'
+            "
+          >
+            @switch (item.icon) {
+              @case ('home') {
+                <svg lucideHome class="size-4" aria-hidden="true"></svg>
+              }
+              @case ('videos') {
+                <svg lucideVideo class="size-4" aria-hidden="true"></svg>
+              }
+              @case ('groups') {
+                <svg lucideUsers class="size-4" aria-hidden="true"></svg>
+              }
+              @default {
+                <svg lucideCalendarDays class="size-4" aria-hidden="true"></svg>
+              }
+            }
+            <span>{{ item.labelKey | transloco }}</span>
+          </a>
+        }
+      </nav>
+    </aside>
+
+    <div class="flex min-w-0 flex-1 flex-col">
+      <header
+        class="sticky top-0 z-20 border-b border-[var(--z-border)] bg-[var(--z-bg)]/90 px-4 py-3 backdrop-blur sm:px-6 lg:px-8"
+      >
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-2">
+            <z-icon-button
+              class="lg:hidden"
+              [label]="'common.openNavigation' | transloco"
+              (pressed)="shell.toggleNavigation()"
+            >
+              <svg lucideMenu class="size-5" aria-hidden="true"></svg>
+            </z-icon-button>
+
+            <div class="min-w-0">
+              <h1 class="truncate text-lg font-semibold sm:text-xl">
+                {{ shell.activeNavigationItem()?.labelKey ?? 'app.brand' | transloco }}
+              </h1>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1 sm:gap-2">
+            <div #userMenu class="relative">
+              <button
+                type="button"
+                class="rounded-md transition hover:ring-2 hover:ring-orange-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                [attr.aria-label]="session.displayName()"
+                [attr.aria-expanded]="shell.isUserMenuOpen()"
+                (click)="shell.toggleUserMenu()"
+              >
+                <z-avatar
+                  class="size-8"
+                  [image]="session.user()?.avatar || undefined"
+                  [fallback]="initials()"
+                  [alt]="session.displayName()"
+                />
+              </button>
+
+              @if (shell.isUserMenuOpen()) {
+                <div
+                  class="absolute right-0 mt-2 w-64 rounded-lg border border-[var(--z-border)] bg-white p-3 shadow-lg shadow-orange-950/10"
+                  animate.enter="z-pop-enter"
+                  animate.leave="z-pop-leave"
+                >
+                  <div class="flex items-center gap-3 border-b border-[var(--z-border)] pb-3">
+                    <z-avatar
+                      class="size-10"
+                      [image]="session.user()?.avatar || undefined"
+                      [fallback]="initials()"
+                      [alt]="session.displayName()"
+                    />
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-semibold">{{ session.displayName() }}</p>
+                      <p class="mt-1 truncate text-xs text-[var(--z-muted)]">
+                        {{ session.user()?.email }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="mt-3 grid gap-1">
+                    <a
+                      routerLink="/preferences/personal-data"
+                      class="flex min-h-9 items-center gap-2 rounded-md px-2 text-sm font-semibold text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)]"
+                    >
+                      <svg lucideSettings class="size-4" aria-hidden="true"></svg>
+                      <span>{{ 'common.preferences' | transloco }}</span>
+                    </a>
+                    <button
+                      type="button"
+                      class="flex min-h-9 w-full items-center gap-2 rounded-md px-2 text-sm font-semibold text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)]"
+                      (click)="session.logout()"
+                    >
+                      <svg lucideLogOut class="size-4" aria-hidden="true"></svg>
+                      <span>{{ 'common.actions.signOut' | transloco }}</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </header>
+
+      @if (shell.isNavigationOpen()) {
+        <div
+          class="fixed inset-0 z-30 lg:hidden"
+          animate.enter="z-fade-enter"
+          animate.leave="z-fade-leave"
+        >
+          <button
+            type="button"
+            class="absolute inset-0 bg-black/20"
+            [attr.aria-label]="'common.closeNavigation' | transloco"
+            (click)="shell.closeNavigation()"
+          ></button>
+          <aside
+            class="absolute inset-y-0 left-0 flex w-[min(20rem,86vw)] flex-col border-r border-[var(--z-border)] bg-white p-4 shadow-xl shadow-orange-950/10"
+            animate.enter="z-drawer-enter"
+            animate.leave="z-drawer-leave"
+            aria-label="Mobile navigation"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <a
+                class="flex min-w-0 items-center gap-3"
+                routerLink="/"
+                aria-label="Zeta dashboard home"
+              >
+                <img
+                  src="assets/brand/mark/zeta-horse-mark-orange-128.png"
+                  width="40"
+                  height="40"
+                  class="size-10 shrink-0 rounded-lg"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span class="min-w-0 text-lg font-semibold leading-none">
+                  {{ 'app.brand' | transloco }}
+                </span>
+              </a>
+              <z-icon-button
+                [label]="'common.closeNavigation' | transloco"
+                (pressed)="shell.closeNavigation()"
+              >
+                <svg lucideX class="size-5" aria-hidden="true"></svg>
+              </z-icon-button>
+            </div>
+
+            <nav class="mt-6 space-y-1">
+              @for (item of navigation(); track item.id) {
+                <a
+                  class="flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition"
+                  [routerLink]="item.href"
+                  [ngClass]="
+                    shell.activeSection() === item.id
+                      ? 'bg-[var(--z-surface-warm)] text-[var(--z-primary-strong)]'
+                      : 'text-[var(--z-muted)] hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)]'
+                  "
+                  (click)="shell.closeNavigation()"
+                >
+                  @switch (item.icon) {
+                    @case ('home') {
+                      <svg lucideHome class="size-4" aria-hidden="true"></svg>
+                    }
+                    @case ('videos') {
+                      <svg lucideVideo class="size-4" aria-hidden="true"></svg>
+                    }
+                    @case ('groups') {
+                      <svg lucideUsers class="size-4" aria-hidden="true"></svg>
+                    }
+                    @default {
+                      <svg lucideCalendarDays class="size-4" aria-hidden="true"></svg>
+                    }
+                  }
+                  <span>{{ item.labelKey | transloco }}</span>
+                </a>
+              }
+            </nav>
+          </aside>
+        </div>
+      }
+
+      <section class="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8" animate.enter="z-list-enter">
+        <div class="mx-auto max-w-6xl">
+          <router-outlet />
+        </div>
+      </section>
+
+      @if (shell.isToastVisible()) {
+        <div
+          class="fixed bottom-4 right-4 z-50 w-[min(24rem,calc(100vw-2rem))]"
+          animate.enter="z-toast-enter"
+          animate.leave="z-toast-leave"
+        >
+          <z-toast
+            [title]="shell.toastTitle()"
+            [message]="shell.toastMessage()"
+            [type]="shell.toastType()"
+            [closeLabel]="'common.dismiss' | transloco"
+            (dismissed)="shell.dismissToast()"
+          />
+        </div>
+      }
+    </div>
+  </div>
+</main>
