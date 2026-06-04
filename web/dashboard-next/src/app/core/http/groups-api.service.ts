@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { EnvService } from './env.service';
 
 export type Group = {
@@ -11,6 +12,22 @@ export type Group = {
   description: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type GroupMembersListKind = 'students' | 'experts';
+
+export type GroupMember = {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  avatar?: string;
+  role?: 'admin' | 'expert' | 'student' | string;
+  name: string;
+};
+
+type ListGroupMembersResponse = {
+  data: Omit<GroupMember, 'name'>[];
 };
 
 @Injectable({ providedIn: 'root' })
@@ -47,5 +64,24 @@ export class GroupsApiClient {
 
   deleteGroup(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  listGroupMembers(groupId: string, kind: GroupMembersListKind): Observable<GroupMember[]> {
+    const segment = kind === 'experts' ? 'experts' : 'users';
+
+    return this.http
+      .get<ListGroupMembersResponse>(`${this.apiUrl}/${groupId}/${segment}`)
+      .pipe(
+        map((response) =>
+          response.data.map((member) => ({
+            ...member,
+            name: `${member.first_name} ${member.last_name}`.trim() || member.email,
+          })),
+        ),
+      );
+  }
+
+  removeGroupMember(groupId: string, userId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${groupId}/users/${userId}`);
   }
 }

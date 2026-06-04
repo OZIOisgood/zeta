@@ -255,9 +255,21 @@
     "deleteFailed": "Failed to delete group",
     "experts": "Experts",
     "students": "Students",
+    "expertsDescription": "People who can review videos and support this group.",
+    "studentsDescription": "Students currently assigned to this coaching group.",
+    "noExperts": "No experts yet",
+    "noExpertsDescription": "Experts assigned to this group will appear here.",
     "noStudents": "No students yet",
     "inviteStudents": "Invite students to join this group.",
     "inviteStudent": "Invite student",
+    "membersLoadFailed": "Group members could not be loaded.",
+    "membersUnavailable": "Member lists are not available",
+    "membersUnavailableDescription": "Your account does not have permission to view students or experts for this group.",
+    "roles": {
+      "admin": "Admin",
+      "expert": "Expert",
+      "student": "Student"
+    },
     "createInvitationTitle": "Create Invitation",
     "invitationReady": "Invitation ready",
     "invitationDialog": {

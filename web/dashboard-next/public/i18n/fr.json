@@ -255,9 +255,21 @@
     "deleteFailed": "Échec de la suppression du groupe",
     "experts": "Experts",
     "students": "Étudiants",
+    "expertsDescription": "Personnes qui peuvent revoir les vidéos et accompagner ce groupe.",
+    "studentsDescription": "Étudiants actuellement associés à ce groupe de coaching.",
+    "noExperts": "Aucun expert pour le moment",
+    "noExpertsDescription": "Les experts associés à ce groupe apparaîtront ici.",
     "noStudents": "Aucun étudiant pour le moment",
     "inviteStudents": "Invitez des étudiants à rejoindre ce groupe.",
     "inviteStudent": "Inviter un étudiant",
+    "membersLoadFailed": "Impossible de charger les membres du groupe.",
+    "membersUnavailable": "Les listes de membres ne sont pas disponibles",
+    "membersUnavailableDescription": "Votre compte n’a pas l’autorisation de voir les étudiants ou experts de ce groupe.",
+    "roles": {
+      "admin": "Admin",
+      "expert": "Expert",
+      "student": "Étudiant"
+    },
     "createInvitationTitle": "Créer une invitation",
     "invitationReady": "Invitation prête",
     "invitationDialog": {

@@ -255,9 +255,21 @@
     "deleteFailed": "Gruppe konnte nicht gelöscht werden",
     "experts": "Experten",
     "students": "Schüler",
+    "expertsDescription": "Personen, die Videos prüfen und diese Gruppe unterstützen können.",
+    "studentsDescription": "Schüler, die dieser Coaching-Gruppe aktuell zugeordnet sind.",
+    "noExperts": "Noch keine Experten",
+    "noExpertsDescription": "Experten, die dieser Gruppe zugeordnet werden, erscheinen hier.",
     "noStudents": "Noch keine Schüler",
     "inviteStudents": "Lade Schüler ein, dieser Gruppe beizutreten.",
     "inviteStudent": "Schüler einladen",
+    "membersLoadFailed": "Gruppenmitglieder konnten nicht geladen werden.",
+    "membersUnavailable": "Mitgliederlisten sind nicht verfügbar",
+    "membersUnavailableDescription": "Dein Konto hat keine Berechtigung, Schüler oder Experten dieser Gruppe anzusehen.",
+    "roles": {
+      "admin": "Admin",
+      "expert": "Experte",
+      "student": "Schüler"
+    },
     "createInvitationTitle": "Einladung erstellen",
     "invitationReady": "Einladung bereit",
     "invitationDialog": {
