@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { Subject } from 'rxjs';
+import { AppShellStore } from '../../core/state/app-shell.store';
 import { Group } from '../../core/http/groups-api.service';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { SessionStore } from '../../features/session/session.store';
@@ -62,8 +63,10 @@ describe('GroupPreferencesPageComponent', () => {
                 namePlaceholder: 'Group name',
                 descriptionPlaceholder: 'Group description',
                 preferences: 'Group Preferences',
+                updated: 'Group updated successfully',
                 phase4: { preferencesSummary: 'Update group details.' },
               },
+              toast: { successTitle: 'Success' },
             },
           },
           translocoConfig: {
@@ -92,6 +95,10 @@ describe('GroupPreferencesPageComponent', () => {
             hasPermission: () => true,
             user: () => ({ id: 'user-1' }),
           },
+        },
+        {
+          provide: AppShellStore,
+          useValue: { showToast: vi.fn() },
         },
       ],
     }).compileComponents();

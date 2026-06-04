@@ -578,6 +578,7 @@ export class VideoDetailsPageComponent {
       this.shell.showToast(
         this.transloco.translate('toast.errorTitle'),
         this.transloco.translate('videos.textEnhanceFailed'),
+        'error',
       );
       return;
     }
@@ -586,6 +587,7 @@ export class VideoDetailsPageComponent {
     this.shell.showToast(
       this.transloco.translate('toast.successTitle'),
       this.transloco.translate('videos.textEnhanced'),
+      'success',
     );
   }
 

@@ -278,9 +278,19 @@
       "joinGroup": "Rejoindre le groupe"
     },
     "inviteDialog": {
+      "title": "Créer une invitation",
+      "description": "Créez un lien d'invitation réutilisable et un QR code. Ajoutez une adresse e-mail si vous souhaitez que Zeta envoie l'invitation directement.",
+      "cardDescription": "Créez un lien ou un QR code partageable pour que les étudiants puissent rejoindre ce groupe.",
+      "emailHint": "Laissez l'e-mail vide pour créer un lien et un QR code génériques à partager.",
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide.",
+      "creating": "Création de l'invitation...",
       "sent": "Invitation envoyée avec succès !",
       "linkCreated": "Lien d'invitation créé !",
       "qrAlt": "QR code d'invitation",
+      "qrUnavailable": "QR indisponible",
+      "shareLink": "Lien de partage",
+      "shareHint": "Les étudiants peuvent utiliser ce lien ou scanner le QR code pour rejoindre le groupe.",
+      "linkCopied": "Lien d'invitation copié",
       "failed": "Échec de la création de l'invitation. Veuillez réessayer."
     },
     "users": {

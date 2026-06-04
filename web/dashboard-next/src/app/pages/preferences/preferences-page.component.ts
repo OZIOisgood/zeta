@@ -519,6 +519,7 @@ export class PreferencesPageComponent {
     this.shell.showToast(
       this.transloco.translate('toast.title'),
       this.transloco.translate('preferences.saveSuccess'),
+      'success',
     );
     this.form.markAsPristine();
   }

@@ -27,6 +27,8 @@ type OverviewCard = {
   delta: string;
 };
 
+export type ToastType = 'success' | 'error' | 'info';
+
 type AppShellState = {
   activeLanguage: DashboardLanguage;
   activeSection: string;
@@ -35,6 +37,7 @@ type AppShellState = {
   isToastVisible: boolean;
   toastMessage: string;
   toastTitle: string;
+  toastType: ToastType;
   navigation: NavigationItem[];
   languages: { value: DashboardLanguage; label: string }[];
   overviewCards: OverviewCard[];
@@ -49,6 +52,7 @@ const initialState: AppShellState = {
   isToastVisible: false,
   toastMessage: '',
   toastTitle: '',
+  toastType: 'info',
   navigation: [
     { id: 'home', label: 'Home', labelKey: 'common.nav.home', href: '/', icon: 'home' },
     {
@@ -129,12 +133,13 @@ export const AppShellStore = signalStore(
         patchState(store, { isUserMenuOpen: false });
       },
       dismissToast,
-      showToast(title: string, message: string): void {
+      showToast(title: string, message: string, type: ToastType = 'info'): void {
         dismissToast();
         patchState(store, {
           isToastVisible: true,
           toastMessage: message,
           toastTitle: title,
+          toastType: type,
         });
         toastTimeout = setTimeout(dismissToast, 4000);
       },

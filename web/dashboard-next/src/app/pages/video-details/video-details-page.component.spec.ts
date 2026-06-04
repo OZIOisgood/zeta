@@ -214,6 +214,10 @@ describe('VideoDetailsPageComponent', () => {
     await component['enhanceEditedReview']();
 
     expect(component['editReviewControl'].value).toBe('Keep a steadier rhythm.');
-    expect(shell.showToast).toHaveBeenCalledWith('Success', 'Text enhanced successfully');
+    expect(shell.showToast).toHaveBeenCalledWith(
+      'Success',
+      'Text enhanced successfully',
+      'success',
+    );
   });
 });

@@ -3,8 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideImage, LucideTriangleAlert, LucideTrash2 } from '@lucide/angular';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
+import { AppShellStore } from '../../core/state/app-shell.store';
 import { SessionStore } from '../../features/session/session.store';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { ZAvatarInputComponent } from '../../shared/ui/avatar-input/z-avatar-input.component';
@@ -158,14 +159,6 @@ type GroupPreferencesFormValue = {
                     {{ store.mutationError() }}
                   </p>
                 }
-                @if (saveSucceeded()) {
-                  <p
-                    class="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800"
-                  >
-                    {{ 'groups.updated' | transloco }}
-                  </p>
-                }
-
                 <div class="flex justify-end">
                   <z-button
                     type="submit"
@@ -254,12 +247,13 @@ type GroupPreferencesFormValue = {
 export class GroupPreferencesPageComponent {
   protected readonly store = inject(GroupsStore);
   protected readonly session = inject(SessionStore);
+  private readonly shell = inject(AppShellStore);
+  private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   protected readonly router = inject(Router);
   protected groupId = '';
   protected readonly activeTab = signal<GroupPreferencesTab>('general');
   protected readonly activeMutation = signal<GroupPreferencesTab | null>(null);
-  protected readonly saveSucceeded = signal(false);
   private readonly formRevision = signal(0);
   private readonly initialFormValue = signal<GroupPreferencesFormValue | null>(null);
   private initializedGroupId = '';
@@ -288,7 +282,6 @@ export class GroupPreferencesPageComponent {
 
   constructor() {
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.saveSucceeded.set(false);
       this.formRevision.update((revision) => revision + 1);
     });
 
@@ -305,7 +298,6 @@ export class GroupPreferencesPageComponent {
         await this.store.loadGroup(this.groupId);
       }
 
-      this.saveSucceeded.set(false);
       this.activeMutation.set(null);
       const group = this.store.activeGroup();
       if (group && this.initializedGroupId !== group.id) {
@@ -345,11 +337,15 @@ export class GroupPreferencesPageComponent {
       avatar: formValue.avatar ?? undefined,
     });
 
-    this.saveSucceeded.set(!!group);
     if (group) {
       const nextValue = this.currentFormValue();
       this.initialFormValue.set(nextValue);
       this.formRevision.update((revision) => revision + 1);
+      this.shell.showToast(
+        this.transloco.translate('toast.successTitle'),
+        this.transloco.translate('groups.updated'),
+        'success',
+      );
     }
   }
 

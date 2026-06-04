@@ -162,7 +162,11 @@ describe('PreferencesPageComponent', () => {
       expect.objectContaining({ first_name: 'Grace', language: 'en', timezone: 'Europe/Rome' }),
     );
     expect(shell.setLanguage).toHaveBeenCalledWith('en');
-    expect(shell.showToast).toHaveBeenCalledWith('Saved', 'Preferences updated successfully');
+    expect(shell.showToast).toHaveBeenCalledWith(
+      'Saved',
+      'Preferences updated successfully',
+      'success',
+    );
   });
 
   it('uses select-like combobox controls for both language and timezone', async () => {

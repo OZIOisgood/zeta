@@ -26,6 +26,11 @@ export type GroupMember = {
   name: string;
 };
 
+export type GroupInvitation = {
+  id: string;
+  code: string;
+};
+
 type ListGroupMembersResponse = {
   data: Omit<GroupMember, 'name'>[];
 };
@@ -83,5 +88,17 @@ export class GroupsApiClient {
 
   removeGroupMember(groupId: string, userId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${groupId}/users/${userId}`);
+  }
+
+  createGroupInvitation(groupId: string, email?: string): Observable<GroupInvitation> {
+    return this.http.post<GroupInvitation>(`${this.apiUrl}/${groupId}/invitations`, {
+      email: email || undefined,
+    });
+  }
+
+  getGroupInvitationQrCode(groupId: string, invitationId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${groupId}/invitations/${invitationId}/qr`, {
+      responseType: 'blob',
+    });
   }
 }
