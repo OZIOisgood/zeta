@@ -20,15 +20,15 @@
 
 ## 4. Frontend & Design (Dashboard)
 
-- **Framework**: Angular with Taiga UI.
+- **Framework**: Angular with Tailwind CSS, Angular Primitives, Transloco, and NgRx Signal Store in `web/dashboard-next`.
 
-- **Reference**: Follow patterns from another pages `web/dashboard/src/app/pages` for example.
+- **Reference**: Follow established patterns in `web/dashboard-next/src/app`. Keep `web/dashboard` available as a legacy behaviour reference while branches still depend on it, but do not add new dashboard work there unless a task explicitly targets the legacy app.
 
-- **Loading States**: Use Taiga UI skeleton placeholders for asynchronous content loading states. Do not show visible loading-status text for page sections, lists, cards, tables, or other content placeholders unless the state is a non-content operation that cannot be represented as a skeleton.
+- **Loading States**: Use skeleton placeholders for asynchronous content loading states. Do not show visible loading-status text for page sections, lists, cards, tables, or other content placeholders unless the state is a non-content operation that cannot be represented as a skeleton.
 
 ## 5. Quality Assurance
 
-- **Build Check**: Always run a build (`make api:build` or `make web:build`) before marking a task as complete.
+- **Build Check**: Always run a build (`make api:build` or `make web-next:build`) before marking a task as complete.
 - **Verification**: Ensure no regressions are introduced.
 
 ## 6. Task Management

@@ -2,8 +2,8 @@
 
 ## Status
 - [x] Defined
-- [ ] In Progress
-- [ ] Completed
+- [x] In Progress
+- [x] Completed
 
 ## Description
 Define a phased rewrite plan for the Angular dashboard. The rewrite must improve the user experience, visual system, frontend architecture, localization, email presentation, and test strategy while keeping the existing product flows recognisable.
@@ -319,7 +319,7 @@ Verification:
 
 - `make email:preview`
 - `make api:build`
-- `make web:build`
+- `make web-next:build`
 
 Backend considerations:
 
@@ -329,20 +329,20 @@ Backend considerations:
 
 Scope:
 
-- Deploy the new Angular application instead of the old dashboard.
-- Update Makefile, Dockerfile, nginx, deployment, and any CI references from the old dashboard app to the new app as needed.
-- Remove unused Taiga UI imports, styles, assets, providers, and dependencies.
-- Remove the old dashboard application only after the new app covers the required flows and deployment cutover is verified.
-- Remove `ngx-translate` once all dashboard usage is migrated to Transloco.
-- Remove `provideAnimations()` and legacy animation dependencies once no longer required.
-- Update `instructions/CONSTITUTION.md` frontend section to reflect the new standard after the migration is accepted.
+- Deploy the new Angular application from `web/dashboard-next` instead of the old dashboard.
+- Keep the folder name `web/dashboard-next` for now because other developers have branches based on this rewrite branch.
+- Update Dockerfile, nginx, deployment, and CI references from the old dashboard app to `web/dashboard-next` as needed.
+- Delete legacy `web:*` Makefile commands while keeping the `web-next:*` commands unchanged.
+- Keep the old dashboard application in place until branch consumers no longer depend on it.
+- Defer deleting Taiga UI, ngx-translate, old dashboard dependencies, and old dashboard source until the branch coordination window closes.
+- Update `instructions/CONSTITUTION.md` frontend section to reflect the accepted new dashboard standard.
 - Update root `README.md` if user journeys, architecture, setup, or commands change.
 - Mark related issue entries if an `ISSUES.md` file is present.
 
 Testing:
 
-- Full dashboard build.
-- Full dashboard tests.
+- Full `dashboard-next` build.
+- Full `dashboard-next` tests.
 - Storybook build.
 - Focused manual route walkthrough across mobile and desktop sizes.
 
@@ -377,23 +377,28 @@ The following items are intentionally not part of the main rewrite plan. They ma
 - Add broader browser-backed test coverage for responsive layout beyond targeted high-risk components.
 
 ## Acceptance Criteria
-- [ ] The new dashboard is implemented as a separate Angular application under `web/` until deployment cutover is complete.
-- [ ] Tailwind CSS is the primary styling mechanism for the new dashboard.
-- [ ] Small SCSS/CSS remains only for design tokens, native animation classes, primitive state selectors, complex layout exceptions, and email CSS.
-- [ ] Taiga UI is not used by new dashboard code.
-- [ ] Angular Primitives are used for accessible behaviour primitives where suitable.
-- [ ] NgRx Signal Store is used for feature state in the new dashboard.
-- [ ] No Angular signal facade pattern is introduced.
-- [ ] Transloco replaces ngx-translate for the new dashboard and eventually for all dashboard UI.
-- [ ] Angular `animate.enter` and `animate.leave` are used for new enter/leave motion.
-- [ ] Storybook is configured locally and covers core UI components and key states.
-- [ ] Tests are added or updated for high-value behaviour without pursuing full coverage.
-- [ ] Email templates visually align with the new dashboard design.
-- [ ] Logo and illustration candidates are generated in the orange-white style and reviewed before production adoption.
-- [ ] Backend refactors or fixes discovered during the rewrite are recorded as explicit tasks or phase items.
-- [ ] The final cutover removes unused Taiga UI and ngx-translate dependencies.
-- [ ] `make web:build` passes before any implementation phase is marked complete.
-- [ ] Relevant Go tests/builds pass when backend or email files change.
+- [x] The new dashboard is implemented as a separate Angular application under `web/`.
+- [x] Tailwind CSS is the primary styling mechanism for the new dashboard.
+- [x] Small SCSS/CSS remains only for design tokens, native animation classes, primitive state selectors, complex layout exceptions, and email CSS.
+- [x] Taiga UI is not used by new dashboard code.
+- [x] Angular Primitives are used for accessible behaviour primitives where suitable.
+- [x] NgRx Signal Store is used for feature state in the new dashboard.
+- [x] No Angular signal facade pattern is introduced.
+- [x] Transloco replaces ngx-translate for the new dashboard.
+- [x] Angular `animate.enter` and `animate.leave` are used for new enter/leave motion.
+- [x] Storybook is configured locally and covers core UI components and key states.
+- [x] Tests are added or updated for high-value behaviour without pursuing full coverage.
+- [x] Email templates visually align with the new dashboard design.
+- [x] Logo and illustration candidates are generated in the orange-white style and reviewed before production adoption.
+- [x] Backend refactors or fixes discovered during the rewrite are recorded as explicit tasks or phase items.
+- [x] Deployment automation now builds `web/dashboard-next` for the dashboard service while preserving the `dashboard-next` folder name.
+- [x] `make web-next:build` passes before any implementation phase is marked complete.
+- [x] Relevant Go tests/builds pass when backend or email files change.
+
+Deferred branch-coordination cleanup:
+
+- [ ] Remove the old `web/dashboard` source and legacy dependencies once dependent branches have moved forward.
+- [ ] Rename `dashboard-next` only if and when the team decides branch coordination allows it.
 
 ## Resolved Planning Decisions
 
@@ -401,4 +406,4 @@ The following items are intentionally not part of the main rewrite plan. They ma
 - The new app will be deployed instead of the old dashboard when ready.
 - Storybook remains local-only during the planned rewrite. Possible deployment is deferred.
 - Visual regression testing is skipped for now and listed as a deferred option.
-- `instructions/CONSTITUTION.md` should be updated during final cutover, when the old dashboard and Taiga UI implementation are removed.
+- `instructions/CONSTITUTION.md` was updated during Phase 7 to make `web/dashboard-next` the active dashboard standard while keeping `web/dashboard` as a temporary legacy reference for branch coordination.

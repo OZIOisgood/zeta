@@ -25,12 +25,6 @@ api\:restart:
 	@sleep 1
 	go run ./cmd/api
 
-web\:build:
-	cd web/dashboard && pnpm install && pnpm run build
-
-web\:start:
-	cd web/dashboard && pnpm install && pnpm run start
-
 web-next\:build:
 	cd web/dashboard-next && pnpm install && pnpm run build
 

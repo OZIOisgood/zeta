@@ -83,4 +83,4 @@ Notes:
 
 ## Next Steps
 
-- Phase 7 should complete deployment cutover, remove legacy dashboard dependencies after verification, and update the frontend constitution once the replacement application is accepted.
+- Phase 7 completed the deployment cutover preparation, updated the frontend constitution, removed legacy Makefile commands, and preserved `web/dashboard-next` plus `web/dashboard` for branch coordination.
