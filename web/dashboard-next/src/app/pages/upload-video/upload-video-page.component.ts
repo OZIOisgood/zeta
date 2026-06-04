@@ -18,9 +18,9 @@ import { GroupsStore } from '../../features/groups/groups.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZComboboxComponent } from '../../shared/ui/combobox/z-combobox.component';
 import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
 import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
-import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZStepperComponent, type StepperStep } from '../../shared/ui/stepper/z-stepper.component';
 import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
@@ -38,9 +38,9 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
     ZBadgeComponent,
     ZBreadcrumbsComponent,
     ZButtonComponent,
+    ZComboboxComponent,
     ZFieldErrorComponent,
     ZFieldLabelComponent,
-    ZSelectComponent,
     ZSkeletonComponent,
     ZStepperComponent,
     ZTextInputComponent,
@@ -178,8 +178,11 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
             @if (groups.status() === 'loading') {
               <z-skeleton class="block h-11 w-full"></z-skeleton>
             } @else {
-              <z-select
-                [value]="form.controls.groupId.value"
+              <z-combobox
+                [label]="'upload.searchGroups' | transloco"
+                [toggleLabel]="'upload.toggleGroups' | transloco"
+                [noOptionsLabel]="'upload.noGroups' | transloco"
+                [value]="form.controls.groupId.value || undefined"
                 [options]="groupOptions()"
                 [placeholder]="'upload.chooseGroup' | transloco"
                 ariaDescribedBy="upload-group-error"

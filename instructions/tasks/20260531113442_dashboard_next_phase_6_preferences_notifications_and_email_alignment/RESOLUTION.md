@@ -36,6 +36,7 @@ Completed Phase 6 for `web/dashboard-next`: migrated the personal preferences an
 - Replaced the navbar user-menu text trigger with a compact 32px rounded-square user avatar while keeping the dropdown identity avatar at 40px.
 - Added translated, accessible inline validation feedback for dirty or touched invalid fields across preferences, group settings, group creation, video upload details, and availability dialogs.
 - Restored the old dashboard's shared permission service and route-level permission guard in `dashboard-next`, then aligned navigation and primary feature actions with those permission checks.
+- Reused the fixed button-only combobox for Upload Video group selection so the Enter Details dropdown uses the same stable portal positioning as Preferences.
 - Hid the First Steps sidebar after its checklist is complete so dashboard content uses the full available width.
 - Added the missing Group Preferences page header and icon-led section headers, and stopped route-only tab changes from reloading group data.
 - Cleared the completed booking mutation whenever the booking page is entered so users can book another session without reloading.
