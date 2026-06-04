@@ -67,3 +67,12 @@ SET avatar     = $2,
     updated_at = NOW()
 WHERE user_id = $1
 RETURNING *;
+
+-- name: UpsertUserName :exec
+INSERT INTO user_preferences (user_id, language, first_name, last_name)
+VALUES ($1, 'en', $2, $3)
+ON CONFLICT (user_id)
+DO UPDATE
+SET first_name = EXCLUDED.first_name,
+    last_name  = EXCLUDED.last_name,
+    updated_at = NOW();

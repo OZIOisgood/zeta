@@ -2,8 +2,10 @@ package reviews
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
@@ -13,6 +15,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/go-chi/chi/v5"
+	pgx "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -37,16 +40,24 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Delete("/{id}/reviews/{reviewId}", h.DeleteReview)
 }
 
+type ReviewAuthor struct {
+	Name   string `json:"name"`
+	Avatar string `json:"avatar,omitempty"`
+}
+
 type ReviewResponse struct {
-	ID               string    `json:"id"`
-	Content          string    `json:"content"`
-	TimestampSeconds *int32    `json:"timestamp_seconds,omitempty"`
-	CreatedAt        time.Time `json:"created_at"`
+	ID               string        `json:"id"`
+	Content          string        `json:"content"`
+	TimestampSeconds *int32        `json:"timestamp_seconds,omitempty"`
+	ParentID         *string       `json:"parent_id,omitempty"`
+	Author           *ReviewAuthor `json:"author,omitempty"`
+	CreatedAt        time.Time     `json:"created_at"`
 }
 
 type CreateReviewRequest struct {
-	Content          string `json:"content"`
-	TimestampSeconds *int32 `json:"timestamp_seconds,omitempty"`
+	Content          string  `json:"content"`
+	TimestampSeconds *int32  `json:"timestamp_seconds,omitempty"`
+	ParentID         *string `json:"parent_id,omitempty"`
 }
 
 type UpdateReviewRequest struct {
@@ -91,21 +102,40 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := make([]ReviewResponse, len(reviews))
-	for i, review := range reviews {
+	for i, row := range reviews {
 		var createdAt time.Time
-		if review.CreatedAt.Valid {
-			createdAt = review.CreatedAt.Time
+		if row.CreatedAt.Valid {
+			createdAt = row.CreatedAt.Time
 		}
 
-		var timestampSeconds *int32
-		if review.TimestampSeconds.Valid {
-			timestampSeconds = &review.TimestampSeconds.Int32
+		var tsSeconds *int32
+		if row.TimestampSeconds.Valid {
+			tsSeconds = &row.TimestampSeconds.Int32
+		}
+
+		var parentID *string
+		if row.ParentID.Valid {
+			s := pgutil.UUIDToString(row.ParentID)
+			parentID = &s
+		}
+
+		var author *ReviewAuthor
+		if row.AuthorFirstName.Valid || row.AuthorLastName.Valid {
+			name := strings.TrimSpace(row.AuthorFirstName.String + " " + row.AuthorLastName.String)
+			if name != "" {
+				author = &ReviewAuthor{Name: name}
+				if row.AuthorAvatar.Valid && row.AuthorAvatar.String != "" {
+					author.Avatar = row.AuthorAvatar.String
+				}
+			}
 		}
 
 		response[i] = ReviewResponse{
-			ID:               pgutil.UUIDToString(review.ID),
-			Content:          review.Content,
-			TimestampSeconds: timestampSeconds,
+			ID:               pgutil.UUIDToString(row.ID),
+			Content:          row.Content,
+			TimestampSeconds: tsSeconds,
+			ParentID:         parentID,
+			Author:           author,
 			CreatedAt:        createdAt,
 		}
 	}
@@ -168,6 +198,53 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Resolve parent_id: validate, enforce single-level, strip timestamp for replies.
+	var parentID pgtype.UUID
+	if req.ParentID != nil {
+		var rawParentID pgtype.UUID
+		if err := rawParentID.Scan(*req.ParentID); err != nil {
+			http.Error(w, "Invalid parent_id", http.StatusBadRequest)
+			return
+		}
+		parent, err := h.q.GetVideoReview(ctx, rawParentID)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				log.WarnContext(ctx, "reply_parent_not_found",
+					slog.String("component", "reviews"),
+					slog.String("parent_id", *req.ParentID),
+				)
+				http.Error(w, "Parent review not found", http.StatusBadRequest)
+				return
+			}
+			log.ErrorContext(ctx, "get_parent_review_failed",
+				slog.String("component", "reviews"),
+				slog.String("video_id", idStr),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to validate parent review", http.StatusInternalServerError)
+			return
+		}
+		if parent.VideoID != videoID {
+			log.WarnContext(ctx, "reply_cross_video_rejected",
+				slog.String("component", "reviews"),
+				slog.String("video_id", idStr),
+				slog.String("parent_id", *req.ParentID),
+			)
+			http.Error(w, "Parent review belongs to a different video", http.StatusBadRequest)
+			return
+		}
+		// Re-root to top level: if the parent is itself a reply, use its parent.
+		if parent.ParentID.Valid {
+			parentID = parent.ParentID
+		} else {
+			parentID = rawParentID
+		}
+		// Replies never carry a video timestamp.
+		req.TimestampSeconds = nil
+	}
+
+	authorID := pgtype.Text{String: userInfo.ID, Valid: userInfo.ID != ""}
+
 	var timestampSeconds pgtype.Int4
 	if req.TimestampSeconds != nil {
 		timestampSeconds = pgtype.Int4{Int32: *req.TimestampSeconds, Valid: true}
@@ -177,6 +254,8 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		VideoID:          videoID,
 		Content:          req.Content,
 		TimestampSeconds: timestampSeconds,
+		ParentID:         parentID,
+		AuthorID:         authorID,
 	})
 	if err != nil {
 		log.ErrorContext(ctx, "create_review_failed",
@@ -203,6 +282,17 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	}
 	if review.TimestampSeconds.Valid {
 		responseData["timestamp_seconds"] = review.TimestampSeconds.Int32
+	}
+	if review.ParentID.Valid {
+		responseData["parent_id"] = pgutil.UUIDToString(review.ParentID)
+	}
+	authorName := strings.TrimSpace(userInfo.FirstName + " " + userInfo.LastName)
+	if authorName != "" {
+		author := map[string]interface{}{"name": authorName}
+		if prefs, prefErr := h.q.GetUserPreferences(ctx, userInfo.ID); prefErr == nil && prefs.Avatar != "" {
+			author["avatar"] = prefs.Avatar
+		}
+		responseData["author"] = author
 	}
 
 	json.NewEncoder(w).Encode(responseData)
@@ -266,6 +356,25 @@ func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 
 	if req.Content == "" {
 		http.Error(w, "Content is required", http.StatusBadRequest)
+		return
+	}
+
+	existing, err := h.q.GetVideoReview(ctx, reviewID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Review not found", http.StatusNotFound)
+			return
+		}
+		log.ErrorContext(ctx, "get_review_for_update_failed",
+			slog.String("component", "reviews"),
+			slog.String("review_id", reviewIdStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to fetch review", http.StatusInternalServerError)
+		return
+	}
+	if existing.AuthorID.Valid && existing.AuthorID.String != userInfo.ID {
+		http.Error(w, "Cannot edit another user's review", http.StatusForbidden)
 		return
 	}
 
@@ -340,6 +449,25 @@ func (h *Handler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 	var reviewID pgtype.UUID
 	if err := reviewID.Scan(reviewIdStr); err != nil {
 		http.Error(w, "Invalid review ID", http.StatusBadRequest)
+		return
+	}
+
+	existing, err := h.q.GetVideoReview(ctx, reviewID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Review not found", http.StatusNotFound)
+			return
+		}
+		log.ErrorContext(ctx, "get_review_for_delete_failed",
+			slog.String("component", "reviews"),
+			slog.String("review_id", reviewIdStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to fetch review", http.StatusInternalServerError)
+		return
+	}
+	if existing.AuthorID.Valid && existing.AuthorID.String != userInfo.ID {
+		http.Error(w, "Cannot delete another user's review", http.StatusForbidden)
 		return
 	}
 

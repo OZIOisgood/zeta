@@ -55,6 +55,7 @@ type Querier interface {
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
 	// === Timezone ===
 	GetUserTimezone(ctx context.Context, userID string) (string, error)
+	GetVideoReview(ctx context.Context, id pgtype.UUID) (GetVideoReviewRow, error)
 	GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams) (GetVisibleAssetRow, error)
 	HasVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (bool, error)
 	ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.UUID) ([]string, error)
@@ -74,7 +75,7 @@ type Querier interface {
 	ListSessionTypesByExpertGroup(ctx context.Context, arg ListSessionTypesByExpertGroupParams) ([]CoachingSessionType, error)
 	ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UUID) ([]CoachingSessionType, error)
 	ListUserGroups(ctx context.Context, userID string) ([]ListUserGroupsRow, error)
-	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]VideoReview, error)
+	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]ListVideoReviewsRow, error)
 	ListVisibleAssets(ctx context.Context, arg ListVisibleAssetsParams) ([]ListVisibleAssetsRow, error)
 	MarkBookingRecordingFailed(ctx context.Context, arg MarkBookingRecordingFailedParams) error
 	MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error)
@@ -99,6 +100,7 @@ type Querier interface {
 	UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusParams) error
 	UpdateVideoStatusByUploadID(ctx context.Context, arg UpdateVideoStatusByUploadIDParams) error
 	UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarParams) (UserPreference, error)
+	UpsertUserName(ctx context.Context, arg UpsertUserNameParams) error
 	UpsertUserPreferences(ctx context.Context, arg UpsertUserPreferencesParams) (UserPreference, error)
 	UpsertUserTimezone(ctx context.Context, arg UpsertUserTimezoneParams) error
 }
