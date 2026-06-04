@@ -8,7 +8,7 @@
 
 ## Description
 
-Complete the constrained Phase 7 cleanup for the dashboard rewrite. The dashboard service should now build and deploy from `web/dashboard-next`, but the folder must not be renamed and the old `web/dashboard` folder must remain in place because other developers have branches based on this rewrite branch.
+Complete the Phase 7 cleanup for the dashboard rewrite. The dashboard service should now build and deploy from `web/dashboard-next`; the folder must not be renamed because other developers have branches based on this rewrite branch, but the old `web/dashboard` application can be removed because dependent work has moved to the new dashboard.
 
 ## User Story / Requirement
 
@@ -19,7 +19,7 @@ As a maintainer, I want the dashboard cutover automation and documentation to po
 - Rewrite plan: `instructions/tasks/20260516105903_dashboard_ux_ui_rewrite_plan/README.md`.
 - Previous phase record: `instructions/tasks/20260531113442_dashboard_next_phase_6_preferences_notifications_and_email_alignment/README.md`.
 - New app: `web/dashboard-next`.
-- Legacy app retained temporarily: `web/dashboard`.
+- Legacy app removed: `web/dashboard`.
 - Active deployment service/image name remains `zeta-dashboard` / `zeta/dashboard`.
 - Terraform already points the dashboard Cloud Run service at the same image name, so Terraform does not need a folder-level change.
 
@@ -29,7 +29,6 @@ As a maintainer, I want the dashboard cutover automation and documentation to po
 - Do not delete the current branch after merge.
 - Delete old dashboard Makefile commands, but keep `web-next:*` commands unchanged.
 - Do not perform the infrastructure action or deployment; the maintainer will do those.
-- Treat old Phase 7 instructions about removing the legacy dashboard as deferred because they are outdated for the current branch coordination state.
 
 ## Acceptance Criteria
 
@@ -40,8 +39,9 @@ As a maintainer, I want the dashboard cutover automation and documentation to po
 - [x] Legacy `web:*` Makefile commands are removed.
 - [x] `web-next:*` Makefile commands remain unchanged.
 - [x] Root README points local frontend startup at `make web-next:start`.
-- [x] Frontend constitution identifies `web/dashboard-next` as the active dashboard standard and keeps `web/dashboard` as a temporary legacy reference.
-- [x] Parent rewrite task is marked complete with deferred cleanup noted.
+- [x] Frontend constitution identifies `web/dashboard-next` as the active dashboard standard and records that the old dashboard was removed.
+- [x] Parent rewrite task is marked complete with only the future folder rename deferred.
+- [x] Old `web/dashboard` application is deleted.
 - [x] Terraform is reviewed and left unchanged because the dashboard service and image name stay stable.
 
 ## Verification

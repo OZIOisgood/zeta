@@ -17,9 +17,9 @@ Created and completed the phased plan for the Angular dashboard UX/UI rewrite. T
 - Updated the design direction to an orange-white palette.
 - Added future logo and illustration generation requirements, including candidate review before production adoption.
 - Recorded that `instructions/CONSTITUTION.md` should be updated during final cutover rather than before Phase 1.
-- Completed Phase 7 with a constrained cutover: CI and deployment workflows now build `web/dashboard-next`, Docker/nginx packaging exists inside `web/dashboard-next`, legacy `web:*` Makefile commands were removed, and `web-next:*` commands remain unchanged.
-- Kept `web/dashboard` in the repository because dependent development branches still use this rewrite branch as their base.
-- Deferred deleting old dashboard source and legacy dependencies until branch coordination allows it.
+- Completed Phase 7 with the dashboard cutover: CI and deployment workflows now build `web/dashboard-next`, Docker/nginx packaging exists inside `web/dashboard-next`, legacy `web:*` Makefile commands were removed, and `web-next:*` commands remain unchanged.
+- Removed the old `web/dashboard` Taiga UI application and its legacy dependencies after confirming dependent branch work is already based on the new dashboard.
+- Kept the `web/dashboard-next` folder name for branch coordination.
 
 ## Verification
 - [x] Build passed

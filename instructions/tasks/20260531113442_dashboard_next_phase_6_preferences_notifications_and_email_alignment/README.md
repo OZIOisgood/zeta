@@ -23,7 +23,7 @@ As an email recipient, I want transactional emails to visually match the rewritt
 - Rewrite plan: `instructions/tasks/20260516105903_dashboard_ux_ui_rewrite_plan/README.md`.
 - Previous phase record: `instructions/tasks/20260531113441_dashboard_next_phase_5_live_coaching_flows/README.md`.
 - New app: `web/dashboard-next`.
-- Current dashboard behaviour reference: `web/dashboard/src/app/pages/user-preferences-page/`.
+- Legacy dashboard behaviour reference used during this phase: `web/dashboard/src/app/pages/user-preferences-page/` before Phase 7 removed the old dashboard source.
 - Existing reusable Zeta controls: `web/dashboard-next/src/app/shared/ui/`.
 - Existing preferences API client: `web/dashboard-next/src/app/core/http/auth-api.service.ts`.
 - Existing session store: `web/dashboard-next/src/app/features/session/session.store.ts`.
@@ -77,7 +77,7 @@ The preferences form depends on the authenticated session loaded by `SessionStor
 - [x] `make web-next:storybook:build` passes.
 - [x] `make email:preview` passes.
 - [x] `make api:build` passes.
-- [x] `make web:build` passes for the legacy dashboard regression check.
+- [x] Legacy dashboard regression check passed during Phase 6 before Phase 7 removed the old dashboard source.
 
 ## Follow-Up UX Refinements
 

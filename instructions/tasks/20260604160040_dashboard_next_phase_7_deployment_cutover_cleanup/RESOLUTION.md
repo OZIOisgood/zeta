@@ -2,7 +2,7 @@
 
 ## Summary
 
-Completed the constrained Phase 7 cleanup for `web/dashboard-next`. The repository now prepares the existing `zeta-dashboard` deployment service to build from the rewritten dashboard while preserving both dashboard folders for branch coordination.
+Completed the Phase 7 cleanup for `web/dashboard-next`. The repository now prepares the existing `zeta-dashboard` deployment service to build from the rewritten dashboard, keeps the `web/dashboard-next` folder name for branch coordination, and removes the old Taiga UI dashboard.
 
 ## Technical Details
 
@@ -12,9 +12,10 @@ Completed the constrained Phase 7 cleanup for `web/dashboard-next`. The reposito
 - Kept the deployed image and Cloud Run service names unchanged.
 - Removed the legacy `web:build` and `web:start` Makefile targets.
 - Kept all `web-next:*` Makefile targets unchanged.
+- Removed the old `web/dashboard` application and its legacy package files.
 - Updated the root README frontend startup command to `make web-next:start`.
 - Updated the frontend constitution so new dashboard work targets `web/dashboard-next`.
-- Updated the parent rewrite task and Phase 6 resolution to reflect Phase 7 completion and the deferred legacy-dashboard removal.
+- Updated the parent rewrite task and Phase 6 resolution to reflect Phase 7 completion and the dashboard-source cleanup.
 - Reviewed Terraform and left it unchanged because it already refers to the stable dashboard service and image names, not the source folder.
 
 ## Verification
@@ -29,5 +30,5 @@ Completed the constrained Phase 7 cleanup for `web/dashboard-next`. The reposito
 Notes:
 
 - Manual infrastructure action and deployment are intentionally left to the maintainer.
-- The old `web/dashboard` folder remains for dependent branches and legacy reference.
+- The old `web/dashboard` folder was removed after the branch-coordination clarification.
 - The first local `make web-next:build` attempt exposed a corrupted local `node_modules` package tree. `pnpm install --force` repaired the untracked dependency directory, and the build then passed.

@@ -51,7 +51,7 @@ Completed Phase 6 for `web/dashboard-next`: migrated the personal preferences an
 - [x] `make web-next:storybook:build`
 - [x] `make email:preview`
 - [x] `make api:build`
-- [x] `make web:build`
+- [x] `make web:build` before Phase 7 removed the legacy dashboard target
 - [x] `go test ./... -count=1`
 - [x] Dashboard locale JSON validated with `jq empty`.
 - [x] `git diff --check`
@@ -61,7 +61,7 @@ Completed Phase 6 for `web/dashboard-next`: migrated the personal preferences an
 Notes:
 
 - The dashboard-next build retains its bundle-budget warning and Agora-related CommonJS optimization warnings.
-- The legacy dashboard build retains its existing bundle-budget, Agora CommonJS, and stale `baseline-browser-mapping` warnings.
+- The legacy dashboard build retained its existing bundle-budget, Agora CommonJS, and stale `baseline-browser-mapping` warnings before Phase 7 removed the legacy dashboard target.
 - Storybook build completed with its existing generated bundle-size warnings.
 - Verification commands were run with the installed Node 20 runtime explicitly placed first in `PATH` because the default global pnpm shim resolves to an older Node runtime in this environment.
 
@@ -83,4 +83,4 @@ Notes:
 
 ## Next Steps
 
-- Phase 7 completed the deployment cutover preparation, updated the frontend constitution, removed legacy Makefile commands, and preserved `web/dashboard-next` plus `web/dashboard` for branch coordination.
+- Phase 7 completed the deployment cutover preparation, updated the frontend constitution, removed legacy Makefile commands, kept the `web/dashboard-next` folder name, and deleted the old `web/dashboard` source.

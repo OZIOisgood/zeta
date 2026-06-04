@@ -1,9 +1,0 @@
-<app-page-container>
-  <app-groups-list
-    [groups]="(groups$ | async) || []"
-    [loading]="loading()"
-    [showCreateTile]="showCreateTile()"
-    (createGroup)="onCreateGroup()"
-    (selectGroup)="onSelectGroup($event)"
-  ></app-groups-list>
-</app-page-container>

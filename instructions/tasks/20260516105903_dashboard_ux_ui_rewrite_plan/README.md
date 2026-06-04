@@ -33,7 +33,7 @@ As a project maintainer, I want the rewrite to be built as a new Angular applica
 - Use targeted tests rather than pursuing full coverage.
 - Update email templates so transactional emails visually align with the new dashboard system.
 
-### Current Dashboard Surface
+### Legacy Dashboard Surface At Planning Time
 
 - Angular app root: `web/dashboard`.
 - Current Angular version: Angular 21 package set.
@@ -333,8 +333,8 @@ Scope:
 - Keep the folder name `web/dashboard-next` for now because other developers have branches based on this rewrite branch.
 - Update Dockerfile, nginx, deployment, and CI references from the old dashboard app to `web/dashboard-next` as needed.
 - Delete legacy `web:*` Makefile commands while keeping the `web-next:*` commands unchanged.
-- Keep the old dashboard application in place until branch consumers no longer depend on it.
-- Defer deleting Taiga UI, ngx-translate, old dashboard dependencies, and old dashboard source until the branch coordination window closes.
+- Remove the old dashboard application after confirming dependent branch work has moved to `web/dashboard-next`.
+- Remove Taiga UI, ngx-translate, old dashboard dependencies, and old dashboard source with the old application.
 - Update `instructions/CONSTITUTION.md` frontend section to reflect the accepted new dashboard standard.
 - Update root `README.md` if user journeys, architecture, setup, or commands change.
 - Mark related issue entries if an `ISSUES.md` file is present.
@@ -395,9 +395,10 @@ The following items are intentionally not part of the main rewrite plan. They ma
 - [x] `make web-next:build` passes before any implementation phase is marked complete.
 - [x] Relevant Go tests/builds pass when backend or email files change.
 
+- [x] Remove the old `web/dashboard` source and legacy dependencies once dependent branches have moved forward.
+
 Deferred branch-coordination cleanup:
 
-- [ ] Remove the old `web/dashboard` source and legacy dependencies once dependent branches have moved forward.
 - [ ] Rename `dashboard-next` only if and when the team decides branch coordination allows it.
 
 ## Resolved Planning Decisions
@@ -406,4 +407,4 @@ Deferred branch-coordination cleanup:
 - The new app will be deployed instead of the old dashboard when ready.
 - Storybook remains local-only during the planned rewrite. Possible deployment is deferred.
 - Visual regression testing is skipped for now and listed as a deferred option.
-- `instructions/CONSTITUTION.md` was updated during Phase 7 to make `web/dashboard-next` the active dashboard standard while keeping `web/dashboard` as a temporary legacy reference for branch coordination.
+- `instructions/CONSTITUTION.md` was updated during Phase 7 to make `web/dashboard-next` the active dashboard standard after removing the old Taiga UI dashboard.

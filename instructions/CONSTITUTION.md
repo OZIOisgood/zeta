@@ -22,7 +22,7 @@
 
 - **Framework**: Angular with Tailwind CSS, Angular Primitives, Transloco, and NgRx Signal Store in `web/dashboard-next`.
 
-- **Reference**: Follow established patterns in `web/dashboard-next/src/app`. Keep `web/dashboard` available as a legacy behaviour reference while branches still depend on it, but do not add new dashboard work there unless a task explicitly targets the legacy app.
+- **Reference**: Follow established patterns in `web/dashboard-next/src/app`. The former `web/dashboard` Taiga UI application has been removed after the dashboard rewrite cutover.
 
 - **Loading States**: Use skeleton placeholders for asynchronous content loading states. Do not show visible loading-status text for page sections, lists, cards, tables, or other content placeholders unless the state is a non-content operation that cannot be represented as a skeleton.
 
