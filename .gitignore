@@ -17,6 +17,10 @@ build/
 # IDE
 .idea/
 
+# Agent-local files
+CLAUDE.local.md
+.claude/settings.local.json
+
 # Tools and temporary files
 /tools/
 tmp/

@@ -28,6 +28,9 @@ api\:restart:
 web-next\:build:
 	cd web/dashboard-next && pnpm install && pnpm run build
 
+web-next\:lint:
+	cd web/dashboard-next && pnpm install && pnpm run lint
+
 web-next\:start:
 	cd web/dashboard-next && pnpm install && pnpm run start
 
