@@ -49,7 +49,7 @@ type GroupPreferencesFormValue = {
     LucideTrash2,
   ],
   template: `
-    <div class="mx-auto grid max-w-3xl gap-5">
+    <div class="mx-auto grid max-w-4xl gap-5">
       <z-breadcrumbs
         [items]="[
           { label: 'common.nav.groups', routerLink: '/groups' },
@@ -104,55 +104,60 @@ type GroupPreferencesFormValue = {
                     </p>
                   </div>
                 </div>
-                <label class="grid gap-2">
-                  <z-field-label
-                    [label]="'groups.groupName' | transloco"
-                    [control]="form.controls.name"
-                  />
-                  <z-text-input
-                    formControlName="name"
-                    [placeholder]="'groups.namePlaceholder' | transloco"
-                    ariaDescribedBy="group-preferences-name-error"
-                    [invalid]="
-                      (form.controls.name.dirty || form.controls.name.touched) &&
-                      form.controls.name.invalid
-                    "
-                  />
-                  @if (
-                    (form.controls.name.dirty || form.controls.name.touched) &&
-                    form.controls.name.invalid
-                  ) {
-                    <z-field-error
-                      id="group-preferences-name-error"
-                      [message]="'groups.groupNameRequired' | transloco"
+                <div class="grid gap-5 lg:grid-cols-2 lg:items-start">
+                  <div class="grid gap-5">
+                    <label class="grid gap-2">
+                      <z-field-label
+                        [label]="'groups.groupName' | transloco"
+                        [control]="form.controls.name"
+                      />
+                      <z-text-input
+                        formControlName="name"
+                        [placeholder]="'groups.namePlaceholder' | transloco"
+                        ariaDescribedBy="group-preferences-name-error"
+                        [invalid]="
+                          (form.controls.name.dirty || form.controls.name.touched) &&
+                          form.controls.name.invalid
+                        "
+                      />
+                      @if (
+                        (form.controls.name.dirty || form.controls.name.touched) &&
+                        form.controls.name.invalid
+                      ) {
+                        <z-field-error
+                          id="group-preferences-name-error"
+                          [message]="'groups.groupNameRequired' | transloco"
+                        />
+                      }
+                    </label>
+
+                    <z-avatar-input
+                      formControlName="avatar"
+                      [label]="'common.fields.avatar' | transloco"
+                      [helperTitle]="'groups.avatarTitle' | transloco"
+                      [helperText]="'avatar.requirement' | transloco"
+                      [previewLabel]="'common.aria.avatarPreview' | transloco"
+                      [selectLabel]="'avatar.selectImage' | transloco"
+                      [invalidImageMessage]="'avatar.invalidImage' | transloco"
+                      [sizeExceededMessage]="'avatar.sizeExceeded' | transloco"
+                      [loadFailedMessage]="'avatar.loadFailed' | transloco"
+                      [readFailedMessage]="'avatar.readFailed' | transloco"
+                      [disabled]="store.mutationStatus() === 'loading'"
                     />
-                  }
-                </label>
+                  </div>
 
-                <label class="grid gap-2">
-                  <z-field-label
-                    [label]="'common.fields.description' | transloco"
-                    [control]="form.controls.description"
-                  />
-                  <z-textarea
-                    formControlName="description"
-                    [placeholder]="'groups.descriptionPlaceholder' | transloco"
-                  />
-                </label>
-
-                <z-avatar-input
-                  formControlName="avatar"
-                  [label]="'common.fields.avatar' | transloco"
-                  [helperTitle]="'groups.avatarTitle' | transloco"
-                  [helperText]="'avatar.requirement' | transloco"
-                  [previewLabel]="'common.aria.avatarPreview' | transloco"
-                  [selectLabel]="'avatar.selectImage' | transloco"
-                  [invalidImageMessage]="'avatar.invalidImage' | transloco"
-                  [sizeExceededMessage]="'avatar.sizeExceeded' | transloco"
-                  [loadFailedMessage]="'avatar.loadFailed' | transloco"
-                  [readFailedMessage]="'avatar.readFailed' | transloco"
-                  [disabled]="store.mutationStatus() === 'loading'"
-                />
+                  <label class="grid gap-2 lg:h-full lg:grid-rows-[auto_minmax(0,1fr)]">
+                    <z-field-label
+                      [label]="'common.fields.description' | transloco"
+                      [control]="form.controls.description"
+                    />
+                    <z-textarea
+                      formControlName="description"
+                      [fillHeight]="true"
+                      [placeholder]="'groups.descriptionPlaceholder' | transloco"
+                    />
+                  </label>
+                </div>
 
                 @if (store.mutationStatus() === 'error' && activeMutation() === 'general') {
                   <p class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
