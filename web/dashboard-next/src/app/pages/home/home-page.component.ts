@@ -8,6 +8,7 @@ import {
   LucideVideo,
 } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { PermissionsService } from '../../core/permissions/permissions.service';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { SessionsOverviewStore } from '../../features/sessions/sessions-overview.store';
 import { VideosStore } from '../../features/videos/videos.store';
@@ -110,12 +111,14 @@ type HomeStep = {
                 [title]="'videos.noVideosYet' | transloco"
                 [description]="'videos.uploadFirstDescription' | transloco"
               >
-                <a
-                  routerLink="/upload-video"
-                  class="inline-flex min-h-9 items-center justify-center rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
-                >
-                  {{ 'videos.uploadNew' | transloco }}
-                </a>
+                @if (canUploadVideo()) {
+                  <a
+                    routerLink="/upload-video"
+                    class="inline-flex min-h-9 items-center justify-center rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
+                  >
+                    {{ 'videos.uploadNew' | transloco }}
+                  </a>
+                }
               </z-empty-state>
             </div>
           } @else {
@@ -187,13 +190,16 @@ export class HomePageComponent {
   protected readonly videos = inject(VideosStore);
   protected readonly groups = inject(GroupsStore);
   protected readonly sessions = inject(SessionsOverviewStore);
+  private readonly permissions = inject(PermissionsService);
+  protected readonly canUploadVideo = () => this.permissions.hasPermission('assets:create');
   protected readonly steps = computed<HomeStep[]>(() => {
     const hasGroups = this.groups.hasGroups();
     const hasVideos = this.videos.videoCount() > 0;
     const hasReviewedVideos = this.videos.reviewedCount() > 0;
+    const steps: HomeStep[] = [];
 
-    return [
-      {
+    if (this.permissions.hasPermission('groups:read')) {
+      steps.push({
         completed: hasGroups,
         labelKey: hasGroups ? 'home.firstSteps.groupCreated' : 'home.firstSteps.createGroup',
         descriptionKey: hasGroups
@@ -202,23 +208,57 @@ export class HomePageComponent {
         href:
           hasGroups && this.groups.firstGroup()
             ? `/groups/${this.groups.firstGroup()?.id}`
-            : '/create-group',
-      },
-      {
+            : this.permissions.hasPermission('groups:create')
+              ? '/create-group'
+              : '/groups',
+      });
+    }
+
+    if (this.permissions.hasPermission('assets:create')) {
+      steps.push({
         completed: hasVideos,
         labelKey: hasVideos ? 'home.firstSteps.videoUploaded' : 'home.firstSteps.uploadFirstVideo',
         descriptionKey: hasVideos
           ? 'home.firstSteps.videoUploadedDescription'
           : 'home.firstSteps.uploadFirstVideoDescription',
         href: hasVideos ? '/videos' : '/upload-video',
-      },
-      {
+      });
+    }
+
+    if (this.permissions.hasPermission('reviews:read')) {
+      steps.push({
         completed: hasReviewedVideos,
         labelKey: 'home.firstSteps.reviewVideos',
         descriptionKey: 'home.firstSteps.reviewVideosDescription',
         href: '/videos',
-      },
-    ];
+      });
+    }
+
+    if (this.permissions.hasPermission('coaching:book')) {
+      steps.push({
+        completed: this.sessions.upcomingBookings().length > 0,
+        labelKey:
+          this.sessions.upcomingBookings().length > 0
+            ? 'home.firstSteps.coachingBooked'
+            : 'home.firstSteps.bookLiveCoaching',
+        descriptionKey:
+          this.sessions.upcomingBookings().length > 0
+            ? 'home.firstSteps.coachingBookedDescription'
+            : 'home.firstSteps.bookLiveCoachingDescription',
+        href: '/sessions/book',
+      });
+    }
+
+    if (this.permissions.hasPermission('coaching:availability:manage')) {
+      steps.push({
+        completed: false,
+        labelKey: 'home.firstSteps.setAvailability',
+        descriptionKey: 'home.firstSteps.setAvailabilityDescription',
+        href: '/sessions/settings',
+      });
+    }
+
+    return steps;
   });
   protected readonly showFirstSteps = computed(() => {
     const loaded = this.groups.status() === 'success' && this.videos.status() === 'success';

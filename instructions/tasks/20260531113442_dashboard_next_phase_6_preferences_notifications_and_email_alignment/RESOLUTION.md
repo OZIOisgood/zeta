@@ -35,6 +35,7 @@ Completed Phase 6 for `web/dashboard-next`: migrated the personal preferences an
 - Added an Angular Primitives-backed avatar to the navbar user-menu identity block.
 - Replaced the navbar user-menu text trigger with a compact 32px rounded-square user avatar while keeping the dropdown identity avatar at 40px.
 - Added translated, accessible inline validation feedback for dirty or touched invalid fields across preferences, group settings, group creation, video upload details, and availability dialogs.
+- Restored the old dashboard's shared permission service and route-level permission guard in `dashboard-next`, then aligned navigation and primary feature actions with those permission checks.
 - Hid the First Steps sidebar after its checklist is complete so dashboard content uses the full available width.
 - Added the missing Group Preferences page header and icon-led section headers, and stopped route-only tab changes from reloading group data.
 - Cleared the completed booking mutation whenever the booking page is entered so users can book another session without reloading.
@@ -77,7 +78,7 @@ Notes:
 - Added shared group-card coverage for top alignment and long-description trimming.
 - Extended follow-up coverage for booking-card selection, fixed comment composition, and edit-action grouping.
 - Added shared combobox coverage for the button-only selected-value rendering contract.
-- Final dashboard-next result: 23 test files and 51 tests passed.
+- Final dashboard-next result: 23 test files and 52 tests passed.
 
 ## Next Steps
 

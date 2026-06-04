@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucidePlus, LucideRotateCcw } from '@lucide/angular';
 import { Asset } from '../../core/http/assets-api.service';
+import { PermissionsService } from '../../core/permissions/permissions.service';
 import { VideosStore } from '../../features/videos/videos.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
@@ -43,13 +44,15 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
             {{ 'videos.phase4.summary' | transloco }}
           </p>
         </div>
-        <a
-          routerLink="/upload-video"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
-        >
-          <svg lucidePlus class="size-4" aria-hidden="true"></svg>
-          <span>{{ 'videos.uploadNew' | transloco }}</span>
-        </a>
+        @if (canUploadVideo()) {
+          <a
+            routerLink="/upload-video"
+            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
+          >
+            <svg lucidePlus class="size-4" aria-hidden="true"></svg>
+            <span>{{ 'videos.uploadNew' | transloco }}</span>
+          </a>
+        }
       </section>
 
       <z-tabs
@@ -86,12 +89,14 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
             [title]="emptyTitleKey() | transloco"
             [description]="emptyDescriptionKey() | transloco"
           >
-            <a
-              routerLink="/upload-video"
-              class="inline-flex min-h-9 items-center justify-center rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold transition hover:bg-[var(--z-surface-warm)]"
-            >
-              {{ 'videos.uploadFirst' | transloco }}
-            </a>
+            @if (canUploadVideo()) {
+              <a
+                routerLink="/upload-video"
+                class="inline-flex min-h-9 items-center justify-center rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold transition hover:bg-[var(--z-surface-warm)]"
+              >
+                {{ 'videos.uploadFirst' | transloco }}
+              </a>
+            }
           </z-empty-state>
         } @else {
           <section class="grid gap-3">
@@ -131,6 +136,7 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
 })
 export class VideosPageComponent {
   protected readonly store = inject(VideosStore);
+  private readonly permissions = inject(PermissionsService);
   private readonly transloco = inject(TranslocoService);
   private readonly _translationEvents = toSignal(this.transloco.events$, { initialValue: null });
   protected readonly selectedFilter = signal<VideoFilter>('all');
@@ -139,6 +145,7 @@ export class VideosPageComponent {
     { value: 'toReview', labelKey: 'videos.reviewStatus.toReview' },
     { value: 'reviewed', labelKey: 'videos.reviewStatus.reviewed' },
   ];
+  protected readonly canUploadVideo = () => this.permissions.hasPermission('assets:create');
   protected readonly filteredAssets = computed(() => {
     const filter = this.selectedFilter();
     const assets = this.store.assets();

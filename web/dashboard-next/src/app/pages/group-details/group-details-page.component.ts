@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideLink, LucideQrCode, LucideSettings, LucideUsers } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
+import { PermissionsService } from '../../core/permissions/permissions.service';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
@@ -66,13 +67,15 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
                 {{ group.description || ('groups.phase4.noDescription' | transloco) }}
               </p>
             </div>
-            <a
-              class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold transition hover:bg-[var(--z-surface-warm)]"
-              [routerLink]="['/groups', group.id, 'preferences', 'general']"
-            >
-              <svg lucideSettings class="size-4" aria-hidden="true"></svg>
-              <span>{{ 'groups.preferences' | transloco }}</span>
-            </a>
+            @if (canEditPreferences()) {
+              <a
+                class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold transition hover:bg-[var(--z-surface-warm)]"
+                [routerLink]="['/groups', group.id, 'preferences', 'general']"
+              >
+                <svg lucideSettings class="size-4" aria-hidden="true"></svg>
+                <span>{{ 'groups.preferences' | transloco }}</span>
+              </a>
+            }
           </div>
         </section>
 
@@ -122,6 +125,9 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
 })
 export class GroupDetailsPageComponent {
   protected readonly store = inject(GroupsStore);
+  private readonly permissions = inject(PermissionsService);
+  protected readonly canEditPreferences = () =>
+    this.permissions.hasPermission('groups:preferences:edit');
 
   constructor() {
     inject(ActivatedRoute)

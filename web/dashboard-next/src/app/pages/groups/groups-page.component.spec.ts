@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { GroupsApiClient } from '../../core/http/groups-api.service';
+import { PermissionsService } from '../../core/permissions/permissions.service';
 import { GroupsPageComponent } from './groups-page.component';
 
 describe('GroupsPageComponent', () => {
@@ -54,6 +55,10 @@ describe('GroupsPageComponent', () => {
                 },
               ]),
           },
+        },
+        {
+          provide: PermissionsService,
+          useValue: { hasPermission: () => true },
         },
       ],
     }).compileComponents();

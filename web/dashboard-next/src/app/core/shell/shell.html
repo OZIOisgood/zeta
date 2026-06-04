@@ -17,7 +17,7 @@
       </a>
 
       <nav class="mt-8 space-y-1">
-        @for (item of shell.navigation(); track item.id) {
+        @for (item of navigation(); track item.id) {
           <a
             class="flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
             [routerLink]="item.href"
@@ -174,7 +174,7 @@
             </div>
 
             <nav class="mt-6 space-y-1">
-              @for (item of shell.navigation(); track item.id) {
+              @for (item of navigation(); track item.id) {
                 <a
                   class="flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition"
                   [routerLink]="item.href"

@@ -26,6 +26,7 @@ import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
 import { DashboardLocalizationService } from '../i18n/dashboard-localization.service';
+import { PermissionsService } from '../permissions/permissions.service';
 import { AppShellStore } from '../state/app-shell.store';
 
 @Component({
@@ -52,7 +53,21 @@ import { AppShellStore } from '../state/app-shell.store';
 export class ShellComponent {
   protected readonly shell = inject(AppShellStore);
   protected readonly session = inject(SessionStore);
+  private readonly permissions = inject(PermissionsService);
   private readonly userMenu = viewChild<ElementRef<HTMLElement>>('userMenu');
+  protected readonly navigation = computed(() =>
+    this.shell.navigation().filter((item) => {
+      if (item.id === 'groups') {
+        return this.permissions.hasPermission('groups:read');
+      }
+
+      if (item.id === 'sessions') {
+        return this.permissions.hasPermission('coaching:bookings:read');
+      }
+
+      return true;
+    }),
+  );
   protected readonly initials = computed(() => {
     return this.session
       .displayName()

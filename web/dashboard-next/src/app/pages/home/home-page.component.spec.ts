@@ -5,6 +5,7 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { SessionsOverviewStore } from '../../features/sessions/sessions-overview.store';
 import { VideosStore } from '../../features/videos/videos.store';
+import { PermissionsService } from '../../core/permissions/permissions.service';
 import { HomePageComponent } from './home-page.component';
 
 describe('HomePageComponent', () => {
@@ -81,6 +82,13 @@ describe('HomePageComponent', () => {
             loadBookings: vi.fn(),
             status: () => 'success',
             upcomingBookings: () => [],
+          },
+        },
+        {
+          provide: PermissionsService,
+          useValue: {
+            hasPermission: (permission: string) =>
+              ['groups:read', 'assets:create', 'reviews:read'].includes(permission),
           },
         },
       ],

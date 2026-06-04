@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { LucidePlus, LucideRotateCcw } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { GroupsStore } from '../../features/groups/groups.store';
+import { PermissionsService } from '../../core/permissions/permissions.service';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
@@ -35,13 +36,15 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
             {{ 'groups.phase4.summary' | transloco }}
           </p>
         </div>
-        <a
-          routerLink="/create-group"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
-        >
-          <svg lucidePlus class="size-4" aria-hidden="true"></svg>
-          <span>{{ 'groups.createNew' | transloco }}</span>
-        </a>
+        @if (canCreateGroup()) {
+          <a
+            routerLink="/create-group"
+            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
+          >
+            <svg lucidePlus class="size-4" aria-hidden="true"></svg>
+            <span>{{ 'groups.createNew' | transloco }}</span>
+          </a>
+        }
       </section>
 
       @if (store.status() === 'loading') {
@@ -62,7 +65,7 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
             </z-button>
           </div>
         </section>
-      } @else if (!store.hasGroups()) {
+      } @else if (!store.hasGroups() && canCreateGroup()) {
         <z-empty-state
           [title]="'groups.noGroupsYet' | transloco"
           [description]="'groups.createFirstDescription' | transloco"
@@ -74,6 +77,11 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
             {{ 'groups.createFirst' | transloco }}
           </a>
         </z-empty-state>
+      } @else if (!store.hasGroups()) {
+        <z-empty-state
+          [title]="'groups.noGroupsYet' | transloco"
+          [description]="'groups.noGroupsJoined' | transloco"
+        />
       } @else {
         <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           @for (group of store.groups(); track group.id) {
@@ -95,6 +103,8 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
 })
 export class GroupsPageComponent {
   protected readonly store = inject(GroupsStore);
+  private readonly permissions = inject(PermissionsService);
+  protected readonly canCreateGroup = () => this.permissions.hasPermission('groups:create');
 
   constructor() {
     if (this.store.status() === 'idle') {
