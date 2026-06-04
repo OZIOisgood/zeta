@@ -109,7 +109,7 @@ describe('GroupPreferencesPageComponent', () => {
     fixture.detectChanges();
 
     paramMap.next(convertToParamMap({ id: 'group-1', tab: 'general' }));
-    await Promise.resolve();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     paramMap.next(convertToParamMap({ id: 'group-1', tab: 'delete' }));
@@ -135,5 +135,30 @@ describe('GroupPreferencesPageComponent', () => {
 
     expect(error?.textContent).toContain('Group name is required.');
     expect(input?.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('enables save only while group details differ from the saved values', async () => {
+    const fixture = TestBed.createComponent(GroupPreferencesPageComponent);
+    fixture.detectChanges();
+
+    paramMap.next(convertToParamMap({ id: 'group-1', tab: 'general' }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const button = () => fixture.nativeElement.querySelector('button[type="submit"]');
+
+    expect(button().disabled).toBe(true);
+
+    fixture.componentInstance['form'].controls.name.setValue('Academy Plus');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(button().disabled).toBe(false);
+
+    fixture.componentInstance['form'].controls.name.setValue('Academy');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(button().disabled).toBe(true);
   });
 });

@@ -167,9 +167,7 @@ type GroupPreferencesFormValue = {
                 <div class="flex justify-end">
                   <z-button
                     type="submit"
-                    [disabled]="
-                      form.invalid || !hasFormChanges() || store.mutationStatus() === 'loading'
-                    "
+                    [disabled]="saveDisabled()"
                   >
                     {{ 'common.actions.save' | transloco }}
                   </z-button>
@@ -275,6 +273,11 @@ export class GroupPreferencesPageComponent {
     const initialValue = this.initialFormValue();
 
     return !!initialValue && !this.sameFormValue(this.currentFormValue(), initialValue);
+  });
+  protected readonly saveDisabled = computed(() => {
+    this.formRevision();
+
+    return this.form.invalid || !this.hasFormChanges() || this.store.mutationStatus() === 'loading';
   });
   protected readonly form = new FormGroup({
     name: new FormControl('', {
