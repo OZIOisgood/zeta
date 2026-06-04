@@ -280,7 +280,6 @@ export class GroupInvitationDialogComponent implements OnDestroy {
           this.transloco.translate(
             email ? 'groups.inviteDialog.sent' : 'groups.inviteDialog.linkCreated',
           ),
-          'success',
         );
         this.loadQrCode(invitation.id);
       },
@@ -304,7 +303,6 @@ export class GroupInvitationDialogComponent implements OnDestroy {
       this.shell.showToast(
         this.transloco.translate('toast.successTitle'),
         this.transloco.translate('groups.inviteDialog.linkCopied'),
-        'success',
       );
       setTimeout(() => this.linkCopied.set(false), 2000);
     });

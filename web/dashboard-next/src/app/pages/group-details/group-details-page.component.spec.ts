@@ -22,8 +22,6 @@ describe('GroupDetailsPageComponent', () => {
   function configure(permissions: string[]) {
     const groupsApi = {
       getGroup: vi.fn(() => of(group)),
-      createGroupInvitation: vi.fn(() => of({ id: 'invite-1', code: 'ABC123' })),
-      getGroupInvitationQrCode: vi.fn(() => of(new Blob())),
       listGroupMembers: vi.fn((_groupId: string, kind: 'students' | 'experts') =>
         of(
           kind === 'students'
@@ -76,9 +74,6 @@ describe('GroupDetailsPageComponent', () => {
                 expertsDescription: 'People who can review videos.',
                 inviteStudent: 'Invite student',
                 inviteStudents: 'Invite students to join this group.',
-                inviteDialog: {
-                  cardDescription: 'Create a shareable link or QR code.',
-                },
                 membersUnavailable: 'Member lists are not available',
                 membersUnavailableDescription: 'No permission to view members.',
                 noExperts: 'No experts yet',
@@ -151,7 +146,7 @@ describe('GroupDetailsPageComponent', () => {
     expect(groupsApi.listGroupMembers).toHaveBeenCalledWith(group.id, 'experts');
     expect(fixture.nativeElement.textContent).toContain('Student One');
     expect(fixture.nativeElement.textContent).toContain('Expert One');
-    expect(fixture.nativeElement.textContent).toContain('Create a shareable link or QR code.');
+    expect(fixture.nativeElement.textContent).toContain('Invite students to join this group.');
   });
 
   it('hides member lists without granular member permissions', async () => {

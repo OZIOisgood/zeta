@@ -15,9 +15,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 @Component({
   selector: 'z-textarea',
   imports: [NgClass],
-  host: {
-    '[class.h-full]': 'fillHeight()',
-  },
   styles: `
     :host {
       display: block;
@@ -49,7 +46,6 @@ export class ZTextareaComponent implements ControlValueAccessor {
   readonly placeholder = input('');
   readonly rows = input(4);
   readonly autoResize = input(false);
-  readonly fillHeight = input(false);
   readonly maxRows = input(8);
   readonly ariaDescribedBy = input('');
   readonly invalid = input(false);
@@ -62,7 +58,6 @@ export class ZTextareaComponent implements ControlValueAccessor {
   protected readonly isEffectivelyDisabled = computed(() => this.disabled() || this.isDisabled());
   protected readonly classes = computed(() => [
     'block box-border w-full rounded-md border bg-white px-3 text-sm outline-none transition placeholder:text-[var(--z-muted)] disabled:cursor-not-allowed disabled:bg-[var(--z-surface-warm)] disabled:text-[var(--z-muted)]',
-    this.fillHeight() ? 'h-full' : '',
     this.autoResize() ? 'min-h-11 resize-none overflow-hidden' : 'min-h-28 resize-y',
     this.autoResize() ? 'py-[11px] leading-5' : 'py-2',
     this.invalid()

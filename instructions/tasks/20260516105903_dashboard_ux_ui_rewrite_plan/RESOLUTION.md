@@ -1,7 +1,7 @@
 # Resolution
 
 ## Summary
-Created and completed the phased plan for the Angular dashboard UX/UI rewrite. The implementation phases now culminate in deployment automation building `web/dashboard-next` for the dashboard service while preserving the folder name for branch coordination.
+Created a task plan for the Angular dashboard UX/UI rewrite. No dashboard implementation was started, in accordance with the requested planning boundary.
 
 ## Technical Details
 - Captured the durable rewrite requirements in `README.md` so future sessions can continue after context compaction.
@@ -17,12 +17,9 @@ Created and completed the phased plan for the Angular dashboard UX/UI rewrite. T
 - Updated the design direction to an orange-white palette.
 - Added future logo and illustration generation requirements, including candidate review before production adoption.
 - Recorded that `instructions/CONSTITUTION.md` should be updated during final cutover rather than before Phase 1.
-- Completed Phase 7 with the dashboard cutover: CI and deployment workflows now build `web/dashboard-next`, Docker/nginx packaging exists inside `web/dashboard-next`, legacy `web:*` Makefile commands were removed, and `web-next:*` commands remain unchanged.
-- Removed the old `web/dashboard` Taiga UI application and its legacy dependencies after confirming dependent branch work is already based on the new dashboard.
-- Kept the `web/dashboard-next` folder name for branch coordination.
 
 ## Verification
-- [x] Build passed
-- [x] Verified in automation configuration
+- [ ] Build passed
+- [ ] Verified in UI/API
 
-Current cutover verification is recorded in the Phase 7 task resolution. Manual infrastructure action and deployment are intentionally left to the maintainer.
+Build and UI verification were not run because this session intentionally created only planning documentation and did not modify production code.

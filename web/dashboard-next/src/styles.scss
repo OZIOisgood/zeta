@@ -14,6 +14,22 @@
   --z-success: #15803d;
   --z-warning: #b45309;
   --z-danger: #be123c;
+  /* very subtle warm tint for comment hover — weaker than --z-surface-warm
+     so comments don't appear clickable */
+  --z-comment-hover: color-mix(in oklab, var(--z-surface-warm) 55%, #fff);
+}
+
+/* hover tint for comment rows — only on pointer devices, never on touch */
+@media (hover: hover) {
+  .comment-hoverable {
+    border-radius: 6px;
+    transition: background-color 160ms ease, box-shadow 160ms ease;
+  }
+  .comment-hoverable:hover {
+    background-color: var(--z-comment-hover);
+    /* box-shadow spread extends the tint 8px outside without layout shift */
+    box-shadow: 0 0 0 8px var(--z-comment-hover);
+  }
 }
 
 html {
@@ -40,12 +56,13 @@ body {
   box-sizing: border-box;
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
+/*
+ * NOTE: `font: inherit` for form controls is intentionally NOT redeclared here.
+ * Tailwind's preflight already applies it inside `@layer base`, so utility
+ * classes (e.g. `text-xs` on a <button>) can still override the size. An
+ * unlayered copy of this rule would beat every Tailwind utility and break
+ * button typography.
+ */
 
 @keyframes z-shimmer {
   100% {

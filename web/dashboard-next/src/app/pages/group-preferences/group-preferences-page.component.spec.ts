@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { Subject } from 'rxjs';
-import { AppShellStore } from '../../core/state/app-shell.store';
 import { Group } from '../../core/http/groups-api.service';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { SessionStore } from '../../features/session/session.store';
@@ -63,10 +62,8 @@ describe('GroupPreferencesPageComponent', () => {
                 namePlaceholder: 'Group name',
                 descriptionPlaceholder: 'Group description',
                 preferences: 'Group Preferences',
-                updated: 'Group updated successfully',
                 phase4: { preferencesSummary: 'Update group details.' },
               },
-              toast: { successTitle: 'Success' },
             },
           },
           translocoConfig: {
@@ -96,10 +93,6 @@ describe('GroupPreferencesPageComponent', () => {
             user: () => ({ id: 'user-1' }),
           },
         },
-        {
-          provide: AppShellStore,
-          useValue: { showToast: vi.fn() },
-        },
       ],
     }).compileComponents();
   });
@@ -109,7 +102,7 @@ describe('GroupPreferencesPageComponent', () => {
     fixture.detectChanges();
 
     paramMap.next(convertToParamMap({ id: 'group-1', tab: 'general' }));
-    await fixture.whenStable();
+    await Promise.resolve();
     fixture.detectChanges();
 
     paramMap.next(convertToParamMap({ id: 'group-1', tab: 'delete' }));
@@ -135,30 +128,5 @@ describe('GroupPreferencesPageComponent', () => {
 
     expect(error?.textContent).toContain('Group name is required.');
     expect(input?.getAttribute('aria-invalid')).toBe('true');
-  });
-
-  it('enables save only while group details differ from the saved values', async () => {
-    const fixture = TestBed.createComponent(GroupPreferencesPageComponent);
-    fixture.detectChanges();
-
-    paramMap.next(convertToParamMap({ id: 'group-1', tab: 'general' }));
-    await Promise.resolve();
-    fixture.detectChanges();
-
-    const button = () => fixture.nativeElement.querySelector('button[type="submit"]');
-
-    expect(button().disabled).toBe(true);
-
-    fixture.componentInstance['form'].controls.name.setValue('Academy Plus');
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(button().disabled).toBe(false);
-
-    fixture.componentInstance['form'].controls.name.setValue('Academy');
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(button().disabled).toBe(true);
   });
 });

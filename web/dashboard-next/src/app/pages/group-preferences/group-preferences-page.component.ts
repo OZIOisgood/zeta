@@ -3,9 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LucideImage, LucideTriangleAlert, LucideTrash2 } from '@lucide/angular';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
-import { AppShellStore } from '../../core/state/app-shell.store';
 import { SessionStore } from '../../features/session/session.store';
 import { GroupsStore } from '../../features/groups/groups.store';
 import { ZAvatarInputComponent } from '../../shared/ui/avatar-input/z-avatar-input.component';
@@ -49,7 +48,7 @@ type GroupPreferencesFormValue = {
     LucideTrash2,
   ],
   template: `
-    <div class="mx-auto grid max-w-4xl gap-5">
+    <div class="mx-auto grid max-w-3xl gap-5">
       <z-breadcrumbs
         [items]="[
           { label: 'common.nav.groups', routerLink: '/groups' },
@@ -104,70 +103,75 @@ type GroupPreferencesFormValue = {
                     </p>
                   </div>
                 </div>
-                <div class="grid gap-5 lg:grid-cols-2 lg:items-start">
-                  <div class="grid gap-5">
-                    <label class="grid gap-2">
-                      <z-field-label
-                        [label]="'groups.groupName' | transloco"
-                        [control]="form.controls.name"
-                      />
-                      <z-text-input
-                        formControlName="name"
-                        [placeholder]="'groups.namePlaceholder' | transloco"
-                        ariaDescribedBy="group-preferences-name-error"
-                        [invalid]="
-                          (form.controls.name.dirty || form.controls.name.touched) &&
-                          form.controls.name.invalid
-                        "
-                      />
-                      @if (
-                        (form.controls.name.dirty || form.controls.name.touched) &&
-                        form.controls.name.invalid
-                      ) {
-                        <z-field-error
-                          id="group-preferences-name-error"
-                          [message]="'groups.groupNameRequired' | transloco"
-                        />
-                      }
-                    </label>
+                <label class="grid gap-2">
+                  <z-field-label
+                    [label]="'groups.groupName' | transloco"
+                    [control]="form.controls.name"
+                  />
+                  <z-text-input
+                    formControlName="name"
+                    [placeholder]="'groups.namePlaceholder' | transloco"
+                    ariaDescribedBy="group-preferences-name-error"
+                    [invalid]="
+                      (form.controls.name.dirty || form.controls.name.touched) &&
+                      form.controls.name.invalid
+                    "
+                  />
+                  @if (
+                    (form.controls.name.dirty || form.controls.name.touched) &&
+                    form.controls.name.invalid
+                  ) {
+                    <z-field-error
+                      id="group-preferences-name-error"
+                      [message]="'groups.groupNameRequired' | transloco"
+                    />
+                  }
+                </label>
 
-                    <z-avatar-input
-                      formControlName="avatar"
-                      [label]="'common.fields.avatar' | transloco"
-                      [helperTitle]="'groups.avatarTitle' | transloco"
-                      [helperText]="'avatar.requirement' | transloco"
-                      [previewLabel]="'common.aria.avatarPreview' | transloco"
-                      [selectLabel]="'avatar.selectImage' | transloco"
-                      [invalidImageMessage]="'avatar.invalidImage' | transloco"
-                      [sizeExceededMessage]="'avatar.sizeExceeded' | transloco"
-                      [loadFailedMessage]="'avatar.loadFailed' | transloco"
-                      [readFailedMessage]="'avatar.readFailed' | transloco"
-                      [disabled]="store.mutationStatus() === 'loading'"
-                    />
-                  </div>
+                <label class="grid gap-2">
+                  <z-field-label
+                    [label]="'common.fields.description' | transloco"
+                    [control]="form.controls.description"
+                  />
+                  <z-textarea
+                    formControlName="description"
+                    [placeholder]="'groups.descriptionPlaceholder' | transloco"
+                  />
+                </label>
 
-                  <label class="grid gap-2 lg:h-full lg:grid-rows-[auto_minmax(0,1fr)]">
-                    <z-field-label
-                      [label]="'common.fields.description' | transloco"
-                      [control]="form.controls.description"
-                    />
-                    <z-textarea
-                      formControlName="description"
-                      [fillHeight]="true"
-                      [placeholder]="'groups.descriptionPlaceholder' | transloco"
-                    />
-                  </label>
-                </div>
+                <z-avatar-input
+                  formControlName="avatar"
+                  [label]="'common.fields.avatar' | transloco"
+                  [helperTitle]="'groups.avatarTitle' | transloco"
+                  [helperText]="'avatar.requirement' | transloco"
+                  [previewLabel]="'common.aria.avatarPreview' | transloco"
+                  [selectLabel]="'avatar.selectImage' | transloco"
+                  [invalidImageMessage]="'avatar.invalidImage' | transloco"
+                  [sizeExceededMessage]="'avatar.sizeExceeded' | transloco"
+                  [loadFailedMessage]="'avatar.loadFailed' | transloco"
+                  [readFailedMessage]="'avatar.readFailed' | transloco"
+                  [disabled]="store.mutationStatus() === 'loading'"
+                />
 
                 @if (store.mutationStatus() === 'error' && activeMutation() === 'general') {
                   <p class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
                     {{ store.mutationError() }}
                   </p>
                 }
+                @if (saveSucceeded()) {
+                  <p
+                    class="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800"
+                  >
+                    {{ 'groups.updated' | transloco }}
+                  </p>
+                }
+
                 <div class="flex justify-end">
                   <z-button
                     type="submit"
-                    [disabled]="saveDisabled()"
+                    [disabled]="
+                      form.invalid || !hasFormChanges() || store.mutationStatus() === 'loading'
+                    "
                   >
                     {{ 'common.actions.save' | transloco }}
                   </z-button>
@@ -250,13 +254,12 @@ type GroupPreferencesFormValue = {
 export class GroupPreferencesPageComponent {
   protected readonly store = inject(GroupsStore);
   protected readonly session = inject(SessionStore);
-  private readonly shell = inject(AppShellStore);
-  private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   protected readonly router = inject(Router);
   protected groupId = '';
   protected readonly activeTab = signal<GroupPreferencesTab>('general');
   protected readonly activeMutation = signal<GroupPreferencesTab | null>(null);
+  protected readonly saveSucceeded = signal(false);
   private readonly formRevision = signal(0);
   private readonly initialFormValue = signal<GroupPreferencesFormValue | null>(null);
   private initializedGroupId = '';
@@ -274,11 +277,6 @@ export class GroupPreferencesPageComponent {
 
     return !!initialValue && !this.sameFormValue(this.currentFormValue(), initialValue);
   });
-  protected readonly saveDisabled = computed(() => {
-    this.formRevision();
-
-    return this.form.invalid || !this.hasFormChanges() || this.store.mutationStatus() === 'loading';
-  });
   protected readonly form = new FormGroup({
     name: new FormControl('', {
       nonNullable: true,
@@ -290,6 +288,7 @@ export class GroupPreferencesPageComponent {
 
   constructor() {
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.saveSucceeded.set(false);
       this.formRevision.update((revision) => revision + 1);
     });
 
@@ -306,6 +305,7 @@ export class GroupPreferencesPageComponent {
         await this.store.loadGroup(this.groupId);
       }
 
+      this.saveSucceeded.set(false);
       this.activeMutation.set(null);
       const group = this.store.activeGroup();
       if (group && this.initializedGroupId !== group.id) {
@@ -345,15 +345,11 @@ export class GroupPreferencesPageComponent {
       avatar: formValue.avatar ?? undefined,
     });
 
+    this.saveSucceeded.set(!!group);
     if (group) {
       const nextValue = this.currentFormValue();
       this.initialFormValue.set(nextValue);
       this.formRevision.update((revision) => revision + 1);
-      this.shell.showToast(
-        this.transloco.translate('toast.successTitle'),
-        this.transloco.translate('groups.updated'),
-        'success',
-      );
     }
   }
 
