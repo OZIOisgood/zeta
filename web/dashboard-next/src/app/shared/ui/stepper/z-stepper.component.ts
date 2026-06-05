@@ -1,5 +1,13 @@
 import { NgClass } from '@angular/common';
-import { Component, ElementRef, computed, effect, input, output, viewChildren } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  input,
+  output,
+  viewChildren,
+} from '@angular/core';
 import { LucideCheck } from '@lucide/angular';
 
 export type StepState = 'completed' | 'active' | 'upcoming';

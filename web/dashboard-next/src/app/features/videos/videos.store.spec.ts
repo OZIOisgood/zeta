@@ -147,10 +147,30 @@ describe('threads computed', () => {
           useValue: {
             listReviews: () =>
               of([
-                { id: 'r2', content: 'Second root', timestamp_seconds: 5, created_at: '2026-01-01T00:01:00Z' },
-                { id: 'r1', content: 'First root', timestamp_seconds: 10, created_at: '2026-01-01T00:00:00Z' },
-                { id: 'rep1', content: 'Reply A', parent_id: 'r1', created_at: '2026-01-01T00:02:00Z' },
-                { id: 'rep2', content: 'Reply B', parent_id: 'r1', created_at: '2026-01-01T00:03:00Z' },
+                {
+                  id: 'r2',
+                  content: 'Second root',
+                  timestamp_seconds: 5,
+                  created_at: '2026-01-01T00:01:00Z',
+                },
+                {
+                  id: 'r1',
+                  content: 'First root',
+                  timestamp_seconds: 10,
+                  created_at: '2026-01-01T00:00:00Z',
+                },
+                {
+                  id: 'rep1',
+                  content: 'Reply A',
+                  parent_id: 'r1',
+                  created_at: '2026-01-01T00:02:00Z',
+                },
+                {
+                  id: 'rep2',
+                  content: 'Reply B',
+                  parent_id: 'r1',
+                  created_at: '2026-01-01T00:03:00Z',
+                },
               ] as Review[]),
           },
         },
@@ -172,12 +192,15 @@ describe('threads computed', () => {
 
   it('createReview with parentId sends no timestamp to API', async () => {
     const createReview = vi.fn().mockReturnValue(
-      of({ id: 'rep3', content: 'New reply', parent_id: 'r1', created_at: '2026-01-01T00:04:00Z' } as Review),
+      of({
+        id: 'rep3',
+        content: 'New reply',
+        parent_id: 'r1',
+        created_at: '2026-01-01T00:04:00Z',
+      } as Review),
     );
     TestBed.configureTestingModule({
-      providers: [
-        { provide: AssetsApiClient, useValue: { createReview } },
-      ],
+      providers: [{ provide: AssetsApiClient, useValue: { createReview } }],
     });
 
     const store = TestBed.inject(VideosStore);
@@ -194,8 +217,18 @@ describe('threads computed', () => {
           useValue: {
             listReviews: () =>
               of([
-                { id: 'r1', content: 'Root', timestamp_seconds: 0, created_at: '2026-01-01T00:00:00Z' },
-                { id: 'rep1', content: 'Reply', parent_id: 'r1', created_at: '2026-01-01T00:01:00Z' },
+                {
+                  id: 'r1',
+                  content: 'Root',
+                  timestamp_seconds: 0,
+                  created_at: '2026-01-01T00:00:00Z',
+                },
+                {
+                  id: 'rep1',
+                  content: 'Reply',
+                  parent_id: 'r1',
+                  created_at: '2026-01-01T00:01:00Z',
+                },
               ] as Review[]),
             deleteReview: () => of(undefined),
           },

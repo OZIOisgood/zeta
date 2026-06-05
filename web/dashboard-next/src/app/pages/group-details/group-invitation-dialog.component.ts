@@ -1,13 +1,7 @@
 import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  LucideCopy,
-  LucideDownload,
-  LucideLink,
-  LucideMail,
-  LucideQrCode,
-} from '@lucide/angular';
+import { LucideCopy, LucideDownload, LucideLink, LucideMail, LucideQrCode } from '@lucide/angular';
 import {
   NgpDialog,
   NgpDialogDescription,
@@ -98,7 +92,11 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
 
             <div class="rounded-md border border-[var(--z-border)] bg-[var(--z-bg)] p-4">
               <div class="flex items-start gap-3">
-                <svg lucideMail class="mt-0.5 size-4 shrink-0 text-[var(--z-primary)]" aria-hidden="true"></svg>
+                <svg
+                  lucideMail
+                  class="mt-0.5 size-4 shrink-0 text-[var(--z-primary)]"
+                  aria-hidden="true"
+                ></svg>
                 <p class="text-sm leading-6 text-[var(--z-muted)]">
                   {{ 'groups.inviteDialog.emailHint' | transloco }}
                 </p>
@@ -148,7 +146,9 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
                 } @else {
                   <div class="text-center text-[var(--z-muted)]">
                     <svg lucideQrCode class="mx-auto size-8" aria-hidden="true"></svg>
-                    <p class="mt-2 text-xs">{{ 'groups.inviteDialog.qrUnavailable' | transloco }}</p>
+                    <p class="mt-2 text-xs">
+                      {{ 'groups.inviteDialog.qrUnavailable' | transloco }}
+                    </p>
                   </div>
                 }
               </div>
@@ -173,7 +173,9 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
               <z-button type="button" variant="secondary" (pressed)="copyLink()">
                 <svg lucideCopy class="size-4" aria-hidden="true"></svg>
                 <span>
-                  {{ (linkCopied() ? 'common.actions.copied' : 'common.actions.copyLink') | transloco }}
+                  {{
+                    (linkCopied() ? 'common.actions.copied' : 'common.actions.copyLink') | transloco
+                  }}
                 </span>
               </z-button>
               @if (qrImageUrl()) {
@@ -209,20 +211,40 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
       animation: z-dialog-panel-out 100ms ease-in;
     }
     @keyframes z-dialog-overlay-in {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
     @keyframes z-dialog-overlay-out {
-      from { opacity: 1; }
-      to { opacity: 0; }
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
     }
     @keyframes z-dialog-panel-in {
-      from { opacity: 0; transform: translateY(8px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
     @keyframes z-dialog-panel-out {
-      from { opacity: 1; transform: translateY(0) scale(1); }
-      to { opacity: 0; transform: translateY(8px) scale(0.98); }
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
     }
   `,
 })

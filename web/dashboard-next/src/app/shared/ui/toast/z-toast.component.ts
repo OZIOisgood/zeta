@@ -7,7 +7,14 @@ type ToastType = 'success' | 'error' | 'info';
 
 @Component({
   selector: 'z-toast',
-  imports: [NgClass, LucideCircleAlert, LucideCircleCheck, LucideInfo, LucideX, ZIconButtonComponent],
+  imports: [
+    NgClass,
+    LucideCircleAlert,
+    LucideCircleCheck,
+    LucideInfo,
+    LucideX,
+    ZIconButtonComponent,
+  ],
   template: `
     <aside
       class="rounded-lg border bg-white p-4 shadow-lg shadow-orange-950/10"

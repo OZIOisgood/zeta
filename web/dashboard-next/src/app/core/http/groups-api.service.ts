@@ -74,16 +74,14 @@ export class GroupsApiClient {
   listGroupMembers(groupId: string, kind: GroupMembersListKind): Observable<GroupMember[]> {
     const segment = kind === 'experts' ? 'experts' : 'users';
 
-    return this.http
-      .get<ListGroupMembersResponse>(`${this.apiUrl}/${groupId}/${segment}`)
-      .pipe(
-        map((response) =>
-          response.data.map((member) => ({
-            ...member,
-            name: `${member.first_name} ${member.last_name}`.trim() || member.email,
-          })),
-        ),
-      );
+    return this.http.get<ListGroupMembersResponse>(`${this.apiUrl}/${groupId}/${segment}`).pipe(
+      map((response) =>
+        response.data.map((member) => ({
+          ...member,
+          name: `${member.first_name} ${member.last_name}`.trim() || member.email,
+        })),
+      ),
+    );
   }
 
   removeGroupMember(groupId: string, userId: string): Observable<void> {

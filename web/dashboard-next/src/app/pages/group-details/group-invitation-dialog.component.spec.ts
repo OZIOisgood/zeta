@@ -109,11 +109,7 @@ describe('GroupInvitationDialogComponent', () => {
     expect(submitEvent.preventDefault).toHaveBeenCalled();
     expect(api.createGroupInvitation).toHaveBeenCalledWith('group-1', undefined);
     expect(api.getGroupInvitationQrCode).toHaveBeenCalledWith('group-1', 'invite-1');
-    expect(shell.showToast).toHaveBeenCalledWith(
-      'Success',
-      'Invitation link created!',
-      'success',
-    );
+    expect(shell.showToast).toHaveBeenCalledWith('Success', 'Invitation link created!', 'success');
     expect(fixture.nativeElement.textContent).toContain('/groups?invite=ABC123');
     expect(fixture.nativeElement.textContent).toContain('Download QR');
   });

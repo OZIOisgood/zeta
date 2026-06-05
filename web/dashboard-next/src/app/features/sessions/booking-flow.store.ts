@@ -66,9 +66,7 @@ export const BookingFlowStore = signalStore(
       for (const [key, slots] of groups) {
         groups.set(
           key,
-          slots.sort(
-            (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
-          ),
+          slots.sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
         );
       }
 
@@ -79,11 +77,7 @@ export const BookingFlowStore = signalStore(
     ),
   })),
   withMethods(
-    (
-      store,
-      coachingApi = inject(CoachingApiClient),
-      groupsApi = inject(GroupsApiClient),
-    ) => ({
+    (store, coachingApi = inject(CoachingApiClient), groupsApi = inject(GroupsApiClient)) => ({
       resetBooking(): void {
         patchState(store, {
           mutationError: null,

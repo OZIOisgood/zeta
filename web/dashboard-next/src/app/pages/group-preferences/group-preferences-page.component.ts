@@ -165,10 +165,7 @@ type GroupPreferencesFormValue = {
                   </p>
                 }
                 <div class="flex justify-end">
-                  <z-button
-                    type="submit"
-                    [disabled]="saveDisabled()"
-                  >
+                  <z-button type="submit" [disabled]="saveDisabled()">
                     {{ 'common.actions.save' | transloco }}
                   </z-button>
                 </div>

@@ -26,10 +26,16 @@ import { ZDialogPanelComponent } from '../dialog/z-dialog-panel.component';
  */
 @Component({
   selector: 'z-comment-actions',
-  imports: [NgpDialogTrigger, TranslocoPipe, ZDialogPanelComponent, LucideEllipsis, LucidePencil, LucideTrash],
+  imports: [
+    NgpDialogTrigger,
+    TranslocoPipe,
+    ZDialogPanelComponent,
+    LucideEllipsis,
+    LucidePencil,
+    LucideTrash,
+  ],
   template: `
     <div class="relative self-start">
-
       <!-- Trigger button: hidden on desktop until hover/focus; always visible on touch -->
       <button
         type="button"

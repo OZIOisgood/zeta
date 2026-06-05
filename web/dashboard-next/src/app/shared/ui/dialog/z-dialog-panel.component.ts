@@ -1,6 +1,11 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
-import { NgpDialog, NgpDialogDescription, NgpDialogOverlay, NgpDialogTitle } from 'ng-primitives/dialog';
+import {
+  NgpDialog,
+  NgpDialogDescription,
+  NgpDialogOverlay,
+  NgpDialogTitle,
+} from 'ng-primitives/dialog';
 import { LucideAlertTriangle, LucideInfo, LucideTrash2 } from '@lucide/angular';
 import { ZButtonComponent } from '../button/z-button.component';
 
@@ -150,7 +155,9 @@ export class ZDialogPanelComponent {
   readonly confirmOnly = input(false);
 
   protected readonly role = computed(() => (this.tone() === 'info' ? 'dialog' : 'alertdialog'));
-  protected readonly confirmVariant = computed(() => (this.tone() === 'danger' ? 'danger' : 'primary'));
+  protected readonly confirmVariant = computed(() =>
+    this.tone() === 'danger' ? 'danger' : 'primary',
+  );
   protected readonly toneClasses = computed(() => {
     switch (this.tone()) {
       case 'danger':

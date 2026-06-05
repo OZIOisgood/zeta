@@ -21,8 +21,7 @@ const bookingSteps = (activeIndex: 0 | 1 | 2 | 3 | 4): StepperStep[] =>
   ['Select Group', 'Select Expert', 'Session Type', 'Select Time', 'Confirm'].map(
     (label, index): StepperStep => ({
       label,
-      state:
-        index < activeIndex ? 'completed' : index === activeIndex ? 'active' : 'upcoming',
+      state: index < activeIndex ? 'completed' : index === activeIndex ? 'active' : 'upcoming',
     }),
   );
 
