@@ -1,6 +1,7 @@
 package reviews
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -12,6 +13,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/go-chi/chi/v5"
@@ -323,6 +325,30 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(responseData)
+
+	// Notify the video owner (student) that their video received a review.
+	// Skipped when the author is the owner. Runs detached from the request.
+	go func(vID pgtype.UUID, authorID, reviewerName string) {
+		bgCtx := context.Background()
+		asset, err := h.q.GetAssetOwnerByVideoID(bgCtx, vID)
+		if err != nil {
+			h.logger.ErrorContext(bgCtx, "video_reviewed_notification_asset_fetch_failed",
+				slog.String("component", "reviews"),
+				slog.Any("err", err),
+			)
+			return
+		}
+		if asset.OwnerID == "" || asset.OwnerID == authorID {
+			return
+		}
+		notifications.Record(bgCtx, h.q, h.logger, asset.OwnerID, notifications.TypeVideoReviewed,
+			notifications.VideoReviewedPayload{
+				AssetID:      pgutil.UUIDToString(asset.AssetID),
+				VideoTitle:   asset.Name,
+				GroupName:    asset.GroupName,
+				ReviewerName: reviewerName,
+			})
+	}(videoID, userInfo.ID, authorName)
 }
 
 func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {

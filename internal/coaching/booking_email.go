@@ -3,6 +3,7 @@ package coaching
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"
 
@@ -10,9 +11,40 @@ import (
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/i18n"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
+
+// recordBookingCreatedNotification records an in-app notification for the expert
+// that a new session was booked. Runs detached from the request context.
+func (h *Handler) recordBookingCreatedNotification(b db.CoachingBooking, sessionTypeName string) {
+	go func() {
+		bgCtx := context.Background()
+
+		groupName := ""
+		if group, err := h.q.GetGroup(bgCtx, b.GroupID); err == nil {
+			groupName = group.Name
+		}
+
+		student := h.resolveParticipant(bgCtx, b.StudentID)
+
+		scheduledAt := ""
+		if b.ScheduledAt.Valid {
+			scheduledAt = b.ScheduledAt.Time.UTC().Format(time.RFC3339)
+		}
+
+		notifications.Record(bgCtx, h.q, h.logger, b.ExpertID, notifications.TypeCoachingBookingCreated,
+			notifications.CoachingBookingCreatedPayload{
+				BookingID:   uuidToString(b.ID),
+				GroupID:     uuidToString(b.GroupID),
+				GroupName:   groupName,
+				StudentName: student.name,
+				SessionName: sessionTypeName,
+				ScheduledAt: scheduledAt,
+			})
+	}()
+}
 
 // bookingParticipant holds the resolved name and email for a booking participant.
 type bookingParticipant struct {

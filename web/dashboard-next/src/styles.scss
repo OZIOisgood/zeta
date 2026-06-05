@@ -145,6 +145,33 @@ body {
   }
 }
 
+/* Notification badge pop when the unread count rises from a live event. */
+@keyframes z-bump {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* One-shot flash on a notification row that just arrived over the live stream. */
+@keyframes z-arrive {
+  from {
+    background-color: var(--z-surface-warm);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.badge-bump {
+  animation: z-bump 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

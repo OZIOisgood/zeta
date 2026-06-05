@@ -8,11 +8,13 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
 	emailmocks "github.com/OZIOisgood/zeta/internal/email/mocks"
+	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -141,6 +143,9 @@ func TestAcceptInvitationKeepsGenericInvitationPending(t *testing.T) {
 		UserID:  "user-2",
 		GroupID: groupID,
 	}).Return(nil)
+	// Background group_member_joined notification: owner == joiner short-circuits
+	// before any CreateNotification. AnyTimes tolerates the detached goroutine.
+	q.EXPECT().GetGroup(gomock.Any(), groupID).Return(db.Group{ID: groupID, OwnerID: "user-2"}, nil).AnyTimes()
 
 	req := httptest.NewRequest(http.MethodPost, "/groups/invitations/accept", strings.NewReader(`{"code":"AbC123"}`))
 	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{
@@ -164,6 +169,156 @@ func TestAcceptInvitationKeepsGenericInvitationPending(t *testing.T) {
 	}
 	if body.GroupID != "11111111-1111-1111-1111-111111111111" {
 		t.Fatalf("got group_id %q, want group uuid", body.GroupID)
+	}
+}
+
+func TestDeclineInvitationMarksEmailInvitationDeclined(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, slog.Default(), "http://localhost:4200")
+
+	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
+	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
+
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+		ID:      invitationID,
+		GroupID: groupID,
+		Email:   pgtype.Text{String: "invitee@example.com", Valid: true},
+		Code:    "AbC123",
+		Status:  db.InvitationStatusPending,
+	}, nil)
+	// Single-recipient invitation: must be persisted as declined.
+	q.EXPECT().UpdateGroupInvitationStatus(gomock.Any(), db.UpdateGroupInvitationStatusParams{
+		ID:     invitationID,
+		Status: db.InvitationStatusDeclined,
+	}).Return(nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/groups/invitations/decline", strings.NewReader(`{"code":"AbC123"}`))
+	// The signed-in user is the intended recipient (email matches the invitation).
+	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{
+		ID:    "user-2",
+		Email: "Invitee@Example.com",
+	}))
+	rec := httptest.NewRecorder()
+
+	h.DeclineInvitation(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusNoContent)
+	}
+}
+
+func TestDeclineInvitationRejectsNonRecipient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, slog.Default(), "http://localhost:4200")
+
+	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
+	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
+
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+		ID:      invitationID,
+		GroupID: groupID,
+		Email:   pgtype.Text{String: "invitee@example.com", Valid: true},
+		Code:    "AbC123",
+		Status:  db.InvitationStatusPending,
+	}, nil)
+	// A user who is NOT the addressed recipient must not be able to decline it.
+	// No UpdateGroupInvitationStatus expectation: gomock fails if it is mutated.
+
+	req := httptest.NewRequest(http.MethodPost, "/groups/invitations/decline", strings.NewReader(`{"code":"AbC123"}`))
+	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{
+		ID:    "attacker",
+		Email: "someone-else@example.com",
+	}))
+	rec := httptest.NewRecorder()
+
+	h.DeclineInvitation(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestAcceptInvitationNotifiesGroupOwner(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, slog.Default(), "http://localhost:4200")
+
+	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
+	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
+
+	// Generic (no email) invitation so the accept path skips the email goroutine;
+	// the only background work is the member-joined notification.
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+		ID:      invitationID,
+		GroupID: groupID,
+		Code:    "AbC123",
+		Status:  db.InvitationStatusPending,
+	}, nil)
+	q.EXPECT().CheckUserGroup(gomock.Any(), gomock.Any()).Return(false, nil)
+	q.EXPECT().AddUserToGroup(gomock.Any(), gomock.Any()).Return(nil)
+	// Owner differs from the joiner, so a notification must be recorded for the owner.
+	q.EXPECT().GetGroup(gomock.Any(), groupID).
+		Return(db.Group{ID: groupID, OwnerID: "owner-1", Name: "Academy"}, nil).
+		AnyTimes()
+
+	recorded := make(chan db.CreateNotificationParams, 1)
+	q.EXPECT().CreateNotification(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, arg db.CreateNotificationParams) (db.Notification, error) {
+			recorded <- arg
+			return db.Notification{}, nil
+		}).Times(1)
+
+	req := httptest.NewRequest(http.MethodPost, "/groups/invitations/accept", strings.NewReader(`{"code":"AbC123"}`))
+	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{
+		ID:        "user-2",
+		FirstName: "New",
+		LastName:  "Member",
+	}))
+	rec := httptest.NewRecorder()
+
+	h.AcceptInvitation(rec, req)
+
+	select {
+	case arg := <-recorded:
+		if arg.RecipientID != "owner-1" {
+			t.Fatalf("recipient = %q, want owner-1", arg.RecipientID)
+		}
+		if arg.Type != db.NotificationType(notifications.TypeGroupMemberJoined) {
+			t.Fatalf("type = %q, want %q", arg.Type, notifications.TypeGroupMemberJoined)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("CreateNotification was not called for the group owner")
+	}
+}
+
+func TestDeclineInvitationKeepsGenericInvitationPending(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, slog.Default(), "http://localhost:4200")
+
+	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
+	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
+
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+		ID:      invitationID,
+		GroupID: groupID,
+		Code:    "AbC123",
+		Status:  db.InvitationStatusPending,
+	}, nil)
+	// Generic link/QR invitation (no email): status must NOT change so the shared
+	// link stays usable. No UpdateGroupInvitationStatus expectation is registered,
+	// so gomock fails the test if the handler tries to mutate it.
+
+	req := httptest.NewRequest(http.MethodPost, "/groups/invitations/decline", strings.NewReader(`{"code":"AbC123"}`))
+	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{ID: "user-2"}))
+	rec := httptest.NewRecorder()
+
+	h.DeclineInvitation(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusNoContent)
 	}
 }
 

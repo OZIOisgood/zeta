@@ -15,6 +15,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
 	llmmocks "github.com/OZIOisgood/zeta/internal/llm/mocks"
+	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -248,6 +249,10 @@ func TestCreateReview_Success(t *testing.T) {
 		CreatedAt: pgtype.Timestamptz{Time: now, Valid: true},
 	}, nil)
 
+	// Background video_reviewed notification: empty owner short-circuits before
+	// any CreateNotification. AnyTimes tolerates the detached goroutine timing.
+	q.EXPECT().GetAssetOwnerByVideoID(gomock.Any(), gomock.Any()).Return(db.GetAssetOwnerByVideoIDRow{}, nil).AnyTimes()
+
 	body := `{"content":"Nice technique"}`
 	req := httptest.NewRequest(http.MethodPost, "/videos/"+videoIDStr+"/reviews", strings.NewReader(body))
 	req = withChiURLParam(req, "id", videoIDStr)
@@ -266,6 +271,72 @@ func TestCreateReview_Success(t *testing.T) {
 	}
 	if resp["content"] != "Nice technique" {
 		t.Errorf("got content %q, want %q", resp["content"], "Nice technique")
+	}
+}
+
+func TestCreateReview_NotifiesVideoOwner(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	llmMock := llmmocks.NewMockEnhancer(ctrl)
+	h := NewHandler(q, slog.Default(), llmMock)
+
+	videoID := testUUID()
+	assetID := pgtype.UUID{Valid: true}
+	copy(assetID.Bytes[:], []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1})
+	reviewID := pgtype.UUID{Valid: true}
+	copy(reviewID.Bytes[:], []byte{16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1})
+	videoIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
+
+	user := reviewUser() // author id "user-1"
+	expectVideoVisible(q, videoID, user)
+	q.EXPECT().GetAssetStatusByVideoID(gomock.Any(), videoID).Return(db.AssetStatusPending, nil)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{
+		FirstName: "Review",
+		LastName:  "User",
+	}, nil)
+	q.EXPECT().CreateVideoReview(gomock.Any(), gomock.Any()).Return(db.VideoReview{
+		ID:        reviewID,
+		VideoID:   videoID,
+		Content:   "Nice technique",
+		CreatedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
+	}, nil)
+	// Owner (student) differs from the reviewer, so a notification must be recorded.
+	q.EXPECT().GetAssetOwnerByVideoID(gomock.Any(), gomock.Any()).Return(db.GetAssetOwnerByVideoIDRow{
+		AssetID:   assetID,
+		OwnerID:   "student-1",
+		Name:      "Backhand drill",
+		GroupName: "Academy",
+	}, nil).AnyTimes()
+
+	recorded := make(chan db.CreateNotificationParams, 1)
+	q.EXPECT().CreateNotification(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, arg db.CreateNotificationParams) (db.Notification, error) {
+			recorded <- arg
+			return db.Notification{}, nil
+		}).Times(1)
+
+	body := `{"content":"Nice technique"}`
+	req := httptest.NewRequest(http.MethodPost, "/videos/"+videoIDStr+"/reviews", strings.NewReader(body))
+	req = withChiURLParam(req, "id", videoIDStr)
+	req = req.WithContext(testUserCtx(req.Context(), user))
+	rec := httptest.NewRecorder()
+
+	h.CreateReview(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("got %d, want %d; body: %s", rec.Code, http.StatusCreated, rec.Body.String())
+	}
+
+	select {
+	case arg := <-recorded:
+		if arg.RecipientID != "student-1" {
+			t.Fatalf("recipient = %q, want student-1", arg.RecipientID)
+		}
+		if arg.Type != db.NotificationType(notifications.TypeVideoReviewed) {
+			t.Fatalf("type = %q, want %q", arg.Type, notifications.TypeVideoReviewed)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("CreateNotification was not called for the video owner")
 	}
 }
 
@@ -503,6 +574,7 @@ func TestCreateReview_Reply_ReRootsToTopLevel(t *testing.T) {
 		Content:   "reply content",
 		CreatedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
 	}, nil)
+	q.EXPECT().GetAssetOwnerByVideoID(gomock.Any(), gomock.Any()).Return(db.GetAssetOwnerByVideoIDRow{}, nil).AnyTimes()
 
 	replyIDStr := "03030304-0506-0708-090a-0b0c0d0e0f10"
 	body := `{"content":"reply content","parent_id":"` + replyIDStr + `","timestamp_seconds":42}`

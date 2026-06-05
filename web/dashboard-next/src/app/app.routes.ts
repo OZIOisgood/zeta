@@ -7,6 +7,7 @@ import { GroupDetailsPageComponent } from './pages/group-details/group-details-p
 import { GroupPreferencesPageComponent } from './pages/group-preferences/group-preferences-page.component';
 import { GroupsPageComponent } from './pages/groups/groups-page.component';
 import { HomePageComponent } from './pages/home/home-page.component';
+import { NotificationsPageComponent } from './pages/notifications/notifications-page.component';
 import { BookCoachingPageComponent } from './pages/book-coaching/book-coaching-page.component';
 import { ManageAvailabilityPageComponent } from './pages/manage-availability/manage-availability-page.component';
 import { PreferencesPageComponent } from './pages/preferences/preferences-page.component';
@@ -31,6 +32,7 @@ export const routes: Routes = [
     children: [
       { path: '', component: HomePageComponent, title: 'Zeta' },
       { path: 'videos', component: VideosPageComponent, title: 'Zeta Videos' },
+      { path: 'notifications', component: NotificationsPageComponent, title: 'Notifications' },
       { path: 'preferences', redirectTo: 'preferences/personal-data', pathMatch: 'full' },
       { path: 'preferences/:tab', component: PreferencesPageComponent, title: 'Preferences' },
       {

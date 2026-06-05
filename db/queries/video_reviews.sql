@@ -44,9 +44,10 @@ INNER JOIN videos v ON v.asset_id = a.id
 WHERE v.id = $1;
 
 -- name: GetAssetOwnerByVideoID :one
-SELECT a.owner_id, a.name
+SELECT a.id AS asset_id, a.owner_id, a.name, a.group_id, COALESCE(g.name, '') AS group_name
 FROM assets a
 INNER JOIN videos v ON v.asset_id = a.id
+LEFT JOIN groups g ON g.id = a.group_id
 WHERE v.id = $1;
 
 -- name: CheckVideoVisibleToUser :one

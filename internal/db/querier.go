@@ -16,6 +16,7 @@ type Querier interface {
 	CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) (bool, error)
 	CheckVideoVisibleToUser(ctx context.Context, arg CheckVideoVisibleToUserParams) (bool, error)
 	CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error)
+	CountUnreadNotifications(ctx context.Context, recipientID string) (int64, error)
 	CountVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (int64, error)
 	CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error)
 	// === Availability ===
@@ -28,6 +29,7 @@ type Querier interface {
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateGroupInvitation(ctx context.Context, arg CreateGroupInvitationParams) (GroupInvitation, error)
 	CreateMissingRecordingImports(ctx context.Context) (int64, error)
+	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	// === Session Types ===
 	CreateSessionType(ctx context.Context, arg CreateSessionTypeParams) (CoachingSessionType, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
@@ -50,6 +52,7 @@ type Querier interface {
 	GetGroup(ctx context.Context, id pgtype.UUID) (Group, error)
 	GetGroupInvitationByCode(ctx context.Context, code string) (GroupInvitation, error)
 	GetGroupInvitationByID(ctx context.Context, arg GetGroupInvitationByIDParams) (GroupInvitation, error)
+	GetNotification(ctx context.Context, id pgtype.UUID) (Notification, error)
 	GetSessionType(ctx context.Context, arg GetSessionTypeParams) (CoachingSessionType, error)
 	GetUserEmailPreferences(ctx context.Context, userID string) (GetUserEmailPreferencesRow, error)
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
@@ -69,6 +72,7 @@ type Querier interface {
 	ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error)
 	ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error)
 	ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error)
+	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
 	ListPendingRecordingImports(ctx context.Context, limit int32) ([]ListPendingRecordingImportsRow, error)
 	ListPendingReminders(ctx context.Context) ([]ListPendingRemindersRow, error)
 	ListRecordingsPastEnd(ctx context.Context, limit int32) ([]CoachingBookingRecording, error)
@@ -77,10 +81,12 @@ type Querier interface {
 	ListUserGroups(ctx context.Context, userID string) ([]ListUserGroupsRow, error)
 	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]ListVideoReviewsRow, error)
 	ListVisibleAssets(ctx context.Context, arg ListVisibleAssetsParams) ([]ListVisibleAssetsRow, error)
+	MarkAllNotificationsRead(ctx context.Context, recipientID string) error
 	MarkBookingRecordingFailed(ctx context.Context, arg MarkBookingRecordingFailedParams) error
 	MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopping(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
+	MarkNotificationRead(ctx context.Context, arg MarkNotificationReadParams) error
 	MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error
 	MarkRecordingImportImporting(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error)
 	MarkRecordingImportMuxCreated(ctx context.Context, arg MarkRecordingImportMuxCreatedParams) (CoachingRecordingImport, error)

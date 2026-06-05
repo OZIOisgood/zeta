@@ -149,6 +149,7 @@ type InvitationStatus string
 const (
 	InvitationStatusPending  InvitationStatus = "pending"
 	InvitationStatusAccepted InvitationStatus = "accepted"
+	InvitationStatusDeclined InvitationStatus = "declined"
 )
 
 func (e *InvitationStatus) Scan(src interface{}) error {
@@ -227,6 +228,51 @@ func (ns NullLanguageCode) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.LanguageCode), nil
+}
+
+type NotificationType string
+
+const (
+	NotificationTypeGroupInvitationReceived NotificationType = "group_invitation_received"
+	NotificationTypeGroupMemberJoined       NotificationType = "group_member_joined"
+	NotificationTypeVideoReviewed           NotificationType = "video_reviewed"
+	NotificationTypeVideoUploaded           NotificationType = "video_uploaded"
+	NotificationTypeCoachingBookingCreated  NotificationType = "coaching_booking_created"
+)
+
+func (e *NotificationType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = NotificationType(s)
+	case string:
+		*e = NotificationType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for NotificationType: %T", src)
+	}
+	return nil
+}
+
+type NullNotificationType struct {
+	NotificationType NotificationType `json:"notification_type"`
+	Valid            bool             `json:"valid"` // Valid is true if NotificationType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNotificationType) Scan(value interface{}) error {
+	if value == nil {
+		ns.NotificationType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.NotificationType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNotificationType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.NotificationType), nil
 }
 
 type VideoStatus string
@@ -389,6 +435,15 @@ type GroupInvitation struct {
 	Code      string             `json:"code"`
 	Status    InvitationStatus   `json:"status"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Notification struct {
+	ID          pgtype.UUID        `json:"id"`
+	RecipientID string             `json:"recipient_id"`
+	Type        NotificationType   `json:"type"`
+	Payload     []byte             `json:"payload"`
+	ReadAt      pgtype.Timestamptz `json:"read_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type UserGroup struct {

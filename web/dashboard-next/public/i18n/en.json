@@ -537,5 +537,46 @@
     "initials": "ZT",
     "name": "Zeta Team",
     "role": "Zeta"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Open notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet",
+    "emptyDescription": "You're all caught up.",
+    "today": "Today",
+    "earlier": "Earlier",
+    "unread": "Unread",
+    "viewAll": "View all notifications",
+    "invite": {
+      "accept": "Accept",
+      "decline": "Decline",
+      "accepted": "Accepted — you joined \"{{group}}\".",
+      "declined": "Invitation declined.",
+      "errorTitle": "Action failed",
+      "acceptError": "The invitation could not be accepted. Please try again.",
+      "declineError": "The invitation could not be declined. Please try again.",
+      "expired": "This invitation is no longer available."
+    },
+    "page": {
+      "description": "Everything happening around your videos, groups, and sessions.",
+      "filtersLabel": "Filter notifications",
+      "tabs": {
+        "all": "All",
+        "unread": "Unread"
+      },
+      "allRead": "All caught up",
+      "emptyDescription": "New events will appear here."
+    },
+    "types": {
+      "groupInvitationReceived": "{{inviter}} invited you to join {{group}}",
+      "groupInvitationReceivedNoActor": "You were invited to join {{group}}",
+      "groupMemberJoined": "{{member}} joined {{group}}",
+      "videoReviewed": "Your video \"{{video}}\" was reviewed",
+      "videoUploaded": "{{uploader}} uploaded a video to {{group}}",
+      "videoUploadedNoGroup": "{{uploader}} uploaded a video for you",
+      "coachingBookingCreated": "{{student}} booked a session with you",
+      "generic": "You have a new notification"
+    }
   }
 }

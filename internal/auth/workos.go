@@ -16,6 +16,7 @@ type UserManagement interface {
 	AuthenticateWithRefreshToken(ctx context.Context, opts usermanagement.AuthenticateWithRefreshTokenOpts) (usermanagement.RefreshAuthenticationResponse, error)
 	AuthenticateWithPassword(ctx context.Context, opts usermanagement.AuthenticateWithPasswordOpts) (usermanagement.AuthenticateResponse, error)
 	GetUser(ctx context.Context, opts usermanagement.GetUserOpts) (usermanagement.User, error)
+	ListUsers(ctx context.Context, opts usermanagement.ListUsersOpts) (usermanagement.ListUsersResponse, error)
 	UpdateUser(ctx context.Context, opts usermanagement.UpdateUserOpts) (usermanagement.User, error)
 	ListOrganizationMemberships(ctx context.Context, opts usermanagement.ListOrganizationMembershipsOpts) (usermanagement.ListOrganizationMembershipsResponse, error)
 	CreateOrganizationMembership(ctx context.Context, opts usermanagement.CreateOrganizationMembershipOpts) (usermanagement.OrganizationMembership, error)
@@ -47,6 +48,10 @@ func (w *workosClient) AuthenticateWithPassword(ctx context.Context, opts userma
 
 func (w *workosClient) GetUser(ctx context.Context, opts usermanagement.GetUserOpts) (usermanagement.User, error) {
 	return usermanagement.GetUser(ctx, opts)
+}
+
+func (w *workosClient) ListUsers(ctx context.Context, opts usermanagement.ListUsersOpts) (usermanagement.ListUsersResponse, error) {
+	return usermanagement.ListUsers(ctx, opts)
 }
 
 func (w *workosClient) UpdateUser(ctx context.Context, opts usermanagement.UpdateUserOpts) (usermanagement.User, error) {

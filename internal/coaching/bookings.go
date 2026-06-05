@@ -307,6 +307,7 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.sendBookingCreatedEmail(ctx, booking, sessionType.Name)
+	h.recordBookingCreatedNotification(booking, sessionType.Name)
 	h.scheduleReminders(ctx, booking)
 
 	users, err := h.resolveUsers(ctx, []string{booking.ExpertID, booking.StudentID})
