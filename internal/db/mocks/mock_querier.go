@@ -623,6 +623,21 @@ func (mr *MockQuerierMockRecorder) GetUserTimezone(ctx, userID any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserTimezone", reflect.TypeOf((*MockQuerier)(nil).GetUserTimezone), ctx, userID)
 }
 
+// GetVideoReview mocks base method.
+func (m *MockQuerier) GetVideoReview(ctx context.Context, id pgtype.UUID) (db.GetVideoReviewRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVideoReview", ctx, id)
+	ret0, _ := ret[0].(db.GetVideoReviewRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVideoReview indicates an expected call of GetVideoReview.
+func (mr *MockQuerierMockRecorder) GetVideoReview(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVideoReview", reflect.TypeOf((*MockQuerier)(nil).GetVideoReview), ctx, id)
+}
+
 // GetVisibleAsset mocks base method.
 func (m *MockQuerier) GetVisibleAsset(ctx context.Context, arg db.GetVisibleAssetParams) (db.GetVisibleAssetRow, error) {
 	m.ctrl.T.Helper()
@@ -894,10 +909,10 @@ func (mr *MockQuerierMockRecorder) ListUserGroups(ctx, userID any) *gomock.Call 
 }
 
 // ListVideoReviews mocks base method.
-func (m *MockQuerier) ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]db.VideoReview, error) {
+func (m *MockQuerier) ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]db.ListVideoReviewsRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListVideoReviews", ctx, videoID)
-	ret0, _ := ret[0].([]db.VideoReview)
+	ret0, _ := ret[0].([]db.ListVideoReviewsRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1185,6 +1200,21 @@ func (m *MockQuerier) UpdateUserEmailPreferences(ctx context.Context, arg db.Upd
 func (mr *MockQuerierMockRecorder) UpdateUserEmailPreferences(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserEmailPreferences", reflect.TypeOf((*MockQuerier)(nil).UpdateUserEmailPreferences), ctx, arg)
+}
+
+// UpdateUserName mocks base method.
+func (m *MockQuerier) UpdateUserName(ctx context.Context, arg db.UpdateUserNameParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserName", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUserName indicates an expected call of UpdateUserName.
+func (mr *MockQuerierMockRecorder) UpdateUserName(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserName", reflect.TypeOf((*MockQuerier)(nil).UpdateUserName), ctx, arg)
 }
 
 // UpdateVideoMuxAssetID mocks base method.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -179,45 +180,67 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	// Seed avatar from WorkOS only on first sign-in (no preferences row yet).
-	// If a row already exists, the DB avatar is the source of truth.
 	go func() {
-		_, err := h.q.GetUserPreferences(context.Background(), resp.User.ID)
-		if err == nil {
-			// Row exists — keep the DB avatar as-is
-			return
-		}
-		if err != pgx.ErrNoRows {
-			h.logger.WarnContext(context.Background(), "auth_seed_avatar_check_failed",
+		ctx := context.Background()
+
+		// Check first-login status BEFORE any upsert that would create the row.
+		_, existsErr := h.q.GetUserPreferences(ctx, resp.User.ID)
+		isFirstLogin := errors.Is(existsErr, pgx.ErrNoRows)
+		if existsErr != nil && !isFirstLogin {
+			h.logger.WarnContext(ctx, "auth_seed_check_failed",
+				slog.String("component", "auth"),
 				slog.String("user_id", resp.User.ID),
-				slog.Any("err", err),
+				slog.Any("err", existsErr),
 			)
 			return
 		}
-		// No preferences row yet — seed avatar from WorkOS if available
-		avatar := ""
-		if resp.User.ProfilePictureURL != "" {
-			avatarB64, err := h.fetchURLAsBase64(resp.User.ProfilePictureURL)
-			if err != nil {
-				h.logger.WarnContext(context.Background(), "auth_seed_avatar_failed",
-					slog.String("user_id", resp.User.ID),
-					slog.Any("err", err),
-				)
-			} else {
-				avatar = avatarB64
+
+		if isFirstLogin {
+			// The foreground /auth/me path creates first-login preferences with
+			// language/timezone. This callback only seeds avatar opportunistically.
+			avatar := ""
+			if resp.User.ProfilePictureURL != "" {
+				avatarB64, err := h.fetchURLAsBase64(resp.User.ProfilePictureURL)
+				if err != nil {
+					h.logger.WarnContext(ctx, "auth_seed_avatar_failed",
+						slog.String("component", "auth"),
+						slog.String("user_id", resp.User.ID),
+						slog.Any("err", err),
+					)
+				} else {
+					avatar = avatarB64
+				}
 			}
+			if avatar != "" {
+				_, err := h.q.UpsertUserAvatar(ctx, db.UpsertUserAvatarParams{
+					UserID:    resp.User.ID,
+					Avatar:    avatar,
+					FirstName: resp.User.FirstName,
+					LastName:  resp.User.LastName,
+				})
+				if err != nil {
+					h.logger.WarnContext(ctx, "auth_seed_avatar_save_failed",
+						slog.String("component", "auth"),
+						slog.String("user_id", resp.User.ID),
+						slog.Any("err", err),
+					)
+				}
+			}
+			return
 		}
-		if avatar != "" {
-			_, err = h.q.UpsertUserAvatar(context.Background(), db.UpsertUserAvatarParams{
-				UserID: resp.User.ID,
-				Avatar: avatar,
-			})
-			if err != nil {
-				h.logger.WarnContext(context.Background(), "auth_seed_avatar_save_failed",
-					slog.String("user_id", resp.User.ID),
-					slog.Any("err", err),
-				)
-			}
+
+		rowsAffected, err := h.q.UpdateUserName(ctx, db.UpdateUserNameParams{
+			UserID:    resp.User.ID,
+			FirstName: resp.User.FirstName,
+			LastName:  resp.User.LastName,
+		})
+		if err != nil || rowsAffected == 0 {
+			h.logger.WarnContext(ctx, "auth_update_name_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", resp.User.ID),
+				slog.Int64("rows_affected", rowsAffected),
+				slog.Any("err", err),
+			)
 		}
 	}()
 
@@ -478,9 +501,11 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			prefs, err = h.q.SeedUserPreferences(ctx, db.SeedUserPreferencesParams{
-				UserID:   user.ID,
-				Language: db.LanguageCode(lang),
-				Timezone: tz,
+				UserID:    user.ID,
+				Language:  db.LanguageCode(lang),
+				Timezone:  tz,
+				FirstName: user.FirstName,
+				LastName:  user.LastName,
 			})
 			if err != nil {
 				h.logger.ErrorContext(ctx, "auth_create_prefs_failed",
@@ -556,6 +581,22 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 			slog.Any("err", err),
 		)
 		http.Error(w, "Failed to update settings", http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, err := h.q.UpdateUserName(ctx, db.UpdateUserNameParams{
+		UserID:    user.ID,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+	})
+	if err != nil || rowsAffected == 0 {
+		h.logger.ErrorContext(ctx, "auth_update_name_failed",
+			slog.String("component", "auth"),
+			slog.String("user_id", user.ID),
+			slog.Int64("rows_affected", rowsAffected),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to update profile name", http.StatusInternalServerError)
 		return
 	}
 

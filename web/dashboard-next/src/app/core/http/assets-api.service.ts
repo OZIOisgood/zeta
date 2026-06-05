@@ -43,10 +43,17 @@ export type Asset = {
   group?: AssetGroup;
 };
 
+export type ReviewAuthor = {
+  name: string;
+  avatar?: string;
+};
+
 export type Review = {
   id: string;
   content: string;
   timestamp_seconds?: number;
+  parent_id?: string | null;
+  author?: ReviewAuthor;
   created_at: string;
 };
 
@@ -84,10 +91,16 @@ export class AssetsApiClient {
     return this.http.get<Review[]>(`${this.apiUrl}/videos/${videoId}/reviews`);
   }
 
-  createReview(videoId: string, content: string, timestampSeconds?: number): Observable<Review> {
+  createReview(
+    videoId: string,
+    content: string,
+    timestampSeconds?: number,
+    parentId?: string,
+  ): Observable<Review> {
     return this.http.post<Review>(`${this.apiUrl}/videos/${videoId}/reviews`, {
       content,
       ...(timestampSeconds === undefined ? {} : { timestamp_seconds: timestampSeconds }),
+      ...(parentId === undefined ? {} : { parent_id: parentId }),
     });
   }
 

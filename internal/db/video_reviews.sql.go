@@ -66,20 +66,30 @@ const createVideoReview = `-- name: CreateVideoReview :one
 INSERT INTO video_reviews (
     video_id,
     content,
-    timestamp_seconds
+    timestamp_seconds,
+    parent_id,
+    author_id
 ) VALUES (
-    $1, $2, $3
-) RETURNING id, video_id, content, timestamp_seconds, created_at, updated_at
+    $1, $2, $3, $4, $5
+) RETURNING id, video_id, content, timestamp_seconds, created_at, updated_at, parent_id, author_id
 `
 
 type CreateVideoReviewParams struct {
 	VideoID          pgtype.UUID `json:"video_id"`
 	Content          string      `json:"content"`
 	TimestampSeconds pgtype.Int4 `json:"timestamp_seconds"`
+	ParentID         pgtype.UUID `json:"parent_id"`
+	AuthorID         pgtype.Text `json:"author_id"`
 }
 
 func (q *Queries) CreateVideoReview(ctx context.Context, arg CreateVideoReviewParams) (VideoReview, error) {
-	row := q.db.QueryRow(ctx, createVideoReview, arg.VideoID, arg.Content, arg.TimestampSeconds)
+	row := q.db.QueryRow(ctx, createVideoReview,
+		arg.VideoID,
+		arg.Content,
+		arg.TimestampSeconds,
+		arg.ParentID,
+		arg.AuthorID,
+	)
 	var i VideoReview
 	err := row.Scan(
 		&i.ID,
@@ -88,6 +98,8 @@ func (q *Queries) CreateVideoReview(ctx context.Context, arg CreateVideoReviewPa
 		&i.TimestampSeconds,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ParentID,
+		&i.AuthorID,
 	)
 	return i, err
 }
@@ -140,6 +152,31 @@ func (q *Queries) GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (
 	return status, err
 }
 
+const getVideoReview = `-- name: GetVideoReview :one
+SELECT id, video_id, parent_id, author_id
+FROM video_reviews
+WHERE id = $1
+`
+
+type GetVideoReviewRow struct {
+	ID       pgtype.UUID `json:"id"`
+	VideoID  pgtype.UUID `json:"video_id"`
+	ParentID pgtype.UUID `json:"parent_id"`
+	AuthorID pgtype.Text `json:"author_id"`
+}
+
+func (q *Queries) GetVideoReview(ctx context.Context, id pgtype.UUID) (GetVideoReviewRow, error) {
+	row := q.db.QueryRow(ctx, getVideoReview, id)
+	var i GetVideoReviewRow
+	err := row.Scan(
+		&i.ID,
+		&i.VideoID,
+		&i.ParentID,
+		&i.AuthorID,
+	)
+	return i, err
+}
+
 const hasVideosWithoutReviews = `-- name: HasVideosWithoutReviews :one
 SELECT EXISTS (
     SELECT 1
@@ -159,34 +196,59 @@ func (q *Queries) HasVideosWithoutReviews(ctx context.Context, assetID pgtype.UU
 }
 
 const listVideoReviews = `-- name: ListVideoReviews :many
-SELECT 
-    id,
-    video_id,
-    content,
-    timestamp_seconds,
-    created_at,
-    updated_at
-FROM video_reviews
-WHERE video_id = $1
-ORDER BY created_at DESC
+SELECT
+    r.id,
+    r.video_id,
+    r.content,
+    r.timestamp_seconds,
+    r.parent_id,
+    r.author_id,
+    r.created_at,
+    r.updated_at,
+    up.first_name  AS author_first_name,
+    up.last_name   AS author_last_name,
+    up.avatar      AS author_avatar
+FROM video_reviews r
+LEFT JOIN user_preferences up ON up.user_id = r.author_id
+WHERE r.video_id = $1
+ORDER BY COALESCE(r.parent_id, r.id), r.parent_id NULLS FIRST, r.created_at
 `
 
-func (q *Queries) ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]VideoReview, error) {
+type ListVideoReviewsRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	VideoID          pgtype.UUID        `json:"video_id"`
+	Content          string             `json:"content"`
+	TimestampSeconds pgtype.Int4        `json:"timestamp_seconds"`
+	ParentID         pgtype.UUID        `json:"parent_id"`
+	AuthorID         pgtype.Text        `json:"author_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	AuthorFirstName  pgtype.Text        `json:"author_first_name"`
+	AuthorLastName   pgtype.Text        `json:"author_last_name"`
+	AuthorAvatar     pgtype.Text        `json:"author_avatar"`
+}
+
+func (q *Queries) ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]ListVideoReviewsRow, error) {
 	rows, err := q.db.Query(ctx, listVideoReviews, videoID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []VideoReview
+	var items []ListVideoReviewsRow
 	for rows.Next() {
-		var i VideoReview
+		var i ListVideoReviewsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.VideoID,
 			&i.Content,
 			&i.TimestampSeconds,
+			&i.ParentID,
+			&i.AuthorID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AuthorFirstName,
+			&i.AuthorLastName,
+			&i.AuthorAvatar,
 		); err != nil {
 			return nil, err
 		}
@@ -202,7 +264,7 @@ const updateVideoReview = `-- name: UpdateVideoReview :one
 UPDATE video_reviews
 SET content = $2, updated_at = NOW()
 WHERE id = $1 AND video_id = $3
-RETURNING id, video_id, content, timestamp_seconds, created_at, updated_at
+RETURNING id, video_id, content, timestamp_seconds, created_at, updated_at, parent_id, author_id
 `
 
 type UpdateVideoReviewParams struct {
@@ -221,6 +283,8 @@ func (q *Queries) UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewPa
 		&i.TimestampSeconds,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ParentID,
+		&i.AuthorID,
 	)
 	return i, err
 }

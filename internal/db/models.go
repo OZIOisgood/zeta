@@ -411,6 +411,8 @@ type UserPreference struct {
 	EmailGroupMembershipUpdatesEnabled bool             `json:"email_group_membership_updates_enabled"`
 	EmailCoachingBookingUpdatesEnabled bool             `json:"email_coaching_booking_updates_enabled"`
 	EmailCoachingRemindersEnabled      bool             `json:"email_coaching_reminders_enabled"`
+	FirstName                          string           `json:"first_name"`
+	LastName                           string           `json:"last_name"`
 }
 
 type Video struct {
@@ -431,4 +433,6 @@ type VideoReview struct {
 	TimestampSeconds pgtype.Int4        `json:"timestamp_seconds"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	ParentID         pgtype.UUID        `json:"parent_id"`
+	AuthorID         pgtype.Text        `json:"author_id"`
 }

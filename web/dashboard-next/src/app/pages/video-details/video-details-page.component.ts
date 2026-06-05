@@ -16,25 +16,28 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import {
   LucideCheck,
+  LucideChevronDown,
+  LucideChevronRight,
   LucideClock,
   LucideMessageCircle,
-  LucidePencil,
+  LucidePlay,
   LucideSendHorizontal,
   LucideSparkles,
-  LucideTrash,
   LucideVideo,
 } from '@lucide/angular';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AppShellStore } from '../../core/state/app-shell.store';
+import { DashboardDateTimeService } from '../../core/i18n/dashboard-date-time.service';
+import { RelativeTimePipe } from '../../core/i18n/relative-time.pipe';
 import { SessionStore } from '../../features/session/session.store';
-import { VideosStore } from '../../features/videos/videos.store';
+import { Thread, VideosStore } from '../../features/videos/videos.store';
 import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZCommentActionsComponent } from '../../shared/ui/comment-actions/z-comment-actions.component';
 import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
-import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 
@@ -46,22 +49,24 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
     NgpDialogTrigger,
     RouterLink,
     TranslocoPipe,
+    RelativeTimePipe,
     ZAvatarComponent,
     ZBadgeComponent,
     ZBreadcrumbsComponent,
     ZButtonComponent,
+    ZCommentActionsComponent,
     ZDialogPanelComponent,
     ZEmptyStateComponent,
-    ZIconButtonComponent,
     ZSkeletonComponent,
     ZTextareaComponent,
     LucideCheck,
+    LucideChevronDown,
+    LucideChevronRight,
     LucideClock,
     LucideMessageCircle,
-    LucidePencil,
+    LucidePlay,
     LucideSendHorizontal,
     LucideSparkles,
-    LucideTrash,
     LucideVideo,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -127,15 +132,15 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
             </div>
 
             <section class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-              <div class="flex items-center justify-between gap-3">
-                <div class="flex items-center gap-2">
-                  <svg
-                    lucideMessageCircle
-                    class="size-4 text-[var(--z-primary)]"
-                    aria-hidden="true"
-                  ></svg>
-                  <h3 class="text-sm font-semibold">{{ 'videos.comments' | transloco }}</h3>
-                </div>
+              <div
+                class="-mx-4 flex items-center gap-2 border-b border-[var(--z-border)] px-4 pb-3"
+              >
+                <svg
+                  lucideMessageCircle
+                  class="size-4 text-[var(--z-primary)]"
+                  aria-hidden="true"
+                ></svg>
+                <h3 class="text-sm font-semibold">{{ 'videos.comments' | transloco }}</h3>
                 @if (selectedVideo(); as video) {
                   <z-badge>{{ video.review_count }}</z-badge>
                 }
@@ -165,48 +170,297 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                   "
                 />
               } @else {
-                <div class="mt-4 grid gap-3">
-                  @for (review of store.reviews(); track review.id) {
+                <div class="mt-2">
+                  @for (thread of store.threads(); track thread.root.id) {
                     <article
-                      class="rounded-md border border-[var(--z-border)] bg-[var(--z-bg)] p-4"
+                      class="group border-t border-[var(--z-border)] py-4 first:border-t-0 first:pt-2"
                     >
-                      @if (editingReviewId() === review.id) {
-                        <form class="grid gap-3" (submit)="saveEditedReview($event, review.id)">
-                          <z-textarea
-                            [formControl]="editReviewControl"
-                            [placeholder]="'videos.commentPlaceholder' | transloco"
-                            [rows]="4"
-                          />
-                          <div
-                            class="flex flex-wrap items-center justify-between gap-2"
-                            data-testid="edit-review-actions"
-                          >
-                            <z-button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              [disabled]="
-                                !editReviewControl.value.trim() ||
-                                store.enhancementStatus() === 'loading'
-                              "
-                              (pressed)="enhanceEditedReview()"
+                      <!-- Root: avatar + content + actions -->
+                      <div
+                        class="comment-hoverable grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2"
+                      >
+                        <z-avatar
+                          class="size-9 shrink-0"
+                          [image]="thread.root.author?.avatar"
+                          [fallback]="authorInitials(thread.root.author?.name)"
+                          [alt]="thread.root.author?.name ?? ('videos.unknownAuthor' | transloco)"
+                        />
+                        <div class="min-w-0 flex-1">
+                          <!-- name + time + timestamp badge -->
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <p class="min-w-0 truncate text-sm font-semibold leading-5">
+                              {{ thread.root.author?.name ?? ('videos.unknownAuthor' | transloco) }}
+                            </p>
+                            <p
+                              class="shrink-0 text-xs leading-5 text-[var(--z-muted)]"
+                              [title]="formatAbsolute(thread.root.created_at)"
                             >
-                              <svg lucideSparkles class="size-4" aria-hidden="true"></svg>
-                              <span>
-                                {{
-                                  (store.enhancementStatus() === 'loading'
-                                    ? 'videos.enhancing'
-                                    : 'videos.enhanceText'
-                                  ) | transloco
-                                }}
-                              </span>
-                            </z-button>
-                            <div class="ml-auto flex gap-2">
+                              {{ thread.root.created_at | relativeTime }}
+                            </p>
+                            @if (
+                              thread.root.timestamp_seconds !== undefined &&
+                              thread.root.timestamp_seconds !== null
+                            ) {
+                              <button
+                                type="button"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--z-surface-warm)] px-2.5 py-1 text-xs font-semibold leading-4 text-[var(--z-primary-strong)] transition hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                                (click)="seekTo(thread.root.timestamp_seconds)"
+                              >
+                                <svg lucidePlay class="size-3" aria-hidden="true"></svg>
+                                {{ formatTimestamp(thread.root.timestamp_seconds) }}
+                              </button>
+                            }
+                          </div>
+
+                          <!-- body or edit form -->
+                          @if (editingReviewId() === thread.root.id) {
+                            <form
+                              class="mt-2 grid gap-3"
+                              (submit)="saveEditedReview($event, thread.root.id)"
+                            >
+                              <z-textarea
+                                [formControl]="editReviewControl"
+                                [placeholder]="'videos.commentPlaceholder' | transloco"
+                                [rows]="4"
+                              />
+                              <div
+                                class="flex flex-wrap items-center justify-between gap-2"
+                                data-testid="edit-review-actions"
+                              >
+                                <z-button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  [disabled]="
+                                    !editReviewControl.value.trim() ||
+                                    store.enhancementStatus() === 'loading'
+                                  "
+                                  (pressed)="enhanceEditedReview()"
+                                >
+                                  <svg lucideSparkles class="size-4" aria-hidden="true"></svg>
+                                  <span>{{
+                                    (store.enhancementStatus() === 'loading'
+                                      ? 'videos.enhancing'
+                                      : 'videos.enhanceText'
+                                    ) | transloco
+                                  }}</span>
+                                </z-button>
+                                <div class="ml-auto flex gap-2">
+                                  <z-button
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    (pressed)="cancelEditing()"
+                                  >
+                                    {{ 'common.actions.cancel' | transloco }}
+                                  </z-button>
+                                  <z-button
+                                    type="submit"
+                                    size="sm"
+                                    [disabled]="
+                                      !editReviewControl.value.trim() ||
+                                      store.enhancementStatus() === 'loading'
+                                    "
+                                  >
+                                    {{ 'common.actions.save' | transloco }}
+                                  </z-button>
+                                </div>
+                              </div>
+                            </form>
+                          } @else {
+                            <p class="mt-1 whitespace-pre-wrap text-sm leading-6">
+                              {{ thread.root.content }}
+                            </p>
+                            @if (canAddReviews()) {
+                              <button
+                                type="button"
+                                class="mt-1 text-xs font-semibold text-[var(--z-muted)] transition hover:text-[var(--z-primary-strong)]"
+                                (click)="openReply(thread.root.id)"
+                              >
+                                {{ 'videos.reply' | transloco }}
+                              </button>
+                            }
+                          }
+                        </div>
+                        @if (canEditReviews() || canDeleteReviews()) {
+                          <z-comment-actions
+                            class="-mt-1"
+                            [canEdit]="canEditReviews()"
+                            [canDelete]="canDeleteReviews()"
+                            (edit)="startEditing(thread.root.id, thread.root.content)"
+                            (delete)="doDeleteReview(thread.root.id)"
+                          />
+                        }
+                      </div>
+
+                      <!-- Collapse toggle (only shown when there are replies) -->
+                      @if (thread.replies.length > 0) {
+                        <button
+                          type="button"
+                          class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--z-muted)] transition hover:text-[var(--z-primary-strong)]"
+                          [attr.aria-expanded]="!collapsedThreads().has(thread.root.id)"
+                          (click)="toggleThread(thread.root.id)"
+                        >
+                          @if (collapsedThreads().has(thread.root.id)) {
+                            <svg lucideChevronRight class="size-3.5" aria-hidden="true"></svg>
+                          } @else {
+                            <svg lucideChevronDown class="size-3.5" aria-hidden="true"></svg>
+                          }
+                          {{ thread.replies.length }}
+                          {{
+                            (thread.replies.length === 1
+                              ? 'videos.reply.one'
+                              : 'videos.reply.other'
+                            ) | transloco
+                          }}
+                        </button>
+                      }
+
+                      <!-- Replies + composer (hidden when collapsed) -->
+                      @if (!collapsedThreads().has(thread.root.id)) {
+                        @if (thread.replies.length > 0) {
+                          <div class="ml-5 mt-3 grid gap-4 pl-5">
+                            @for (reply of thread.replies; track reply.id) {
+                              <div
+                                animate.enter="z-list-enter"
+                                class="comment-hoverable group grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2"
+                              >
+                                <z-avatar
+                                  class="size-7 shrink-0"
+                                  [image]="reply.author?.avatar"
+                                  [fallback]="authorInitials(reply.author?.name)"
+                                  [alt]="reply.author?.name ?? ('videos.unknownAuthor' | transloco)"
+                                />
+                                <div class="min-w-0 flex-1">
+                                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                    <p class="min-w-0 truncate text-sm font-semibold leading-5">
+                                      {{
+                                        reply.author?.name ?? ('videos.unknownAuthor' | transloco)
+                                      }}
+                                    </p>
+                                    <p
+                                      class="shrink-0 text-xs leading-5 text-[var(--z-muted)]"
+                                      [title]="formatAbsolute(reply.created_at)"
+                                    >
+                                      {{ reply.created_at | relativeTime }}
+                                    </p>
+                                  </div>
+
+                                  @if (editingReviewId() === reply.id) {
+                                    <form
+                                      class="mt-2 grid gap-3"
+                                      (submit)="saveEditedReview($event, reply.id)"
+                                    >
+                                      <z-textarea
+                                        [formControl]="editReviewControl"
+                                        [placeholder]="'videos.commentPlaceholder' | transloco"
+                                        [rows]="3"
+                                      />
+                                      <div
+                                        class="flex flex-wrap items-center justify-between gap-2"
+                                        data-testid="edit-reply-actions"
+                                      >
+                                        <z-button
+                                          type="button"
+                                          size="sm"
+                                          variant="secondary"
+                                          [disabled]="
+                                            !editReviewControl.value.trim() ||
+                                            store.enhancementStatus() === 'loading'
+                                          "
+                                          (pressed)="enhanceEditedReview()"
+                                        >
+                                          <svg
+                                            lucideSparkles
+                                            class="size-4"
+                                            aria-hidden="true"
+                                          ></svg>
+                                          <span>{{
+                                            (store.enhancementStatus() === 'loading'
+                                              ? 'videos.enhancing'
+                                              : 'videos.enhanceText'
+                                            ) | transloco
+                                          }}</span>
+                                        </z-button>
+                                        <div class="ml-auto flex gap-2">
+                                          <z-button
+                                            type="button"
+                                            size="sm"
+                                            variant="secondary"
+                                            (pressed)="cancelEditing()"
+                                          >
+                                            {{ 'common.actions.cancel' | transloco }}
+                                          </z-button>
+                                          <z-button
+                                            type="submit"
+                                            size="sm"
+                                            [disabled]="
+                                              !editReviewControl.value.trim() ||
+                                              store.enhancementStatus() === 'loading'
+                                            "
+                                          >
+                                            {{ 'common.actions.save' | transloco }}
+                                          </z-button>
+                                        </div>
+                                      </div>
+                                    </form>
+                                  } @else {
+                                    <p class="mt-1 whitespace-pre-wrap text-sm leading-6">
+                                      {{ reply.content }}
+                                    </p>
+                                    @if (canAddReviews()) {
+                                      <button
+                                        type="button"
+                                        class="mt-1 text-xs font-semibold text-[var(--z-muted)] transition hover:text-[var(--z-primary-strong)]"
+                                        (click)="openReply(thread.root.id)"
+                                      >
+                                        {{ 'videos.reply' | transloco }}
+                                      </button>
+                                    }
+                                  }
+                                </div>
+                                @if (canEditReviews() || canDeleteReviews()) {
+                                  <z-comment-actions
+                                    class="-mt-1"
+                                    [canEdit]="canEditReviews()"
+                                    [canDelete]="canDeleteReviews()"
+                                    (edit)="startEditing(reply.id, reply.content)"
+                                    (delete)="doDeleteReview(reply.id)"
+                                  />
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+
+                        <!-- Inline reply composer -->
+                        @if (openReplyFor() === thread.root.id) {
+                          <form
+                            class="ml-5 mt-3 grid gap-2 pl-5"
+                            (submit)="postReply($event, thread.root.id)"
+                          >
+                            <div class="flex items-start gap-2">
+                              <z-avatar
+                                class="mt-0.5 size-7 shrink-0"
+                                [image]="session.user()?.avatar"
+                                [fallback]="authorInitials(session.displayName())"
+                                [alt]="session.displayName()"
+                              />
+                              <z-textarea
+                                #replyTextarea
+                                class="flex-1"
+                                [formControl]="replyControl"
+                                [placeholder]="'videos.replyPlaceholder' | transloco"
+                                [rows]="2"
+                                (keydown)="onReplyKeydown($event, thread.root.id)"
+                              />
+                            </div>
+                            <div class="flex justify-end gap-2 pl-9">
                               <z-button
                                 type="button"
                                 size="sm"
-                                variant="secondary"
-                                (pressed)="cancelEditing()"
+                                variant="ghost"
+                                (pressed)="cancelReply()"
                               >
                                 {{ 'common.actions.cancel' | transloco }}
                               </z-button>
@@ -214,63 +468,14 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                 type="submit"
                                 size="sm"
                                 [disabled]="
-                                  !editReviewControl.value.trim() ||
-                                  store.enhancementStatus() === 'loading'
+                                  !replyControl.value.trim() || store.reviewStatus() === 'loading'
                                 "
                               >
-                                {{ 'common.actions.save' | transloco }}
+                                {{ 'videos.reply' | transloco }}
                               </z-button>
                             </div>
-                          </div>
-                        </form>
-                      } @else {
-                        <p class="whitespace-pre-wrap text-sm leading-7">{{ review.content }}</p>
-                        <div class="mt-3 flex items-center justify-between gap-3">
-                          <div
-                            class="flex min-w-0 items-center gap-2 text-xs text-[var(--z-muted)]"
-                          >
-                            @if (
-                              review.timestamp_seconds !== undefined &&
-                              review.timestamp_seconds !== null
-                            ) {
-                              <svg lucideClock class="size-3.5" aria-hidden="true"></svg>
-                              <span>{{ formatTimestamp(review.timestamp_seconds) }}</span>
-                            }
-                          </div>
-                          @if (canEditReviews() || canDeleteReviews()) {
-                            <div class="flex items-center gap-1">
-                              @if (canEditReviews()) {
-                                <z-icon-button
-                                  [label]="'common.actions.edit' | transloco"
-                                  size="sm"
-                                  (pressed)="startEditing(review.id, review.content)"
-                                >
-                                  <svg lucidePencil class="size-4" aria-hidden="true"></svg>
-                                </z-icon-button>
-                              }
-                              @if (canDeleteReviews()) {
-                                <ng-template #deleteCommentDialog let-close="close">
-                                  <z-dialog-panel
-                                    [title]="'videos.deleteComment' | transloco"
-                                    [description]="'videos.confirmDeleteComment' | transloco"
-                                    tone="danger"
-                                    [confirmLabel]="'common.actions.delete' | transloco"
-                                    [cancelLabel]="'common.actions.cancel' | transloco"
-                                    [close]="close"
-                                  />
-                                </ng-template>
-                                <z-icon-button
-                                  [label]="'common.actions.delete' | transloco"
-                                  size="sm"
-                                  [ngpDialogTrigger]="deleteCommentDialog"
-                                  (ngpDialogTriggerClosed)="confirmDeleteReview($event, review.id)"
-                                >
-                                  <svg lucideTrash class="size-4" aria-hidden="true"></svg>
-                                </z-icon-button>
-                              }
-                            </div>
-                          }
-                        </div>
+                          </form>
+                        }
                       }
                     </article>
                   }
@@ -429,6 +634,7 @@ export class VideoDetailsPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
+  private readonly dateTime = inject(DashboardDateTimeService);
   private readonly muxPlayer = viewChild<ElementRef<HTMLElement>>('muxPlayer');
 
   protected readonly currentTimestamp = signal(0);
@@ -436,6 +642,10 @@ export class VideoDetailsPageComponent {
   protected readonly selectedVideoIndex = signal(0);
   protected readonly reviewControl = new FormControl('', { nonNullable: true });
   protected readonly editReviewControl = new FormControl('', { nonNullable: true });
+  protected readonly collapsedThreads = signal<Set<string>>(new Set());
+  protected readonly openReplyFor = signal<string | null>(null);
+  protected readonly replyControl = new FormControl('', { nonNullable: true });
+  private readonly replyTextareaEl = viewChild('replyTextarea', { read: ElementRef });
 
   protected readonly selectedVideo = computed(() => {
     const videos = this.store.activeAsset()?.videos ?? [];
@@ -554,6 +764,7 @@ export class VideoDetailsPageComponent {
   protected cancelEditing(): void {
     this.editingReviewId.set(null);
     this.editReviewControl.reset('');
+    this.cancelReply();
   }
 
   protected async saveEditedReview(event: Event, reviewId: string): Promise<void> {
@@ -578,7 +789,6 @@ export class VideoDetailsPageComponent {
       this.shell.showToast(
         this.transloco.translate('toast.errorTitle'),
         this.transloco.translate('videos.textEnhanceFailed'),
-        'error',
       );
       return;
     }
@@ -587,16 +797,12 @@ export class VideoDetailsPageComponent {
     this.shell.showToast(
       this.transloco.translate('toast.successTitle'),
       this.transloco.translate('videos.textEnhanced'),
-      'success',
     );
   }
 
-  protected async confirmDeleteReview(result: unknown, reviewId: string): Promise<void> {
-    if (result !== true) return;
-
+  protected async doDeleteReview(reviewId: string): Promise<void> {
     const video = this.selectedVideo();
     if (!video || this.isFinalized()) return;
-
     await this.store.deleteReview(video.id, reviewId);
   }
 
@@ -619,5 +825,71 @@ export class VideoDetailsPageComponent {
         .join('')
         .toUpperCase() || '?'
     );
+  }
+
+  protected authorInitials(name?: string): string {
+    return this.groupInitials(name ?? '');
+  }
+
+  protected seekTo(seconds: number): void {
+    const player = this.muxPlayer()?.nativeElement as HTMLMediaElement | undefined;
+    if (player) player.currentTime = seconds;
+  }
+
+  protected formatAbsolute(dateStr: string): string {
+    return this.dateTime.formatInstantDateTime(dateStr, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  }
+
+  protected toggleThread(rootId: string): void {
+    const next = new Set(this.collapsedThreads());
+    if (next.has(rootId)) {
+      next.delete(rootId);
+    } else {
+      next.add(rootId);
+    }
+    this.collapsedThreads.set(next);
+  }
+
+  protected openReply(rootId: string): void {
+    const next = new Set(this.collapsedThreads());
+    next.delete(rootId);
+    this.collapsedThreads.set(next);
+    this.openReplyFor.set(rootId);
+    this.replyControl.reset('');
+    setTimeout(() => {
+      const host = this.replyTextareaEl()?.nativeElement as HTMLElement | undefined;
+      const ta = host?.querySelector('textarea') ?? host;
+      if (ta instanceof HTMLElement) ta.focus();
+    });
+  }
+
+  protected cancelReply(): void {
+    this.openReplyFor.set(null);
+    this.replyControl.reset('');
+  }
+
+  protected onReplyKeydown(event: KeyboardEvent, rootId: string): void {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+      void this.submitReply(rootId);
+    }
+  }
+
+  protected async submitReply(rootId: string): Promise<void> {
+    const video = this.selectedVideo();
+    const content = this.replyControl.value.trim();
+    if (!video || !content || this.isFinalized()) return;
+    await this.store.createReview(video.id, content, undefined, rootId);
+    if (this.store.reviewStatus() === 'success') {
+      this.cancelReply();
+    }
+  }
+
+  protected async postReply(event: Event, rootId: string): Promise<void> {
+    event.preventDefault();
+    await this.submitReply(rootId);
   }
 }

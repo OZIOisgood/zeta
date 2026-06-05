@@ -2,22 +2,30 @@
 INSERT INTO video_reviews (
     video_id,
     content,
-    timestamp_seconds
+    timestamp_seconds,
+    parent_id,
+    author_id
 ) VALUES (
-    $1, $2, $3
+    $1, $2, $3, $4, $5
 ) RETURNING *;
 
 -- name: ListVideoReviews :many
-SELECT 
-    id,
-    video_id,
-    content,
-    timestamp_seconds,
-    created_at,
-    updated_at
-FROM video_reviews
-WHERE video_id = $1
-ORDER BY created_at DESC;
+SELECT
+    r.id,
+    r.video_id,
+    r.content,
+    r.timestamp_seconds,
+    r.parent_id,
+    r.author_id,
+    r.created_at,
+    r.updated_at,
+    up.first_name  AS author_first_name,
+    up.last_name   AS author_last_name,
+    up.avatar      AS author_avatar
+FROM video_reviews r
+LEFT JOIN user_preferences up ON up.user_id = r.author_id
+WHERE r.video_id = $1
+ORDER BY COALESCE(r.parent_id, r.id), r.parent_id NULLS FIRST, r.created_at;
 
 -- name: DeleteVideoReview :exec
 DELETE FROM video_reviews
@@ -79,3 +87,8 @@ SELECT EXISTS (
     GROUP BY v.id
     HAVING COUNT(r.id) = 0
 ) as has_unreviewed;
+
+-- name: GetVideoReview :one
+SELECT id, video_id, parent_id, author_id
+FROM video_reviews
+WHERE id = $1;

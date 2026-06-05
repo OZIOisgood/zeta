@@ -197,7 +197,8 @@ describe('VideoDetailsPageComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const groupLink = fixture.nativeElement.querySelector('z-avatar')?.closest('a');
+    const groupLink = fixture.nativeElement.querySelector('a[href="/groups/group-1"]') ??
+      [...fixture.nativeElement.querySelectorAll('a')].find((el: Element) => el.textContent?.includes('Arena Academy'));
     expect(groupLink).toBeTruthy();
     expect(groupLink.textContent).toContain('Arena Academy');
     expect(groupLink.querySelector('z-avatar')).toBeTruthy();
@@ -214,10 +215,6 @@ describe('VideoDetailsPageComponent', () => {
     await component['enhanceEditedReview']();
 
     expect(component['editReviewControl'].value).toBe('Keep a steadier rhythm.');
-    expect(shell.showToast).toHaveBeenCalledWith(
-      'Success',
-      'Text enhanced successfully',
-      'success',
-    );
+    expect(shell.showToast).toHaveBeenCalledWith('Success', 'Text enhanced successfully');
   });
 });
