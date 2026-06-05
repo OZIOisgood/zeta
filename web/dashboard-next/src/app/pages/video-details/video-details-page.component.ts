@@ -175,8 +175,10 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                     <article
                       class="group border-t border-[var(--z-border)] py-4 first:border-t-0 first:pt-2"
                     >
-                      <!-- Root: avatar + content column -->
-                      <div class="comment-hoverable flex items-start gap-2">
+                      <!-- Root: avatar + content + actions -->
+                      <div
+                        class="comment-hoverable grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2"
+                      >
                         <z-avatar
                           class="size-9 shrink-0"
                           [image]="thread.root.author?.avatar"
@@ -184,8 +186,8 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                           [alt]="thread.root.author?.name ?? ('videos.unknownAuthor' | transloco)"
                         />
                         <div class="min-w-0 flex-1">
-                          <!-- name + time + timestamp badge + actions on one line -->
-                          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                          <!-- name + time + timestamp badge -->
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <p class="min-w-0 truncate text-sm font-semibold leading-5">
                               {{ thread.root.author?.name ?? ('videos.unknownAuthor' | transloco) }}
                             </p>
@@ -207,15 +209,6 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                 <svg lucidePlay class="size-3" aria-hidden="true"></svg>
                                 {{ formatTimestamp(thread.root.timestamp_seconds) }}
                               </button>
-                            }
-                            @if (canEditReviews() || canDeleteReviews()) {
-                              <z-comment-actions
-                                class="ml-auto"
-                                [canEdit]="canEditReviews()"
-                                [canDelete]="canDeleteReviews()"
-                                (edit)="startEditing(thread.root.id, thread.root.content)"
-                                (delete)="doDeleteReview(thread.root.id)"
-                              />
                             }
                           </div>
 
@@ -289,6 +282,15 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                             }
                           }
                         </div>
+                        @if (canEditReviews() || canDeleteReviews()) {
+                          <z-comment-actions
+                            class="-mt-1"
+                            [canEdit]="canEditReviews()"
+                            [canDelete]="canDeleteReviews()"
+                            (edit)="startEditing(thread.root.id, thread.root.content)"
+                            (delete)="doDeleteReview(thread.root.id)"
+                          />
+                        }
                       </div>
 
                       <!-- Collapse toggle (only shown when there are replies) -->
@@ -321,7 +323,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                             @for (reply of thread.replies; track reply.id) {
                               <div
                                 animate.enter="z-list-enter"
-                                class="comment-hoverable group flex items-start gap-2"
+                                class="comment-hoverable group grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2"
                               >
                                 <z-avatar
                                   class="size-7 shrink-0"
@@ -330,7 +332,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                   [alt]="reply.author?.name ?? ('videos.unknownAuthor' | transloco)"
                                 />
                                 <div class="min-w-0 flex-1">
-                                  <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                                     <p class="min-w-0 truncate text-sm font-semibold leading-5">
                                       {{
                                         reply.author?.name ?? ('videos.unknownAuthor' | transloco)
@@ -342,15 +344,6 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                     >
                                       {{ reply.created_at | relativeTime }}
                                     </p>
-                                    @if (canEditReviews() || canDeleteReviews()) {
-                                      <z-comment-actions
-                                        class="ml-auto"
-                                        [canEdit]="canEditReviews()"
-                                        [canDelete]="canDeleteReviews()"
-                                        (edit)="startEditing(reply.id, reply.content)"
-                                        (delete)="doDeleteReview(reply.id)"
-                                      />
-                                    }
                                   </div>
 
                                   @if (editingReviewId() === reply.id) {
@@ -426,6 +419,15 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                     }
                                   }
                                 </div>
+                                @if (canEditReviews() || canDeleteReviews()) {
+                                  <z-comment-actions
+                                    class="-mt-1"
+                                    [canEdit]="canEditReviews()"
+                                    [canDelete]="canDeleteReviews()"
+                                    (edit)="startEditing(reply.id, reply.content)"
+                                    (delete)="doDeleteReview(reply.id)"
+                                  />
+                                }
                               </div>
                             }
                           </div>
