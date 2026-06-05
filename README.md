@@ -106,7 +106,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - Public: `/health`
 - Protected: `/assets` (Requires Login)
 - Login: Click "Login via WorkOS" -> Redirects to WorkOS AuthKit -> Callback -> Logged In.
-- **Redirect Preservation**: When an unauthenticated user accesses a deep link (e.g., an invite URL), the initial path is captured to `localStorage` (with a 5-minute expiry) in `main.ts` before Angular bootstraps—ensuring route guards cannot redirect away before the path is saved. After successful authentication, the shell component reads and consumes the saved path, navigating the user back to the intended page.
+- **Redirect Preservation**: When an unauthenticated user accesses a deep link (e.g., an invite URL), the Angular guards call `/auth/login?return_to=<path>`. The API validates the relative return path, stores it in a short-lived HttpOnly auth-state cookie, sends only an opaque `state` value to WorkOS, and restores the original path from `/auth/callback` after successful authentication.
 
 ### Asset Visibility
 

@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { CanActivateFn } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { filter, map, take } from 'rxjs';
 import { SessionStore } from '../../features/session/session.store';
 
@@ -8,9 +8,10 @@ const isSettled = (status: string) => status !== 'idle' && status !== 'loading';
 
 export const authGuard: CanActivateFn = () => {
   const session = inject(SessionStore);
+  const router = inject(Router);
 
   const bounce = () => {
-    session.login();
+    session.login(router.url);
     return false;
   };
 

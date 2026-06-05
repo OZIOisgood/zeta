@@ -31,6 +31,18 @@ export type GroupInvitation = {
   code: string;
 };
 
+export type GroupInvitationInfo = {
+  code: string;
+  group_id: string;
+  group_name: string;
+  group_avatar: string | null;
+  already_member: boolean;
+};
+
+export type AcceptGroupInvitationResponse = {
+  group_id: string;
+};
+
 type ListGroupMembersResponse = {
   data: Omit<GroupMember, 'name'>[];
 };
@@ -97,6 +109,18 @@ export class GroupsApiClient {
   getGroupInvitationQrCode(groupId: string, invitationId: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${groupId}/invitations/${invitationId}/qr`, {
       responseType: 'blob',
+    });
+  }
+
+  getInvitationInfo(code: string): Observable<GroupInvitationInfo> {
+    return this.http.get<GroupInvitationInfo>(
+      `${this.apiUrl}/invitations/${encodeURIComponent(code)}`,
+    );
+  }
+
+  acceptInvitation(code: string): Observable<AcceptGroupInvitationResponse> {
+    return this.http.post<AcceptGroupInvitationResponse>(`${this.apiUrl}/invitations/accept`, {
+      code,
     });
   }
 }

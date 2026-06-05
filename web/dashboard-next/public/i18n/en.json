@@ -281,7 +281,12 @@
     "invitationDialog": {
       "title": "Group Invitation",
       "invited": "You've been invited to join {{group}}",
-      "joinGroup": "Join Group"
+      "joinGroup": "Join Group",
+      "joining": "Joining...",
+      "joined": "You joined {{group}}.",
+      "joinFailed": "Failed to join the group. Please try again.",
+      "notFound": "This invitation is invalid, expired, or already used.",
+      "alreadyMember": "You're already a member of {{group}}."
     },
     "inviteDialog": {
       "cardDescription": "Create a shareable invitation link or send one directly by email.",

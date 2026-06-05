@@ -280,8 +280,13 @@
     "invitationReady": "Einladung bereit",
     "invitationDialog": {
       "title": "Gruppeneinladung",
-      "invited": "Du wurdest eingeladen, <strong>{{group}}</strong> beizutreten",
-      "joinGroup": "Gruppe beitreten"
+      "invited": "Du wurdest eingeladen, {{group}} beizutreten",
+      "joinGroup": "Gruppe beitreten",
+      "joining": "Beitritt läuft...",
+      "joined": "Du bist {{group}} beigetreten.",
+      "joinFailed": "Der Beitritt zur Gruppe ist fehlgeschlagen. Bitte versuche es erneut.",
+      "notFound": "Diese Einladung ist ungültig, abgelaufen oder bereits verwendet.",
+      "alreadyMember": "Du bist bereits Mitglied von {{group}}."
     },
     "inviteDialog": {
       "cardDescription": "Erstelle einen teilbaren Einladungslink oder sende eine Einladung direkt per E-Mail.",

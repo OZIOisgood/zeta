@@ -281,7 +281,12 @@
     "invitationDialog": {
       "title": "Invitation au groupe",
       "invited": "Vous avez été invité à rejoindre {{group}}",
-      "joinGroup": "Rejoindre le groupe"
+      "joinGroup": "Rejoindre le groupe",
+      "joining": "Adhésion...",
+      "joined": "Vous avez rejoint {{group}}.",
+      "joinFailed": "Impossible de rejoindre le groupe. Veuillez réessayer.",
+      "notFound": "Cette invitation est invalide, expirée ou déjà utilisée.",
+      "alreadyMember": "Vous êtes déjà membre de {{group}}."
     },
     "inviteDialog": {
       "cardDescription": "Créez un lien d’invitation partageable ou envoyez une invitation directement par e-mail.",

@@ -24,5 +24,8 @@ describe('AuthApiClient', () => {
     const client = TestBed.inject(AuthApiClient);
 
     expect(client.getLoginUrl()).toBe('https://api.example.test/auth/login');
+    expect(client.getLoginUrl('/groups?invite=AbC123')).toBe(
+      'https://api.example.test/auth/login?return_to=%2Fgroups%3Finvite%3DAbC123',
+    );
   });
 });

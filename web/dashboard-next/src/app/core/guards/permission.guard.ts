@@ -19,7 +19,7 @@ export const permissionGuard: CanActivateFn = (route) => {
 
   const decide = () => {
     if (session.status() !== 'success') {
-      session.login();
+      session.login(router.url);
       return false;
     }
 

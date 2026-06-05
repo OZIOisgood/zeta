@@ -2,7 +2,7 @@ import { Component, HostListener, input, output, signal } from '@angular/core';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import { LucideEllipsis, LucidePencil, LucideTrash } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ZDialogPanelComponent } from '../dialog/z-dialog-panel.component';
+import { ZConfirmDialogComponent } from '../dialog/z-confirm-dialog.component';
 
 /**
  * Kebab-menu for comment actions (edit + delete).
@@ -29,7 +29,7 @@ import { ZDialogPanelComponent } from '../dialog/z-dialog-panel.component';
   imports: [
     NgpDialogTrigger,
     TranslocoPipe,
-    ZDialogPanelComponent,
+    ZConfirmDialogComponent,
     LucideEllipsis,
     LucidePencil,
     LucideTrash,
@@ -84,7 +84,7 @@ import { ZDialogPanelComponent } from '../dialog/z-dialog-panel.component';
 
           @if (canDelete()) {
             <ng-template #confirmDeleteDialog let-close="close">
-              <z-dialog-panel
+              <z-confirm-dialog
                 [title]="'videos.deleteComment' | transloco"
                 [description]="'videos.confirmDeleteComment' | transloco"
                 tone="danger"

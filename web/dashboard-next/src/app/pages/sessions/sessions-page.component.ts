@@ -10,19 +10,14 @@ import {
   LucideVideo,
   LucideX,
 } from '@lucide/angular';
-import {
-  NgpDialog,
-  NgpDialogDescription,
-  NgpDialogOverlay,
-  NgpDialogTitle,
-  NgpDialogTrigger,
-} from 'ng-primitives/dialog';
+import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import { CoachingBooking } from '../../core/http/coaching-api.service';
 import { DashboardDateTimeService } from '../../core/i18n/dashboard-date-time.service';
 import { SessionStore } from '../../features/session/session.store';
 import { SessionsOverviewStore } from '../../features/sessions/sessions-overview.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZActionDialogComponent } from '../../shared/ui/dialog/z-action-dialog.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
@@ -37,13 +32,10 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
     ReactiveFormsModule,
     RouterLink,
     TranslocoPipe,
-    NgpDialog,
-    NgpDialogDescription,
-    NgpDialogOverlay,
-    NgpDialogTitle,
     NgpDialogTrigger,
     ZBadgeComponent,
     ZButtonComponent,
+    ZActionDialogComponent,
     ZEmptyStateComponent,
     ZSkeletonComponent,
     ZTabPanelComponent,
@@ -171,52 +163,24 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                       }
                       @if (canCancel(booking)) {
                         <ng-template #cancelDialog let-close="close">
-                          <div
-                            ngpDialogOverlay
-                            animate.enter="z-dialog-overlay-enter"
-                            animate.leave="z-dialog-overlay-leave"
-                            class="fixed inset-0 z-50 grid place-items-center bg-stone-950/35 p-4 backdrop-blur-sm"
+                          <z-action-dialog
+                            [title]="'sessions.cancel.title' | transloco"
+                            [description]="cancelDescription(booking)"
+                            tone="danger"
+                            [confirmLabel]="'sessions.cancel.title' | transloco"
+                            [cancelLabel]="'sessions.cancel.keep' | transloco"
+                            [confirmDisabled]="store.mutationStatus() === 'loading'"
+                            [confirmResult]="cancelReasonControl.value.trim() || true"
+                            [cancelResult]="null"
+                            [close]="close"
                           >
-                            <section
-                              ngpDialog
-                              ngpDialogRole="alertdialog"
-                              [ngpDialogModal]="true"
-                              animate.enter="z-dialog-panel-enter"
-                              animate.leave="z-dialog-panel-leave"
-                              class="w-full max-w-md rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-2xl shadow-stone-950/15"
-                            >
-                              <h2 ngpDialogTitle class="text-base font-semibold">
-                                {{ 'sessions.cancel.title' | transloco }}
-                              </h2>
-                              <p
-                                ngpDialogDescription
-                                class="mt-2 text-sm leading-6 text-[var(--z-muted)]"
-                              >
-                                {{ cancelDescription(booking) }}
-                              </p>
-                              <z-textarea
-                                class="mt-4 block"
-                                [formControl]="cancelReasonControl"
-                                [placeholder]="'sessions.cancel.placeholder' | transloco"
-                                [rows]="3"
-                              />
-                              <div
-                                class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
-                              >
-                                <z-button type="button" variant="secondary" (pressed)="close(null)">
-                                  {{ 'sessions.cancel.keep' | transloco }}
-                                </z-button>
-                                <z-button
-                                  type="button"
-                                  variant="danger"
-                                  [disabled]="store.mutationStatus() === 'loading'"
-                                  (pressed)="close(cancelReasonControl.value.trim() || true)"
-                                >
-                                  {{ 'sessions.cancel.title' | transloco }}
-                                </z-button>
-                              </div>
-                            </section>
-                          </div>
+                            <z-textarea
+                              class="mt-4 block"
+                              [formControl]="cancelReasonControl"
+                              [placeholder]="'sessions.cancel.placeholder' | transloco"
+                              [rows]="3"
+                            />
+                          </z-action-dialog>
                         </ng-template>
                         <z-button
                           size="sm"
@@ -238,63 +202,6 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
         }
       </z-tab-panel>
     </div>
-  `,
-  styles: `
-    .z-dialog-overlay-enter {
-      animation: z-dialog-overlay-in 120ms ease-out;
-    }
-
-    .z-dialog-overlay-leave {
-      animation: z-dialog-overlay-out 100ms ease-in;
-    }
-
-    .z-dialog-panel-enter {
-      animation: z-dialog-panel-in 140ms ease-out;
-    }
-
-    .z-dialog-panel-leave {
-      animation: z-dialog-panel-out 100ms ease-in;
-    }
-
-    @keyframes z-dialog-overlay-in {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
-    @keyframes z-dialog-overlay-out {
-      from {
-        opacity: 1;
-      }
-      to {
-        opacity: 0;
-      }
-    }
-
-    @keyframes z-dialog-panel-in {
-      from {
-        opacity: 0;
-        transform: translateY(8px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    @keyframes z-dialog-panel-out {
-      from {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-      to {
-        opacity: 0;
-        transform: translateY(8px) scale(0.98);
-      }
-    }
   `,
 })
 export class SessionsPageComponent {
