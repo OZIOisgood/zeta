@@ -112,6 +112,7 @@ describe('GroupInvitationDialogComponent', () => {
     expect(shell.showToast).toHaveBeenCalledWith(
       'Success',
       'Invitation link created!',
+      'success',
     );
     expect(fixture.nativeElement.textContent).toContain('/groups?invite=ABC123');
     expect(fixture.nativeElement.textContent).toContain('Download QR');

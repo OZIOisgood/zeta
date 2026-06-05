@@ -24,6 +24,7 @@ import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.com
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
+import { GroupInvitationDialogComponent } from './group-invitation-dialog.component';
 
 @Component({
   selector: 'app-group-details-page',
@@ -37,6 +38,7 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
     ZButtonComponent,
     ZDialogPanelComponent,
     ZEmptyStateComponent,
+    GroupInvitationDialogComponent,
     ZIconButtonComponent,
     ZSkeletonComponent,
     LucideLink,
@@ -103,6 +105,38 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
           </div>
         </section>
 
+        @if (canInviteStudents()) {
+          <ng-template #inviteDialog let-close="close">
+            <app-group-invitation-dialog [groupId]="group.id" [close]="close" />
+          </ng-template>
+          <article
+            class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4"
+          >
+            <div class="flex items-start gap-3">
+              <span
+                class="grid size-10 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
+              >
+                <svg lucideLink class="size-5" aria-hidden="true"></svg>
+              </span>
+              <div>
+                <h3 class="text-base font-semibold">
+                  {{ 'groups.createInvitationTitle' | transloco }}
+                </h3>
+                <p class="mt-1 text-sm leading-6 text-[var(--z-muted)]">
+                  {{ 'groups.inviteDialog.cardDescription' | transloco }}
+                </p>
+              </div>
+            </div>
+            <z-button
+              class="mt-4 sm:mt-0"
+              type="button"
+              [ngpDialogTrigger]="inviteDialog"
+            >
+              <span>{{ 'common.actions.createInvitation' | transloco }}</span>
+            </z-button>
+          </article>
+        }
+
         @if (memberSections().length) {
           <section class="grid gap-4 xl:grid-cols-2">
             @for (section of memberSections(); track section.kind) {
@@ -128,7 +162,6 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
                       </p>
                     </div>
                   </div>
-
                 </div>
 
                 @if (section.status === 'loading') {
@@ -220,27 +253,6 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
           />
         }
 
-        @if (canInviteStudents()) {
-          <article
-            class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4"
-          >
-            <div class="flex items-start gap-3">
-              <span
-                class="grid size-10 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-              >
-                <svg lucideLink class="size-5" aria-hidden="true"></svg>
-              </span>
-              <div>
-                <h3 class="text-base font-semibold">
-                  {{ 'groups.createInvitationTitle' | transloco }}
-                </h3>
-                <p class="mt-1 text-sm leading-6 text-[var(--z-muted)]">
-                  {{ 'groups.inviteStudents' | transloco }}
-                </p>
-              </div>
-            </div>
-          </article>
-        }
       }
     </div>
   `,
@@ -348,6 +360,7 @@ export class GroupDetailsPageComponent {
       this.shell.showToast(
         this.transloco.translate('toast.successTitle'),
         this.transloco.translate('groups.users.removed', { name: member.name }),
+        'success',
       );
       return;
     }
@@ -355,6 +368,7 @@ export class GroupDetailsPageComponent {
     this.shell.showToast(
       this.transloco.translate('toast.errorTitle'),
       this.store.mutationError() || this.transloco.translate('groups.users.removeFailed'),
+      'error',
     );
   }
 

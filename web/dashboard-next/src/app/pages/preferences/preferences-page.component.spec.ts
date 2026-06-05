@@ -162,7 +162,11 @@ describe('PreferencesPageComponent', () => {
       expect.objectContaining({ first_name: 'Grace', language: 'en', timezone: 'Europe/Rome' }),
     );
     expect(shell.setLanguage).toHaveBeenCalledWith('en');
-    expect(shell.showToast).toHaveBeenCalledWith('Saved', 'Preferences updated successfully');
+    expect(shell.showToast).toHaveBeenCalledWith(
+      'Saved',
+      'Preferences updated successfully',
+      'success',
+    );
   });
 
   it('uses select-like combobox controls for both language and timezone', async () => {
@@ -175,6 +179,33 @@ describe('PreferencesPageComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('z-combobox')).toHaveLength(2);
     expect(fixture.nativeElement.querySelectorAll('z-combobox input')).toHaveLength(0);
     expect(fixture.nativeElement.querySelector('z-select')).toBeNull();
+  });
+
+  it('enables save only while profile values differ from the saved user', async () => {
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+    fixture.componentInstance['activeTab'].set('personal-data');
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('z-text-input input') as HTMLInputElement;
+    const button = () => fixture.nativeElement.querySelector('button[type="submit"]');
+
+    expect(button().disabled).toBe(true);
+
+    input.value = 'Ada1';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(button().disabled).toBe(false);
+
+    input.value = 'Ada';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(button().disabled).toBe(true);
   });
 
   it('shows a translated inline error for a dirty invalid profile field', async () => {

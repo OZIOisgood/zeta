@@ -24,6 +24,14 @@ import { ZTabsComponent } from '../../shared/ui/tabs/z-tabs.component';
 import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
 
 type PreferencesTab = 'personal-data' | 'email-preferences';
+type PreferencesFormValue = {
+  first_name: string;
+  last_name: string;
+  language: DashboardLanguage;
+  timezone: string;
+  avatar: string | null;
+  email_preferences: EmailPreferences;
+};
 
 const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
   notifications_enabled: true,
@@ -369,6 +377,8 @@ export class PreferencesPageComponent {
 
   protected readonly activeTab = signal<PreferencesTab>('personal-data');
   protected readonly feedback = signal<'error' | null>(null);
+  private readonly formRevision = signal(0);
+  private readonly initialFormValue = signal<PreferencesFormValue | null>(null);
   protected readonly form = new FormGroup({
     first_name: new FormControl('', {
       nonNullable: true,
@@ -431,6 +441,10 @@ export class PreferencesPageComponent {
     this.session.hasPermission('coaching:bookings:read'),
   );
   constructor() {
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.formRevision.update((revision) => revision + 1);
+    });
+
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const tab = params.get('tab');
       if (tab === 'personal-data' || tab === 'email-preferences') {
@@ -445,22 +459,22 @@ export class PreferencesPageComponent {
       const user = this.session.user();
       if (!user) return;
 
-      this.form.patchValue(
-        {
-          first_name: user.first_name,
-          last_name: user.last_name,
-          language: DASHBOARD_LANGUAGES.some((language) => language.value === user.language)
-            ? (user.language as DashboardLanguage)
-            : 'en',
-          timezone: user.timezone,
-          avatar: user.avatar || null,
-          email_preferences: {
-            ...DEFAULT_EMAIL_PREFERENCES,
-            ...(user.email_preferences ?? {}),
-          },
+      const formValue = {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        language: DASHBOARD_LANGUAGES.some((language) => language.value === user.language)
+          ? (user.language as DashboardLanguage)
+          : 'en',
+        timezone: user.timezone,
+        avatar: user.avatar || null,
+        email_preferences: {
+          ...DEFAULT_EMAIL_PREFERENCES,
+          ...(user.email_preferences ?? {}),
         },
-        { emitEvent: false },
-      );
+      };
+      this.form.patchValue(formValue, { emitEvent: false });
+      this.initialFormValue.set(this.normalizeFormValue(formValue));
+      this.formRevision.update((revision) => revision + 1);
       this.form.markAsPristine();
     });
   }
@@ -493,7 +507,9 @@ export class PreferencesPageComponent {
   }
 
   protected saveDisabled(): boolean {
-    return this.form.invalid || this.form.pristine || this.session.mutationStatus() === 'loading';
+    this.formRevision();
+
+    return this.form.invalid || !this.hasFormChanges() || this.session.mutationStatus() === 'loading';
   }
 
   protected async save(): Promise<void> {
@@ -519,8 +535,47 @@ export class PreferencesPageComponent {
     this.shell.showToast(
       this.transloco.translate('toast.title'),
       this.transloco.translate('preferences.saveSuccess'),
+      'success',
     );
+    this.initialFormValue.set(this.currentFormValue());
+    this.formRevision.update((revision) => revision + 1);
     this.form.markAsPristine();
+  }
+
+  private hasFormChanges(): boolean {
+    const initialValue = this.initialFormValue();
+
+    return !!initialValue && !this.sameFormValue(this.currentFormValue(), initialValue);
+  }
+
+  private currentFormValue(): PreferencesFormValue {
+    return this.normalizeFormValue(this.form.getRawValue());
+  }
+
+  private normalizeFormValue(value: PreferencesFormValue): PreferencesFormValue {
+    return {
+      first_name: value.first_name.trim(),
+      last_name: value.last_name.trim(),
+      language: value.language,
+      timezone: value.timezone,
+      avatar: value.avatar ?? null,
+      email_preferences: { ...value.email_preferences },
+    };
+  }
+
+  private sameFormValue(left: PreferencesFormValue, right: PreferencesFormValue): boolean {
+    return (
+      left.first_name === right.first_name &&
+      left.last_name === right.last_name &&
+      left.language === right.language &&
+      left.timezone === right.timezone &&
+      left.avatar === right.avatar &&
+      Object.keys(DEFAULT_EMAIL_PREFERENCES).every((key) => {
+        const preferenceKey = key as keyof EmailPreferences;
+
+        return left.email_preferences[preferenceKey] === right.email_preferences[preferenceKey];
+      })
+    );
   }
 
   private timezoneLabel(timezone: string): string {
