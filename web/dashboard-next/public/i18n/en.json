@@ -284,9 +284,19 @@
       "joinGroup": "Join Group"
     },
     "inviteDialog": {
+      "cardDescription": "Create a shareable invitation link or send one directly by email.",
+      "title": "Create invitation",
+      "description": "Invite a student with an email address, or leave it empty to generate a reusable link and QR code.",
+      "emailInvalid": "Enter a valid email address.",
+      "emailHint": "Leave the email empty to create a generic invitation link you can share yourself.",
+      "creating": "Creating...",
       "sent": "Invitation sent successfully!",
       "linkCreated": "Invitation link created!",
       "qrAlt": "Invitation QR Code",
+      "qrUnavailable": "QR code unavailable",
+      "shareLink": "Share link",
+      "shareHint": "Anyone with this link can open the invitation and request to join the group.",
+      "linkCopied": "Invitation link copied",
       "failed": "Failed to create invitation. Please try again."
     },
     "users": {

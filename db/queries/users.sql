@@ -22,11 +22,13 @@ SET language = EXCLUDED.language,
 RETURNING *;
 
 -- name: SeedUserPreferences :one
-INSERT INTO user_preferences (user_id, language, timezone)
-VALUES ($1, $2, $3)
+INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name)
+VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (user_id) DO UPDATE
 SET language   = EXCLUDED.language,
     timezone   = EXCLUDED.timezone,
+    first_name = EXCLUDED.first_name,
+    last_name  = EXCLUDED.last_name,
     updated_at = NOW()
 RETURNING *;
 
@@ -54,10 +56,12 @@ SET email_notifications_enabled = EXCLUDED.email_notifications_enabled,
 RETURNING *;
 
 -- name: UpsertUserAvatar :one
-INSERT INTO user_preferences (user_id, language, avatar)
-VALUES ($1, 'en', $2)
+INSERT INTO user_preferences (user_id, language, avatar, first_name, last_name)
+VALUES ($1, 'en', $2, $3, $4)
 ON CONFLICT (user_id) DO UPDATE
 SET avatar     = EXCLUDED.avatar,
+    first_name = EXCLUDED.first_name,
+    last_name  = EXCLUDED.last_name,
     updated_at = NOW()
 RETURNING *;
 
@@ -68,11 +72,9 @@ SET avatar     = $2,
 WHERE user_id = $1
 RETURNING *;
 
--- name: UpsertUserName :exec
-INSERT INTO user_preferences (user_id, language, first_name, last_name)
-VALUES ($1, 'en', $2, $3)
-ON CONFLICT (user_id)
-DO UPDATE
-SET first_name = EXCLUDED.first_name,
-    last_name  = EXCLUDED.last_name,
-    updated_at = NOW();
+-- name: UpdateUserName :execrows
+UPDATE user_preferences
+SET first_name = $2,
+    last_name  = $3,
+    updated_at = NOW()
+WHERE user_id = $1;

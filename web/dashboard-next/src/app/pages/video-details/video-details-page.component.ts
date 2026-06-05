@@ -132,7 +132,9 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
             </div>
 
             <section class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-              <div class="-mx-4 flex items-center gap-2 border-b border-[var(--z-border)] px-4 pb-3">
+              <div
+                class="-mx-4 flex items-center gap-2 border-b border-[var(--z-border)] px-4 pb-3"
+              >
                 <svg
                   lucideMessageCircle
                   class="size-4 text-[var(--z-primary)]"
@@ -170,8 +172,9 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
               } @else {
                 <div class="mt-2">
                   @for (thread of store.threads(); track thread.root.id) {
-                    <article class="group border-t border-[var(--z-border)] py-4 first:border-t-0 first:pt-2">
-
+                    <article
+                      class="group border-t border-[var(--z-border)] py-4 first:border-t-0 first:pt-2"
+                    >
                       <!-- Root: avatar + content column -->
                       <div class="comment-hoverable flex items-start gap-2">
                         <z-avatar
@@ -182,20 +185,23 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                         />
                         <div class="min-w-0 flex-1">
                           <!-- name + time + timestamp badge + actions on one line -->
-                          <div class="flex items-center gap-2">
-                            <p class="min-w-0 truncate text-sm font-semibold">
+                          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                            <p class="min-w-0 truncate text-sm font-semibold leading-5">
                               {{ thread.root.author?.name ?? ('videos.unknownAuthor' | transloco) }}
                             </p>
                             <p
-                              class="shrink-0 text-xs text-[var(--z-muted)]"
+                              class="shrink-0 text-xs leading-5 text-[var(--z-muted)]"
                               [title]="formatAbsolute(thread.root.created_at)"
                             >
                               {{ thread.root.created_at | relativeTime }}
                             </p>
-                            @if (thread.root.timestamp_seconds !== undefined && thread.root.timestamp_seconds !== null) {
+                            @if (
+                              thread.root.timestamp_seconds !== undefined &&
+                              thread.root.timestamp_seconds !== null
+                            ) {
                               <button
                                 type="button"
-                                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--z-surface-warm)] px-2.5 py-1 text-xs font-semibold text-[var(--z-primary-strong)] transition hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--z-surface-warm)] px-2.5 py-1 text-xs font-semibold leading-4 text-[var(--z-primary-strong)] transition hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
                                 (click)="seekTo(thread.root.timestamp_seconds)"
                               >
                                 <svg lucidePlay class="size-3" aria-hidden="true"></svg>
@@ -215,33 +221,53 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
 
                           <!-- body or edit form -->
                           @if (editingReviewId() === thread.root.id) {
-                            <form class="mt-2 grid gap-3" (submit)="saveEditedReview($event, thread.root.id)">
+                            <form
+                              class="mt-2 grid gap-3"
+                              (submit)="saveEditedReview($event, thread.root.id)"
+                            >
                               <z-textarea
                                 [formControl]="editReviewControl"
                                 [placeholder]="'videos.commentPlaceholder' | transloco"
                                 [rows]="4"
                               />
-                              <div class="flex flex-wrap items-center justify-between gap-2" data-testid="edit-review-actions">
+                              <div
+                                class="flex flex-wrap items-center justify-between gap-2"
+                                data-testid="edit-review-actions"
+                              >
                                 <z-button
                                   type="button"
                                   size="sm"
                                   variant="secondary"
-                                  [disabled]="!editReviewControl.value.trim() || store.enhancementStatus() === 'loading'"
+                                  [disabled]="
+                                    !editReviewControl.value.trim() ||
+                                    store.enhancementStatus() === 'loading'
+                                  "
                                   (pressed)="enhanceEditedReview()"
                                 >
                                   <svg lucideSparkles class="size-4" aria-hidden="true"></svg>
                                   <span>{{
-                                    (store.enhancementStatus() === 'loading' ? 'videos.enhancing' : 'videos.enhanceText') | transloco
+                                    (store.enhancementStatus() === 'loading'
+                                      ? 'videos.enhancing'
+                                      : 'videos.enhanceText'
+                                    ) | transloco
                                   }}</span>
                                 </z-button>
                                 <div class="ml-auto flex gap-2">
-                                  <z-button type="button" size="sm" variant="secondary" (pressed)="cancelEditing()">
+                                  <z-button
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    (pressed)="cancelEditing()"
+                                  >
                                     {{ 'common.actions.cancel' | transloco }}
                                   </z-button>
                                   <z-button
                                     type="submit"
                                     size="sm"
-                                    [disabled]="!editReviewControl.value.trim() || store.enhancementStatus() === 'loading'"
+                                    [disabled]="
+                                      !editReviewControl.value.trim() ||
+                                      store.enhancementStatus() === 'loading'
+                                    "
                                   >
                                     {{ 'common.actions.save' | transloco }}
                                   </z-button>
@@ -249,7 +275,9 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                               </div>
                             </form>
                           } @else {
-                            <p class="mt-1 whitespace-pre-wrap text-sm leading-6">{{ thread.root.content }}</p>
+                            <p class="mt-1 whitespace-pre-wrap text-sm leading-6">
+                              {{ thread.root.content }}
+                            </p>
                             @if (canAddReviews()) {
                               <button
                                 type="button"
@@ -267,17 +295,22 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                       @if (thread.replies.length > 0) {
                         <button
                           type="button"
-                          class="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--z-primary-strong)]"
+                          class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--z-muted)] transition hover:text-[var(--z-primary-strong)]"
                           [attr.aria-expanded]="!collapsedThreads().has(thread.root.id)"
                           (click)="toggleThread(thread.root.id)"
                         >
                           @if (collapsedThreads().has(thread.root.id)) {
-                            <svg lucideChevronRight class="size-4" aria-hidden="true"></svg>
+                            <svg lucideChevronRight class="size-3.5" aria-hidden="true"></svg>
                           } @else {
-                            <svg lucideChevronDown class="size-4" aria-hidden="true"></svg>
+                            <svg lucideChevronDown class="size-3.5" aria-hidden="true"></svg>
                           }
                           {{ thread.replies.length }}
-                          {{ (thread.replies.length === 1 ? 'videos.reply.one' : 'videos.reply.other') | transloco }}
+                          {{
+                            (thread.replies.length === 1
+                              ? 'videos.reply.one'
+                              : 'videos.reply.other'
+                            ) | transloco
+                          }}
                         </button>
                       }
 
@@ -286,7 +319,10 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                         @if (thread.replies.length > 0) {
                           <div class="ml-5 mt-3 grid gap-4 pl-5">
                             @for (reply of thread.replies; track reply.id) {
-                              <div animate.enter="z-list-enter" class="comment-hoverable group flex items-start gap-2">
+                              <div
+                                animate.enter="z-list-enter"
+                                class="comment-hoverable group flex items-start gap-2"
+                              >
                                 <z-avatar
                                   class="size-7 shrink-0"
                                   [image]="reply.author?.avatar"
@@ -294,12 +330,14 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                   [alt]="reply.author?.name ?? ('videos.unknownAuthor' | transloco)"
                                 />
                                 <div class="min-w-0 flex-1">
-                                  <div class="flex items-center gap-2">
-                                    <p class="min-w-0 truncate text-sm font-semibold">
-                                      {{ reply.author?.name ?? ('videos.unknownAuthor' | transloco) }}
+                                  <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                    <p class="min-w-0 truncate text-sm font-semibold leading-5">
+                                      {{
+                                        reply.author?.name ?? ('videos.unknownAuthor' | transloco)
+                                      }}
                                     </p>
                                     <p
-                                      class="shrink-0 text-xs text-[var(--z-muted)]"
+                                      class="shrink-0 text-xs leading-5 text-[var(--z-muted)]"
                                       [title]="formatAbsolute(reply.created_at)"
                                     >
                                       {{ reply.created_at | relativeTime }}
@@ -316,33 +354,57 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                   </div>
 
                                   @if (editingReviewId() === reply.id) {
-                                    <form class="mt-2 grid gap-3" (submit)="saveEditedReview($event, reply.id)">
+                                    <form
+                                      class="mt-2 grid gap-3"
+                                      (submit)="saveEditedReview($event, reply.id)"
+                                    >
                                       <z-textarea
                                         [formControl]="editReviewControl"
                                         [placeholder]="'videos.commentPlaceholder' | transloco"
                                         [rows]="3"
                                       />
-                                      <div class="flex flex-wrap items-center justify-between gap-2" data-testid="edit-reply-actions">
+                                      <div
+                                        class="flex flex-wrap items-center justify-between gap-2"
+                                        data-testid="edit-reply-actions"
+                                      >
                                         <z-button
                                           type="button"
                                           size="sm"
                                           variant="secondary"
-                                          [disabled]="!editReviewControl.value.trim() || store.enhancementStatus() === 'loading'"
+                                          [disabled]="
+                                            !editReviewControl.value.trim() ||
+                                            store.enhancementStatus() === 'loading'
+                                          "
                                           (pressed)="enhanceEditedReview()"
                                         >
-                                          <svg lucideSparkles class="size-4" aria-hidden="true"></svg>
+                                          <svg
+                                            lucideSparkles
+                                            class="size-4"
+                                            aria-hidden="true"
+                                          ></svg>
                                           <span>{{
-                                            (store.enhancementStatus() === 'loading' ? 'videos.enhancing' : 'videos.enhanceText') | transloco
+                                            (store.enhancementStatus() === 'loading'
+                                              ? 'videos.enhancing'
+                                              : 'videos.enhanceText'
+                                            ) | transloco
                                           }}</span>
                                         </z-button>
                                         <div class="ml-auto flex gap-2">
-                                          <z-button type="button" size="sm" variant="secondary" (pressed)="cancelEditing()">
+                                          <z-button
+                                            type="button"
+                                            size="sm"
+                                            variant="secondary"
+                                            (pressed)="cancelEditing()"
+                                          >
                                             {{ 'common.actions.cancel' | transloco }}
                                           </z-button>
                                           <z-button
                                             type="submit"
                                             size="sm"
-                                            [disabled]="!editReviewControl.value.trim() || store.enhancementStatus() === 'loading'"
+                                            [disabled]="
+                                              !editReviewControl.value.trim() ||
+                                              store.enhancementStatus() === 'loading'
+                                            "
                                           >
                                             {{ 'common.actions.save' | transloco }}
                                           </z-button>
@@ -350,7 +412,9 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                       </div>
                                     </form>
                                   } @else {
-                                    <p class="mt-1 whitespace-pre-wrap text-sm leading-6">{{ reply.content }}</p>
+                                    <p class="mt-1 whitespace-pre-wrap text-sm leading-6">
+                                      {{ reply.content }}
+                                    </p>
                                     @if (canAddReviews()) {
                                       <button
                                         type="button"
@@ -390,13 +454,20 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                               />
                             </div>
                             <div class="flex justify-end gap-2 pl-9">
-                              <z-button type="button" size="sm" variant="ghost" (pressed)="cancelReply()">
+                              <z-button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                (pressed)="cancelReply()"
+                              >
                                 {{ 'common.actions.cancel' | transloco }}
                               </z-button>
                               <z-button
                                 type="submit"
                                 size="sm"
-                                [disabled]="!replyControl.value.trim() || store.reviewStatus() === 'loading'"
+                                [disabled]="
+                                  !replyControl.value.trim() || store.reviewStatus() === 'loading'
+                                "
                               >
                                 {{ 'videos.reply' | transloco }}
                               </z-button>
@@ -404,7 +475,6 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                           </form>
                         }
                       }
-
                     </article>
                   }
                 </div>
@@ -765,7 +835,10 @@ export class VideoDetailsPageComponent {
   }
 
   protected formatAbsolute(dateStr: string): string {
-    return this.dateTime.formatInstantDateTime(dateStr, { dateStyle: 'medium', timeStyle: 'short' });
+    return this.dateTime.formatInstantDateTime(dateStr, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
   }
 
   protected toggleThread(rootId: string): void {

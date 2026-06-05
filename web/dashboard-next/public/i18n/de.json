@@ -284,9 +284,19 @@
       "joinGroup": "Gruppe beitreten"
     },
     "inviteDialog": {
+      "cardDescription": "Erstelle einen teilbaren Einladungslink oder sende eine Einladung direkt per E-Mail.",
+      "title": "Einladung erstellen",
+      "description": "Lade einen Studenten mit E-Mail-Adresse ein oder lasse das Feld leer, um einen wiederverwendbaren Link und QR-Code zu erstellen.",
+      "emailInvalid": "Gib eine gültige E-Mail-Adresse ein.",
+      "emailHint": "Lasse die E-Mail leer, um einen allgemeinen Einladungslink zu erstellen, den du selbst teilen kannst.",
+      "creating": "Wird erstellt...",
       "sent": "Einladung erfolgreich gesendet!",
       "linkCreated": "Einladungslink erstellt!",
       "qrAlt": "Einladungs-QR-Code",
+      "qrUnavailable": "QR-Code nicht verfügbar",
+      "shareLink": "Link teilen",
+      "shareHint": "Jede Person mit diesem Link kann die Einladung öffnen und den Beitritt zur Gruppe anfragen.",
+      "linkCopied": "Einladungslink kopiert",
       "failed": "Einladung konnte nicht erstellt werden. Bitte versuche es erneut."
     },
     "users": {

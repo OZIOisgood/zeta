@@ -20,6 +20,6 @@ Add single-level reply threads to video comments. Any comment can be replied to;
 - [ ] Replies to replies still attach to the same root (one level only)
 - [ ] Threads with replies show a working collapse toggle (default expanded); count label pluralises correctly
 - [ ] New root comments still come from the bottom composer; replies never send a `timestamp_seconds`
-- [ ] Author name and avatar appear on all comments (legacy comments show fallback "Unbekannt")
+- [ ] Author name and avatar appear on all comments; comments with `author_id` require a local `user_preferences` profile
 - [ ] `make api:build` and `make test:unit` pass
 - [ ] `make web-next:build` and `make web-next:test` pass

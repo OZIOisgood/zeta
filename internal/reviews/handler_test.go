@@ -72,6 +72,8 @@ func reviewUser() *auth.UserContext {
 	return &auth.UserContext{
 		ID:          "user-1",
 		Email:       "reviewer@test.com",
+		FirstName:   "Review",
+		LastName:    "User",
 		Role:        "admin",
 		Permissions: []string{permissions.ReviewsRead, permissions.ReviewsCreate},
 	}
@@ -235,6 +237,10 @@ func TestCreateReview_Success(t *testing.T) {
 	user := reviewUser()
 	expectVideoVisible(q, videoID, user)
 	q.EXPECT().GetAssetStatusByVideoID(gomock.Any(), videoID).Return(db.AssetStatusPending, nil)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{
+		FirstName: "Review",
+		LastName:  "User",
+	}, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), gomock.Any()).Return(db.VideoReview{
 		ID:        reviewID,
 		VideoID:   videoID,
@@ -315,6 +321,33 @@ func TestCreateReview_EmptyContent(t *testing.T) {
 	}
 }
 
+func TestCreateReview_AuthorPreferencesMissing(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	llmMock := llmmocks.NewMockEnhancer(ctrl)
+	h := NewHandler(q, slog.Default(), llmMock)
+
+	videoID := testUUID()
+	videoIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
+
+	user := reviewUser()
+	expectVideoVisible(q, videoID, user)
+	q.EXPECT().GetAssetStatusByVideoID(gomock.Any(), videoID).Return(db.AssetStatusPending, nil)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{}, errors.New("missing preferences"))
+
+	body := `{"content":"Good content"}`
+	req := httptest.NewRequest(http.MethodPost, "/videos/"+videoIDStr+"/reviews", strings.NewReader(body))
+	req = withChiURLParam(req, "id", videoIDStr)
+	req = req.WithContext(testUserCtx(req.Context(), user))
+	rec := httptest.NewRecorder()
+
+	h.CreateReview(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("got %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+}
+
 func TestCreateReview_DBError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
@@ -327,6 +360,10 @@ func TestCreateReview_DBError(t *testing.T) {
 	user := reviewUser()
 	expectVideoVisible(q, videoID, user)
 	q.EXPECT().GetAssetStatusByVideoID(gomock.Any(), videoID).Return(db.AssetStatusPending, nil)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{
+		FirstName: "Review",
+		LastName:  "User",
+	}, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), gomock.Any()).Return(db.VideoReview{}, errors.New("db error"))
 
 	body := `{"content":"Good content"}`
@@ -392,6 +429,40 @@ func TestListReviews_ReturnsAuthorAndParentID(t *testing.T) {
 	}
 }
 
+func TestListReviews_AuthorProfileMissingIsError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	llmMock := llmmocks.NewMockEnhancer(ctrl)
+	h := NewHandler(q, slog.Default(), llmMock)
+
+	user := reviewUser()
+	videoID := testUUID()
+	reviewID := testUUID()
+	rows := []db.ListVideoReviewsRow{
+		{
+			ID:        reviewID,
+			VideoID:   videoID,
+			Content:   "Own comment",
+			AuthorID:  pgtype.Text{String: user.ID, Valid: true},
+			CreatedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		},
+	}
+
+	expectVideoVisible(q, videoID, user)
+	q.EXPECT().ListVideoReviews(gomock.Any(), videoID).Return(rows, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req = withChiURLParam(req, "id", "01020304-0506-0708-090a-0b0c0d0e0f10")
+	req = req.WithContext(testUserCtx(req.Context(), user))
+	rec := httptest.NewRecorder()
+
+	h.ListReviews(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("got %d, want 500: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestCreateReview_Reply_ReRootsToTopLevel(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
@@ -423,12 +494,15 @@ func TestCreateReview_Reply_ReRootsToTopLevel(t *testing.T) {
 	}, nil)
 
 	// Expect insert re-rooted to rootUUID (not replyUUID), with no timestamp
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{
+		FirstName: "Anna",
+		LastName:  "Müller",
+	}, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), createReviewReRootedMatcher{wantParentID: rootUUID}).Return(db.VideoReview{
 		ID:        videoID,
 		Content:   "reply content",
 		CreatedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
 	}, nil)
-	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{}, nil)
 
 	replyIDStr := "03030304-0506-0708-090a-0b0c0d0e0f10"
 	body := `{"content":"reply content","parent_id":"` + replyIDStr + `","timestamp_seconds":42}`

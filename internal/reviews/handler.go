@@ -129,7 +129,15 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-
+		if row.AuthorID.Valid && author == nil {
+			log.ErrorContext(ctx, "review_author_preferences_missing",
+				slog.String("component", "reviews"),
+				slog.String("review_id", pgutil.UUIDToString(row.ID)),
+				slog.String("author_id", row.AuthorID.String),
+			)
+			http.Error(w, "Review author profile is missing", http.StatusInternalServerError)
+			return
+		}
 		response[i] = ReviewResponse{
 			ID:               pgutil.UUIDToString(row.ID),
 			Content:          row.Content,
@@ -243,7 +251,26 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		req.TimestampSeconds = nil
 	}
 
-	authorName := strings.TrimSpace(userInfo.FirstName + " " + userInfo.LastName)
+	authorPrefs, err := h.q.GetUserPreferences(ctx, userInfo.ID)
+	if err != nil {
+		log.ErrorContext(ctx, "review_author_preferences_fetch_failed",
+			slog.String("component", "reviews"),
+			slog.String("user_id", userInfo.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Review author profile is missing", http.StatusInternalServerError)
+		return
+	}
+	authorName := strings.TrimSpace(authorPrefs.FirstName + " " + authorPrefs.LastName)
+	if authorName == "" {
+		log.ErrorContext(ctx, "review_author_name_missing",
+			slog.String("component", "reviews"),
+			slog.String("user_id", userInfo.ID),
+		)
+		http.Error(w, "Review author profile is incomplete", http.StatusInternalServerError)
+		return
+	}
+
 	authorID := pgtype.Text{String: userInfo.ID, Valid: userInfo.ID != ""}
 
 	var timestampSeconds pgtype.Int4
@@ -289,8 +316,8 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	}
 	if authorName != "" {
 		author := map[string]interface{}{"name": authorName}
-		if prefs, prefErr := h.q.GetUserPreferences(ctx, userInfo.ID); prefErr == nil && prefs.Avatar != "" {
-			author["avatar"] = prefs.Avatar
+		if authorPrefs.Avatar != "" {
+			author["avatar"] = authorPrefs.Avatar
 		}
 		responseData["author"] = author
 	}

@@ -284,9 +284,19 @@
       "joinGroup": "Rejoindre le groupe"
     },
     "inviteDialog": {
+      "cardDescription": "Créez un lien d’invitation partageable ou envoyez une invitation directement par e-mail.",
+      "title": "Créer une invitation",
+      "description": "Invitez un étudiant avec une adresse e-mail, ou laissez le champ vide pour générer un lien réutilisable et un QR code.",
+      "emailInvalid": "Saisissez une adresse e-mail valide.",
+      "emailHint": "Laissez l’e-mail vide pour créer un lien d’invitation générique à partager vous-même.",
+      "creating": "Création...",
       "sent": "Invitation envoyée avec succès !",
       "linkCreated": "Lien d'invitation créé !",
       "qrAlt": "QR code d'invitation",
+      "qrUnavailable": "QR code indisponible",
+      "shareLink": "Lien de partage",
+      "shareHint": "Toute personne disposant de ce lien peut ouvrir l’invitation et demander à rejoindre le groupe.",
+      "linkCopied": "Lien d’invitation copié",
       "failed": "Échec de la création de l'invitation. Veuillez réessayer."
     },
     "users": {

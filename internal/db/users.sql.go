@@ -75,23 +75,33 @@ func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPr
 }
 
 const seedUserPreferences = `-- name: SeedUserPreferences :one
-INSERT INTO user_preferences (user_id, language, timezone)
-VALUES ($1, $2, $3)
+INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name)
+VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (user_id) DO UPDATE
 SET language   = EXCLUDED.language,
     timezone   = EXCLUDED.timezone,
+    first_name = EXCLUDED.first_name,
+    last_name  = EXCLUDED.last_name,
     updated_at = NOW()
 RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
 `
 
 type SeedUserPreferencesParams struct {
-	UserID   string       `json:"user_id"`
-	Language LanguageCode `json:"language"`
-	Timezone string       `json:"timezone"`
+	UserID    string       `json:"user_id"`
+	Language  LanguageCode `json:"language"`
+	Timezone  string       `json:"timezone"`
+	FirstName string       `json:"first_name"`
+	LastName  string       `json:"last_name"`
 }
 
 func (q *Queries) SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error) {
-	row := q.db.QueryRow(ctx, seedUserPreferences, arg.UserID, arg.Language, arg.Timezone)
+	row := q.db.QueryRow(ctx, seedUserPreferences,
+		arg.UserID,
+		arg.Language,
+		arg.Timezone,
+		arg.FirstName,
+		arg.LastName,
+	)
 	var i UserPreference
 	err := row.Scan(
 		&i.UserID,
@@ -216,22 +226,53 @@ func (q *Queries) UpdateUserEmailPreferences(ctx context.Context, arg UpdateUser
 	return i, err
 }
 
+const updateUserName = `-- name: UpdateUserName :execrows
+UPDATE user_preferences
+SET first_name = $2,
+    last_name  = $3,
+    updated_at = NOW()
+WHERE user_id = $1
+`
+
+type UpdateUserNameParams struct {
+	UserID    string `json:"user_id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+}
+
+func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateUserName, arg.UserID, arg.FirstName, arg.LastName)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const upsertUserAvatar = `-- name: UpsertUserAvatar :one
-INSERT INTO user_preferences (user_id, language, avatar)
-VALUES ($1, 'en', $2)
+INSERT INTO user_preferences (user_id, language, avatar, first_name, last_name)
+VALUES ($1, 'en', $2, $3, $4)
 ON CONFLICT (user_id) DO UPDATE
 SET avatar     = EXCLUDED.avatar,
+    first_name = EXCLUDED.first_name,
+    last_name  = EXCLUDED.last_name,
     updated_at = NOW()
 RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
 `
 
 type UpsertUserAvatarParams struct {
-	UserID string `json:"user_id"`
-	Avatar string `json:"avatar"`
+	UserID    string `json:"user_id"`
+	Avatar    string `json:"avatar"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 }
 
 func (q *Queries) UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarParams) (UserPreference, error) {
-	row := q.db.QueryRow(ctx, upsertUserAvatar, arg.UserID, arg.Avatar)
+	row := q.db.QueryRow(ctx, upsertUserAvatar,
+		arg.UserID,
+		arg.Avatar,
+		arg.FirstName,
+		arg.LastName,
+	)
 	var i UserPreference
 	err := row.Scan(
 		&i.UserID,
@@ -251,27 +292,6 @@ func (q *Queries) UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarPara
 		&i.LastName,
 	)
 	return i, err
-}
-
-const upsertUserName = `-- name: UpsertUserName :exec
-INSERT INTO user_preferences (user_id, language, first_name, last_name)
-VALUES ($1, 'en', $2, $3)
-ON CONFLICT (user_id)
-DO UPDATE
-SET first_name = EXCLUDED.first_name,
-    last_name  = EXCLUDED.last_name,
-    updated_at = NOW()
-`
-
-type UpsertUserNameParams struct {
-	UserID    string `json:"user_id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-}
-
-func (q *Queries) UpsertUserName(ctx context.Context, arg UpsertUserNameParams) error {
-	_, err := q.db.Exec(ctx, upsertUserName, arg.UserID, arg.FirstName, arg.LastName)
-	return err
 }
 
 const upsertUserPreferences = `-- name: UpsertUserPreferences :one

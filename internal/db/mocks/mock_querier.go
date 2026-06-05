@@ -1202,6 +1202,21 @@ func (mr *MockQuerierMockRecorder) UpdateUserEmailPreferences(ctx, arg any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserEmailPreferences", reflect.TypeOf((*MockQuerier)(nil).UpdateUserEmailPreferences), ctx, arg)
 }
 
+// UpdateUserName mocks base method.
+func (m *MockQuerier) UpdateUserName(ctx context.Context, arg db.UpdateUserNameParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserName", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUserName indicates an expected call of UpdateUserName.
+func (mr *MockQuerierMockRecorder) UpdateUserName(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserName", reflect.TypeOf((*MockQuerier)(nil).UpdateUserName), ctx, arg)
+}
+
 // UpdateVideoMuxAssetID mocks base method.
 func (m *MockQuerier) UpdateVideoMuxAssetID(ctx context.Context, arg db.UpdateVideoMuxAssetIDParams) error {
 	m.ctrl.T.Helper()
@@ -1272,20 +1287,6 @@ func (m *MockQuerier) UpsertUserAvatar(ctx context.Context, arg db.UpsertUserAva
 func (mr *MockQuerierMockRecorder) UpsertUserAvatar(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserAvatar", reflect.TypeOf((*MockQuerier)(nil).UpsertUserAvatar), ctx, arg)
-}
-
-// UpsertUserName mocks base method.
-func (m *MockQuerier) UpsertUserName(ctx context.Context, arg db.UpsertUserNameParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertUserName", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpsertUserName indicates an expected call of UpsertUserName.
-func (mr *MockQuerierMockRecorder) UpsertUserName(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserName", reflect.TypeOf((*MockQuerier)(nil).UpsertUserName), ctx, arg)
 }
 
 // UpsertUserPreferences mocks base method.

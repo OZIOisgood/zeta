@@ -195,49 +195,52 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Keep local profile names in sync for joined comment authorship.
-		if err := h.q.UpsertUserName(ctx, db.UpsertUserNameParams{
-			UserID:    resp.User.ID,
-			FirstName: resp.User.FirstName,
-			LastName:  resp.User.LastName,
-		}); err != nil {
-			h.logger.WarnContext(ctx, "auth_upsert_name_failed",
-				slog.String("component", "auth"),
-				slog.String("user_id", resp.User.ID),
-				slog.Any("err", err),
-			)
-		}
-
-		if !isFirstLogin {
+		if isFirstLogin {
+			// The foreground /auth/me path creates first-login preferences with
+			// language/timezone. This callback only seeds avatar opportunistically.
+			avatar := ""
+			if resp.User.ProfilePictureURL != "" {
+				avatarB64, err := h.fetchURLAsBase64(resp.User.ProfilePictureURL)
+				if err != nil {
+					h.logger.WarnContext(ctx, "auth_seed_avatar_failed",
+						slog.String("component", "auth"),
+						slog.String("user_id", resp.User.ID),
+						slog.Any("err", err),
+					)
+				} else {
+					avatar = avatarB64
+				}
+			}
+			if avatar != "" {
+				_, err := h.q.UpsertUserAvatar(ctx, db.UpsertUserAvatarParams{
+					UserID:    resp.User.ID,
+					Avatar:    avatar,
+					FirstName: resp.User.FirstName,
+					LastName:  resp.User.LastName,
+				})
+				if err != nil {
+					h.logger.WarnContext(ctx, "auth_seed_avatar_save_failed",
+						slog.String("component", "auth"),
+						slog.String("user_id", resp.User.ID),
+						slog.Any("err", err),
+					)
+				}
+			}
 			return
 		}
 
-		// Seed avatar from WorkOS only on first sign-in.
-		avatar := ""
-		if resp.User.ProfilePictureURL != "" {
-			avatarB64, err := h.fetchURLAsBase64(resp.User.ProfilePictureURL)
-			if err != nil {
-				h.logger.WarnContext(ctx, "auth_seed_avatar_failed",
-					slog.String("component", "auth"),
-					slog.String("user_id", resp.User.ID),
-					slog.Any("err", err),
-				)
-			} else {
-				avatar = avatarB64
-			}
-		}
-		if avatar != "" {
-			_, err := h.q.UpsertUserAvatar(ctx, db.UpsertUserAvatarParams{
-				UserID: resp.User.ID,
-				Avatar: avatar,
-			})
-			if err != nil {
-				h.logger.WarnContext(ctx, "auth_seed_avatar_save_failed",
-					slog.String("component", "auth"),
-					slog.String("user_id", resp.User.ID),
-					slog.Any("err", err),
-				)
-			}
+		rowsAffected, err := h.q.UpdateUserName(ctx, db.UpdateUserNameParams{
+			UserID:    resp.User.ID,
+			FirstName: resp.User.FirstName,
+			LastName:  resp.User.LastName,
+		})
+		if err != nil || rowsAffected == 0 {
+			h.logger.WarnContext(ctx, "auth_update_name_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", resp.User.ID),
+				slog.Int64("rows_affected", rowsAffected),
+				slog.Any("err", err),
+			)
 		}
 	}()
 
@@ -498,9 +501,11 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			prefs, err = h.q.SeedUserPreferences(ctx, db.SeedUserPreferencesParams{
-				UserID:   user.ID,
-				Language: db.LanguageCode(lang),
-				Timezone: tz,
+				UserID:    user.ID,
+				Language:  db.LanguageCode(lang),
+				Timezone:  tz,
+				FirstName: user.FirstName,
+				LastName:  user.LastName,
 			})
 			if err != nil {
 				h.logger.ErrorContext(ctx, "auth_create_prefs_failed",
@@ -579,17 +584,20 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Keep local profile names in sync for joined comment authorship.
-	if err := h.q.UpsertUserName(ctx, db.UpsertUserNameParams{
+	rowsAffected, err := h.q.UpdateUserName(ctx, db.UpdateUserNameParams{
 		UserID:    user.ID,
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
-	}); err != nil {
-		h.logger.WarnContext(ctx, "auth_upsert_name_failed",
+	})
+	if err != nil || rowsAffected == 0 {
+		h.logger.ErrorContext(ctx, "auth_update_name_failed",
 			slog.String("component", "auth"),
 			slog.String("user_id", user.ID),
+			slog.Int64("rows_affected", rowsAffected),
 			slog.Any("err", err),
 		)
+		http.Error(w, "Failed to update profile name", http.StatusInternalServerError)
+		return
 	}
 
 	// Update timezone if provided and valid

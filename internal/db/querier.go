@@ -95,12 +95,12 @@ type Querier interface {
 	UpdateSessionType(ctx context.Context, arg UpdateSessionTypeParams) (CoachingSessionType, error)
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error)
 	UpdateUserEmailPreferences(ctx context.Context, arg UpdateUserEmailPreferencesParams) (UserPreference, error)
+	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (int64, error)
 	UpdateVideoMuxAssetID(ctx context.Context, arg UpdateVideoMuxAssetIDParams) error
 	UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewParams) (VideoReview, error)
 	UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusParams) error
 	UpdateVideoStatusByUploadID(ctx context.Context, arg UpdateVideoStatusByUploadIDParams) error
 	UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarParams) (UserPreference, error)
-	UpsertUserName(ctx context.Context, arg UpsertUserNameParams) error
 	UpsertUserPreferences(ctx context.Context, arg UpsertUserPreferencesParams) (UserPreference, error)
 	UpsertUserTimezone(ctx context.Context, arg UpsertUserTimezoneParams) error
 }
