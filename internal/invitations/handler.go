@@ -142,7 +142,26 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 
 	inviteLink := h.inviteURL(code)
 	if emailAddress != "" {
-		inviterName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+		inviterPrefs, err := h.q.GetUserPreferences(ctx, user.ID)
+		if err != nil {
+			log.ErrorContext(ctx, "invitation_inviter_preferences_failed",
+				slog.String("component", "invitations"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to resolve inviter profile", http.StatusInternalServerError)
+			return
+		}
+		inviterName, err := preferences.RequireDisplayName(inviterPrefs)
+		if err != nil {
+			log.ErrorContext(ctx, "invitation_inviter_name_missing",
+				slog.String("component", "invitations"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to resolve inviter profile", http.StatusInternalServerError)
+			return
+		}
 		// External invitation: recipient user ID unknown — use DEFAULT_LANGUAGE.
 		loc := i18n.Default()
 		subject := i18n.T(loc, "email.invitation.subject")
@@ -384,7 +403,22 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			joinerName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+			joinerPrefs, err := h.q.GetUserPreferences(bgCtx, user.ID)
+			if err != nil {
+				bgLog.ErrorContext(bgCtx, "invitation_accepted_joiner_preferences_failed",
+					slog.String("user_id", user.ID),
+					slog.Any("err", err),
+				)
+				return
+			}
+			joinerName, err := preferences.RequireDisplayName(joinerPrefs)
+			if err != nil {
+				bgLog.ErrorContext(bgCtx, "invitation_accepted_joiner_name_missing",
+					slog.String("user_id", user.ID),
+					slog.Any("err", err),
+				)
+				return
+			}
 			loc := i18n.For(preferences.UserLang(bgCtx, h.q, bgLog, invitation.InviterID))
 			subject := i18n.T(loc, "email.invitation_accepted.subject")
 			message := email.Message{

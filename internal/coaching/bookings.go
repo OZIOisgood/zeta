@@ -309,7 +309,15 @@ func (h *Handler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	h.sendBookingCreatedEmail(ctx, booking, sessionType.Name)
 	h.scheduleReminders(ctx, booking)
 
-	users := h.resolveUsers(ctx, []string{booking.ExpertID, booking.StudentID})
+	users, err := h.resolveUsers(ctx, []string{booking.ExpertID, booking.StudentID})
+	if err != nil {
+		log.ErrorContext(ctx, "resolve_booking_users_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to resolve booking users", http.StatusInternalServerError)
+		return
+	}
 	writeJSON(w, http.StatusCreated, toBookingResponse(booking, users, sessionType.Name))
 }
 
@@ -350,7 +358,15 @@ func (h *Handler) ListMyBookings(w http.ResponseWriter, r *http.Request) {
 	for i, b := range bookings {
 		pairs[i] = [2]string{b.ExpertID, b.StudentID}
 	}
-	users := h.resolveUsers(ctx, collectUserIDs(pairs))
+	users, err := h.resolveUsers(ctx, collectUserIDs(pairs))
+	if err != nil {
+		log.ErrorContext(ctx, "resolve_booking_users_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to resolve booking users", http.StatusInternalServerError)
+		return
+	}
 
 	resp := make([]bookingResponse, len(bookings))
 	for i, b := range bookings {
@@ -388,7 +404,15 @@ func (h *Handler) ListAllMyBookings(w http.ResponseWriter, r *http.Request) {
 	for i, b := range bookings {
 		pairs[i] = [2]string{b.ExpertID, b.StudentID}
 	}
-	users := h.resolveUsers(ctx, collectUserIDs(pairs))
+	users, err := h.resolveUsers(ctx, collectUserIDs(pairs))
+	if err != nil {
+		log.ErrorContext(ctx, "resolve_booking_users_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to resolve booking users", http.StatusInternalServerError)
+		return
+	}
 
 	resp := make([]bookingResponse, len(bookings))
 	for i, b := range bookings {
@@ -431,7 +455,15 @@ func (h *Handler) ListGroupSessions(w http.ResponseWriter, r *http.Request) {
 	for i, b := range bookings {
 		pairs[i] = [2]string{b.ExpertID, b.StudentID}
 	}
-	users := h.resolveUsers(ctx, collectUserIDs(pairs))
+	users, err := h.resolveUsers(ctx, collectUserIDs(pairs))
+	if err != nil {
+		log.ErrorContext(ctx, "resolve_booking_users_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to resolve booking users", http.StatusInternalServerError)
+		return
+	}
 
 	resp := make([]bookingResponse, len(bookings))
 	for i, b := range bookings {
@@ -514,6 +546,14 @@ func (h *Handler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 
 	h.sendCancellationEmail(ctx, updated, user.ID)
 
-	users := h.resolveUsers(ctx, []string{updated.ExpertID, updated.StudentID})
+	users, err := h.resolveUsers(ctx, []string{updated.ExpertID, updated.StudentID})
+	if err != nil {
+		log.ErrorContext(ctx, "resolve_booking_users_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to resolve booking users", http.StatusInternalServerError)
+		return
+	}
 	writeJSON(w, http.StatusOK, toBookingResponse(updated, users, ""))
 }

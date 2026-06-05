@@ -59,7 +59,13 @@ func ToUpdateParams(userID string, prefs EmailPreferences) db.UpdateUserEmailPre
 func AllowsUserEmail(ctx context.Context, q db.Querier, log *slog.Logger, userID string, category EmailCategory) bool {
 	prefs, err := q.GetUserEmailPreferences(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return true
+		log.ErrorContext(ctx, "email_preferences_missing",
+			slog.String("component", "email_preferences"),
+			slog.String("user_id", userID),
+			slog.String("category", string(category)),
+			slog.Any("err", err),
+		)
+		return false
 	}
 	if err != nil {
 		log.WarnContext(ctx, "email_preferences_fetch_failed",
@@ -98,10 +104,16 @@ func Allows(prefs db.GetUserEmailPreferencesRow, category EmailCategory) bool {
 }
 
 // UserLang returns the language preference for a registered user (e.g. "en", "de", "fr").
-// When the preferences row is absent it falls back to DEFAULT_LANGUAGE or "en".
+// When the preferences row is absent it logs the invariant failure and falls back
+// to DEFAULT_LANGUAGE or "en" so notification copy can still be rendered.
 func UserLang(ctx context.Context, q db.Querier, log *slog.Logger, userID string) string {
 	prefs, err := q.GetUserPreferences(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
+		log.ErrorContext(ctx, "user_preferences_missing_for_language",
+			slog.String("component", "preferences"),
+			slog.String("user_id", userID),
+			slog.Any("err", err),
+		)
 		return defaultLang()
 	}
 	if err != nil {

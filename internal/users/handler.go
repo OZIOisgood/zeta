@@ -3,7 +3,6 @@ package users
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,7 +16,6 @@ import (
 	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
@@ -142,8 +140,8 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 		return
 	}
 
-	// Fetch user details from WorkOS in parallel; local preferences remain the
-	// source of truth for display avatars.
+	// Fetch user details in parallel. Local preferences are the source of
+	// truth for display profile fields; WorkOS supplies delivery email.
 	type result struct {
 		user groupUser
 		err  error
@@ -155,6 +153,16 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 		wg.Add(1)
 		go func(idx int, userID string) {
 			defer wg.Done()
+			prefs, err := h.q.GetUserPreferences(ctx, userID)
+			if err != nil {
+				results[idx] = result{err: err}
+				return
+			}
+			if _, err := preferences.RequireDisplayName(prefs); err != nil {
+				results[idx] = result{err: err}
+				return
+			}
+
 			u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
 				User: userID,
 			})
@@ -162,20 +170,12 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 				results[idx] = result{err: err}
 				return
 			}
-			prefs, err := h.q.GetUserPreferences(ctx, userID)
-			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-				h.logger.WarnContext(ctx, "users_get_preferences_failed",
-					slog.String("component", "users"),
-					slog.String("target_user_id", userID),
-					slog.Any("err", err),
-				)
-			}
 			results[idx] = result{
 				user: groupUser{
-					ID:        u.ID,
+					ID:        userID,
 					Email:     u.Email,
-					FirstName: u.FirstName,
-					LastName:  u.LastName,
+					FirstName: prefs.FirstName,
+					LastName:  prefs.LastName,
 					Avatar:    prefs.Avatar,
 					Role:      roleByUserID[userID],
 				},
@@ -187,11 +187,12 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 	users := make([]groupUser, 0, len(filteredMemberIDs))
 	for _, r := range results {
 		if r.err != nil {
-			h.logger.WarnContext(ctx, "users_get_workos_user_failed",
+			h.logger.ErrorContext(ctx, "users_resolve_group_member_failed",
 				slog.String("component", "users"),
 				slog.Any("err", r.err),
 			)
-			continue
+			http.Error(w, "Failed to list group members", http.StatusInternalServerError)
+			return
 		}
 		users = append(users, r.user)
 	}

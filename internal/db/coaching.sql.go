@@ -1589,19 +1589,3 @@ func (q *Queries) UpdateSessionType(ctx context.Context, arg UpdateSessionTypePa
 	)
 	return i, err
 }
-
-const upsertUserTimezone = `-- name: UpsertUserTimezone :exec
-INSERT INTO user_preferences (user_id, timezone)
-VALUES ($1, $2)
-ON CONFLICT (user_id) DO UPDATE SET timezone = $2, updated_at = NOW()
-`
-
-type UpsertUserTimezoneParams struct {
-	UserID   string `json:"user_id"`
-	Timezone string `json:"timezone"`
-}
-
-func (q *Queries) UpsertUserTimezone(ctx context.Context, arg UpsertUserTimezoneParams) error {
-	_, err := q.db.Exec(ctx, upsertUserTimezone, arg.UserID, arg.Timezone)
-	return err
-}

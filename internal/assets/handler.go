@@ -487,8 +487,22 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Send Email
-		userName := fmt.Sprintf("%s %s", userCtx.FirstName, userCtx.LastName)
+		uploaderPrefs, err := h.q.GetUserPreferences(bgCtx, userCtx.ID)
+		if err != nil {
+			bgLog.ErrorContext(bgCtx, "asset_notification_uploader_preferences_failed",
+				slog.String("user_id", userCtx.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
+		userName, err := preferences.RequireDisplayName(uploaderPrefs)
+		if err != nil {
+			bgLog.ErrorContext(bgCtx, "asset_notification_uploader_name_missing",
+				slog.String("user_id", userCtx.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
 		loc := i18n.For(preferences.UserLang(bgCtx, h.q, bgLog, group.OwnerID))
 		message := email.Message{
 			Copy: email.Copy{

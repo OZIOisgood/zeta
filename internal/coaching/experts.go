@@ -46,7 +46,15 @@ func (h *Handler) ListExpertsInGroup(w http.ResponseWriter, r *http.Request) {
 		expertIDs = []string{}
 	}
 
-	users := h.resolveUsers(ctx, expertIDs)
+	users, err := h.resolveUsers(ctx, expertIDs)
+	if err != nil {
+		log.ErrorContext(ctx, "resolve_expert_users_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to resolve experts", http.StatusInternalServerError)
+		return
+	}
 
 	resp := make([]ExpertInfo, len(expertIDs))
 	for i, id := range expertIDs {
