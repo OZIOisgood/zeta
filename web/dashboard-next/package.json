@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "lint": "prettier --check \"src/**/*.{ts,html,scss,css,json}\" \".storybook/**/*.{ts,json}\" \"*.{json,md}\"",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false",

@@ -46,7 +46,11 @@ export type BreadcrumbItem = {
             }
 
             @if (!last) {
-              <svg lucideChevronRight class="size-4 shrink-0 text-[var(--z-muted)]" aria-hidden="true"></svg>
+              <svg
+                lucideChevronRight
+                class="size-4 shrink-0 text-[var(--z-muted)]"
+                aria-hidden="true"
+              ></svg>
             }
           </li>
         }

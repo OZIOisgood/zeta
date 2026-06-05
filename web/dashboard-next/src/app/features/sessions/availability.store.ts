@@ -51,9 +51,7 @@ function normalizeAvailabilityResponse(
     return [response, ...current];
   }
 
-  return current.map((availability) =>
-    availability.id === fallbackId ? response : availability,
-  );
+  return current.map((availability) => (availability.id === fallbackId ? response : availability));
 }
 
 export const AvailabilityStore = signalStore(
@@ -96,7 +94,7 @@ export const AvailabilityStore = signalStore(
           try {
             const groups = await firstValueFrom(groupsApi.listGroups());
             const activeGroup = groupId
-              ? groups.find((group) => group.id === groupId) ?? null
+              ? (groups.find((group) => group.id === groupId) ?? null)
               : null;
 
             patchState(store, {
@@ -116,212 +114,210 @@ export const AvailabilityStore = signalStore(
           }
         },
 
-      async selectGroup(group: Group): Promise<void> {
-        patchState(store, { activeGroup: group });
-        await loadGroupConfiguration(group);
-      },
+        async selectGroup(group: Group): Promise<void> {
+          patchState(store, { activeGroup: group });
+          await loadGroupConfiguration(group);
+        },
 
-      async createSessionType(data: {
-        name: string;
-        description: string;
-        duration_minutes: number;
-      }): Promise<void> {
-        const group = store.activeGroup();
-        if (!group) return;
-        patchState(store, { mutationError: null, mutationStatus: 'loading' });
+        async createSessionType(data: {
+          name: string;
+          description: string;
+          duration_minutes: number;
+        }): Promise<void> {
+          const group = store.activeGroup();
+          if (!group) return;
+          patchState(store, { mutationError: null, mutationStatus: 'loading' });
 
-        try {
-          const sessionType = await firstValueFrom(coachingApi.createSessionType(group.id, data));
-          patchState(store, {
-            mutationError: null,
-            mutationStatus: 'success',
-            sessionTypes: [sessionType, ...store.sessionTypes()],
-          });
-        } catch (error) {
-          const errorState = errorAsyncSlice(error);
-          patchState(store, {
-            mutationError: errorState.error,
-            mutationStatus: errorState.status,
-          });
-        }
-      },
+          try {
+            const sessionType = await firstValueFrom(coachingApi.createSessionType(group.id, data));
+            patchState(store, {
+              mutationError: null,
+              mutationStatus: 'success',
+              sessionTypes: [sessionType, ...store.sessionTypes()],
+            });
+          } catch (error) {
+            const errorState = errorAsyncSlice(error);
+            patchState(store, {
+              mutationError: errorState.error,
+              mutationStatus: errorState.status,
+            });
+          }
+        },
 
-      async updateSessionType(
-        sessionTypeId: string,
-        data: { name: string; description: string; duration_minutes: number },
-      ): Promise<void> {
-        const group = store.activeGroup();
-        if (!group) return;
-        patchState(store, { mutationError: null, mutationStatus: 'loading' });
+        async updateSessionType(
+          sessionTypeId: string,
+          data: { name: string; description: string; duration_minutes: number },
+        ): Promise<void> {
+          const group = store.activeGroup();
+          if (!group) return;
+          patchState(store, { mutationError: null, mutationStatus: 'loading' });
 
-        try {
-          const sessionType = await firstValueFrom(
-            coachingApi.updateSessionType(group.id, sessionTypeId, data),
-          );
-          patchState(store, {
-            mutationError: null,
-            mutationStatus: 'success',
-            sessionTypes: store
-              .sessionTypes()
-              .map((current) => (current.id === sessionType.id ? sessionType : current)),
-          });
-        } catch (error) {
-          const errorState = errorAsyncSlice(error);
-          patchState(store, {
-            mutationError: errorState.error,
-            mutationStatus: errorState.status,
-          });
-        }
-      },
+          try {
+            const sessionType = await firstValueFrom(
+              coachingApi.updateSessionType(group.id, sessionTypeId, data),
+            );
+            patchState(store, {
+              mutationError: null,
+              mutationStatus: 'success',
+              sessionTypes: store
+                .sessionTypes()
+                .map((current) => (current.id === sessionType.id ? sessionType : current)),
+            });
+          } catch (error) {
+            const errorState = errorAsyncSlice(error);
+            patchState(store, {
+              mutationError: errorState.error,
+              mutationStatus: errorState.status,
+            });
+          }
+        },
 
-      async deleteSessionType(sessionTypeId: string): Promise<void> {
-        const group = store.activeGroup();
-        if (!group) return;
-        patchState(store, { mutationError: null, mutationStatus: 'loading' });
+        async deleteSessionType(sessionTypeId: string): Promise<void> {
+          const group = store.activeGroup();
+          if (!group) return;
+          patchState(store, { mutationError: null, mutationStatus: 'loading' });
 
-        try {
-          await firstValueFrom(coachingApi.deleteSessionType(group.id, sessionTypeId));
-          patchState(store, {
-            mutationError: null,
-            mutationStatus: 'success',
-            sessionTypes: store.sessionTypes().filter((type) => type.id !== sessionTypeId),
-          });
-        } catch (error) {
-          const errorState = errorAsyncSlice(error);
-          patchState(store, {
-            mutationError: errorState.error,
-            mutationStatus: errorState.status,
-          });
-        }
-      },
+          try {
+            await firstValueFrom(coachingApi.deleteSessionType(group.id, sessionTypeId));
+            patchState(store, {
+              mutationError: null,
+              mutationStatus: 'success',
+              sessionTypes: store.sessionTypes().filter((type) => type.id !== sessionTypeId),
+            });
+          } catch (error) {
+            const errorState = errorAsyncSlice(error);
+            patchState(store, {
+              mutationError: errorState.error,
+              mutationStatus: errorState.status,
+            });
+          }
+        },
 
-      async createAvailability(data: {
-        day_of_week: number;
-        start_time: string;
-        end_time: string;
-      }): Promise<void> {
-        const group = store.activeGroup();
-        if (!group) return;
-        patchState(store, { mutationError: null, mutationStatus: 'loading' });
+        async createAvailability(data: {
+          day_of_week: number;
+          start_time: string;
+          end_time: string;
+        }): Promise<void> {
+          const group = store.activeGroup();
+          if (!group) return;
+          patchState(store, { mutationError: null, mutationStatus: 'loading' });
 
-        try {
-          const availability = await firstValueFrom(coachingApi.createAvailability(group.id, data));
-          patchState(store, {
-            mutationError: null,
-            mutationStatus: 'success',
-            availability: normalizeAvailabilityResponse(availability, store.availability()),
-          });
-        } catch (error) {
-          const errorState = errorAsyncSlice(error);
-          patchState(store, {
-            mutationError: errorState.error,
-            mutationStatus: errorState.status,
-          });
-        }
-      },
+          try {
+            const availability = await firstValueFrom(
+              coachingApi.createAvailability(group.id, data),
+            );
+            patchState(store, {
+              mutationError: null,
+              mutationStatus: 'success',
+              availability: normalizeAvailabilityResponse(availability, store.availability()),
+            });
+          } catch (error) {
+            const errorState = errorAsyncSlice(error);
+            patchState(store, {
+              mutationError: errorState.error,
+              mutationStatus: errorState.status,
+            });
+          }
+        },
 
-      async updateAvailability(
-        availabilityId: string,
-        data: { day_of_week: number; start_time: string; end_time: string },
-      ): Promise<void> {
-        const group = store.activeGroup();
-        if (!group) return;
-        patchState(store, { mutationError: null, mutationStatus: 'loading' });
+        async updateAvailability(
+          availabilityId: string,
+          data: { day_of_week: number; start_time: string; end_time: string },
+        ): Promise<void> {
+          const group = store.activeGroup();
+          if (!group) return;
+          patchState(store, { mutationError: null, mutationStatus: 'loading' });
 
-        try {
-          const availability = await firstValueFrom(
-            coachingApi.updateAvailability(group.id, availabilityId, data),
-          );
-          patchState(store, {
-            mutationError: null,
-            mutationStatus: 'success',
-            availability: normalizeAvailabilityResponse(
-              availability,
-              store.availability(),
-              availabilityId,
-            ),
-          });
-        } catch (error) {
-          const errorState = errorAsyncSlice(error);
-          patchState(store, {
-            mutationError: errorState.error,
-            mutationStatus: errorState.status,
-          });
-        }
-      },
+          try {
+            const availability = await firstValueFrom(
+              coachingApi.updateAvailability(group.id, availabilityId, data),
+            );
+            patchState(store, {
+              mutationError: null,
+              mutationStatus: 'success',
+              availability: normalizeAvailabilityResponse(
+                availability,
+                store.availability(),
+                availabilityId,
+              ),
+            });
+          } catch (error) {
+            const errorState = errorAsyncSlice(error);
+            patchState(store, {
+              mutationError: errorState.error,
+              mutationStatus: errorState.status,
+            });
+          }
+        },
 
-      async deleteAvailability(availabilityId: string): Promise<void> {
-        const group = store.activeGroup();
-        if (!group) return;
-        patchState(store, { mutationError: null, mutationStatus: 'loading' });
+        async deleteAvailability(availabilityId: string): Promise<void> {
+          const group = store.activeGroup();
+          if (!group) return;
+          patchState(store, { mutationError: null, mutationStatus: 'loading' });
 
-        try {
-          await firstValueFrom(coachingApi.deleteAvailability(group.id, availabilityId));
-          patchState(store, {
-            mutationError: null,
-            mutationStatus: 'success',
-            availability: store
-              .availability()
-              .filter((current) => current.id !== availabilityId),
-          });
-        } catch (error) {
-          const errorState = errorAsyncSlice(error);
-          patchState(store, {
-            mutationError: errorState.error,
-            mutationStatus: errorState.status,
-          });
-        }
-      },
+          try {
+            await firstValueFrom(coachingApi.deleteAvailability(group.id, availabilityId));
+            patchState(store, {
+              mutationError: null,
+              mutationStatus: 'success',
+              availability: store.availability().filter((current) => current.id !== availabilityId),
+            });
+          } catch (error) {
+            const errorState = errorAsyncSlice(error);
+            patchState(store, {
+              mutationError: errorState.error,
+              mutationStatus: errorState.status,
+            });
+          }
+        },
 
-      async createBlockedSlot(data: {
-        blocked_date: string;
-        start_time?: string;
-        end_time?: string;
-        reason?: string;
-      }): Promise<void> {
-        const group = store.activeGroup();
-        if (!group) return;
-        patchState(store, { mutationError: null, mutationStatus: 'loading' });
+        async createBlockedSlot(data: {
+          blocked_date: string;
+          start_time?: string;
+          end_time?: string;
+          reason?: string;
+        }): Promise<void> {
+          const group = store.activeGroup();
+          if (!group) return;
+          patchState(store, { mutationError: null, mutationStatus: 'loading' });
 
-        try {
-          const blockedSlot = await firstValueFrom(coachingApi.createBlockedSlot(group.id, data));
-          patchState(store, {
-            mutationError: null,
-            mutationStatus: 'success',
-            blockedSlots: [blockedSlot, ...store.blockedSlots()],
-          });
-        } catch (error) {
-          const errorState = errorAsyncSlice(error);
-          patchState(store, {
-            mutationError: errorState.error,
-            mutationStatus: errorState.status,
-          });
-        }
-      },
+          try {
+            const blockedSlot = await firstValueFrom(coachingApi.createBlockedSlot(group.id, data));
+            patchState(store, {
+              mutationError: null,
+              mutationStatus: 'success',
+              blockedSlots: [blockedSlot, ...store.blockedSlots()],
+            });
+          } catch (error) {
+            const errorState = errorAsyncSlice(error);
+            patchState(store, {
+              mutationError: errorState.error,
+              mutationStatus: errorState.status,
+            });
+          }
+        },
 
-      async deleteBlockedSlot(blockedSlotId: string): Promise<void> {
-        const group = store.activeGroup();
-        if (!group) return;
-        patchState(store, { mutationError: null, mutationStatus: 'loading' });
+        async deleteBlockedSlot(blockedSlotId: string): Promise<void> {
+          const group = store.activeGroup();
+          if (!group) return;
+          patchState(store, { mutationError: null, mutationStatus: 'loading' });
 
-        try {
-          await firstValueFrom(coachingApi.deleteBlockedSlot(group.id, blockedSlotId));
-          patchState(store, {
-            mutationError: null,
-            mutationStatus: 'success',
-            blockedSlots: store
-              .blockedSlots()
-              .filter((current) => current.id !== blockedSlotId),
-          });
-        } catch (error) {
-          const errorState = errorAsyncSlice(error);
-          patchState(store, {
-            mutationError: errorState.error,
-            mutationStatus: errorState.status,
-          });
-        }
-      },
-    };
+          try {
+            await firstValueFrom(coachingApi.deleteBlockedSlot(group.id, blockedSlotId));
+            patchState(store, {
+              mutationError: null,
+              mutationStatus: 'success',
+              blockedSlots: store.blockedSlots().filter((current) => current.id !== blockedSlotId),
+            });
+          } catch (error) {
+            const errorState = errorAsyncSlice(error);
+            patchState(store, {
+              mutationError: errorState.error,
+              mutationStatus: errorState.status,
+            });
+          }
+        },
+      };
     },
   ),
 );

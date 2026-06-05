@@ -33,10 +33,3 @@ make web-next:test
 make web-next:storybook
 make web-next:storybook:build
 ```
-
-## Coexistence With The Current Dashboard
-
-- `web/dashboard` remains the existing Taiga UI implementation and the behavioural reference.
-- `web/dashboard-next` is developed independently until it covers the required flows.
-- Deployment wiring should continue to serve `web/dashboard` until the final cutover phase.
-- `instructions/CONSTITUTION.md` should be updated during final cutover, when the old dashboard is removed.

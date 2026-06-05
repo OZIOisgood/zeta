@@ -53,20 +53,40 @@ import { ZButtonComponent } from '../button/z-button.component';
       animation: z-dialog-panel-out 100ms ease-in;
     }
     @keyframes z-dialog-overlay-in {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
     @keyframes z-dialog-overlay-out {
-      from { opacity: 1; }
-      to { opacity: 0; }
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
     }
     @keyframes z-dialog-panel-in {
-      from { opacity: 0; transform: translateY(8px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
     @keyframes z-dialog-panel-out {
-      from { opacity: 1; transform: translateY(0) scale(1); }
-      to { opacity: 0; transform: translateY(8px) scale(0.98); }
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
     }
   `,
 })

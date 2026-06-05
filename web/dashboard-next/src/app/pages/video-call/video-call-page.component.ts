@@ -13,7 +13,14 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideCamera, LucideCameraOff, LucideMic, LucideMicOff, LucidePhoneOff, LucideSettings } from '@lucide/angular';
+import {
+  LucideCamera,
+  LucideCameraOff,
+  LucideMic,
+  LucideMicOff,
+  LucidePhoneOff,
+  LucideSettings,
+} from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
 import { AgoraService } from '../../core/calls/agora.service';
 import { CoachingApiClient } from '../../core/http/coaching-api.service';
@@ -39,13 +46,17 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
       @if (connecting()) {
         <div class="grid min-h-[calc(100dvh-2rem)] place-items-center">
           <div class="text-center">
-            <div class="mx-auto size-12 animate-spin rounded-full border-2 border-white/20 border-t-[var(--z-primary)]"></div>
+            <div
+              class="mx-auto size-12 animate-spin rounded-full border-2 border-white/20 border-t-[var(--z-primary)]"
+            ></div>
             <p class="mt-4 text-sm font-semibold">{{ 'sessions.call.connecting' | transloco }}</p>
           </div>
         </div>
       } @else if (error()) {
         <div class="grid min-h-[calc(100dvh-2rem)] place-items-center">
-          <section class="max-w-md rounded-lg border border-white/10 bg-white p-6 text-center text-[var(--z-text)] shadow-2xl">
+          <section
+            class="max-w-md rounded-lg border border-white/10 bg-white p-6 text-center text-[var(--z-text)] shadow-2xl"
+          >
             <h1 class="text-xl font-semibold">{{ 'sessions.call.couldNotJoin' | transloco }}</h1>
             <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">{{ error() }}</p>
             <z-button class="mt-5 block" type="button" (pressed)="backToSessions()">
@@ -54,7 +65,9 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
           </section>
         </div>
       } @else {
-        <section class="grid min-h-[calc(100dvh-1.5rem)] grid-rows-[minmax(0,1fr)_auto] gap-3 sm:min-h-[calc(100dvh-2rem)]">
+        <section
+          class="grid min-h-[calc(100dvh-1.5rem)] grid-rows-[minmax(0,1fr)_auto] gap-3 sm:min-h-[calc(100dvh-2rem)]"
+        >
           <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
             <div class="relative overflow-hidden rounded-lg bg-stone-900">
               <div #remoteVideo class="h-full min-h-[60dvh] w-full"></div>
@@ -100,25 +113,46 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
             </div>
           </div>
 
-          <footer class="flex flex-wrap items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/10 p-3 backdrop-blur">
-            <button type="button" class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]" [ngClass]="agora.audioEnabled() ? '' : 'bg-rose-700 text-white'" (click)="toggleAudio()">
+          <footer
+            class="flex flex-wrap items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/10 p-3 backdrop-blur"
+          >
+            <button
+              type="button"
+              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
+              [ngClass]="agora.audioEnabled() ? '' : 'bg-rose-700 text-white'"
+              (click)="toggleAudio()"
+            >
               @if (agora.audioEnabled()) {
                 <svg lucideMic class="size-5" aria-hidden="true"></svg>
               } @else {
                 <svg lucideMicOff class="size-5" aria-hidden="true"></svg>
               }
             </button>
-            <button type="button" class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]" [ngClass]="agora.videoEnabled() ? '' : 'bg-rose-700 text-white'" (click)="toggleVideo()">
+            <button
+              type="button"
+              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
+              [ngClass]="agora.videoEnabled() ? '' : 'bg-rose-700 text-white'"
+              (click)="toggleVideo()"
+            >
               @if (agora.videoEnabled()) {
                 <svg lucideCamera class="size-5" aria-hidden="true"></svg>
               } @else {
                 <svg lucideCameraOff class="size-5" aria-hidden="true"></svg>
               }
             </button>
-            <button #settingsButton type="button" class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]" (click)="toggleDevicePanel()">
+            <button
+              #settingsButton
+              type="button"
+              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
+              (click)="toggleDevicePanel()"
+            >
               <svg lucideSettings class="size-5" aria-hidden="true"></svg>
             </button>
-            <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-md border border-rose-700 bg-rose-700 px-4 text-sm font-semibold text-white" (click)="leave()">
+            <button
+              type="button"
+              class="inline-flex min-h-11 items-center gap-2 rounded-md border border-rose-700 bg-rose-700 px-4 text-sm font-semibold text-white"
+              (click)="leave()"
+            >
               <svg lucidePhoneOff class="size-5" aria-hidden="true"></svg>
               <span>{{ 'common.aria.leaveCall' | transloco }}</span>
             </button>
@@ -135,12 +169,24 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
       animation: z-device-panel-out 100ms ease-in;
     }
     @keyframes z-device-panel-in {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     @keyframes z-device-panel-out {
-      from { opacity: 1; transform: translateY(0); }
-      to { opacity: 0; transform: translateY(6px); }
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(6px);
+      }
     }
   `,
 })
@@ -207,7 +253,9 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
     }
 
     try {
-      const credentials = await firstValueFrom(this.api.connectToBooking(this.groupId, this.bookingId));
+      const credentials = await firstValueFrom(
+        this.api.connectToBooking(this.groupId, this.bookingId),
+      );
       await this.agora.join(
         credentials.app_id,
         credentials.channel,

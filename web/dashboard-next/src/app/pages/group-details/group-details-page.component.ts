@@ -127,11 +127,7 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
                 </p>
               </div>
             </div>
-            <z-button
-              class="mt-4 sm:mt-0"
-              type="button"
-              [ngpDialogTrigger]="inviteDialog"
-            >
+            <z-button class="mt-4 sm:mt-0" type="button" [ngpDialogTrigger]="inviteDialog">
               <span>{{ 'common.actions.createInvitation' | transloco }}</span>
             </z-button>
           </article>
@@ -252,7 +248,6 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
             [description]="'groups.membersUnavailableDescription' | transloco"
           />
         }
-
       }
     </div>
   `,

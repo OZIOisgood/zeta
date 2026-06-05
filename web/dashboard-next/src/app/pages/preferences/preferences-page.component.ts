@@ -509,7 +509,9 @@ export class PreferencesPageComponent {
   protected saveDisabled(): boolean {
     this.formRevision();
 
-    return this.form.invalid || !this.hasFormChanges() || this.session.mutationStatus() === 'loading';
+    return (
+      this.form.invalid || !this.hasFormChanges() || this.session.mutationStatus() === 'loading'
+    );
   }
 
   protected async save(): Promise<void> {

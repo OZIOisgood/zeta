@@ -50,6 +50,10 @@ jobs:
         working-directory: web/dashboard-next
         run: pnpm install --frozen-lockfile
 
+      - name: Lint Web
+        working-directory: web/dashboard-next
+        run: pnpm run lint
+
       - name: Build Web
         working-directory: web/dashboard-next
         run: pnpm run build

@@ -118,7 +118,9 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                     <div class="min-w-0">
                       <div class="flex flex-wrap items-center gap-2">
                         <h2 class="text-base font-semibold">
-                          {{ booking.session_type_name || ('sessions.book.sessionType' | transloco) }}
+                          {{
+                            booking.session_type_name || ('sessions.book.sessionType' | transloco)
+                          }}
                         </h2>
                         <z-badge [tone]="booking.status === 'cancelled' ? 'danger' : 'primary'">
                           {{ statusLabel(booking) }}

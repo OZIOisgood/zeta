@@ -197,8 +197,11 @@ describe('VideoDetailsPageComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const groupLink = fixture.nativeElement.querySelector('a[href="/groups/group-1"]') ??
-      [...fixture.nativeElement.querySelectorAll('a')].find((el: Element) => el.textContent?.includes('Arena Academy'));
+    const groupLink =
+      fixture.nativeElement.querySelector('a[href="/groups/group-1"]') ??
+      [...fixture.nativeElement.querySelectorAll('a')].find((el: Element) =>
+        el.textContent?.includes('Arena Academy'),
+      );
     expect(groupLink).toBeTruthy();
     expect(groupLink.textContent).toContain('Arena Academy');
     expect(groupLink.querySelector('z-avatar')).toBeTruthy();

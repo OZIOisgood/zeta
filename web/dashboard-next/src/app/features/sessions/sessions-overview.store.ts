@@ -82,9 +82,9 @@ export const SessionsOverviewStore = signalStore(
         patchState(store, {
           mutationStatus: 'success',
           mutationError: null,
-          bookings: store.bookings().map((booking) =>
-            booking.id === updated.id ? updated : booking,
-          ),
+          bookings: store
+            .bookings()
+            .map((booking) => (booking.id === updated.id ? updated : booking)),
         });
         return updated;
       } catch (error) {
