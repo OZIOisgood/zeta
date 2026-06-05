@@ -16,7 +16,7 @@ import {
   ZBreadcrumbsComponent,
 } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
-import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
+import { ZConfirmDialogComponent } from '../../shared/ui/dialog/z-confirm-dialog.component';
 import { ZFormDialogComponent } from '../../shared/ui/dialog/z-form-dialog.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
@@ -41,7 +41,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
     ZBadgeComponent,
     ZBreadcrumbsComponent,
     ZButtonComponent,
-    ZDialogPanelComponent,
+    ZConfirmDialogComponent,
     ZFormDialogComponent,
     ZEmptyStateComponent,
     ZFieldErrorComponent,
@@ -184,7 +184,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
                           <svg lucidePencil class="size-4" aria-hidden="true"></svg>
                         </z-button>
                         <ng-template #deleteTypeDialog let-close="close">
-                          <z-dialog-panel
+                          <z-confirm-dialog
                             [title]="'sessions.availability.deleteSessionType' | transloco"
                             [description]="'sessions.availability.confirmDelete' | transloco"
                             tone="danger"
@@ -242,7 +242,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
                           <svg lucidePencil class="size-4" aria-hidden="true"></svg>
                         </z-button>
                         <ng-template #deleteAvailabilityDialog let-close="close">
-                          <z-dialog-panel
+                          <z-confirm-dialog
                             [title]="'sessions.availability.deleteAvailability' | transloco"
                             [description]="'sessions.availability.confirmDelete' | transloco"
                             tone="danger"
@@ -301,7 +301,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
                         }
                       </div>
                       <ng-template #deleteBlockedDialog let-close="close">
-                        <z-dialog-panel
+                        <z-confirm-dialog
                           [title]="'sessions.availability.deleteBlockedDate' | transloco"
                           [description]="'sessions.availability.confirmDelete' | transloco"
                           tone="danger"

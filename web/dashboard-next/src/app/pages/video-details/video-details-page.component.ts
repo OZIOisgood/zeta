@@ -36,7 +36,7 @@ import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZCommentActionsComponent } from '../../shared/ui/comment-actions/z-comment-actions.component';
-import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
+import { ZConfirmDialogComponent } from '../../shared/ui/dialog/z-confirm-dialog.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
@@ -55,7 +55,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
     ZBreadcrumbsComponent,
     ZButtonComponent,
     ZCommentActionsComponent,
-    ZDialogPanelComponent,
+    ZConfirmDialogComponent,
     ZEmptyStateComponent,
     ZSkeletonComponent,
     ZTextareaComponent,
@@ -547,7 +547,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                 @if (canFinalize() && !isFinalized()) {
                   @if (hasUnreviewedParts()) {
                     <ng-template #cannotMarkReviewedDialog let-close="close">
-                      <z-dialog-panel
+                      <z-confirm-dialog
                         [title]="'videos.cannotMarkReviewedTitle' | transloco"
                         [description]="'videos.cannotMarkReviewed' | transloco"
                         tone="info"
@@ -562,7 +562,7 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                     </z-button>
                   } @else {
                     <ng-template #markReviewedDialog let-close="close">
-                      <z-dialog-panel
+                      <z-confirm-dialog
                         [title]="'videos.markVideoReviewed' | transloco"
                         [description]="'videos.confirmMarkReviewed' | transloco"
                         tone="warning"

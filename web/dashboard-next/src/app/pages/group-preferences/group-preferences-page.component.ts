@@ -11,7 +11,7 @@ import { GroupsStore } from '../../features/groups/groups.store';
 import { ZAvatarInputComponent } from '../../shared/ui/avatar-input/z-avatar-input.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
-import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
+import { ZConfirmDialogComponent } from '../../shared/ui/dialog/z-confirm-dialog.component';
 import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
 import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
@@ -36,7 +36,7 @@ type GroupPreferencesFormValue = {
     ZAvatarInputComponent,
     ZBreadcrumbsComponent,
     ZButtonComponent,
-    ZDialogPanelComponent,
+    ZConfirmDialogComponent,
     ZFieldErrorComponent,
     ZFieldLabelComponent,
     ZSkeletonComponent,
@@ -198,7 +198,7 @@ type GroupPreferencesFormValue = {
 
                 @if (canDeleteGroup()) {
                   <ng-template #deleteGroupDialog let-close="close">
-                    <z-dialog-panel
+                    <z-confirm-dialog
                       [title]="'groups.deleteGroup' | transloco"
                       [description]="'groups.deleteConfirm' | transloco"
                       tone="danger"

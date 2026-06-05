@@ -20,7 +20,7 @@ import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
-import { ZDialogPanelComponent } from '../../shared/ui/dialog/z-dialog-panel.component';
+import { ZConfirmDialogComponent } from '../../shared/ui/dialog/z-confirm-dialog.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
@@ -36,7 +36,7 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
     ZBadgeComponent,
     ZBreadcrumbsComponent,
     ZButtonComponent,
-    ZDialogPanelComponent,
+    ZConfirmDialogComponent,
     ZEmptyStateComponent,
     GroupInvitationDialogComponent,
     ZIconButtonComponent,
@@ -206,7 +206,7 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
 
                         @if (canRemoveUsers() && !isCurrentUser(member.id)) {
                           <ng-template #removeMemberDialog let-close="close">
-                            <z-dialog-panel
+                            <z-confirm-dialog
                               [title]="'groups.users.removeUser' | transloco"
                               [description]="
                                 'groups.users.confirmRemove' | transloco: { name: member.name }
