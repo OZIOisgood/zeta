@@ -45,9 +45,15 @@ Group invitation links (`/groups?invite=<code>`) were generated, but the new das
 - `PATH=/Users/test/.nvm/versions/node/v20.19.1/bin:$PATH make web-next:lint`
 - `PATH=/Users/test/.nvm/versions/node/v20.19.1/bin:$PATH make web-next:test`
 - `PATH=/Users/test/.nvm/versions/node/v20.19.1/bin:$PATH make web-next:build`
+- `PATH=/Users/test/.nvm/versions/node/v20.19.1/bin:$PATH make web-next:storybook:build`
 
 Frontend build completed with existing budget/CommonJS warnings for Agora-related bundles.
 
 ## Follow-ups
 
 - Manual WorkOS smoke test in dev: open `/groups?invite=<code>` while logged out, authenticate/register, confirm return to the invite dialog, accept, and land on the group page.
+
+## Follow-up Fix
+
+- Replaced the URL-driven join dialog's direct conditional `NgpDialog`/`NgpDialogOverlay` usage with a shared `z-action-dialog` component opened through `NgpDialogManager`. `ng-primitives/dialog` expects the trigger/manager path to provide its exit-animation manager; direct conditional rendering caused `NG0201: No provider found for _NgpExitAnimationManager` even though the invitation API request succeeded.
+- Refactored the old `z-dialog-panel` confirmation wrapper to delegate to `z-action-dialog`, preserving existing call sites while centralizing the Angular Primitives overlay/panel/actions shell.
