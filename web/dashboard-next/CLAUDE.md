@@ -36,31 +36,31 @@ Naming: selector `z-<name>`, class `Z<Name>Component`, folder `shared/ui/<name>/
 
 Verify the exact inputs/outputs in each file before use; this table is a discovery index, not an API spec.
 
-| Selector | Component | Use for |
-| --- | --- | --- |
-| `z-button` | ZButtonComponent | Buttons. Inputs: `variant` (`primary`/`secondary`/`ghost`/`danger`), `size` (`sm`/`md`), `type`, `disabled`, `iconOnly`, `ariaLabel`; output `pressed`. |
-| `z-icon-button` | ZIconButtonComponent | Icon-only actions. |
-| `z-text-input` | ZTextInputComponent | Text/email/password/date/number/… input. `ControlValueAccessor` — use with reactive forms. |
-| `z-textarea` | ZTextareaComponent | Multi-line input (CVA). |
-| `z-checkbox` | ZCheckboxComponent | Checkbox (CVA). |
-| `z-select` | ZSelectComponent | Single-choice native-style select (CVA). |
-| `z-combobox` | ZComboboxComponent | Searchable/filterable dropdown (CVA). Also exports `[zComboboxPositionedDropdown]` directive. |
-| `z-field-label` | ZFieldLabelComponent | Form field label. |
-| `z-field-error` | ZFieldErrorComponent | Validation error text under a field. |
-| `z-avatar` | ZAvatarComponent | Display a user/group avatar. |
-| `z-avatar-input` | ZAvatarInputComponent | Pick/upload an avatar. |
-| `z-badge` | ZBadgeComponent | Status pill / count badge. |
-| `z-breadcrumbs` | ZBreadcrumbsComponent | Breadcrumb navigation. |
-| `z-tabs` / `z-tab-panel` | ZTabsComponent / ZTabPanelComponent | Tabbed sections. |
-| `z-segmented-control` | ZSegmentedControlComponent | Segmented toggle between a few options. |
-| `z-stepper` | ZStepperComponent | Multi-step flow progress (e.g. upload, booking). |
-| `z-dialog-panel` | ZDialogPanelComponent | Generic dialog panel with severity icon (info/warning/trash). |
-| `z-form-dialog` | ZFormDialogComponent | Modal with cancel/save footer. Input `title` (required); outputs `cancelled`, `saved`. |
-| `z-toast` | ZToastComponent | Toast notification surface. |
-| `z-skeleton` | ZSkeletonComponent | Loading placeholder. |
-| `z-empty-state` | ZEmptyStateComponent | Empty/zero-data state. |
-| `z-group-card` | ZGroupCardComponent | Domain card for a group. |
-| `z-video-preview` | ZVideoPreviewComponent | Domain video thumbnail/preview. |
+| Selector                 | Component                           | Use for                                                                                                                                                 |
+| ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `z-button`               | ZButtonComponent                    | Buttons. Inputs: `variant` (`primary`/`secondary`/`ghost`/`danger`), `size` (`sm`/`md`), `type`, `disabled`, `iconOnly`, `ariaLabel`; output `pressed`. |
+| `z-icon-button`          | ZIconButtonComponent                | Icon-only actions.                                                                                                                                      |
+| `z-text-input`           | ZTextInputComponent                 | Text/email/password/date/number/… input. `ControlValueAccessor` — use with reactive forms.                                                              |
+| `z-textarea`             | ZTextareaComponent                  | Multi-line input (CVA).                                                                                                                                 |
+| `z-checkbox`             | ZCheckboxComponent                  | Checkbox (CVA).                                                                                                                                         |
+| `z-select`               | ZSelectComponent                    | Single-choice native-style select (CVA).                                                                                                                |
+| `z-combobox`             | ZComboboxComponent                  | Searchable/filterable dropdown (CVA). Also exports `[zComboboxPositionedDropdown]` directive.                                                           |
+| `z-field-label`          | ZFieldLabelComponent                | Form field label.                                                                                                                                       |
+| `z-field-error`          | ZFieldErrorComponent                | Validation error text under a field.                                                                                                                    |
+| `z-avatar`               | ZAvatarComponent                    | Display a user/group avatar.                                                                                                                            |
+| `z-avatar-input`         | ZAvatarInputComponent               | Pick/upload an avatar.                                                                                                                                  |
+| `z-badge`                | ZBadgeComponent                     | Status pill / count badge.                                                                                                                              |
+| `z-breadcrumbs`          | ZBreadcrumbsComponent               | Breadcrumb navigation.                                                                                                                                  |
+| `z-tabs` / `z-tab-panel` | ZTabsComponent / ZTabPanelComponent | Tabbed sections.                                                                                                                                        |
+| `z-segmented-control`    | ZSegmentedControlComponent          | Segmented toggle between a few options.                                                                                                                 |
+| `z-stepper`              | ZStepperComponent                   | Multi-step flow progress (e.g. upload, booking).                                                                                                        |
+| `z-dialog-panel`         | ZDialogPanelComponent               | Generic dialog panel with severity icon (info/warning/trash).                                                                                           |
+| `z-form-dialog`          | ZFormDialogComponent                | Modal with cancel/save footer. Input `title` (required); outputs `cancelled`, `saved`.                                                                  |
+| `z-toast`                | ZToastComponent                     | Toast notification surface.                                                                                                                             |
+| `z-skeleton`             | ZSkeletonComponent                  | Loading placeholder.                                                                                                                                    |
+| `z-empty-state`          | ZEmptyStateComponent                | Empty/zero-data state.                                                                                                                                  |
+| `z-group-card`           | ZGroupCardComponent                 | Domain card for a group.                                                                                                                                |
+| `z-video-preview`        | ZVideoPreviewComponent              | Domain video thumbnail/preview.                                                                                                                         |
 
 ## Styling conventions
 
