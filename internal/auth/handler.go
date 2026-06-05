@@ -2,13 +2,16 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	neturl "net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -22,6 +25,15 @@ import (
 
 const CookieName = "zeta_session"
 const RefreshCookieName = "zeta_refresh"
+const AuthStateCookieName = "zeta_auth_state"
+
+const authStateTTL = 10 * time.Minute
+
+type authReturnState struct {
+	State     string    `json:"state"`
+	ReturnTo  string    `json:"return_to"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
 
 // cookieSecure returns false when DEV_AUTH_ENABLED is set, so that HttpOnly
 // cookies work over plain HTTP during local development. In production the
@@ -65,6 +77,95 @@ func setSessionCookies(w http.ResponseWriter, accessToken, refreshToken string, 
 	http.SetCookie(w, refreshCookie)
 }
 
+func setAuthStateCookie(w http.ResponseWriter, state authReturnState) error {
+	payload, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     AuthStateCookieName,
+		Value:    base64.RawURLEncoding.EncodeToString(payload),
+		Path:     "/auth",
+		HttpOnly: true,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
+		Expires:  state.ExpiresAt,
+		MaxAge:   int(time.Until(state.ExpiresAt).Seconds()),
+	})
+	return nil
+}
+
+func clearAuthStateCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     AuthStateCookieName,
+		Value:    "",
+		Path:     "/auth",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
+	})
+}
+
+func readAuthStateCookie(r *http.Request) (authReturnState, bool, error) {
+	cookie, err := r.Cookie(AuthStateCookieName)
+	if err == http.ErrNoCookie {
+		return authReturnState{}, false, nil
+	}
+	if err != nil {
+		return authReturnState{}, false, err
+	}
+
+	data, err := base64.RawURLEncoding.DecodeString(cookie.Value)
+	if err != nil {
+		return authReturnState{}, true, err
+	}
+
+	var state authReturnState
+	if err := json.Unmarshal(data, &state); err != nil {
+		return authReturnState{}, true, err
+	}
+
+	return state, true, nil
+}
+
+func randomAuthState() (string, error) {
+	var bytes [32]byte
+	if _, err := rand.Read(bytes[:]); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(bytes[:]), nil
+}
+
+func validReturnTo(value string) (string, bool) {
+	if value == "" {
+		return "", false
+	}
+	if !strings.HasPrefix(value, "/") || strings.HasPrefix(value, "//") {
+		return "", false
+	}
+	if strings.Contains(value, "\\") || strings.ContainsAny(value, "\r\n\t") {
+		return "", false
+	}
+
+	parsed, err := neturl.Parse(value)
+	if err != nil || parsed.IsAbs() || parsed.Host != "" {
+		return "", false
+	}
+
+	return value, true
+}
+
+func frontendRedirectURL(returnTo string) string {
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:4200"
+	}
+	return strings.TrimRight(frontendURL, "/") + returnTo
+}
+
 type Handler struct {
 	logger *slog.Logger
 	q      db.Querier
@@ -88,11 +189,49 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	clientID := os.Getenv("WORKOS_CLIENT_ID")
 	redirectURI := os.Getenv("WORKOS_REDIRECT_URI")
+	returnTo := ""
+	state := ""
+	if rawReturnTo := r.URL.Query().Get("return_to"); rawReturnTo != "" {
+		validatedReturnTo, ok := validReturnTo(rawReturnTo)
+		if !ok {
+			h.logger.WarnContext(ctx, "auth_login_invalid_return_to",
+				slog.String("component", "auth"),
+			)
+			http.Error(w, "Invalid return target", http.StatusBadRequest)
+			return
+		}
+
+		generatedState, err := randomAuthState()
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_state_generation_failed",
+				slog.String("component", "auth"),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to prepare login", http.StatusInternalServerError)
+			return
+		}
+
+		returnTo = validatedReturnTo
+		state = generatedState
+		if err := setAuthStateCookie(w, authReturnState{
+			State:     generatedState,
+			ReturnTo:  validatedReturnTo,
+			ExpiresAt: time.Now().Add(authStateTTL),
+		}); err != nil {
+			h.logger.ErrorContext(ctx, "auth_state_cookie_set_failed",
+				slog.String("component", "auth"),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to prepare login", http.StatusInternalServerError)
+			return
+		}
+	}
 
 	url, err := h.workos.GetAuthorizationURL(usermanagement.GetAuthorizationURLOpts{
 		ClientID:    clientID,
 		RedirectURI: redirectURI,
 		Provider:    "authkit",
+		State:       state,
 	})
 	if err != nil {
 		h.logger.ErrorContext(ctx, "auth_get_url_failed",
@@ -101,6 +240,12 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	if returnTo != "" {
+		h.logger.InfoContext(ctx, "auth_login_return_state_prepared",
+			slog.String("component", "auth"),
+		)
 	}
 
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
@@ -115,6 +260,32 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		)
 		http.Error(w, "No code provided", http.StatusBadRequest)
 		return
+	}
+
+	returnTo := ""
+	callbackState := r.URL.Query().Get("state")
+	storedState, hasStoredState, err := readAuthStateCookie(r)
+	if err != nil {
+		clearAuthStateCookie(w)
+		h.logger.WarnContext(ctx, "auth_callback_state_cookie_invalid",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Invalid auth state", http.StatusBadRequest)
+		return
+	}
+	if hasStoredState || callbackState != "" {
+		clearAuthStateCookie(w)
+		if !hasStoredState || callbackState == "" || callbackState != storedState.State || time.Now().After(storedState.ExpiresAt) {
+			h.logger.WarnContext(ctx, "auth_callback_state_mismatch",
+				slog.String("component", "auth"),
+			)
+			http.Error(w, "Invalid auth state", http.StatusBadRequest)
+			return
+		}
+		if validatedReturnTo, ok := validReturnTo(storedState.ReturnTo); ok {
+			returnTo = validatedReturnTo
+		}
 	}
 
 	clientID := os.Getenv("WORKOS_CLIENT_ID")
@@ -187,11 +358,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		slog.String("user_id", resp.User.ID),
 	)
 
-	frontendURL := os.Getenv("FRONTEND_URL")
-	if frontendURL == "" {
-		frontendURL = "http://localhost:4200"
-	}
-	http.Redirect(w, r, frontendURL, http.StatusSeeOther)
+	http.Redirect(w, r, frontendRedirectURL(returnTo), http.StatusSeeOther)
 }
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {

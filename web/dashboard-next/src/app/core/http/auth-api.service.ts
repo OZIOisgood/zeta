@@ -44,8 +44,14 @@ export class AuthApiClient {
     return `${this.env.apiUrl}/auth`;
   }
 
-  getLoginUrl(): string {
-    return `${this.apiUrl}/login`;
+  getLoginUrl(returnTo?: string): string {
+    const loginUrl = `${this.apiUrl}/login`;
+    if (!returnTo) {
+      return loginUrl;
+    }
+
+    const params = new URLSearchParams({ return_to: returnTo });
+    return `${loginUrl}?${params.toString()}`;
   }
 
   getCurrentUser(): Observable<User> {

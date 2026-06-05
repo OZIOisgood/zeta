@@ -95,8 +95,8 @@ export const SessionStore = signalStore(
         }
       },
 
-      login(): void {
-        window.location.href = api.getLoginUrl();
+      login(returnTo?: string): void {
+        window.location.href = api.getLoginUrl(returnTo);
       },
 
       logout(): void {
