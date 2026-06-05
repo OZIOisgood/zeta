@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -179,70 +178,6 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 			slog.String("component", "auth"),
 		)
 	}
-
-	go func() {
-		ctx := context.Background()
-
-		// Check first-login status BEFORE any upsert that would create the row.
-		_, existsErr := h.q.GetUserPreferences(ctx, resp.User.ID)
-		isFirstLogin := errors.Is(existsErr, pgx.ErrNoRows)
-		if existsErr != nil && !isFirstLogin {
-			h.logger.WarnContext(ctx, "auth_seed_check_failed",
-				slog.String("component", "auth"),
-				slog.String("user_id", resp.User.ID),
-				slog.Any("err", existsErr),
-			)
-			return
-		}
-
-		if isFirstLogin {
-			// The foreground /auth/me path creates first-login preferences with
-			// language/timezone. This callback only seeds avatar opportunistically.
-			avatar := ""
-			if resp.User.ProfilePictureURL != "" {
-				avatarB64, err := h.fetchURLAsBase64(resp.User.ProfilePictureURL)
-				if err != nil {
-					h.logger.WarnContext(ctx, "auth_seed_avatar_failed",
-						slog.String("component", "auth"),
-						slog.String("user_id", resp.User.ID),
-						slog.Any("err", err),
-					)
-				} else {
-					avatar = avatarB64
-				}
-			}
-			if avatar != "" {
-				_, err := h.q.UpsertUserAvatar(ctx, db.UpsertUserAvatarParams{
-					UserID:    resp.User.ID,
-					Avatar:    avatar,
-					FirstName: resp.User.FirstName,
-					LastName:  resp.User.LastName,
-				})
-				if err != nil {
-					h.logger.WarnContext(ctx, "auth_seed_avatar_save_failed",
-						slog.String("component", "auth"),
-						slog.String("user_id", resp.User.ID),
-						slog.Any("err", err),
-					)
-				}
-			}
-			return
-		}
-
-		rowsAffected, err := h.q.UpdateUserName(ctx, db.UpdateUserNameParams{
-			UserID:    resp.User.ID,
-			FirstName: resp.User.FirstName,
-			LastName:  resp.User.LastName,
-		})
-		if err != nil || rowsAffected == 0 {
-			h.logger.WarnContext(ctx, "auth_update_name_failed",
-				slog.String("component", "auth"),
-				slog.String("user_id", resp.User.ID),
-				slog.Int64("rows_affected", rowsAffected),
-				slog.Any("err", err),
-			)
-		}
-	}()
 
 	// Store WorkOS tokens directly. The middleware validates the access token via JWKS.
 	setSessionCookies(w, accessToken, refreshToken, true)
@@ -488,11 +423,11 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	user.Role = newRole
 	user.Permissions = newPermissions
 
-	// Fetch user preferences (language + avatar)
+	// Fetch user preferences. This is the canonical display profile.
 	prefs, err := h.q.GetUserPreferences(ctx, user.ID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			// No preferences yet — first login. Seed language and timezone in one query.
+			// No preferences yet means the user has just completed first signup.
 			lang := tools.NegotiateLanguage(r.Header.Get("Accept-Language"))
 			tz := "UTC"
 			if raw := r.Header.Get("X-Timezone"); raw != "" {
@@ -500,23 +435,47 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 					tz = raw
 				}
 			}
-			prefs, err = h.q.SeedUserPreferences(ctx, db.SeedUserPreferencesParams{
-				UserID:    user.ID,
-				Language:  db.LanguageCode(lang),
-				Timezone:  tz,
-				FirstName: user.FirstName,
-				LastName:  user.LastName,
-			})
+
+			avatar := ""
+			if user.ProfilePictureUrl != "" {
+				avatarB64, avatarErr := h.fetchURLAsBase64(user.ProfilePictureUrl)
+				if avatarErr != nil {
+					h.logger.WarnContext(ctx, "auth_seed_avatar_failed",
+						slog.String("component", "auth"),
+						slog.String("user_id", user.ID),
+						slog.Any("err", avatarErr),
+					)
+				} else {
+					avatar = avatarB64
+				}
+			}
+
+			if avatar != "" {
+				prefs, err = h.q.SeedUserPreferencesWithAvatar(ctx, db.SeedUserPreferencesWithAvatarParams{
+					UserID:    user.ID,
+					Language:  db.LanguageCode(lang),
+					Timezone:  tz,
+					FirstName: user.FirstName,
+					LastName:  user.LastName,
+					Avatar:    avatar,
+				})
+			} else {
+				prefs, err = h.q.SeedUserPreferences(ctx, db.SeedUserPreferencesParams{
+					UserID:    user.ID,
+					Language:  db.LanguageCode(lang),
+					Timezone:  tz,
+					FirstName: user.FirstName,
+					LastName:  user.LastName,
+				})
+			}
 			if err != nil {
 				h.logger.ErrorContext(ctx, "auth_create_prefs_failed",
 					slog.String("component", "auth"),
 					slog.String("user_id", user.ID),
 					slog.Any("err", err),
 				)
-				prefs = db.UserPreference{
-					UserID:   user.ID,
-					Language: db.LanguageCode(lang),
-				}
+				http.Error(w, "Failed to create user settings", http.StatusInternalServerError)
+				return
 			}
 		} else {
 			h.logger.ErrorContext(ctx, "auth_get_prefs_failed",
@@ -528,11 +487,11 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Construct response combining WorkOS data (from JWT) and Local Preferences
+	// Construct response using local preferences for display profile fields.
 	resp := map[string]interface{}{
 		"id":                user.ID,
-		"first_name":        user.FirstName,
-		"last_name":         user.LastName,
+		"first_name":        prefs.FirstName,
+		"last_name":         prefs.LastName,
 		"email":             user.Email,
 		"language":          prefs.Language,
 		"avatar":            prefs.Avatar,
@@ -550,7 +509,7 @@ type UpdateUserRequest struct {
 	FirstName        string                        `json:"first_name"`
 	LastName         string                        `json:"last_name"`
 	Language         string                        `json:"language"`
-	Avatar           string                        `json:"avatar"`
+	Avatar           *string                       `json:"avatar"`
 	Timezone         string                        `json:"timezone"`
 	EmailPreferences *preferences.EmailPreferences `json:"email_preferences"`
 }
@@ -569,54 +528,30 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update Preferences (Language)
-	prefs, err := h.q.UpsertUserPreferences(ctx, db.UpsertUserPreferencesParams{
-		UserID:   user.ID,
-		Language: db.LanguageCode(req.Language),
-	})
-	if err != nil {
-		h.logger.ErrorContext(ctx, "auth_update_prefs_failed",
-			slog.String("component", "auth"),
-			slog.String("user_id", user.ID),
-			slog.Any("err", err),
-		)
-		http.Error(w, "Failed to update settings", http.StatusInternalServerError)
+	if req.Timezone == "" {
+		http.Error(w, "Timezone is required", http.StatusBadRequest)
+		return
+	}
+	if _, tzErr := time.LoadLocation(req.Timezone); tzErr != nil {
+		http.Error(w, "Invalid timezone", http.StatusBadRequest)
 		return
 	}
 
-	rowsAffected, err := h.q.UpdateUserName(ctx, db.UpdateUserNameParams{
+	prefs, err := h.q.UpdateUserProfilePreferences(ctx, db.UpdateUserProfilePreferencesParams{
 		UserID:    user.ID,
+		Language:  db.LanguageCode(req.Language),
+		Timezone:  req.Timezone,
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 	})
-	if err != nil || rowsAffected == 0 {
-		h.logger.ErrorContext(ctx, "auth_update_name_failed",
+	if err != nil {
+		h.logger.ErrorContext(ctx, "auth_update_profile_preferences_failed",
 			slog.String("component", "auth"),
 			slog.String("user_id", user.ID),
-			slog.Int64("rows_affected", rowsAffected),
 			slog.Any("err", err),
 		)
-		http.Error(w, "Failed to update profile name", http.StatusInternalServerError)
+		http.Error(w, "Failed to update profile settings", http.StatusInternalServerError)
 		return
-	}
-
-	// Update timezone if provided and valid
-	if req.Timezone != "" {
-		if _, tzErr := time.LoadLocation(req.Timezone); tzErr == nil {
-			if tzErr2 := h.q.UpsertUserTimezone(ctx, db.UpsertUserTimezoneParams{
-				UserID:   user.ID,
-				Timezone: req.Timezone,
-			}); tzErr2 != nil {
-				h.logger.ErrorContext(ctx, "auth_update_timezone_failed",
-					slog.String("component", "auth"),
-					slog.String("user_id", user.ID),
-					slog.Any("err", tzErr2),
-				)
-				http.Error(w, "Failed to update timezone", http.StatusInternalServerError)
-				return
-			}
-			prefs.Timezone = req.Timezone
-		}
 	}
 
 	if req.EmailPreferences != nil {
@@ -633,11 +568,10 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		prefs = updated
 	}
 
-	// Update avatar if provided
-	if req.Avatar != "" {
+	if req.Avatar != nil {
 		updated, err := h.q.UpdateUserAvatar(ctx, db.UpdateUserAvatarParams{
 			UserID: user.ID,
-			Avatar: req.Avatar,
+			Avatar: *req.Avatar,
 		})
 		if err != nil {
 			h.logger.ErrorContext(ctx, "auth_update_avatar_failed",
@@ -694,8 +628,8 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 
 	resp := map[string]interface{}{
 		"id":                user.ID,
-		"first_name":        req.FirstName,
-		"last_name":         req.LastName,
+		"first_name":        prefs.FirstName,
+		"last_name":         prefs.LastName,
 		"email":             user.Email,
 		"language":          prefs.Language,
 		"avatar":            prefs.Avatar,

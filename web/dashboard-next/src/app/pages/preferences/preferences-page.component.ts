@@ -525,7 +525,7 @@ export class PreferencesPageComponent {
       language: rawValue.language,
       timezone: rawValue.timezone,
       email_preferences: rawValue.email_preferences,
-      ...(this.form.controls.avatar.dirty && rawValue.avatar ? { avatar: rawValue.avatar } : {}),
+      ...(this.form.controls.avatar.dirty ? { avatar: rawValue.avatar ?? '' } : {}),
     });
 
     if (!user) {

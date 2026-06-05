@@ -77,12 +77,6 @@ func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPr
 const seedUserPreferences = `-- name: SeedUserPreferences :one
 INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name)
 VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (user_id) DO UPDATE
-SET language   = EXCLUDED.language,
-    timezone   = EXCLUDED.timezone,
-    first_name = EXCLUDED.first_name,
-    last_name  = EXCLUDED.last_name,
-    updated_at = NOW()
 RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
 `
 
@@ -101,6 +95,51 @@ func (q *Queries) SeedUserPreferences(ctx context.Context, arg SeedUserPreferenc
 		arg.Timezone,
 		arg.FirstName,
 		arg.LastName,
+	)
+	var i UserPreference
+	err := row.Scan(
+		&i.UserID,
+		&i.Language,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Avatar,
+		&i.Timezone,
+		&i.EmailNotificationsEnabled,
+		&i.EmailAssetUploadsEnabled,
+		&i.EmailAssetReviewsEnabled,
+		&i.EmailInvitationUpdatesEnabled,
+		&i.EmailGroupMembershipUpdatesEnabled,
+		&i.EmailCoachingBookingUpdatesEnabled,
+		&i.EmailCoachingRemindersEnabled,
+		&i.FirstName,
+		&i.LastName,
+	)
+	return i, err
+}
+
+const seedUserPreferencesWithAvatar = `-- name: SeedUserPreferencesWithAvatar :one
+INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, avatar)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
+`
+
+type SeedUserPreferencesWithAvatarParams struct {
+	UserID    string       `json:"user_id"`
+	Language  LanguageCode `json:"language"`
+	Timezone  string       `json:"timezone"`
+	FirstName string       `json:"first_name"`
+	LastName  string       `json:"last_name"`
+	Avatar    string       `json:"avatar"`
+}
+
+func (q *Queries) SeedUserPreferencesWithAvatar(ctx context.Context, arg SeedUserPreferencesWithAvatarParams) (UserPreference, error) {
+	row := q.db.QueryRow(ctx, seedUserPreferencesWithAvatar,
+		arg.UserID,
+		arg.Language,
+		arg.Timezone,
+		arg.FirstName,
+		arg.LastName,
+		arg.Avatar,
 	)
 	var i UserPreference
 	err := row.Scan(
@@ -160,26 +199,16 @@ func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarPara
 }
 
 const updateUserEmailPreferences = `-- name: UpdateUserEmailPreferences :one
-INSERT INTO user_preferences (
-    user_id,
-    email_notifications_enabled,
-    email_asset_uploads_enabled,
-    email_asset_reviews_enabled,
-    email_invitation_updates_enabled,
-    email_group_membership_updates_enabled,
-    email_coaching_booking_updates_enabled,
-    email_coaching_reminders_enabled
-)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-ON CONFLICT (user_id) DO UPDATE
-SET email_notifications_enabled = EXCLUDED.email_notifications_enabled,
-    email_asset_uploads_enabled = EXCLUDED.email_asset_uploads_enabled,
-    email_asset_reviews_enabled = EXCLUDED.email_asset_reviews_enabled,
-    email_invitation_updates_enabled = EXCLUDED.email_invitation_updates_enabled,
-    email_group_membership_updates_enabled = EXCLUDED.email_group_membership_updates_enabled,
-    email_coaching_booking_updates_enabled = EXCLUDED.email_coaching_booking_updates_enabled,
-    email_coaching_reminders_enabled = EXCLUDED.email_coaching_reminders_enabled,
+UPDATE user_preferences
+SET email_notifications_enabled = $2,
+    email_asset_uploads_enabled = $3,
+    email_asset_reviews_enabled = $4,
+    email_invitation_updates_enabled = $5,
+    email_group_membership_updates_enabled = $6,
+    email_coaching_booking_updates_enabled = $7,
+    email_coaching_reminders_enabled = $8,
     updated_at = NOW()
+WHERE user_id = $1
 RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
 `
 
@@ -226,90 +255,33 @@ func (q *Queries) UpdateUserEmailPreferences(ctx context.Context, arg UpdateUser
 	return i, err
 }
 
-const updateUserName = `-- name: UpdateUserName :execrows
+const updateUserProfilePreferences = `-- name: UpdateUserProfilePreferences :one
 UPDATE user_preferences
-SET first_name = $2,
-    last_name  = $3,
+SET language   = $2,
+    timezone   = $3,
+    first_name = $4,
+    last_name  = $5,
     updated_at = NOW()
 WHERE user_id = $1
-`
-
-type UpdateUserNameParams struct {
-	UserID    string `json:"user_id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-}
-
-func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (int64, error) {
-	result, err := q.db.Exec(ctx, updateUserName, arg.UserID, arg.FirstName, arg.LastName)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
-const upsertUserAvatar = `-- name: UpsertUserAvatar :one
-INSERT INTO user_preferences (user_id, language, avatar, first_name, last_name)
-VALUES ($1, 'en', $2, $3, $4)
-ON CONFLICT (user_id) DO UPDATE
-SET avatar     = EXCLUDED.avatar,
-    first_name = EXCLUDED.first_name,
-    last_name  = EXCLUDED.last_name,
-    updated_at = NOW()
 RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
 `
 
-type UpsertUserAvatarParams struct {
-	UserID    string `json:"user_id"`
-	Avatar    string `json:"avatar"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+type UpdateUserProfilePreferencesParams struct {
+	UserID    string       `json:"user_id"`
+	Language  LanguageCode `json:"language"`
+	Timezone  string       `json:"timezone"`
+	FirstName string       `json:"first_name"`
+	LastName  string       `json:"last_name"`
 }
 
-func (q *Queries) UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarParams) (UserPreference, error) {
-	row := q.db.QueryRow(ctx, upsertUserAvatar,
+func (q *Queries) UpdateUserProfilePreferences(ctx context.Context, arg UpdateUserProfilePreferencesParams) (UserPreference, error) {
+	row := q.db.QueryRow(ctx, updateUserProfilePreferences,
 		arg.UserID,
-		arg.Avatar,
+		arg.Language,
+		arg.Timezone,
 		arg.FirstName,
 		arg.LastName,
 	)
-	var i UserPreference
-	err := row.Scan(
-		&i.UserID,
-		&i.Language,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Avatar,
-		&i.Timezone,
-		&i.EmailNotificationsEnabled,
-		&i.EmailAssetUploadsEnabled,
-		&i.EmailAssetReviewsEnabled,
-		&i.EmailInvitationUpdatesEnabled,
-		&i.EmailGroupMembershipUpdatesEnabled,
-		&i.EmailCoachingBookingUpdatesEnabled,
-		&i.EmailCoachingRemindersEnabled,
-		&i.FirstName,
-		&i.LastName,
-	)
-	return i, err
-}
-
-const upsertUserPreferences = `-- name: UpsertUserPreferences :one
-INSERT INTO user_preferences (user_id, language)
-VALUES ($1, $2)
-ON CONFLICT (user_id) DO UPDATE
-SET language = EXCLUDED.language,
-    updated_at = NOW()
-RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
-`
-
-type UpsertUserPreferencesParams struct {
-	UserID   string       `json:"user_id"`
-	Language LanguageCode `json:"language"`
-}
-
-func (q *Queries) UpsertUserPreferences(ctx context.Context, arg UpsertUserPreferencesParams) (UserPreference, error) {
-	row := q.db.QueryRow(ctx, upsertUserPreferences, arg.UserID, arg.Language)
 	var i UserPreference
 	err := row.Scan(
 		&i.UserID,

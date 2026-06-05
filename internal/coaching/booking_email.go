@@ -3,7 +3,6 @@ package coaching
 import (
 	"context"
 	"log/slog"
-	"strings"
 
 	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"
 
@@ -21,7 +20,7 @@ type bookingParticipant struct {
 	email string
 }
 
-// resolveParticipant fetches a WorkOS user's display name and email address in one call.
+// resolveParticipant fetches display name from preferences and email from WorkOS.
 func (h *Handler) resolveParticipant(ctx context.Context, userID string) bookingParticipant {
 	u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{User: userID})
 	if err != nil {
@@ -32,8 +31,26 @@ func (h *Handler) resolveParticipant(ctx context.Context, userID string) booking
 		)
 		return bookingParticipant{}
 	}
+	prefs, err := h.q.GetUserPreferences(ctx, userID)
+	if err != nil {
+		h.logger.ErrorContext(ctx, "resolve_participant_preferences_failed",
+			slog.String("component", "coaching"),
+			slog.String("user_id", userID),
+			slog.Any("err", err),
+		)
+		return bookingParticipant{email: u.Email}
+	}
+	name, err := preferences.RequireDisplayName(prefs)
+	if err != nil {
+		h.logger.ErrorContext(ctx, "resolve_participant_display_name_missing",
+			slog.String("component", "coaching"),
+			slog.String("user_id", userID),
+			slog.Any("err", err),
+		)
+		return bookingParticipant{email: u.Email}
+	}
 	return bookingParticipant{
-		name:  strings.TrimSpace(u.FirstName + " " + u.LastName),
+		name:  name,
 		email: u.Email,
 	}
 }
@@ -221,5 +238,3 @@ func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBookin
 		slog.String("scheduled_at", scheduledStr),
 	)
 }
-
-

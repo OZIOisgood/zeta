@@ -3,11 +3,6 @@
 -- name: GetUserTimezone :one
 SELECT timezone FROM user_preferences WHERE user_id = $1;
 
--- name: UpsertUserTimezone :exec
-INSERT INTO user_preferences (user_id, timezone)
-VALUES ($1, $2)
-ON CONFLICT (user_id) DO UPDATE SET timezone = $2, updated_at = NOW();
-
 -- === Session Types ===
 
 -- name: CreateSessionType :one

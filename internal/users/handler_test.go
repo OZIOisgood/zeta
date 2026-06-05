@@ -59,7 +59,12 @@ func TestListGroupUsersUsesPreferenceAvatar(t *testing.T) {
 		nil,
 	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "user-2").Return(
-		db.UserPreference{UserID: "user-2", Avatar: "local-base64-avatar"},
+		db.UserPreference{
+			UserID:    "user-2",
+			FirstName: "Local",
+			LastName:  "Expert",
+			Avatar:    "local-base64-avatar",
+		},
 		nil,
 	)
 
@@ -90,12 +95,15 @@ func TestListGroupUsersUsesPreferenceAvatar(t *testing.T) {
 	if got := body.Data[0]["avatar"]; got != "local-base64-avatar" {
 		t.Fatalf("got avatar %v, want local-base64-avatar", got)
 	}
+	if got := body.Data[0]["first_name"]; got != "Local" {
+		t.Fatalf("got first_name %v, want Local", got)
+	}
 	if _, ok := body.Data[0]["profile_picture_url"]; ok {
 		t.Fatalf("response must not expose WorkOS profile_picture_url: %#v", body.Data[0])
 	}
 }
 
-func TestListGroupUsersAllowsMissingPreferences(t *testing.T) {
+func TestListGroupUsersMissingPreferencesIsError(t *testing.T) {
 	t.Setenv("DEFAULT_ORG_ID", "org_test")
 
 	ctrl := gomock.NewController(t)
@@ -118,10 +126,6 @@ func TestListGroupUsersAllowsMissingPreferences(t *testing.T) {
 		},
 		nil,
 	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "user-2"}).Return(
-		usermanagement.User{ID: "user-2", Email: "student@example.com", FirstName: "Example", LastName: "Student"},
-		nil,
-	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "user-2").Return(db.UserPreference{}, pgx.ErrNoRows)
 
 	router := chi.NewRouter()
@@ -135,8 +139,8 @@ func TestListGroupUsersAllowsMissingPreferences(t *testing.T) {
 
 	router.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("got status %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("got status %d, want %d; body: %s", rec.Code, http.StatusInternalServerError, rec.Body.String())
 	}
 }
 
@@ -169,7 +173,10 @@ func TestListGroupUsersFiltersStudents(t *testing.T) {
 		usermanagement.User{ID: "student-1", Email: "student@example.com", FirstName: "Example", LastName: "Student"},
 		nil,
 	)
-	q.EXPECT().GetUserPreferences(gomock.Any(), "student-1").Return(db.UserPreference{}, pgx.ErrNoRows)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "student-1").Return(
+		db.UserPreference{UserID: "student-1", FirstName: "Local", LastName: "Student"},
+		nil,
+	)
 
 	router := chi.NewRouter()
 	router.Get("/groups/{groupID}/users", h.ListGroupUsers)
@@ -233,8 +240,14 @@ func TestListGroupExpertsFiltersExpertsAndAdmins(t *testing.T) {
 		usermanagement.User{ID: "admin-1", Email: "admin@example.com", FirstName: "Example", LastName: "Admin"},
 		nil,
 	)
-	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(db.UserPreference{}, pgx.ErrNoRows)
-	q.EXPECT().GetUserPreferences(gomock.Any(), "admin-1").Return(db.UserPreference{}, pgx.ErrNoRows)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(
+		db.UserPreference{UserID: "expert-1", FirstName: "Local", LastName: "Expert"},
+		nil,
+	)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "admin-1").Return(
+		db.UserPreference{UserID: "admin-1", FirstName: "Local", LastName: "Admin"},
+		nil,
+	)
 
 	router := chi.NewRouter()
 	router.Get("/groups/{groupID}/experts", h.ListGroupExperts)

@@ -13,56 +13,37 @@ SELECT
 FROM user_preferences
 WHERE user_id = $1;
 
--- name: UpsertUserPreferences :one
-INSERT INTO user_preferences (user_id, language)
-VALUES ($1, $2)
-ON CONFLICT (user_id) DO UPDATE
-SET language = EXCLUDED.language,
-    updated_at = NOW()
-RETURNING *;
-
 -- name: SeedUserPreferences :one
 INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name)
 VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (user_id) DO UPDATE
-SET language   = EXCLUDED.language,
-    timezone   = EXCLUDED.timezone,
-    first_name = EXCLUDED.first_name,
-    last_name  = EXCLUDED.last_name,
+RETURNING *;
+
+-- name: SeedUserPreferencesWithAvatar :one
+INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, avatar)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
+
+-- name: UpdateUserProfilePreferences :one
+UPDATE user_preferences
+SET language   = $2,
+    timezone   = $3,
+    first_name = $4,
+    last_name  = $5,
     updated_at = NOW()
+WHERE user_id = $1
 RETURNING *;
 
 -- name: UpdateUserEmailPreferences :one
-INSERT INTO user_preferences (
-    user_id,
-    email_notifications_enabled,
-    email_asset_uploads_enabled,
-    email_asset_reviews_enabled,
-    email_invitation_updates_enabled,
-    email_group_membership_updates_enabled,
-    email_coaching_booking_updates_enabled,
-    email_coaching_reminders_enabled
-)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-ON CONFLICT (user_id) DO UPDATE
-SET email_notifications_enabled = EXCLUDED.email_notifications_enabled,
-    email_asset_uploads_enabled = EXCLUDED.email_asset_uploads_enabled,
-    email_asset_reviews_enabled = EXCLUDED.email_asset_reviews_enabled,
-    email_invitation_updates_enabled = EXCLUDED.email_invitation_updates_enabled,
-    email_group_membership_updates_enabled = EXCLUDED.email_group_membership_updates_enabled,
-    email_coaching_booking_updates_enabled = EXCLUDED.email_coaching_booking_updates_enabled,
-    email_coaching_reminders_enabled = EXCLUDED.email_coaching_reminders_enabled,
+UPDATE user_preferences
+SET email_notifications_enabled = $2,
+    email_asset_uploads_enabled = $3,
+    email_asset_reviews_enabled = $4,
+    email_invitation_updates_enabled = $5,
+    email_group_membership_updates_enabled = $6,
+    email_coaching_booking_updates_enabled = $7,
+    email_coaching_reminders_enabled = $8,
     updated_at = NOW()
-RETURNING *;
-
--- name: UpsertUserAvatar :one
-INSERT INTO user_preferences (user_id, language, avatar, first_name, last_name)
-VALUES ($1, 'en', $2, $3, $4)
-ON CONFLICT (user_id) DO UPDATE
-SET avatar     = EXCLUDED.avatar,
-    first_name = EXCLUDED.first_name,
-    last_name  = EXCLUDED.last_name,
-    updated_at = NOW()
+WHERE user_id = $1
 RETURNING *;
 
 -- name: UpdateUserAvatar :one
@@ -71,10 +52,3 @@ SET avatar     = $2,
     updated_at = NOW()
 WHERE user_id = $1
 RETURNING *;
-
--- name: UpdateUserName :execrows
-UPDATE user_preferences
-SET first_name = $2,
-    last_name  = $3,
-    updated_at = NOW()
-WHERE user_id = $1;

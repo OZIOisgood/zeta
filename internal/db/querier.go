@@ -88,6 +88,7 @@ type Querier interface {
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
 	SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error)
+	SeedUserPreferencesWithAvatar(ctx context.Context, arg SeedUserPreferencesWithAvatarParams) (UserPreference, error)
 	UpdateAssetStatus(ctx context.Context, arg UpdateAssetStatusParams) error
 	UpdateAvailability(ctx context.Context, arg UpdateAvailabilityParams) (CoachingAvailability, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
@@ -95,14 +96,11 @@ type Querier interface {
 	UpdateSessionType(ctx context.Context, arg UpdateSessionTypeParams) (CoachingSessionType, error)
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error)
 	UpdateUserEmailPreferences(ctx context.Context, arg UpdateUserEmailPreferencesParams) (UserPreference, error)
-	UpdateUserName(ctx context.Context, arg UpdateUserNameParams) (int64, error)
+	UpdateUserProfilePreferences(ctx context.Context, arg UpdateUserProfilePreferencesParams) (UserPreference, error)
 	UpdateVideoMuxAssetID(ctx context.Context, arg UpdateVideoMuxAssetIDParams) error
 	UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewParams) (VideoReview, error)
 	UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusParams) error
 	UpdateVideoStatusByUploadID(ctx context.Context, arg UpdateVideoStatusByUploadIDParams) error
-	UpsertUserAvatar(ctx context.Context, arg UpsertUserAvatarParams) (UserPreference, error)
-	UpsertUserPreferences(ctx context.Context, arg UpsertUserPreferencesParams) (UserPreference, error)
-	UpsertUserTimezone(ctx context.Context, arg UpsertUserTimezoneParams) error
 }
 
 var _ Querier = (*Queries)(nil)

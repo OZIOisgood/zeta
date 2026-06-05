@@ -8,33 +8,34 @@ import (
 	authmocks "github.com/OZIOisgood/zeta/internal/auth/mocks"
 	"github.com/OZIOisgood/zeta/internal/db"
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
-	"github.com/workos/workos-go/v4/pkg/usermanagement"
 	"go.uber.org/mock/gomock"
 )
 
-func TestResolveUsersUsesPreferenceAvatar(t *testing.T) {
+func TestResolveUsersUsesPreferences(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
 	workos := authmocks.NewMockUserManagement(ctrl)
 	h := NewHandler(q, nil, nil, workos, slog.Default(), HandlerConfig{})
 
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "expert-1"}).Return(
-		usermanagement.User{
-			ID:                "expert-1",
-			FirstName:         "Example",
-			LastName:          "Expert",
-			ProfilePictureURL: "https://workos.example/avatar.png",
+	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(
+		db.UserPreference{
+			UserID:    "expert-1",
+			FirstName: "Local",
+			LastName:  "Expert",
+			Avatar:    "local-base64-avatar",
 		},
 		nil,
 	)
-	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(
-		db.UserPreference{UserID: "expert-1", Avatar: "local-base64-avatar"},
-		nil,
-	)
 
-	users := h.resolveUsers(context.Background(), []string{"expert-1"})
+	users, err := h.resolveUsers(context.Background(), []string{"expert-1"})
+	if err != nil {
+		t.Fatalf("resolveUsers: %v", err)
+	}
 
 	got := users["expert-1"]
+	if got.FirstName != "Local" || got.LastName != "Expert" {
+		t.Fatalf("got name %q %q, want Local Expert", got.FirstName, got.LastName)
+	}
 	if got.Avatar != "local-base64-avatar" {
 		t.Fatalf("got avatar %q, want local-base64-avatar", got.Avatar)
 	}

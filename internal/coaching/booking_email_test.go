@@ -45,6 +45,14 @@ func TestSendBookingCreatedEmailSkipsDisabledRecipient(t *testing.T) {
 		usermanagement.User{ID: "student-1", Email: "student@example.com", FirstName: "Student", LastName: "One"},
 		nil,
 	)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(
+		db.UserPreference{UserID: "expert-1", FirstName: "Local", LastName: "Expert", Language: db.LanguageCodeEn},
+		nil,
+	)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "student-1").Return(
+		db.UserPreference{UserID: "student-1", FirstName: "Local", LastName: "Student", Language: db.LanguageCodeEn},
+		nil,
+	)
 	q.EXPECT().GetUserEmailPreferences(gomock.Any(), "student-1").Return(
 		db.GetUserEmailPreferencesRow{
 			EmailNotificationsEnabled:          true,
@@ -60,7 +68,7 @@ func TestSendBookingCreatedEmailSkipsDisabledRecipient(t *testing.T) {
 		nil,
 	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(
-		db.UserPreference{Language: db.LanguageCodeEn},
+		db.UserPreference{UserID: "expert-1", FirstName: "Local", LastName: "Expert", Language: db.LanguageCodeEn},
 		nil,
 	)
 	sender.EXPECT().SendTemplate([]string{"expert@example.com"}, gomock.Any(), email.TemplateNotification, gomock.Any()).Return(nil)
