@@ -243,6 +243,7 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		req.TimestampSeconds = nil
 	}
 
+	authorName := strings.TrimSpace(userInfo.FirstName + " " + userInfo.LastName)
 	authorID := pgtype.Text{String: userInfo.ID, Valid: userInfo.ID != ""}
 
 	var timestampSeconds pgtype.Int4
@@ -286,7 +287,6 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	if review.ParentID.Valid {
 		responseData["parent_id"] = pgutil.UUIDToString(review.ParentID)
 	}
-	authorName := strings.TrimSpace(userInfo.FirstName + " " + userInfo.LastName)
 	if authorName != "" {
 		author := map[string]interface{}{"name": authorName}
 		if prefs, prefErr := h.q.GetUserPreferences(ctx, userInfo.ID); prefErr == nil && prefs.Avatar != "" {

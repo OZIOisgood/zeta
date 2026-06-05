@@ -386,7 +386,7 @@ erDiagram
     groups ||--o{ assets : contains
     assets ||--|{ videos : contains
     videos ||--o{ video_reviews : has
-    video_reviews ||--o{ video_reviews : "replies to"
+    video_reviews ||--o{ video_reviews : "has replies"
 
     users["User Identity (WorkOS)"] {
         string id PK "WorkOS User ID"
@@ -470,6 +470,7 @@ erDiagram
         uuid parent_id FK "self-ref reply, ON DELETE CASCADE"
         string author_id "WorkOS User ID ref"
         string content
+        integer timestamp_seconds
         timestamp created_at
         timestamp updated_at
     }

@@ -168,7 +168,12 @@ type GetVideoReviewRow struct {
 func (q *Queries) GetVideoReview(ctx context.Context, id pgtype.UUID) (GetVideoReviewRow, error) {
 	row := q.db.QueryRow(ctx, getVideoReview, id)
 	var i GetVideoReviewRow
-	err := row.Scan(&i.ID, &i.VideoID, &i.ParentID, &i.AuthorID)
+	err := row.Scan(
+		&i.ID,
+		&i.VideoID,
+		&i.ParentID,
+		&i.AuthorID,
+	)
 	return i, err
 }
 

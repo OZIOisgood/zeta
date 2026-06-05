@@ -195,7 +195,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Always upsert name so it stays in sync with WorkOS on every login.
+		// Keep local profile names in sync for joined comment authorship.
 		if err := h.q.UpsertUserName(ctx, db.UpsertUserNameParams{
 			UserID:    resp.User.ID,
 			FirstName: resp.User.FirstName,
@@ -579,7 +579,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Sync name to user_preferences so comment authorship stays current.
+	// Keep local profile names in sync for joined comment authorship.
 	if err := h.q.UpsertUserName(ctx, db.UpsertUserNameParams{
 		UserID:    user.ID,
 		FirstName: req.FirstName,
