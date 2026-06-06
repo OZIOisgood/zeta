@@ -625,14 +625,24 @@ export class ReportsPageComponent {
       columns: this.exportColumns(),
     });
 
-    // Lazy-loaded so pdfmake (+ its fonts) never enters the main bundle.
-    const pdfMake = (await import('pdfmake/build/pdfmake')).default;
-    const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
-    (pdfMake as unknown as { vfs: unknown }).vfs =
-      (pdfFonts as { pdfMake?: { vfs: unknown }; vfs?: unknown }).pdfMake?.vfs ??
-      (pdfFonts as { vfs?: unknown }).vfs;
+    try {
+      // Lazy-loaded so pdfmake (+ its fonts) never enters the main bundle.
+      const pdfMake = (await import('pdfmake/build/pdfmake')).default;
+      const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
+      (pdfMake as unknown as { vfs: unknown }).vfs =
+        (pdfFonts as { pdfMake?: { vfs: unknown }; vfs?: unknown }).pdfMake?.vfs ??
+        (pdfFonts as { vfs?: unknown }).vfs;
 
-    pdfMake.createPdf(doc).download(this.exportFileName('pdf'));
+      pdfMake.createPdf(doc).download(this.exportFileName('pdf'));
+    } catch {
+      // Loading pdfmake or rendering can fail; surface it instead of failing silently.
+      this.shell.showToast(
+        this.transloco.translate('reports.export.errorTitle'),
+        this.transloco.translate('reports.export.errorMessage'),
+        'error',
+      );
+      return;
+    }
 
     this.shell.showToast(
       this.transloco.translate('reports.export.pdfToastTitle'),

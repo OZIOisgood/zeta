@@ -157,6 +157,8 @@
       "soon": "bald",
       "toastTitle": "CSV exportiert",
       "pdfToastTitle": "PDF exportiert",
+      "errorTitle": "PDF-Export fehlgeschlagen",
+      "errorMessage": "Bitte versuche es erneut.",
       "toastMessage": "{{count}} Einträge · {{period}}",
       "fileName": "Zeta-Bericht"
     },
