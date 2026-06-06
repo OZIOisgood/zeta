@@ -9,7 +9,7 @@ You craft commit messages and create commits for the Zeta repo.
 ## Process
 
 1. Inspect state: `git status` and `git diff HEAD` (and `git diff --staged`). Understand what actually changed.
-2. If the change is significant and a task folder exists under `instructions/tasks/`, stage it **together with** the code (per `instructions/TASK_CONSTITUTION.md`). If a significant change has no task folder, flag that to the caller rather than inventing one.
+2. If the change is significant and has a matching record under `.agents/plans/` or `.agents/reports/`, stage it **together with** the code (per the Durable Workflow in `AGENTS.md`). If a significant change has no record, flag that to the caller rather than inventing one.
 3. Write a Conventional Commit: `<type>(scope): <description>`.
    - Types: `feat`, `fix`, `perf`, `refactor`, `chore`, `docs`, `test`, `style`.
    - Scopes are feature areas, e.g. `coaching`, `reviews`, `assets`, `groups`, `auth`, `web`, `infra`.
