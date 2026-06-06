@@ -77,6 +77,7 @@
       "groups": "Groups",
       "home": "Home",
       "menu": "Menu",
+      "report": "Report",
       "sessions": "Sessions",
       "videos": "Videos"
     },
@@ -99,6 +100,72 @@
     "openNavigation": "Open navigation",
     "preferences": "Preferences",
     "search": "Search"
+  },
+  "reports": {
+    "expert": { "title": "Expert report" },
+    "student": { "title": "Student report" },
+    "description": "{{kind}} for {{name}} · {{count}} activities, grouped by group › {{leaf}}.",
+    "kind": {
+      "month": "Monthly report",
+      "quarter": "Quarterly report",
+      "year": "Annual report"
+    },
+    "leaf": {
+      "student": "Student",
+      "expert": "Expert"
+    },
+    "leafCount": {
+      "students": "{{count}} students",
+      "experts": "{{count}} experts"
+    },
+    "period": {
+      "label": "Period",
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year",
+      "prev": "Previous period",
+      "next": "Next period",
+      "today": "Today"
+    },
+    "stats": {
+      "videos": "Videos uploaded",
+      "live": "Live coachings",
+      "students": "Active students",
+      "experts": "Active experts",
+      "inGroups": "in {{count}} groups"
+    },
+    "unit": {
+      "hour": "hr",
+      "minute": "min",
+      "video": "Video",
+      "videos": "Videos",
+      "live": "Live",
+      "lives": "Lives"
+    },
+    "event": {
+      "videoUploaded": "Video uploaded",
+      "liveCoaching": "Live coaching"
+    },
+    "empty": {
+      "title": "No activity in this period",
+      "description": "There are no uploaded videos or live coachings for {{period}}."
+    },
+    "export": {
+      "label": "Export",
+      "csv": "As CSV / Excel",
+      "pdf": "As PDF",
+      "soon": "soon",
+      "toastTitle": "CSV exported",
+      "toastMessage": "{{count}} entries · {{period}}",
+      "fileName": "Zeta-Report"
+    },
+    "columns": {
+      "group": "Group",
+      "date": "Date",
+      "type": "Type",
+      "description": "Description",
+      "minutes": "Length (min)"
+    }
   },
   "home": {
     "latestVideos": "Latest videos",

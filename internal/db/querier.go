@@ -80,6 +80,9 @@ type Querier interface {
 	ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UUID) ([]CoachingSessionType, error)
 	ListUserGroups(ctx context.Context, userID string) ([]ListUserGroupsRow, error)
 	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]ListVideoReviewsRow, error)
+	// Ready videos without a captured duration. Either identifier may be empty:
+	// direct uploads carry mux_upload_id, coaching imports carry mux_asset_id.
+	ListVideosMissingDuration(ctx context.Context, limit int32) ([]ListVideosMissingDurationRow, error)
 	ListVisibleAssets(ctx context.Context, arg ListVisibleAssetsParams) ([]ListVisibleAssetsRow, error)
 	MarkAllNotificationsRead(ctx context.Context, recipientID string) error
 	MarkBookingRecordingFailed(ctx context.Context, arg MarkBookingRecordingFailedParams) error
@@ -93,8 +96,26 @@ type Querier interface {
 	MarkRecordingImportReady(ctx context.Context, arg MarkRecordingImportReadyParams) (CoachingRecordingImport, error)
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
+	// Past, non-cancelled sessions the expert ran. Title is the session type name.
+	ReportSessionEventsForExpert(ctx context.Context, expertID string) ([]ReportSessionEventsForExpertRow, error)
+	// Past, non-cancelled sessions the student attended. Title is the session type name.
+	ReportSessionEventsForStudent(ctx context.Context, studentID string) ([]ReportSessionEventsForStudentRow, error)
+	// Reports list a user's own video uploads and live coaching sessions as
+	// individual events. The frontend ports buildReport(): it nests events by
+	// group then leaf (student for experts, expert for students), aggregates totals,
+	// and filters by the selected month/quarter/year period — so these queries
+	// return the full history with no period/timezone bucketing.
+	// Visibility is enforced by always scoping on the requesting user's own id.
+	// One row per asset uploaded into a group the expert owns. The reviewing expert
+	// is the group owner; the student is the asset owner. Duration sums the asset's
+	// video parts.
+	ReportUploadEventsForExpert(ctx context.Context, expertID string) ([]ReportUploadEventsForExpertRow, error)
+	// One row per asset the student uploaded. The reviewing expert is the group owner.
+	ReportUploadEventsForStudent(ctx context.Context, studentID string) ([]ReportUploadEventsForStudentRow, error)
 	SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error)
 	SeedUserPreferencesWithAvatar(ctx context.Context, arg SeedUserPreferencesWithAvatarParams) (UserPreference, error)
+	SetVideoDurationByID(ctx context.Context, arg SetVideoDurationByIDParams) error
+	SetVideoDurationByUploadID(ctx context.Context, arg SetVideoDurationByUploadIDParams) error
 	UpdateAssetStatus(ctx context.Context, arg UpdateAssetStatusParams) error
 	UpdateAvailability(ctx context.Context, arg UpdateAvailabilityParams) (CoachingAvailability, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)

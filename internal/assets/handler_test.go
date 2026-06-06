@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/OZIOisgood/zeta/internal/assets/mocks"
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
@@ -15,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	muxgo "github.com/muxinc/mux-go"
 	"go.uber.org/mock/gomock"
 )
 
@@ -37,7 +39,7 @@ func assetTestUUID() pgtype.UUID {
 func TestListAssets_StudentUsesOwnerVisibilityScope(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default())
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
 
 	user := &auth.UserContext{ID: "student-1", Role: permissions.RoleStudent}
 	assetID := assetTestUUID()
@@ -80,7 +82,7 @@ func TestListAssets_StudentUsesOwnerVisibilityScope(t *testing.T) {
 func TestListAssets_ExpertUsesGroupMembershipVisibilityScope(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default())
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
 
 	user := &auth.UserContext{ID: "expert-1", Role: permissions.RoleExpert}
 	q.EXPECT().ListVisibleAssets(gomock.Any(), db.ListVisibleAssetsParams{
@@ -102,7 +104,7 @@ func TestListAssets_ExpertUsesGroupMembershipVisibilityScope(t *testing.T) {
 func TestListAssets_AdminUsesGroupMembershipVisibilityScope(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default())
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
 
 	user := &auth.UserContext{ID: "admin-1", Role: permissions.RoleAdmin}
 	q.EXPECT().ListVisibleAssets(gomock.Any(), db.ListVisibleAssetsParams{
@@ -124,7 +126,7 @@ func TestListAssets_AdminUsesGroupMembershipVisibilityScope(t *testing.T) {
 func TestGetAsset_NotVisibleReturnsNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default())
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
 
 	user := &auth.UserContext{ID: "student-1", Role: permissions.RoleStudent}
 	assetID := assetTestUUID()
@@ -150,7 +152,7 @@ func TestGetAsset_NotVisibleReturnsNotFound(t *testing.T) {
 func TestFinalizeAsset_NotVisibleReturnsNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default())
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
 
 	user := &auth.UserContext{
 		ID:          "expert-1",
@@ -174,5 +176,98 @@ func TestFinalizeAsset_NotVisibleReturnsNotFound(t *testing.T) {
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("got %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestBackfillVideoDurations_RejectsWithoutSecret(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "scheduler-secret")
+
+	req := httptest.NewRequest(http.MethodPost, "/internal/assets/durations/backfill", nil)
+	req.Header.Set("Authorization", "Bearer wrong")
+	rec := httptest.NewRecorder()
+
+	h.BackfillVideoDurations(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("got %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestBackfillVideoDurations_UpdatesMissingDurations(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	mux := mocks.NewMockMuxClient(ctrl)
+	h := NewHandler(q, mux, nil, nil, slog.Default(), "scheduler-secret")
+
+	videoID := assetTestUUID()
+	q.EXPECT().ListVideosMissingDuration(gomock.Any(), int32(100)).Return([]db.ListVideosMissingDurationRow{
+		{ID: videoID, MuxAssetID: pgtype.Text{String: "mux-asset-1", Valid: true}},
+	}, nil)
+	mux.EXPECT().GetAsset("mux-asset-1").Return(muxgo.AssetResponse{
+		Data: muxgo.Asset{Duration: 42.5},
+	}, nil)
+	q.EXPECT().SetVideoDurationByID(gomock.Any(), db.SetVideoDurationByIDParams{
+		ID:              videoID,
+		DurationSeconds: pgtype.Float8{Float64: 42.5, Valid: true},
+	}).Return(nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/internal/assets/durations/backfill", nil)
+	req.Header.Set("Authorization", "Bearer scheduler-secret")
+	rec := httptest.NewRecorder()
+
+	h.BackfillVideoDurations(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got %d, want %d", rec.Code, http.StatusOK)
+	}
+	var resp map[string]int
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if resp["updated"] != 1 {
+		t.Fatalf("got updated=%d, want 1", resp["updated"])
+	}
+}
+
+// Direct uploads carry only mux_upload_id (mux_asset_id stays empty), so the
+// backfill must resolve duration via the upload's backing asset.
+func TestBackfillVideoDurations_ResolvesViaUploadID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	mux := mocks.NewMockMuxClient(ctrl)
+	h := NewHandler(q, mux, nil, nil, slog.Default(), "scheduler-secret")
+
+	videoID := assetTestUUID()
+	q.EXPECT().ListVideosMissingDuration(gomock.Any(), int32(100)).Return([]db.ListVideosMissingDurationRow{
+		{ID: videoID, MuxUploadID: pgtype.Text{String: "upload-1", Valid: true}},
+	}, nil)
+	mux.EXPECT().GetDirectUpload("upload-1").Return(muxgo.UploadResponse{
+		Data: muxgo.Upload{AssetId: "mux-asset-7"},
+	}, nil)
+	mux.EXPECT().GetAsset("mux-asset-7").Return(muxgo.AssetResponse{
+		Data: muxgo.Asset{Duration: 90},
+	}, nil)
+	q.EXPECT().SetVideoDurationByID(gomock.Any(), db.SetVideoDurationByIDParams{
+		ID:              videoID,
+		DurationSeconds: pgtype.Float8{Float64: 90, Valid: true},
+	}).Return(nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/internal/assets/durations/backfill", nil)
+	req.Header.Set("Authorization", "Bearer scheduler-secret")
+	rec := httptest.NewRecorder()
+
+	h.BackfillVideoDurations(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got %d, want %d", rec.Code, http.StatusOK)
+	}
+	var resp map[string]int
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if resp["updated"] != 1 {
+		t.Fatalf("got updated=%d, want 1", resp["updated"])
 	}
 }

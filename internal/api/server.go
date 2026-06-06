@@ -20,6 +20,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/notifications"
+	"github.com/OZIOisgood/zeta/internal/reports"
 	"github.com/OZIOisgood/zeta/internal/reviews"
 	"github.com/OZIOisgood/zeta/internal/users"
 	"github.com/go-chi/chi/v5"
@@ -72,11 +73,12 @@ func (s *Server) routes() {
 	emailService := email.NewService(s.Logger)
 	llmService := llm.NewService(s.Logger)
 	muxClient := assets.NewMuxClient()
-	assetsHandler := assets.NewHandler(queries, muxClient, emailService, workosClient, s.Logger)
+	assetsHandler := assets.NewHandler(queries, muxClient, emailService, workosClient, s.Logger, os.Getenv("SCHEDULER_SECRET"))
 	groupsHandler := groups.NewHandler(queries, s.Logger)
 	invitationsHandler := invitations.NewHandler(queries, emailService, workosClient, s.Logger, frontendBaseURL())
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
+	reportsHandler := reports.NewHandler(queries, s.Logger)
 
 	// In-app notifications: a per-instance hub fed by a Postgres LISTEN/NOTIFY
 	// listener (started below) delivers events to connected SSE clients.
@@ -178,6 +180,7 @@ func (s *Server) routes() {
 			r.Post("/invitations/decline", invitationsHandler.DeclineInvitation)
 		})
 		r.Route("/notifications", notificationsHandler.RegisterRoutes)
+		reportsHandler.RegisterRoutes(r)
 		coachingHandler.RegisterRoutes(r)
 	})
 
@@ -185,6 +188,7 @@ func (s *Server) routes() {
 	s.Router.Post("/internal/coaching/reminders", coachingHandler.ProcessReminders)
 	s.Router.Post("/internal/coaching/recordings/cleanup", coachingHandler.CleanupFinishedRecordings)
 	s.Router.Post("/internal/coaching/recordings/process", coachingHandler.ProcessRecordingImports)
+	s.Router.Post("/internal/assets/durations/backfill", assetsHandler.BackfillVideoDurations)
 }
 
 // allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)
