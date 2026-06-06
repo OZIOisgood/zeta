@@ -173,8 +173,11 @@ export type ReportRowOptions = {
 };
 
 // Flattens the nested report into export rows in render order:
-// [group, leaf, date, type, title, minutes]. Pure — the caller supplies
+// [group, leaf, date, type, title, length]. Pure — the caller supplies
 // localized labels and the date formatter so this stays Angular-free.
+//
+// Length mirrors the on-screen per-event duration: videos as "m:ss" (so
+// sub-minute clips don't collapse to 0) and live coachings as whole minutes.
 export function reportRows(report: Report, opts: ReportRowOptions): string[][] {
   const rows: string[][] = [];
   for (const group of report.groups) {
@@ -186,10 +189,65 @@ export function reportRows(report: Report, opts: ReportRowOptions): string[][] {
           opts.formatDate(event.at),
           event.kind === 'video' ? opts.videoLabel : opts.liveLabel,
           event.title,
-          `${Math.round(event.duration_seconds / 60)}`,
+          eventLength(event),
         ]);
       }
     }
   }
   return rows;
+}
+
+// Per-event length cell: videos as "m:ss" (so sub-minute clips don't show 0),
+// live coachings as whole minutes. Shared by both export shapes.
+function eventLength(event: ReportEvent): string {
+  return event.kind === 'video'
+    ? videoClock(event.duration_seconds)
+    : `${Math.round(event.duration_seconds / 60)}`;
+}
+
+// ── Grouped sections (PDF export) ─────────────────────────────────────────────
+
+export type ReportSectionOptions = {
+  // Localized "video" / "live" labels for the Type column.
+  videoLabel: string;
+  liveLabel: string;
+  // Formats an event's ISO instant into a display date (locale-aware).
+  formatDate: (iso: string) => string;
+  // Builds the right-aligned per-section subtotal from a leaf's totals
+  // (e.g. "3 Videos · 18 Min"). Supplied by the caller so this stays Angular-free.
+  formatSubtotal: (totals: Totals) => string;
+};
+
+export type ReportSection = {
+  // "Group › Leaf" header for the block.
+  heading: string;
+  // Localized subtotal shown to the right of the heading.
+  subtotal: string;
+  // Event rows in [date, type, description, length] order, oldest first.
+  rows: string[][];
+};
+
+// Builds one section per (group, leaf) pair for the grouped PDF layout. Unlike
+// reportRows (flat, newest-first for the dashboard), events here are ordered
+// oldest-first so the block reads as a chronological history. Pure — labels and
+// formatters are supplied by the caller.
+export function reportSections(report: Report, opts: ReportSectionOptions): ReportSection[] {
+  const sections: ReportSection[] = [];
+  for (const group of report.groups) {
+    for (const leaf of group.leaves) {
+      // leaf.events is stored newest-first; reverse for oldest-first display.
+      const ordered = [...leaf.events].reverse();
+      sections.push({
+        heading: `${group.name} › ${leaf.name}`,
+        subtotal: opts.formatSubtotal(leaf.totals),
+        rows: ordered.map((event) => [
+          opts.formatDate(event.at),
+          event.kind === 'video' ? opts.videoLabel : opts.liveLabel,
+          event.title,
+          eventLength(event),
+        ]),
+      });
+    }
+  }
+  return sections;
 }

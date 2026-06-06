@@ -21,6 +21,12 @@ build/
 CLAUDE.local.md
 .claude/settings.local.json
 
+# Brainstorming visual-companion mockups (local only)
+.superpowers/
+
+# Design handoff notes (local only)
+docs/handoffs/
+
 # Tools and temporary files
 /tools/
 tmp/

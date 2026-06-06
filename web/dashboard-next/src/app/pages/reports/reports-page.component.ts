@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { filter, map } from 'rxjs';
 import {
   LucideCalendarDays,
   LucideChartColumn,
@@ -25,6 +26,7 @@ import {
   durationHM,
   quarterOf,
   reportRows,
+  reportSections,
   videoClock,
 } from '../../features/reports/reports.util';
 import { buildReportDoc } from '../../features/reports/reports.pdf';
@@ -376,6 +378,18 @@ export class ReportsPageComponent {
   private readonly dateTime = inject(DashboardDateTimeService);
   private readonly transloco = inject(TranslocoService);
   private readonly translationEvents = toSignal(this.transloco.events$, { initialValue: null });
+  // True once the active language file has loaded. Synchronous translate() calls
+  // in the computeds below run during the first render — before the lang JSON is
+  // fetched — which logs spurious "Missing translation" warnings. Gating on this
+  // suppresses that startup race; the computeds re-run via translationEvents once
+  // loading completes.
+  private readonly translationsReady = toSignal(
+    this.transloco.events$.pipe(
+      filter((event) => event.type === 'translationLoadSuccess'),
+      map(() => true),
+    ),
+    { initialValue: false },
+  );
 
   protected readonly report = this.store.report;
   protected readonly totals = computed(() => this.report().totals);
@@ -392,10 +406,10 @@ export class ReportsPageComponent {
   );
 
   protected readonly granOptions = computed(() => {
-    this.translationEvents();
+    const ready = this.translationsReady();
     return (['month', 'quarter', 'year'] as Granularity[]).map((value) => ({
       value,
-      label: this.transloco.translate(`reports.period.${value}`),
+      label: ready ? this.transloco.translate(`reports.period.${value}`) : '',
     }));
   });
 
@@ -410,7 +424,7 @@ export class ReportsPageComponent {
   });
 
   protected readonly description = computed(() => {
-    this.translationEvents();
+    if (!this.translationsReady()) return '';
     return this.transloco.translate('reports.description', {
       kind: this.transloco.translate(`reports.kind.${this.store.gran()}`),
       name: this.store.viewer()?.name ?? '',
@@ -422,19 +436,19 @@ export class ReportsPageComponent {
   });
 
   protected readonly peopleLabel = computed(() => {
-    this.translationEvents();
+    if (!this.translationsReady()) return '';
     return this.transloco.translate(
       this.isExpert() ? 'reports.stats.students' : 'reports.stats.experts',
     );
   });
 
   protected readonly inGroupsLabel = computed(() => {
-    this.translationEvents();
+    if (!this.translationsReady()) return '';
     return this.transloco.translate('reports.stats.inGroups', { count: this.report().groupCount });
   });
 
   protected readonly emptyDescription = computed(() => {
-    this.translationEvents();
+    if (!this.translationsReady()) return '';
     return this.transloco.translate('reports.empty.description', { period: this.periodLabel() });
   });
 
@@ -588,10 +602,60 @@ export class ReportsPageComponent {
     return `${prefix}_${this.store.viewer()?.name ?? 'report'}_${this.periodLabel()}.${extension}`;
   }
 
+  // Aggregated total length across all events, formatted like the stat cards.
+  private exportTotalLength(): string {
+    const totals = this.report().totals;
+    return this.fmtDuration(totals.videoSec + totals.liveSec);
+  }
+
+  // Trailing totals row for the flat CSV export: label + aggregated length.
+  private exportSummaryRow(): string[] {
+    return [
+      this.transloco.translate('reports.export.total'),
+      '',
+      '',
+      '',
+      '',
+      this.exportTotalLength(),
+    ];
+  }
+
+  // The 4 event-table headers for the grouped PDF (no group/expert columns).
+  private exportEventColumns(): string[] {
+    return [
+      this.transloco.translate('reports.columns.date'),
+      this.transloco.translate('reports.columns.type'),
+      this.transloco.translate('reports.columns.description'),
+      this.transloco.translate('reports.columns.minutes'),
+    ];
+  }
+
+  // Plain-text KPI line for the PDF header: videos · live · people.
+  private exportKpiLine(): string {
+    const report = this.report();
+    return [
+      this.videoChip(report.totals),
+      this.liveChip(report.totals),
+      this.leafCountLabel(report.leafCount),
+    ].join('   |   ');
+  }
+
+  // Right-aligned per-section subtotal, reusing the dashboard chip wording.
+  private exportLeafSummary(totals: Totals): string {
+    const parts: string[] = [];
+    if (totals.videoCount) parts.push(this.videoChip(totals));
+    if (totals.liveCount) parts.push(this.liveChip(totals));
+    return parts.length ? parts.join(' · ') : this.fmtDuration(0);
+  }
+
   // ── CSV export ──
   protected exportCsv(): void {
     this.closeMenu();
-    const rows = [this.exportColumns(), ...reportRows(this.report(), this.reportRowOptions())];
+    const rows = [
+      this.exportColumns(),
+      ...reportRows(this.report(), this.reportRowOptions()),
+      this.exportSummaryRow(),
+    ];
     const csv =
       '﻿' +
       rows
@@ -618,24 +682,46 @@ export class ReportsPageComponent {
   // ── PDF export ──
   protected async exportPdf(): Promise<void> {
     this.closeMenu();
-    const rows = reportRows(this.report(), this.reportRowOptions());
-    const doc = buildReportDoc(rows, {
+    const sections = reportSections(this.report(), {
+      videoLabel: this.transloco.translate('reports.unit.video'),
+      liveLabel: this.transloco.translate('reports.unit.live'),
+      formatDate: (iso) =>
+        this.dateTime.formatInstantDate(iso, { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      formatSubtotal: (totals) => this.exportLeafSummary(totals),
+    });
+    const doc = buildReportDoc({
       title: this.transloco.translate(this.title()),
       subtitle: `${this.store.viewer()?.name ?? ''} · ${this.periodLabel()}`,
-      columns: this.exportColumns(),
+      kpiLine: this.exportKpiLine(),
+      columns: this.exportEventColumns(),
+      sections,
+      total: {
+        label: this.transloco.translate('reports.export.total'),
+        value: this.exportTotalLength(),
+      },
     });
 
     try {
       // Lazy-loaded so pdfmake (+ its fonts) never enters the main bundle.
       const pdfMake = (await import('pdfmake/build/pdfmake')).default;
-      const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
-      (pdfMake as unknown as { vfs: unknown }).vfs =
-        (pdfFonts as { pdfMake?: { vfs: unknown }; vfs?: unknown }).pdfMake?.vfs ??
-        (pdfFonts as { vfs?: unknown }).vfs;
+      const pdfFontsModule = await import('pdfmake/build/vfs_fonts');
+      const pdfFonts = (pdfFontsModule as { default?: unknown }).default ?? pdfFontsModule;
+      // VFS layout varies by pdfmake version: older builds wrap it in
+      // `.pdfMake.vfs` / `.vfs`; 0.2.x exports the font map (keys like
+      // "Roboto-Regular.ttf") directly as the module object.
+      const vfs =
+        (pdfFonts as { pdfMake?: { vfs: unknown } }).pdfMake?.vfs ??
+        (pdfFonts as { vfs?: unknown }).vfs ??
+        pdfFonts;
+      if (!vfs || typeof vfs !== 'object') {
+        throw new Error('pdfmake VFS could not be loaded');
+      }
+      (pdfMake as unknown as { vfs: unknown }).vfs = vfs;
 
       pdfMake.createPdf(doc).download(this.exportFileName('pdf'));
-    } catch {
+    } catch (error) {
       // Loading pdfmake or rendering can fail; surface it instead of failing silently.
+      console.error('reports_pdf_export_failed', error);
       this.shell.showToast(
         this.transloco.translate('reports.export.errorTitle'),
         this.transloco.translate('reports.export.errorMessage'),

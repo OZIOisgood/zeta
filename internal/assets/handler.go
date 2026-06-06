@@ -270,6 +270,23 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 				})
 				h.persistVideoDuration(ctx, uploadID, duration)
 			}
+		} else if uploadID == "" && v.MuxAssetID.Valid && v.MuxAssetID.String != "" {
+			// Coaching-import videos are created with mux_asset_id and no upload ID.
+			// persistVideoDuration (keyed by upload ID) never fires for them, so
+			// capture duration lazily here. SetVideoDurationByID is a no-op if already set.
+			duration, err := h.durationFromMux(ctx, v.MuxAssetID.String, "")
+			if err == nil && duration > 0 {
+				if err := h.q.SetVideoDurationByID(ctx, db.SetVideoDurationByIDParams{
+					ID:              v.ID,
+					DurationSeconds: pgtype.Float8{Float64: duration, Valid: true},
+				}); err != nil {
+					log.ErrorContext(ctx, "video_duration_update_failed",
+						slog.String("component", "assets"),
+						slog.String("mux_asset_id", v.MuxAssetID.String),
+						slog.Any("err", err),
+					)
+				}
+			}
 		}
 
 		videos = append(videos, VideoItem{
@@ -442,7 +459,11 @@ func (h *Handler) BackfillVideoDurations(w http.ResponseWriter, r *http.Request)
 		slog.Int("updated", updated),
 	)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{"scanned": len(videos), "updated": updated})
+	json.NewEncoder(w).Encode(map[string]any{
+		"scanned":  len(videos),
+		"updated":  updated,
+		"has_more": len(videos) >= batchSize,
+	})
 }
 
 // persistVideoDuration stores the Mux-reported duration for a video, keyed by its

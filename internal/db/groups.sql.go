@@ -183,6 +183,39 @@ func (q *Queries) GetGroupInvitationByID(ctx context.Context, arg GetGroupInvita
 	return i, err
 }
 
+const getGroupInvitationsByCodes = `-- name: GetGroupInvitationsByCodes :many
+SELECT id, group_id, inviter_id, email, code, status, created_at FROM group_invitations
+WHERE code = ANY($1::text[])
+`
+
+func (q *Queries) GetGroupInvitationsByCodes(ctx context.Context, dollar_1 []string) ([]GroupInvitation, error) {
+	rows, err := q.db.Query(ctx, getGroupInvitationsByCodes, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GroupInvitation
+	for rows.Next() {
+		var i GroupInvitation
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.InviterID,
+			&i.Email,
+			&i.Code,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listGroupMembers = `-- name: ListGroupMembers :many
 SELECT user_id FROM user_groups
 WHERE group_id = $1

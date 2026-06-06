@@ -593,6 +593,21 @@ func (mr *MockQuerierMockRecorder) GetGroupInvitationByID(ctx, arg any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupInvitationByID", reflect.TypeOf((*MockQuerier)(nil).GetGroupInvitationByID), ctx, arg)
 }
 
+// GetGroupInvitationsByCodes mocks base method.
+func (m *MockQuerier) GetGroupInvitationsByCodes(ctx context.Context, dollar_1 []string) ([]db.GroupInvitation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupInvitationsByCodes", ctx, dollar_1)
+	ret0, _ := ret[0].([]db.GroupInvitation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupInvitationsByCodes indicates an expected call of GetGroupInvitationsByCodes.
+func (mr *MockQuerierMockRecorder) GetGroupInvitationsByCodes(ctx, dollar_1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupInvitationsByCodes", reflect.TypeOf((*MockQuerier)(nil).GetGroupInvitationsByCodes), ctx, dollar_1)
+}
+
 // GetNotification mocks base method.
 func (m *MockQuerier) GetNotification(ctx context.Context, id pgtype.UUID) (db.Notification, error) {
 	m.ctrl.T.Helper()
@@ -1098,6 +1113,20 @@ func (m *MockQuerier) MarkNotificationRead(ctx context.Context, arg db.MarkNotif
 func (mr *MockQuerierMockRecorder) MarkNotificationRead(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationRead", reflect.TypeOf((*MockQuerier)(nil).MarkNotificationRead), ctx, arg)
+}
+
+// MarkNotificationReadByInviteCode mocks base method.
+func (m *MockQuerier) MarkNotificationReadByInviteCode(ctx context.Context, arg db.MarkNotificationReadByInviteCodeParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkNotificationReadByInviteCode", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkNotificationReadByInviteCode indicates an expected call of MarkNotificationReadByInviteCode.
+func (mr *MockQuerierMockRecorder) MarkNotificationReadByInviteCode(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationReadByInviteCode", reflect.TypeOf((*MockQuerier)(nil).MarkNotificationReadByInviteCode), ctx, arg)
 }
 
 // MarkRecordingImportFailed mocks base method.

@@ -159,7 +159,8 @@
       "errorTitle": "PDF export failed",
       "errorMessage": "Please try again.",
       "toastMessage": "{{count}} entries · {{period}}",
-      "fileName": "Zeta-Report"
+      "fileName": "Zeta-Report",
+      "total": "Total"
     },
     "columns": {
       "group": "Group",

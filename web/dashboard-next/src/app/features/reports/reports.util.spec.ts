@@ -6,6 +6,7 @@ import {
   eventInPeriod,
   isCurrentPeriod,
   reportRows,
+  reportSections,
   stepCursor,
   videoClock,
 } from './reports.util';
@@ -107,7 +108,7 @@ describe('reports.util', () => {
   });
 
   describe('reportRows', () => {
-    it('flattens groups → leaves → events into [group, leaf, date, type, title, minutes] rows, newest first', () => {
+    it('flattens groups → leaves → events into [group, leaf, date, type, title, length] rows, newest first', () => {
       const events: ReportEvent[] = [
         ev({
           kind: 'video',
@@ -134,8 +135,59 @@ describe('reports.util', () => {
       });
 
       expect(rows).toEqual([
+        // Live → whole minutes; video → m:ss so sub-minute clips don't show 0.
         ['Beta', 'Student One', '04.06.2026', 'Live', 'Session A', '30'],
-        ['Beta', 'Student One', '03.06.2026', 'Video', 'Clip A', '2'],
+        ['Beta', 'Student One', '03.06.2026', 'Video', 'Clip A', '1:30'],
+      ]);
+    });
+  });
+
+  describe('reportSections', () => {
+    it('builds one section per leaf with oldest-first rows and a "Group › Leaf" heading', () => {
+      const events: ReportEvent[] = [
+        ev({
+          student: { id: 's1', name: 'Student One' },
+          title: 'Clip A',
+          at: '2026-06-03T10:00:00Z',
+          duration_seconds: 90,
+        }),
+        ev({
+          student: { id: 's1', name: 'Student One' },
+          title: 'Clip B',
+          at: '2026-06-09T10:00:00Z',
+          duration_seconds: 260,
+        }),
+        ev({
+          student: { id: 's2', name: 'Student Two' },
+          title: 'Clip C',
+          at: '2026-06-02T10:00:00Z',
+          duration_seconds: 360,
+        }),
+      ];
+      const report = buildReport('expert', events, 'month', { year: 2026, month: 5 });
+
+      const sections = reportSections(report, {
+        videoLabel: 'Video',
+        liveLabel: 'Live',
+        formatDate: (iso) => `${iso.slice(8, 10)}.06.2026`,
+        formatSubtotal: (totals) => `${totals.videoCount}v`,
+      });
+
+      expect(sections).toEqual([
+        {
+          heading: 'Beta › Student One',
+          subtotal: '2v',
+          rows: [
+            // oldest first (buildReport stores newest-first; sections reverse it)
+            ['03.06.2026', 'Video', 'Clip A', '1:30'],
+            ['09.06.2026', 'Video', 'Clip B', '4:20'],
+          ],
+        },
+        {
+          heading: 'Beta › Student Two',
+          subtotal: '1v',
+          rows: [['02.06.2026', 'Video', 'Clip C', '6:00']],
+        },
       ]);
     });
   });

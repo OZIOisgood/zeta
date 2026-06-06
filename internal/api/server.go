@@ -33,19 +33,28 @@ type Server struct {
 	Router *chi.Mux
 	Pool   *pgxpool.Pool
 	Logger *slog.Logger
+	cancel context.CancelFunc
 }
 
 func NewServer(pool *pgxpool.Pool, baseLogger *slog.Logger) *Server {
+	ctx, cancel := context.WithCancel(context.Background())
 	s := &Server{
 		Router: chi.NewRouter(),
 		Pool:   pool,
 		Logger: baseLogger,
+		cancel: cancel,
 	}
-	s.routes()
+	s.routes(ctx)
 	return s
 }
 
-func (s *Server) routes() {
+// Shutdown cancels the server's internal context, stopping background goroutines
+// (e.g. the Postgres LISTEN/NOTIFY listener) so DB connections are released cleanly.
+func (s *Server) Shutdown() {
+	s.cancel()
+}
+
+func (s *Server) routes(ctx context.Context) {
 	// Structured logging middleware replaces middleware.Logger
 	s.Router.Use(logger.Middleware(s.Logger))
 	s.Router.Use(middleware.Recoverer)
@@ -84,7 +93,7 @@ func (s *Server) routes() {
 	// listener (started below) delivers events to connected SSE clients.
 	notificationsHub := notifications.NewHub()
 	notificationsHandler := notifications.NewHandler(queries, notificationsHub, s.Logger)
-	go notifications.NewListener(s.Pool, queries, notificationsHub, s.Logger).Run(context.Background())
+	go notifications.NewListener(s.Pool, queries, notificationsHub, s.Logger).Run(ctx)
 	recordingEnabled := parseBool(os.Getenv("AGORA_CLOUD_RECORDING_ENABLED"))
 	var recordingClient coaching.RecordingClient
 	var recordingStore coaching.RecordingObjectStore

@@ -222,12 +222,15 @@ func TestBackfillVideoDurations_UpdatesMissingDurations(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("got %d, want %d", rec.Code, http.StatusOK)
 	}
-	var resp map[string]int
+	var resp struct {
+		Updated int  `json:"updated"`
+		HasMore bool `json:"has_more"`
+	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if resp["updated"] != 1 {
-		t.Fatalf("got updated=%d, want 1", resp["updated"])
+	if resp.Updated != 1 {
+		t.Fatalf("got updated=%d, want 1", resp.Updated)
 	}
 }
 
@@ -263,11 +266,14 @@ func TestBackfillVideoDurations_ResolvesViaUploadID(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("got %d, want %d", rec.Code, http.StatusOK)
 	}
-	var resp map[string]int
+	var resp struct {
+		Updated int  `json:"updated"`
+		HasMore bool `json:"has_more"`
+	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if resp["updated"] != 1 {
-		t.Fatalf("got updated=%d, want 1", resp["updated"])
+	if resp.Updated != 1 {
+		t.Fatalf("got updated=%d, want 1", resp.Updated)
 	}
 }

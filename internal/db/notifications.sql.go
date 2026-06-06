@@ -133,3 +133,22 @@ func (q *Queries) MarkNotificationRead(ctx context.Context, arg MarkNotification
 	_, err := q.db.Exec(ctx, markNotificationRead, arg.ID, arg.RecipientID)
 	return err
 }
+
+const markNotificationReadByInviteCode = `-- name: MarkNotificationReadByInviteCode :exec
+UPDATE notifications
+SET read_at = NOW()
+WHERE recipient_id = $1
+  AND type = 'group_invitation_received'
+  AND payload->>'code' = $2
+  AND read_at IS NULL
+`
+
+type MarkNotificationReadByInviteCodeParams struct {
+	RecipientID string `json:"recipient_id"`
+	Code        []byte `json:"code"`
+}
+
+func (q *Queries) MarkNotificationReadByInviteCode(ctx context.Context, arg MarkNotificationReadByInviteCodeParams) error {
+	_, err := q.db.Exec(ctx, markNotificationReadByInviteCode, arg.RecipientID, arg.Code)
+	return err
+}
