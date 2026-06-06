@@ -129,11 +129,12 @@ describe('reports.util', () => {
       const rows = reportRows(report, {
         videoLabel: 'Video',
         liveLabel: 'Live',
-        formatDate: () => '03.06.2026',
+        // Echo the day so the test also verifies event.at reaches the formatter.
+        formatDate: (iso) => `${iso.slice(8, 10)}.06.2026`,
       });
 
       expect(rows).toEqual([
-        ['Beta', 'Student One', '03.06.2026', 'Live', 'Session A', '30'],
+        ['Beta', 'Student One', '04.06.2026', 'Live', 'Session A', '30'],
         ['Beta', 'Student One', '03.06.2026', 'Video', 'Clip A', '2'],
       ]);
     });
