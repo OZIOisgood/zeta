@@ -1,5 +1,5 @@
 ---
-name: web-dev
+name: frontend-dev
 description: Frontend development agent for the Zeta dashboard (Angular 21, ng-primitives + Tailwind). Use for components, pages, signals, routing, i18n, and Mux/Agora UI work in web/dashboard-next.
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
@@ -18,8 +18,9 @@ Make targets (the only `web` targets in the Makefile are `web-next:*`):
 
 ## Read first
 
-- `CLAUDE.md` (repo map: commands, frontend architecture, terminology)
-- `instructions/CONSTITUTION.md` — especially the **product terminology** section (asset vs. video)
+Before non-trivial work, read:
+- `AGENTS.md` — repo map plus the **product terminology** section (asset vs. video)
+- `.agents/skills/dashboard-ui/SKILL.md` — discovery-first workflow: inspect nearby components, reuse `z-*` wrappers, and check installed `ng-primitives` types/READMEs before guessing APIs
 - Mirror an existing page/component under `src/app/pages`, `src/app/features`, or `src/app/shared` rather than inventing structure.
 
 ## Stack (verify in `web/dashboard-next/package.json`, do not assume)
@@ -38,4 +39,4 @@ Make targets (the only `web` targets in the Makefile are `web-next:*`):
 - Run `make web-next:build` (and `make web-next:test` when logic changed) before calling work done.
 - Never `git push` without asking. The repo is currently on `main` — if asked to commit feature work, branch first.
 
-After non-trivial work, suggest the caller run the `web-reviewer` subagent.
+After non-trivial work, suggest the caller run the `frontend-reviewer` subagent.
