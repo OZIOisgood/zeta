@@ -156,6 +156,7 @@
       "pdf": "Als PDF",
       "soon": "bald",
       "toastTitle": "CSV exportiert",
+      "pdfToastTitle": "PDF exportiert",
       "toastMessage": "{{count}} Einträge · {{period}}",
       "fileName": "Zeta-Bericht"
     },
