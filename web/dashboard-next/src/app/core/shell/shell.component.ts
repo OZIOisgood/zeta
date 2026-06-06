@@ -15,12 +15,14 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   LucideBell,
   LucideCalendarDays,
+  LucideChartColumn,
   LucideCheckCheck,
   LucideChevronRight,
   LucideHome,
   LucideLogOut,
   LucideMenu,
   LucideSettings,
+  LucideUserRound,
   LucideUsers,
   LucideVideo,
   LucideX,
@@ -54,12 +56,14 @@ import { AppShellStore } from '../state/app-shell.store';
     NotificationListComponent,
     LucideBell,
     LucideCalendarDays,
+    LucideChartColumn,
     LucideCheckCheck,
     LucideChevronRight,
     LucideHome,
     LucideLogOut,
     LucideMenu,
     LucideSettings,
+    LucideUserRound,
     LucideUsers,
     LucideVideo,
     LucideX,
@@ -84,6 +88,18 @@ export class ShellComponent implements OnDestroy {
 
       if (item.id === 'sessions') {
         return this.permissions.hasPermission('coaching:bookings:read');
+      }
+
+      if (item.id === 'reports-expert') {
+        return (
+          this.permissions.hasPermission('reports:read') && this.session.user()?.role !== 'student'
+        );
+      }
+
+      if (item.id === 'reports-student') {
+        return (
+          this.permissions.hasPermission('reports:read') && this.session.user()?.role === 'student'
+        );
       }
 
       return true;

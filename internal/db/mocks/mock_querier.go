@@ -593,6 +593,21 @@ func (mr *MockQuerierMockRecorder) GetGroupInvitationByID(ctx, arg any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupInvitationByID", reflect.TypeOf((*MockQuerier)(nil).GetGroupInvitationByID), ctx, arg)
 }
 
+// GetGroupInvitationsByCodes mocks base method.
+func (m *MockQuerier) GetGroupInvitationsByCodes(ctx context.Context, dollar_1 []string) ([]db.GroupInvitation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroupInvitationsByCodes", ctx, dollar_1)
+	ret0, _ := ret[0].([]db.GroupInvitation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGroupInvitationsByCodes indicates an expected call of GetGroupInvitationsByCodes.
+func (mr *MockQuerierMockRecorder) GetGroupInvitationsByCodes(ctx, dollar_1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupInvitationsByCodes", reflect.TypeOf((*MockQuerier)(nil).GetGroupInvitationsByCodes), ctx, dollar_1)
+}
+
 // GetNotification mocks base method.
 func (m *MockQuerier) GetNotification(ctx context.Context, id pgtype.UUID) (db.Notification, error) {
 	m.ctrl.T.Helper()
@@ -983,6 +998,21 @@ func (mr *MockQuerierMockRecorder) ListVideoReviews(ctx, videoID any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVideoReviews", reflect.TypeOf((*MockQuerier)(nil).ListVideoReviews), ctx, videoID)
 }
 
+// ListVideosMissingDuration mocks base method.
+func (m *MockQuerier) ListVideosMissingDuration(ctx context.Context, limit int32) ([]db.ListVideosMissingDurationRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListVideosMissingDuration", ctx, limit)
+	ret0, _ := ret[0].([]db.ListVideosMissingDurationRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListVideosMissingDuration indicates an expected call of ListVideosMissingDuration.
+func (mr *MockQuerierMockRecorder) ListVideosMissingDuration(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVideosMissingDuration", reflect.TypeOf((*MockQuerier)(nil).ListVideosMissingDuration), ctx, limit)
+}
+
 // ListVisibleAssets mocks base method.
 func (m *MockQuerier) ListVisibleAssets(ctx context.Context, arg db.ListVisibleAssetsParams) ([]db.ListVisibleAssetsRow, error) {
 	m.ctrl.T.Helper()
@@ -1085,6 +1115,20 @@ func (mr *MockQuerierMockRecorder) MarkNotificationRead(ctx, arg any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationRead", reflect.TypeOf((*MockQuerier)(nil).MarkNotificationRead), ctx, arg)
 }
 
+// MarkNotificationReadByInviteCode mocks base method.
+func (m *MockQuerier) MarkNotificationReadByInviteCode(ctx context.Context, arg db.MarkNotificationReadByInviteCodeParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkNotificationReadByInviteCode", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkNotificationReadByInviteCode indicates an expected call of MarkNotificationReadByInviteCode.
+func (mr *MockQuerierMockRecorder) MarkNotificationReadByInviteCode(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationReadByInviteCode", reflect.TypeOf((*MockQuerier)(nil).MarkNotificationReadByInviteCode), ctx, arg)
+}
+
 // MarkRecordingImportFailed mocks base method.
 func (m *MockQuerier) MarkRecordingImportFailed(ctx context.Context, arg db.MarkRecordingImportFailedParams) error {
 	m.ctrl.T.Helper()
@@ -1172,6 +1216,66 @@ func (mr *MockQuerierMockRecorder) RemoveUserFromGroup(ctx, arg any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromGroup", reflect.TypeOf((*MockQuerier)(nil).RemoveUserFromGroup), ctx, arg)
 }
 
+// ReportSessionEventsForExpert mocks base method.
+func (m *MockQuerier) ReportSessionEventsForExpert(ctx context.Context, expertID string) ([]db.ReportSessionEventsForExpertRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReportSessionEventsForExpert", ctx, expertID)
+	ret0, _ := ret[0].([]db.ReportSessionEventsForExpertRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReportSessionEventsForExpert indicates an expected call of ReportSessionEventsForExpert.
+func (mr *MockQuerierMockRecorder) ReportSessionEventsForExpert(ctx, expertID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportSessionEventsForExpert", reflect.TypeOf((*MockQuerier)(nil).ReportSessionEventsForExpert), ctx, expertID)
+}
+
+// ReportSessionEventsForStudent mocks base method.
+func (m *MockQuerier) ReportSessionEventsForStudent(ctx context.Context, studentID string) ([]db.ReportSessionEventsForStudentRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReportSessionEventsForStudent", ctx, studentID)
+	ret0, _ := ret[0].([]db.ReportSessionEventsForStudentRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReportSessionEventsForStudent indicates an expected call of ReportSessionEventsForStudent.
+func (mr *MockQuerierMockRecorder) ReportSessionEventsForStudent(ctx, studentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportSessionEventsForStudent", reflect.TypeOf((*MockQuerier)(nil).ReportSessionEventsForStudent), ctx, studentID)
+}
+
+// ReportUploadEventsForExpert mocks base method.
+func (m *MockQuerier) ReportUploadEventsForExpert(ctx context.Context, expertID string) ([]db.ReportUploadEventsForExpertRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReportUploadEventsForExpert", ctx, expertID)
+	ret0, _ := ret[0].([]db.ReportUploadEventsForExpertRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReportUploadEventsForExpert indicates an expected call of ReportUploadEventsForExpert.
+func (mr *MockQuerierMockRecorder) ReportUploadEventsForExpert(ctx, expertID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportUploadEventsForExpert", reflect.TypeOf((*MockQuerier)(nil).ReportUploadEventsForExpert), ctx, expertID)
+}
+
+// ReportUploadEventsForStudent mocks base method.
+func (m *MockQuerier) ReportUploadEventsForStudent(ctx context.Context, studentID string) ([]db.ReportUploadEventsForStudentRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReportUploadEventsForStudent", ctx, studentID)
+	ret0, _ := ret[0].([]db.ReportUploadEventsForStudentRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReportUploadEventsForStudent indicates an expected call of ReportUploadEventsForStudent.
+func (mr *MockQuerierMockRecorder) ReportUploadEventsForStudent(ctx, studentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReportUploadEventsForStudent", reflect.TypeOf((*MockQuerier)(nil).ReportUploadEventsForStudent), ctx, studentID)
+}
+
 // SeedUserPreferences mocks base method.
 func (m *MockQuerier) SeedUserPreferences(ctx context.Context, arg db.SeedUserPreferencesParams) (db.UserPreference, error) {
 	m.ctrl.T.Helper()
@@ -1200,6 +1304,34 @@ func (m *MockQuerier) SeedUserPreferencesWithAvatar(ctx context.Context, arg db.
 func (mr *MockQuerierMockRecorder) SeedUserPreferencesWithAvatar(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SeedUserPreferencesWithAvatar", reflect.TypeOf((*MockQuerier)(nil).SeedUserPreferencesWithAvatar), ctx, arg)
+}
+
+// SetVideoDurationByID mocks base method.
+func (m *MockQuerier) SetVideoDurationByID(ctx context.Context, arg db.SetVideoDurationByIDParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetVideoDurationByID", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetVideoDurationByID indicates an expected call of SetVideoDurationByID.
+func (mr *MockQuerierMockRecorder) SetVideoDurationByID(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetVideoDurationByID", reflect.TypeOf((*MockQuerier)(nil).SetVideoDurationByID), ctx, arg)
+}
+
+// SetVideoDurationByUploadID mocks base method.
+func (m *MockQuerier) SetVideoDurationByUploadID(ctx context.Context, arg db.SetVideoDurationByUploadIDParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetVideoDurationByUploadID", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetVideoDurationByUploadID indicates an expected call of SetVideoDurationByUploadID.
+func (mr *MockQuerierMockRecorder) SetVideoDurationByUploadID(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetVideoDurationByUploadID", reflect.TypeOf((*MockQuerier)(nil).SetVideoDurationByUploadID), ctx, arg)
 }
 
 // UpdateAssetStatus mocks base method.

@@ -196,7 +196,7 @@ func (h *Handler) processRecordingImport(ctx context.Context, pending db.ListPen
 			h.markRecordingImportFailed(ctx, pending.BookingID, err)
 			return false, false, err
 		}
-		return h.createReviewableRecordingAsset(ctx, pending, object.Name, muxAssetID, playbackID)
+		return h.createReviewableRecordingAsset(ctx, pending, object.Name, muxAssetID, playbackID, assetResp.Data.Duration)
 	case "errored":
 		err := fmt.Errorf("mux asset %s errored", muxAssetID)
 		h.markRecordingImportFailed(ctx, pending.BookingID, err)
@@ -212,7 +212,7 @@ func (h *Handler) processRecordingImport(ctx context.Context, pending db.ListPen
 	}
 }
 
-func (h *Handler) createReviewableRecordingAsset(ctx context.Context, pending db.ListPendingRecordingImportsRow, objectName, muxAssetID, playbackID string) (bool, bool, error) {
+func (h *Handler) createReviewableRecordingAsset(ctx context.Context, pending db.ListPendingRecordingImportsRow, objectName, muxAssetID, playbackID string, duration float64) (bool, bool, error) {
 	if pending.AssetID.Valid && pending.VideoID.Valid {
 		_, err := h.q.MarkRecordingImportReady(ctx, db.MarkRecordingImportReadyParams{
 			BookingID:     pending.BookingID,
@@ -222,7 +222,11 @@ func (h *Handler) createReviewableRecordingAsset(ctx context.Context, pending db
 			AssetID:       pending.AssetID,
 			VideoID:       pending.VideoID,
 		})
-		return err == nil, false, err
+		if err != nil {
+			return false, false, err
+		}
+		h.persistImportDuration(ctx, pending.VideoID, duration)
+		return true, false, nil
 	}
 
 	tx, err := h.pool.BeginTx(ctx, pgx.TxOptions{})
@@ -271,6 +275,10 @@ func (h *Handler) createReviewableRecordingAsset(ctx context.Context, pending db
 		return false, false, err
 	}
 
+	// Persist duration outside the transaction (best-effort; SetVideoDurationByID
+	// is a no-op if already set, so retries are safe).
+	h.persistImportDuration(ctx, video.ID, duration)
+
 	log := logger.From(ctx, h.logger)
 	log.InfoContext(ctx, "recording_import_ready",
 		slog.String("component", "coaching"),
@@ -280,6 +288,23 @@ func (h *Handler) createReviewableRecordingAsset(ctx context.Context, pending db
 		slog.String("mux_asset_id", muxAssetID),
 	)
 	return true, false, nil
+}
+
+// persistImportDuration stores the Mux-reported duration for a coaching-import
+// video by its DB ID. Best-effort: failures are logged but never block the caller.
+func (h *Handler) persistImportDuration(ctx context.Context, videoID pgtype.UUID, duration float64) {
+	if !videoID.Valid || duration <= 0 {
+		return
+	}
+	if err := h.q.SetVideoDurationByID(ctx, db.SetVideoDurationByIDParams{
+		ID:              videoID,
+		DurationSeconds: pgtype.Float8{Float64: duration, Valid: true},
+	}); err != nil {
+		h.logger.WarnContext(ctx, "recording_import_duration_persist_failed",
+			slog.String("component", "coaching"),
+			slog.Any("err", err),
+		)
+	}
 }
 
 func (h *Handler) markRecordingImportFailed(ctx context.Context, bookingID pgtype.UUID, cause error) {

@@ -77,6 +77,7 @@
       "groups": "Gruppen",
       "home": "Start",
       "menu": "Menü",
+      "report": "Bericht",
       "sessions": "Termine",
       "videos": "Videos"
     },
@@ -99,6 +100,75 @@
     "openNavigation": "Navigation öffnen",
     "preferences": "Einstellungen",
     "search": "Suchen"
+  },
+  "reports": {
+    "expert": { "title": "Experten-Bericht" },
+    "student": { "title": "Schüler-Bericht" },
+    "description": "{{kind}} für {{name}} · {{count}} Aktivitäten, gruppiert nach Gruppe › {{leaf}}.",
+    "kind": {
+      "month": "Monatsbericht",
+      "quarter": "Quartalsbericht",
+      "year": "Jahresbericht"
+    },
+    "leaf": {
+      "student": "Schüler",
+      "expert": "Experte"
+    },
+    "leafCount": {
+      "students": "{{count}} Schüler",
+      "experts": "{{count}} Experten"
+    },
+    "period": {
+      "label": "Zeitraum",
+      "month": "Monat",
+      "quarter": "Quartal",
+      "year": "Jahr",
+      "prev": "Vorheriger Zeitraum",
+      "next": "Nächster Zeitraum",
+      "today": "Heute"
+    },
+    "stats": {
+      "videos": "Videos hochgeladen",
+      "live": "Live-Coachings",
+      "students": "Aktive Schüler",
+      "experts": "Aktive Experten",
+      "inGroups": "in {{count}} Gruppen"
+    },
+    "unit": {
+      "hour": "Std",
+      "minute": "Min",
+      "video": "Video",
+      "videos": "Videos",
+      "live": "Live",
+      "lives": "Lives"
+    },
+    "event": {
+      "videoUploaded": "Video hochgeladen",
+      "liveCoaching": "Live-Coaching"
+    },
+    "empty": {
+      "title": "Keine Aktivitäten in diesem Zeitraum",
+      "description": "Für {{period}} liegen keine hochgeladenen Videos oder Live-Coachings vor."
+    },
+    "export": {
+      "label": "Exportieren",
+      "csv": "Als CSV / Excel",
+      "pdf": "Als PDF",
+      "toastTitle": "CSV exportiert",
+      "pdfToastTitle": "PDF exportiert",
+      "errorTitle": "PDF-Export fehlgeschlagen",
+      "errorMessage": "Bitte versuche es erneut.",
+      "toastMessage": "{{count}} Einträge · {{period}}",
+      "fileName": "Zeta-Bericht",
+      "total": "Summe"
+    },
+    "columns": {
+      "group": "Gruppe",
+      "date": "Datum",
+      "type": "Typ",
+      "description": "Beschreibung",
+      "minutes": "Länge (Min)"
+    }
   },
   "home": {
     "latestVideos": "Neueste Videos",

@@ -4,6 +4,9 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	_ "time/tzdata" // embed IANA timezone database for Cloud Run (alpine has no tzdata)
 
 	"github.com/OZIOisgood/zeta/internal/api"
@@ -33,9 +36,18 @@ func main() {
 
 	srv := api.NewServer(pool, baseLogger)
 
-	baseLogger.InfoContext(ctx, "api_starting", slog.String("port", "8080"))
-	if err := http.ListenAndServe(":8080", srv.Router); err != nil {
-		baseLogger.ErrorContext(ctx, "api_listen_failed", slog.Any("err", err))
-		panic(err)
-	}
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		baseLogger.InfoContext(ctx, "api_starting", slog.String("port", "8080"))
+		if err := http.ListenAndServe(":8080", srv.Router); err != nil {
+			baseLogger.ErrorContext(ctx, "api_listen_failed", slog.Any("err", err))
+			panic(err)
+		}
+	}()
+
+	<-stop
+	baseLogger.InfoContext(ctx, "api_shutting_down")
+	srv.Shutdown()
 }

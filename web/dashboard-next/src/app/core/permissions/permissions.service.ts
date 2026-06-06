@@ -21,7 +21,8 @@ export type Permission =
   | 'coaching:book'
   | 'coaching:bookings:read'
   | 'coaching:bookings:manage'
-  | 'coaching:video:connect';
+  | 'coaching:video:connect'
+  | 'reports:read';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {

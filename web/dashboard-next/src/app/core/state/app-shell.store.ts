@@ -11,7 +11,7 @@ type NavigationItem = {
   label: string;
   labelKey: string;
   href: string;
-  icon: 'home' | 'videos' | 'groups' | 'sessions';
+  icon: 'home' | 'videos' | 'groups' | 'sessions' | 'reports-expert' | 'reports-student';
 };
 
 type WorkQueueItem = {
@@ -77,6 +77,20 @@ const initialState: AppShellState = {
       labelKey: 'common.nav.sessions',
       href: '/sessions',
       icon: 'sessions',
+    },
+    {
+      id: 'reports-expert',
+      label: 'Report',
+      labelKey: 'common.nav.report',
+      href: '/reports/experts',
+      icon: 'reports-expert',
+    },
+    {
+      id: 'reports-student',
+      label: 'Report',
+      labelKey: 'common.nav.report',
+      href: '/reports/students',
+      icon: 'reports-student',
     },
   ],
   languages: DASHBOARD_LANGUAGES.map(({ value, label }) => ({ value, label })),
@@ -161,13 +175,19 @@ export const AppShellStore = signalStore(
         });
       },
       selectSectionForUrl(url: string): void {
-        const firstSegment = url.split('?')[0].split('/').filter(Boolean)[0] ?? 'home';
+        const segments = url.split('?')[0].split('/').filter(Boolean);
+        const firstSegment = segments[0] ?? 'home';
         const sectionAliases: Record<string, string> = {
           asset: 'videos',
           'upload-video': 'videos',
           'create-group': 'groups',
         };
-        const aliasedSection = sectionAliases[firstSegment] ?? firstSegment;
+        let aliasedSection = sectionAliases[firstSegment] ?? firstSegment;
+        // The two report routes share the `reports` segment; resolve to the
+        // matching nav item so the right one highlights.
+        if (firstSegment === 'reports') {
+          aliasedSection = segments[1] === 'students' ? 'reports-student' : 'reports-expert';
+        }
         const section = store.navigation().some((item) => item.id === aliasedSection)
           ? aliasedSection
           : 'home';

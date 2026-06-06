@@ -26,6 +26,21 @@ func (rw *ResponseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+// Flush implements http.Flusher by delegating to the wrapped ResponseWriter
+// when it supports flushing. This keeps Server-Sent Events streaming working
+// through the logging middleware.
+func (rw *ResponseWriter) Flush() {
+	if f, ok := rw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Unwrap returns the underlying ResponseWriter so http.ResponseController can
+// reach optional interfaces the wrapper does not implement.
+func (rw *ResponseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
 // Middleware returns an HTTP middleware that logs structured request information.
 // It extracts or generates a request ID, attaches a scoped logger to context,
 // captures response metadata, and logs a final HTTP request event.

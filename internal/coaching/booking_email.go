@@ -23,7 +23,13 @@ func (h *Handler) recordBookingCreatedNotification(b db.CoachingBooking, session
 		bgCtx := context.Background()
 
 		groupName := ""
-		if group, err := h.q.GetGroup(bgCtx, b.GroupID); err == nil {
+		if group, err := h.q.GetGroup(bgCtx, b.GroupID); err != nil {
+			h.logger.WarnContext(bgCtx, "booking_notification_fetch_group_failed",
+				slog.String("component", "coaching"),
+				slog.String("booking_id", uuidToString(b.ID)),
+				slog.Any("err", err),
+			)
+		} else {
 			groupName = group.Name
 		}
 

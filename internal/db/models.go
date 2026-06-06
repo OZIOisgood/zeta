@@ -471,14 +471,15 @@ type UserPreference struct {
 }
 
 type Video struct {
-	ID          pgtype.UUID        `json:"id"`
-	AssetID     pgtype.UUID        `json:"asset_id"`
-	MuxUploadID pgtype.Text        `json:"mux_upload_id"`
-	MuxAssetID  pgtype.Text        `json:"mux_asset_id"`
-	PlaybackID  pgtype.Text        `json:"playback_id"`
-	Status      VideoStatus        `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID              pgtype.UUID        `json:"id"`
+	AssetID         pgtype.UUID        `json:"asset_id"`
+	MuxUploadID     pgtype.Text        `json:"mux_upload_id"`
+	MuxAssetID      pgtype.Text        `json:"mux_asset_id"`
+	PlaybackID      pgtype.Text        `json:"playback_id"`
+	Status          VideoStatus        `json:"status"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	DurationSeconds pgtype.Float8      `json:"duration_seconds"`
 }
 
 type VideoReview struct {

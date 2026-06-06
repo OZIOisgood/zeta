@@ -1,7 +1,6 @@
 package notifications
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -77,35 +76,54 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Collect invitation codes for a single batch lookup instead of N+1 queries.
+	var codes []string
+	for _, row := range rows {
+		if string(row.Type) == string(TypeGroupInvitationReceived) {
+			var p struct {
+				Code string `json:"code"`
+			}
+			if json.Unmarshal(row.Payload, &p) == nil && p.Code != "" {
+				codes = append(codes, p.Code)
+			}
+		}
+	}
+	statusByCode := make(map[string]string, len(codes))
+	if len(codes) > 0 {
+		invitations, err := h.q.GetGroupInvitationsByCodes(ctx, codes)
+		if err != nil {
+			log.WarnContext(ctx, "invitation_status_batch_lookup_failed",
+				slog.String("component", "notifications"),
+				slog.Any("err", err),
+			)
+		} else {
+			for _, inv := range invitations {
+				statusByCode[inv.Code] = string(inv.Status)
+			}
+		}
+	}
+
 	items := make([]item, 0, len(rows))
 	for _, row := range rows {
 		it := toItem(row)
 		if it.Type == string(TypeGroupInvitationReceived) {
-			it.InviteStatus = h.inviteStatus(ctx, it.Payload)
+			var p struct {
+				Code string `json:"code"`
+			}
+			if json.Unmarshal(it.Payload, &p) == nil && p.Code != "" {
+				if status, ok := statusByCode[p.Code]; ok {
+					it.InviteStatus = status
+				} else {
+					// Not found in DB means the invitation was deleted.
+					it.InviteStatus = "expired"
+				}
+			}
 		}
 		items = append(items, it)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(listResponse{Items: items, UnreadCount: unread})
-}
-
-// inviteStatus resolves the current status of the invitation referenced by an
-// invitation notification so the client can stop offering accept/decline once it
-// is resolved (or deleted). Returns "expired" when the invitation no longer
-// exists, or "" when the code is missing/unreadable (treated as still actionable).
-func (h *Handler) inviteStatus(ctx context.Context, payload json.RawMessage) string {
-	var p struct {
-		Code string `json:"code"`
-	}
-	if err := json.Unmarshal(payload, &p); err != nil || p.Code == "" {
-		return ""
-	}
-	invitation, err := h.q.GetGroupInvitationByCode(ctx, p.Code)
-	if err != nil {
-		return "expired"
-	}
-	return string(invitation.Status)
 }
 
 // MarkRead marks a single notification read. The recipient is part of the WHERE

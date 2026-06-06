@@ -77,6 +77,7 @@
       "groups": "Groupes",
       "home": "Accueil",
       "menu": "Menu",
+      "report": "Rapport",
       "sessions": "Séances",
       "videos": "Vidéos"
     },
@@ -99,6 +100,75 @@
     "openNavigation": "Ouvrir la navigation",
     "preferences": "Préférences",
     "search": "Rechercher"
+  },
+  "reports": {
+    "expert": { "title": "Rapport expert" },
+    "student": { "title": "Rapport élève" },
+    "description": "{{kind}} pour {{name}} · {{count}} activités, regroupées par groupe › {{leaf}}.",
+    "kind": {
+      "month": "Rapport mensuel",
+      "quarter": "Rapport trimestriel",
+      "year": "Rapport annuel"
+    },
+    "leaf": {
+      "student": "Élève",
+      "expert": "Expert"
+    },
+    "leafCount": {
+      "students": "{{count}} élèves",
+      "experts": "{{count}} experts"
+    },
+    "period": {
+      "label": "Période",
+      "month": "Mois",
+      "quarter": "Trimestre",
+      "year": "Année",
+      "prev": "Période précédente",
+      "next": "Période suivante",
+      "today": "Aujourd'hui"
+    },
+    "stats": {
+      "videos": "Vidéos téléversées",
+      "live": "Coachings en direct",
+      "students": "Élèves actifs",
+      "experts": "Experts actifs",
+      "inGroups": "dans {{count}} groupes"
+    },
+    "unit": {
+      "hour": "h",
+      "minute": "min",
+      "video": "Vidéo",
+      "videos": "Vidéos",
+      "live": "Live",
+      "lives": "Lives"
+    },
+    "event": {
+      "videoUploaded": "Vidéo téléversée",
+      "liveCoaching": "Coaching en direct"
+    },
+    "empty": {
+      "title": "Aucune activité durant cette période",
+      "description": "Aucune vidéo téléversée ni coaching en direct pour {{period}}."
+    },
+    "export": {
+      "label": "Exporter",
+      "csv": "En CSV / Excel",
+      "pdf": "En PDF",
+      "toastTitle": "CSV exporté",
+      "pdfToastTitle": "PDF exporté",
+      "errorTitle": "Échec de l'export PDF",
+      "errorMessage": "Veuillez réessayer.",
+      "toastMessage": "{{count}} entrées · {{period}}",
+      "fileName": "Zeta-Rapport",
+      "total": "Total"
+    },
+    "columns": {
+      "group": "Groupe",
+      "date": "Date",
+      "type": "Type",
+      "description": "Description",
+      "minutes": "Durée (min)"
+    }
   },
   "home": {
     "latestVideos": "Dernières vidéos",

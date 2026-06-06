@@ -502,6 +502,7 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 		slog.String("component", "invitations"),
 		slog.String("user_id", user.ID),
 		slog.String("group_id", groupIDStr),
+		slog.String("invitation_code", invitation.Code),
 	)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -572,12 +573,28 @@ func (h *Handler) DeclineInvitation(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+	} else {
+		// Generic-link/QR invitations are multi-use so their status stays pending for
+		// others. Mark the user's own notification as read so the client stops showing
+		// the accept/decline prompt.
+		if err := h.q.MarkNotificationReadByInviteCode(ctx, db.MarkNotificationReadByInviteCodeParams{
+			RecipientID: user.ID,
+			Code:        []byte(req.Code),
+		}); err != nil {
+			log.WarnContext(ctx, "invitation_decline_notification_dismiss_failed",
+				slog.String("component", "invitations"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			// Not fatal — return 204 regardless.
+		}
 	}
 
 	log.InfoContext(ctx, "invitation_declined",
 		slog.String("component", "invitations"),
 		slog.String("user_id", user.ID),
 		slog.String("group_id", pgutil.UUIDToString(invitation.GroupID)),
+		slog.String("invitation_code", invitation.Code),
 	)
 
 	w.WriteHeader(http.StatusNoContent)

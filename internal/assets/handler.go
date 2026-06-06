@@ -2,6 +2,7 @@ package assets
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -23,20 +24,22 @@ import (
 )
 
 type Handler struct {
-	q      db.Querier
-	mux    MuxClient
-	email  email.Sender
-	workos auth.UserManagement
-	logger *slog.Logger
+	q               db.Querier
+	mux             MuxClient
+	email           email.Sender
+	workos          auth.UserManagement
+	logger          *slog.Logger
+	schedulerSecret string
 }
 
-func NewHandler(q db.Querier, mux MuxClient, email email.Sender, workos auth.UserManagement, logger *slog.Logger) *Handler {
+func NewHandler(q db.Querier, mux MuxClient, email email.Sender, workos auth.UserManagement, logger *slog.Logger, schedulerSecret string) *Handler {
 	return &Handler{
-		q:      q,
-		mux:    mux,
-		email:  email,
-		workos: workos,
-		logger: logger,
+		q:               q,
+		mux:             mux,
+		email:           email,
+		workos:          workos,
+		logger:          logger,
+		schedulerSecret: schedulerSecret,
 	}
 }
 
@@ -158,7 +161,7 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 				slog.String("component", "assets"),
 				slog.String("mux_upload_id", a.MuxUploadID),
 			)
-			pid, err := h.fetchPlaybackIDFromMux(ctx, a.MuxUploadID)
+			pid, duration, err := h.fetchPlaybackIDFromMux(ctx, a.MuxUploadID)
 			if err == nil && pid != "" {
 				playbackID = pid
 				// Update DB so we don't fetch again
@@ -175,6 +178,7 @@ func (h *Handler) ListAssets(w http.ResponseWriter, r *http.Request) {
 						slog.Any("err", err),
 					)
 				}
+				h.persistVideoDuration(ctx, a.MuxUploadID, duration)
 			}
 		}
 
@@ -256,7 +260,7 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 			uploadID = v.MuxUploadID.String
 		}
 		if playbackID == "" && uploadID != "" {
-			pid, err := h.fetchPlaybackIDFromMux(ctx, uploadID)
+			pid, duration, err := h.fetchPlaybackIDFromMux(ctx, uploadID)
 			if err == nil && pid != "" {
 				playbackID = pid
 				h.q.UpdateVideoStatusByUploadID(ctx, db.UpdateVideoStatusByUploadIDParams{
@@ -264,6 +268,24 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 					MuxAssetID:  pgtype.Text{String: "", Valid: false},
 					PlaybackID:  pgtype.Text{String: pid, Valid: true},
 				})
+				h.persistVideoDuration(ctx, uploadID, duration)
+			}
+		} else if uploadID == "" && v.MuxAssetID.Valid && v.MuxAssetID.String != "" {
+			// Coaching-import videos are created with mux_asset_id and no upload ID.
+			// persistVideoDuration (keyed by upload ID) never fires for them, so
+			// capture duration lazily here. SetVideoDurationByID is a no-op if already set.
+			duration, err := h.durationFromMux(ctx, v.MuxAssetID.String, "")
+			if err == nil && duration > 0 {
+				if err := h.q.SetVideoDurationByID(ctx, db.SetVideoDurationByIDParams{
+					ID:              v.ID,
+					DurationSeconds: pgtype.Float8{Float64: duration, Valid: true},
+				}); err != nil {
+					log.ErrorContext(ctx, "video_duration_update_failed",
+						slog.String("component", "assets"),
+						slog.String("mux_asset_id", v.MuxAssetID.String),
+						slog.Any("err", err),
+					)
+				}
 			}
 		}
 
@@ -322,26 +344,144 @@ func isStudent(user *auth.UserContext) bool {
 	return user.Role == permissions.RoleStudent
 }
 
-func (h *Handler) fetchPlaybackIDFromMux(ctx context.Context, uploadID string) (string, error) {
+// fetchPlaybackIDFromMux resolves the public playback ID for an upload and, as a
+// side value, the asset duration in seconds (0 if Mux does not report one yet).
+func (h *Handler) fetchPlaybackIDFromMux(ctx context.Context, uploadID string) (string, float64, error) {
 	upload, err := h.mux.GetDirectUpload(uploadID)
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	if upload.Data.Status == "asset_created" && upload.Data.AssetId != "" {
 		asset, err := h.mux.GetAsset(upload.Data.AssetId)
 		if err != nil {
-			return "", err
+			return "", 0, err
 		}
 
 		for _, pid := range asset.Data.PlaybackIds {
 			if pid.Policy == muxgo.PUBLIC {
-				return pid.Id, nil
+				return pid.Id, asset.Data.Duration, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("playback id not found")
+	return "", 0, fmt.Errorf("playback id not found")
+}
+
+// durationFromMux resolves a video's duration in seconds from whichever Mux
+// identifier is available: the asset id directly, or the upload id (direct
+// uploads, which only carry the upload id until processing completes).
+func (h *Handler) durationFromMux(ctx context.Context, muxAssetID, muxUploadID string) (float64, error) {
+	if muxAssetID != "" {
+		asset, err := h.mux.GetAsset(muxAssetID)
+		if err != nil {
+			return 0, err
+		}
+		return asset.Data.Duration, nil
+	}
+	if muxUploadID != "" {
+		return h.durationFromUpload(ctx, muxUploadID)
+	}
+	return 0, fmt.Errorf("no mux identifier")
+}
+
+// durationFromUpload resolves duration via a direct upload's backing asset.
+// Unlike fetchPlaybackIDFromMux it does not require a public playback id.
+func (h *Handler) durationFromUpload(ctx context.Context, uploadID string) (float64, error) {
+	upload, err := h.mux.GetDirectUpload(uploadID)
+	if err != nil {
+		return 0, err
+	}
+	if upload.Data.AssetId == "" {
+		return 0, fmt.Errorf("upload %s has no asset yet", uploadID)
+	}
+	asset, err := h.mux.GetAsset(upload.Data.AssetId)
+	if err != nil {
+		return 0, err
+	}
+	return asset.Data.Duration, nil
+}
+
+// BackfillVideoDurations fills duration_seconds for existing ready videos that
+// predate duration capture. Internal endpoint, protected by the scheduler secret.
+func (h *Handler) BackfillVideoDurations(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+
+	secret := r.Header.Get("Authorization")
+	if h.schedulerSecret == "" || subtle.ConstantTimeCompare([]byte(secret), []byte("Bearer "+h.schedulerSecret)) != 1 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	const batchSize = 100
+	videos, err := h.q.ListVideosMissingDuration(ctx, batchSize)
+	if err != nil {
+		log.ErrorContext(ctx, "video_duration_backfill_list_failed",
+			slog.String("component", "assets"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to list videos", http.StatusInternalServerError)
+		return
+	}
+
+	updated := 0
+	for _, v := range videos {
+		duration, err := h.durationFromMux(ctx, v.MuxAssetID.String, v.MuxUploadID.String)
+		if err != nil {
+			log.WarnContext(ctx, "video_duration_backfill_fetch_failed",
+				slog.String("component", "assets"),
+				slog.String("mux_asset_id", v.MuxAssetID.String),
+				slog.String("mux_upload_id", v.MuxUploadID.String),
+				slog.Any("err", err),
+			)
+			continue
+		}
+		if duration <= 0 {
+			continue
+		}
+		if err := h.q.SetVideoDurationByID(ctx, db.SetVideoDurationByIDParams{
+			ID:              v.ID,
+			DurationSeconds: pgtype.Float8{Float64: duration, Valid: true},
+		}); err != nil {
+			log.ErrorContext(ctx, "video_duration_backfill_update_failed",
+				slog.String("component", "assets"),
+				slog.Any("err", err),
+			)
+			continue
+		}
+		updated++
+	}
+
+	log.InfoContext(ctx, "video_duration_backfill_completed",
+		slog.String("component", "assets"),
+		slog.Int("scanned", len(videos)),
+		slog.Int("updated", updated),
+	)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"scanned":  len(videos),
+		"updated":  updated,
+		"has_more": len(videos) >= batchSize,
+	})
+}
+
+// persistVideoDuration stores the Mux-reported duration for a video, keyed by its
+// upload ID. It is best-effort: failures are logged but never block the request.
+func (h *Handler) persistVideoDuration(ctx context.Context, uploadID string, duration float64) {
+	if uploadID == "" || duration <= 0 {
+		return
+	}
+	if err := h.q.SetVideoDurationByUploadID(ctx, db.SetVideoDurationByUploadIDParams{
+		MuxUploadID:     pgtype.Text{String: uploadID, Valid: true},
+		DurationSeconds: pgtype.Float8{Float64: duration, Valid: true},
+	}); err != nil {
+		logger.From(ctx, h.logger).ErrorContext(ctx, "video_duration_update_failed",
+			slog.String("component", "assets"),
+			slog.String("mux_upload_id", uploadID),
+			slog.Any("err", err),
+		)
+	}
 }
 
 func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {

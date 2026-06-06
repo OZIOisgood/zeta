@@ -31,6 +31,8 @@ describe('AppShellStore', () => {
       'videos',
       'groups',
       'sessions',
+      'reports-expert',
+      'reports-student',
     ]);
     expect(store.openWorkCount()).toBe(3);
   });
