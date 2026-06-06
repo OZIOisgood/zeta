@@ -154,7 +154,6 @@
       "label": "Exportieren",
       "csv": "Als CSV / Excel",
       "pdf": "Als PDF",
-      "soon": "bald",
       "toastTitle": "CSV exportiert",
       "pdfToastTitle": "PDF exportiert",
       "errorTitle": "PDF-Export fehlgeschlagen",
