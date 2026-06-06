@@ -23,6 +23,8 @@ const (
 	CoachingBookingsRead       = "coaching:bookings:read"
 	CoachingBookingsManage     = "coaching:bookings:manage"
 	CoachingVideoConnect       = "coaching:video:connect"
+
+	ReportsRead = "reports:read"
 )
 
 // Roles

@@ -95,10 +95,10 @@ func TestListEnrichesInvitationStatus(t *testing.T) {
 
 	q.EXPECT().ListNotifications(gomock.Any(), db.ListNotificationsParams{RecipientID: "user-1", Limit: listLimit}).Return(rows, nil)
 	q.EXPECT().CountUnreadNotifications(gomock.Any(), "user-1").Return(int64(1), nil)
-	// The referenced invitation was already accepted — the client should hide the
-	// accept/decline actions for this row.
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "ZP-1").
-		Return(db.GroupInvitation{Status: db.InvitationStatusAccepted}, nil)
+	// Batch lookup: the referenced invitation was already accepted — the client
+	// should hide the accept/decline actions for this row.
+	q.EXPECT().GetGroupInvitationsByCodes(gomock.Any(), []string{"ZP-1"}).
+		Return([]db.GroupInvitation{{Code: "ZP-1", Status: db.InvitationStatusAccepted}}, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/notifications", nil)
 	req = req.WithContext(testUserCtx(req.Context(), "user-1"))

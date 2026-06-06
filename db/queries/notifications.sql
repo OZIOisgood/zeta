@@ -26,3 +26,11 @@ WHERE id = $1 AND recipient_id = $2 AND read_at IS NULL;
 UPDATE notifications
 SET read_at = NOW()
 WHERE recipient_id = $1 AND read_at IS NULL;
+
+-- name: MarkNotificationReadByInviteCode :exec
+UPDATE notifications
+SET read_at = NOW()
+WHERE recipient_id = @recipient_id
+  AND type = 'group_invitation_received'
+  AND payload->>'code' = @code
+  AND read_at IS NULL;

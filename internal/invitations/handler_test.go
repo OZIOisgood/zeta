@@ -307,9 +307,13 @@ func TestDeclineInvitationKeepsGenericInvitationPending(t *testing.T) {
 		Code:    "AbC123",
 		Status:  db.InvitationStatusPending,
 	}, nil)
-	// Generic link/QR invitation (no email): status must NOT change so the shared
-	// link stays usable. No UpdateGroupInvitationStatus expectation is registered,
-	// so gomock fails the test if the handler tries to mutate it.
+	// Generic link/QR invitation (no email): invitation status must NOT change so
+	// the shared link stays usable for others. The handler must mark the user's own
+	// notification as read so the UI hides the accept/decline prompt.
+	q.EXPECT().MarkNotificationReadByInviteCode(gomock.Any(), db.MarkNotificationReadByInviteCodeParams{
+		RecipientID: "user-2",
+		Code:        []byte("AbC123"),
+	}).Return(nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/groups/invitations/decline", strings.NewReader(`{"code":"AbC123"}`))
 	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{ID: "user-2"}))

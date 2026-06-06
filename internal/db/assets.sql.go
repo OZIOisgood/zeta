@@ -44,7 +44,7 @@ func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset
 }
 
 const createVideo = `-- name: CreateVideo :one
-INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at
+INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at, duration_seconds
 `
 
 type CreateVideoParams struct {
@@ -65,6 +65,7 @@ func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DurationSeconds,
 	)
 	return i, err
 }
@@ -72,7 +73,7 @@ func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video
 const createVideoFromMuxAsset = `-- name: CreateVideoFromMuxAsset :one
 INSERT INTO videos (asset_id, mux_upload_id, mux_asset_id, playback_id, status)
 VALUES ($1, '', $2, $3, 'ready')
-RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at
+RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at, duration_seconds
 `
 
 type CreateVideoFromMuxAssetParams struct {
@@ -93,6 +94,7 @@ func (q *Queries) CreateVideoFromMuxAsset(ctx context.Context, arg CreateVideoFr
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DurationSeconds,
 	)
 	return i, err
 }
@@ -254,6 +256,44 @@ func (q *Queries) GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams
 	return i, err
 }
 
+const listVideosMissingDuration = `-- name: ListVideosMissingDuration :many
+SELECT id, mux_asset_id, mux_upload_id
+FROM videos
+WHERE status = 'ready'
+  AND duration_seconds IS NULL
+  AND (mux_asset_id <> '' OR mux_upload_id <> '')
+ORDER BY created_at
+LIMIT $1
+`
+
+type ListVideosMissingDurationRow struct {
+	ID          pgtype.UUID `json:"id"`
+	MuxAssetID  pgtype.Text `json:"mux_asset_id"`
+	MuxUploadID pgtype.Text `json:"mux_upload_id"`
+}
+
+// Ready videos without a captured duration. Either identifier may be empty:
+// direct uploads carry mux_upload_id, coaching imports carry mux_asset_id.
+func (q *Queries) ListVideosMissingDuration(ctx context.Context, limit int32) ([]ListVideosMissingDurationRow, error) {
+	rows, err := q.db.Query(ctx, listVideosMissingDuration, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListVideosMissingDurationRow
+	for rows.Next() {
+		var i ListVideosMissingDurationRow
+		if err := rows.Scan(&i.ID, &i.MuxAssetID, &i.MuxUploadID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listVisibleAssets = `-- name: ListVisibleAssets :many
 SELECT
     a.id,
@@ -346,6 +386,38 @@ func (q *Queries) ListVisibleAssets(ctx context.Context, arg ListVisibleAssetsPa
 		return nil, err
 	}
 	return items, nil
+}
+
+const setVideoDurationByID = `-- name: SetVideoDurationByID :exec
+UPDATE videos
+SET duration_seconds = $2, updated_at = NOW()
+WHERE id = $1 AND duration_seconds IS NULL
+`
+
+type SetVideoDurationByIDParams struct {
+	ID              pgtype.UUID   `json:"id"`
+	DurationSeconds pgtype.Float8 `json:"duration_seconds"`
+}
+
+func (q *Queries) SetVideoDurationByID(ctx context.Context, arg SetVideoDurationByIDParams) error {
+	_, err := q.db.Exec(ctx, setVideoDurationByID, arg.ID, arg.DurationSeconds)
+	return err
+}
+
+const setVideoDurationByUploadID = `-- name: SetVideoDurationByUploadID :exec
+UPDATE videos
+SET duration_seconds = $2, updated_at = NOW()
+WHERE mux_upload_id = $1 AND duration_seconds IS NULL
+`
+
+type SetVideoDurationByUploadIDParams struct {
+	MuxUploadID     pgtype.Text   `json:"mux_upload_id"`
+	DurationSeconds pgtype.Float8 `json:"duration_seconds"`
+}
+
+func (q *Queries) SetVideoDurationByUploadID(ctx context.Context, arg SetVideoDurationByUploadIDParams) error {
+	_, err := q.db.Exec(ctx, setVideoDurationByUploadID, arg.MuxUploadID, arg.DurationSeconds)
+	return err
 }
 
 const updateAssetStatus = `-- name: UpdateAssetStatus :exec

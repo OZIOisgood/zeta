@@ -98,3 +98,24 @@ UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated
 
 -- name: UpdateVideoStatusByUploadID :exec
 UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated_at = NOW() WHERE mux_upload_id = $1;
+
+-- name: SetVideoDurationByUploadID :exec
+UPDATE videos
+SET duration_seconds = $2, updated_at = NOW()
+WHERE mux_upload_id = $1 AND duration_seconds IS NULL;
+
+-- name: ListVideosMissingDuration :many
+-- Ready videos without a captured duration. Either identifier may be empty:
+-- direct uploads carry mux_upload_id, coaching imports carry mux_asset_id.
+SELECT id, mux_asset_id, mux_upload_id
+FROM videos
+WHERE status = 'ready'
+  AND duration_seconds IS NULL
+  AND (mux_asset_id <> '' OR mux_upload_id <> '')
+ORDER BY created_at
+LIMIT $1;
+
+-- name: SetVideoDurationByID :exec
+UPDATE videos
+SET duration_seconds = $2, updated_at = NOW()
+WHERE id = $1 AND duration_seconds IS NULL;
