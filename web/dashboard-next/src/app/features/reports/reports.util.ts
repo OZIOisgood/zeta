@@ -161,3 +161,35 @@ export function videoClock(totalSec: number): string {
   const s = total % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
+
+// ── Table flattening (CSV / PDF export) ──────────────────────────────────────
+
+export type ReportRowOptions = {
+  // Localized "video" / "live" labels for the Type column.
+  videoLabel: string;
+  liveLabel: string;
+  // Formats an event's ISO instant into a display date (locale-aware).
+  formatDate: (iso: string) => string;
+};
+
+// Flattens the nested report into export rows in render order:
+// [group, leaf, date, type, title, minutes]. Pure — the caller supplies
+// localized labels and the date formatter so this stays Angular-free.
+export function reportRows(report: Report, opts: ReportRowOptions): string[][] {
+  const rows: string[][] = [];
+  for (const group of report.groups) {
+    for (const leaf of group.leaves) {
+      for (const event of leaf.events) {
+        rows.push([
+          group.name,
+          leaf.name,
+          opts.formatDate(event.at),
+          event.kind === 'video' ? opts.videoLabel : opts.liveLabel,
+          event.title,
+          `${Math.round(event.duration_seconds / 60)}`,
+        ]);
+      }
+    }
+  }
+  return rows;
+}

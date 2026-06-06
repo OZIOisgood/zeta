@@ -5,6 +5,7 @@ import {
   durationHM,
   eventInPeriod,
   isCurrentPeriod,
+  reportRows,
   stepCursor,
   videoClock,
 } from './reports.util';
@@ -102,6 +103,39 @@ describe('reports.util', () => {
     it('formats a video clock as m:ss', () => {
       expect(videoClock(288)).toBe('4:48');
       expect(videoClock(65)).toBe('1:05');
+    });
+  });
+
+  describe('reportRows', () => {
+    it('flattens groups → leaves → events into [group, leaf, date, type, title, minutes] rows, newest first', () => {
+      const events: ReportEvent[] = [
+        ev({
+          kind: 'video',
+          group: { id: 'g1', name: 'Beta' },
+          title: 'Clip A',
+          at: '2026-06-03T10:00:00Z',
+          duration_seconds: 90,
+        }),
+        ev({
+          kind: 'live',
+          group: { id: 'g1', name: 'Beta' },
+          title: 'Session A',
+          at: '2026-06-04T10:00:00Z',
+          duration_seconds: 1800,
+        }),
+      ];
+      const report = buildReport('expert', events, 'month', { year: 2026, month: 5 });
+
+      const rows = reportRows(report, {
+        videoLabel: 'Video',
+        liveLabel: 'Live',
+        formatDate: () => '03.06.2026',
+      });
+
+      expect(rows).toEqual([
+        ['Beta', 'Student One', '03.06.2026', 'Live', 'Session A', '30'],
+        ['Beta', 'Student One', '03.06.2026', 'Video', 'Clip A', '2'],
+      ]);
     });
   });
 });
