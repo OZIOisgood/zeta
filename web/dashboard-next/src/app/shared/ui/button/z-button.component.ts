@@ -28,10 +28,14 @@ export class ZButtonComponent {
   readonly disabled = input(false);
   readonly ariaLabel = input<string | null>(null);
   readonly iconOnly = input(false);
+  readonly mobileFullWidth = input(false);
+  readonly nowrap = input(false);
   readonly pressed = output<void>();
 
   protected readonly classes = computed(() => [
     'inline-flex items-center justify-center gap-2 rounded-md border font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+    this.mobileFullWidth() ? 'w-full sm:w-auto' : '',
+    this.nowrap() ? 'whitespace-nowrap' : '',
     this.sizeClasses(),
     this.variantClasses(),
   ]);

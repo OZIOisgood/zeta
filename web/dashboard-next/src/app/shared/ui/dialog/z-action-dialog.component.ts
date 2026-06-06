@@ -88,6 +88,8 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
                 type="button"
                 [variant]="cancelVariant()"
                 [disabled]="cancelDisabled()"
+                [mobileFullWidth]="true"
+                [nowrap]="true"
                 (pressed)="onCancel()"
               >
                 {{ cancelLabel() }}
@@ -98,6 +100,8 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
                 type="button"
                 [variant]="resolvedConfirmVariant()"
                 [disabled]="confirmDisabled()"
+                [mobileFullWidth]="true"
+                [nowrap]="true"
                 (pressed)="onConfirm()"
               >
                 <ng-content select="[z-dialog-confirm-icon]" />
