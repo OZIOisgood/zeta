@@ -537,5 +537,46 @@
     "initials": "ZT",
     "name": "Zeta Team",
     "role": "Zeta"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "open": "Benachrichtigungen öffnen",
+    "markAllRead": "Alle als gelesen markieren",
+    "empty": "Noch keine Benachrichtigungen",
+    "emptyDescription": "Du bist auf dem neuesten Stand.",
+    "today": "Heute",
+    "earlier": "Früher",
+    "unread": "Ungelesen",
+    "viewAll": "Alle Benachrichtigungen ansehen",
+    "invite": {
+      "accept": "Annehmen",
+      "decline": "Ablehnen",
+      "accepted": "Angenommen — du bist „{{group}}“ beigetreten.",
+      "declined": "Einladung abgelehnt.",
+      "errorTitle": "Aktion fehlgeschlagen",
+      "acceptError": "Die Einladung konnte nicht angenommen werden. Bitte versuche es erneut.",
+      "declineError": "Die Einladung konnte nicht abgelehnt werden. Bitte versuche es erneut.",
+      "expired": "Diese Einladung ist nicht mehr verfügbar."
+    },
+    "page": {
+      "description": "Alle Ereignisse rund um deine Videos, Gruppen und Termine.",
+      "filtersLabel": "Benachrichtigungen filtern",
+      "tabs": {
+        "all": "Alle",
+        "unread": "Ungelesen"
+      },
+      "allRead": "Alles gelesen",
+      "emptyDescription": "Neue Ereignisse erscheinen hier."
+    },
+    "types": {
+      "groupInvitationReceived": "{{inviter}} hat dich zu {{group}} eingeladen",
+      "groupInvitationReceivedNoActor": "Du wurdest zu {{group}} eingeladen",
+      "groupMemberJoined": "{{member}} ist {{group}} beigetreten",
+      "videoReviewed": "Dein Video „{{video}}“ wurde bewertet",
+      "videoUploaded": "{{uploader}} hat ein Video zu {{group}} hochgeladen",
+      "videoUploadedNoGroup": "{{uploader}} hat ein Video für dich hochgeladen",
+      "coachingBookingCreated": "{{student}} hat einen Termin mit dir gebucht",
+      "generic": "Du hast eine neue Benachrichtigung"
+    }
   }
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/i18n"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/OZIOisgood/zeta/internal/preferences"
@@ -191,6 +192,37 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 				)
 			}
 		}(emailAddress)
+
+		// In-app notification — only possible when the invited email already maps
+		// to a registered user (generic link/QR invites have no known recipient).
+		go func(to, inviter, inviteCode string) {
+			bgCtx := context.Background()
+			bgLog := h.logger.With(slog.String("component", "invitations"))
+
+			users, err := h.workos.ListUsers(bgCtx, usermanagement.ListUsersOpts{Email: to})
+			if err != nil {
+				bgLog.ErrorContext(bgCtx, "invitation_notification_user_lookup_failed", slog.Any("err", err))
+				return
+			}
+			if len(users.Data) == 0 {
+				return // invitee has no account yet — email invite only
+			}
+			recipientID := users.Data[0].ID
+
+			group, err := h.q.GetGroup(bgCtx, pgGroupID)
+			if err != nil {
+				bgLog.ErrorContext(bgCtx, "invitation_notification_group_fetch_failed", slog.Any("err", err))
+				return
+			}
+
+			notifications.Record(bgCtx, h.q, h.logger, recipientID, notifications.TypeGroupInvitationReceived,
+				notifications.GroupInvitationReceivedPayload{
+					GroupID:     pgutil.UUIDToString(pgGroupID),
+					GroupName:   group.Name,
+					InviterName: strings.TrimSpace(inviter),
+					Code:        inviteCode,
+				})
+		}(emailAddress, inviterName, code)
 	}
 
 	log.InfoContext(ctx, "invitation_created",
@@ -350,6 +382,30 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// In-app notification for the group owner that a new member joined. Fires for
+	// every join (link/QR or email invite), independent of email preferences.
+	joinerName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+	go func() {
+		bgCtx := context.Background()
+		group, err := h.q.GetGroup(bgCtx, invitation.GroupID)
+		if err != nil {
+			h.logger.ErrorContext(bgCtx, "member_joined_notification_group_fetch_failed",
+				slog.String("component", "invitations"),
+				slog.Any("err", err),
+			)
+			return
+		}
+		if group.OwnerID == user.ID {
+			return
+		}
+		notifications.Record(bgCtx, h.q, h.logger, group.OwnerID, notifications.TypeGroupMemberJoined,
+			notifications.GroupMemberJoinedPayload{
+				GroupID:    pgutil.UUIDToString(invitation.GroupID),
+				GroupName:  group.Name,
+				MemberName: strings.TrimSpace(joinerName),
+			})
+	}()
+
 	if invitationHasEmail(invitation) {
 		// Email-specific invitations are single-use. Generic link/QR invitations
 		// remain pending so multiple users can join from the same shared link.
@@ -452,6 +508,79 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"group_id": groupIDStr,
 	})
+}
+
+// DeclineInvitation lets the recipient explicitly turn down a group invitation.
+// Only email-specific (single-recipient) invitations are marked declined; generic
+// link/QR invitations are shared and must stay usable for others, so the caller
+// just dismisses their own notification.
+func (h *Handler) DeclineInvitation(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.Code == "" {
+		http.Error(w, "Code is required", http.StatusBadRequest)
+		return
+	}
+
+	invitation, err := h.q.GetGroupInvitationByCode(ctx, req.Code)
+	if err != nil {
+		log.WarnContext(ctx, "invitation_decline_not_found",
+			slog.String("component", "invitations"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Invitation not found", http.StatusNotFound)
+		return
+	}
+
+	if invitationHasEmail(invitation) {
+		// Email-specific invitations are addressed to a single recipient. Only that
+		// recipient may decline them — otherwise anyone holding the code could block
+		// the real invitee. Respond 404 (not 403) so a non-recipient cannot use this
+		// endpoint as an oracle to confirm a code exists.
+		if !strings.EqualFold(strings.TrimSpace(invitation.Email.String), strings.TrimSpace(user.Email)) {
+			log.WarnContext(ctx, "invitation_decline_recipient_mismatch",
+				slog.String("component", "invitations"),
+				slog.String("user_id", user.ID),
+			)
+			http.Error(w, "Invitation not found", http.StatusNotFound)
+			return
+		}
+		if invitation.Status == db.InvitationStatusPending {
+			if err := h.q.UpdateGroupInvitationStatus(ctx, db.UpdateGroupInvitationStatusParams{
+				ID:     invitation.ID,
+				Status: db.InvitationStatusDeclined,
+			}); err != nil {
+				log.ErrorContext(ctx, "invitation_decline_status_update_failed",
+					slog.String("component", "invitations"),
+					slog.String("user_id", user.ID),
+					slog.Any("err", err),
+				)
+				http.Error(w, "Failed to decline invitation", http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+	log.InfoContext(ctx, "invitation_declined",
+		slog.String("component", "invitations"),
+		slog.String("user_id", user.ID),
+		slog.String("group_id", pgutil.UUIDToString(invitation.GroupID)),
+	)
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) GetInvitationQR(w http.ResponseWriter, r *http.Request) {

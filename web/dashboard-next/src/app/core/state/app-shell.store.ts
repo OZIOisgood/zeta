@@ -34,6 +34,7 @@ type AppShellState = {
   activeSection: string;
   isNavigationOpen: boolean;
   isUserMenuOpen: boolean;
+  isNotificationsOpen: boolean;
   isToastVisible: boolean;
   toastMessage: string;
   toastTitle: string;
@@ -49,6 +50,7 @@ const initialState: AppShellState = {
   activeSection: 'home',
   isNavigationOpen: false,
   isUserMenuOpen: false,
+  isNotificationsOpen: false,
   isToastVisible: false,
   toastMessage: '',
   toastTitle: '',
@@ -132,6 +134,15 @@ export const AppShellStore = signalStore(
       closeUserMenu(): void {
         patchState(store, { isUserMenuOpen: false });
       },
+      closeNotifications(): void {
+        patchState(store, { isNotificationsOpen: false });
+      },
+      toggleNotifications(): void {
+        patchState(store, {
+          isNotificationsOpen: !store.isNotificationsOpen(),
+          isUserMenuOpen: false,
+        });
+      },
       dismissToast,
       showToast(title: string, message: string, type: ToastType = 'info'): void {
         dismissToast();
@@ -176,7 +187,10 @@ export const AppShellStore = signalStore(
         patchState(store, { isNavigationOpen: !store.isNavigationOpen() });
       },
       toggleUserMenu(): void {
-        patchState(store, { isUserMenuOpen: !store.isUserMenuOpen() });
+        patchState(store, {
+          isUserMenuOpen: !store.isUserMenuOpen(),
+          isNotificationsOpen: false,
+        });
       },
     };
   }),

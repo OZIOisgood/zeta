@@ -120,21 +120,31 @@ func (q *Queries) DeleteVideoReview(ctx context.Context, arg DeleteVideoReviewPa
 }
 
 const getAssetOwnerByVideoID = `-- name: GetAssetOwnerByVideoID :one
-SELECT a.owner_id, a.name
+SELECT a.id AS asset_id, a.owner_id, a.name, a.group_id, COALESCE(g.name, '') AS group_name
 FROM assets a
 INNER JOIN videos v ON v.asset_id = a.id
+LEFT JOIN groups g ON g.id = a.group_id
 WHERE v.id = $1
 `
 
 type GetAssetOwnerByVideoIDRow struct {
-	OwnerID string `json:"owner_id"`
-	Name    string `json:"name"`
+	AssetID   pgtype.UUID `json:"asset_id"`
+	OwnerID   string      `json:"owner_id"`
+	Name      string      `json:"name"`
+	GroupID   pgtype.UUID `json:"group_id"`
+	GroupName string      `json:"group_name"`
 }
 
 func (q *Queries) GetAssetOwnerByVideoID(ctx context.Context, id pgtype.UUID) (GetAssetOwnerByVideoIDRow, error) {
 	row := q.db.QueryRow(ctx, getAssetOwnerByVideoID, id)
 	var i GetAssetOwnerByVideoIDRow
-	err := row.Scan(&i.OwnerID, &i.Name)
+	err := row.Scan(
+		&i.AssetID,
+		&i.OwnerID,
+		&i.Name,
+		&i.GroupID,
+		&i.GroupName,
+	)
 	return i, err
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/i18n"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/OZIOisgood/zeta/internal/preferences"
@@ -459,6 +460,17 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			)
 			return
 		}
+
+		// In-app notification for the owner (the reviewing expert/coach). Recorded
+		// independently of email preferences, which only gate the email below.
+		notifications.Record(bgCtx, h.q, h.logger, group.OwnerID, notifications.TypeVideoUploaded,
+			notifications.VideoUploadedPayload{
+				AssetID:      pgutil.UUIDToString(asset.ID),
+				VideoTitle:   asset.Name,
+				GroupID:      pgutil.UUIDToString(asset.GroupID),
+				GroupName:    group.Name,
+				UploaderName: fmt.Sprintf("%s %s", userCtx.FirstName, userCtx.LastName),
+			})
 
 		if !preferences.AllowsUserEmail(bgCtx, h.q, h.logger, group.OwnerID, preferences.EmailCategoryAssetUploads) {
 			bgLog.InfoContext(bgCtx, "asset_notification_skipped_by_preferences",

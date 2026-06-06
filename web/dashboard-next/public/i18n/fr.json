@@ -537,5 +537,46 @@
     "initials": "ZT",
     "name": "Équipe Zeta",
     "role": "Zeta"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Ouvrir les notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "empty": "Aucune notification",
+    "emptyDescription": "Vous êtes à jour.",
+    "today": "Aujourd'hui",
+    "earlier": "Plus tôt",
+    "unread": "Non lues",
+    "viewAll": "Voir toutes les notifications",
+    "invite": {
+      "accept": "Accepter",
+      "decline": "Refuser",
+      "accepted": "Acceptée — vous avez rejoint « {{group}} ».",
+      "declined": "Invitation refusée.",
+      "errorTitle": "Action échouée",
+      "acceptError": "L'invitation n'a pas pu être acceptée. Veuillez réessayer.",
+      "declineError": "L'invitation n'a pas pu être refusée. Veuillez réessayer.",
+      "expired": "Cette invitation n'est plus disponible."
+    },
+    "page": {
+      "description": "Tout ce qui concerne vos vidéos, groupes et séances.",
+      "filtersLabel": "Filtrer les notifications",
+      "tabs": {
+        "all": "Toutes",
+        "unread": "Non lues"
+      },
+      "allRead": "Tout est à jour",
+      "emptyDescription": "Les nouveaux événements apparaîtront ici."
+    },
+    "types": {
+      "groupInvitationReceived": "{{inviter}} vous a invité à rejoindre {{group}}",
+      "groupInvitationReceivedNoActor": "Vous avez été invité à rejoindre {{group}}",
+      "groupMemberJoined": "{{member}} a rejoint {{group}}",
+      "videoReviewed": "Votre vidéo « {{video}} » a été évaluée",
+      "videoUploaded": "{{uploader}} a téléversé une vidéo dans {{group}}",
+      "videoUploadedNoGroup": "{{uploader}} a téléversé une vidéo pour vous",
+      "coachingBookingCreated": "{{student}} a réservé une séance avec vous",
+      "generic": "Vous avez une nouvelle notification"
+    }
   }
 }

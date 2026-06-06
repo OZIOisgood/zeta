@@ -19,6 +19,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/invitations"
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/reviews"
 	"github.com/OZIOisgood/zeta/internal/users"
 	"github.com/go-chi/chi/v5"
@@ -76,6 +77,12 @@ func (s *Server) routes() {
 	invitationsHandler := invitations.NewHandler(queries, emailService, workosClient, s.Logger, frontendBaseURL())
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
+
+	// In-app notifications: a per-instance hub fed by a Postgres LISTEN/NOTIFY
+	// listener (started below) delivers events to connected SSE clients.
+	notificationsHub := notifications.NewHub()
+	notificationsHandler := notifications.NewHandler(queries, notificationsHub, s.Logger)
+	go notifications.NewListener(s.Pool, queries, notificationsHub, s.Logger).Run(context.Background())
 	recordingEnabled := parseBool(os.Getenv("AGORA_CLOUD_RECORDING_ENABLED"))
 	var recordingClient coaching.RecordingClient
 	var recordingStore coaching.RecordingObjectStore
@@ -168,7 +175,9 @@ func (s *Server) routes() {
 			r.Get("/{groupID}/invitations/{invitationID}/qr", invitationsHandler.GetInvitationQR)
 			r.Get("/invitations/{code}", invitationsHandler.GetInvitationInfo)
 			r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)
+			r.Post("/invitations/decline", invitationsHandler.DeclineInvitation)
 		})
+		r.Route("/notifications", notificationsHandler.RegisterRoutes)
 		coachingHandler.RegisterRoutes(r)
 	})
 
