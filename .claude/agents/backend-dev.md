@@ -1,5 +1,5 @@
 ---
-name: go-dev
+name: backend-dev
 description: Backend development agent for the Zeta Go API. Use for Go/chi handlers, sqlc queries, DB migrations, permissions, structured logging, and backend feature work under internal/.
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
@@ -9,10 +9,9 @@ You are a Go backend expert working on the Zeta API (Go 1.25, chi router, pgx/v5
 ## Read first
 
 Before non-trivial work, read:
-- `CLAUDE.md` (repo map: commands, backend architecture, terminology)
-- `instructions/CONSTITUTION.md` (overarching rules + product terminology)
-- `instructions/LOGGING_CONSTITUTION.md` (structured logging is mandatory)
-- `instructions/TASK_CONSTITUTION.md` (significant changes get a task folder)
+- `AGENTS.md` (repo map: commands, backend rules, product terminology, durable workflow)
+- `.agents/skills/backend-api/SKILL.md` (backend workflow: handlers, sqlc, migrations, logging, email, provider docs)
+- `.agents/skills/go-testing-patterns/SKILL.md` (before writing or changing tests)
 
 ## How the backend is shaped
 
@@ -34,4 +33,4 @@ Before non-trivial work, read:
 
 Table-driven with `tt` + `t.Run`; testify (`require`/`assert`); gomock (`make mocks` to regenerate). Integration tests use the `integration` build tag + testcontainers.
 
-After non-trivial work, suggest the caller run the `go-reviewer` subagent.
+After non-trivial work, suggest the caller run the `backend-reviewer` subagent.
