@@ -20,11 +20,14 @@ import { AppShellStore } from '../../core/state/app-shell.store';
 import { ReportsStore } from '../../features/reports/reports.store';
 import {
   Granularity,
+  ReportRowOptions,
   Totals,
   durationHM,
   quarterOf,
+  reportRows,
   videoClock,
 } from '../../features/reports/reports.util';
+import { buildReportDoc } from '../../features/reports/reports.pdf';
 import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
@@ -103,11 +106,10 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
               <button
                 type="button"
                 role="menuitem"
-                disabled
-                class="flex w-full cursor-not-allowed items-center justify-between gap-2 px-3 py-2 text-left text-sm opacity-60"
+                class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-[var(--z-surface-warm)]"
+                (click)="exportPdf()"
               >
                 {{ 'reports.export.pdf' | transloco }}
-                <z-badge tone="warning">{{ 'reports.export.soon' | transloco }}</z-badge>
               </button>
             </div>
           }
@@ -560,40 +562,36 @@ export class ReportsPageComponent {
       .join('');
   }
 
+  // ── Export helpers (shared by CSV + PDF) ──
+  private reportRowOptions(): ReportRowOptions {
+    return {
+      videoLabel: this.transloco.translate('reports.unit.video'),
+      liveLabel: this.transloco.translate('reports.unit.live'),
+      formatDate: (iso) =>
+        this.dateTime.formatInstantDate(iso, { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    };
+  }
+
+  private exportColumns(): string[] {
+    return [
+      this.transloco.translate('reports.columns.group'),
+      this.transloco.translate(this.isExpert() ? 'reports.leaf.student' : 'reports.leaf.expert'),
+      this.transloco.translate('reports.columns.date'),
+      this.transloco.translate('reports.columns.type'),
+      this.transloco.translate('reports.columns.description'),
+      this.transloco.translate('reports.columns.minutes'),
+    ];
+  }
+
+  private exportFileName(extension: 'csv' | 'pdf'): string {
+    const prefix = this.transloco.translate('reports.export.fileName');
+    return `${prefix}_${this.store.viewer()?.name ?? 'report'}_${this.periodLabel()}.${extension}`;
+  }
+
   // ── CSV export ──
   protected exportCsv(): void {
     this.closeMenu();
-    const rows: string[][] = [
-      [
-        this.transloco.translate('reports.columns.group'),
-        this.transloco.translate(this.isExpert() ? 'reports.leaf.student' : 'reports.leaf.expert'),
-        this.transloco.translate('reports.columns.date'),
-        this.transloco.translate('reports.columns.type'),
-        this.transloco.translate('reports.columns.description'),
-        this.transloco.translate('reports.columns.minutes'),
-      ],
-    ];
-    for (const group of this.report().groups) {
-      for (const leaf of group.leaves) {
-        for (const event of leaf.events) {
-          rows.push([
-            group.name,
-            leaf.name,
-            this.dateTime.formatInstantDate(event.at, {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            }),
-            this.transloco.translate(
-              event.kind === 'video' ? 'reports.unit.video' : 'reports.unit.live',
-            ),
-            event.title,
-            `${Math.round(event.duration_seconds / 60)}`,
-          ]);
-        }
-      }
-    }
-
+    const rows = [this.exportColumns(), ...reportRows(this.report(), this.reportRowOptions())];
     const csv =
       '﻿' +
       rows
@@ -603,13 +601,41 @@ export class ReportsPageComponent {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const prefix = this.transloco.translate('reports.export.fileName');
-    link.download = `${prefix}_${this.store.viewer()?.name ?? 'report'}_${this.periodLabel()}.csv`;
+    link.download = this.exportFileName('csv');
     link.click();
     URL.revokeObjectURL(url);
 
     this.shell.showToast(
       this.transloco.translate('reports.export.toastTitle'),
+      this.transloco.translate('reports.export.toastMessage', {
+        count: this.report().count,
+        period: this.periodLabel(),
+      }),
+      'success',
+    );
+  }
+
+  // ── PDF export ──
+  protected async exportPdf(): Promise<void> {
+    this.closeMenu();
+    const rows = reportRows(this.report(), this.reportRowOptions());
+    const doc = buildReportDoc(rows, {
+      title: this.transloco.translate(this.title()),
+      subtitle: `${this.store.viewer()?.name ?? ''} · ${this.periodLabel()}`,
+      columns: this.exportColumns(),
+    });
+
+    // Lazy-loaded so pdfmake (+ its fonts) never enters the main bundle.
+    const pdfMake = (await import('pdfmake/build/pdfmake')).default;
+    const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
+    (pdfMake as unknown as { vfs: unknown }).vfs =
+      (pdfFonts as { pdfMake?: { vfs: unknown }; vfs?: unknown }).pdfMake?.vfs ??
+      (pdfFonts as { vfs?: unknown }).vfs;
+
+    pdfMake.createPdf(doc).download(this.exportFileName('pdf'));
+
+    this.shell.showToast(
+      this.transloco.translate('reports.export.pdfToastTitle'),
       this.transloco.translate('reports.export.toastMessage', {
         count: this.report().count,
         period: this.periodLabel(),
