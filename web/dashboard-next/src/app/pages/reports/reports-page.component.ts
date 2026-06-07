@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { filter, map } from 'rxjs';
+import { map } from 'rxjs';
 import {
   LucideCalendarDays,
   LucideChartColumn,
@@ -378,16 +378,17 @@ export class ReportsPageComponent {
   private readonly dateTime = inject(DashboardDateTimeService);
   private readonly transloco = inject(TranslocoService);
   private readonly translationEvents = toSignal(this.transloco.events$, { initialValue: null });
-  // True once the active language file has loaded. Synchronous translate() calls
-  // in the computeds below run during the first render — before the lang JSON is
-  // fetched — which logs spurious "Missing translation" warnings. Gating on this
-  // suppresses that startup race; the computeds re-run via translationEvents once
-  // loading completes.
+  // True once the active language file is loaded. The label computeds below call
+  // translate() synchronously; gating on this keeps them blank (rather than logging
+  // "Missing translation") until the JSON is available, then re-runs them. We derive
+  // it from selectTranslation(), which replays the cached load *synchronously* when
+  // the language is already loaded — the usual case when navigating to this lazy
+  // route — and re-emits on language change. (An earlier version waited for the
+  // one-shot translationLoadSuccess event, which had typically already fired before
+  // this page subscribed, leaving the signal stuck at false and every gated label
+  // permanently empty.)
   private readonly translationsReady = toSignal(
-    this.transloco.events$.pipe(
-      filter((event) => event.type === 'translationLoadSuccess'),
-      map(() => true),
-    ),
+    this.transloco.selectTranslation().pipe(map(() => true)),
     { initialValue: false },
   );
 
