@@ -13,6 +13,8 @@ type IconButtonSize = 'sm' | 'md';
       ngpButton
       type="button"
       [attr.aria-label]="label()"
+      [attr.aria-expanded]="expanded()"
+      [attr.aria-haspopup]="hasPopup()"
       [disabled]="disabled()"
       [ngClass]="classes()"
       (click)="pressed.emit()"
@@ -26,6 +28,10 @@ export class ZIconButtonComponent {
   readonly variant = input<IconButtonVariant>('ghost');
   readonly size = input<IconButtonSize>('md');
   readonly disabled = input(false);
+  // Optional disclosure semantics for menu/dropdown triggers. Null (default)
+  // omits the attribute entirely so plain icon buttons are unaffected.
+  readonly expanded = input<boolean | null>(null);
+  readonly hasPopup = input<string | null>(null);
   readonly pressed = output<void>();
 
   protected readonly classes = computed(() => [

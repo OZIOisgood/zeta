@@ -37,6 +37,7 @@ import {
 import { NotificationsStore } from '../../features/notifications/notifications.store';
 import { SessionStore } from '../../features/session/session.store';
 import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
+import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
 import { DashboardLocalizationService } from '../i18n/dashboard-localization.service';
@@ -51,6 +52,7 @@ import { AppShellStore } from '../state/app-shell.store';
     RouterOutlet,
     TranslocoPipe,
     ZAvatarComponent,
+    ZButtonComponent,
     ZIconButtonComponent,
     ZToastComponent,
     NotificationListComponent,

@@ -76,23 +76,22 @@
 
           <div class="flex items-center gap-1 sm:gap-2">
             <div #notificationMenu class="relative">
-              <button
-                type="button"
-                class="relative flex size-9 items-center justify-center rounded-md text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
-                [attr.aria-label]="'notifications.open' | transloco"
-                [attr.aria-expanded]="shell.isNotificationsOpen()"
-                (click)="shell.toggleNotifications()"
+              <z-icon-button
+                [label]="'notifications.open' | transloco"
+                [expanded]="shell.isNotificationsOpen()"
+                hasPopup="menu"
+                (pressed)="shell.toggleNotifications()"
               >
                 <svg lucideBell class="size-5" aria-hidden="true"></svg>
-                @if (notifications.hasUnread()) {
-                  <span
-                    class="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-[var(--z-primary)] px-1 text-[10px] font-semibold leading-4 text-white"
-                    [ngClass]="badgeBump() ? 'badge-bump' : ''"
-                    aria-hidden="true"
-                    >{{ notifications.badge() }}</span
-                  >
-                }
-              </button>
+              </z-icon-button>
+              @if (notifications.hasUnread()) {
+                <span
+                  class="pointer-events-none absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-[var(--z-primary)] px-1 text-[10px] font-semibold leading-4 text-white"
+                  [ngClass]="badgeBump() ? 'badge-bump' : ''"
+                  aria-hidden="true"
+                  >{{ notifications.badge() }}</span
+                >
+              }
 
               @if (shell.isNotificationsOpen()) {
                 <div
@@ -105,14 +104,10 @@
                   >
                     <p class="text-sm font-semibold">{{ 'notifications.title' | transloco }}</p>
                     @if (notifications.hasUnread()) {
-                      <button
-                        type="button"
-                        class="flex items-center gap-1 text-xs font-semibold text-[var(--z-primary-strong)] hover:underline"
-                        (click)="notifications.markAllRead()"
-                      >
+                      <z-button variant="ghost" size="sm" (pressed)="notifications.markAllRead()">
                         <svg lucideCheckCheck class="size-3.5" aria-hidden="true"></svg>
                         <span>{{ 'notifications.markAllRead' | transloco }}</span>
-                      </button>
+                      </z-button>
                     }
                   </div>
 
