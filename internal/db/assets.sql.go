@@ -141,7 +141,7 @@ func (q *Queries) GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, er
 }
 
 const getAssetVideos = `-- name: GetAssetVideos :many
-SELECT v.id, v.mux_upload_id, v.mux_asset_id, v.playback_id, v.status, v.created_at, COUNT(r.id) as review_count
+SELECT v.id, v.mux_upload_id, v.mux_asset_id, v.playback_id, v.status, v.duration_seconds, v.created_at, COUNT(r.id) as review_count
 FROM videos v
 LEFT JOIN video_reviews r ON v.id = r.video_id
 WHERE v.asset_id = $1
@@ -150,13 +150,14 @@ ORDER BY v.created_at ASC
 `
 
 type GetAssetVideosRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	MuxUploadID pgtype.Text        `json:"mux_upload_id"`
-	MuxAssetID  pgtype.Text        `json:"mux_asset_id"`
-	PlaybackID  pgtype.Text        `json:"playback_id"`
-	Status      VideoStatus        `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	ReviewCount int64              `json:"review_count"`
+	ID              pgtype.UUID        `json:"id"`
+	MuxUploadID     pgtype.Text        `json:"mux_upload_id"`
+	MuxAssetID      pgtype.Text        `json:"mux_asset_id"`
+	PlaybackID      pgtype.Text        `json:"playback_id"`
+	Status          VideoStatus        `json:"status"`
+	DurationSeconds pgtype.Float8      `json:"duration_seconds"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	ReviewCount     int64              `json:"review_count"`
 }
 
 func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]GetAssetVideosRow, error) {
@@ -174,6 +175,7 @@ func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]Ge
 			&i.MuxAssetID,
 			&i.PlaybackID,
 			&i.Status,
+			&i.DurationSeconds,
 			&i.CreatedAt,
 			&i.ReviewCount,
 		); err != nil {

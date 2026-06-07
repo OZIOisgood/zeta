@@ -86,7 +86,7 @@ WHERE a.id = sqlc.arg(asset_id)
   );
 
 -- name: GetAssetVideos :many
-SELECT v.id, v.mux_upload_id, v.mux_asset_id, v.playback_id, v.status, v.created_at, COUNT(r.id) as review_count
+SELECT v.id, v.mux_upload_id, v.mux_asset_id, v.playback_id, v.status, v.duration_seconds, v.created_at, COUNT(r.id) as review_count
 FROM videos v
 LEFT JOIN video_reviews r ON v.id = r.video_id
 WHERE v.asset_id = $1

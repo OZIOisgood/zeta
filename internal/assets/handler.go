@@ -270,10 +270,11 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 				})
 				h.persistVideoDuration(ctx, uploadID, duration)
 			}
-		} else if uploadID == "" && v.MuxAssetID.Valid && v.MuxAssetID.String != "" {
+		} else if uploadID == "" && v.MuxAssetID.Valid && v.MuxAssetID.String != "" && !v.DurationSeconds.Valid {
 			// Coaching-import videos are created with mux_asset_id and no upload ID.
 			// persistVideoDuration (keyed by upload ID) never fires for them, so
-			// capture duration lazily here. SetVideoDurationByID is a no-op if already set.
+			// capture duration lazily here — but only once: gate on a missing
+			// duration so we don't hit the Mux API on every GET after it's stored.
 			duration, err := h.durationFromMux(ctx, v.MuxAssetID.String, "")
 			if err == nil && duration > 0 {
 				if err := h.q.SetVideoDurationByID(ctx, db.SetVideoDurationByIDParams{
