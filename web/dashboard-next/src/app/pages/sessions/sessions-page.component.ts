@@ -58,11 +58,11 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
             {{ 'sessions.summary' | transloco }}
           </p>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap md:justify-end">
           @if (canBook()) {
             <a
               routerLink="/sessions/book"
-              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+              class="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)] sm:w-auto"
             >
               <svg lucideCalendarClock class="size-4" aria-hidden="true"></svg>
               <span>{{ 'sessions.bookLive' | transloco }}</span>
@@ -71,7 +71,7 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
           @if (canManageAvailability()) {
             <a
               routerLink="/sessions/settings"
-              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-white px-4 text-sm font-semibold text-[var(--z-text)] transition hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+              class="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[var(--z-border)] bg-white px-4 text-sm font-semibold text-[var(--z-text)] transition hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)] sm:w-auto"
             >
               <svg lucideSettings class="size-4" aria-hidden="true"></svg>
               <span>{{ 'sessions.availability.title' | transloco }}</span>

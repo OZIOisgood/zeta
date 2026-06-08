@@ -41,7 +41,13 @@ type NotificationFilter = 'all' | 'unread';
           </p>
         </div>
         @if (store.hasUnread()) {
-          <z-button variant="secondary" size="sm" (pressed)="store.markAllRead()">
+          <z-button
+            variant="secondary"
+            size="sm"
+            [mobileFullWidth]="true"
+            [nowrap]="true"
+            (pressed)="store.markAllRead()"
+          >
             <svg lucideCheckCheck class="size-4" aria-hidden="true"></svg>
             <span>{{ 'notifications.markAllRead' | transloco }}</span>
           </z-button>

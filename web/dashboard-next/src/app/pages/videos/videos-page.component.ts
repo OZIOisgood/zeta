@@ -47,7 +47,7 @@ type VideoFilter = 'all' | 'toReview' | 'reviewed';
         @if (canUploadVideo()) {
           <a
             routerLink="/upload-video"
-            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
+            class="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)] sm:w-auto"
           >
             <svg lucidePlus class="size-4" aria-hidden="true"></svg>
             <span>{{ 'videos.uploadNew' | transloco }}</span>

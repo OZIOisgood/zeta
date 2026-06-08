@@ -292,12 +292,20 @@ type BookingStep = 0 | 1 | 2 | 3 | 4;
                 </p>
               }
               <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-                <z-button type="button" variant="secondary" (pressed)="activeStep.set(3)">
+                <z-button
+                  type="button"
+                  variant="secondary"
+                  [mobileFullWidth]="true"
+                  [nowrap]="true"
+                  (pressed)="activeStep.set(3)"
+                >
                   {{ 'common.actions.back' | transloco }}
                 </z-button>
                 <z-button
                   type="button"
                   [disabled]="store.mutationStatus() === 'loading'"
+                  [mobileFullWidth]="true"
+                  [nowrap]="true"
                   (pressed)="confirmBooking()"
                 >
                   {{

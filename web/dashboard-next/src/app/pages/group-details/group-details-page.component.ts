@@ -95,7 +95,7 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
             </div>
             @if (canEditPreferences()) {
               <a
-                class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold transition hover:bg-[var(--z-surface-warm)]"
+                class="inline-flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold transition hover:bg-[var(--z-surface-warm)] sm:w-auto"
                 [routerLink]="['/groups', group.id, 'preferences', 'general']"
               >
                 <svg lucideSettings class="size-4" aria-hidden="true"></svg>
@@ -127,7 +127,13 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
                 </p>
               </div>
             </div>
-            <z-button class="mt-4 sm:mt-0" type="button" [ngpDialogTrigger]="inviteDialog">
+            <z-button
+              class="mt-4 block sm:mt-0"
+              type="button"
+              [mobileFullWidth]="true"
+              [nowrap]="true"
+              [ngpDialogTrigger]="inviteDialog"
+            >
               <span>{{ 'common.actions.createInvitation' | transloco }}</span>
             </z-button>
           </article>

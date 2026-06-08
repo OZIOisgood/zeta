@@ -76,6 +76,8 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
             @case ('session-types') {
               <z-button
                 type="button"
+                [mobileFullWidth]="true"
+                [nowrap]="true"
                 (pressed)="prepareSessionType(null)"
                 [ngpDialogTrigger]="sessionTypeDialog"
                 (ngpDialogTriggerClosed)="saveSessionType($event)"
@@ -87,6 +89,8 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
             @case ('schedule') {
               <z-button
                 type="button"
+                [mobileFullWidth]="true"
+                [nowrap]="true"
                 (pressed)="prepareAvailability(null)"
                 [ngpDialogTrigger]="availabilityDialog"
                 (ngpDialogTriggerClosed)="saveAvailability($event)"
@@ -98,6 +102,8 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
             @case ('blocked') {
               <z-button
                 type="button"
+                [mobileFullWidth]="true"
+                [nowrap]="true"
                 (pressed)="prepareBlockedSlot()"
                 [ngpDialogTrigger]="blockedDialog"
                 (ngpDialogTriggerClosed)="saveBlockedSlot($event)"
