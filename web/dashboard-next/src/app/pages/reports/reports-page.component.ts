@@ -406,6 +406,15 @@ export class ReportsPageComponent {
     this.isExpert() ? 'reports.expert.title' : 'reports.student.title',
   );
 
+  protected readonly description = computed(() => {
+    if (!this.translationsReady()) return '';
+    return this.transloco.translate('reports.description', {
+      kind: this.transloco.translate(`reports.kind.${this.store.gran()}`),
+      name: this.store.viewer()?.name ?? '',
+      count: this.report().count,
+    });
+  });
+
   protected readonly granOptions = computed(() => {
     const ready = this.translationsReady();
     return (['month', 'quarter', 'year'] as Granularity[]).map((value) => ({
@@ -422,18 +431,6 @@ export class ReportsPageComponent {
     if (gran === 'quarter') return `Q${quarterOf(cursor.month) + 1} ${cursor.year}`;
     const iso = `${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}-01`;
     return this.dateTime.formatCalendarDate(iso, { month: 'long', year: 'numeric' });
-  });
-
-  protected readonly description = computed(() => {
-    if (!this.translationsReady()) return '';
-    return this.transloco.translate('reports.description', {
-      kind: this.transloco.translate(`reports.kind.${this.store.gran()}`),
-      name: this.store.viewer()?.name ?? '',
-      count: this.report().count,
-      leaf: this.transloco.translate(
-        this.isExpert() ? 'reports.leaf.student' : 'reports.leaf.expert',
-      ),
-    });
   });
 
   protected readonly peopleLabel = computed(() => {

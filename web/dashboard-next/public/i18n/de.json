@@ -104,7 +104,7 @@
   "reports": {
     "expert": { "title": "Experten-Bericht" },
     "student": { "title": "Schüler-Bericht" },
-    "description": "{{kind}} für {{name}} · {{count}} Aktivitäten, gruppiert nach Gruppe › {{leaf}}.",
+    "description": "{{kind}} für {{name}} · {{count}} Aktivitäten.",
     "kind": {
       "month": "Monatsbericht",
       "quarter": "Quartalsbericht",
