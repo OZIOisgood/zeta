@@ -30,7 +30,7 @@ describe('app routes', () => {
         }),
         expect.objectContaining({
           path: 'groups/:id/preferences/:tab',
-          data: { permission: 'groups:preferences:edit' },
+          data: { permission: 'groups:read' },
         }),
         expect.objectContaining({
           path: 'sessions/book',

@@ -13,6 +13,7 @@ const (
 	GroupsUserListRead    = "groups:user-list:read"
 	GroupsExpertListRead  = "groups:expert-list:read"
 	GroupsUserListDelete  = "groups:user-list:delete"
+	GroupsMembershipLeave = "groups:membership:leave"
 	GroupsInvitesCreate   = "groups:invites:create"
 	GroupsPreferencesEdit = "groups:preferences:edit"
 	GroupsDelete          = "groups:delete"

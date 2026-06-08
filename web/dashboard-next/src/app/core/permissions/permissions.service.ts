@@ -13,6 +13,7 @@ export type Permission =
   | 'groups:user-list:read'
   | 'groups:expert-list:read'
   | 'groups:user-list:delete'
+  | 'groups:membership:leave'
   | 'groups:invites:create'
   | 'groups:preferences:edit'
   | 'groups:delete'

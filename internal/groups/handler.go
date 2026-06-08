@@ -232,6 +232,95 @@ func (h *Handler) GetGroupByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(toGroupResponse(group))
 }
 
+func (h *Handler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsMembershipLeave) {
+		log.WarnContext(ctx, "group_membership_leave_permission_denied",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("role", user.Role),
+		)
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	groupIDStr := chi.URLParam(r, "groupID")
+	var groupID pgtype.UUID
+	if err := groupID.Scan(groupIDStr); err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return
+	}
+
+	inGroup, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{
+		UserID:  user.ID,
+		GroupID: groupID,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "group_membership_leave_check_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to verify group membership", http.StatusInternalServerError)
+		return
+	}
+	if !inGroup {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	group, err := h.q.GetGroup(ctx, groupID)
+	if err != nil {
+		log.ErrorContext(ctx, "group_membership_leave_get_group_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+	if group.OwnerID == user.ID {
+		http.Error(w, "Group owner cannot leave the group", http.StatusBadRequest)
+		return
+	}
+
+	removed, err := h.q.LeaveGroupIfNotLastMember(ctx, db.LeaveGroupIfNotLastMemberParams{
+		UserID:  user.ID,
+		GroupID: groupID,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "group_membership_leave_failed",
+			slog.String("component", "groups"),
+			slog.String("user_id", user.ID),
+			slog.String("group_id", groupIDStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to leave group", http.StatusInternalServerError)
+		return
+	}
+	if removed == 0 {
+		http.Error(w, "Cannot leave the group as the last member", http.StatusConflict)
+		return
+	}
+
+	log.InfoContext(ctx, "group_membership_left",
+		slog.String("component", "groups"),
+		slog.String("user_id", user.ID),
+		slog.String("group_id", groupIDStr),
+	)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type UpdateGroupRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`

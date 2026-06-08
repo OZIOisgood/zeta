@@ -728,6 +728,21 @@ func (mr *MockQuerierMockRecorder) HasVideosWithoutReviews(ctx, assetID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasVideosWithoutReviews", reflect.TypeOf((*MockQuerier)(nil).HasVideosWithoutReviews), ctx, assetID)
 }
 
+// LeaveGroupIfNotLastMember mocks base method.
+func (m *MockQuerier) LeaveGroupIfNotLastMember(ctx context.Context, arg db.LeaveGroupIfNotLastMemberParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LeaveGroupIfNotLastMember", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LeaveGroupIfNotLastMember indicates an expected call of LeaveGroupIfNotLastMember.
+func (mr *MockQuerierMockRecorder) LeaveGroupIfNotLastMember(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LeaveGroupIfNotLastMember", reflect.TypeOf((*MockQuerier)(nil).LeaveGroupIfNotLastMember), ctx, arg)
+}
+
 // ListActiveExpertsInGroup mocks base method.
 func (m *MockQuerier) ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.UUID) ([]string, error) {
 	m.ctrl.T.Helper()

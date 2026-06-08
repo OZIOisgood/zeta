@@ -216,6 +216,32 @@ func (q *Queries) GetGroupInvitationsByCodes(ctx context.Context, dollar_1 []str
 	return items, nil
 }
 
+const leaveGroupIfNotLastMember = `-- name: LeaveGroupIfNotLastMember :execrows
+WITH remaining_members AS (
+    SELECT user_id
+    FROM user_groups
+    WHERE group_id = $2 AND user_id <> $1
+    FOR UPDATE
+)
+DELETE FROM user_groups AS ug
+WHERE ug.user_id = $1
+  AND ug.group_id = $2
+  AND EXISTS (SELECT 1 FROM remaining_members)
+`
+
+type LeaveGroupIfNotLastMemberParams struct {
+	UserID  string      `json:"user_id"`
+	GroupID pgtype.UUID `json:"group_id"`
+}
+
+func (q *Queries) LeaveGroupIfNotLastMember(ctx context.Context, arg LeaveGroupIfNotLastMemberParams) (int64, error) {
+	result, err := q.db.Exec(ctx, leaveGroupIfNotLastMember, arg.UserID, arg.GroupID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const listGroupMembers = `-- name: ListGroupMembers :many
 SELECT user_id FROM user_groups
 WHERE group_id = $1

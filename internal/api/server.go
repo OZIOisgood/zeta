@@ -179,6 +179,7 @@ func (s *Server) routes(ctx context.Context) {
 			r.Get("/{groupID}", groupsHandler.GetGroupByID)
 			r.Put("/{groupID}", groupsHandler.UpdateGroupPreferences)
 			r.Delete("/{groupID}", groupsHandler.DeleteGroup)
+			r.Delete("/{groupID}/membership", groupsHandler.LeaveGroup)
 			r.Get("/{groupID}/users", usersHandler.ListGroupUsers)
 			r.Get("/{groupID}/experts", usersHandler.ListGroupExperts)
 			r.Delete("/{groupID}/users/{userID}", usersHandler.RemoveGroupUser)

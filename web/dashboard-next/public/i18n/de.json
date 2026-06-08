@@ -319,6 +319,7 @@
     "preferences": "Gruppeneinstellungen",
     "preferencesTab": "Einstellungen",
     "dangerZone": "Gefahrenbereich",
+    "dangerDescription": "Prüfe Aktionen, die den Zugriff auf diese Gruppe entfernen.",
     "deleteThisGroup": "Diese Gruppe löschen",
     "deleteDescription": "Diese Gruppe und alle Mitglieder, Einladungen und Inhalte dauerhaft löschen.",
     "deleteSummary": "Dadurch wird die Gruppe für alle Mitglieder entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -329,6 +330,14 @@
     "updateFailed": "Gruppe konnte nicht aktualisiert werden",
     "deleted": "Gruppe gelöscht",
     "deleteFailed": "Gruppe konnte nicht gelöscht werden",
+    "leave": {
+      "action": "Gruppe verlassen",
+      "title": "Gruppe verlassen?",
+      "summary": "Verlasse diese Gruppe und verliere den Zugriff auf ihre Videos und Coaching-Termine.",
+      "confirm": "Du verlässt „{{group}}“ und verlierst den Zugriff auf Videos und Coaching-Termine dieser Gruppe.",
+      "success": "Du hast „{{group}}“ verlassen.",
+      "failed": "Die Gruppe konnte nicht verlassen werden."
+    },
     "experts": "Experten",
     "students": "Schüler",
     "expertsDescription": "Personen, die Videos prüfen und diese Gruppe unterstützen können.",
