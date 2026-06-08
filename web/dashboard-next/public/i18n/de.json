@@ -483,6 +483,8 @@
     },
     "availability": {
       "title": "Verfügbarkeit verwalten",
+      "titleForGroup": "Verfügbarkeit für {{group}} verwalten",
+      "summary": "Wähle eine Gruppe aus und konfiguriere dann Terminarten, wöchentliche Verfügbarkeit und blockierte Zeiten.",
       "noGroups": "Noch keine Gruppen",
       "noGroupsDescription": "Du bist in keiner Gruppe Mitglied. Erstelle eine Gruppe oder tritt einer bei, um deine Verfügbarkeit zu verwalten.",
       "sessionTypes": "Terminarten",

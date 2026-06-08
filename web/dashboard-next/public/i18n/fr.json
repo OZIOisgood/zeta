@@ -483,6 +483,8 @@
     },
     "availability": {
       "title": "Gérer les disponibilités",
+      "titleForGroup": "Gérer les disponibilités pour {{group}}",
+      "summary": "Choisissez un groupe, puis configurez les types de séances, les disponibilités hebdomadaires et les créneaux bloqués.",
       "noGroups": "Aucun groupe pour le moment",
       "noGroupsDescription": "Vous n'êtes membre d'aucun groupe. Créez ou rejoignez un groupe pour commencer à gérer vos disponibilités.",
       "sessionTypes": "Types de séances",

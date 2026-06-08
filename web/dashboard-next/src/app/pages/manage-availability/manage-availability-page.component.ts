@@ -62,57 +62,65 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
     <div class="grid gap-6">
       <z-breadcrumbs [items]="breadcrumbs()" />
 
-      <section class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <section
+        class="grid gap-4 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-start"
+      >
         <div>
-          <h1 class="text-2xl font-semibold tracking-tight">
-            {{ 'sessions.availability.title' | transloco }}
+          <h1 class="text-2xl font-semibold sm:text-3xl">
+            @if (store.activeGroup(); as group) {
+              {{ 'sessions.availability.titleForGroup' | transloco: { group: group.name } }}
+            } @else {
+              {{ 'sessions.availability.title' | transloco }}
+            }
           </h1>
-          @if (store.activeGroup(); as group) {
-            <p class="mt-1 text-sm leading-6 text-[var(--z-muted)]">{{ group.name }}</p>
-          }
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-[var(--z-muted)]">
+            {{ 'sessions.availability.summary' | transloco }}
+          </p>
         </div>
         @if (store.activeGroup()) {
-          @switch (activeTab()) {
-            @case ('session-types') {
-              <z-button
-                type="button"
-                [mobileFullWidth]="true"
-                [nowrap]="true"
-                (pressed)="prepareSessionType(null)"
-                [ngpDialogTrigger]="sessionTypeDialog"
-                (ngpDialogTriggerClosed)="saveSessionType($event)"
-              >
-                <svg lucidePlus class="size-4" aria-hidden="true"></svg>
-                <span>{{ 'sessions.availability.addSessionType' | transloco }}</span>
-              </z-button>
+          <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap md:justify-end">
+            @switch (activeTab()) {
+              @case ('session-types') {
+                <z-button
+                  type="button"
+                  [mobileFullWidth]="true"
+                  [nowrap]="true"
+                  (pressed)="prepareSessionType(null)"
+                  [ngpDialogTrigger]="sessionTypeDialog"
+                  (ngpDialogTriggerClosed)="saveSessionType($event)"
+                >
+                  <svg lucidePlus class="size-4" aria-hidden="true"></svg>
+                  <span>{{ 'sessions.availability.addSessionType' | transloco }}</span>
+                </z-button>
+              }
+              @case ('schedule') {
+                <z-button
+                  type="button"
+                  [mobileFullWidth]="true"
+                  [nowrap]="true"
+                  (pressed)="prepareAvailability(null)"
+                  [ngpDialogTrigger]="availabilityDialog"
+                  (ngpDialogTriggerClosed)="saveAvailability($event)"
+                >
+                  <svg lucidePlus class="size-4" aria-hidden="true"></svg>
+                  <span>{{ 'sessions.availability.addAvailability' | transloco }}</span>
+                </z-button>
+              }
+              @case ('blocked') {
+                <z-button
+                  type="button"
+                  [mobileFullWidth]="true"
+                  [nowrap]="true"
+                  (pressed)="prepareBlockedSlot()"
+                  [ngpDialogTrigger]="blockedDialog"
+                  (ngpDialogTriggerClosed)="saveBlockedSlot($event)"
+                >
+                  <svg lucidePlus class="size-4" aria-hidden="true"></svg>
+                  <span>{{ 'sessions.availability.addBlockTime' | transloco }}</span>
+                </z-button>
+              }
             }
-            @case ('schedule') {
-              <z-button
-                type="button"
-                [mobileFullWidth]="true"
-                [nowrap]="true"
-                (pressed)="prepareAvailability(null)"
-                [ngpDialogTrigger]="availabilityDialog"
-                (ngpDialogTriggerClosed)="saveAvailability($event)"
-              >
-                <svg lucidePlus class="size-4" aria-hidden="true"></svg>
-                <span>{{ 'sessions.availability.addAvailability' | transloco }}</span>
-              </z-button>
-            }
-            @case ('blocked') {
-              <z-button
-                type="button"
-                [mobileFullWidth]="true"
-                [nowrap]="true"
-                (pressed)="prepareBlockedSlot()"
-                [ngpDialogTrigger]="blockedDialog"
-                (ngpDialogTriggerClosed)="saveBlockedSlot($event)"
-              >
-                <svg lucidePlus class="size-4" aria-hidden="true"></svg>
-                <span>{{ 'sessions.availability.addBlockTime' | transloco }}</span>
-              </z-button>
-            }
-          }
+          </div>
         }
       </section>
 

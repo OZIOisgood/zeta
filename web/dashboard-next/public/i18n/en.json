@@ -483,6 +483,8 @@
     },
     "availability": {
       "title": "Manage Availability",
+      "titleForGroup": "Manage Availability for {{group}}",
+      "summary": "Choose a group, then configure session types, weekly availability, and blocked time.",
       "noGroups": "No Groups Yet",
       "noGroupsDescription": "You are not a member of any group. Create or join a group to start managing your availability.",
       "sessionTypes": "Session Types",

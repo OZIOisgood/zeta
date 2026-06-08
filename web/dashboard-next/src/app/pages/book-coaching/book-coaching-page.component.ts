@@ -48,11 +48,15 @@ type BookingStep = 0 | 1 | 2 | 3 | 4;
         ]"
       />
 
-      <section class="grid gap-2">
-        <h1 class="text-2xl font-semibold tracking-tight">{{ 'sessions.bookLive' | transloco }}</h1>
-        <p class="max-w-2xl text-sm leading-6 text-[var(--z-muted)]">
-          {{ activeStepDescription() }}
-        </p>
+      <section class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
+        <div>
+          <h1 class="text-2xl font-semibold sm:text-3xl">
+            {{ 'sessions.bookLive' | transloco }}
+          </h1>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-[var(--z-muted)]">
+            {{ activeStepDescription() }}
+          </p>
+        </div>
       </section>
 
       <z-stepper [steps]="stepperSteps()" (stepClick)="goToCompletedStep($event)" />
