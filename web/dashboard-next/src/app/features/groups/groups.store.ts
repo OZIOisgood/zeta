@@ -165,6 +165,30 @@ export const GroupsStore = signalStore(
         return false;
       }
     },
+    async leaveGroup(groupId: string): Promise<boolean> {
+      patchState(store, {
+        mutationStatus: 'loading',
+        mutationError: null,
+      });
+
+      try {
+        await firstValueFrom(api.leaveGroup(groupId));
+        patchState(store, {
+          mutationStatus: 'success',
+          mutationError: null,
+          activeGroup: store.activeGroup()?.id === groupId ? null : store.activeGroup(),
+          groups: store.groups().filter((group) => group.id !== groupId),
+        });
+        return true;
+      } catch (error) {
+        const errorState = errorAsyncSlice(error);
+        patchState(store, {
+          mutationStatus: errorState.status,
+          mutationError: errorState.error,
+        });
+        return false;
+      }
+    },
     async createGroup(data: {
       name: string;
       description?: string;

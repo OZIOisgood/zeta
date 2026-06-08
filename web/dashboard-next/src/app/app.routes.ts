@@ -89,7 +89,7 @@ export const routes: Routes = [
         path: 'groups/:id/preferences/:tab',
         component: GroupPreferencesPageComponent,
         canActivate: [permissionGuard],
-        data: { permission: 'groups:preferences:edit' },
+        data: { permission: 'groups:read' },
         title: 'Group preferences',
       },
       { path: 'sessions', redirectTo: 'sessions/upcoming', pathMatch: 'full' },

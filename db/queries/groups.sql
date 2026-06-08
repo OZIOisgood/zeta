@@ -40,6 +40,18 @@ WHERE id = $1 AND group_id = $2 LIMIT 1;
 -- name: RemoveUserFromGroup :exec
 DELETE FROM user_groups WHERE user_id = $1 AND group_id = $2;
 
+-- name: LeaveGroupIfNotLastMember :execrows
+WITH remaining_members AS (
+    SELECT user_id
+    FROM user_groups
+    WHERE group_id = $2 AND user_id <> $1
+    FOR UPDATE
+)
+DELETE FROM user_groups AS ug
+WHERE ug.user_id = $1
+  AND ug.group_id = $2
+  AND EXISTS (SELECT 1 FROM remaining_members);
+
 -- name: UpdateGroupInvitationStatus :exec
 UPDATE group_invitations SET status = @status WHERE id = @id;
 

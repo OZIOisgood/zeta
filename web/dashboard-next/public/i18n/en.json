@@ -319,6 +319,7 @@
     "preferences": "Group Preferences",
     "preferencesTab": "Preferences",
     "dangerZone": "Danger Zone",
+    "dangerDescription": "Review actions that remove access to this group.",
     "deleteThisGroup": "Delete this group",
     "deleteDescription": "Permanently delete this group and all its members, invitations, and content.",
     "deleteSummary": "This removes the group for every member and cannot be undone.",
@@ -329,6 +330,14 @@
     "updateFailed": "Failed to update group",
     "deleted": "Group deleted",
     "deleteFailed": "Failed to delete group",
+    "leave": {
+      "action": "Leave group",
+      "title": "Leave group?",
+      "summary": "Leave this group and lose access to its videos and coaching sessions.",
+      "confirm": "You will leave \"{{group}}\" and lose access to its videos and coaching sessions.",
+      "success": "You left \"{{group}}\".",
+      "failed": "Failed to leave group."
+    },
     "experts": "Experts",
     "students": "Students",
     "expertsDescription": "People who can review videos and support this group.",

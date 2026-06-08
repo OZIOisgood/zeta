@@ -131,7 +131,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - The group details page separates members into Students and Experts lists.
 - `GET /groups/{groupID}/users` returns students only and requires `groups:user-list:read`.
 - `GET /groups/{groupID}/experts` returns experts and administrators and requires `groups:expert-list:read`.
-- Expert and administrator roles should have both permissions. Student roles should only have `groups:expert-list:read`.
+- Expert and administrator roles should have both list permissions. Student roles should have `groups:expert-list:read` and `groups:membership:leave`.
+- Students with `groups:membership:leave` can leave a joined group from that group's Preferences danger zone via `DELETE /groups/{groupID}/membership`. The API rejects leaving when the user is the group owner or the last remaining member.
 
 ### Live Coaching Flow
 

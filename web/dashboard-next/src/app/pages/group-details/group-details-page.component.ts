@@ -93,10 +93,15 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
                 {{ group.description || ('groups.phase4.noDescription' | transloco) }}
               </p>
             </div>
-            @if (canEditPreferences()) {
+            @if (canOpenPreferences()) {
               <a
                 class="inline-flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold transition hover:bg-[var(--z-surface-warm)] sm:w-auto"
-                [routerLink]="['/groups', group.id, 'preferences', 'general']"
+                [routerLink]="[
+                  '/groups',
+                  group.id,
+                  'preferences',
+                  canEditPreferences() ? 'general' : 'delete',
+                ]"
               >
                 <svg lucideSettings class="size-4" aria-hidden="true"></svg>
                 <span>{{ 'groups.preferences' | transloco }}</span>
@@ -266,6 +271,8 @@ export class GroupDetailsPageComponent {
   private readonly transloco = inject(TranslocoService);
   protected readonly canEditPreferences = () =>
     this.permissions.hasPermission('groups:preferences:edit');
+  protected readonly canOpenPreferences = () =>
+    this.canEditPreferences() || this.permissions.hasPermission('groups:membership:leave');
   protected readonly canReadStudents = computed(() =>
     this.permissions.hasPermission('groups:user-list:read'),
   );

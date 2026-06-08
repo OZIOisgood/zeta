@@ -100,6 +100,10 @@ export class GroupsApiClient {
     return this.http.delete<void>(`${this.apiUrl}/${groupId}/users/${userId}`);
   }
 
+  leaveGroup(groupId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${groupId}/membership`);
+  }
+
   createGroupInvitation(groupId: string, email?: string): Observable<GroupInvitation> {
     return this.http.post<GroupInvitation>(`${this.apiUrl}/${groupId}/invitations`, {
       email: email || undefined,

@@ -62,6 +62,7 @@ type Querier interface {
 	GetVideoReview(ctx context.Context, id pgtype.UUID) (GetVideoReviewRow, error)
 	GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams) (GetVisibleAssetRow, error)
 	HasVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (bool, error)
+	LeaveGroupIfNotLastMember(ctx context.Context, arg LeaveGroupIfNotLastMemberParams) (int64, error)
 	ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.UUID) ([]string, error)
 	ListAllMyBookings(ctx context.Context, expertID string) ([]ListAllMyBookingsRow, error)
 	ListAvailabilityByExpertGroup(ctx context.Context, arg ListAvailabilityByExpertGroupParams) ([]CoachingAvailability, error)

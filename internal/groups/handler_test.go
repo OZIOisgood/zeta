@@ -15,6 +15,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"go.uber.org/mock/gomock"
 )
@@ -32,6 +33,28 @@ func adminUser() *auth.UserContext {
 		Role:        "admin",
 		Permissions: []string{permissions.GroupsRead, permissions.GroupsCreate},
 	}
+}
+
+func studentUser() *auth.UserContext {
+	return &auth.UserContext{
+		ID:          "student-1",
+		Email:       "student@test.com",
+		FirstName:   "Student",
+		LastName:    "User",
+		Role:        permissions.RoleStudent,
+		Permissions: []string{permissions.GroupsRead, permissions.GroupsMembershipLeave},
+	}
+}
+
+func mustGroupUUID(t *testing.T) pgtype.UUID {
+	t.Helper()
+
+	var groupID pgtype.UUID
+	if err := groupID.Scan("11111111-1111-1111-1111-111111111111"); err != nil {
+		t.Fatalf("scan group id: %v", err)
+	}
+
+	return groupID
 }
 
 func TestListGroups_Unauthorized(t *testing.T) {
@@ -211,5 +234,71 @@ func TestCreateGroup_MissingAvatar(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Errorf("got %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestLeaveGroup_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, slog.Default())
+	groupID := mustGroupUUID(t)
+
+	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{
+		UserID:  "student-1",
+		GroupID: groupID,
+	}).Return(true, nil)
+	q.EXPECT().GetGroup(gomock.Any(), groupID).Return(db.Group{
+		ID:      groupID,
+		OwnerID: "expert-1",
+		Name:    "Academy",
+	}, nil)
+	q.EXPECT().LeaveGroupIfNotLastMember(gomock.Any(), db.LeaveGroupIfNotLastMemberParams{
+		UserID:  "student-1",
+		GroupID: groupID,
+	}).Return(int64(1), nil)
+
+	router := chi.NewRouter()
+	router.Delete("/groups/{groupID}/membership", h.LeaveGroup)
+	req := httptest.NewRequest(http.MethodDelete, "/groups/11111111-1111-1111-1111-111111111111/membership", nil)
+	req = req.WithContext(testUserCtx(req.Context(), studentUser()))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("got %d, want %d; body: %s", rec.Code, http.StatusNoContent, rec.Body.String())
+	}
+}
+
+func TestLeaveGroup_ForbidsLastMember(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, slog.Default())
+	groupID := mustGroupUUID(t)
+
+	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{
+		UserID:  "student-1",
+		GroupID: groupID,
+	}).Return(true, nil)
+	q.EXPECT().GetGroup(gomock.Any(), groupID).Return(db.Group{
+		ID:      groupID,
+		OwnerID: "expert-1",
+		Name:    "Academy",
+	}, nil)
+	q.EXPECT().LeaveGroupIfNotLastMember(gomock.Any(), db.LeaveGroupIfNotLastMemberParams{
+		UserID:  "student-1",
+		GroupID: groupID,
+	}).Return(int64(0), nil)
+
+	router := chi.NewRouter()
+	router.Delete("/groups/{groupID}/membership", h.LeaveGroup)
+	req := httptest.NewRequest(http.MethodDelete, "/groups/11111111-1111-1111-1111-111111111111/membership", nil)
+	req = req.WithContext(testUserCtx(req.Context(), studentUser()))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("got %d, want %d; body: %s", rec.Code, http.StatusConflict, rec.Body.String())
 	}
 }

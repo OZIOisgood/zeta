@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideImage, LucideTriangleAlert, LucideTrash2 } from '@lucide/angular';
+import { LucideImage, LucideLogOut, LucideTriangleAlert, LucideTrash2 } from '@lucide/angular';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import { AppShellStore } from '../../core/state/app-shell.store';
@@ -45,6 +45,7 @@ type GroupPreferencesFormValue = {
     ZTextInputComponent,
     ZTextareaComponent,
     LucideImage,
+    LucideLogOut,
     LucideTriangleAlert,
     LucideTrash2,
   ],
@@ -77,10 +78,7 @@ type GroupPreferencesFormValue = {
             tabsId="group-preferences-tabs"
             [label]="'groups.preferences' | transloco"
             [value]="activeTab()"
-            [options]="[
-              { value: 'general', label: ('groups.generalTab' | transloco) },
-              { value: 'delete', label: ('groups.deleteTab' | transloco) },
-            ]"
+            [options]="tabOptions()"
             (valueChange)="selectTab($event)"
           />
 
@@ -182,10 +180,10 @@ type GroupPreferencesFormValue = {
                   </span>
                   <div>
                     <h2 class="text-base font-semibold text-[var(--z-text)]">
-                      {{ 'groups.deleteGroup' | transloco }}
+                      {{ 'groups.deleteTab' | transloco }}
                     </h2>
                     <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
-                      {{ 'groups.deleteDescription' | transloco }}
+                      {{ 'groups.dangerDescription' | transloco }}
                     </p>
                   </div>
                 </div>
@@ -230,6 +228,46 @@ type GroupPreferencesFormValue = {
                     </z-button>
                   </div>
                 } @else {
+                  @if (canLeaveGroup()) {
+                    <ng-template #leaveGroupDialog let-close="close">
+                      <z-confirm-dialog
+                        [title]="'groups.leave.title' | transloco"
+                        [description]="
+                          'groups.leave.confirm'
+                            | transloco: { group: store.activeGroup()?.name || '' }
+                        "
+                        tone="danger"
+                        [confirmLabel]="'groups.leave.action' | transloco"
+                        [cancelLabel]="'common.actions.cancel' | transloco"
+                        [close]="close"
+                      />
+                    </ng-template>
+                    <div
+                      class="flex flex-col gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <h3 class="text-sm font-semibold text-rose-950">
+                          {{ 'groups.leave.title' | transloco }}
+                        </h3>
+                        <p class="mt-1 text-sm leading-6 text-rose-800">
+                          {{ 'groups.leave.summary' | transloco }}
+                        </p>
+                      </div>
+                      <z-button
+                        variant="danger"
+                        type="button"
+                        [disabled]="store.mutationStatus() === 'loading'"
+                        [ngpDialogTrigger]="leaveGroupDialog"
+                        (ngpDialogTriggerClosed)="confirmLeave($event)"
+                      >
+                        <svg lucideLogOut class="size-4" aria-hidden="true"></svg>
+                        <span>{{ 'groups.leave.action' | transloco }}</span>
+                      </z-button>
+                    </div>
+                  }
+                }
+
+                @if (!canDeleteGroup() && !canLeaveGroup()) {
                   <p
                     class="rounded-md border border-[var(--z-border)] bg-[var(--z-bg)] p-4 text-sm leading-6 text-[var(--z-muted)]"
                   >
@@ -265,6 +303,34 @@ export class GroupPreferencesPageComponent {
       !!group && !!user && group.owner_id === user.id && this.session.hasPermission('groups:delete')
     );
   });
+  protected readonly canEditPreferences = computed(() =>
+    this.session.hasPermission('groups:preferences:edit'),
+  );
+  protected readonly canLeaveGroup = computed(() => {
+    const group = this.store.activeGroup();
+    const user = this.session.user();
+
+    return (
+      !!group &&
+      !!user &&
+      group.owner_id !== user.id &&
+      this.session.hasPermission('groups:membership:leave')
+    );
+  });
+  protected readonly tabOptions = computed(() => {
+    const options: { value: GroupPreferencesTab; label: string }[] = [];
+
+    if (this.canEditPreferences()) {
+      options.push({ value: 'general', label: this.transloco.translate('groups.generalTab') });
+    }
+    if (this.canDeleteGroup() || this.canLeaveGroup()) {
+      options.push({ value: 'delete', label: this.transloco.translate('groups.deleteTab') });
+    }
+
+    return options.length
+      ? options
+      : [{ value: 'delete', label: this.transloco.translate('groups.deleteTab') }];
+  });
   protected readonly hasFormChanges = computed(() => {
     this.formRevision();
     const initialValue = this.initialFormValue();
@@ -292,8 +358,7 @@ export class GroupPreferencesPageComponent {
 
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(async (params) => {
       this.groupId = params.get('id') ?? '';
-      const tab = this.normalizeTab(params.get('tab'));
-      this.activeTab.set(tab);
+      const requestedTab = this.normalizeTab(params.get('tab'));
 
       if (!this.groupId) {
         return;
@@ -316,11 +381,19 @@ export class GroupPreferencesPageComponent {
         this.formRevision.update((revision) => revision + 1);
         this.initializedGroupId = group.id;
       }
+
+      const tab = this.allowedTab(requestedTab);
+      this.activeTab.set(tab);
+      if (tab !== requestedTab) {
+        void this.router.navigate(['/groups', this.groupId, 'preferences', tab], {
+          replaceUrl: true,
+        });
+      }
     });
   }
 
   protected selectTab(value: string | undefined): void {
-    const tab = this.normalizeTab(value);
+    const tab = this.allowedTab(this.normalizeTab(value));
     if (!this.groupId || tab === this.activeTab()) {
       return;
     }
@@ -366,8 +439,46 @@ export class GroupPreferencesPageComponent {
     }
   }
 
+  protected async confirmLeave(result: unknown): Promise<void> {
+    if (result !== true || !this.groupId || !this.canLeaveGroup()) {
+      return;
+    }
+
+    this.activeMutation.set('delete');
+    const groupName = this.store.activeGroup()?.name ?? '';
+    const left = await this.store.leaveGroup(this.groupId);
+    if (!left) {
+      this.shell.showToast(
+        this.transloco.translate('toast.errorTitle'),
+        this.store.mutationError() || this.transloco.translate('groups.leave.failed'),
+        'error',
+      );
+      return;
+    }
+
+    this.shell.showToast(
+      this.transloco.translate('toast.successTitle'),
+      this.transloco.translate('groups.leave.success', { group: groupName }),
+      'success',
+    );
+    await this.router.navigate(['/groups']);
+  }
+
   private normalizeTab(value: string | null | undefined): GroupPreferencesTab {
     return value === 'delete' ? 'delete' : 'general';
+  }
+
+  private allowedTab(tab: GroupPreferencesTab): GroupPreferencesTab {
+    if (tab === 'general' && this.canEditPreferences()) {
+      return 'general';
+    }
+    if (tab === 'delete' && (this.canDeleteGroup() || this.canLeaveGroup())) {
+      return 'delete';
+    }
+    if (this.canEditPreferences()) {
+      return 'general';
+    }
+    return 'delete';
   }
 
   private currentFormValue(): GroupPreferencesFormValue {

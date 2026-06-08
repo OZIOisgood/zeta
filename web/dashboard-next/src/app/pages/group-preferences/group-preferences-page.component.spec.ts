@@ -22,17 +22,29 @@ const group: Group = {
 describe('GroupPreferencesPageComponent', () => {
   const paramMap = new Subject<ReturnType<typeof convertToParamMap>>();
   const activeGroup = signal<Group | null>(null);
+  const currentUser = signal<{ id: string }>({ id: 'user-1' });
+  let permissions: string[] = ['groups:preferences:edit', 'groups:delete'];
+  const mutationStatus = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const mutationError = signal<string | null>(null);
+  const router = { navigate: vi.fn() };
+  const shell = { showToast: vi.fn() };
   const store = {
     activeGroup,
     detailStatus: () => 'success',
     loadGroup: vi.fn(async () => activeGroup.set(group)),
-    mutationError: () => null,
-    mutationStatus: () => 'idle',
+    mutationError,
+    mutationStatus,
     updateGroup: vi.fn(),
+    deleteGroup: vi.fn(async () => true),
+    leaveGroup: vi.fn(async () => true),
   };
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    permissions = ['groups:preferences:edit', 'groups:delete'];
+    currentUser.set({ id: 'user-1' });
+    mutationStatus.set('idle');
+    mutationError.set(null);
     activeGroup.set(null);
 
     await TestBed.configureTestingModule({
@@ -62,11 +74,27 @@ describe('GroupPreferencesPageComponent', () => {
                 groupNameRequired: 'Group name is required.',
                 namePlaceholder: 'Group name',
                 descriptionPlaceholder: 'Group description',
+                dangerDescription: 'Dangerous group actions.',
+                deleteConfirm: 'Delete this group?',
+                deleteDescription: 'Delete this group.',
+                deleteGroup: 'Delete Group',
+                deleteSummary: 'This cannot be undone.',
+                deleteTab: 'Danger Zone',
+                deleteThisGroup: 'Delete this group',
+                deleteUnavailable: 'No group actions available.',
                 preferences: 'Group Preferences',
                 updated: 'Group updated successfully',
+                leave: {
+                  action: 'Leave group',
+                  confirm: 'Leave {{group}}.',
+                  failed: 'Failed to leave group.',
+                  success: 'You left {{group}}.',
+                  summary: 'Leave this group and lose access to its videos.',
+                  title: 'Leave group?',
+                },
                 phase4: { preferencesSummary: 'Update group details.' },
               },
-              toast: { successTitle: 'Success' },
+              toast: { errorTitle: 'Error', successTitle: 'Success' },
             },
           },
           translocoConfig: {
@@ -83,7 +111,7 @@ describe('GroupPreferencesPageComponent', () => {
         },
         {
           provide: Router,
-          useValue: { navigate: vi.fn() },
+          useValue: router,
         },
         {
           provide: GroupsStore,
@@ -92,13 +120,13 @@ describe('GroupPreferencesPageComponent', () => {
         {
           provide: SessionStore,
           useValue: {
-            hasPermission: () => true,
-            user: () => ({ id: 'user-1' }),
+            hasPermission: (permission: string) => permissions.includes(permission),
+            user: currentUser,
           },
         },
         {
           provide: AppShellStore,
-          useValue: { showToast: vi.fn() },
+          useValue: shell,
         },
       ],
     }).compileComponents();
@@ -160,5 +188,26 @@ describe('GroupPreferencesPageComponent', () => {
     fixture.detectChanges();
 
     expect(button().disabled).toBe(true);
+  });
+
+  it('lets a non-owner leave from the danger zone', async () => {
+    permissions = ['groups:membership:leave'];
+    currentUser.set({ id: 'student-1' });
+    activeGroup.set({ ...group, owner_id: 'expert-1' });
+    const fixture = TestBed.createComponent(GroupPreferencesPageComponent);
+    fixture.detectChanges();
+
+    paramMap.next(convertToParamMap({ id: 'group-1', tab: 'delete' }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Leave group');
+    expect(fixture.componentInstance['activeTab']()).toBe('delete');
+
+    await fixture.componentInstance['confirmLeave'](true);
+
+    expect(store.leaveGroup).toHaveBeenCalledWith('group-1');
+    expect(shell.showToast).toHaveBeenCalledWith('Success', 'You left Academy.', 'success');
+    expect(router.navigate).toHaveBeenCalledWith(['/groups']);
   });
 });

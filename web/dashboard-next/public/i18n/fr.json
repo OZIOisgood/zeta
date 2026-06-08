@@ -319,6 +319,7 @@
     "preferences": "Préférences du groupe",
     "preferencesTab": "Préférences",
     "dangerZone": "Zone dangereuse",
+    "dangerDescription": "Vérifiez les actions qui retirent l'accès à ce groupe.",
     "deleteThisGroup": "Supprimer ce groupe",
     "deleteDescription": "Supprimer définitivement ce groupe ainsi que tous ses membres, invitations et contenus.",
     "deleteSummary": "Cela supprime le groupe pour tous les membres et ne peut pas être annulé.",
@@ -329,6 +330,14 @@
     "updateFailed": "Échec de la mise à jour du groupe",
     "deleted": "Groupe supprimé",
     "deleteFailed": "Échec de la suppression du groupe",
+    "leave": {
+      "action": "Quitter le groupe",
+      "title": "Quitter le groupe ?",
+      "summary": "Quittez ce groupe et perdez l'accès à ses vidéos et séances de coaching.",
+      "confirm": "Vous quitterez « {{group}} » et perdrez l'accès à ses vidéos et séances de coaching.",
+      "success": "Vous avez quitté « {{group}} ».",
+      "failed": "Impossible de quitter le groupe."
+    },
     "experts": "Experts",
     "students": "Étudiants",
     "expertsDescription": "Personnes qui peuvent revoir les vidéos et accompagner ce groupe.",
