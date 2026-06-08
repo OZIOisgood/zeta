@@ -80,8 +80,14 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
           <p class="mt-1 text-sm text-[var(--z-muted)]">{{ description() }}</p>
         </div>
         <!-- Export -->
-        <div class="relative">
-          <z-button variant="secondary" size="sm" (pressed)="toggleMenu()">
+        <div class="relative w-full sm:w-auto">
+          <z-button
+            variant="secondary"
+            size="sm"
+            [mobileFullWidth]="true"
+            [nowrap]="true"
+            (pressed)="toggleMenu()"
+          >
             <svg lucideDownload class="size-4" aria-hidden="true"></svg>
             {{ 'reports.export.label' | transloco }}
             <svg lucideChevronDown class="size-4" aria-hidden="true"></svg>

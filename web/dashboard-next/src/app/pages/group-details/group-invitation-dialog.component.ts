@@ -93,11 +93,18 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
               type="button"
               variant="secondary"
               [disabled]="status() === 'loading'"
+              [mobileFullWidth]="true"
+              [nowrap]="true"
               (pressed)="close()(false)"
             >
               {{ 'common.actions.cancel' | transloco }}
             </z-button>
-            <z-button type="submit" [disabled]="emailControl.invalid || status() === 'loading'">
+            <z-button
+              type="submit"
+              [disabled]="emailControl.invalid || status() === 'loading'"
+              [mobileFullWidth]="true"
+              [nowrap]="true"
+            >
               @if (status() === 'loading') {
                 {{ 'groups.inviteDialog.creating' | transloco }}
               } @else {
@@ -149,7 +156,13 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
           </div>
 
           <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <z-button type="button" variant="secondary" (pressed)="copyLink()">
+            <z-button
+              type="button"
+              variant="secondary"
+              [mobileFullWidth]="true"
+              [nowrap]="true"
+              (pressed)="copyLink()"
+            >
               <svg lucideCopy class="size-4" aria-hidden="true"></svg>
               <span>
                 {{
@@ -158,12 +171,23 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
               </span>
             </z-button>
             @if (qrImageUrl()) {
-              <z-button type="button" variant="secondary" (pressed)="downloadQr()">
+              <z-button
+                type="button"
+                variant="secondary"
+                [mobileFullWidth]="true"
+                [nowrap]="true"
+                (pressed)="downloadQr()"
+              >
                 <svg lucideDownload class="size-4" aria-hidden="true"></svg>
                 <span>{{ 'common.actions.downloadQr' | transloco }}</span>
               </z-button>
             }
-            <z-button type="button" (pressed)="close()(true)">
+            <z-button
+              type="button"
+              [mobileFullWidth]="true"
+              [nowrap]="true"
+              (pressed)="close()(true)"
+            >
               {{ 'common.actions.done' | transloco }}
             </z-button>
           </div>
