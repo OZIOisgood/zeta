@@ -1,6 +1,17 @@
 -- name: GetUserPreferences :one
 SELECT * FROM user_preferences WHERE user_id = $1;
 
+-- name: GetUserPreferencesByUsername :one
+SELECT * FROM user_preferences WHERE lower(username) = lower($1) LIMIT 1;
+
+-- name: CheckUsernameAvailable :one
+SELECT NOT EXISTS(
+    SELECT 1
+    FROM user_preferences
+    WHERE lower(username) = lower($1)
+      AND user_id <> $2
+) AS available;
+
 -- name: GetUserEmailPreferences :one
 SELECT
     email_notifications_enabled,
@@ -14,13 +25,13 @@ FROM user_preferences
 WHERE user_id = $1;
 
 -- name: SeedUserPreferences :one
-INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, username)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: SeedUserPreferencesWithAvatar :one
-INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, avatar)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, avatar, username)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: UpdateUserProfilePreferences :one
@@ -29,6 +40,7 @@ SET language   = $2,
     timezone   = $3,
     first_name = $4,
     last_name  = $5,
+    username   = $6,
     updated_at = NOW()
 WHERE user_id = $1
 RETURNING *;

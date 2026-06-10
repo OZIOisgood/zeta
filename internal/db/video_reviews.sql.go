@@ -215,8 +215,7 @@ SELECT
     r.author_id,
     r.created_at,
     r.updated_at,
-    up.first_name  AS author_first_name,
-    up.last_name   AS author_last_name,
+    up.username    AS author_username,
     up.avatar      AS author_avatar
 FROM video_reviews r
 LEFT JOIN user_preferences up ON up.user_id = r.author_id
@@ -233,8 +232,7 @@ type ListVideoReviewsRow struct {
 	AuthorID         pgtype.Text        `json:"author_id"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
-	AuthorFirstName  pgtype.Text        `json:"author_first_name"`
-	AuthorLastName   pgtype.Text        `json:"author_last_name"`
+	AuthorUsername   pgtype.Text        `json:"author_username"`
 	AuthorAvatar     pgtype.Text        `json:"author_avatar"`
 }
 
@@ -256,8 +254,7 @@ func (q *Queries) ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]
 			&i.AuthorID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.AuthorFirstName,
-			&i.AuthorLastName,
+			&i.AuthorUsername,
 			&i.AuthorAvatar,
 		); err != nil {
 			return nil, err

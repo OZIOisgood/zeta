@@ -16,6 +16,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
+	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/go-chi/chi/v5"
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -122,8 +123,8 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var author *ReviewAuthor
-		if row.AuthorFirstName.Valid || row.AuthorLastName.Valid {
-			name := strings.TrimSpace(row.AuthorFirstName.String + " " + row.AuthorLastName.String)
+		if row.AuthorUsername.Valid {
+			name := strings.TrimSpace(row.AuthorUsername.String)
 			if name != "" {
 				author = &ReviewAuthor{Name: name}
 				if row.AuthorAvatar.Valid && row.AuthorAvatar.String != "" {
@@ -263,11 +264,12 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Review author profile is missing", http.StatusInternalServerError)
 		return
 	}
-	authorName := strings.TrimSpace(authorPrefs.FirstName + " " + authorPrefs.LastName)
-	if authorName == "" {
+	authorName, err := preferences.RequireDisplayName(authorPrefs)
+	if err != nil {
 		log.ErrorContext(ctx, "review_author_name_missing",
 			slog.String("component", "reviews"),
 			slog.String("user_id", userInfo.ID),
+			slog.Any("err", err),
 		)
 		http.Error(w, "Review author profile is incomplete", http.StatusInternalServerError)
 		return

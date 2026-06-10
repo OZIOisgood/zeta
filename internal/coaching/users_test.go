@@ -22,6 +22,7 @@ func TestResolveUsersUsesPreferences(t *testing.T) {
 			UserID:    "expert-1",
 			FirstName: "Local",
 			LastName:  "Expert",
+			Username:  "local.e",
 			Avatar:    "local-base64-avatar",
 		},
 		nil,
@@ -33,8 +34,8 @@ func TestResolveUsersUsesPreferences(t *testing.T) {
 	}
 
 	got := users["expert-1"]
-	if got.FirstName != "Local" || got.LastName != "Expert" {
-		t.Fatalf("got name %q %q, want Local Expert", got.FirstName, got.LastName)
+	if got.Username != "local.e" {
+		t.Fatalf("got username %q, want local.e", got.Username)
 	}
 	if got.Avatar != "local-base64-avatar" {
 		t.Fatalf("got avatar %q, want local-base64-avatar", got.Avatar)

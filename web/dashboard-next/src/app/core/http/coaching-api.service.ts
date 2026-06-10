@@ -83,8 +83,7 @@ export type CoachingBooking = {
 
 export type ExpertInfo = {
   expert_id: string;
-  first_name: string;
-  last_name: string;
+  username: string;
   avatar?: string;
 };
 

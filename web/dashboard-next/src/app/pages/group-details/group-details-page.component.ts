@@ -212,7 +212,6 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
                               </z-badge>
                             }
                           </div>
-                          <p class="truncate text-sm text-[var(--z-muted)]">{{ member.email }}</p>
                         </div>
 
                         @if (canRemoveUsers() && !isCurrentUser(member.id)) {
@@ -342,7 +341,7 @@ export class GroupDetailsPageComponent {
         .slice(0, 2)
         .map((part) => part.charAt(0))
         .join('')
-        .toUpperCase() || member.email.charAt(0).toUpperCase()
+        .toUpperCase() || member.username.charAt(0).toUpperCase()
     );
   }
 

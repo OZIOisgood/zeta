@@ -468,6 +468,7 @@ type UserPreference struct {
 	EmailCoachingRemindersEnabled      bool             `json:"email_coaching_reminders_enabled"`
 	FirstName                          string           `json:"first_name"`
 	LastName                           string           `json:"last_name"`
+	Username                           string           `json:"username"`
 }
 
 type Video struct {

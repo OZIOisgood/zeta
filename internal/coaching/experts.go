@@ -11,10 +11,9 @@ import (
 
 // ExpertInfo is the public shape returned by ListExpertsInGroup.
 type ExpertInfo struct {
-	ExpertID  string `json:"expert_id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Avatar    string `json:"avatar,omitempty"`
+	ExpertID string `json:"expert_id"`
+	Username string `json:"username"`
+	Avatar   string `json:"avatar,omitempty"`
 }
 
 func (h *Handler) ListExpertsInGroup(w http.ResponseWriter, r *http.Request) {
@@ -60,10 +59,9 @@ func (h *Handler) ListExpertsInGroup(w http.ResponseWriter, r *http.Request) {
 	for i, id := range expertIDs {
 		u := users[id]
 		resp[i] = ExpertInfo{
-			ExpertID:  id,
-			FirstName: u.FirstName,
-			LastName:  u.LastName,
-			Avatar:    u.Avatar,
+			ExpertID: id,
+			Username: u.Username,
+			Avatar:   u.Avatar,
 		}
 	}
 

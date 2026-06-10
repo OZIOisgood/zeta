@@ -25,6 +25,7 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
 
 type PreferencesTab = 'personal-data' | 'email-preferences';
 type PreferencesFormValue = {
+  username: string;
   first_name: string;
   last_name: string;
   language: DashboardLanguage;
@@ -42,6 +43,7 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
   coaching_booking_updates_enabled: true,
   coaching_reminders_enabled: true,
 };
+const USERNAME_PATTERN = /^[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]$/;
 
 @Component({
   selector: 'app-preferences-page',
@@ -104,6 +106,31 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
               </div>
 
               <div class="grid gap-4 sm:grid-cols-2">
+                <label class="grid gap-2 sm:col-span-2">
+                  <z-field-label
+                    [label]="'preferences.username' | transloco"
+                    [control]="form.controls.username"
+                  />
+                  <z-text-input
+                    formControlName="username"
+                    autocomplete="username"
+                    ariaDescribedBy="preferences-username-error"
+                    [invalid]="
+                      (form.controls.username.dirty || form.controls.username.touched) &&
+                      form.controls.username.invalid
+                    "
+                  />
+                  @if (
+                    (form.controls.username.dirty || form.controls.username.touched) &&
+                    form.controls.username.invalid
+                  ) {
+                    <z-field-error
+                      id="preferences-username-error"
+                      [message]="usernameError() | transloco"
+                    />
+                  }
+                </label>
+
                 <label class="grid gap-2">
                   <z-field-label
                     [label]="'preferences.firstName' | transloco"
@@ -380,6 +407,10 @@ export class PreferencesPageComponent {
   private readonly formRevision = signal(0);
   private readonly initialFormValue = signal<PreferencesFormValue | null>(null);
   protected readonly form = new FormGroup({
+    username: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(USERNAME_PATTERN)],
+    }),
     first_name: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/)],
@@ -460,6 +491,7 @@ export class PreferencesPageComponent {
       if (!user) return;
 
       const formValue = {
+        username: user.username,
         first_name: user.first_name,
         last_name: user.last_name,
         language: DASHBOARD_LANGUAGES.some((language) => language.value === user.language)
@@ -506,6 +538,12 @@ export class PreferencesPageComponent {
     this.emailControls[key].markAsDirty();
   }
 
+  protected usernameError(): string {
+    return this.form.controls.username.hasError('required')
+      ? 'preferences.usernameRequired'
+      : 'preferences.usernameInvalid';
+  }
+
   protected saveDisabled(): boolean {
     this.formRevision();
 
@@ -520,6 +558,7 @@ export class PreferencesPageComponent {
     this.feedback.set(null);
     const rawValue = this.form.getRawValue();
     const user = await this.session.updateCurrentUser({
+      username: rawValue.username.trim().toLowerCase(),
       first_name: rawValue.first_name,
       last_name: rawValue.last_name,
       language: rawValue.language,
@@ -556,6 +595,7 @@ export class PreferencesPageComponent {
 
   private normalizeFormValue(value: PreferencesFormValue): PreferencesFormValue {
     return {
+      username: value.username.trim().toLowerCase(),
       first_name: value.first_name.trim(),
       last_name: value.last_name.trim(),
       language: value.language,
@@ -567,6 +607,7 @@ export class PreferencesPageComponent {
 
   private sameFormValue(left: PreferencesFormValue, right: PreferencesFormValue): boolean {
     return (
+      left.username === right.username &&
       left.first_name === right.first_name &&
       left.last_name === right.last_name &&
       left.language === right.language &&

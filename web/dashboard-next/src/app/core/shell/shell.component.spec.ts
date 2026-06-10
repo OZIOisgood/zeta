@@ -12,6 +12,7 @@ const mockUser: User = {
   email: 'ada@example.com',
   first_name: 'Ada',
   last_name: 'Coach',
+  username: 'ada.c',
   language: 'en',
   avatar: '',
   timezone: 'Europe/Berlin',
@@ -119,12 +120,12 @@ describe('ShellComponent', () => {
     fixture.detectChanges();
 
     const el = fixture.nativeElement as HTMLElement;
-    const menuButton = el.querySelector<HTMLButtonElement>('button[aria-label="Ada Coach"]');
+    const menuButton = el.querySelector<HTMLButtonElement>('button[aria-label="ada.c"]');
 
     menuButton?.click();
     fixture.detectChanges();
 
-    expect(menuButton?.querySelector('z-avatar')?.classList).toContain('size-8');
+    expect(menuButton?.querySelector('z-avatar')?.classList).toContain('size-9');
     expect(menuButton?.getAttribute('aria-expanded')).toBe('true');
     expect(el.textContent).toContain('ada@example.com');
     expect(el.querySelector('.absolute .border-b z-avatar')?.classList).toContain('size-10');

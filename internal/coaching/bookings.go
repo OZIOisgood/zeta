@@ -78,9 +78,9 @@ func buildBookingResponse(
 	resp := bookingResponse{
 		ID:              uuidToString(id),
 		ExpertID:        expertID,
-		ExpertName:      expertUser.FirstName + " " + expertUser.LastName,
+		ExpertName:      expertUser.Username,
 		StudentID:       studentID,
-		StudentName:     studentUser.FirstName + " " + studentUser.LastName,
+		StudentName:     studentUser.Username,
 		GroupID:         uuidToString(groupID),
 		SessionTypeID:   uuidToString(sessionTypeID),
 		SessionTypeName: sessionTypeName,

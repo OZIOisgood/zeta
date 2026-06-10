@@ -40,7 +40,9 @@ export const SessionStore = signalStore(
     displayName: computed(() => {
       const user = store.user();
 
-      return user ? `${user.first_name} ${user.last_name}`.trim() || user.email : '';
+      return user
+        ? user.username || `${user.first_name} ${user.last_name}`.trim() || user.email
+        : '';
     }),
     permissions: computed(() => new Set(store.user()?.permissions ?? [])),
   })),

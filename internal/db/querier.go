@@ -14,6 +14,7 @@ type Querier interface {
 	AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error
 	CancelBooking(ctx context.Context, arg CancelBookingParams) (CoachingBooking, error)
 	CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) (bool, error)
+	CheckUsernameAvailable(ctx context.Context, arg CheckUsernameAvailableParams) (bool, error)
 	CheckVideoVisibleToUser(ctx context.Context, arg CheckVideoVisibleToUserParams) (bool, error)
 	CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error)
 	CountUnreadNotifications(ctx context.Context, recipientID string) (int64, error)
@@ -57,6 +58,7 @@ type Querier interface {
 	GetSessionType(ctx context.Context, arg GetSessionTypeParams) (CoachingSessionType, error)
 	GetUserEmailPreferences(ctx context.Context, userID string) (GetUserEmailPreferencesRow, error)
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
+	GetUserPreferencesByUsername(ctx context.Context, lower string) (UserPreference, error)
 	// === Timezone ===
 	GetUserTimezone(ctx context.Context, userID string) (string, error)
 	GetVideoReview(ctx context.Context, id pgtype.UUID) (GetVideoReviewRow, error)

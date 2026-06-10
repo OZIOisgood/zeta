@@ -602,6 +602,23 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		uploaderPrefs, err := h.q.GetUserPreferences(bgCtx, userCtx.ID)
+		if err != nil {
+			bgLog.ErrorContext(bgCtx, "asset_notification_uploader_preferences_failed",
+				slog.String("user_id", userCtx.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
+		userName, err := preferences.RequireDisplayName(uploaderPrefs)
+		if err != nil {
+			bgLog.ErrorContext(bgCtx, "asset_notification_uploader_name_missing",
+				slog.String("user_id", userCtx.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
+
 		// In-app notification for the owner (the reviewing expert/coach). Recorded
 		// independently of email preferences, which only gate the email below.
 		notifications.Record(bgCtx, h.q, h.logger, group.OwnerID, notifications.TypeVideoUploaded,
@@ -610,7 +627,7 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 				VideoTitle:   asset.Name,
 				GroupID:      pgutil.UUIDToString(asset.GroupID),
 				GroupName:    group.Name,
-				UploaderName: fmt.Sprintf("%s %s", userCtx.FirstName, userCtx.LastName),
+				UploaderName: userName,
 			})
 
 		if !preferences.AllowsUserEmail(bgCtx, h.q, h.logger, group.OwnerID, preferences.EmailCategoryAssetUploads) {
@@ -640,22 +657,6 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		uploaderPrefs, err := h.q.GetUserPreferences(bgCtx, userCtx.ID)
-		if err != nil {
-			bgLog.ErrorContext(bgCtx, "asset_notification_uploader_preferences_failed",
-				slog.String("user_id", userCtx.ID),
-				slog.Any("err", err),
-			)
-			return
-		}
-		userName, err := preferences.RequireDisplayName(uploaderPrefs)
-		if err != nil {
-			bgLog.ErrorContext(bgCtx, "asset_notification_uploader_name_missing",
-				slog.String("user_id", userCtx.ID),
-				slog.Any("err", err),
-			)
-			return
-		}
 		loc := i18n.For(preferences.UserLang(bgCtx, h.q, bgLog, group.OwnerID))
 		message := email.Message{
 			Copy: email.Copy{

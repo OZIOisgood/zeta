@@ -48,21 +48,12 @@ func TestListGroupUsersUsesPreferenceAvatar(t *testing.T) {
 		},
 		nil,
 	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "user-2"}).Return(
-		usermanagement.User{
-			ID:                "user-2",
-			Email:             "expert@example.com",
-			FirstName:         "Example",
-			LastName:          "Expert",
-			ProfilePictureURL: "https://workos.example/avatar.png",
-		},
-		nil,
-	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "user-2").Return(
 		db.UserPreference{
 			UserID:    "user-2",
 			FirstName: "Local",
 			LastName:  "Expert",
+			Username:  "local.e",
 			Avatar:    "local-base64-avatar",
 		},
 		nil,
@@ -95,8 +86,14 @@ func TestListGroupUsersUsesPreferenceAvatar(t *testing.T) {
 	if got := body.Data[0]["avatar"]; got != "local-base64-avatar" {
 		t.Fatalf("got avatar %v, want local-base64-avatar", got)
 	}
-	if got := body.Data[0]["first_name"]; got != "Local" {
-		t.Fatalf("got first_name %v, want Local", got)
+	if got := body.Data[0]["username"]; got != "local.e" {
+		t.Fatalf("got username %v, want local.e", got)
+	}
+	if _, ok := body.Data[0]["first_name"]; ok {
+		t.Fatalf("response must not expose first_name: %#v", body.Data[0])
+	}
+	if _, ok := body.Data[0]["email"]; ok {
+		t.Fatalf("response must not expose email: %#v", body.Data[0])
 	}
 	if _, ok := body.Data[0]["profile_picture_url"]; ok {
 		t.Fatalf("response must not expose WorkOS profile_picture_url: %#v", body.Data[0])
@@ -169,12 +166,8 @@ func TestListGroupUsersFiltersStudents(t *testing.T) {
 		},
 		nil,
 	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "student-1"}).Return(
-		usermanagement.User{ID: "student-1", Email: "student@example.com", FirstName: "Example", LastName: "Student"},
-		nil,
-	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "student-1").Return(
-		db.UserPreference{UserID: "student-1", FirstName: "Local", LastName: "Student"},
+		db.UserPreference{UserID: "student-1", FirstName: "Local", LastName: "Student", Username: "local.s"},
 		nil,
 	)
 
@@ -232,20 +225,12 @@ func TestListGroupExpertsFiltersExpertsAndAdmins(t *testing.T) {
 		},
 		nil,
 	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "expert-1"}).Return(
-		usermanagement.User{ID: "expert-1", Email: "expert@example.com", FirstName: "Example", LastName: "Expert"},
-		nil,
-	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "admin-1"}).Return(
-		usermanagement.User{ID: "admin-1", Email: "admin@example.com", FirstName: "Example", LastName: "Admin"},
-		nil,
-	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(
-		db.UserPreference{UserID: "expert-1", FirstName: "Local", LastName: "Expert"},
+		db.UserPreference{UserID: "expert-1", FirstName: "Local", LastName: "Expert", Username: "local.e"},
 		nil,
 	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "admin-1").Return(
-		db.UserPreference{UserID: "admin-1", FirstName: "Local", LastName: "Admin"},
+		db.UserPreference{UserID: "admin-1", FirstName: "Local", LastName: "Admin", Username: "local.a"},
 		nil,
 	)
 

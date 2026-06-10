@@ -30,23 +30,19 @@ describe('GroupDetailsPageComponent', () => {
             ? [
                 {
                   id: 'student-1',
-                  email: 'student@example.com',
-                  first_name: 'Student',
-                  last_name: 'One',
+                  username: 'student.one',
                   avatar: '',
                   role: 'student',
-                  name: 'Student One',
+                  name: 'student.one',
                 },
               ]
             : [
                 {
                   id: 'expert-1',
-                  email: 'expert@example.com',
-                  first_name: 'Expert',
-                  last_name: 'One',
+                  username: 'expert.one',
                   avatar: '',
                   role: 'expert',
-                  name: 'Expert One',
+                  name: 'expert.one',
                 },
               ],
         ),
@@ -149,8 +145,8 @@ describe('GroupDetailsPageComponent', () => {
 
     expect(groupsApi.listGroupMembers).toHaveBeenCalledWith(group.id, 'students');
     expect(groupsApi.listGroupMembers).toHaveBeenCalledWith(group.id, 'experts');
-    expect(fixture.nativeElement.textContent).toContain('Student One');
-    expect(fixture.nativeElement.textContent).toContain('Expert One');
+    expect(fixture.nativeElement.textContent).toContain('student.one');
+    expect(fixture.nativeElement.textContent).toContain('expert.one');
     expect(fixture.nativeElement.textContent).toContain('Create a shareable link or QR code.');
   });
 
@@ -162,7 +158,7 @@ describe('GroupDetailsPageComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Member lists are not available');
-    expect(fixture.nativeElement.textContent).not.toContain('Student One');
-    expect(fixture.nativeElement.textContent).not.toContain('Expert One');
+    expect(fixture.nativeElement.textContent).not.toContain('student.one');
+    expect(fixture.nativeElement.textContent).not.toContain('expert.one');
   });
 });

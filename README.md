@@ -14,6 +14,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Group Invitations**: Invite users to groups via email or reusable generic invitation links with QR code generation and confirmation flow.
 - **Seamless Uploads**: Direct high-quality video uploads powered by Mux.
 - **Secure Authentication**: Enterprise-grade auth via WorkOS.
+- **Pseudonymous Identity**: Users get a public username and can change it in Preferences; email addresses stay private to the account owner and delivery flows.
 - **Video Reviews**: Add comments and feedback directly to video clips.
 - **Live Video Coaching**: 1-on-1 Agora-powered video calls with booking, availability management, and automated email reminders.
 - **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle and automatic import into the review flow.
@@ -175,6 +176,14 @@ sequenceDiagram
         A-->>A: Skip email
     end
 ```
+
+### Public User Identity
+
+- Users have a public `username` stored in `user_preferences`.
+- On first profile creation, the API generates a simple username from the user's first name and last initial when possible, for example `pavlo.l`.
+- Users can change their username from the Preferences page.
+- Cross-user surfaces such as group member lists, review authors, coaching bookings, reports, notifications, and emails use the username as the public display identifier.
+- `/auth/me` can still return the signed-in user's own email address for account UI. Group member and other cross-user API responses must not expose email addresses.
 
 ### API Examples
 

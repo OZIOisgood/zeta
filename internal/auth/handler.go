@@ -634,6 +634,17 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
+			username, err := h.availableUsername(ctx, user.ID, preferences.DefaultUsernameCandidate(user.FirstName, user.LastName, user.ID))
+			if err != nil {
+				h.logger.ErrorContext(ctx, "auth_generate_username_failed",
+					slog.String("component", "auth"),
+					slog.String("user_id", user.ID),
+					slog.Any("err", err),
+				)
+				http.Error(w, "Failed to create user settings", http.StatusInternalServerError)
+				return
+			}
+
 			if avatar != "" {
 				prefs, err = h.q.SeedUserPreferencesWithAvatar(ctx, db.SeedUserPreferencesWithAvatarParams{
 					UserID:    user.ID,
@@ -642,6 +653,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 					FirstName: user.FirstName,
 					LastName:  user.LastName,
 					Avatar:    avatar,
+					Username:  username,
 				})
 			} else {
 				prefs, err = h.q.SeedUserPreferences(ctx, db.SeedUserPreferencesParams{
@@ -650,6 +662,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 					Timezone:  tz,
 					FirstName: user.FirstName,
 					LastName:  user.LastName,
+					Username:  username,
 				})
 			}
 			if err != nil {
@@ -676,6 +689,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"id":                user.ID,
 		"first_name":        prefs.FirstName,
 		"last_name":         prefs.LastName,
+		"username":          prefs.Username,
 		"email":             user.Email,
 		"language":          prefs.Language,
 		"avatar":            prefs.Avatar,
@@ -692,6 +706,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 type UpdateUserRequest struct {
 	FirstName        string                        `json:"first_name"`
 	LastName         string                        `json:"last_name"`
+	Username         string                        `json:"username"`
 	Language         string                        `json:"language"`
 	Avatar           *string                       `json:"avatar"`
 	Timezone         string                        `json:"timezone"`
@@ -721,12 +736,50 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	currentPrefs, err := h.q.GetUserPreferences(ctx, user.ID)
+	if err != nil {
+		h.logger.ErrorContext(ctx, "auth_get_prefs_for_update_failed",
+			slog.String("component", "auth"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to get user settings", http.StatusInternalServerError)
+		return
+	}
+
+	username := preferences.NormalizeUsername(req.Username)
+	if username == "" {
+		username = currentPrefs.Username
+	}
+	if err := preferences.ValidateUsername(username); err != nil {
+		http.Error(w, "Invalid username", http.StatusBadRequest)
+		return
+	}
+	available, err := h.q.CheckUsernameAvailable(ctx, db.CheckUsernameAvailableParams{
+		Lower:  username,
+		UserID: user.ID,
+	})
+	if err != nil {
+		h.logger.ErrorContext(ctx, "auth_check_username_failed",
+			slog.String("component", "auth"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to check username", http.StatusInternalServerError)
+		return
+	}
+	if !available {
+		http.Error(w, "Username is already taken", http.StatusConflict)
+		return
+	}
+
 	prefs, err := h.q.UpdateUserProfilePreferences(ctx, db.UpdateUserProfilePreferencesParams{
 		UserID:    user.ID,
 		Language:  db.LanguageCode(req.Language),
 		Timezone:  req.Timezone,
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
+		Username:  username,
 	})
 	if err != nil {
 		h.logger.ErrorContext(ctx, "auth_update_profile_preferences_failed",
@@ -814,6 +867,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		"id":                user.ID,
 		"first_name":        prefs.FirstName,
 		"last_name":         prefs.LastName,
+		"username":          prefs.Username,
 		"email":             user.Email,
 		"language":          prefs.Language,
 		"avatar":            prefs.Avatar,
@@ -825,6 +879,32 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *Handler) availableUsername(ctx context.Context, userID, candidate string) (string, error) {
+	base := preferences.NormalizeUsername(candidate)
+	if err := preferences.ValidateUsername(base); err != nil {
+		base = preferences.DefaultUsernameCandidate("", "", userID)
+	}
+
+	for suffix := 1; suffix <= 50; suffix++ {
+		username := preferences.UsernameWithSuffix(base, suffix)
+		if err := preferences.ValidateUsername(username); err != nil {
+			continue
+		}
+		available, err := h.q.CheckUsernameAvailable(ctx, db.CheckUsernameAvailableParams{
+			Lower:  username,
+			UserID: userID,
+		})
+		if err != nil {
+			return "", err
+		}
+		if available {
+			return username, nil
+		}
+	}
+
+	return "", fmt.Errorf("no available username candidate for user %s", userID)
 }
 
 // DevToken issues a WorkOS RS256 access token for a given email/password via WorkOS Password Auth.

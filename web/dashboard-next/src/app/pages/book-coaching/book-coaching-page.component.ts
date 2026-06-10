@@ -438,13 +438,11 @@ export class BookCoachingPageComponent {
   }
 
   protected expertName(expert: ExpertInfo): string {
-    return `${expert.first_name} ${expert.last_name}`.trim() || expert.expert_id;
+    return expert.username || expert.expert_id;
   }
 
   protected expertInitials(expert: ExpertInfo): string {
-    const first = expert.first_name.trim().charAt(0);
-    const last = expert.last_name.trim().charAt(0);
-    return `${first}${last}`.trim().toUpperCase() || '?';
+    return (expert.username || expert.expert_id).trim().charAt(0).toUpperCase() || '?';
   }
 
   protected avatarSrc(avatar: string): string {

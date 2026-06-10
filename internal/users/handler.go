@@ -22,12 +22,10 @@ import (
 
 // groupUser is the JSON shape returned to the frontend.
 type groupUser struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Avatar    string `json:"avatar,omitempty"`
-	Role      string `json:"role"`
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Avatar   string `json:"avatar,omitempty"`
+	Role     string `json:"role"`
 }
 
 type Handler struct {
@@ -163,21 +161,12 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 				return
 			}
 
-			u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
-				User: userID,
-			})
-			if err != nil {
-				results[idx] = result{err: err}
-				return
-			}
 			results[idx] = result{
 				user: groupUser{
-					ID:        userID,
-					Email:     u.Email,
-					FirstName: prefs.FirstName,
-					LastName:  prefs.LastName,
-					Avatar:    prefs.Avatar,
-					Role:      roleByUserID[userID],
+					ID:       userID,
+					Username: prefs.Username,
+					Avatar:   prefs.Avatar,
+					Role:     roleByUserID[userID],
 				},
 			}
 		}(i, uid)

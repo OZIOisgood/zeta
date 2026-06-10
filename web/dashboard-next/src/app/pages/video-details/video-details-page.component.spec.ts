@@ -12,6 +12,7 @@ const user: User = {
   email: 'expert@example.com',
   first_name: 'Ada',
   last_name: 'Expert',
+  username: 'ada.e',
   language: 'en',
   avatar: '',
   timezone: 'Europe/Rome',

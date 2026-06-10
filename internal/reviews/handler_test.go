@@ -37,7 +37,7 @@ func (m createReviewReRootedMatcher) String() string {
 	return "re-rooted CreateVideoReviewParams with no timestamp"
 }
 
-func makeListRow(id, videoID pgtype.UUID, content string, ts *int32, parentID *pgtype.UUID, firstName, lastName string) db.ListVideoReviewsRow {
+func makeListRow(id, videoID pgtype.UUID, content string, ts *int32, parentID *pgtype.UUID, username string) db.ListVideoReviewsRow {
 	row := db.ListVideoReviewsRow{
 		ID:        id,
 		VideoID:   videoID,
@@ -50,11 +50,8 @@ func makeListRow(id, videoID pgtype.UUID, content string, ts *int32, parentID *p
 	if parentID != nil {
 		row.ParentID = *parentID
 	}
-	if firstName != "" {
-		row.AuthorFirstName = pgtype.Text{String: firstName, Valid: true}
-	}
-	if lastName != "" {
-		row.AuthorLastName = pgtype.Text{String: lastName, Valid: true}
+	if username != "" {
+		row.AuthorUsername = pgtype.Text{String: username, Valid: true}
 	}
 	return row
 }
@@ -241,6 +238,7 @@ func TestCreateReview_Success(t *testing.T) {
 	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{
 		FirstName: "Review",
 		LastName:  "User",
+		Username:  "review.u",
 	}, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), gomock.Any()).Return(db.VideoReview{
 		ID:        reviewID,
@@ -293,6 +291,7 @@ func TestCreateReview_NotifiesVideoOwner(t *testing.T) {
 	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{
 		FirstName: "Review",
 		LastName:  "User",
+		Username:  "review.u",
 	}, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), gomock.Any()).Return(db.VideoReview{
 		ID:        reviewID,
@@ -434,6 +433,7 @@ func TestCreateReview_DBError(t *testing.T) {
 	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{
 		FirstName: "Review",
 		LastName:  "User",
+		Username:  "review.u",
 	}, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), gomock.Any()).Return(db.VideoReview{}, errors.New("db error"))
 
@@ -463,8 +463,8 @@ func TestListReviews_ReturnsAuthorAndParentID(t *testing.T) {
 
 	ts := int32(10)
 	rows := []db.ListVideoReviewsRow{
-		makeListRow(videoID, videoID, "Root comment", &ts, nil, "Anna", "Müller"),
-		makeListRow(replyUUID, videoID, "Reply text", nil, &videoID, "Ben", "Smith"),
+		makeListRow(videoID, videoID, "Root comment", &ts, nil, "anna.m"),
+		makeListRow(replyUUID, videoID, "Reply text", nil, &videoID, "ben.s"),
 	}
 
 	expectVideoVisible(q, videoID, user)
@@ -489,8 +489,8 @@ func TestListReviews_ReturnsAuthorAndParentID(t *testing.T) {
 	if len(got) != 2 {
 		t.Fatalf("got %d reviews, want 2", len(got))
 	}
-	if got[0].Author == nil || got[0].Author.Name != "Anna Müller" {
-		t.Errorf("root author name: got %v, want 'Anna Müller'", got[0].Author)
+	if got[0].Author == nil || got[0].Author.Name != "anna.m" {
+		t.Errorf("root author name: got %v, want 'anna.m'", got[0].Author)
 	}
 	if got[1].ParentID == nil {
 		t.Error("reply should have parent_id set")
@@ -568,6 +568,7 @@ func TestCreateReview_Reply_ReRootsToTopLevel(t *testing.T) {
 	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(db.UserPreference{
 		FirstName: "Anna",
 		LastName:  "Müller",
+		Username:  "anna.m",
 	}, nil)
 	q.EXPECT().CreateVideoReview(gomock.Any(), createReviewReRootedMatcher{wantParentID: rootUUID}).Return(db.VideoReview{
 		ID:        videoID,

@@ -11,10 +11,9 @@ import (
 )
 
 type userInfo struct {
-	ID        string `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Avatar    string `json:"avatar,omitempty"`
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Avatar   string `json:"avatar,omitempty"`
 }
 
 // resolveUsers fetches display profiles from user_preferences concurrently.
@@ -62,10 +61,9 @@ func (h *Handler) resolveUsers(ctx context.Context, userIDs []string) (map[strin
 			}
 			mu.Lock()
 			result[id] = userInfo{
-				ID:        id,
-				FirstName: prefs.FirstName,
-				LastName:  prefs.LastName,
-				Avatar:    prefs.Avatar,
+				ID:       id,
+				Username: prefs.Username,
+				Avatar:   prefs.Avatar,
 			}
 			mu.Unlock()
 		}(uid)

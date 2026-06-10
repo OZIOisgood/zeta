@@ -32,8 +32,8 @@ func TestBuildBookingResponse(t *testing.T) {
 	expertID := "user-expert"
 	studentID := "user-student"
 	users := map[string]userInfo{
-		expertID:  {FirstName: "Anna", LastName: "Smith"},
-		studentID: {FirstName: "Bob", LastName: "Jones"},
+		expertID:  {Username: "anna.s"},
+		studentID: {Username: "bob.j"},
 	}
 
 	futureTime := time.Now().Add(24 * time.Hour).UTC().Truncate(time.Microsecond)
@@ -52,18 +52,18 @@ func TestBuildBookingResponse(t *testing.T) {
 	copy(sessionTypeID.Bytes[:], []byte{33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48})
 	sessionTypeID.Valid = true
 
-	t.Run("names concatenated correctly", func(t *testing.T) {
+	t.Run("public names use usernames", func(t *testing.T) {
 		resp := buildBookingResponse(
 			id, expertID, studentID, groupID, sessionTypeID, "Quick Call",
 			scheduledAt, 60, false,
 			pgtype.Text{}, pgtype.Text{}, pgtype.Text{},
 			createdAt, users, "", pgtype.UUID{}, pgtype.UUID{},
 		)
-		if resp.ExpertName != "Anna Smith" {
-			t.Errorf("ExpertName = %q, want %q", resp.ExpertName, "Anna Smith")
+		if resp.ExpertName != "anna.s" {
+			t.Errorf("ExpertName = %q, want %q", resp.ExpertName, "anna.s")
 		}
-		if resp.StudentName != "Bob Jones" {
-			t.Errorf("StudentName = %q, want %q", resp.StudentName, "Bob Jones")
+		if resp.StudentName != "bob.j" {
+			t.Errorf("StudentName = %q, want %q", resp.StudentName, "bob.j")
 		}
 	})
 

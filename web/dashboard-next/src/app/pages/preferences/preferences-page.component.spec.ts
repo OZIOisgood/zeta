@@ -13,6 +13,7 @@ const user: User = {
   email: 'coach@example.com',
   first_name: 'Ada',
   last_name: 'Coach',
+  username: 'ada.c',
   language: 'en',
   avatar: '',
   timezone: 'Europe/Rome',
@@ -106,6 +107,9 @@ describe('PreferencesPageComponent', () => {
                 toggleLanguages: 'Toggle language options',
                 toggleTimezones: 'Toggle timezone options',
                 timezoneRequired: 'Please select a timezone.',
+                username: 'Username',
+                usernameInvalid: 'Use a valid username.',
+                usernameRequired: 'Username is required.',
               },
               toast: { title: 'Saved' },
             },
@@ -159,7 +163,12 @@ describe('PreferencesPageComponent', () => {
     await component['save']();
 
     expect(session.updateCurrentUser).toHaveBeenCalledWith(
-      expect.objectContaining({ first_name: 'Grace', language: 'en', timezone: 'Europe/Rome' }),
+      expect.objectContaining({
+        first_name: 'Grace',
+        language: 'en',
+        timezone: 'Europe/Rome',
+        username: 'ada.c',
+      }),
     );
     expect(shell.setLanguage).toHaveBeenCalledWith('en');
     expect(shell.showToast).toHaveBeenCalledWith(
@@ -193,14 +202,14 @@ describe('PreferencesPageComponent', () => {
 
     expect(button().disabled).toBe(true);
 
-    input.value = 'Ada1';
+    input.value = 'ada2';
     input.dispatchEvent(new Event('input'));
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(button().disabled).toBe(false);
 
-    input.value = 'Ada';
+    input.value = 'ada.c';
     input.dispatchEvent(new Event('input'));
     await fixture.whenStable();
     fixture.detectChanges();
@@ -218,7 +227,7 @@ describe('PreferencesPageComponent', () => {
     fixture.detectChanges();
 
     const error = fixture.nativeElement.querySelector('#preferences-first-name-error');
-    const input = fixture.nativeElement.querySelector('z-text-input input');
+    const input = fixture.nativeElement.querySelectorAll('z-text-input input')[1];
 
     expect(error?.textContent).toContain('First name is required.');
     expect(input?.getAttribute('aria-invalid')).toBe('true');

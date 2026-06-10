@@ -9,6 +9,7 @@ const user: User = {
   email: 'coach@example.com',
   first_name: 'Ada',
   last_name: 'Coach',
+  username: 'ada.c',
   language: 'fr',
   avatar: '',
   timezone: 'Europe/Rome',
@@ -51,7 +52,7 @@ describe('SessionStore', () => {
     await store.loadCurrentUser();
 
     expect(store.status()).toBe('success');
-    expect(store.displayName()).toBe('Ada Coach');
+    expect(store.displayName()).toBe('ada.c');
     expect(store.hasPermission('assets:create')).toBe(true);
     expect(localization.useUserPreferences).toHaveBeenCalledWith('fr', 'Europe/Rome');
   });
@@ -87,6 +88,7 @@ describe('SessionStore', () => {
     const updatedUser = {
       ...user,
       first_name: 'Grace',
+      username: 'grace.c',
       language: 'de',
       timezone: 'Europe/Berlin',
     };
@@ -115,13 +117,14 @@ describe('SessionStore', () => {
     await store.updateCurrentUser({
       first_name: 'Grace',
       last_name: 'Coach',
+      username: 'grace.c',
       language: 'de',
       timezone: 'Europe/Berlin',
       email_preferences: user.email_preferences,
     });
 
     expect(store.mutationStatus()).toBe('success');
-    expect(store.displayName()).toBe('Grace Coach');
+    expect(store.displayName()).toBe('grace.c');
     expect(localization.useUserPreferences).toHaveBeenCalledWith('de', 'Europe/Berlin');
   });
 });

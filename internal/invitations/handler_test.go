@@ -262,6 +262,10 @@ func TestAcceptInvitationNotifiesGroupOwner(t *testing.T) {
 	q.EXPECT().GetGroup(gomock.Any(), groupID).
 		Return(db.Group{ID: groupID, OwnerID: "owner-1", Name: "Academy"}, nil).
 		AnyTimes()
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user-2").Return(db.UserPreference{
+		UserID:   "user-2",
+		Username: "new.member",
+	}, nil)
 
 	recorded := make(chan db.CreateNotificationParams, 1)
 	q.EXPECT().CreateNotification(gomock.Any(), gomock.Any()).

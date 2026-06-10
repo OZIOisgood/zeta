@@ -384,7 +384,6 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 
 	// In-app notification for the group owner that a new member joined. Fires for
 	// every join (link/QR or email invite), independent of email preferences.
-	joinerName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	go func() {
 		bgCtx := context.Background()
 		group, err := h.q.GetGroup(bgCtx, invitation.GroupID)
@@ -398,11 +397,29 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 		if group.OwnerID == user.ID {
 			return
 		}
+		joinerPrefs, err := h.q.GetUserPreferences(bgCtx, user.ID)
+		if err != nil {
+			h.logger.ErrorContext(bgCtx, "member_joined_notification_joiner_preferences_failed",
+				slog.String("component", "invitations"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
+		joinerName, err := preferences.RequireDisplayName(joinerPrefs)
+		if err != nil {
+			h.logger.ErrorContext(bgCtx, "member_joined_notification_joiner_name_missing",
+				slog.String("component", "invitations"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			return
+		}
 		notifications.Record(bgCtx, h.q, h.logger, group.OwnerID, notifications.TypeGroupMemberJoined,
 			notifications.GroupMemberJoinedPayload{
 				GroupID:    pgutil.UUIDToString(invitation.GroupID),
 				GroupName:  group.Name,
-				MemberName: strings.TrimSpace(joinerName),
+				MemberName: joinerName,
 			})
 	}()
 
