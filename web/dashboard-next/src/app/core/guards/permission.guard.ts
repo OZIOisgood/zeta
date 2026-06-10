@@ -7,7 +7,7 @@ import { Permission, PermissionsService } from '../permissions/permissions.servi
 
 const isSettled = (status: string) => status !== 'idle' && status !== 'loading';
 
-export const permissionGuard: CanActivateFn = (route) => {
+export const permissionGuard: CanActivateFn = (route, state) => {
   const session = inject(SessionStore);
   const permissions = inject(PermissionsService);
   const router = inject(Router);
@@ -19,7 +19,7 @@ export const permissionGuard: CanActivateFn = (route) => {
 
   const decide = () => {
     if (session.status() !== 'success') {
-      session.login(router.url);
+      session.login(state.url);
       return false;
     }
 

@@ -26,6 +26,8 @@ import (
 const CookieName = "zeta_session"
 const RefreshCookieName = "zeta_refresh"
 const AuthStateCookieName = "zeta_auth_state"
+const authStateCookiePath = "/"
+const legacyAuthStateCookiePath = "/auth"
 
 const authStateTTL = 10 * time.Minute
 
@@ -83,10 +85,11 @@ func setAuthStateCookie(w http.ResponseWriter, state authReturnState) error {
 		return err
 	}
 
+	clearLegacyAuthStateCookie(w)
 	http.SetCookie(w, &http.Cookie{
 		Name:     AuthStateCookieName,
 		Value:    base64.RawURLEncoding.EncodeToString(payload),
-		Path:     "/auth",
+		Path:     authStateCookiePath,
 		HttpOnly: true,
 		Secure:   cookieSecure(),
 		SameSite: cookieSameSite(),
@@ -100,7 +103,21 @@ func clearAuthStateCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     AuthStateCookieName,
 		Value:    "",
-		Path:     "/auth",
+		Path:     authStateCookiePath,
+		Expires:  time.Now().Add(-1 * time.Hour),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   cookieSecure(),
+		SameSite: cookieSameSite(),
+	})
+	clearLegacyAuthStateCookie(w)
+}
+
+func clearLegacyAuthStateCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     AuthStateCookieName,
+		Value:    "",
+		Path:     legacyAuthStateCookiePath,
 		Expires:  time.Now().Add(-1 * time.Hour),
 		MaxAge:   -1,
 		HttpOnly: true,

@@ -52,6 +52,9 @@ func TestLoginWithReturnToPassesOpaqueStateToWorkOS(t *testing.T) {
 	}
 
 	cookie := authStateCookie(t, rec.Result().Cookies())
+	if cookie.Path != authStateCookiePath {
+		t.Fatalf("auth state cookie path %q, want %q", cookie.Path, authStateCookiePath)
+	}
 	stored := decodeAuthStateCookie(t, cookie.Value)
 	if stored.State != captured.State {
 		t.Fatalf("stored state %q, want %q", stored.State, captured.State)
@@ -152,7 +155,7 @@ func TestCallbackRejectsMismatchedState(t *testing.T) {
 func authStateCookie(t *testing.T, cookies []*http.Cookie) *http.Cookie {
 	t.Helper()
 	for _, cookie := range cookies {
-		if cookie.Name == AuthStateCookieName {
+		if cookie.Name == AuthStateCookieName && cookie.Value != "" && cookie.MaxAge >= 0 {
 			return cookie
 		}
 	}
@@ -169,7 +172,7 @@ func encodedAuthStateCookie(t *testing.T, state authReturnState) *http.Cookie {
 	return &http.Cookie{
 		Name:  AuthStateCookieName,
 		Value: base64.RawURLEncoding.EncodeToString(payload),
-		Path:  "/auth",
+		Path:  authStateCookiePath,
 	}
 }
 
