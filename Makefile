@@ -46,6 +46,18 @@ web-next\:storybook:
 web-next\:storybook\:build:
 	cd web/dashboard-next && pnpm install && pnpm run build-storybook
 
+mobile\:start:
+	cd mobile && pnpm install && pnpm run start
+
+mobile\:lint:
+	cd mobile && pnpm install && pnpm run lint
+
+mobile\:test:
+	cd mobile && pnpm install && pnpm run test
+
+mobile\:typecheck:
+	cd mobile && pnpm install && pnpm exec tsc --noEmit
+
 infra\:up:
 	docker-compose -f ./infra/docker-compose.yml up -d --build
 
