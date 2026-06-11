@@ -244,9 +244,14 @@ const (
 )
 
 // Event describes a single audited mutation. ResourceID and GroupID are empty
-// strings when not applicable (stored as SQL NULL). OldValues/NewValues are
-// JSON-serialized; pass only PII-minimized snapshots (no tokens, no full
-// profiles, no email bodies).
+// strings when not applicable (stored as SQL NULL).
+//
+// OldValues/NewValues MUST be a *curated snapshot DTO*, never a raw db row.
+// Marshalling a db.* struct directly couples the audit format to DB migrations
+// and leaks unfiltered PII. Each snapshot type carries a `_v` schema version
+// (start at 1; bump only on breaking shape changes) and includes only the fields
+// you intentionally want in the trail (no tokens, no full profiles, no email
+// bodies). See the design spec, "Schema-Evolution der Snapshots".
 type Event struct {
 	Action       string
 	ResourceType string
@@ -256,6 +261,25 @@ type Event struct {
 	NewValues    any
 }
 ```
+
+**Snapshot contract (applies to every rollout plan, not built here):** each domain
+defines its own curated snapshot DTO with a `_v` tag, e.g.
+
+```go
+type bookingSnapshot struct {
+	V           int    `json:"_v"` // start at 1
+	ExpertID    string `json:"expert_id"`
+	StudentID   string `json:"student_id"`
+	ScheduledAt string `json:"scheduled_at"`
+	DurationMin int32  `json:"duration_min"`
+	IsCancelled bool   `json:"is_cancelled"`
+	// deliberately NOT: internal columns, unfiltered PII
+}
+```
+
+Additive field changes keep `_v`; breaking changes (rename/remove/semantic shift)
+bump `_v`. Old rows are never migrated (the trigger forbids UPDATE) — readers are
+tolerant (schema-on-read).
 
 - [ ] **Step 2: Verify it compiles**
 
@@ -1105,7 +1129,7 @@ git commit -m "docs(audit): document maintenance schedule, infra cron and schema
 
 ## Self-Review
 
-- **Spec coverage:** Table/columns (Task 1) ✓ · TEXT actor/resource ids correcting the spec ✓ · partitioning + immutability trigger (Task 1) ✓ · sqlc insert (Task 2) ✓ · event taxonomy (Task 3) ✓ · actor-from-context + system fallback + point-in-time label (Task 5) ✓ · metadata middleware (Task 4) ✓ · in-transaction atomicity (Task 5 rollback test) ✓ · 3-year retention via partition drop (Task 6/8) ✓ · server wiring (Task 9) ✓ · DSGVO/PII handled via PII-minimized snapshots (documented in `Event` doc-comment) ✓ · docs/infra (Task 10) ✓. **Out of scope by design:** per-domain handler wiring → rollout plans.
+- **Spec coverage:** Table/columns (Task 1) ✓ · TEXT actor/resource ids correcting the spec ✓ · partitioning + immutability trigger (Task 1) ✓ · sqlc insert (Task 2) ✓ · event taxonomy (Task 3) ✓ · actor-from-context + system fallback + point-in-time label (Task 5) ✓ · metadata middleware (Task 4) ✓ · in-transaction atomicity (Task 5 rollback test) ✓ · 3-year retention via partition drop (Task 6/8) ✓ · server wiring (Task 9) ✓ · DSGVO/PII handled via curated PII-minimized snapshot DTOs (Task 3 doc-comment + Snapshot contract) ✓ · snapshot schema-evolution: curated DTO + `_v`, schema-on-read (Task 3) ✓ · docs/infra (Task 10) ✓. **Out of scope by design:** per-domain handler wiring → rollout plans.
 - **Placeholder scan:** The illustrative `countPartitions` helper in Task 6 Step 1 is explicitly flagged for removal before running. No other placeholders.
 - **Type consistency:** `Recorder.Record(ctx, db.DBTX, Event)`, `EnsurePartitions(ctx, *pgxpool.Pool)`, `DropExpiredPartitions(ctx, *pgxpool.Pool, time.Duration)`, `NewRecorder()`, `NewHandler(pool, logger, secret)` — used consistently across tasks. `text()` helper and `pgtype.Text` params match Task 2 Step 4’s expected generated types (verify in Task 2).
 
@@ -1114,6 +1138,8 @@ git commit -m "docs(audit): document maintenance schedule, infra cron and schema
 ## Rollout Roadmap (separate plans — write each via writing-plans when ready)
 
 Each domain plan injects `*audit.Recorder` into the handler, converts the relevant mutation(s) to a `pool.Begin → db.New(tx) → mutation + rec.Record → Commit` transaction, and adds a per-event integration test asserting the correct `action`/actor/`resource_id`.
+
+Each domain also defines its own **curated snapshot DTO(s) with a `_v` tag** (see the Snapshot contract in Task 3) and passes those — never raw `db.*` rows — as `Event.OldValues`/`NewValues`.
 
 1. **Groups** — `group.created|updated|deleted`, `group_membership.added|removed|left`, `group_invite.created|accepted|revoked`. Touches `internal/groups`, `internal/users` (RemoveGroupUser), `internal/invitations`. Needs pool injected (currently Querier-only).
 2. **Coaching bookings** — `booking.created|cancelled|rescheduled`. `internal/coaching` already has the pool; lightest rollout.

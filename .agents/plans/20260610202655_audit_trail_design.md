@@ -138,6 +138,53 @@ Der Hauptaufwand ist der **Transaktions-Umbau der ~12 betroffenen Handler** von
 „`db.Querier`-Interface" auf „`*pgxpool.Pool` + Transaktion". Das ist die
 Voraussetzung dafür, dass der Trail nie von der Realität abdriften kann.
 
+## Schema-Evolution der Snapshots
+
+`old_values`/`new_values` sind JSONB. Entitäten ändern sich über die Zeit — der
+Trail ist aber unveränderlich, alte Zeilen werden **nie** migriert (Trigger
+verbietet UPDATE; und sie sollen die *damalige* Form zeigen). Heterogene Shapes
+über die Zeit sind also gewollt, nicht ein Defekt. Zwei verbindliche Regeln:
+
+**(a) Kuratierter Snapshot-DTO — niemals der rohe DB-Row.**
+Snapshots werden über einen bewusst definierten Typ **pro Resource** serialisiert,
+**nicht** via `json.Marshal(dbRow)`. Sonst verschiebt sich das Audit-Format
+unkontrolliert mit jeder DB-Migration mit, und PII landet ungefiltert im Trail.
+Der DTO ist die *eine* Stelle, an der Shape **und** PII-Minimierung kontrolliert
+werden.
+
+```go
+type bookingSnapshot struct {
+    V           int    `json:"_v"`        // Snapshot-Schemaversion
+    ExpertID    string `json:"expert_id"`
+    StudentID   string `json:"student_id"`
+    ScheduledAt string `json:"scheduled_at"`
+    DurationMin int32  `json:"duration_min"`
+    IsCancelled bool   `json:"is_cancelled"`
+    // bewusst NICHT: interne Spalten, ungefilterte PII
+}
+```
+
+**(b) Versions-Tag `_v` + additive-vs-breaking-Regel.** Jeder Snapshot trägt `_v`
+(Start: `1`).
+- **Additiv** (neues Feld) → kein Bump; tolerante Leser ignorieren/zeigen es.
+- **Brechend** (Feld umbenannt/entfernt/Semantik geändert) → `_v` bumpen,
+  Mini-Changelog der Snapshot-Schemas pflegen.
+
+**Lesen = schema-on-read.** Konsumenten behandeln Payloads als lose typisierte Map
+(fehlend → leer, unbekannt → trotzdem anzeigen). Audit-Anzeige ist generisches
+Key/Value-/Diff-Rendering, kein typisierter Struct pro Version.
+
+**Ausblick (jetzt nicht bauen):** Für *brechende* Änderungen ist **Upcasting** der
+benannte Read-Pfad (alte Version → aktuelle Form, in-memory, ohne die Zeile
+anzufassen). **Schema-Registry / Avro / Protobuf** (writer/reader-schema-resolution)
+wird erst SOTA-relevant, wenn Audit-Events über den Outbox/CDC-Pfad an viele
+Konsumenten fließen — bewusst außer Scope. Real-Columns-pro-Entität (Envers-Stil)
+wurde verworfen: löst Evolution nicht (alte Zeilen bleiben ebenso eingefroren),
+erzwingt aber DDL-Lockstep pro Entität und passt nicht zum Action-Audit über einen
+ORM-losen sqlc-Stack. Die feststehenden Query-Achsen (`actor_id`, `action`,
+`resource_type`, …) sind ohnehin echte, typisierte Spalten — JSONB trägt nur den
+offenen Payload.
+
 ## Unveränderlichkeit & Retention
 
 - **Trigger** `BEFORE UPDATE OR DELETE` auf `audit_events` wirft immer →
