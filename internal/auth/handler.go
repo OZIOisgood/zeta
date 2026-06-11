@@ -957,6 +957,19 @@ func (h *Handler) TokenRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// The refresh response carries no user object; extract the user ID from
+	// the freshly issued access token (same trust as Callback's sid parse).
+	userID := ""
+	var refreshClaims jwt.MapClaims
+	if _, _, err := jwt.NewParser().ParseUnverified(resp.AccessToken, &refreshClaims); err == nil {
+		userID, _ = refreshClaims["sub"].(string)
+	}
+
+	h.logger.InfoContext(ctx, "auth_token_refresh_succeeded",
+		slog.String("component", "auth"),
+		slog.String("user_id", userID),
+	)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tokenPairResponse{
 		AccessToken:  resp.AccessToken,
