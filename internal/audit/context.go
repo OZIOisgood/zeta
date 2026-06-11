@@ -54,8 +54,13 @@ func Middleware(captureIP bool) func(http.Handler) http.Handler {
 }
 
 func clientIP(r *http.Request) string {
+	// X-Forwarded-For accumulates hops left-to-right; only the RIGHTMOST entry
+	// was appended by our trusted proxy (Cloud Run / Google Front End). Leftmost
+	// entries are client-controlled and trivially forgeable — never trust them
+	// in a forensic trail.
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		return strings.TrimSpace(strings.Split(xff, ",")[0])
+		parts := strings.Split(xff, ",")
+		return strings.TrimSpace(parts[len(parts)-1])
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
