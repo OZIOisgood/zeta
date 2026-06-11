@@ -20,6 +20,12 @@ type Options = {
  * Retry limitation: only the retried request's headers are rebuilt; requests
  * with consumed body streams (POST/PUT) may not be retryable — acceptable for
  * now, the app's reads dominate and writes surface the error to the caller.
+ *
+ * Known window: a request sent with the old token that 401s after a completed
+ * refresh starts one extra rotation with the (current) refresh token. This is
+ * bounded — at most one extra refresh per in-flight straggler — and safe with
+ * WorkOS rotation since the newest stored token is always used. A
+ * generation/epoch guard can eliminate it if rotation churn ever matters.
  */
 export function createAuthenticatedClient(options: Options) {
   const baseUrl = options.baseUrl ?? process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_BASE_URL;
@@ -39,7 +45,8 @@ export function createAuthenticatedClient(options: Options) {
       }),
     );
     if (!response.ok) return false;
-    const pair = (await response.json()) as { access_token: string; refresh_token: string };
+    const pair = (await response.json()) as { access_token?: string; refresh_token?: string };
+    if (!pair.access_token || !pair.refresh_token) return false;
     await setTokens({ accessToken: pair.access_token, refreshToken: pair.refresh_token });
     return true;
   }

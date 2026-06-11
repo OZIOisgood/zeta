@@ -95,6 +95,25 @@ test('on 401 with failing refresh: clears tokens and calls onSignOut', async () 
   expect(onSignOut).toHaveBeenCalledTimes(1);
 });
 
+test('on 401 with malformed refresh response: clears tokens and calls onSignOut', async () => {
+  await setTokens({ accessToken: 'acc_old', refreshToken: 'ref_old' });
+  const fetchSpy: typeof fetch = async (input) => {
+    const req = input as Request;
+    if (new URL(req.url).pathname === '/auth/token/refresh') {
+      return jsonResponse({ access_token: '', refresh_token: '' });
+    }
+    return jsonResponse({ message: 'unauthorized' }, 401);
+  };
+
+  const onSignOut = jest.fn();
+  const client = createAuthenticatedClient({ baseUrl: BASE, fetch: fetchSpy, onSignOut });
+  const { error } = await client.GET('/auth/me');
+
+  expect(error).toBeDefined();
+  expect(await getTokens()).toBeNull();
+  expect(onSignOut).toHaveBeenCalledTimes(1);
+});
+
 test('parallel 401s trigger only one refresh (single-flight)', async () => {
   await setTokens({ accessToken: 'acc_old', refreshToken: 'ref_old' });
   let refreshCalls = 0;
