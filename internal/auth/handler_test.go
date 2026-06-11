@@ -271,3 +271,68 @@ func TestTokenExchangeRejectsFailedAuthentication(t *testing.T) {
 		t.Fatalf("got status %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 }
+
+func TestTokenRefreshReturnsRotatedPair(t *testing.T) {
+	t.Setenv("WORKOS_CLIENT_ID", "client_test")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().AuthenticateWithRefreshToken(gomock.Any(), usermanagement.AuthenticateWithRefreshTokenOpts{
+		ClientID:     "client_test",
+		RefreshToken: "refresh_old",
+	}).Return(usermanagement.RefreshAuthenticationResponse{
+		AccessToken:  "access_new",
+		RefreshToken: "refresh_new",
+	}, nil)
+
+	h := NewHandler(slog.Default(), nil, workos)
+	req := httptest.NewRequest(http.MethodPost, "/auth/token/refresh", strings.NewReader(`{"refresh_token":"refresh_old"}`))
+	rec := httptest.NewRecorder()
+
+	h.TokenRefresh(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusOK)
+	}
+	var resp struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.AccessToken != "access_new" || resp.RefreshToken != "refresh_new" {
+		t.Fatalf("unexpected token pair: %+v", resp)
+	}
+}
+
+func TestTokenRefreshRequiresToken(t *testing.T) {
+	h := NewHandler(slog.Default(), nil, nil)
+	req := httptest.NewRequest(http.MethodPost, "/auth/token/refresh", strings.NewReader(`{}`))
+	rec := httptest.NewRecorder()
+
+	h.TokenRefresh(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestTokenRefreshRejectsFailedRefresh(t *testing.T) {
+	t.Setenv("WORKOS_CLIENT_ID", "client_test")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().AuthenticateWithRefreshToken(gomock.Any(), gomock.Any()).
+		Return(usermanagement.RefreshAuthenticationResponse{}, fmt.Errorf("revoked"))
+
+	h := NewHandler(slog.Default(), nil, workos)
+	req := httptest.NewRequest(http.MethodPost, "/auth/token/refresh", strings.NewReader(`{"refresh_token":"revoked"}`))
+	rec := httptest.NewRecorder()
+
+	h.TokenRefresh(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+}

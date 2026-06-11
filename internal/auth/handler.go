@@ -924,6 +924,46 @@ func (h *Handler) TokenExchange(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type tokenRefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+// TokenRefresh rotates a WorkOS token pair for the mobile flow. WorkOS
+// invalidates the presented refresh token, so the client must always replace
+// its stored pair with the returned one.
+func (h *Handler) TokenRefresh(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req tokenRefreshRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.RefreshToken == "" {
+		http.Error(w, "refresh_token is required", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.workos.AuthenticateWithRefreshToken(ctx, usermanagement.AuthenticateWithRefreshTokenOpts{
+		ClientID:     os.Getenv("WORKOS_CLIENT_ID"),
+		RefreshToken: req.RefreshToken,
+	})
+	if err != nil {
+		h.logger.WarnContext(ctx, "auth_token_refresh_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Refresh failed", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tokenPairResponse{
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+	})
+}
+
 // fetchURLAsBase64 downloads the content at url and returns it as a base64-encoded string.
 func (h *Handler) fetchURLAsBase64(url string) (string, error) {
 	resp, err := http.Get(url) // #nosec G107 — URL comes from WorkOS API response
