@@ -159,6 +159,8 @@ func (s *Server) routes(ctx context.Context) {
 		r.Post("/auth/logout", authHandler.Logout)
 		r.Get("/auth/me", authHandler.Me)
 		r.Put("/auth/me", authHandler.UpdateMe)
+		// Mobile PKCE flow: exchanges an AuthKit code for a JSON token pair
+		r.Post("/auth/token", authHandler.TokenExchange)
 		// Dev-only: issues a Zeta JWT via password auth — never enable in production
 		if os.Getenv("DEV_AUTH_ENABLED") == "true" {
 			r.Post("/auth/dev/token", authHandler.DevToken)

@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -197,4 +198,76 @@ func testAccessToken(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return signed
+}
+
+func TestTokenExchangeReturnsTokenPair(t *testing.T) {
+	t.Setenv("WORKOS_CLIENT_ID", "client_test")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().AuthenticateWithCode(gomock.Any(), usermanagement.AuthenticateWithCodeOpts{
+		ClientID:     "client_test",
+		Code:         "code_123",
+		CodeVerifier: "verifier_abc",
+	}).Return(usermanagement.AuthenticateResponse{
+		User:           usermanagement.User{ID: "user_123"},
+		OrganizationID: "org_123",
+		AccessToken:    testAccessToken(t),
+		RefreshToken:   "refresh_123",
+	}, nil)
+
+	h := NewHandler(slog.Default(), nil, workos)
+	body := strings.NewReader(`{"code":"code_123","code_verifier":"verifier_abc"}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/token", body)
+	rec := httptest.NewRecorder()
+
+	h.TokenExchange(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusOK)
+	}
+	var resp struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.AccessToken == "" || resp.RefreshToken != "refresh_123" {
+		t.Fatalf("unexpected token pair: %+v", resp)
+	}
+	if len(rec.Result().Cookies()) != 0 {
+		t.Fatalf("mobile flow must not set cookies, got %d", len(rec.Result().Cookies()))
+	}
+}
+
+func TestTokenExchangeRequiresCode(t *testing.T) {
+	h := NewHandler(slog.Default(), nil, nil)
+	req := httptest.NewRequest(http.MethodPost, "/auth/token", strings.NewReader(`{"code_verifier":"v"}`))
+	rec := httptest.NewRecorder()
+
+	h.TokenExchange(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestTokenExchangeRejectsFailedAuthentication(t *testing.T) {
+	t.Setenv("WORKOS_CLIENT_ID", "client_test")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().AuthenticateWithCode(gomock.Any(), gomock.Any()).
+		Return(usermanagement.AuthenticateResponse{}, fmt.Errorf("invalid code"))
+
+	h := NewHandler(slog.Default(), nil, workos)
+	req := httptest.NewRequest(http.MethodPost, "/auth/token", strings.NewReader(`{"code":"bad"}`))
+	rec := httptest.NewRecorder()
+
+	h.TokenExchange(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("got status %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
 }

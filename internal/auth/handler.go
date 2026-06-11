@@ -875,6 +875,55 @@ func (h *Handler) DevToken(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"token": resp.AccessToken})
 }
 
+type tokenExchangeRequest struct {
+	Code         string `json:"code"`
+	CodeVerifier string `json:"code_verifier"`
+}
+
+type tokenPairResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// TokenExchange exchanges an AuthKit authorization code (PKCE) for WorkOS
+// tokens and returns them as JSON. This is the mobile counterpart of Callback:
+// same session establishment, but tokens travel in the response body instead
+// of HttpOnly cookies. The mobile client stores them in secure storage.
+func (h *Handler) TokenExchange(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req tokenExchangeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.Code == "" {
+		http.Error(w, "code is required", http.StatusBadRequest)
+		return
+	}
+
+	tokens, err := h.establishSession(ctx, req.Code, req.CodeVerifier)
+	if err != nil {
+		h.logger.WarnContext(ctx, "auth_token_exchange_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Authentication failed", http.StatusUnauthorized)
+		return
+	}
+
+	h.logger.InfoContext(ctx, "auth_token_exchange_succeeded",
+		slog.String("component", "auth"),
+		slog.String("user_id", tokens.UserID),
+	)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tokenPairResponse{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	})
+}
+
 // fetchURLAsBase64 downloads the content at url and returns it as a base64-encoded string.
 func (h *Handler) fetchURLAsBase64(url string) (string, error) {
 	resp, err := http.Get(url) // #nosec G107 — URL comes from WorkOS API response
