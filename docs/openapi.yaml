@@ -1,0 +1,249 @@
+openapi: 3.1.0
+info:
+  title: Zeta API
+  version: 0.1.0
+  description: >
+    Contract for the Zeta API consumed by the mobile app. This spec currently
+    covers the auth and health endpoints; it grows with each mobile work
+    package. The mobile TypeScript client is generated from this file with
+    openapi-typescript / openapi-fetch.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+tags:
+  - name: auth
+  - name: system
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Health check
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                required: [status]
+  /auth/token:
+    post:
+      tags: [auth]
+      summary: Exchange an AuthKit authorization code (PKCE) for a token pair
+      operationId: exchangeToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenExchangeRequest"
+      responses:
+        "200":
+          description: Token pair for the authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400":
+          description: Missing code or invalid request body
+        "401":
+          description: WorkOS rejected the authorization code
+  /auth/token/refresh:
+    post:
+      tags: [auth]
+      summary: Rotate a token pair using a refresh token
+      description: >
+        WorkOS invalidates the presented refresh token. Clients must always
+        replace their stored pair with the returned one.
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRefreshRequest"
+      responses:
+        "200":
+          description: Rotated token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400":
+          description: Missing refresh_token or invalid request body
+        "401":
+          description: Refresh token expired or revoked
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Current user profile, role, permissions, and preferences
+      operationId: getMe
+      responses:
+        "200":
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "401":
+          description: Not authenticated
+    put:
+      tags: [auth]
+      summary: Update profile and notification preferences
+      operationId: updateMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "400":
+          description: Invalid or missing timezone, invalid body
+        "401":
+          description: Not authenticated
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: End the session and get the WorkOS logout URL
+      operationId: logout
+      responses:
+        "200":
+          description: Logout URL to open for session termination at WorkOS
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logoutUrl:
+                    type: string
+                required: [logoutUrl]
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: WorkOS access token, validated via JWKS
+  schemas:
+    TokenExchangeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Authorization code from the AuthKit redirect
+        code_verifier:
+          type: string
+          description: PKCE code verifier matching the code_challenge sent to AuthKit
+      required: [code]
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required: [refresh_token]
+    TokenPair:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+      required: [access_token, refresh_token]
+    EmailPreferences:
+      type: object
+      properties:
+        notifications_enabled:
+          type: boolean
+        asset_uploads_enabled:
+          type: boolean
+        asset_reviews_enabled:
+          type: boolean
+        invitation_updates_enabled:
+          type: boolean
+        group_membership_updates_enabled:
+          type: boolean
+        coaching_booking_updates_enabled:
+          type: boolean
+        coaching_reminders_enabled:
+          type: boolean
+      required:
+        - notifications_enabled
+        - asset_uploads_enabled
+        - asset_reviews_enabled
+        - invitation_updates_enabled
+        - group_membership_updates_enabled
+        - coaching_booking_updates_enabled
+        - coaching_reminders_enabled
+    Me:
+      type: object
+      properties:
+        id:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        language:
+          type: string
+          enum: [en, de, fr]
+        avatar:
+          type: string
+          description: Base64-encoded avatar image, empty when unset
+        timezone:
+          type: string
+        email_preferences:
+          $ref: "#/components/schemas/EmailPreferences"
+        role:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - first_name
+        - last_name
+        - email
+        - language
+        - avatar
+        - timezone
+        - email_preferences
+        - role
+        - permissions
+    UpdateMeRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        language:
+          type: string
+          enum: [en, de, fr]
+        avatar:
+          type: string
+          description: Base64-encoded avatar image; omit to keep the current one
+        timezone:
+          type: string
+        email_preferences:
+          $ref: "#/components/schemas/EmailPreferences"
+      required: [timezone]
