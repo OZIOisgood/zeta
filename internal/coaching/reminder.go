@@ -2,7 +2,6 @@ package coaching
 
 import (
 	"context"
-	"crypto/subtle"
 	"log/slog"
 	"net/http"
 	"time"
@@ -22,13 +21,6 @@ import (
 func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-
-	// Validate scheduler secret via Authorization header.
-	secret := r.Header.Get("Authorization")
-	if h.schedulerSecret == "" || subtle.ConstantTimeCompare([]byte(secret), []byte("Bearer "+h.schedulerSecret)) != 1 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
 	reminders, err := h.q.ListPendingReminders(ctx)
 	if err != nil {

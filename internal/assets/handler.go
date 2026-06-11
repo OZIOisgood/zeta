@@ -2,7 +2,6 @@ package assets
 
 import (
 	"context"
-	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -24,22 +23,20 @@ import (
 )
 
 type Handler struct {
-	q               db.Querier
-	mux             MuxClient
-	email           email.Sender
-	workos          auth.UserManagement
-	logger          *slog.Logger
-	schedulerSecret string
+	q      db.Querier
+	mux    MuxClient
+	email  email.Sender
+	workos auth.UserManagement
+	logger *slog.Logger
 }
 
-func NewHandler(q db.Querier, mux MuxClient, email email.Sender, workos auth.UserManagement, logger *slog.Logger, schedulerSecret string) *Handler {
+func NewHandler(q db.Querier, mux MuxClient, email email.Sender, workos auth.UserManagement, logger *slog.Logger) *Handler {
 	return &Handler{
-		q:               q,
-		mux:             mux,
-		email:           email,
-		workos:          workos,
-		logger:          logger,
-		schedulerSecret: schedulerSecret,
+		q:      q,
+		mux:    mux,
+		email:  email,
+		workos: workos,
+		logger: logger,
 	}
 }
 
@@ -408,12 +405,6 @@ func (h *Handler) durationFromUpload(ctx context.Context, uploadID string) (floa
 func (h *Handler) BackfillVideoDurations(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-
-	secret := r.Header.Get("Authorization")
-	if h.schedulerSecret == "" || subtle.ConstantTimeCompare([]byte(secret), []byte("Bearer "+h.schedulerSecret)) != 1 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
 	const batchSize = 100
 	videos, err := h.q.ListVideosMissingDuration(ctx, batchSize)

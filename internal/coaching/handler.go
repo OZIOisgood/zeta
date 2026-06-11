@@ -33,7 +33,6 @@ type Handler struct {
 	recordingClient     RecordingClient
 	recordingStore      RecordingObjectStore
 	recordingMux        RecordingMuxClient
-	schedulerSecret     string
 	appBaseURL          string
 	minBookingNotice    time.Duration
 	cancellationNotice  time.Duration
@@ -48,7 +47,6 @@ type HandlerConfig struct {
 	RecordingClient     RecordingClient
 	RecordingStore      RecordingObjectStore
 	RecordingMux        RecordingMuxClient
-	SchedulerSecret     string
 	AppBaseURL          string        // base URL of the frontend app (e.g. https://app.example.com)
 	MinBookingNotice    time.Duration // default: 2h
 	CancellationNotice  time.Duration // default: 1h
@@ -68,7 +66,6 @@ func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, wor
 		recordingClient:     cfg.RecordingClient,
 		recordingStore:      cfg.RecordingStore,
 		recordingMux:        cfg.RecordingMux,
-		schedulerSecret:     cfg.SchedulerSecret,
 		appBaseURL:          cfg.AppBaseURL,
 		minBookingNotice:    cfg.MinBookingNotice,
 		cancellationNotice:  cfg.CancellationNotice,

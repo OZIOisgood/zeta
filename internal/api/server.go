@@ -78,7 +78,7 @@ func (s *Server) routes(ctx context.Context) {
 	queries := db.New(s.Pool)
 
 	auditRetention := time.Duration(parseIntOrDefault(os.Getenv("AUDIT_RETENTION_DAYS"), audit.DefaultRetentionDays)) * 24 * time.Hour
-	auditHandler := audit.NewHandler(s.Pool, s.Logger, os.Getenv("SCHEDULER_SECRET"), auditRetention)
+	auditHandler := audit.NewHandler(s.Pool, s.Logger, auditRetention)
 
 	// Create the current/near-future audit partitions so writes succeed before
 	// the first scheduled maintenance run.
@@ -94,7 +94,7 @@ func (s *Server) routes(ctx context.Context) {
 	emailService := email.NewService(s.Logger)
 	llmService := llm.NewService(s.Logger)
 	muxClient := assets.NewMuxClient()
-	assetsHandler := assets.NewHandler(queries, muxClient, emailService, workosClient, s.Logger, os.Getenv("SCHEDULER_SECRET"))
+	assetsHandler := assets.NewHandler(queries, muxClient, emailService, workosClient, s.Logger)
 	groupsHandler := groups.NewHandler(queries, s.Logger)
 	invitationsHandler := invitations.NewHandler(queries, emailService, workosClient, s.Logger, frontendBaseURL())
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
@@ -148,7 +148,6 @@ func (s *Server) routes(ctx context.Context) {
 		RecordingClient:     recordingClient,
 		RecordingStore:      recordingStore,
 		RecordingMux:        muxClient,
-		SchedulerSecret:     os.Getenv("SCHEDULER_SECRET"),
 		AppBaseURL:          frontendBaseURL(),
 		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
 		CancellationNotice:  parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
@@ -207,12 +206,15 @@ func (s *Server) routes(ctx context.Context) {
 		coachingHandler.RegisterRoutes(r)
 	})
 
-	// Internal routes (not behind user auth — protected by scheduler secret)
-	s.Router.Post("/internal/coaching/reminders", coachingHandler.ProcessReminders)
-	s.Router.Post("/internal/coaching/recordings/cleanup", coachingHandler.CleanupFinishedRecordings)
-	s.Router.Post("/internal/coaching/recordings/process", coachingHandler.ProcessRecordingImports)
-	s.Router.Post("/internal/assets/durations/backfill", assetsHandler.BackfillVideoDurations)
-	s.Router.Post("/internal/audit/maintenance", auditHandler.RunMaintenance)
+	// Internal routes (not behind user auth — protected by the scheduler secret)
+	s.Router.Group(func(r chi.Router) {
+		r.Use(auth.RequireSchedulerSecret(os.Getenv("SCHEDULER_SECRET"), s.Logger))
+		r.Post("/internal/coaching/reminders", coachingHandler.ProcessReminders)
+		r.Post("/internal/coaching/recordings/cleanup", coachingHandler.CleanupFinishedRecordings)
+		r.Post("/internal/coaching/recordings/process", coachingHandler.ProcessRecordingImports)
+		r.Post("/internal/assets/durations/backfill", assetsHandler.BackfillVideoDurations)
+		r.Post("/internal/audit/maintenance", auditHandler.RunMaintenance)
+	})
 }
 
 // allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)
