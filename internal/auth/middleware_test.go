@@ -69,7 +69,7 @@ func TestMiddlewareAcceptsBearerToken(t *testing.T) {
 	if got == nil {
 		t.Fatal("expected authenticated user from Bearer token")
 	}
-	if got.ID != "user_123" || got.Role != "student" {
+	if got.ID != "user_123" || got.Role != "student" || got.Email != "user@example.test" || got.SID != "session_123" {
 		t.Fatalf("unexpected user context: %+v", got)
 	}
 	if len(got.Permissions) != 1 || got.Permissions[0] != "assets:read" {
@@ -97,6 +97,57 @@ func TestMiddlewareIgnoresInvalidBearerToken(t *testing.T) {
 	}
 	if got != nil {
 		t.Fatal("expected no user for invalid token")
+	}
+}
+
+func TestMiddlewareRejectsExpiredToken(t *testing.T) {
+	srv, key := newTestJWKSServer(t)
+	jwks := NewJWKSCache(srv.URL, time.Hour)
+
+	var got *UserContext
+	handler := Middleware(slog.Default(), jwks)(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		got = GetUser(r.Context())
+	}))
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"sub": "user_123",
+		"exp": time.Now().Add(-time.Minute).Unix(),
+	})
+	token.Header["kid"] = "test-kid"
+	signed, err := token.SignedString(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer "+signed)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	if got != nil {
+		t.Fatal("expired token must not authenticate")
+	}
+}
+
+func TestMiddlewareRejectsTokenSignedWithUnknownKey(t *testing.T) {
+	srv, _ := newTestJWKSServer(t)
+	jwks := NewJWKSCache(srv.URL, time.Hour)
+
+	rogueKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var got *UserContext
+	handler := Middleware(slog.Default(), jwks)(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		got = GetUser(r.Context())
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer "+signedTestToken(t, rogueKey))
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	if got != nil {
+		t.Fatal("token signed with unknown key must not authenticate")
 	}
 }
 
