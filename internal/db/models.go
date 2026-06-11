@@ -329,6 +329,21 @@ type Asset struct {
 	OwnerID     string             `json:"owner_id"`
 }
 
+type AuditEvent struct {
+	ID           pgtype.UUID        `json:"id"`
+	OccurredAt   pgtype.Timestamptz `json:"occurred_at"`
+	ActorID      pgtype.Text        `json:"actor_id"`
+	ActorType    string             `json:"actor_type"`
+	ActorLabel   pgtype.Text        `json:"actor_label"`
+	Action       string             `json:"action"`
+	ResourceType string             `json:"resource_type"`
+	ResourceID   pgtype.Text        `json:"resource_id"`
+	GroupID      pgtype.Text        `json:"group_id"`
+	OldValues    []byte             `json:"old_values"`
+	NewValues    []byte             `json:"new_values"`
+	Metadata     []byte             `json:"metadata"`
+}
+
 type CoachingAvailability struct {
 	ID        pgtype.UUID        `json:"id"`
 	ExpertID  string             `json:"expert_id"`
