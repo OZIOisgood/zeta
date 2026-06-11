@@ -107,6 +107,17 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - Protected: `/assets` (Requires Login)
 - Login: Click "Login via WorkOS" -> Redirects to WorkOS AuthKit -> Callback -> Logged In.
 - **Redirect Preservation**: When an unauthenticated user accesses a deep link (e.g., an invite URL), the Angular guards call `/auth/login?return_to=<path>`. The API validates the relative return path, stores it in a short-lived HttpOnly auth-state cookie, sends only an opaque `state` value to WorkOS, and restores the original path from `/auth/callback` after successful authentication.
+- **Mobile Token Flow**: Native apps authenticate with AuthKit via PKCE in the
+  system browser. The app sends the authorization code to `POST /auth/token`
+  (`{ "code": "...", "code_verifier": "..." }`) and receives an access/refresh
+  token pair as JSON instead of cookies. `POST /auth/token/refresh` rotates the
+  pair; the presented refresh token is invalidated by WorkOS. Authenticated
+  API requests send `Authorization: Bearer <access_token>`. The mobile redirect
+  URI (e.g. `zeta://auth/callback`) must be registered in the WorkOS dashboard.
+- The dev-only password-auth endpoint moved from `/auth/token` to
+  `/auth/dev/token` (requires `DEV_AUTH_ENABLED=true`).
+- The API contract for mobile clients lives in `docs/openapi.yaml` (lint with
+  `make api:openapi:lint`).
 
 ### Asset Visibility
 
@@ -182,6 +193,7 @@ Check auth status:
 
 ```bash
 curl -b "zeta_session=..." http://localhost:8080/auth/me
+curl -H "Authorization: Bearer ..." http://localhost:8080/auth/me
 ```
 
 ## Diagrams
