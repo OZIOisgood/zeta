@@ -205,6 +205,23 @@ resource "google_cloud_scheduler_job" "coaching_recordings_cleanup" {
   }
 }
 
+resource "google_cloud_scheduler_job" "audit_maintenance" {
+  name             = "audit-maintenance"
+  region           = var.region
+  schedule         = "0 3 * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "30s"
+  depends_on       = [module.github_wif]
+
+  http_target {
+    uri         = "${module.cloud_run.service_url}/internal/audit/maintenance"
+    http_method = "POST"
+    headers = {
+      "Authorization" = "Bearer ${var.scheduler_secret}"
+    }
+  }
+}
+
 output "dashboard_domain" {
   value = local.dashboard_domain
 }
