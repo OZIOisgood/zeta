@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/OZIOisgood/zeta/internal/assets"
+	"github.com/OZIOisgood/zeta/internal/audit"
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/coaching"
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -75,6 +76,14 @@ func (s *Server) routes(ctx context.Context) {
 	jwksCache := auth.NewJWKSCache(jwksURL, time.Hour)
 
 	queries := db.New(s.Pool)
+
+	auditHandler := audit.NewHandler(s.Pool, s.Logger, os.Getenv("SCHEDULER_SECRET"))
+
+	// Create the current/near-future audit partitions so writes succeed before
+	// the first scheduled maintenance run.
+	if err := audit.EnsurePartitions(ctx, s.Pool); err != nil {
+		s.Logger.Error("audit_ensure_partitions_failed", slog.Any("err", err))
+	}
 
 	// Initialize Handlers
 	workosClient := auth.NewWorkOSClient()
@@ -145,6 +154,7 @@ func (s *Server) routes(ctx context.Context) {
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware(s.Logger, jwksCache))
+	s.Router.Use(audit.Middleware(parseBool(os.Getenv("AUDIT_CAPTURE_IP"))))
 
 	// Public Routes
 	s.Router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -199,6 +209,7 @@ func (s *Server) routes(ctx context.Context) {
 	s.Router.Post("/internal/coaching/recordings/cleanup", coachingHandler.CleanupFinishedRecordings)
 	s.Router.Post("/internal/coaching/recordings/process", coachingHandler.ProcessRecordingImports)
 	s.Router.Post("/internal/assets/durations/backfill", assetsHandler.BackfillVideoDurations)
+	s.Router.Post("/internal/audit/maintenance", auditHandler.RunMaintenance)
 }
 
 // allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)
