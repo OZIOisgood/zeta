@@ -25,6 +25,9 @@ api\:restart:
 	@sleep 1
 	go run ./cmd/api
 
+api\:openapi\:lint:
+	pnpm --package=@redocly/cli@2 dlx redocly lint docs/openapi.yaml
+
 web-next\:build:
 	cd web/dashboard-next && pnpm install && pnpm run build
 
