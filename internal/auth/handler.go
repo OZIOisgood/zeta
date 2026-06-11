@@ -268,6 +268,47 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
+// sessionTokens bundles the WorkOS tokens established for a login session.
+type sessionTokens struct {
+	AccessToken  string
+	RefreshToken string
+	UserID       string
+}
+
+// establishSession exchanges an AuthKit authorization code for WorkOS tokens
+// and ensures the session is scoped to the default organization. codeVerifier
+// is empty for the web cookie flow and set for the mobile PKCE flow.
+func (h *Handler) establishSession(ctx context.Context, code, codeVerifier string) (sessionTokens, error) {
+	resp, err := h.workos.AuthenticateWithCode(ctx, usermanagement.AuthenticateWithCodeOpts{
+		ClientID:     os.Getenv("WORKOS_CLIENT_ID"),
+		Code:         code,
+		CodeVerifier: codeVerifier,
+	})
+	if err != nil {
+		return sessionTokens{}, fmt.Errorf("authenticate with code: %w", err)
+	}
+
+	tokens := sessionTokens{
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+		UserID:       resp.User.ID,
+	}
+
+	if resp.OrganizationID == "" {
+		if _, _, err := h.ensureUserInOrg(ctx, resp.User.ID); err != nil {
+			return sessionTokens{}, fmt.Errorf("ensure user in org: %w", err)
+		}
+		scoped, err := h.refreshSessionForDefaultOrg(ctx, tokens.RefreshToken)
+		if err != nil {
+			return sessionTokens{}, fmt.Errorf("refresh session for default org: %w", err)
+		}
+		tokens.AccessToken = scoped.AccessToken
+		tokens.RefreshToken = scoped.RefreshToken
+	}
+
+	return tokens, nil
+}
+
 func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	code := r.URL.Query().Get("code")
@@ -305,48 +346,17 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	clientID := os.Getenv("WORKOS_CLIENT_ID")
-
-	resp, err := h.workos.AuthenticateWithCode(ctx, usermanagement.AuthenticateWithCodeOpts{
-		ClientID: clientID,
-		Code:     code,
-	})
+	tokens, err := h.establishSession(ctx, code, "")
 	if err != nil {
-		h.logger.ErrorContext(ctx, "auth_authenticate_failed",
+		h.logger.ErrorContext(ctx, "auth_session_establish_failed",
 			slog.String("component", "auth"),
 			slog.Any("err", err),
 		)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Authentication failed", http.StatusInternalServerError)
 		return
 	}
-
-	accessToken := resp.AccessToken
-	refreshToken := resp.RefreshToken
-
-	if resp.OrganizationID == "" {
-		if _, _, err := h.ensureUserInOrg(ctx, resp.User.ID); err != nil {
-			h.logger.ErrorContext(ctx, "auth_ensure_org_failed",
-				slog.String("component", "auth"),
-				slog.String("user_id", resp.User.ID),
-				slog.Any("err", err),
-			)
-			http.Error(w, "Failed to prepare user organization", http.StatusInternalServerError)
-			return
-		}
-
-		scoped, err := h.refreshSessionForDefaultOrg(ctx, refreshToken)
-		if err != nil {
-			h.logger.ErrorContext(ctx, "auth_org_session_refresh_failed",
-				slog.String("component", "auth"),
-				slog.String("user_id", resp.User.ID),
-				slog.Any("err", err),
-			)
-			http.Error(w, "Failed to prepare user session", http.StatusInternalServerError)
-			return
-		}
-		accessToken = scoped.AccessToken
-		refreshToken = scoped.RefreshToken
-	}
+	accessToken := tokens.AccessToken
+	refreshToken := tokens.RefreshToken
 
 	// Extract Session ID from WorkOS Access Token (needed for logout URL later)
 	var claims jwt.MapClaims
@@ -372,7 +382,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	h.logger.InfoContext(ctx, "auth_login_succeeded",
 		slog.String("component", "auth"),
-		slog.String("user_id", resp.User.ID),
+		slog.String("user_id", tokens.UserID),
 	)
 
 	http.Redirect(w, r, frontendRedirectURL(returnTo), http.StatusSeeOther)
