@@ -7,6 +7,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -16,11 +17,12 @@ type Recorder struct{}
 // NewRecorder constructs a Recorder.
 func NewRecorder() *Recorder { return &Recorder{} }
 
-// Record writes one event inside the supplied transaction handle (a pgx.Tx or
-// pool). The audit row commits or rolls back atomically with the caller's
-// mutation. The actor is resolved from the context; absent a user it is recorded
-// as the system actor.
-func (r *Recorder) Record(ctx context.Context, tx db.DBTX, e Event) error {
+// Record writes one event inside the supplied transaction. The parameter is
+// deliberately pgx.Tx — NOT db.DBTX — so the atomicity contract is enforced at
+// compile time: the audit row commits or rolls back together with the caller's
+// mutation, never independently. The actor is resolved from the context; absent
+// a user it is recorded as the system actor.
+func (r *Recorder) Record(ctx context.Context, tx pgx.Tx, e Event) error {
 	q := db.New(tx)
 
 	actorType := "system"
