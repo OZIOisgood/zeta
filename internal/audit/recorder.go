@@ -46,9 +46,13 @@ func (r *Recorder) Record(ctx context.Context, tx db.DBTX, e Event) error {
 			metaMap[k] = v
 		}
 	}
-	metaJSON, err := json.Marshal(metaMap)
-	if err != nil {
-		return err
+	var metaJSON []byte
+	if len(metaMap) > 0 {
+		b, err := json.Marshal(metaMap)
+		if err != nil {
+			return err
+		}
+		metaJSON = b
 	}
 
 	oldJSON, err := marshalOrNil(e.OldValues)

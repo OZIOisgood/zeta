@@ -80,14 +80,18 @@ func TestIntegration_Recorder_SystemActorWhenNoUser(t *testing.T) {
 
 	var actorType string
 	var actorID *string
+	var metadata []byte
 	row := pool.QueryRow(ctx,
-		`SELECT actor_type, actor_id FROM audit_events WHERE action = $1`,
+		`SELECT actor_type, actor_id, metadata FROM audit_events WHERE action = $1`,
 		audit.ActionRecordingCreated)
-	if err := row.Scan(&actorType, &actorID); err != nil {
+	if err := row.Scan(&actorType, &actorID, &metadata); err != nil {
 		t.Fatalf("scan: %v", err)
 	}
 	if actorType != "system" || actorID != nil {
 		t.Errorf("actor_type=%q actor_id=%v, want system/NULL", actorType, actorID)
+	}
+	if metadata != nil {
+		t.Errorf("metadata = %s, want SQL NULL for empty request context", metadata)
 	}
 }
 
