@@ -26,12 +26,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum: [ok]
-                required: [status]
+                $ref: "#/components/schemas/HealthResponse"
   /auth/token:
     post:
       tags: [auth]
@@ -127,11 +122,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  logoutUrl:
-                    type: string
-                required: [logoutUrl]
+                $ref: "#/components/schemas/LogoutResponse"
 security:
   - bearerAuth: []
 components:
@@ -142,6 +133,19 @@ components:
       bearerFormat: JWT
       description: WorkOS access token, validated via JWKS
   schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+      required: [status]
+    LogoutResponse:
+      type: object
+      properties:
+        logoutUrl:
+          type: string
+      required: [logoutUrl]
     TokenExchangeRequest:
       type: object
       properties:
@@ -150,7 +154,10 @@ components:
           description: Authorization code from the AuthKit redirect
         code_verifier:
           type: string
-          description: PKCE code verifier matching the code_challenge sent to AuthKit
+          description: >
+            PKCE code verifier matching the code_challenge sent to AuthKit.
+            Required for the mobile PKCE flow; omitted only when a confidential
+            client exchanges a code without PKCE.
       required: [code]
     TokenRefreshRequest:
       type: object
