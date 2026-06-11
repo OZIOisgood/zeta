@@ -101,6 +101,13 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    ```
    Dashboard available at `http://localhost:4200`.
 
+5. **Run Mobile App** (development):
+   ```bash
+   make mobile:start
+   ```
+   Expo dev server for the `mobile/` app (Expo Go works until native modules
+   arrive; later work packages require a development build via EAS).
+
 ### Auth Flow
 
 - Public: `/health`
