@@ -80,14 +80,6 @@ func (s *Server) routes(ctx context.Context) {
 	auditRetention := time.Duration(parseIntOrDefault(os.Getenv("AUDIT_RETENTION_DAYS"), audit.DefaultRetentionDays)) * 24 * time.Hour
 	auditHandler := audit.NewHandler(s.Pool, s.Logger, auditRetention)
 
-	// Create the current/near-future audit partitions so writes succeed before
-	// the first scheduled maintenance run.
-	if err := audit.EnsurePartitions(ctx, s.Pool); err != nil {
-		s.Logger.Error("audit_ensure_partitions_failed",
-			slog.String("component", "audit"),
-			slog.Any("err", err))
-	}
-
 	// Initialize Handlers
 	workosClient := auth.NewWorkOSClient()
 	authHandler := auth.NewHandler(s.Logger, queries, workosClient)
