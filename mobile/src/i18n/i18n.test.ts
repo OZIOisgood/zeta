@@ -1,6 +1,6 @@
-jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
-
 import { initI18n } from './index';
+
+jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
 test('resolves translations for all supported languages', async () => {
   const i18n = await initI18n('en');

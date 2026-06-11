@@ -1,8 +1,9 @@
 import { Tabs } from 'expo-router';
-import i18next from 'i18next';
 import { CalendarClock, UserRound, Users, Video } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
   return (
     <Tabs
       screenOptions={{
@@ -14,7 +15,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: i18next.t('common.nav.videos'), tabBarIcon: ({ color, size }) => <Video color={color} size={size} /> }}
+        options={{ title: t('common.nav.videos'), tabBarIcon: ({ color, size }) => <Video color={color} size={size} /> }}
       />
       <Tabs.Screen
         name="coaching"
@@ -22,7 +23,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="groups"
-        options={{ title: i18next.t('common.nav.groups'), tabBarIcon: ({ color, size }) => <Users color={color} size={size} /> }}
+        options={{ title: t('common.nav.groups'), tabBarIcon: ({ color, size }) => <Users color={color} size={size} /> }}
       />
       <Tabs.Screen
         name="profile"
