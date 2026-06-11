@@ -7,7 +7,11 @@ export const workosDiscovery = {
 };
 
 export function workosClientId(): string {
-  return process.env.EXPO_PUBLIC_WORKOS_CLIENT_ID ?? '';
+  const id = process.env.EXPO_PUBLIC_WORKOS_CLIENT_ID ?? '';
+  if (!id && __DEV__) {
+    console.warn('EXPO_PUBLIC_WORKOS_CLIENT_ID is not set — sign-in will fail.');
+  }
+  return id;
 }
 
 /** Exchanges the AuthKit authorization code at the Zeta API for a token pair. */
