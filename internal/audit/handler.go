@@ -4,8 +4,6 @@ import (
 	"crypto/subtle"
 	"log/slog"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/OZIOisgood/zeta/internal/logger"
@@ -15,18 +13,6 @@ import (
 // DefaultRetentionDays is the fallback retention when AUDIT_RETENTION_DAYS is unset.
 const DefaultRetentionDays = 1095 // 3 years
 
-// retentionFromEnv resolves the retention window from AUDIT_RETENTION_DAYS,
-// falling back to DefaultRetentionDays for empty/invalid/non-positive values.
-func retentionFromEnv() time.Duration {
-	days := DefaultRetentionDays
-	if v := os.Getenv("AUDIT_RETENTION_DAYS"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil && n > 0 {
-			days = n
-		}
-	}
-	return time.Duration(days) * 24 * time.Hour
-}
-
 // Handler exposes the scheduler-triggered maintenance endpoint.
 type Handler struct {
 	pool            *pgxpool.Pool
@@ -35,14 +21,13 @@ type Handler struct {
 	retention       time.Duration
 }
 
-// NewHandler constructs the audit maintenance handler.
-func NewHandler(pool *pgxpool.Pool, logger *slog.Logger, schedulerSecret string) *Handler {
-	return &Handler{
-		pool:            pool,
-		logger:          logger,
-		schedulerSecret: schedulerSecret,
-		retention:       retentionFromEnv(),
+// NewHandler constructs the audit maintenance handler. retention <= 0 falls
+// back to DefaultRetentionDays.
+func NewHandler(pool *pgxpool.Pool, logger *slog.Logger, schedulerSecret string, retention time.Duration) *Handler {
+	if retention <= 0 {
+		retention = time.Duration(DefaultRetentionDays) * 24 * time.Hour
 	}
+	return &Handler{pool: pool, logger: logger, schedulerSecret: schedulerSecret, retention: retention}
 }
 
 // RunMaintenance ensures upcoming partitions exist and drops expired ones.

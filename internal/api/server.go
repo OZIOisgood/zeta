@@ -77,7 +77,8 @@ func (s *Server) routes(ctx context.Context) {
 
 	queries := db.New(s.Pool)
 
-	auditHandler := audit.NewHandler(s.Pool, s.Logger, os.Getenv("SCHEDULER_SECRET"))
+	auditRetention := time.Duration(parseIntOrDefault(os.Getenv("AUDIT_RETENTION_DAYS"), audit.DefaultRetentionDays)) * 24 * time.Hour
+	auditHandler := audit.NewHandler(s.Pool, s.Logger, os.Getenv("SCHEDULER_SECRET"), auditRetention)
 
 	// Create the current/near-future audit partitions so writes succeed before
 	// the first scheduled maintenance run.
