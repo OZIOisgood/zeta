@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+
+	"github.com/OZIOisgood/zeta/internal/logger"
 )
 
 // RequestMeta is the request-scoped context captured for each audit event.
@@ -36,9 +38,14 @@ func requestMetaFrom(ctx context.Context) RequestMeta {
 func Middleware(captureIP bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			requestID := r.Header.Get("X-Request-Id")
+			requestID := logger.RequestIDFromContext(r.Context())
 			if requestID == "" {
-				requestID = uuid.New().String()
+				// logger.Middleware not in the chain (tests, sub-mounts):
+				// fall back to header / fresh UUID.
+				requestID = r.Header.Get("X-Request-Id")
+				if requestID == "" {
+					requestID = uuid.New().String()
+				}
 			}
 			meta := RequestMeta{
 				RequestID: requestID,
