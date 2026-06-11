@@ -6,9 +6,9 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
-import { authStore } from '../../auth/auth-store';
-import type { Me } from '../../auth/auth-store';
-import ProfileScreen from './profile';
+import { authStore } from '../auth/auth-store';
+import type { Me } from '../auth/auth-store';
+import ProfileScreen from '../app/(tabs)/profile';
 
 const ME: Me = {
   id: 'user_1', first_name: 'Heinrich', last_name: 'Mergel', email: 'h@example.test',
