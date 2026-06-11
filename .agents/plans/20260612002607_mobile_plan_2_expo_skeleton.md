@@ -17,7 +17,7 @@
 - File edits via the UNC path `\\wsl.localhost\ubuntu\home\heinrich\dev\projects\zeta`.
 - Prettier enforces LF — run the app's `lint` script before every commit.
 - Commit per task, Conventional Commits, no `Co-Authored-By`, never `git add -A`.
-- Work on branch `feat/mobile-app-skeleton` (created in Task 1 from up-to-date `main`).
+- Work on the EXISTING branch `feat/mobile-token-auth` (user decision: the skeleton ships in the same PR #15). This also resolves the Plan-1 dependency — `docs/openapi.yaml` is on this branch.
 
 ---
 
@@ -68,10 +68,10 @@ README.md                   + mobile app section
 - Create: `mobile/` (via create-expo-app)
 - Branch setup
 
-- [ ] **Step 1: Create the branch from up-to-date main**
+- [ ] **Step 1: Check out the existing PR branch**
 
 ```bash
-git checkout main && git pull --ff-only && git checkout -b feat/mobile-app-skeleton
+git checkout feat/mobile-token-auth && git pull --ff-only
 ```
 
 - [ ] **Step 2: Scaffold**
