@@ -1,5 +1,5 @@
 import { createAuthStore, type AuthenticatedClientLike } from './auth-store';
-import { clearTokens, setTokens } from './token-store';
+import { clearTokens, getTokens, setTokens } from './token-store';
 
 jest.mock('expo-secure-store', () => {
   const store = new Map<string, string>();
@@ -69,4 +69,31 @@ test('signOut clears tokens and user', async () => {
   await store.getState().signOut();
   expect(store.getState().status).toBe('signedOut');
   expect(store.getState().user).toBeNull();
+});
+
+test('restore with network failure keeps tokens but settles to signedOut', async () => {
+  await setTokens({ accessToken: 'a', refreshToken: 'r' });
+  const throwingClient = {
+    GET: jest.fn(async () => {
+      throw new TypeError('Network request failed');
+    }),
+  };
+  const store = createAuthStore(throwingClient as unknown as AuthenticatedClientLike);
+  await expect(store.getState().restore()).resolves.toBeUndefined();
+  expect(store.getState().status).toBe('signedOut');
+  expect(await getTokens()).toEqual({ accessToken: 'a', refreshToken: 'r' });
+});
+
+test('signIn with network failure clears tokens and rethrows', async () => {
+  const throwingClient = {
+    GET: jest.fn(async () => {
+      throw new TypeError('Network request failed');
+    }),
+  };
+  const store = createAuthStore(throwingClient as unknown as AuthenticatedClientLike);
+  await expect(
+    store.getState().signIn({ accessToken: 'a', refreshToken: 'r' }),
+  ).rejects.toThrow('Network request failed');
+  expect(store.getState().status).toBe('signedOut');
+  expect(await getTokens()).toBeNull();
 });

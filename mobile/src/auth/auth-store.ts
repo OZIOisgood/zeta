@@ -46,19 +46,30 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
           set({ status: 'signedOut', user: null });
           return;
         }
-        const ok = await loadUser();
-        if (!ok && get().status !== 'signedOut') {
-          await clearTokens();
+        try {
+          const ok = await loadUser();
+          if (!ok && get().status !== 'signedOut') {
+            await clearTokens();
+            set({ status: 'signedOut', user: null });
+          }
+        } catch {
+          // Network failure: keep tokens so the session survives transient outages; the next launch retries.
           set({ status: 'signedOut', user: null });
         }
       },
 
       signIn: async (tokens: TokenPair) => {
         await setTokens(tokens);
-        const ok = await loadUser();
-        if (!ok) {
+        try {
+          const ok = await loadUser();
+          if (!ok) {
+            await clearTokens();
+            set({ status: 'signedOut', user: null });
+          }
+        } catch (err) {
           await clearTokens();
           set({ status: 'signedOut', user: null });
+          throw err;
         }
       },
 
