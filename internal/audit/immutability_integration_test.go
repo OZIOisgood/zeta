@@ -40,4 +40,10 @@ func TestIntegration_AuditEvents_AreImmutable(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
 		t.Errorf("DELETE error = %v, want append-only rejection", err)
 	}
+
+	// TRUNCATE must be rejected by the statement-level trigger.
+	_, err = pool.Exec(ctx, `TRUNCATE audit_events`)
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Errorf("TRUNCATE error = %v, want append-only rejection", err)
+	}
 }

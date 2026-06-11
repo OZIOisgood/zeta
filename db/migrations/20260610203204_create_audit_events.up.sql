@@ -36,3 +36,9 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER audit_events_block_mutation
     BEFORE UPDATE OR DELETE ON audit_events
     FOR EACH ROW EXECUTE FUNCTION audit_events_block_mutation();
+
+-- Row-level triggers do not fire on TRUNCATE; add a statement-level guard so the
+-- table (and its partitions) cannot be truncated either.
+CREATE TRIGGER audit_events_block_truncate
+    BEFORE TRUNCATE ON audit_events
+    FOR EACH STATEMENT EXECUTE FUNCTION audit_events_block_mutation();

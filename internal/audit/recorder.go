@@ -36,11 +36,17 @@ func (r *Recorder) Record(ctx context.Context, tx db.DBTX, e Event) error {
 	}
 
 	meta := requestMetaFrom(ctx)
-	metaJSON, err := json.Marshal(map[string]string{
+	metaMap := map[string]string{}
+	for k, v := range map[string]string{
 		"request_id": meta.RequestID,
 		"ip":         meta.IP,
 		"user_agent": meta.UserAgent,
-	})
+	} {
+		if v != "" {
+			metaMap[k] = v
+		}
+	}
+	metaJSON, err := json.Marshal(metaMap)
 	if err != nil {
 		return err
 	}

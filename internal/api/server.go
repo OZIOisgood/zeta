@@ -82,7 +82,9 @@ func (s *Server) routes(ctx context.Context) {
 	// Create the current/near-future audit partitions so writes succeed before
 	// the first scheduled maintenance run.
 	if err := audit.EnsurePartitions(ctx, s.Pool); err != nil {
-		s.Logger.Error("audit_ensure_partitions_failed", slog.Any("err", err))
+		s.Logger.Error("audit_ensure_partitions_failed",
+			slog.String("component", "audit"),
+			slog.Any("err", err))
 	}
 
 	// Initialize Handlers

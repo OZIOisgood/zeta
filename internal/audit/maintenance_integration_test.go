@@ -25,9 +25,9 @@ func TestIntegration_EnsurePartitions_CreatesRollingWindow(t *testing.T) {
 		`SELECT count(*) FROM pg_inherits WHERE inhparent = 'audit_events'::regclass`).Scan(&n); err != nil {
 		t.Fatalf("scan: %v", err)
 	}
-	// current month + 3 ahead + 1 previous = at least 4 partitions.
-	if n < 4 {
-		t.Errorf("partition count = %d, want >= 4", n)
+	// previous month + current + 3 ahead = 5 partitions.
+	if n < 5 {
+		t.Errorf("partition count = %d, want >= 5", n)
 	}
 }
 
@@ -52,7 +52,7 @@ func TestIntegration_DropExpiredPartitions_RemovesOld(t *testing.T) {
 		t.Fatalf("create old partition: %v", err)
 	}
 
-	if err := audit.DropExpiredPartitions(ctx, pool, 3*365*24*time.Hour); err != nil {
+	if err := audit.DropExpiredPartitions(ctx, pool, audit.DefaultRetentionDays*24*time.Hour); err != nil {
 		t.Fatalf("DropExpiredPartitions: %v", err)
 	}
 
