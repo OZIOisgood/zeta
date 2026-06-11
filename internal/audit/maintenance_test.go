@@ -25,6 +25,9 @@ func TestPartitionUpperBound(t *testing.T) {
 		{"audit_events_foo", false, 0, 0},
 		{"audit_events_", false, 0, 0},
 		{"other_table", false, 0, 0},
+		{"public.audit_events_2026_06", true, 2026, time.July},
+		{"audit.audit_events_2026_03", true, 2026, time.April},
+		{"public.other_table", false, 0, 0},
 	}
 	for _, c := range cases {
 		got, ok := partitionUpperBound(c.name)

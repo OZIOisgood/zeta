@@ -3,8 +3,10 @@ package audit
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -22,7 +24,7 @@ func EnsurePartitions(ctx context.Context, pool *pgxpool.Pool) error {
 		name := partitionName(start)
 		stmt := fmt.Sprintf(
 			`CREATE TABLE IF NOT EXISTS %s PARTITION OF audit_events FOR VALUES FROM ('%s') TO ('%s')`,
-			name, start.Format("2006-01-02"), end.Format("2006-01-02"),
+			pgx.Identifier{name}.Sanitize(), start.Format("2006-01-02"), end.Format("2006-01-02"),
 		)
 		if _, err := pool.Exec(ctx, stmt); err != nil {
 			return fmt.Errorf("create partition %s: %w", name, err)
@@ -60,7 +62,13 @@ func DropExpiredPartitions(ctx context.Context, pool *pgxpool.Pool, retention ti
 			continue // not a managed monthly partition; skip
 		}
 		if !end.After(cutoff) {
-			if _, err := pool.Exec(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, name)); err != nil {
+			// Names come from the pg catalog and may be schema-qualified; quote
+			// each part so a crafted or unusual identifier cannot break the DDL.
+			ident := pgx.Identifier{name}
+			if i := strings.LastIndexByte(name, '.'); i >= 0 {
+				ident = pgx.Identifier{name[:i], name[i+1:]}
+			}
+			if _, err := pool.Exec(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, ident.Sanitize())); err != nil {
 				return fmt.Errorf("drop partition %s: %w", name, err)
 			}
 		}
@@ -73,13 +81,20 @@ func partitionName(monthStart time.Time) string {
 }
 
 // partitionUpperBound parses the exclusive upper bound from a managed partition
-// name like "audit_events_2026_06" -> 2026-07-01.
+// name like "audit_events_2026_06" -> 2026-07-01. regclass::text returns a
+// schema-qualified name ("public.audit_events_2026_06") when the table's schema
+// is not on the search_path, so any qualifier is stripped before matching —
+// otherwise expired partitions would silently never be dropped.
 func partitionUpperBound(name string) (time.Time, bool) {
+	bare := name
+	if i := strings.LastIndexByte(bare, '.'); i >= 0 {
+		bare = bare[i+1:]
+	}
 	const prefix = "audit_events_"
-	if len(name) <= len(prefix) || name[:len(prefix)] != prefix {
+	if len(bare) <= len(prefix) || bare[:len(prefix)] != prefix {
 		return time.Time{}, false
 	}
-	start, err := time.Parse("2006_01", name[len(prefix):])
+	start, err := time.Parse("2006_01", bare[len(prefix):])
 	if err != nil {
 		return time.Time{}, false
 	}
