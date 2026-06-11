@@ -6,5 +6,11 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ["dist/*"],
-  }
+  },
+  {
+    files: ['**/*.test.{ts,tsx}', 'src/__tests__/**'],
+    rules: {
+      'import/first': 'off',
+    },
+  },
 ]);

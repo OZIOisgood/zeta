@@ -23,6 +23,15 @@ pnpm exec tsc --noEmit
 
 From the repo root: `make mobile:start`, `make mobile:lint`, `make mobile:test`, `make mobile:typecheck`.
 
+## Authentication
+
+Sign-in uses WorkOS AuthKit via PKCE in the system browser (`expo-auth-session`).
+Copy `.env.example` to `.env` and set `EXPO_PUBLIC_WORKOS_CLIENT_ID`. The
+redirect URI `zeta://auth/callback` must be registered in the WorkOS dashboard.
+Tokens live in `expo-secure-store`; the API client refreshes them on 401
+automatically. Sign-out is local (token deletion) — server-side session
+revocation is a follow-up.
+
 ## Regenerating
 
 - API types: `pnpm run generate:api` (after `../docs/openapi.yaml` changes)

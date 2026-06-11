@@ -121,6 +121,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
   pair; the presented refresh token is invalidated by WorkOS. Authenticated
   API requests send `Authorization: Bearer <access_token>`. The mobile redirect
   URI (e.g. `zeta://auth/callback`) must be registered in the WorkOS dashboard.
+  The mobile app implements this flow with expo-auth-session (PKCE) and stores tokens in secure storage.
 - The dev-only password-auth endpoint moved from `/auth/token` to
   `/auth/dev/token` (requires `DEV_AUTH_ENABLED=true`).
 - The API contract for mobile clients lives in `docs/openapi.yaml` (lint with
