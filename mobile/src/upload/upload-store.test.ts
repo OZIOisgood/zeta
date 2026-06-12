@@ -267,9 +267,9 @@ test('queue state is persisted after enqueue', async () => {
   expect(parsed.state.jobs).toHaveLength(1);
   const job = parsed.state.jobs[0] as Record<string, unknown>;
   expect(job.status).toBe('done');
-  // No function fields serialized.
-  expect(typeof job.enqueue).toBe('undefined');
-  expect(typeof job.retryFile).toBe('undefined');
+  // No function fields serialized on the persisted state.
+  expect((parsed.state as Record<string, unknown>).enqueue).toBeUndefined();
+  expect((parsed.state as Record<string, unknown>).retryFile).toBeUndefined();
 });
 
 test('interrupted uploads rehydrate as failed', async () => {
@@ -367,4 +367,83 @@ test('done jobs are dropped on rehydrate', async () => {
   expect(jobs).toHaveLength(1);
   expect(jobs[0].id).toBe('asset_interrupted');
   expect(jobs[0].status).toBe('failed');
+});
+
+test('jobs enqueued before rehydrate resolves are not dropped', async () => {
+  // This test verifies that the merge function preserves in-flight jobs that
+  // were enqueued WHILE the async storage read was still pending.
+  //
+  // We use a latch to hold the storage getItem open so we can enqueue a job
+  // and let it finish before the persisted state is merged in.
+  let releaseStorage!: () => void;
+  const storageGate = new Promise<void>((res) => {
+    releaseStorage = res;
+  });
+
+  // Seeded persisted state: one interrupted upload.
+  const seedJson = JSON.stringify({
+    state: {
+      jobs: [
+        {
+          id: 'old',
+          title: 'Old upload',
+          status: 'uploading',
+          files: [
+            {
+              videoId: 'v_old',
+              uploadUrl: 'https://mux.example/old',
+              localUri: 'file:///old.mp4',
+              filename: 'old.mp4',
+              progress: 0.3,
+              status: 'uploading',
+            },
+          ],
+        },
+      ],
+    },
+    version: 0,
+  });
+
+  // Storage whose getItem blocks until the gate is released; setItem is a no-op
+  // so intermediate enqueue state writes don't overwrite the seed.
+  const blockedStorage = {
+    getItem: jest.fn(async (k: string) => {
+      await storageGate;
+      return k === 'zeta.uploadQueue' ? seedJson : null;
+    }),
+    setItem: jest.fn(async (_k: string, _v: string) => undefined),
+    removeItem: jest.fn(async (_k: string) => undefined),
+  };
+
+  // Use insta-succeeding fake deps so enqueue resolves quickly.
+  const { deps } = makeDeps();
+  const store = createUploadStore({ ...deps, storage: blockedStorage }) as PersistedUploadStore;
+
+  // Enqueue a new job WHILE the storage read is blocked (before any merge).
+  const newCreate = {
+    asset_id: 'new',
+    videos: [{ id: 'v_new', upload_url: 'https://mux.example/new', filename: 'new.mp4' }],
+  };
+  const enqueuePromise = store
+    .getState()
+    .enqueue(newCreate, [{ filename: 'new.mp4', localUri: 'file:///new.mp4' }], 'New upload');
+
+  // Let the enqueue finish so 'new' is in the store as 'done'.
+  await enqueuePromise;
+
+  // Now release storage and let both the auto-hydrate and an explicit rehydrate complete.
+  releaseStorage();
+  await store.persist.rehydrate();
+
+  const jobs = store.getState().jobs;
+
+  // The 'old' persisted job must be present (marked failed by sanitizeJobs).
+  const oldJob = jobs.find((j) => j.id === 'old');
+  expect(oldJob).toBeDefined();
+  expect(oldJob!.status).toBe('failed');
+
+  // The freshly-enqueued 'new' job must also be present (done after transfer).
+  const newJob = jobs.find((j) => j.id === 'new');
+  expect(newJob).toBeDefined();
+  expect(newJob!.status).toBe('done');
 });

@@ -249,13 +249,14 @@ export function createUploadStore(deps: UploadDeps = defaultDeps): StoreApi<Uplo
         {
           name: 'zeta.uploadQueue',
           storage: createJSONStorage(() => deps.storage!),
-          partialize: (s) => ({ jobs: s.jobs }) as UploadState,
+          partialize: (s) => ({ jobs: s.jobs }) as Pick<UploadState, 'jobs'>,
           merge: (persisted, current) => {
             if (persisted == null) return current;
-            return {
-              ...current,
-              jobs: sanitizeJobs(((persisted as { jobs?: UploadJob[] })?.jobs) ?? []),
-            };
+            const rehydrated = sanitizeJobs((persisted as { jobs?: UploadJob[] })?.jobs ?? []);
+            // Keep any in-flight jobs that arrived before rehydration completed.
+            const rehydratedIds = new Set(rehydrated.map((j) => j.id));
+            const fresh = current.jobs.filter((j) => !rehydratedIds.has(j.id));
+            return { ...current, jobs: [...rehydrated, ...fresh] };
           },
         },
       ),
