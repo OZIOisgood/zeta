@@ -1,9 +1,10 @@
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
+import { ZScreen } from '../../components/ui/z-screen';
 
 export default function CoachingScreen() {
   return (
-    <View className="flex-1 items-center justify-center bg-z-bg">
+    <ZScreen edges={['top']} className="items-center justify-center">
       <Text className="text-lg font-semibold text-z-text">Coaching</Text>
-    </View>
+    </ZScreen>
   );
 }

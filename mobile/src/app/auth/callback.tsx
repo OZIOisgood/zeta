@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { completeLogin } from '../../auth/login';
 import { useAuth } from '../../auth/auth-store';
+import { ZScreen } from '../../components/ui/z-screen';
 import { colors } from '../../theme/colors';
 
 /**
@@ -35,8 +36,8 @@ export default function AuthCallback() {
   if (!exchanging && status !== 'loading') return <Redirect href="/login" />;
 
   return (
-    <View className="flex-1 items-center justify-center bg-z-bg">
+    <ZScreen className="items-center justify-center">
       <ActivityIndicator size="large" color={colors.primary} />
-    </View>
+    </ZScreen>
   );
 }

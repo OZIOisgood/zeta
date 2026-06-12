@@ -9,6 +9,7 @@ import type { UploadJob } from '../../upload/upload-store';
 import { AssetCard } from '../../components/asset-card';
 import { UploadProgressCard } from '../../components/upload-progress-card';
 import { ZButton } from '../../components/ui/z-button';
+import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
 
@@ -101,7 +102,7 @@ export default function VideosScreen() {
   }
 
   return (
-    <View className="flex-1">
+    <ZScreen edges={['top']}>
       {content}
       {canCreate && (
         <Pressable
@@ -113,6 +114,6 @@ export default function VideosScreen() {
           <Plus color={colors.onPrimary} size={24} />
         </Pressable>
       )}
-    </View>
+    </ZScreen>
   );
 }

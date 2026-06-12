@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 import { ZButton } from '../../components/ui/z-button';
+import { ZScreen } from '../../components/ui/z-screen';
 import { authStore, useAuth } from '../../auth/auth-store';
 
 export default function ProfileScreen() {
@@ -8,7 +9,7 @@ export default function ProfileScreen() {
   if (!user) return null;
 
   return (
-    <View className="flex-1 items-center justify-center gap-4 bg-z-bg px-8">
+    <ZScreen edges={['top']} className="items-center justify-center gap-4 px-8">
       <Text className="text-xl font-semibold text-z-text">
         {user.first_name} {user.last_name}
       </Text>
@@ -21,6 +22,6 @@ export default function ProfileScreen() {
           onPress={() => void authStore.getState().signOut()}
         />
       </View>
-    </View>
+    </ZScreen>
   );
 }

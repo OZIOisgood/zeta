@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { makeRedirectUri, ResponseType, useAuthRequest } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { ZButton } from '../components/ui/z-button';
+import { ZScreen } from '../components/ui/z-screen';
 import { completeLogin, stashCodeVerifier, workosClientId, workosDiscovery } from '../auth/login';
 import { authStore } from '../auth/auth-store';
 
@@ -55,7 +56,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <View className="flex-1 items-center justify-center gap-6 bg-z-bg px-8">
+    <ZScreen className="items-center justify-center gap-6 px-8">
       <Text className="text-3xl font-bold text-z-text">Zeta</Text>
       <Text className="text-center text-z-muted">
         Digital video coaching — sign in to continue.
@@ -64,6 +65,6 @@ export default function LoginScreen() {
         <ZButton label={busy ? 'Signing in…' : 'Sign in'} onPress={signIn} disabled={busy || !request} />
       </View>
       {failed ? <Text className="text-z-danger">Sign-in failed. Please try again.</Text> : null}
-    </View>
+    </ZScreen>
   );
 }

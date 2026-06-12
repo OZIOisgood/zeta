@@ -9,6 +9,7 @@ import { api } from '../auth/auth-store';
 import { uploadStore } from '../upload/upload-store';
 import type { PickedFile } from '../upload/upload-store';
 import { ZButton } from '../components/ui/z-button';
+import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
 import { colors } from '../theme/colors';
 
@@ -71,124 +72,126 @@ export default function UploadScreen() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ padding: 16 }}>
-      {/* Header */}
-      <View className="mb-4 flex-row items-center gap-3">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.actions.back')}
-          onPress={() => router.back()}
-          className="p-1"
-        >
-          <ArrowLeft color={colors.muted} size={24} />
-        </Pressable>
-        <Text className="text-lg font-semibold text-z-text">{t('common.actions.uploadVideo')}</Text>
-      </View>
+    <ZScreen>
+      <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ padding: 16 }}>
+        {/* Header */}
+        <View className="mb-4 flex-row items-center gap-3">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.actions.back')}
+            onPress={() => router.back()}
+            className="p-1"
+          >
+            <ArrowLeft color={colors.muted} size={24} />
+          </Pressable>
+          <Text className="text-lg font-semibold text-z-text">{t('common.actions.uploadVideo')}</Text>
+        </View>
 
-      {/* Title */}
-      <View className="mb-3">
-        <Text className="mb-1 text-sm font-medium text-z-text">{t('common.fields.title')}</Text>
-        <TextInput
-          accessibilityLabel={t('common.fields.title')}
-          value={title}
-          onChangeText={setTitle}
-          placeholder="e.g. Jump line take 2"
-          placeholderTextColor={colors.muted}
-          className="rounded-lg border border-z-border bg-z-surface px-3 py-2 text-z-text"
-        />
-      </View>
+        {/* Title */}
+        <View className="mb-3">
+          <Text className="mb-1 text-sm font-medium text-z-text">{t('common.fields.title')}</Text>
+          <TextInput
+            accessibilityLabel={t('common.fields.title')}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="e.g. Jump line take 2"
+            placeholderTextColor={colors.muted}
+            className="rounded-lg border border-z-border bg-z-surface px-3 py-2 text-z-text"
+          />
+        </View>
 
-      {/* Description */}
-      <View className="mb-3">
-        <Text className="mb-1 text-sm font-medium text-z-text">{t('common.fields.description')}</Text>
-        <TextInput
-          accessibilityLabel={t('common.fields.description')}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Add context, goals, or notes for the reviewer."
-          placeholderTextColor={colors.muted}
-          multiline
-          numberOfLines={3}
-          className="rounded-lg border border-z-border bg-z-surface px-3 py-2 text-z-text"
-        />
-      </View>
+        {/* Description */}
+        <View className="mb-3">
+          <Text className="mb-1 text-sm font-medium text-z-text">{t('common.fields.description')}</Text>
+          <TextInput
+            accessibilityLabel={t('common.fields.description')}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Add context, goals, or notes for the reviewer."
+            placeholderTextColor={colors.muted}
+            multiline
+            numberOfLines={3}
+            className="rounded-lg border border-z-border bg-z-surface px-3 py-2 text-z-text"
+          />
+        </View>
 
-      {/* Group chips */}
-      <View className="mb-3">
-        <Text className="mb-2 text-sm font-medium text-z-text">{t('common.fields.group')}</Text>
-        {isPending && (
-          <View className="flex-row gap-2">
-            <ZSkeleton className="h-8 w-24 rounded-full" />
-            <ZSkeleton className="h-8 w-24 rounded-full" />
-          </View>
-        )}
-        {isError && (
-          <View className="flex-row items-center gap-2">
-            <Text className="text-sm text-z-danger">Groups could not be loaded.</Text>
-            <ZButton label={t('upload.retry')} variant="ghost" onPress={() => void refetch()} />
-          </View>
-        )}
-        {groups && (
-          <View className="flex-row flex-wrap gap-2">
-            {groups.map((group) => {
-              const selected = selectedGroupId === group.id;
-              return (
-                <Pressable
-                  key={group.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={group.name}
-                  onPress={() => setSelectedGroupId(group.id)}
-                  className={`rounded-full border px-3 py-1.5 ${
-                    selected
-                      ? 'border-z-primary bg-z-primary-soft'
-                      : 'border-z-border bg-z-surface'
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-medium ${selected ? 'text-z-primary-strong' : 'text-z-text'}`}
+        {/* Group chips */}
+        <View className="mb-3">
+          <Text className="mb-2 text-sm font-medium text-z-text">{t('common.fields.group')}</Text>
+          {isPending && (
+            <View className="flex-row gap-2">
+              <ZSkeleton className="h-8 w-24 rounded-full" />
+              <ZSkeleton className="h-8 w-24 rounded-full" />
+            </View>
+          )}
+          {isError && (
+            <View className="flex-row items-center gap-2">
+              <Text className="text-sm text-z-danger">Groups could not be loaded.</Text>
+              <ZButton label={t('upload.retry')} variant="ghost" onPress={() => void refetch()} />
+            </View>
+          )}
+          {groups && (
+            <View className="flex-row flex-wrap gap-2">
+              {groups.map((group) => {
+                const selected = selectedGroupId === group.id;
+                return (
+                  <Pressable
+                    key={group.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={group.name}
+                    onPress={() => setSelectedGroupId(group.id)}
+                    className={`rounded-full border px-3 py-1.5 ${
+                      selected
+                        ? 'border-z-primary bg-z-primary-soft'
+                        : 'border-z-border bg-z-surface'
+                    }`}
                   >
-                    {group.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-      </View>
+                    <Text
+                      className={`text-sm font-medium ${selected ? 'text-z-primary-strong' : 'text-z-text'}`}
+                    >
+                      {group.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </View>
 
-      {/* Pick videos */}
-      <View className="mb-3">
-        <Text className="mb-2 text-sm font-medium text-z-text">Videos</Text>
-        <ZButton label="Pick videos" variant="secondary" onPress={() => void handlePickVideos()} />
-        {picked.length > 0 && (
-          <View className="mt-2 gap-1">
-            {picked.map((file, index) => (
-              <View
-                key={`${file.localUri}-${index}`}
-                className="flex-row items-center justify-between rounded-lg border border-z-border bg-z-surface px-3 py-2"
-              >
-                <Text className="flex-1 text-sm text-z-text" numberOfLines={1}>
-                  {file.filename}
-                </Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remove ${file.filename}`}
-                  onPress={() => handleRemovePicked(index)}
-                  className="ml-2 p-1"
+        {/* Pick videos */}
+        <View className="mb-3">
+          <Text className="mb-2 text-sm font-medium text-z-text">Videos</Text>
+          <ZButton label="Pick videos" variant="secondary" onPress={() => void handlePickVideos()} />
+          {picked.length > 0 && (
+            <View className="mt-2 gap-1">
+              {picked.map((file, index) => (
+                <View
+                  key={`${file.localUri}-${index}`}
+                  className="flex-row items-center justify-between rounded-lg border border-z-border bg-z-surface px-3 py-2"
                 >
-                  <X color={colors.muted} size={16} />
-                </Pressable>
-              </View>
-            ))}
-          </View>
+                  <Text className="flex-1 text-sm text-z-text" numberOfLines={1}>
+                    {file.filename}
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${file.filename}`}
+                    onPress={() => handleRemovePicked(index)}
+                    className="ml-2 p-1"
+                  >
+                    <X color={colors.muted} size={16} />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {failed && (
+          <Text className="mb-3 text-sm text-z-danger">{t('upload.uploadFailed')}</Text>
         )}
-      </View>
 
-      {failed && (
-        <Text className="mb-3 text-sm text-z-danger">{t('upload.uploadFailed')}</Text>
-      )}
-
-      <ZButton label={t('upload.startUpload')} onPress={() => void handleSubmit()} disabled={!canSubmit} />
-    </ScrollView>
+        <ZButton label={t('upload.startUpload')} onPress={() => void handleSubmit()} disabled={!canSubmit} />
+      </ScrollView>
+    </ZScreen>
   );
 }
