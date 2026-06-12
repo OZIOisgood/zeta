@@ -556,7 +556,12 @@
       "joinFailed": "Échec du démarrage de l'appel vidéo",
       "connectFailed": "Échec de la connexion à la séance",
       "microphoneFallback": "Microphone {{index}}",
-      "cameraFallback": "Caméra {{index}}"
+      "cameraFallback": "Caméra {{index}}",
+      "permissionHeading": "Caméra et microphone requis",
+      "permissionBody": "L'accès à la caméra et au microphone est requis pour les séances de coaching en direct.",
+      "grantCamera": "Autoriser la caméra",
+      "grantMicrophone": "Autoriser le microphone",
+      "switchCamera": "Changer de caméra"
     }
   },
   "preferences": {

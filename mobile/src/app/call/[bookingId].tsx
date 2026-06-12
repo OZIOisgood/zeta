@@ -65,7 +65,8 @@ export default function CallScreen() {
   }, []);
 
   function handleLeave() {
-    void callStore.getState().leave(groupId ?? '', bookingId ?? '');
+    // Do NOT call leave() here — the useEffect cleanup on unmount is the single
+    // teardown path (see file comment above). Calling back() triggers unmount.
     router.back();
   }
 
@@ -75,21 +76,21 @@ export default function CallScreen() {
       <ZScreen edges={['top', 'bottom']}>
         <View testID="call-permission-denied" className="flex-1 items-center justify-center gap-4 px-8">
           <Text className="text-center text-base font-semibold text-z-text">
-            {t('groups.invite.cameraHint')}
+            {t('sessions.call.permissionHeading')}
           </Text>
           <Text className="text-center text-sm text-z-muted">
-            Camera and microphone access are required for live coaching sessions.
+            {t('sessions.call.permissionBody')}
           </Text>
           {!cameraGranted ? (
             <ZButton
-              label={t('groups.invite.grantCamera')}
+              label={t('sessions.call.grantCamera')}
               variant="primary"
               onPress={() => void requestCameraPermission()}
             />
           ) : null}
           {!micGranted ? (
             <ZButton
-              label="Grant microphone access"
+              label={t('sessions.call.grantMicrophone')}
               variant="primary"
               onPress={() => void requestMicPermission()}
             />
@@ -160,8 +161,7 @@ export default function CallScreen() {
       {remoteUid === null ? (
         <View
           testID="call-waiting"
-          className="absolute inset-0 items-center justify-center px-8"
-          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          className="absolute inset-0 items-center justify-center bg-black/60 px-8"
         >
           <Text className="text-center text-base text-white">
             {t('sessions.call.waiting')}
@@ -203,7 +203,7 @@ export default function CallScreen() {
 
         <ZIconButton
           testID="call-switch"
-          label="Switch camera"
+          label={t('sessions.call.switchCamera')}
           variant="secondary"
           size="lg"
           shape="circle"

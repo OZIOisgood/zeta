@@ -137,17 +137,21 @@ test('phase inCall remoteUid null → waiting hint visible', async () => {
   expect(screen.getByTestId('call-waiting')).toBeOnTheScreen();
 });
 
-// ── Test 4: leave button → store.leave + router.back ─────────────────────────
+// ── Test 4: leave button → leave called exactly ONCE total (including unmount) ─
 
-test('press call-leave → store.leave called and router.back called', async () => {
+test('press call-leave then unmount → leave called exactly once, router.back called once', async () => {
   mockPhase = 'inCall';
   mockRemoteUid = 42;
-  await act(async () => {
-    render(<CallScreen />);
-  });
+  // render is async in @testing-library/react-native v14
+  const view = await render(<CallScreen />);
   await act(async () => {
     fireEvent.press(screen.getByTestId('call-leave'));
   });
+  // Simulate the unmount that router.back() triggers (back-navigate triggers unmount)
+  await act(async () => {
+    view.unmount();
+  });
+  // leave() must fire exactly once — the unmount cleanup is the single teardown path
   expect(mockLeave).toHaveBeenCalledTimes(1);
   expect(mockBack).toHaveBeenCalledTimes(1);
 });

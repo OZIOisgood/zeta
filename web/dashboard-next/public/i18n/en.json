@@ -556,7 +556,12 @@
       "joinFailed": "Failed to join video call",
       "connectFailed": "Failed to connect to session",
       "microphoneFallback": "Microphone {{index}}",
-      "cameraFallback": "Camera {{index}}"
+      "cameraFallback": "Camera {{index}}",
+      "permissionHeading": "Camera and Microphone Required",
+      "permissionBody": "Camera and microphone access are required for live coaching sessions.",
+      "grantCamera": "Grant camera access",
+      "grantMicrophone": "Grant microphone access",
+      "switchCamera": "Switch camera"
     }
   },
   "preferences": {

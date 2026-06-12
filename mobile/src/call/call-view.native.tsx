@@ -19,7 +19,7 @@ export { CallVideoProps };
  */
 export function CallVideo({ remoteUid, localPreview }: CallVideoProps) {
   return (
-    <View testID="call-video-stub" style={{ flex: 1, backgroundColor: '#000' }}>
+    <View testID="call-video-stub" className="flex-1 bg-black">
       {/* Remote video — full bleed */}
       {remoteUid !== null ? (
         <RtcSurfaceView

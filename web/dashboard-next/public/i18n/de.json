@@ -556,7 +556,12 @@
       "joinFailed": "Videoanruf konnte nicht gestartet werden",
       "connectFailed": "Verbindung zum Termin fehlgeschlagen",
       "microphoneFallback": "Mikrofon {{index}}",
-      "cameraFallback": "Kamera {{index}}"
+      "cameraFallback": "Kamera {{index}}",
+      "permissionHeading": "Kamera und Mikrofon erforderlich",
+      "permissionBody": "Für Live-Coaching-Sitzungen benötigst du Zugriff auf Kamera und Mikrofon.",
+      "grantCamera": "Kamerazugriff erlauben",
+      "grantMicrophone": "Mikrofonzugriff erlauben",
+      "switchCamera": "Kamera wechseln"
     }
   },
   "preferences": {
