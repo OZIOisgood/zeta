@@ -399,6 +399,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/groups/{groupID}/coaching/bookings/{bookingID}/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Generate an Agora RTC token for a coaching session
+         * @description Returns the Agora app ID, channel name, a short-lived RTC token, and a participant UID for the authenticated user. The caller must hold the coaching:video:connect permission and be a participant (student or expert) of the booking. The connect window opens 15 minutes before the scheduled start time and closes at the session end (scheduled_at + duration_minutes). If recording is enabled and has not yet been started, this call also triggers recording — a recording start failure returns 500 (the token is NOT issued in that case).
+         */
+        get: operations["connectToBooking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/bookings/{bookingID}/recording/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop the cloud recording for a coaching booking
+         * @description Stops the Agora Cloud Recording for the given booking. The caller must hold the coaching:video:connect permission and be a participant of the booking. If recording is disabled or there is no active recording to stop, the call succeeds silently (idempotent). Returns 200 with a status confirmation body on success.
+         */
+        post: operations["stopBookingRecording"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/groups/{groupID}/coaching/bookings/{bookingID}/cancel": {
         parameters: {
             query?: never;
@@ -682,6 +722,17 @@ export interface components {
         CancelBookingRequest: {
             /** @description Optional reason for cancellation */
             cancellation_reason?: string;
+        };
+        /** @description Agora RTC credentials returned by the connect endpoint */
+        BookingConnectInfo: {
+            /** @description Agora application ID */
+            app_id: string;
+            /** @description Agora channel name for this booking session */
+            channel: string;
+            /** @description Short-lived Agora RTC credential — never log it. Valid for 3600 seconds from issuance. */
+            token: string;
+            /** @description Participant UID for the Agora channel (uint32). Students always receive UID 1; experts always receive UID 2. */
+            uid: number;
         };
     };
     responses: never;
@@ -1746,6 +1797,132 @@ export interface operations {
             };
             /** @description Time slot is no longer available (conflict) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    connectToBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                bookingID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agora RTC credentials for the session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingConnectInfo"];
+                };
+            };
+            /** @description Invalid booking ID; booking is cancelled; or the current time is outside the connect window (too early or session has already ended) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not a group member or missing coaching:video:connect permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Booking not found or caller is not a participant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to generate the Agora token or start recording */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Video calling is not configured on the server */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    stopBookingRecording: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                bookingID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recording stopped (or was already stopped / not running) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "ok";
+                    };
+                };
+            };
+            /** @description Invalid booking ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not a group member or missing coaching:video:connect permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Booking not found or caller is not a participant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to stop the recording */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

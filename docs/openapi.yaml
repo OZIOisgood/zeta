@@ -669,6 +669,106 @@ paths:
         "409":
           description: Time slot is no longer available (conflict)
 
+  /groups/{groupID}/coaching/bookings/{bookingID}/connect:
+    get:
+      tags: [coaching]
+      summary: Generate an Agora RTC token for a coaching session
+      description: >
+        Returns the Agora app ID, channel name, a short-lived RTC token, and a
+        participant UID for the authenticated user. The caller must hold the
+        coaching:video:connect permission and be a participant (student or
+        expert) of the booking. The connect window opens 15 minutes before the
+        scheduled start time and closes at the session end
+        (scheduled_at + duration_minutes). If recording is enabled and has not
+        yet been started, this call also triggers recording — a recording
+        start failure returns 500 (the token is NOT issued in that case).
+      operationId: connectToBooking
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: bookingID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Agora RTC credentials for the session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingConnectInfo"
+        "400":
+          description: >
+            Invalid booking ID; booking is cancelled; or the current time is
+            outside the connect window (too early or session has already ended)
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:video:connect
+            permission
+        "404":
+          description: Booking not found or caller is not a participant
+        "500":
+          description: Failed to generate the Agora token or start recording
+        "503":
+          description: Video calling is not configured on the server
+
+  /groups/{groupID}/coaching/bookings/{bookingID}/recording/stop:
+    post:
+      tags: [coaching]
+      summary: Stop the cloud recording for a coaching booking
+      description: >
+        Stops the Agora Cloud Recording for the given booking. The caller must
+        hold the coaching:video:connect permission and be a participant of the
+        booking. If recording is disabled or there is no active recording to
+        stop, the call succeeds silently (idempotent). Returns 200 with a
+        status confirmation body on success.
+      operationId: stopBookingRecording
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: bookingID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Recording stopped (or was already stopped / not running)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                required: [status]
+        "400":
+          description: Invalid booking ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:video:connect
+            permission
+        "404":
+          description: Booking not found or caller is not a participant
+        "500":
+          description: Failed to stop the recording
+
   /groups/{groupID}/coaching/bookings/{bookingID}/cancel:
     put:
       tags: [coaching]
@@ -1231,3 +1331,26 @@ components:
         cancellation_reason:
           type: string
           description: Optional reason for cancellation
+
+    BookingConnectInfo:
+      type: object
+      description: Agora RTC credentials returned by the connect endpoint
+      properties:
+        app_id:
+          type: string
+          description: Agora application ID
+        channel:
+          type: string
+          description: Agora channel name for this booking session
+        token:
+          type: string
+          description: >
+            Short-lived Agora RTC credential — never log it. Valid for 3600
+            seconds from issuance.
+        uid:
+          type: integer
+          minimum: 0
+          description: >
+            Participant UID for the Agora channel (uint32). Students always
+            receive UID 1; experts always receive UID 2.
+      required: [app_id, channel, token, uid]
