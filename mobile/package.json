@@ -36,6 +36,7 @@
     "react-dom": "19.2.3",
     "react-i18next": "^17.0.8",
     "react-native": "0.85.3",
+    "react-native-agora": "^4.5.4",
     "react-native-css-interop": "0.2.5",
     "react-native-gesture-handler": "~2.31.1",
     "react-native-reanimated": "4.3.1",
@@ -81,7 +82,8 @@
       "/node_modules/@react-native/babel-preset/"
     ],
     "moduleNameMapper": {
-      "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
+      "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock",
+      "^react-native-agora$": "<rootDir>/src/call/__mocks__/react-native-agora.ts"
     }
   },
   "private": true
