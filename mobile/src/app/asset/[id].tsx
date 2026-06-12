@@ -169,7 +169,7 @@ export default function AssetDetailScreen() {
   const { data, isPending, isError, refetch } = useAssetQuery(id ?? '');
 
   const permissions = useAuth((s) => s.user?.permissions ?? null);
-  const canCompose = permissions?.includes('reviews:create') ?? false;
+  const canCompose = (permissions?.includes('reviews:create') ?? false) && data?.status !== 'completed';
 
   // Player ref for seeking
   const playerRef = useRef<ReturnType<typeof useVideoPlayer> | null>(null);

@@ -152,6 +152,22 @@ test('composer visible with reviews:create', async () => {
   expect(screen.getByTestId('review-input')).toBeOnTheScreen();
 });
 
+// ── Test 5: composer hidden on completed asset even with reviews:create ──────────
+
+test('composer hidden when asset is completed even with reviews:create', async () => {
+  mockPermissions = ['reviews:create'];
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, status: 'completed' as const },
+    refetch: jest.fn(),
+  });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.queryByTestId('review-input')).toBeNull();
+});
+
 // ── Existing tests (keep passing) ─────────────────────────────────────────────
 
 test('shows title, description and part info', async () => {
