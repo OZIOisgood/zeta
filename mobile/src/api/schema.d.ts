@@ -299,6 +299,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/coaching/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all bookings for the current user across all groups
+         * @description Returns every booking where the caller is either the student or the expert, regardless of group. Requires the coaching:bookings:read permission.
+         */
+        get: operations["listMyBookings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/session-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List coaching session types for a group
+         * @description Experts with coaching:availability:manage see only their own session types. Users with coaching:slots:read see all active types in the group. Returns 403 if the caller has neither permission.
+         */
+        get: operations["listGroupSessionTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/experts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List coaching experts in a group
+         * @description Returns the active experts for the given group. Requires group membership and coaching:slots:read.
+         */
+        get: operations["listCoachingExperts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List available booking slots for an expert
+         * @description Computes open time slots for the given expert and session type over the next 28 days, excluding blocked slots, existing bookings, and times that fall within the minimum booking notice window. Both expert_id and session_type_id are required.
+         */
+        get: operations["listAvailableSlots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Book a coaching session
+         * @description Creates a booking for the authenticated user with the specified expert, session type, and scheduled time. The slot is checked for conflicts inside a serializable transaction. Requires group membership and coaching:book.
+         */
+        post: operations["createBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/bookings/{bookingID}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Cancel a coaching booking
+         * @description Cancels a booking. The caller must be a participant (either the student or the expert) — this is enforced inside the handler without a permission middleware. Returns 404 if the booking does not exist or the caller is not a participant. Cancellations must be made at least the configured cancellation-notice period before the session.
+         */
+        put: operations["cancelBooking"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -466,6 +586,102 @@ export interface components {
         };
         DeclineInvitationRequest: {
             code: string;
+        };
+        /** @description Recording metadata attached to a completed booking */
+        BookingRecording: {
+            /** @description Recording pipeline status */
+            status: string;
+            /**
+             * Format: uuid
+             * @description Parent asset ID; present once the recording is processed
+             */
+            asset_id?: string;
+            /**
+             * Format: uuid
+             * @description Video part ID; present once the recording is processed
+             */
+            video_id?: string;
+        };
+        Booking: {
+            /** Format: uuid */
+            id: string;
+            expert_id: string;
+            expert_name: string;
+            student_id: string;
+            student_name: string;
+            /** Format: uuid */
+            group_id: string;
+            /** Format: uuid */
+            session_type_id: string;
+            /** @description Omitted when not available (e.g. after cancel without a name lookup) */
+            session_type_name?: string;
+            /** Format: date-time */
+            scheduled_at: string;
+            /** Format: int32 */
+            duration_minutes: number;
+            /**
+             * @description Derived at response time: cancelled if is_cancelled is set; done if scheduled_at is in the past; otherwise pending.
+             * @enum {string}
+             */
+            status: "pending" | "done" | "cancelled";
+            /** @description Provided reason; omitted when not cancelled or no reason given */
+            cancellation_reason?: string;
+            /** @description User ID of whoever cancelled; omitted when not cancelled */
+            cancelled_by?: string;
+            /** @description Optional notes from the student; omitted when absent */
+            notes?: string;
+            recording?: components["schemas"]["BookingRecording"];
+            /** Format: date-time */
+            created_at: string;
+        };
+        SessionType: {
+            /** Format: uuid */
+            id: string;
+            expert_id: string;
+            /** Format: uuid */
+            group_id: string;
+            name: string;
+            description: string;
+            /** Format: int32 */
+            duration_minutes: number;
+            is_active: boolean;
+            /** Format: date-time */
+            created_at: string;
+        };
+        CoachingSlot: {
+            /** @description WorkOS user ID of the expert this slot belongs to */
+            expert_id: string;
+            /** Format: date-time */
+            starts_at: string;
+            /** Format: date-time */
+            ends_at: string;
+            /** Format: int32 */
+            duration_minutes: number;
+        };
+        CoachingExpert: {
+            /** @description WorkOS user ID */
+            expert_id: string;
+            first_name: string;
+            last_name: string;
+            /** @description Base64-encoded avatar; omitted when unset */
+            avatar?: string;
+        };
+        CreateBookingRequest: {
+            /** @description WorkOS user ID of the expert to book */
+            expert_id: string;
+            /** Format: uuid */
+            session_type_id: string;
+            /**
+             * Format: date-time
+             * @description Desired session start time (RFC3339)
+             */
+            scheduled_at: string;
+            /** @description Optional notes to share with the expert */
+            notes?: string;
+        };
+        CancelBookingRequest: {
+            /** @description Optional reason for cancellation */
+            cancellation_reason?: string;
         };
     };
     responses: never;
@@ -1284,6 +1500,304 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LogoutResponse"];
                 };
+            };
+        };
+    };
+    listMyBookings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bookings across all groups */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Booking"][];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing coaching:bookings:read permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listGroupSessionTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session types available in this group */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionType"][];
+                };
+            };
+            /** @description Invalid group ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not a group member, or has neither coaching:availability:manage nor coaching:slots:read permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listCoachingExperts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Experts in the group */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoachingExpert"][];
+                };
+            };
+            /** @description Invalid group ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not a group member or missing coaching:slots:read permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listAvailableSlots: {
+        parameters: {
+            query: {
+                /** @description WorkOS user ID of the expert */
+                expert_id: string;
+                /** @description Session type whose duration governs slot sizing */
+                session_type_id: string;
+            };
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available slots within the lookahead window */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoachingSlot"][];
+                };
+            };
+            /** @description Invalid group ID, missing expert_id, missing or invalid session_type_id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not a group member or missing coaching:slots:read permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session type not found in this group */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBookingRequest"];
+            };
+        };
+        responses: {
+            /** @description Booking created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Booking"];
+                };
+            };
+            /** @description Invalid group ID, missing expert_id, invalid session_type_id, invalid scheduled_at (must be RFC3339), or session must be booked further in advance (minimum booking notice not met) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not a group member or missing coaching:book permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session type not found in this group */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Time slot is no longer available (conflict) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancelBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                bookingID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CancelBookingRequest"];
+            };
+        };
+        responses: {
+            /** @description Booking cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Booking"];
+                };
+            };
+            /** @description Invalid booking ID or cancellation is too close to the session start (cancellation notice period not met) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not a group member */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Booking not found or caller is not a participant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Booking is already cancelled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

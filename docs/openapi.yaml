@@ -15,6 +15,7 @@ tags:
   - name: system
   - name: assets
   - name: groups
+  - name: coaching
 paths:
   /health:
     get:
@@ -474,6 +475,246 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LogoutResponse"
+
+  # --- Coaching ---
+
+  /coaching/bookings:
+    get:
+      tags: [coaching]
+      summary: List all bookings for the current user across all groups
+      description: >
+        Returns every booking where the caller is either the student or the
+        expert, regardless of group. Requires the coaching:bookings:read
+        permission.
+      operationId: listMyBookings
+      responses:
+        "200":
+          description: Bookings across all groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing coaching:bookings:read permission
+
+  /groups/{groupID}/coaching/session-types:
+    get:
+      tags: [coaching]
+      summary: List coaching session types for a group
+      description: >
+        Experts with coaching:availability:manage see only their own session
+        types. Users with coaching:slots:read see all active types in the
+        group. Returns 403 if the caller has neither permission.
+      operationId: listGroupSessionTypes
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session types available in this group
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionType"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member, or has neither
+            coaching:availability:manage nor coaching:slots:read permission
+
+  /groups/{groupID}/coaching/experts:
+    get:
+      tags: [coaching]
+      summary: List coaching experts in a group
+      description: >
+        Returns the active experts for the given group. Requires group
+        membership and coaching:slots:read.
+      operationId: listCoachingExperts
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Experts in the group
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingExpert"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:slots:read
+            permission
+
+  /groups/{groupID}/coaching/slots:
+    get:
+      tags: [coaching]
+      summary: List available booking slots for an expert
+      description: >
+        Computes open time slots for the given expert and session type over
+        the next 28 days, excluding blocked slots, existing bookings, and
+        times that fall within the minimum booking notice window. Both
+        expert_id and session_type_id are required.
+      operationId: listAvailableSlots
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: expert_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: WorkOS user ID of the expert
+        - name: session_type_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Session type whose duration governs slot sizing
+      responses:
+        "200":
+          description: Available slots within the lookahead window
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingSlot"
+        "400":
+          description: >
+            Invalid group ID, missing expert_id, missing or invalid
+            session_type_id
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:slots:read
+            permission
+        "404":
+          description: Session type not found in this group
+
+  /groups/{groupID}/coaching/bookings:
+    post:
+      tags: [coaching]
+      summary: Book a coaching session
+      description: >
+        Creates a booking for the authenticated user with the specified
+        expert, session type, and scheduled time. The slot is checked for
+        conflicts inside a serializable transaction. Requires group
+        membership and coaching:book.
+      operationId: createBooking
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingRequest"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: >
+            Invalid group ID, missing expert_id, invalid session_type_id,
+            invalid scheduled_at (must be RFC3339), or session must be booked
+            further in advance (minimum booking notice not met)
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:book permission
+        "404":
+          description: Session type not found in this group
+        "409":
+          description: Time slot is no longer available (conflict)
+
+  /groups/{groupID}/coaching/bookings/{bookingID}/cancel:
+    put:
+      tags: [coaching]
+      summary: Cancel a coaching booking
+      description: >
+        Cancels a booking. The caller must be a participant (either the
+        student or the expert) — this is enforced inside the handler without
+        a permission middleware. Returns 404 if the booking does not exist
+        or the caller is not a participant. Cancellations must be made at
+        least the configured cancellation-notice period before the session.
+      operationId: cancelBooking
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: bookingID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelBookingRequest"
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: >
+            Invalid booking ID or cancellation is too close to the session
+            start (cancellation notice period not met)
+        "401":
+          description: Not authenticated
+        "403":
+          description: Caller is not a group member
+        "404":
+          description: Booking not found or caller is not a participant
+        "409":
+          description: Booking is already cancelled
+
 security:
   - bearerAuth: []
 components:
@@ -815,3 +1056,174 @@ components:
         code:
           type: string
       required: [code]
+
+    # --- Coaching schemas ---
+
+    BookingRecording:
+      type: object
+      description: Recording metadata attached to a completed booking
+      properties:
+        status:
+          type: string
+          description: Recording pipeline status
+        asset_id:
+          type: string
+          format: uuid
+          description: Parent asset ID; present once the recording is processed
+        video_id:
+          type: string
+          format: uuid
+          description: Video part ID; present once the recording is processed
+      required: [status]
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        expert_id:
+          type: string
+        expert_name:
+          type: string
+        student_id:
+          type: string
+        student_name:
+          type: string
+        group_id:
+          type: string
+          format: uuid
+        session_type_id:
+          type: string
+          format: uuid
+        session_type_name:
+          type: string
+          description: Omitted when not available (e.g. after cancel without a name lookup)
+        scheduled_at:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum: [pending, done, cancelled]
+          description: >
+            Derived at response time: cancelled if is_cancelled is set;
+            done if scheduled_at is in the past; otherwise pending.
+        cancellation_reason:
+          type: string
+          description: Provided reason; omitted when not cancelled or no reason given
+        cancelled_by:
+          type: string
+          description: User ID of whoever cancelled; omitted when not cancelled
+        notes:
+          type: string
+          description: Optional notes from the student; omitted when absent
+        recording:
+          $ref: "#/components/schemas/BookingRecording"
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - expert_id
+        - expert_name
+        - student_id
+        - student_name
+        - group_id
+        - session_type_id
+        - scheduled_at
+        - duration_minutes
+        - status
+        - created_at
+
+    SessionType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        expert_id:
+          type: string
+        group_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        duration_minutes:
+          type: integer
+          format: int32
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - expert_id
+        - group_id
+        - name
+        - description
+        - duration_minutes
+        - is_active
+        - created_at
+
+    CoachingSlot:
+      type: object
+      properties:
+        expert_id:
+          type: string
+          description: WorkOS user ID of the expert this slot belongs to
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+          format: int32
+      required: [expert_id, starts_at, ends_at, duration_minutes]
+
+    CoachingExpert:
+      type: object
+      properties:
+        expert_id:
+          type: string
+          description: WorkOS user ID
+        first_name:
+          type: string
+        last_name:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded avatar; omitted when unset
+      required: [expert_id, first_name, last_name]
+
+    CreateBookingRequest:
+      type: object
+      properties:
+        expert_id:
+          type: string
+          description: WorkOS user ID of the expert to book
+        session_type_id:
+          type: string
+          format: uuid
+        scheduled_at:
+          type: string
+          format: date-time
+          description: Desired session start time (RFC3339)
+        notes:
+          type: string
+          description: Optional notes to share with the expert
+      required: [expert_id, session_type_id, scheduled_at]
+
+    CancelBookingRequest:
+      type: object
+      properties:
+        cancellation_reason:
+          type: string
+          description: Optional reason for cancellation
