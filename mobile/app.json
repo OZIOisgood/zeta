@@ -44,6 +44,12 @@
           "photosPermission": "Allow Zeta to access your video library to upload videos for review.",
           "cameraPermission": "Allow Zeta to access your camera."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Zeta to scan QR codes to join groups."
+        }
       ]
     ],
     "experiments": {

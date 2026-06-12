@@ -83,7 +83,7 @@ export default function GroupsScreen() {
           testID="groups-join"
           label="Join group"
           variant="secondary"
-          onPress={() => router.push('/invite' as never)}
+          onPress={() => router.push('/invite')}
           icon={<QrCode color={colors.text} size={16} />}
         />
       </View>

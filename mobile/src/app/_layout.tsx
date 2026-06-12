@@ -29,6 +29,7 @@ export default function RootLayout() {
           <Stack.Screen name="asset/[id]" />
           <Stack.Screen name="group/[id]" />
           <Stack.Screen name="upload" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="invite" />
         </Stack.Protected>
         <Stack.Protected guard={status !== 'signedIn'}>
           <Stack.Screen name="login" />
