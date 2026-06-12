@@ -70,10 +70,6 @@ const defaultDeps: UploadDeps = {
   },
 };
 
-// Re-entrancy guard: tracks which job IDs are currently being processed.
-// processJob returns immediately if its jobId is already in this set.
-const processing = new Set<string>();
-
 /**
  * Sanitize jobs loaded from persisted storage.
  * - Drops jobs that are already 'done' (no point showing them after restart).
@@ -99,6 +95,12 @@ export function sanitizeJobs(jobs: UploadJob[]): UploadJob[] {
  * The `deps` closure is captured here so both code paths use the same logic.
  */
 function buildStateCreator(deps: UploadDeps) {
+  // Re-entrancy guard: tracks which job IDs are currently being processed.
+  // processJob returns immediately if its jobId is already in this set.
+  // Scoped per store instance so independent stores (tests, hot reload)
+  // never block each other on identical job IDs.
+  const processing = new Set<string>();
+
   return (
     set: (partial: UploadState | Partial<UploadState> | ((s: UploadState) => UploadState | Partial<UploadState>)) => void,
     get: () => UploadState,
@@ -139,7 +141,10 @@ function buildStateCreator(deps: UploadDeps) {
         });
         const { status } = await handle.start();
         if (status >= 200 && status < 300) {
-          patchFile(jobId, file.videoId, { status: 'done', progress: 1 });
+          // Drop the consumed capability URL: the queue is persisted to
+          // unencrypted AsyncStorage, so only files that may still need a
+          // retry keep their (time-limited) Mux upload URL around.
+          patchFile(jobId, file.videoId, { status: 'done', progress: 1, uploadUrl: '' });
           return true;
         }
       } catch {
@@ -226,6 +231,10 @@ function buildStateCreator(deps: UploadDeps) {
         await processJob(created.asset_id);
       },
 
+      // Resets one file, but processJob re-attempts every non-done file in
+      // the job (and re-runs completion) — retrying a single file therefore
+      // drags the rest of its failed siblings along. That is intentional:
+      // a job only succeeds when all parts are uploaded.
       retryFile: async (jobId, videoId) => {
         patchFile(jobId, videoId, { status: 'pending', progress: 0 });
         await processJob(jobId);

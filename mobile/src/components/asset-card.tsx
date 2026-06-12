@@ -2,6 +2,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 import { MessageSquare, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Asset } from '../api/queries/assets';
+import { colors } from '../theme/colors';
 
 const STATUS_CLASS: Record<Asset['status'], string> = {
   waiting_upload: 'bg-z-surface-muted text-z-muted',
@@ -29,7 +30,7 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
         {asset.thumbnail ? (
           <Image source={{ uri: asset.thumbnail }} className="h-full w-full" resizeMode="cover" />
         ) : (
-          <VideoIcon color="#735f4d" size={24} />
+          <VideoIcon color={colors.muted} size={24} />
         )}
       </View>
       <View className="flex-1 gap-1">
@@ -44,7 +45,7 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
             {statusLabel}
           </Text>
           <View className="flex-row items-center gap-1">
-            <MessageSquare color="#735f4d" size={14} />
+            <MessageSquare color={colors.muted} size={14} />
             <Text className="text-xs text-z-muted">{asset.review_count}</Text>
           </View>
         </View>

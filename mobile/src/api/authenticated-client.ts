@@ -11,11 +11,15 @@ type Options = {
   onSignOut: () => void;
 };
 
+type RefreshOutcome = 'rotated' | 'rejected' | 'unavailable';
+
 /**
  * Typed client with credential handling: injects the stored access token as
  * a Bearer header and, on 401, performs a single-flight refresh and retries
  * the original request once. The /auth/token* endpoints themselves are never
- * intercepted (they are the credential plumbing).
+ * intercepted (they are the credential plumbing). Tokens are cleared and the
+ * user signed out only when WorkOS deliberately rejects the refresh token;
+ * transient failures keep the pair and surface the original 401.
  *
  * Retry limitation: only the retried request's headers are rebuilt; requests
  * with consumed body streams (POST/PUT) may not be retryable — acceptable for
@@ -32,23 +36,35 @@ export function createAuthenticatedClient(options: Options) {
   const fetchImpl = options.fetch ?? fetch;
   const client = createClient<paths>({ baseUrl, fetch: fetchImpl });
 
-  let refreshInFlight: Promise<boolean> | null = null;
+  let refreshInFlight: Promise<RefreshOutcome> | null = null;
 
-  async function refreshTokens(): Promise<boolean> {
+  /**
+   * 'rejected' means WorkOS deliberately refused the refresh token — only this
+   * outcome may destroy the stored pair. 'unavailable' covers transient
+   * failures (network down, 5xx, malformed body); the still-valid refresh
+   * token must survive those, so callers just surface the original 401.
+   */
+  async function refreshTokens(): Promise<RefreshOutcome> {
     const current = await getTokens();
-    if (!current) return false;
-    const response = await fetchImpl(
-      new Request(`${baseUrl}/auth/token/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: current.refreshToken }),
-      }),
-    );
-    if (!response.ok) return false;
+    if (!current) return 'rejected';
+    let response: Response;
+    try {
+      response = await fetchImpl(
+        new Request(`${baseUrl}/auth/token/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: current.refreshToken }),
+        }),
+      );
+    } catch {
+      return 'unavailable';
+    }
+    if (response.status === 400 || response.status === 401) return 'rejected';
+    if (!response.ok) return 'unavailable';
     const pair = (await response.json()) as { access_token?: string; refresh_token?: string };
-    if (!pair.access_token || !pair.refresh_token) return false;
+    if (!pair.access_token || !pair.refresh_token) return 'unavailable';
     await setTokens({ accessToken: pair.access_token, refreshToken: pair.refresh_token });
-    return true;
+    return 'rotated';
   }
 
   function isAuthPlumbing(url: string): boolean {
@@ -71,13 +87,14 @@ export function createAuthenticatedClient(options: Options) {
       refreshInFlight ??= refreshTokens().finally(() => {
         refreshInFlight = null;
       });
-      const refreshed = await refreshInFlight;
+      const outcome = await refreshInFlight;
 
-      if (!refreshed) {
+      if (outcome === 'rejected') {
         await clearTokens();
         options.onSignOut();
         return response;
       }
+      if (outcome === 'unavailable') return response;
 
       const tokens = await getTokens();
       if (!tokens) return response;

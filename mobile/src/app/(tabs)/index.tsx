@@ -10,6 +10,7 @@ import { AssetCard } from '../../components/asset-card';
 import { UploadProgressCard } from '../../components/upload-progress-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { colors } from '../../theme/colors';
 
 function ListSkeleton() {
   return (
@@ -65,7 +66,7 @@ export default function VideosScreen() {
       <View className="flex-1 bg-z-bg">
         <JobCards jobs={jobs} />
         <View className="flex-1 items-center justify-center gap-4 px-8">
-          <CloudOff color="#735f4d" size={32} />
+          <CloudOff color={colors.muted} size={32} />
           <Text className="text-center text-z-muted">Your videos could not be loaded.</Text>
           <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
         </View>
@@ -76,7 +77,7 @@ export default function VideosScreen() {
       <View testID="videos-empty" className="flex-1 bg-z-bg">
         <JobCards jobs={jobs} />
         <View className="flex-1 items-center justify-center gap-3 px-8">
-          <VideoIcon color="#735f4d" size={32} />
+          <VideoIcon color={colors.muted} size={32} />
           <Text className="text-lg font-semibold text-z-text">{t('videos.noVideosYet')}</Text>
           <Text className="text-center text-z-muted">Videos you upload appear here.</Text>
         </View>
@@ -109,7 +110,7 @@ export default function VideosScreen() {
           onPress={() => router.push('/upload')}
           className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-z-primary"
         >
-          <Plus color="white" size={24} />
+          <Plus color={colors.onPrimary} size={24} />
         </Pressable>
       )}
     </View>

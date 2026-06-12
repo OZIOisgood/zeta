@@ -52,6 +52,8 @@ paths:
           description: Missing code or invalid request body
         "401":
           description: WorkOS rejected the authorization code
+        "429":
+          description: Rate limit exceeded for this client
   /auth/token/refresh:
     post:
       tags: [auth]
@@ -78,6 +80,8 @@ paths:
           description: Missing refresh_token or invalid request body
         "401":
           description: Refresh token expired or revoked
+        "429":
+          description: Rate limit exceeded for this client
   /auth/me:
     get:
       tags: [auth]

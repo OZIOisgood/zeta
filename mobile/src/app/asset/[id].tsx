@@ -8,6 +8,7 @@ import { useAssetQuery } from '../../api/queries/assets';
 import type { components } from '../../api/schema';
 import { ZButton } from '../../components/ui/z-button';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { colors } from '../../theme/colors';
 
 type AssetVideo = components['schemas']['AssetVideo'];
 
@@ -62,7 +63,7 @@ export default function AssetDetailScreen() {
           <Player key={active.id} video={active} />
         ) : (
           <View className="items-center gap-2">
-            <Clock color="#fff8ed" size={28} />
+            <Clock color={colors.bg} size={28} />
             <Text className="text-z-bg">Processing…</Text>
           </View>
         )}
@@ -70,7 +71,7 @@ export default function AssetDetailScreen() {
       <View className="gap-2 p-4">
         <View className="flex-row items-center gap-2">
           <Pressable accessibilityRole="button" accessibilityLabel={t('common.actions.back')} onPress={() => router.back()}>
-            <ArrowLeft color="#26180f" size={22} />
+            <ArrowLeft color={colors.text} size={22} />
           </Pressable>
           <Text className="flex-1 text-xl font-semibold text-z-text" numberOfLines={2}>
             {data.title}

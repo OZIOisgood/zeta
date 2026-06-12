@@ -95,7 +95,7 @@ test('on 401 with failing refresh: clears tokens and calls onSignOut', async () 
   expect(onSignOut).toHaveBeenCalledTimes(1);
 });
 
-test('on 401 with malformed refresh response: clears tokens and calls onSignOut', async () => {
+test('on 401 with malformed refresh response: keeps tokens and does not sign out', async () => {
   await setTokens({ accessToken: 'acc_old', refreshToken: 'ref_old' });
   const fetchSpy: typeof fetch = async (input) => {
     const req = input as Request;
@@ -110,8 +110,47 @@ test('on 401 with malformed refresh response: clears tokens and calls onSignOut'
   const { error } = await client.GET('/auth/me');
 
   expect(error).toBeDefined();
-  expect(await getTokens()).toBeNull();
-  expect(onSignOut).toHaveBeenCalledTimes(1);
+  expect(await getTokens()).toEqual({ accessToken: 'acc_old', refreshToken: 'ref_old' });
+  expect(onSignOut).not.toHaveBeenCalled();
+});
+
+test('on 401 with refresh 5xx: keeps tokens, surfaces the 401, does not sign out', async () => {
+  await setTokens({ accessToken: 'acc_old', refreshToken: 'ref_old' });
+  const fetchSpy: typeof fetch = async (input) => {
+    const req = input as Request;
+    if (new URL(req.url).pathname === '/auth/token/refresh') {
+      return jsonResponse({ message: 'bad gateway' }, 502);
+    }
+    return jsonResponse({ message: 'unauthorized' }, 401);
+  };
+
+  const onSignOut = jest.fn();
+  const client = createAuthenticatedClient({ baseUrl: BASE, fetch: fetchSpy, onSignOut });
+  const { error, response } = await client.GET('/auth/me');
+
+  expect(error).toBeDefined();
+  expect(response.status).toBe(401);
+  expect(await getTokens()).toEqual({ accessToken: 'acc_old', refreshToken: 'ref_old' });
+  expect(onSignOut).not.toHaveBeenCalled();
+});
+
+test('on 401 with refresh network failure: keeps tokens and does not sign out', async () => {
+  await setTokens({ accessToken: 'acc_old', refreshToken: 'ref_old' });
+  const fetchSpy: typeof fetch = async (input) => {
+    const req = input as Request;
+    if (new URL(req.url).pathname === '/auth/token/refresh') {
+      throw new TypeError('Network request failed');
+    }
+    return jsonResponse({ message: 'unauthorized' }, 401);
+  };
+
+  const onSignOut = jest.fn();
+  const client = createAuthenticatedClient({ baseUrl: BASE, fetch: fetchSpy, onSignOut });
+  const { error } = await client.GET('/auth/me');
+
+  expect(error).toBeDefined();
+  expect(await getTokens()).toEqual({ accessToken: 'acc_old', refreshToken: 'ref_old' });
+  expect(onSignOut).not.toHaveBeenCalled();
 });
 
 test('parallel 401s trigger only one refresh (single-flight)', async () => {

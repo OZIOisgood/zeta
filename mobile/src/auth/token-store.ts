@@ -15,6 +15,14 @@ export async function getTokens(): Promise<TokenPair | null> {
 }
 
 export async function setTokens(tokens: TokenPair): Promise<void> {
+  // expo-secure-store documents ~2048 bytes per value as the safe ceiling;
+  // WorkOS access tokens grow with the permissions claim, so surface it
+  // early in development instead of failing silently on device.
+  if (__DEV__ && tokens.accessToken.length > 2048) {
+    console.warn(
+      `Access token is ${tokens.accessToken.length} bytes — values above 2048 bytes may fail to persist in SecureStore on some platforms.`,
+    );
+  }
   await Promise.all([
     SecureStore.setItemAsync(ACCESS_KEY, tokens.accessToken),
     SecureStore.setItemAsync(REFRESH_KEY, tokens.refreshToken),

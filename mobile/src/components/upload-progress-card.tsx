@@ -2,6 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 import { RotateCcw, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { UploadJob } from '../upload/upload-store';
+import { colors } from '../theme/colors';
 
 export function UploadProgressCard({
   job,
@@ -32,7 +33,7 @@ export function UploadProgressCard({
             accessibilityLabel="Dismiss"
             onPress={() => onDismiss(job.id)}
           >
-            <X color="#735f4d" size={16} />
+            <X color={colors.muted} size={16} />
           </Pressable>
         )}
 
@@ -43,7 +44,7 @@ export function UploadProgressCard({
             accessibilityLabel="Retry"
             onPress={() => onRetry(job.id, firstFailed.videoId)}
           >
-            <RotateCcw color="#735f4d" size={16} />
+            <RotateCcw color={colors.muted} size={16} />
           </Pressable>
         )}
       </View>

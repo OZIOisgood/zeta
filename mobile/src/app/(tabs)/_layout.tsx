@@ -1,15 +1,15 @@
 import { Tabs } from 'expo-router';
 import { CalendarClock, UserRound, Users, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { colors } from '../../theme/colors';
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   return (
     <Tabs
       screenOptions={{
-        // --z-primary / --z-muted tokens; React Navigation options cannot read CSS vars
-        tabBarActiveTintColor: '#ea580c',
-        tabBarInactiveTintColor: '#735f4d',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted,
         headerShown: false,
       }}
     >

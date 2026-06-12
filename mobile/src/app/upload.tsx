@@ -10,6 +10,7 @@ import { uploadStore } from '../upload/upload-store';
 import type { PickedFile } from '../upload/upload-store';
 import { ZButton } from '../components/ui/z-button';
 import { ZSkeleton } from '../components/ui/z-skeleton';
+import { colors } from '../theme/colors';
 
 export default function UploadScreen() {
   const { t } = useTranslation();
@@ -79,7 +80,7 @@ export default function UploadScreen() {
           onPress={() => router.back()}
           className="p-1"
         >
-          <ArrowLeft color="#735f4d" size={24} />
+          <ArrowLeft color={colors.muted} size={24} />
         </Pressable>
         <Text className="text-lg font-semibold text-z-text">{t('common.actions.uploadVideo')}</Text>
       </View>
@@ -92,7 +93,7 @@ export default function UploadScreen() {
           value={title}
           onChangeText={setTitle}
           placeholder="e.g. Jump line take 2"
-          placeholderTextColor="#735f4d"
+          placeholderTextColor={colors.muted}
           className="rounded-lg border border-z-border bg-z-surface px-3 py-2 text-z-text"
         />
       </View>
@@ -105,7 +106,7 @@ export default function UploadScreen() {
           value={description}
           onChangeText={setDescription}
           placeholder="Add context, goals, or notes for the reviewer."
-          placeholderTextColor="#735f4d"
+          placeholderTextColor={colors.muted}
           multiline
           numberOfLines={3}
           className="rounded-lg border border-z-border bg-z-surface px-3 py-2 text-z-text"
@@ -175,7 +176,7 @@ export default function UploadScreen() {
                   onPress={() => handleRemovePicked(index)}
                   className="ml-2 p-1"
                 >
-                  <X color="#735f4d" size={16} />
+                  <X color={colors.muted} size={16} />
                 </Pressable>
               </View>
             ))}
