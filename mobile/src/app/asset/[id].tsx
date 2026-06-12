@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { ArrowLeft, Clock } from 'lucide-react-native';
@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useAssetQuery } from '../../api/queries/assets';
 import type { components } from '../../api/schema';
 import { ZButton } from '../../components/ui/z-button';
+import { ZChip } from '../../components/ui/z-chip';
+import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
@@ -74,9 +76,9 @@ export default function AssetDetailScreen() {
         </View>
         <View className="gap-2 p-4">
           <View className="flex-row items-center gap-2">
-            <Pressable accessibilityRole="button" accessibilityLabel={t('common.actions.back')} onPress={() => router.back()}>
+            <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
               <ArrowLeft color={colors.text} size={22} />
-            </Pressable>
+            </ZIconButton>
             <Text className="flex-1 text-xl font-semibold text-z-text" numberOfLines={2}>
               {data.title}
             </Text>
@@ -85,17 +87,12 @@ export default function AssetDetailScreen() {
           {playable.length > 1 ? (
             <View className="flex-row flex-wrap gap-2 pt-2">
               {playable.map((v, i) => (
-                <Pressable
+                <ZChip
                   key={v.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('videos.phase4.videoPart', { count: i + 1 })}
+                  label={t('videos.phase4.videoPart', { count: i + 1 })}
+                  selected={v.id === active?.id}
                   onPress={() => setActiveId(v.id)}
-                  className={`rounded-full border px-3 py-1 ${
-                    v.id === active?.id ? 'border-z-primary bg-z-primary-soft' : 'border-z-border bg-z-surface'
-                  }`}
-                >
-                  <Text className="text-sm text-z-text">{t('videos.phase4.videoPart', { count: i + 1 })}</Text>
-                </Pressable>
+                />
               ))}
             </View>
           ) : null}

@@ -1,4 +1,4 @@
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CloudOff, Plus, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import type { UploadJob } from '../../upload/upload-store';
 import { AssetCard } from '../../components/asset-card';
 import { UploadProgressCard } from '../../components/upload-progress-card';
 import { ZButton } from '../../components/ui/z-button';
+import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
@@ -105,14 +106,16 @@ export default function VideosScreen() {
     <ZScreen edges={['top']}>
       {content}
       {canCreate && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Upload video"
+        <ZIconButton
+          label="Upload video"
+          variant="primary"
+          size="lg"
+          shape="circle"
           onPress={() => router.push('/upload')}
-          className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-z-primary"
+          className="absolute bottom-6 right-6"
         >
           <Plus color={colors.onPrimary} size={24} />
-        </Pressable>
+        </ZIconButton>
       )}
     </ZScreen>
   );

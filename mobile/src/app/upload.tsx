@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ArrowLeft, X } from 'lucide-react-native';
@@ -9,8 +9,12 @@ import { api } from '../auth/auth-store';
 import { uploadStore } from '../upload/upload-store';
 import type { PickedFile } from '../upload/upload-store';
 import { ZButton } from '../components/ui/z-button';
+import { ZChip } from '../components/ui/z-chip';
+import { ZIconButton } from '../components/ui/z-icon-button';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
+import { ZTextInput } from '../components/ui/z-text-input';
+import { ZTextarea } from '../components/ui/z-textarea';
 import { colors } from '../theme/colors';
 
 export default function UploadScreen() {
@@ -76,42 +80,32 @@ export default function UploadScreen() {
       <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ padding: 16 }}>
         {/* Header */}
         <View className="mb-4 flex-row items-center gap-3">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('common.actions.back')}
-            onPress={() => router.back()}
-            className="p-1"
-          >
+          <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
             <ArrowLeft color={colors.muted} size={24} />
-          </Pressable>
+          </ZIconButton>
           <Text className="text-lg font-semibold text-z-text">{t('common.actions.uploadVideo')}</Text>
         </View>
 
         {/* Title */}
         <View className="mb-3">
           <Text className="mb-1 text-sm font-medium text-z-text">{t('common.fields.title')}</Text>
-          <TextInput
+          <ZTextInput
             accessibilityLabel={t('common.fields.title')}
             value={title}
             onChangeText={setTitle}
             placeholder="e.g. Jump line take 2"
-            placeholderTextColor={colors.muted}
-            className="rounded-lg border border-z-border bg-z-surface px-3 py-2 text-z-text"
           />
         </View>
 
         {/* Description */}
         <View className="mb-3">
           <Text className="mb-1 text-sm font-medium text-z-text">{t('common.fields.description')}</Text>
-          <TextInput
+          <ZTextarea
             accessibilityLabel={t('common.fields.description')}
             value={description}
             onChangeText={setDescription}
             placeholder="Add context, goals, or notes for the reviewer."
-            placeholderTextColor={colors.muted}
-            multiline
-            numberOfLines={3}
-            className="rounded-lg border border-z-border bg-z-surface px-3 py-2 text-z-text"
+            rows={3}
           />
         </View>
 
@@ -132,28 +126,14 @@ export default function UploadScreen() {
           )}
           {groups && (
             <View className="flex-row flex-wrap gap-2">
-              {groups.map((group) => {
-                const selected = selectedGroupId === group.id;
-                return (
-                  <Pressable
-                    key={group.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={group.name}
-                    onPress={() => setSelectedGroupId(group.id)}
-                    className={`rounded-full border px-3 py-1.5 ${
-                      selected
-                        ? 'border-z-primary bg-z-primary-soft'
-                        : 'border-z-border bg-z-surface'
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm font-medium ${selected ? 'text-z-primary-strong' : 'text-z-text'}`}
-                    >
-                      {group.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+              {groups.map((group) => (
+                <ZChip
+                  key={group.id}
+                  label={group.name}
+                  selected={selectedGroupId === group.id}
+                  onPress={() => setSelectedGroupId(group.id)}
+                />
+              ))}
             </View>
           )}
         </View>
@@ -172,14 +152,14 @@ export default function UploadScreen() {
                   <Text className="flex-1 text-sm text-z-text" numberOfLines={1}>
                     {file.filename}
                   </Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove ${file.filename}`}
+                  <ZIconButton
+                    size="sm"
+                    label={`Remove ${file.filename}`}
                     onPress={() => handleRemovePicked(index)}
-                    className="ml-2 p-1"
+                    className="ml-2"
                   >
                     <X color={colors.muted} size={16} />
-                  </Pressable>
+                  </ZIconButton>
                 </View>
               ))}
             </View>
