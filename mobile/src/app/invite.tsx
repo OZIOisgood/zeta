@@ -22,6 +22,7 @@ export default function InviteScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [code, setCode] = useState('');
   const [manualInput, setManualInput] = useState('');
+  const [manualInputError, setManualInputError] = useState(false);
   const manualInputRef = useRef('');
   const scannedRef = useRef(false);
 
@@ -39,13 +40,19 @@ export default function InviteScreen() {
 
   function handleManualSubmit() {
     const current = manualInputRef.current;
-    const parsed = parseInviteCode(current) || current.trim().toUpperCase();
+    const parsed = parseInviteCode(current);
+    if (!parsed) {
+      setManualInputError(true);
+      return;
+    }
+    setManualInputError(false);
     setCode(parsed);
   }
 
   function handleReset() {
     setCode('');
     setManualInput('');
+    setManualInputError(false);
     manualInputRef.current = '';
     scannedRef.current = false;
   }
@@ -114,9 +121,23 @@ export default function InviteScreen() {
               onChangeText={(v) => {
                 manualInputRef.current = v;
                 setManualInput(v);
+                if (manualInputError) setManualInputError(false);
               }}
               placeholder="e.g. ABC123"
+              invalid={manualInputError}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              returnKeyType="go"
+              onSubmitEditing={handleManualSubmit}
             />
+            {manualInputError && (
+              <Text
+                testID="invite-code-error"
+                className="mt-1 text-sm text-z-danger"
+              >
+                Enter the 6-character code from the invitation.
+              </Text>
+            )}
             <View className="mt-3">
               <ZButton
                 testID="invite-code-submit"

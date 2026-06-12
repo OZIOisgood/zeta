@@ -160,7 +160,34 @@ test('already_member: open-group button shown, accept button absent', async () =
   expect(mockReplace).toHaveBeenCalledWith('/group/g1');
 });
 
-// ── Test 4: unknown code → error shown + reset ────────────────────────────────
+// ── Test 4: invalid manual code → inline hint shown, query not fired ─────────
+
+test('invalid code "hello-world": shows validation hint and never queries with a non-empty code', async () => {
+  mockUseInvitationInfoQuery.mockImplementation((code: string) => {
+    return { isPending: false, isError: false, data: undefined, _receivedCode: code };
+  });
+
+  const { getByTestId, getByText } = await render(<Providers><InviteScreen /></Providers>);
+
+  fireEvent.changeText(getByTestId('invite-code-input'), 'hello-world');
+  await waitFor(() =>
+    expect(getByTestId('invite-code-input').props.value).toBe('hello-world'),
+  );
+  fireEvent.press(getByTestId('invite-code-submit'));
+
+  // Validation hint visible
+  await waitFor(() => {
+    expect(getByText('Enter the 6-character code from the invitation.')).toBeOnTheScreen();
+  });
+
+  // Query hook was never called with a non-empty code
+  const nonEmptyCalls = mockUseInvitationInfoQuery.mock.calls.filter(
+    ([code]: [string]) => code !== '',
+  );
+  expect(nonEmptyCalls).toHaveLength(0);
+});
+
+// ── Test 5: unknown code → error shown + reset ────────────────────────────────
 
 test('unknown code: error shown with invite-reset button; press reset → code input visible again', async () => {
   mockUseInvitationInfoQuery.mockImplementation((code: string) => {

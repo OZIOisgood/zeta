@@ -1,6 +1,10 @@
 /**
  * Extracts an invite code from a scanned QR payload: a web invite URL
  * (…/groups?invite=CODE) or a raw code. Returns '' for junk.
+ *
+ * The backend alphabet is [A-Za-z0-9] (fixed length 6 today), so input is
+ * uppercased for normalisation; the 4–10 character window is tolerance for
+ * future length changes.
  */
 export function parseInviteCode(data: string): string {
   if (!data) return '';

@@ -1,4 +1,5 @@
 import { TextInput } from 'react-native';
+import type { TextInputProps } from 'react-native';
 import { colors } from '../../theme/colors';
 
 /**
@@ -13,6 +14,10 @@ export function ZTextInput({
   invalid = false,
   disabled = false,
   testID,
+  autoCapitalize,
+  autoCorrect,
+  returnKeyType,
+  onSubmitEditing,
 }: {
   value: string;
   onChangeText: (value: string) => void;
@@ -21,6 +26,10 @@ export function ZTextInput({
   invalid?: boolean;
   disabled?: boolean;
   testID?: string;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  autoCorrect?: boolean;
+  returnKeyType?: TextInputProps['returnKeyType'];
+  onSubmitEditing?: TextInputProps['onSubmitEditing'];
 }) {
   return (
     <TextInput
@@ -32,6 +41,10 @@ export function ZTextInput({
       placeholder={placeholder}
       placeholderTextColor={colors.muted}
       editable={!disabled}
+      autoCapitalize={autoCapitalize}
+      autoCorrect={autoCorrect}
+      returnKeyType={returnKeyType}
+      onSubmitEditing={onSubmitEditing}
       className={`min-h-11 w-full rounded-md border px-3 py-2 ${
         disabled ? 'bg-z-surface-warm text-z-muted' : 'bg-z-surface text-z-text'
       } ${invalid ? 'border-z-danger' : 'border-z-border'}`}
