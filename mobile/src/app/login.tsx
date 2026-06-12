@@ -10,6 +10,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 const redirectUri = makeRedirectUri({ scheme: 'zeta', path: 'auth/callback' });
 
+if (__DEV__) {
+  // In Expo Go this is an exp:// URI that depends on the dev machine's
+  // address — it must be registered verbatim in the WorkOS dashboard.
+  console.log('AuthKit redirect URI:', redirectUri);
+}
+
 export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
