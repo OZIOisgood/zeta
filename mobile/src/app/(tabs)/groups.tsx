@@ -81,7 +81,7 @@ export default function GroupsScreen() {
         <Text className="text-xl font-semibold text-z-text">{t('common.nav.groups')}</Text>
         <ZButton
           testID="groups-join"
-          label="Join group"
+          label={t('groups.invitationDialog.joinGroup')}
           variant="secondary"
           onPress={() => router.push('/invite')}
           icon={<QrCode color={colors.text} size={16} />}

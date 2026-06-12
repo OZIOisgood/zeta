@@ -3,6 +3,7 @@ import { Image, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ArrowLeft, Users } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import {
   useInvitationInfoQuery,
   useAcceptInvitationMutation,
@@ -18,6 +19,7 @@ import { avatarSrc } from '../lib/avatar';
 import { colors } from '../theme/colors';
 
 export default function InviteScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [code, setCode] = useState('');
@@ -78,7 +80,7 @@ export default function InviteScreen() {
           <ZIconButton label="Back" onPress={() => router.back()}>
             <ArrowLeft color={colors.muted} size={24} />
           </ZIconButton>
-          <Text className="text-lg font-semibold text-z-text">Join a group</Text>
+          <Text className="text-lg font-semibold text-z-text">{t('home.firstSteps.joinGroup')}</Text>
         </View>
 
         {/* Capture phase */}
@@ -207,7 +209,7 @@ export default function InviteScreen() {
                 {info.already_member ? (
                   <>
                     <Text className="text-center text-sm text-z-muted">
-                      You are already a member of this group.
+                      {t('groups.invitationDialog.alreadyMember', { group: info.group_name })}
                     </Text>
                     <ZButton
                       testID="invite-open-group"
@@ -219,13 +221,13 @@ export default function InviteScreen() {
                   <>
                     <ZButton
                       testID="invite-accept"
-                      label="Join group"
+                      label={t('groups.invitationDialog.joinGroup')}
                       disabled={acceptMutation.isPending || declineMutation.isPending}
                       onPress={() => void handleAccept()}
                     />
                     <ZButton
                       testID="invite-decline"
-                      label="Decline"
+                      label={t('common.actions.decline')}
                       variant="ghost"
                       disabled={acceptMutation.isPending || declineMutation.isPending}
                       onPress={() => void handleDecline()}

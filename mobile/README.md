@@ -49,6 +49,15 @@ and lets users with `reviews:create` comment — optionally anchored to the
 current player position. Timestamp chips seek the player. Edit/delete and the
 LLM enhancer remain web-only for now.
 
+## Groups & Invites
+
+The Groups tab lists the user's groups; the detail screen shows members
+(sections are permission-gated: students need `groups:expert-list:read`,
+experts/admins additionally `groups:user-list:read`) and offers leaving via
+`groups:membership:leave` (owners cannot leave). Joining works by scanning an
+invite QR code (`expo-camera`, works in Expo Go) or entering the 6-character
+code; the confirmation step shows the group before accepting.
+
 ## Regenerating
 
 - API types: `pnpm run generate:api` (after `../docs/openapi.yaml` changes)
