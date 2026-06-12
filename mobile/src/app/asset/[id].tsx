@@ -1,11 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { ArrowLeft, Clock } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAssetQuery } from '../../api/queries/assets';
+import { useCreateReviewMutation, useReviewsQuery } from '../../api/queries/reviews';
+import type { CreateReviewInput, Review } from '../../api/queries/reviews';
 import type { components } from '../../api/schema';
+import { useAuth } from '../../auth/auth-store';
+import { ReviewComposer } from '../../components/review-composer';
+import { ReviewItem } from '../../components/review-item';
 import { ZButton } from '../../components/ui/z-button';
 import { ZChip } from '../../components/ui/z-chip';
 import { ZIconButton } from '../../components/ui/z-icon-button';
@@ -19,10 +24,143 @@ function streamUrl(playbackId: string) {
   return `https://stream.mux.com/${playbackId}.m3u8`;
 }
 
-function Player({ video }: { video: AssetVideo }) {
+// ── Player ───────────────────────────────────────────────────────────────────
+
+function Player({
+  video,
+  onPlayer,
+}: {
+  video: AssetVideo;
+  onPlayer?: (player: ReturnType<typeof useVideoPlayer>) => void;
+}) {
   const player = useVideoPlayer(streamUrl(video.playback_id));
-  return <VideoView player={player} style={{ width: '100%', height: '100%' }} fullscreenOptions={{ enable: true }} />;
+
+  useEffect(() => {
+    onPlayer?.(player);
+  }, [player, onPlayer]);
+
+  return (
+    <VideoView
+      player={player}
+      style={{ width: '100%', height: '100%' }}
+      fullscreenOptions={{ enable: true }}
+    />
+  );
 }
+
+// ── Reviews section ──────────────────────────────────────────────────────────
+
+function ReviewsSkeleton() {
+  return (
+    <View className="gap-3">
+      <ZSkeleton className="h-14 w-full" />
+      <ZSkeleton className="h-14 w-full" />
+      <ZSkeleton className="h-14 w-full" />
+    </View>
+  );
+}
+
+type ReviewsSectionProps = {
+  videoId: string;
+  seekTo: (seconds: number) => void;
+  getCurrentTime: () => number;
+  canCompose: boolean;
+};
+
+function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: ReviewsSectionProps) {
+  const { t } = useTranslation();
+  const [replyingTo, setReplyingTo] = useState<Review | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const { data, isPending, isError, refetch } = useReviewsQuery(videoId);
+  const { mutateAsync } = useCreateReviewMutation(videoId);
+
+  // Thread: top-level reviews sorted by created_at ASC
+  const topLevel = useMemo(
+    () =>
+      (data ?? [])
+        .filter((r) => !r.parent_id)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
+    [data],
+  );
+
+  // Replies grouped by parent id
+  const repliesByParent = useMemo(() => {
+    const map = new Map<string, Review[]>();
+    for (const r of data ?? []) {
+      if (r.parent_id) {
+        const arr = map.get(r.parent_id) ?? [];
+        arr.push(r);
+        map.set(r.parent_id, arr);
+      }
+    }
+    // sort each group ASC
+    for (const [, arr] of map) {
+      arr.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    }
+    return map;
+  }, [data]);
+
+  async function handleSubmit(input: CreateReviewInput) {
+    setMutationError(null);
+    try {
+      await mutateAsync(input);
+      setReplyingTo(null);
+    } catch {
+      setMutationError('Failed to post comment. Please try again.');
+    }
+  }
+
+  return (
+    <View className="gap-4 pt-4">
+      <Text className="text-base font-semibold text-z-text">Reviews</Text>
+
+      {isPending && <ReviewsSkeleton />}
+
+      {isError && (
+        <View className="items-start gap-2">
+          <Text className="text-sm text-z-muted">Could not load reviews.</Text>
+          <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
+        </View>
+      )}
+
+      {!isPending && !isError && topLevel.length === 0 && (
+        <Text className="text-sm text-z-muted">No reviews yet.</Text>
+      )}
+
+      {!isPending &&
+        !isError &&
+        topLevel.map((review) => (
+          <View key={review.id} className="gap-2">
+            <ReviewItem
+              review={review}
+              onSeek={seekTo}
+              onReply={(r) => setReplyingTo(r)}
+            />
+            {(repliesByParent.get(review.id) ?? []).map((reply) => (
+              <ReviewItem key={reply.id} review={reply} onSeek={seekTo} isReply />
+            ))}
+          </View>
+        ))}
+
+      {canCompose && (
+        <View className="gap-1">
+          <ReviewComposer
+            onSubmit={handleSubmit}
+            getCurrentTime={replyingTo ? undefined : getCurrentTime}
+            replyingTo={replyingTo ?? undefined}
+            onCancelReply={() => setReplyingTo(null)}
+          />
+          {mutationError ? (
+            <Text className="text-sm text-z-danger">{mutationError}</Text>
+          ) : null}
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ── Screen ───────────────────────────────────────────────────────────────────
 
 export default function AssetDetailScreen() {
   const { t } = useTranslation();
@@ -30,12 +168,37 @@ export default function AssetDetailScreen() {
   const router = useRouter();
   const { data, isPending, isError, refetch } = useAssetQuery(id ?? '');
 
+  const permissions = useAuth((s) => s.user?.permissions ?? null);
+  const canCompose = permissions?.includes('reviews:create') ?? false;
+
+  // Player ref for seeking
+  const playerRef = useRef<ReturnType<typeof useVideoPlayer> | null>(null);
+
+  function seekTo(seconds: number) {
+    const p = playerRef.current;
+    if (p) {
+      p.currentTime = seconds;
+      p.play?.();
+    }
+  }
+
+  function getCurrentTime() {
+    return playerRef.current?.currentTime ?? 0;
+  }
+
   const playable = useMemo(
     () => (data?.videos ?? []).filter((v) => v.playback_id !== ''),
     [data],
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = playable.find((v) => v.id === activeId) ?? playable[0] ?? null;
+
+  // Reset reply state when part changes
+  useEffect(() => {
+    // Part-level reset is handled inside ReviewsSection via its own state,
+    // but we signal the key change by re-mounting. The key={active?.id} on
+    // ReviewsSection below achieves this without extra state here.
+  }, [active?.id]);
 
   if (isPending) {
     return (
@@ -66,7 +229,13 @@ export default function AssetDetailScreen() {
       <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="aspect-video w-full items-center justify-center bg-black">
           {active ? (
-            <Player key={active.id} video={active} />
+            <Player
+              key={active.id}
+              video={active}
+              onPlayer={(p) => {
+                playerRef.current = p;
+              }}
+            />
           ) : (
             <View className="items-center gap-2">
               <Clock color={colors.bg} size={28} />
@@ -100,6 +269,16 @@ export default function AssetDetailScreen() {
             <Text className="text-sm text-z-muted">
               {processingParts} more part{processingParts > 1 ? 's' : ''} still processing.
             </Text>
+          ) : null}
+
+          {active ? (
+            <ReviewsSection
+              key={active.id}
+              videoId={active.id}
+              seekTo={seekTo}
+              getCurrentTime={getCurrentTime}
+              canCompose={canCompose}
+            />
           ) : null}
         </View>
       </ScrollView>
