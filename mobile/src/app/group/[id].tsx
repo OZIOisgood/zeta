@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Image, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import {
   useLeaveGroupMutation,
 } from '../../api/queries/groups';
 import { useAuth } from '../../auth/auth-store';
+import { avatarSrc } from '../../lib/avatar';
 import { MemberRow } from '../../components/member-row';
 import { ZButton } from '../../components/ui/z-button';
 import { ZIconButton } from '../../components/ui/z-icon-button';
@@ -63,7 +64,7 @@ export default function GroupDetailScreen() {
       await mutateAsync();
       router.back();
     } catch {
-      setLeaveError('Failed to leave group. Please try again.');
+      setLeaveError(t('groups.leave.failed'));
     }
   }
 
@@ -96,7 +97,15 @@ export default function GroupDetailScreen() {
             <ArrowLeft color={colors.text} size={22} />
           </ZIconButton>
           <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-z-surface-warm">
-            <Users color={colors.primary} size={28} />
+            {data.avatar ? (
+              <Image
+                source={{ uri: avatarSrc(data.avatar) }}
+                className="h-full w-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <Users color={colors.primary} size={28} />
+            )}
           </View>
           <View className="flex-1">
             <Text className="text-xl font-semibold text-z-text" numberOfLines={2}>
@@ -119,9 +128,12 @@ export default function GroupDetailScreen() {
               {expertsLoading ? (
                 <MembersSkeleton />
               ) : experts && experts.length > 0 ? (
-                <View className="divide-y divide-z-border">
-                  {experts.map((e) => (
-                    <MemberRow key={e.id} member={e} />
+                <View>
+                  {experts.map((e, index) => (
+                    <View key={e.id}>
+                      {index > 0 && <View className="h-px bg-z-border" />}
+                      <MemberRow member={e} />
+                    </View>
                   ))}
                 </View>
               ) : (
@@ -137,9 +149,12 @@ export default function GroupDetailScreen() {
               {studentsLoading ? (
                 <MembersSkeleton />
               ) : students && students.length > 0 ? (
-                <View className="divide-y divide-z-border">
-                  {students.map((s) => (
-                    <MemberRow key={s.id} member={s} />
+                <View>
+                  {students.map((s, index) => (
+                    <View key={s.id}>
+                      {index > 0 && <View className="h-px bg-z-border" />}
+                      <MemberRow member={s} />
+                    </View>
                   ))}
                 </View>
               ) : (

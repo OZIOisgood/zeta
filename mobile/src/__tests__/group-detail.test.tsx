@@ -27,8 +27,8 @@ jest.mock('../api/queries/groups', () => ({
 let mockPermissions: string[] | null = null;
 let mockUserId = 'u1';
 
-jest.mock('../../src/auth/auth-store', () => ({
-  ...jest.requireActual('../../src/auth/auth-store'),
+jest.mock('../auth/auth-store', () => ({
+  ...jest.requireActual('../auth/auth-store'),
   useAuth: (selector: (s: { user: { permissions: string[]; id: string } | null }) => unknown) =>
     selector({
       user: mockPermissions !== null ? { permissions: mockPermissions, id: mockUserId } : null,
@@ -181,4 +181,25 @@ test('cancel in leave confirm row hides the confirm UI', async () => {
   fireEvent.press(screen.getByRole('button', { name: /cancel/i }));
   await waitFor(() => expect(screen.queryByTestId('group-leave-confirm')).toBeNull());
   expect(screen.getByTestId('group-leave')).toBeOnTheScreen();
+});
+
+test('leave error: mutateAsync rejects → translated error message appears', async () => {
+  mockPermissions = ['groups:membership:leave'];
+  mockUserId = 'u1';
+  mockMutateAsync.mockRejectedValueOnce(new Error('network error'));
+  mockUseGroupQuery.mockReturnValue({ isPending: false, isError: false, data: GROUP, refetch: jest.fn() });
+
+  await render(<Providers><GroupDetailScreen /></Providers>);
+
+  // Open confirm UI
+  fireEvent.press(screen.getByTestId('group-leave'));
+  await waitFor(() => expect(screen.getByTestId('group-leave-confirm')).toBeOnTheScreen());
+
+  // Trigger the failing mutation
+  fireEvent.press(screen.getByTestId('group-leave-confirm'));
+
+  // Translated error text should appear
+  await waitFor(() =>
+    expect(screen.getByText('Failed to leave group.')).toBeOnTheScreen(),
+  );
 });

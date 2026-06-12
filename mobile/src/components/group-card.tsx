@@ -1,11 +1,8 @@
 import { Image, Pressable, Text, View } from 'react-native';
 import { Users } from 'lucide-react-native';
 import type { Group } from '../api/queries/groups';
+import { avatarSrc } from '../lib/avatar';
 import { colors } from '../theme/colors';
-
-function avatarSrc(avatar: string): string {
-  return avatar.startsWith('data:') ? avatar : `data:image/jpeg;base64,${avatar}`;
-}
 
 export function GroupCard({ group, onPress }: { group: Group; onPress: () => void }) {
   return (
