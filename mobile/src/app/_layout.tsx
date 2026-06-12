@@ -27,6 +27,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={status === 'signedIn'}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="asset/[id]" />
         </Stack.Protected>
         <Stack.Protected guard={status !== 'signedIn'}>
           <Stack.Screen name="login" />
