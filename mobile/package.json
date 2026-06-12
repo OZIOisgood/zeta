@@ -47,6 +47,7 @@
   "devDependencies": {
     "@testing-library/react-native": "^14.0.0",
     "@types/jest": "^29.5.14",
+    "@types/node": "^25.9.3",
     "@types/react": "~19.2.2",
     "eslint": "^9.39.4",
     "eslint-config-expo": "~56.0.4",
@@ -64,7 +65,8 @@
     "lint": "expo lint",
     "test": "jest",
     "generate:api": "openapi-typescript ../docs/openapi.yaml -o src/api/schema.d.ts",
-    "sync:i18n": "node scripts/sync-i18n.mjs"
+    "sync:i18n": "node scripts/sync-i18n.mjs",
+    "sync:tokens": "node scripts/sync-tokens.mjs"
   },
   "jest": {
     "preset": "jest-expo",

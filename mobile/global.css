@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Zeta design tokens — keep in sync with web/dashboard-next/src/styles.scss */
+/* BEGIN GENERATED TOKENS (scripts/sync-tokens.mjs — do not edit by hand) */
 :root {
   --z-bg: #fff8ed;
   --z-surface: #ffffff;
@@ -19,3 +19,4 @@
   --z-warning: #b45309;
   --z-danger: #be123c;
 }
+/* END GENERATED TOKENS */
