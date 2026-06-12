@@ -18,18 +18,12 @@ export default function RootLayout() {
     void authStore.getState().restore();
   }, []);
 
-  if (status === 'loading') {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <View className="flex-1 items-center justify-center bg-z-bg">
-          <ActivityIndicator size="large" color="#ea580c" />
-        </View>
-      </QueryClientProvider>
-    );
-  }
-
-  return (
-    <QueryClientProvider client={queryClient}>
+  const content =
+    status === 'loading' ? (
+      <View className="flex-1 items-center justify-center bg-z-bg">
+        <ActivityIndicator size="large" color="#ea580c" />
+      </View>
+    ) : (
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={status === 'signedIn'}>
           <Stack.Screen name="(tabs)" />
@@ -38,6 +32,9 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
         </Stack.Protected>
       </Stack>
-    </QueryClientProvider>
+    );
+
+  return (
+    <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>
   );
 }

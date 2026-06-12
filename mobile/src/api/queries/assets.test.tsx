@@ -10,8 +10,19 @@ jest.mock('expo-secure-store', () => ({
 
 import { useAssetQuery, useAssetsQuery } from './assets';
 
+let client: QueryClient;
+
+beforeEach(() => {
+  client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
+});
+
+afterEach(() => {
+  client.clear();
+});
+
 function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
