@@ -7,6 +7,7 @@ import type { Booking } from '../../api/queries/coaching';
 import { useMyBookingsQuery, useCancelBookingMutation } from '../../api/queries/coaching';
 import { useAuth } from '../../auth/auth-store';
 import { BookingCard } from '../../components/booking-card';
+import { isJoinable } from '../../lib/connect-window';
 import { ZButton } from '../../components/ui/z-button';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
@@ -94,6 +95,7 @@ export default function CoachingScreen() {
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const currentUserId = useAuth((s) => s.user?.id ?? '');
   const canBook = permissions !== null && permissions.includes('coaching:book');
+  const canConnect = permissions !== null && permissions.includes('coaching:video:connect');
 
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
@@ -159,6 +161,12 @@ export default function CoachingScreen() {
                   canCancel={confirmingId !== booking.id}
                   onCancel={() => setConfirmingId(booking.id)}
                   onOpenRecording={(assetId) => router.push(`/asset/${assetId}`)}
+                  onJoin={
+                    canConnect && isJoinable(booking, now)
+                      // router type stubs don't include /call/[bookingId] until `expo export` regenerates them
+                      ? () => router.push(`/call/${booking.id}?groupId=${booking.group_id}` as never)
+                      : undefined
+                  }
                 />
                 {confirmingId === booking.id ? (
                   <CancelConfirm

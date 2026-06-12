@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { Ban, Video } from 'lucide-react-native';
+import { Ban, Phone, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../api/queries/coaching';
 import { ZButton } from './ui/z-button';
@@ -45,6 +45,8 @@ export type BookingCardProps = {
   canCancel: boolean;
   onCancel: () => void;
   onOpenRecording: (assetId: string) => void;
+  /** When provided, renders a Join button in the footer (shown during the join window). */
+  onJoin?: () => void;
 };
 
 export function BookingCard({
@@ -53,6 +55,7 @@ export function BookingCard({
   canCancel,
   onCancel,
   onOpenRecording,
+  onJoin,
 }: BookingCardProps) {
   const { t } = useTranslation();
 
@@ -104,9 +107,18 @@ export function BookingCard({
         </Text>
       ) : null}
 
-      {/* Footer row: recording + cancel */}
-      {(hasRecording || canCancel) ? (
+      {/* Footer row: join + recording + cancel */}
+      {(onJoin || hasRecording || canCancel) ? (
         <View className="mt-3 flex-row items-center gap-2">
+          {onJoin ? (
+            <ZButton
+              testID="booking-join"
+              label={t('common.actions.join')}
+              variant="primary"
+              icon={<Phone color={colors.onPrimary} size={16} />}
+              onPress={onJoin}
+            />
+          ) : null}
           {hasRecording ? (
             <ZButton
               testID="booking-recording"

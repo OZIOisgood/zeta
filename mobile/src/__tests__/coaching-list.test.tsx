@@ -318,3 +318,71 @@ test('recording press navigates to /asset/<id>', async () => {
   fireEvent.press(screen.getByTestId('booking-recording'));
   expect(mockPush).toHaveBeenCalledWith('/asset/asset-xyz');
 });
+
+// ── Join affordance ───────────────────────────────────────────────────────────
+
+// A booking that is within the join window: scheduled 5 minutes from now,
+// so now >= scheduled_at - 15min and now <= scheduled_at + duration.
+const JOINABLE_BOOKING: Booking = {
+  id: 'b1',
+  expert_id: 'e1',
+  expert_name: 'Coach Ana',
+  student_id: 's1',
+  student_name: 'Bob Student',
+  group_id: 'g1',
+  session_type_id: 'st1',
+  session_type_name: 'Strategy Session',
+  scheduled_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 min from now
+  duration_minutes: 60,
+  status: 'pending',
+  created_at: '2026-01-01T00:00:00Z',
+};
+
+// A booking outside the join window: 7 days away.
+const NOT_YET_JOINABLE_BOOKING: Booking = {
+  ...JOINABLE_BOOKING,
+  id: 'b2',
+  scheduled_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+};
+
+test('joinable booking with coaching:video:connect → Join button visible and navigates correctly', async () => {
+  mockPermissions = ['coaching:book', 'coaching:video:connect'];
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [JOINABLE_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  const joinBtn = screen.getByTestId('booking-join');
+  expect(joinBtn).toBeOnTheScreen();
+  fireEvent.press(joinBtn);
+  expect(mockPush).toHaveBeenCalledWith('/call/b1?groupId=g1');
+});
+
+test('joinable booking WITHOUT coaching:video:connect → Join button absent', async () => {
+  mockPermissions = ['coaching:book']; // no coaching:video:connect
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [JOINABLE_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.queryByTestId('booking-join')).toBeNull();
+});
+
+test('booking outside join window → Join button absent even with permission', async () => {
+  mockPermissions = ['coaching:book', 'coaching:video:connect'];
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [NOT_YET_JOINABLE_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.queryByTestId('booking-join')).toBeNull();
+});
