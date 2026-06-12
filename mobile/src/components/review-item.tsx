@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 import { Reply } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import type { Review } from '../api/queries/reviews';
 import { colors } from '../theme/colors';
 import { ZChip } from './ui/z-chip';
@@ -45,7 +46,8 @@ export type ReviewItemProps = {
  * Replies are indented and use slightly muted styling.
  */
 export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewItemProps) {
-  const authorName = review.author?.name ?? 'Unknown';
+  const { t } = useTranslation();
+  const authorName = review.author?.name ?? t('videos.unknownAuthor');
   // Suppress the reply affordance on replies — one-level threads only.
   const showReplyButton = Boolean(onReply) && !isReply;
 
@@ -76,7 +78,7 @@ export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewI
 
         {showReplyButton && (
           <ZIconButton
-            label="Reply"
+            label={t('videos.reply')}
             size="sm"
             testID="review-reply"
             onPress={() => onReply!(review)}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -113,19 +113,19 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
 
   return (
     <View className="gap-4 pt-4">
-      <Text className="text-base font-semibold text-z-text">Reviews</Text>
+      <Text className="text-base font-semibold text-z-text">{t('videos.comments')}</Text>
 
       {isPending && <ReviewsSkeleton />}
 
       {isError && (
         <View className="items-start gap-2">
-          <Text className="text-sm text-z-muted">Could not load reviews.</Text>
+          <Text className="text-sm text-z-muted">{t('videos.phase4.commentsFailed')}</Text>
           <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
         </View>
       )}
 
       {!isPending && !isError && topLevel.length === 0 && (
-        <Text className="text-sm text-z-muted">No reviews yet.</Text>
+        <Text className="text-sm text-z-muted">{t('videos.noComments')}</Text>
       )}
 
       {!isPending &&
@@ -193,12 +193,12 @@ export default function AssetDetailScreen() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = playable.find((v) => v.id === activeId) ?? playable[0] ?? null;
 
-  // Reset reply state when part changes
-  useEffect(() => {
-    // Part-level reset is handled inside ReviewsSection via its own state,
-    // but we signal the key change by re-mounting. The key={active?.id} on
-    // ReviewsSection below achieves this without extra state here.
-  }, [active?.id]);
+  const handlePlayer = useCallback(
+    (p: ReturnType<typeof useVideoPlayer>) => {
+      playerRef.current = p;
+    },
+    [],
+  );
 
   if (isPending) {
     return (
@@ -232,9 +232,7 @@ export default function AssetDetailScreen() {
             <Player
               key={active.id}
               video={active}
-              onPlayer={(p) => {
-                playerRef.current = p;
-              }}
+              onPlayer={handlePlayer}
             />
           ) : (
             <View className="items-center gap-2">

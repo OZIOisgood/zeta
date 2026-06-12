@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Send, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import type { CreateReviewInput, Review } from '../api/queries/reviews';
 import { colors } from '../theme/colors';
 import { ZChip } from './ui/z-chip';
@@ -35,6 +36,7 @@ export function ReviewComposer({
   replyingTo,
   onCancelReply,
 }: ReviewComposerProps) {
+  const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [includeTimestamp, setIncludeTimestamp] = useState(false);
   const [capturedTime, setCapturedTime] = useState<number | null>(null);
@@ -89,7 +91,7 @@ export function ReviewComposer({
           <Text className="flex-1 text-xs text-z-muted" numberOfLines={1}>
             Replying to{' '}
             <Text className="font-semibold text-z-text">
-              {replyingTo.author?.name ?? 'Unknown'}
+              {replyingTo.author?.name ?? t('videos.unknownAuthor')}
             </Text>
           </Text>
           <ZIconButton
@@ -118,8 +120,8 @@ export function ReviewComposer({
         <View className="flex-1">
           <ZTextarea
             testID="review-input"
-            accessibilityLabel="Add a comment"
-            placeholder="Add a comment…"
+            accessibilityLabel={t('videos.addCommentPlaceholder')}
+            placeholder={t('videos.addCommentPlaceholder')}
             value={content}
             onChangeText={setContent}
             rows={2}

@@ -42,6 +42,13 @@ file, the app PUTs each file sequentially (`src/upload/`), then calls
 interrupted uploads survive restarts as retryable entries (a retry re-uploads
 the whole file; chunked resume is a follow-up).
 
+## Reviews
+
+The asset detail screen lists the active part's reviews (threaded, one level)
+and lets users with `reviews:create` comment — optionally anchored to the
+current player position. Timestamp chips seek the player. Edit/delete and the
+LLM enhancer remain web-only for now.
+
 ## Regenerating
 
 - API types: `pnpm run generate:api` (after `../docs/openapi.yaml` changes)
