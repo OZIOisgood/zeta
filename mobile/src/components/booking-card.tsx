@@ -22,12 +22,7 @@ export function resolveStatusLabel(
 
 /** Status chip: inline badge that mirrors the web z-badge tone. */
 function StatusChip({ status, label }: { status: Booking['status']; label: string }) {
-  const chipClass =
-    status === 'pending'
-      ? 'bg-z-primary-soft'
-      : status === 'cancelled'
-        ? 'bg-z-surface-muted'
-        : 'bg-z-surface-muted';
+  const chipClass = status === 'pending' ? 'bg-z-primary-soft' : 'bg-z-surface-muted';
   const textClass =
     status === 'pending'
       ? 'text-z-primary-strong'

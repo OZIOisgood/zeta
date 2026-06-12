@@ -58,6 +58,13 @@ experts list needs `groups:expert-list:read`) and offers leaving via
 invite QR code (`expo-camera`, works in Expo Go) or entering the 6-character
 code; the confirmation step shows the group before accepting.
 
+## Coaching
+
+The Coaching tab lists your sessions (upcoming and past; recordings link to
+the review screen). Users with `coaching:book` book through a guided flow:
+group → expert → session type → free slot → confirm. Live calls (Agora) are
+not in the Expo Go build yet — they arrive with the dev-client work package.
+
 ## Regenerating
 
 - API types: `pnpm run generate:api` (after `../docs/openapi.yaml` changes)

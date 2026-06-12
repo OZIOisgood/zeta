@@ -493,6 +493,7 @@
       "loadSessionTypesFailed": "Failed to load session types",
       "loadSlotsFailed": "Failed to load available slots"
     },
+    "loadFailed": "Your sessions could not be loaded.",
     "cancel": {
       "title": "Cancel Session",
       "description": "This will cancel the session with <strong>{{otherParty}}</strong> on {{scheduledAt}}.",

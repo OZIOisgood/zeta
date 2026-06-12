@@ -493,6 +493,7 @@
       "loadSessionTypesFailed": "Terminarten konnten nicht geladen werden",
       "loadSlotsFailed": "Verfügbare Termine konnten nicht geladen werden"
     },
+    "loadFailed": "Deine Sessions konnten nicht geladen werden.",
     "cancel": {
       "title": "Termin absagen",
       "description": "Dies sagt den Termin mit <strong>{{otherParty}}</strong> am {{scheduledAt}} ab.",

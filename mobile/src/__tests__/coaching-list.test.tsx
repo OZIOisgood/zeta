@@ -254,6 +254,52 @@ test('cancel flow: press booking-cancel → confirm UI → confirm → mutateAsy
   );
 });
 
+test('cancel flow: mutateAsync rejects → sessions.cancel.failed text appears', async () => {
+  mockMutateAsync.mockRejectedValueOnce(new Error('network'));
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  fireEvent.press(screen.getByTestId('booking-cancel'));
+  await waitFor(() => expect(screen.getByTestId('booking-cancel-confirm')).toBeOnTheScreen());
+
+  fireEvent.press(screen.getByTestId('booking-cancel-confirm'));
+  await waitFor(() => expect(screen.getByText('Failed to cancel booking.')).toBeOnTheScreen());
+});
+
+test('cancel flow: pressing abort button unmounts confirm row and cancel affordance reappears', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  // Cancel button visible initially
+  expect(screen.getByTestId('booking-cancel')).toBeOnTheScreen();
+
+  // Press cancel → confirm row appears
+  fireEvent.press(screen.getByTestId('booking-cancel'));
+  await waitFor(() => expect(screen.getByTestId('booking-cancel-confirm')).toBeOnTheScreen());
+  // The original cancel affordance should be hidden while confirming
+  expect(screen.queryByTestId('booking-cancel')).toBeNull();
+
+  // Press abort (the ghost "Cancel" button in the confirm row)
+  const [abortBtn] = screen.getAllByRole('button', { name: /cancel/i });
+  fireEvent.press(abortBtn);
+
+  // Confirm row gone, cancel affordance reappears
+  await waitFor(() => expect(screen.queryByTestId('booking-cancel-confirm')).toBeNull());
+  expect(screen.getByTestId('booking-cancel')).toBeOnTheScreen();
+});
+
 // ── recording press ───────────────────────────────────────────────────────────
 
 test('recording press navigates to /asset/<id>', async () => {

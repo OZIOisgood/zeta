@@ -123,7 +123,7 @@ export default function CoachingScreen() {
     content = (
       <View className="flex-1 items-center justify-center gap-4 bg-z-bg px-8">
         <CloudOff color={colors.muted} size={32} />
-        <Text className="text-center text-z-muted">{t('sessions.empty.upcomingDescription')}</Text>
+        <Text className="text-center text-z-muted">{t('sessions.loadFailed')}</Text>
         <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
       </View>
     );

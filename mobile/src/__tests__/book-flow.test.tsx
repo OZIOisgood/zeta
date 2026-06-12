@@ -288,6 +288,55 @@ test('full flow with notes: notes value passed to mutateAsync', async () => {
 });
 
 
+// ── Test: notes reset when expert changes ─────────────────────────────────────
+
+test('notes reset when expert changes: submitted body has notes: undefined', async () => {
+  mockUseGroupsQuery.mockReturnValue(dataHook([GROUP_A]));
+  mockUseCoachingExpertsQuery.mockReturnValue(dataHook([EXPERT_1, EXPERT_2]));
+  mockUseSessionTypesQuery.mockReturnValue(dataHook([SESSION_TYPE_1, SESSION_TYPE_2]));
+  mockUseSlotsQuery.mockReturnValue(dataHook([SLOT_1]));
+  mockMutateAsync.mockResolvedValue({ id: 'booking-x' });
+
+  await render(<Providers client={client}><BookScreen /></Providers>);
+
+  // Step 1: select expert 1, session type, slot → confirm section appears
+  await waitFor(() => expect(screen.getByTestId('book-expert-e1')).toBeOnTheScreen());
+  fireEvent.press(screen.getByTestId('book-expert-e1'));
+  await waitFor(() => expect(screen.getByTestId('book-type-st1')).toBeOnTheScreen());
+  fireEvent.press(screen.getByTestId('book-type-st1'));
+  await waitFor(() =>
+    expect(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`)).toBeOnTheScreen(),
+  );
+  fireEvent.press(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`));
+  await waitFor(() => expect(screen.getByTestId('book-notes')).toBeOnTheScreen());
+
+  // Step 2: type notes
+  await act(async () => {
+    fireEvent.changeText(screen.getByTestId('book-notes'), 'Some notes');
+  });
+
+  // Step 3: change expert → notes reset, confirm section gone
+  fireEvent.press(screen.getByTestId('book-expert-e2'));
+  await waitFor(() => expect(screen.queryByTestId('book-submit')).toBeNull());
+
+  // Step 4: re-complete the flow with expert 2's session type
+  await waitFor(() => expect(screen.getByTestId('book-type-st2')).toBeOnTheScreen());
+  fireEvent.press(screen.getByTestId('book-type-st2'));
+  await waitFor(() =>
+    expect(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`)).toBeOnTheScreen(),
+  );
+  fireEvent.press(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`));
+  await waitFor(() => expect(screen.getByTestId('book-submit')).toBeOnTheScreen());
+
+  // Step 5: submit — notes field was reset so submitted body has notes: undefined
+  fireEvent.press(screen.getByTestId('book-submit'));
+  await waitFor(() => {
+    expect(mockMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ notes: undefined }),
+    );
+  });
+});
+
 // ── Test 4: changing expert resets session-type / slot selections ──────────────
 
 test('changing expert resets session type and slot selections', async () => {

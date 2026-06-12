@@ -493,6 +493,7 @@
       "loadSessionTypesFailed": "Échec du chargement des types de séances",
       "loadSlotsFailed": "Échec du chargement des créneaux disponibles"
     },
+    "loadFailed": "Vos sessions n'ont pas pu être chargées.",
     "cancel": {
       "title": "Annuler la séance",
       "description": "Cela annulera la séance avec <strong>{{otherParty}}</strong> le {{scheduledAt}}.",

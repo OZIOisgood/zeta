@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
@@ -59,6 +59,9 @@ export default function BookScreen() {
   const experts: CoachingExpert[] = expertsQuery.data ?? [];
 
   // Session types filtered to the selected expert (expert_id scoping)
+  // Session types are an expert's offering (coaching_session_types.expert_id),
+  // so we scope them to the selected expert. The web booking flow currently
+  // shows all active types in the group — candidate web bug, tracked as follow-up.
   const allSessionTypes: SessionType[] = sessionTypesQuery.data ?? [];
   const sessionTypes = expertId
     ? allSessionTypes.filter((st) => st.expert_id === expertId)
@@ -76,15 +79,6 @@ export default function BookScreen() {
   const selectedExpert = experts.find((e) => e.expert_id === expertId) ?? null;
   const selectedSessionType = sessionTypes.find((st) => st.id === sessionTypeId) ?? null;
 
-  // ── notes ref: updated directly in onChangeText so handleSubmit
-  //    always reads the latest value even if React batches the state update.
-  const notesRef = useRef(notes);
-
-  function handleNotesChange(text: string) {
-    notesRef.current = text;
-    setNotes(text);
-  }
-
   // ── handlers ──────────────────────────────────────────────────────────────
   function handleSelectGroup(id: string) {
     if (id === selectedGroupId) return;
@@ -92,6 +86,7 @@ export default function BookScreen() {
     setExpertId('');
     setSessionTypeId('');
     setSlot(null);
+    setNotes('');
     setSubmitError(null);
   }
 
@@ -100,12 +95,14 @@ export default function BookScreen() {
       setExpertId('');
       setSessionTypeId('');
       setSlot(null);
+      setNotes('');
       setSubmitError(null);
       return;
     }
     setExpertId(id);
     setSessionTypeId('');
     setSlot(null);
+    setNotes('');
     setSubmitError(null);
   }
 
@@ -113,10 +110,12 @@ export default function BookScreen() {
     if (id === sessionTypeId) {
       setSessionTypeId('');
       setSlot(null);
+      setNotes('');
       return;
     }
     setSessionTypeId(id);
     setSlot(null);
+    setNotes('');
   }
 
   function handleSelectSlot(s: CoachingSlot) {
@@ -125,13 +124,12 @@ export default function BookScreen() {
 
   async function handleSubmit() {
     if (!expertId || !sessionTypeId || !slot) return;
-    const currentNotes = notesRef.current;
     try {
       await mutateAsync({
         expertId,
         sessionTypeId,
         scheduledAt: slot.starts_at,
-        notes: currentNotes.trim() || undefined,
+        notes: notes.trim() || undefined,
       });
       router.back();
     } catch {
@@ -335,7 +333,7 @@ export default function BookScreen() {
             <ZTextarea
               testID="book-notes"
               value={notes}
-              onChangeText={handleNotesChange}
+              onChangeText={setNotes}
               accessibilityLabel={t('sessions.book.notes')}
               placeholder={t('sessions.book.notesPlaceholder')}
               rows={3}
