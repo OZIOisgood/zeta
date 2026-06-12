@@ -27,6 +27,7 @@ export default function RootLayout() {
         <Stack.Protected guard={status === 'signedIn'}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="asset/[id]" />
+          <Stack.Screen name="group/[id]" />
           <Stack.Screen name="upload" options={{ presentation: 'modal' }} />
         </Stack.Protected>
         <Stack.Protected guard={status !== 'signedIn'}>

@@ -1,4 +1,5 @@
-import { Pressable, Text } from 'react-native';
+import type { ReactNode } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
 export type ZButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -21,21 +22,28 @@ export function ZButton({
   onPress,
   variant = 'primary',
   disabled = false,
+  icon,
+  testID,
 }: {
   label: string;
   onPress?: () => void;
   variant?: ZButtonVariant;
   disabled?: boolean;
+  /** Optional leading icon node. */
+  icon?: ReactNode;
+  testID?: string;
 }) {
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      className={`items-center justify-center rounded-lg px-4 py-3 ${containerClasses[variant]} ${disabled ? 'opacity-50' : ''}`}
+      className={`flex-row items-center justify-center gap-2 rounded-lg px-4 py-3 ${containerClasses[variant]} ${disabled ? 'opacity-50' : ''}`}
     >
+      {icon ? <View>{icon}</View> : null}
       <Text className={`text-base font-semibold ${labelClasses[variant]}`}>{label}</Text>
     </Pressable>
   );
