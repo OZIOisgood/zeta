@@ -47,14 +47,21 @@ const defaultDeps: CallDeps = {
     return data;
   },
   stopRecording: (groupId, bookingId) => {
-    void api.POST('/groups/{groupID}/coaching/bookings/{bookingID}/recording/stop', {
-      params: { path: { groupID: groupId, bookingID: bookingId } },
-    });
+    // fire-and-forget; the internal cleanup endpoint also stops recordings server-side
+    void api
+      .POST('/groups/{groupID}/coaching/bookings/{bookingID}/recording/stop', {
+        params: { path: { groupID: groupId, bookingID: bookingId } },
+      })
+      .catch(() => {});
   },
 };
 
 export function createCallStore(deps: CallDeps = defaultDeps) {
   let engine: CallEngine | null = null;
+  // Incremented on every join() and leave() call. A join callback only applies
+  // its result if the generation it captured is still current; otherwise the
+  // in-flight engine is torn down to avoid resource leaks.
+  let generation = 0;
 
   return createStore<CallState>((set, get) => ({
     ...IDLE_STATE,
@@ -64,13 +71,16 @@ export function createCallStore(deps: CallDeps = defaultDeps) {
       // Re-entrancy guard: only join when idle or in error state
       if (phase === 'connecting' || phase === 'inCall') return;
 
+      const gen = ++generation;
       set({ phase: 'connecting', error: null });
 
       let connectInfo: components['schemas']['BookingConnectInfo'];
       try {
         connectInfo = await deps.fetchConnect(groupId, bookingId);
       } catch {
-        set({ phase: 'error', error: 'Failed to get connection info' });
+        if (gen === generation) {
+          set({ phase: 'error', error: 'Failed to get connection info' });
+        }
         return;
       }
 
@@ -81,15 +91,10 @@ export function createCallStore(deps: CallDeps = defaultDeps) {
         onRemoteUserLeft: (_uid) => {
           set({ remoteUid: null });
         },
-        onError: (message) => {
+        onError: (_message) => {
           // Never store or log the raw message — it may contain connection details.
           // Provide a generic error to the UI.
-          const safeMessage = 'A call error occurred';
-          void safeMessage; // ensure we don't accidentally use `message` below
-          set({ phase: 'error', error: safeMessage });
-          // We still receive the original message for engine-level handling but
-          // never persist it to state. Silence the unused var warning:
-          void message;
+          set({ phase: 'error', error: 'A call error occurred' });
         },
       });
 
@@ -101,20 +106,29 @@ export function createCallStore(deps: CallDeps = defaultDeps) {
           connectInfo.token,
           connectInfo.uid,
         );
-        engine = newEngine;
-        set({ phase: 'inCall' });
       } catch {
         // Attempt cleanup — ignore secondary failures
-        try {
-          await newEngine.leave();
-        } catch {
-          // Swallow cleanup errors
+        void newEngine.leave().catch(() => {});
+        if (gen === generation) {
+          set({ phase: 'error', error: 'Failed to join the call' });
         }
-        set({ phase: 'error', error: 'Failed to join the call' });
+        return;
+      }
+
+      if (gen === generation) {
+        // Generation still matches — this join is the current one.
+        engine = newEngine;
+        set({ phase: 'inCall' });
+      } else {
+        // A leave() (or newer join) happened while we were connecting.
+        // Tear down the now-orphaned engine without touching store state.
+        void newEngine.leave().catch(() => {});
       }
     },
 
     leave: async (groupId: string, bookingId: string) => {
+      // Invalidate any in-flight join so it cannot apply its result.
+      generation++;
       if (engine) {
         try {
           await engine.leave();
@@ -123,8 +137,13 @@ export function createCallStore(deps: CallDeps = defaultDeps) {
         }
         engine = null;
       }
-      // Fire-and-forget: don't await, don't block UI
-      deps.stopRecording(groupId, bookingId);
+      // Fire-and-forget: don't await, don't block UI. Wrap in try/catch so
+      // even a synchronously-throwing dep cannot break leave().
+      try {
+        deps.stopRecording(groupId, bookingId);
+      } catch {
+        // Swallow — recording stop is best-effort
+      }
       set({ ...IDLE_STATE });
     },
 

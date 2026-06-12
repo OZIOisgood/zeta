@@ -225,6 +225,100 @@ describe('call-store', () => {
     expect(store.getState().error).not.toBeNull();
   });
 
+  // ─── Fix 1: stopRecording rejection tolerance ────────────────────────────────
+
+  test('leave resolves cleanly even when stopRecording throws synchronously', async () => {
+    const throwingDeps: CallDeps = {
+      createEngine: (events) => makeFakeEngine(events, 'resolve'),
+      fetchConnect: async () => ({
+        app_id: 'fake-app-id',
+        channel: 'test-channel',
+        token: 'tok',
+        uid: 1,
+      }),
+      // Synchronously-throwing dep — store must not propagate this
+      stopRecording: () => {
+        throw new Error('stop recording failed synchronously');
+      },
+    };
+    const store = createCallStore(throwingDeps);
+    await store.getState().join('grp1', 'book1');
+    // Must not throw and phase must reset to idle
+    await expect(store.getState().leave('grp1', 'book1')).resolves.toBeUndefined();
+    expect(store.getState().phase).toBe('idle');
+  });
+
+  test('leave resolves cleanly even when stopRecording returns a rejecting promise', async () => {
+    const rejectingDeps: CallDeps = {
+      createEngine: (events) => makeFakeEngine(events, 'resolve'),
+      fetchConnect: async () => ({
+        app_id: 'fake-app-id',
+        channel: 'test-channel',
+        token: 'tok',
+        uid: 1,
+      }),
+      // Async-rejecting dep — fire-and-forget rejection must be swallowed
+      stopRecording: () => {
+        void Promise.reject(new Error('async stop recording failed')).catch(() => {});
+      },
+    };
+    const store = createCallStore(rejectingDeps);
+    await store.getState().join('grp1', 'book1');
+    await expect(store.getState().leave('grp1', 'book1')).resolves.toBeUndefined();
+    expect(store.getState().phase).toBe('idle');
+  });
+
+  // ─── Fix 2: join-generation counter — stale in-flight join is discarded ──────
+
+  test('leave during in-flight join leaves final phase as idle, not inCall', async () => {
+    // Gate the engine.join so we can interleave leave() before it resolves
+    let resolveJoin!: () => void;
+    const joinGate = new Promise<void>((res) => {
+      resolveJoin = res;
+    });
+
+    let fakeEngine: FakeEngine | null = null;
+
+    const gatedDeps: CallDeps = {
+      createEngine: (events) => {
+        const eng = makeFakeEngine(events, 'resolve');
+        // Override join to wait for gate
+        eng.join = async () => {
+          await joinGate;
+        };
+        fakeEngine = eng;
+        return eng;
+      },
+      fetchConnect: async () => ({
+        app_id: 'fake-app-id',
+        channel: 'test-channel',
+        token: 'tok',
+        uid: 1,
+      }),
+      stopRecording: () => undefined,
+    };
+
+    const store = createCallStore(gatedDeps);
+
+    // Start join (will be stuck waiting for the gate)
+    const joinPromise = store.getState().join('grp1', 'book1');
+    expect(store.getState().phase).toBe('connecting');
+
+    // Leave while join is still in-flight
+    await store.getState().leave('grp1', 'book1');
+    expect(store.getState().phase).toBe('idle');
+
+    // Now release the gate so the stale join resolves
+    resolveJoin();
+    await joinPromise;
+
+    // Phase must remain idle — the stale join must NOT apply its inCall state
+    expect(store.getState().phase).toBe('idle');
+
+    // The orphaned engine must have had leave() called on it for cleanup
+    expect(fakeEngine!.leaveCallCount).toBeGreaterThanOrEqual(1);
+  });
+
   test('error message never contains the Agora token', async () => {
     // Override createEngine to simulate an error that might try to include token
     const fakeEngines: FakeEngine[] = [];
