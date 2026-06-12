@@ -86,7 +86,8 @@ export interface paths {
         /** List assets visible to the current user */
         get: operations["listAssets"];
         put?: never;
-        post?: never;
+        /** Create a new asset and get upload URLs for each video file */
+        post: operations["createAsset"];
         delete?: never;
         options?: never;
         head?: never;
@@ -102,6 +103,40 @@ export interface paths {
         };
         /** Get a single visible asset including its video parts */
         get: operations["getAsset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark all video parts as uploaded and transition the asset to pending review */
+        post: operations["completeAssetUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List groups the current user belongs to */
+        get: operations["listGroups"];
         put?: never;
         post?: never;
         delete?: never;
@@ -213,6 +248,33 @@ export interface components {
             review_count: number;
             videos?: components["schemas"]["AssetVideo"][];
             group?: components["schemas"]["AssetGroup"];
+        };
+        CreateAssetRequest: {
+            title: string;
+            description: string;
+            filenames: string[];
+            /** Format: uuid */
+            group_id: string;
+        };
+        CreateAssetVideo: {
+            id: string;
+            /** @description Mux direct-upload URL; PUT the file binary here */
+            upload_url: string;
+            filename: string;
+        };
+        CreateAssetResponse: {
+            asset_id: string;
+            videos: components["schemas"]["CreateAssetVideo"][];
+        };
+        Group: {
+            id: string;
+            name: string;
+            owner_id: string;
+            /** @description Base64-encoded group avatar */
+            avatar: string | null;
+            description: string;
+            created_at: string;
+            updated_at: string;
         };
     };
     responses: never;
@@ -411,6 +473,51 @@ export interface operations {
             };
         };
     };
+    createAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAssetRequest"];
+            };
+        };
+        responses: {
+            /** @description Asset created with Mux upload URLs for each video file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateAssetResponse"];
+                };
+            };
+            /** @description Missing title or group_id, invalid body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing assets:create permission or not a group member */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getAsset: {
         parameters: {
             query?: never;
@@ -447,6 +554,79 @@ export interface operations {
             };
             /** @description Asset not found or not visible */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    completeAssetUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upload marked as complete */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "ok";
+                    };
+                };
+            };
+            /** @description Invalid asset id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Groups the authenticated user is a member of */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Group"][];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing groups:read permission */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

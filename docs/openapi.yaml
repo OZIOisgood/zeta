@@ -14,6 +14,7 @@ tags:
   - name: auth
   - name: system
   - name: assets
+  - name: groups
 paths:
   /health:
     get:
@@ -128,6 +129,29 @@ paths:
                   $ref: "#/components/schemas/Asset"
         "401":
           description: Not authenticated
+    post:
+      tags: [assets]
+      summary: Create a new asset and get upload URLs for each video file
+      operationId: createAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAssetRequest"
+      responses:
+        "200":
+          description: Asset created with Mux upload URLs for each video file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAssetResponse"
+        "400":
+          description: Missing title or group_id, invalid body
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing assets:create permission or not a group member
   /assets/{id}:
     get:
       tags: [assets]
@@ -153,6 +177,52 @@ paths:
           description: Not authenticated
         "404":
           description: Asset not found or not visible
+  /assets/{id}/complete:
+    post:
+      tags: [assets]
+      summary: Mark all video parts as uploaded and transition the asset to pending review
+      operationId: completeAssetUpload
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Upload marked as complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                required: [status]
+        "400":
+          description: Invalid asset id
+        "401":
+          description: Not authenticated
+  /groups:
+    get:
+      tags: [groups]
+      summary: List groups the current user belongs to
+      operationId: listGroups
+      responses:
+        "200":
+          description: Groups the authenticated user is a member of
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:read permission
   /auth/logout:
     post:
       tags: [auth]
@@ -353,3 +423,58 @@ components:
         group:
           $ref: "#/components/schemas/AssetGroup"
       required: [id, title, description, owner_id, status, review_count]
+    CreateAssetRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        filenames:
+          type: array
+          items:
+            type: string
+        group_id:
+          type: string
+          format: uuid
+      required: [title, description, filenames, group_id]
+    CreateAssetVideo:
+      type: object
+      properties:
+        id:
+          type: string
+        upload_url:
+          type: string
+          description: Mux direct-upload URL; PUT the file binary here
+        filename:
+          type: string
+      required: [id, upload_url, filename]
+    CreateAssetResponse:
+      type: object
+      properties:
+        asset_id:
+          type: string
+        videos:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateAssetVideo"
+      required: [asset_id, videos]
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        owner_id:
+          type: string
+        avatar:
+          type: [string, "null"]
+          description: Base64-encoded group avatar
+        description:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+      required: [id, name, owner_id, avatar, description, created_at, updated_at]
