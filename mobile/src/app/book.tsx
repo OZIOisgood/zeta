@@ -5,11 +5,13 @@ import { ChevronLeft } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { CoachingExpert, CoachingSlot, SessionType } from '../api/queries/coaching';
 import {
+  BookingError,
   useCoachingExpertsQuery,
   useCreateBookingMutation,
   useSessionTypesQuery,
   useSlotsQuery,
 } from '../api/queries/coaching';
+import { queryClient } from '../api/query-client';
 import { useGroupsQuery } from '../api/queries/groups';
 import type { Group } from '../api/queries/groups';
 import { ZButton } from '../components/ui/z-button';
@@ -132,8 +134,16 @@ export default function BookScreen() {
         notes: notes.trim() || undefined,
       });
       router.back();
-    } catch {
-      setSubmitError(t('sessions.book.failed'));
+    } catch (err) {
+      if (err instanceof BookingError && err.status === 409) {
+        setSlot(null);
+        void queryClient.invalidateQueries({ queryKey: ['coaching', groupId, 'slots'] });
+        setSubmitError(t('sessions.book.slotTaken'));
+      } else if (err instanceof BookingError && err.status === 400) {
+        setSubmitError(t('sessions.book.tooLate'));
+      } else {
+        setSubmitError(t('sessions.book.failed'));
+      }
     }
   }
 
@@ -299,6 +309,13 @@ export default function BookScreen() {
           </View>
         )}
 
+        {/* Inline submit error — shown outside confirm section so it persists after slot reset */}
+        {submitError !== null && (
+          <Text testID="book-error" className="text-sm text-z-danger">
+            {submitError}
+          </Text>
+        )}
+
         {/* ── Confirm section ───────────────────────────────────────────────── */}
         {slot !== null && selectedExpert !== null && selectedSessionType !== null && (
           <View className="gap-3 rounded-lg border border-z-border bg-z-surface p-4">
@@ -338,13 +355,6 @@ export default function BookScreen() {
               placeholder={t('sessions.book.notesPlaceholder')}
               rows={3}
             />
-
-            {/* Inline error */}
-            {submitError !== null && (
-              <Text testID="book-error" className="text-sm text-z-danger">
-                {submitError}
-              </Text>
-            )}
 
             {/* Submit */}
             <ZButton

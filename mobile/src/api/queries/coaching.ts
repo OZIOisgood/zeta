@@ -3,6 +3,12 @@ import type { components } from '../schema';
 import { api } from '../../auth/auth-store';
 import { queryClient } from '../query-client';
 
+export class BookingError extends Error {
+  constructor(readonly status: number) {
+    super('Booking failed');
+  }
+}
+
 export type Booking = components['schemas']['Booking'];
 export type SessionType = components['schemas']['SessionType'];
 export type CoachingSlot = components['schemas']['CoachingSlot'];
@@ -98,7 +104,7 @@ export function useCreateBookingMutation(
 ) {
   return useMutation({
     mutationFn: async (input: CreateBookingInput) => {
-      const { data, error } = await (client as typeof api).POST(
+      const { data, error, response } = await (client as typeof api).POST(
         '/groups/{groupID}/coaching/bookings',
         {
           params: { path: { groupID: groupId } },
@@ -110,7 +116,7 @@ export function useCreateBookingMutation(
           },
         },
       );
-      if (error || !data) throw new Error('Failed to create booking');
+      if (error || !data) throw new BookingError(response.status);
       return data;
     },
     onSuccess: async () => {

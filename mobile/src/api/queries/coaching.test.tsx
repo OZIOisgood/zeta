@@ -15,6 +15,7 @@ import {
   useSlotsQuery,
   useCreateBookingMutation,
   useCancelBookingMutation,
+  BookingError,
 } from './coaching';
 
 let client: QueryClient;
@@ -207,16 +208,47 @@ test('useCreateBookingMutation posts body and invalidates bookings and slots on 
   );
 });
 
-test('useCreateBookingMutation does not invalidate on error', async () => {
-  const POST = jest.fn(async () => ({ data: undefined, error: { message: 'conflict' } }));
+test('useCreateBookingMutation throws BookingError with response status on error', async () => {
+  const POST = jest.fn(async () => ({
+    data: undefined,
+    error: { message: 'conflict' },
+    response: { status: 409 },
+  }));
   const qc = { invalidateQueries: jest.fn() };
   const { result } = await renderHook(
     () => useCreateBookingMutation('g1', { POST } as never, qc as never),
     { wrapper },
   );
-  await expect(
-    result.current.mutateAsync({ expertId: 'e1', sessionTypeId: 'st1', scheduledAt: '2026-07-01T10:00:00Z' }),
-  ).rejects.toThrow();
+  let thrown: unknown;
+  try {
+    await result.current.mutateAsync({ expertId: 'e1', sessionTypeId: 'st1', scheduledAt: '2026-07-01T10:00:00Z' });
+  } catch (err) {
+    thrown = err;
+  }
+  expect(thrown).toBeInstanceOf(BookingError);
+  expect((thrown as BookingError).status).toBe(409);
+  expect(qc.invalidateQueries).not.toHaveBeenCalled();
+});
+
+test('useCreateBookingMutation throws BookingError with status 400 for notice errors', async () => {
+  const POST = jest.fn(async () => ({
+    data: undefined,
+    error: { message: 'too late' },
+    response: { status: 400 },
+  }));
+  const qc = { invalidateQueries: jest.fn() };
+  const { result } = await renderHook(
+    () => useCreateBookingMutation('g1', { POST } as never, qc as never),
+    { wrapper },
+  );
+  let thrown: unknown;
+  try {
+    await result.current.mutateAsync({ expertId: 'e1', sessionTypeId: 'st1', scheduledAt: '2026-07-01T10:00:00Z' });
+  } catch (err) {
+    thrown = err;
+  }
+  expect(thrown).toBeInstanceOf(BookingError);
+  expect((thrown as BookingError).status).toBe(400);
   expect(qc.invalidateQueries).not.toHaveBeenCalled();
 });
 

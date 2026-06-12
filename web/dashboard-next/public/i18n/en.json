@@ -488,6 +488,7 @@
       "booking": "Booking...",
       "bookSession": "Book Session",
       "slotTaken": "That slot was just taken. Please choose another.",
+      "tooLate": "This time can no longer be booked. Please pick a later slot.",
       "failed": "Failed to book session. Please try again.",
       "loadExpertsFailed": "Failed to load experts",
       "loadSessionTypesFailed": "Failed to load session types",

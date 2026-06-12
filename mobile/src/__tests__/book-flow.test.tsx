@@ -48,6 +48,7 @@ import { initI18n } from '../i18n';
 import BookScreen from '../app/book';
 
 import type { CoachingExpert, CoachingSlot, SessionType } from '../api/queries/coaching';
+import { BookingError } from '../api/queries/coaching';
 import type { Group } from '../api/queries/groups';
 
 beforeAll(() => initI18n('en'));
@@ -395,10 +396,93 @@ test('submit error shows book-error testID, no navigation', async () => {
   fireEvent.press(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`));
 
   await waitFor(() => expect(screen.getByTestId('book-submit')).toBeOnTheScreen());
-  fireEvent.press(screen.getByTestId('book-submit'));
+
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('book-submit'));
+  });
 
   await waitFor(() => {
     expect(screen.getByTestId('book-error')).toBeOnTheScreen();
   });
+  expect(mockBack).not.toHaveBeenCalled();
+});
+
+// ── Test 6: 409 → slotTaken copy, slot selection reset ────────────────────────
+
+test('409 BookingError shows slotTaken message and resets slot selection', async () => {
+  mockUseGroupsQuery.mockReturnValue(dataHook([GROUP_A]));
+  mockUseCoachingExpertsQuery.mockReturnValue(dataHook([EXPERT_1]));
+  mockUseSessionTypesQuery.mockReturnValue(dataHook([SESSION_TYPE_1]));
+  mockUseSlotsQuery.mockReturnValue(dataHook([SLOT_1]));
+  mockMutateAsync.mockRejectedValueOnce(new BookingError(409));
+
+  await render(<Providers client={client}><BookScreen /></Providers>);
+
+  await waitFor(() => expect(screen.getByTestId('book-expert-e1')).toBeOnTheScreen());
+  fireEvent.press(screen.getByTestId('book-expert-e1'));
+
+  await waitFor(() => expect(screen.getByTestId('book-type-st1')).toBeOnTheScreen());
+  fireEvent.press(screen.getByTestId('book-type-st1'));
+
+  await waitFor(() =>
+    expect(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`)).toBeOnTheScreen(),
+  );
+  fireEvent.press(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`));
+
+  await waitFor(() => expect(screen.getByTestId('book-submit')).toBeOnTheScreen());
+
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('book-submit'));
+  });
+
+  await waitFor(() => {
+    expect(screen.getByTestId('book-error')).toBeOnTheScreen();
+  });
+  expect(screen.getByTestId('book-error')).toHaveTextContent(
+    'That slot was just taken. Please choose another.',
+  );
+  // Slot reset → confirm section (submit button) gone
+  await waitFor(() => {
+    expect(screen.queryByTestId('book-submit')).toBeNull();
+  });
+  expect(mockBack).not.toHaveBeenCalled();
+});
+
+// ── Test 7: 400 → tooLate copy ────────────────────────────────────────────────
+
+test('400 BookingError shows tooLate message', async () => {
+  mockUseGroupsQuery.mockReturnValue(dataHook([GROUP_A]));
+  mockUseCoachingExpertsQuery.mockReturnValue(dataHook([EXPERT_1]));
+  mockUseSessionTypesQuery.mockReturnValue(dataHook([SESSION_TYPE_1]));
+  mockUseSlotsQuery.mockReturnValue(dataHook([SLOT_1]));
+  mockMutateAsync.mockRejectedValueOnce(new BookingError(400));
+
+  await render(<Providers client={client}><BookScreen /></Providers>);
+
+  await waitFor(() => expect(screen.getByTestId('book-expert-e1')).toBeOnTheScreen());
+  fireEvent.press(screen.getByTestId('book-expert-e1'));
+
+  await waitFor(() => expect(screen.getByTestId('book-type-st1')).toBeOnTheScreen());
+  fireEvent.press(screen.getByTestId('book-type-st1'));
+
+  await waitFor(() =>
+    expect(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`)).toBeOnTheScreen(),
+  );
+  fireEvent.press(screen.getByTestId(`book-slot-${SLOT_1.starts_at}`));
+
+  await waitFor(() => expect(screen.getByTestId('book-submit')).toBeOnTheScreen());
+
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('book-submit'));
+  });
+
+  await waitFor(() => {
+    expect(screen.getByTestId('book-error')).toBeOnTheScreen();
+  });
+  expect(screen.getByTestId('book-error')).toHaveTextContent(
+    'This time can no longer be booked. Please pick a later slot.',
+  );
+  // Slot selection not reset on 400 — submit button stays visible
+  expect(screen.getByTestId('book-submit')).toBeOnTheScreen();
   expect(mockBack).not.toHaveBeenCalled();
 });

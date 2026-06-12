@@ -488,6 +488,7 @@
       "booking": "Réservation en cours...",
       "bookSession": "Réserver la séance",
       "slotTaken": "Ce créneau vient d'être pris. Veuillez en choisir un autre.",
+      "tooLate": "Ce créneau ne peut plus être réservé. Veuillez en choisir un plus tardif.",
       "failed": "Échec de la réservation. Veuillez réessayer.",
       "loadExpertsFailed": "Échec du chargement des experts",
       "loadSessionTypesFailed": "Échec du chargement des types de séances",

@@ -488,6 +488,7 @@
       "booking": "Wird gebucht...",
       "bookSession": "Termin buchen",
       "slotTaken": "Dieser Termin wurde gerade vergeben. Bitte wähle einen anderen.",
+      "tooLate": "Dieser Termin kann nicht mehr gebucht werden. Bitte wähle einen späteren Slot.",
       "failed": "Termin konnte nicht gebucht werden. Bitte versuche es erneut.",
       "loadExpertsFailed": "Experten konnten nicht geladen werden",
       "loadSessionTypesFailed": "Terminarten konnten nicht geladen werden",
