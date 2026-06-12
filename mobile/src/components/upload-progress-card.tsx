@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { RotateCcw, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import type { UploadJob } from '../upload/upload-store';
 
 export function UploadProgressCard({
@@ -11,6 +12,7 @@ export function UploadProgressCard({
   onRetry: (jobId: string, videoId: string) => void;
   onDismiss: (jobId: string) => void;
 }) {
+  const { t } = useTranslation();
   const doneCount = job.files.filter((f) => f.status === 'done').length;
   const overall =
     job.files.length > 0
@@ -61,7 +63,7 @@ export function UploadProgressCard({
       )}
 
       {job.status === 'failed' && (
-        <Text className="text-xs text-z-danger">Upload failed</Text>
+        <Text className="text-xs text-z-danger">{t('upload.uploadFailed')}</Text>
       )}
     </View>
   );

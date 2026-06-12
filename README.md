@@ -242,6 +242,7 @@ graph TD
     Web -->|HTTP API| API[Go API Server]
     Mobile[Mobile App] -->|HTTP API + Bearer| API
     Mobile -->|HLS Playback| Mux
+    Mobile -->|Direct Upload| Mux
     API -->|SQL| DB[(PostgreSQL)]
     API -->|Email| Resend[Resend]
     API -->|Auth| WorkOS[WorkOS]

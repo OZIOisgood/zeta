@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ArrowLeft, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../api/queries/groups';
 import { api } from '../auth/auth-store';
 import { uploadStore } from '../upload/upload-store';
@@ -11,6 +12,7 @@ import { ZButton } from '../components/ui/z-button';
 import { ZSkeleton } from '../components/ui/z-skeleton';
 
 export default function UploadScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { data: groups, isPending, isError, refetch } = useGroupsQuery();
 
@@ -73,20 +75,20 @@ export default function UploadScreen() {
       <View className="mb-4 flex-row items-center gap-3">
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('common.actions.back')}
           onPress={() => router.back()}
           className="p-1"
         >
           <ArrowLeft color="#735f4d" size={24} />
         </Pressable>
-        <Text className="text-lg font-semibold text-z-text">Upload video</Text>
+        <Text className="text-lg font-semibold text-z-text">{t('common.actions.uploadVideo')}</Text>
       </View>
 
       {/* Title */}
       <View className="mb-3">
-        <Text className="mb-1 text-sm font-medium text-z-text">Title</Text>
+        <Text className="mb-1 text-sm font-medium text-z-text">{t('common.fields.title')}</Text>
         <TextInput
-          accessibilityLabel="Title"
+          accessibilityLabel={t('common.fields.title')}
           value={title}
           onChangeText={setTitle}
           placeholder="e.g. Jump line take 2"
@@ -97,9 +99,9 @@ export default function UploadScreen() {
 
       {/* Description */}
       <View className="mb-3">
-        <Text className="mb-1 text-sm font-medium text-z-text">Description</Text>
+        <Text className="mb-1 text-sm font-medium text-z-text">{t('common.fields.description')}</Text>
         <TextInput
-          accessibilityLabel="Description"
+          accessibilityLabel={t('common.fields.description')}
           value={description}
           onChangeText={setDescription}
           placeholder="Add context, goals, or notes for the reviewer."
@@ -112,7 +114,7 @@ export default function UploadScreen() {
 
       {/* Group chips */}
       <View className="mb-3">
-        <Text className="mb-2 text-sm font-medium text-z-text">Group</Text>
+        <Text className="mb-2 text-sm font-medium text-z-text">{t('common.fields.group')}</Text>
         {isPending && (
           <View className="flex-row gap-2">
             <ZSkeleton className="h-8 w-24 rounded-full" />
@@ -122,7 +124,7 @@ export default function UploadScreen() {
         {isError && (
           <View className="flex-row items-center gap-2">
             <Text className="text-sm text-z-danger">Groups could not be loaded.</Text>
-            <ZButton label="Retry" variant="ghost" onPress={() => void refetch()} />
+            <ZButton label={t('upload.retry')} variant="ghost" onPress={() => void refetch()} />
           </View>
         )}
         {groups && (
@@ -182,10 +184,10 @@ export default function UploadScreen() {
       </View>
 
       {failed && (
-        <Text className="mb-3 text-sm text-z-danger">Upload failed. Please try again.</Text>
+        <Text className="mb-3 text-sm text-z-danger">{t('upload.uploadFailed')}</Text>
       )}
 
-      <ZButton label="Upload" onPress={() => void handleSubmit()} disabled={!canSubmit} />
+      <ZButton label={t('upload.startUpload')} onPress={() => void handleSubmit()} disabled={!canSubmit} />
     </ScrollView>
   );
 }

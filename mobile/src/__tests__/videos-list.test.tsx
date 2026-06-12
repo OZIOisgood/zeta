@@ -8,9 +8,11 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
+let mockPermissions: string[] | null = null;
 jest.mock('../../src/auth/auth-store', () => ({
   ...jest.requireActual('../../src/auth/auth-store'),
-  useAuth: (selector: (s: { user: null }) => unknown) => selector({ user: null }),
+  useAuth: (selector: (s: { user: { permissions: string[] } | null }) => unknown) =>
+    selector({ user: mockPermissions !== null ? { permissions: mockPermissions } : null }),
 }));
 
 jest.mock('../../src/upload/upload-store', () => ({
@@ -38,6 +40,7 @@ beforeAll(() => initI18n('en'));
 
 let client: QueryClient;
 beforeEach(() => {
+  mockPermissions = null;
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
 afterEach(() => client.clear());
@@ -75,4 +78,18 @@ test('data state lists assets', async () => {
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [ASSET], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
   expect(screen.getByText('Kata 1')).toBeOnTheScreen();
+});
+
+test('upload FAB shows with assets:create permission', async () => {
+  mockPermissions = ['assets:create'];
+  mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [ASSET], refetch: jest.fn(), isRefetching: false });
+  await render(<Providers><VideosScreen /></Providers>);
+  expect(screen.getByLabelText('Upload video')).toBeOnTheScreen();
+});
+
+test('upload FAB hidden without permission', async () => {
+  mockPermissions = [];
+  mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [ASSET], refetch: jest.fn(), isRefetching: false });
+  await render(<Providers><VideosScreen /></Providers>);
+  expect(screen.queryByLabelText('Upload video')).toBeNull();
 });

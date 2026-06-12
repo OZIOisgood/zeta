@@ -1,6 +1,12 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
+
+jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
+
+import { initI18n } from '../i18n';
 import { UploadProgressCard } from './upload-progress-card';
 import type { UploadJob } from '../upload/upload-store';
+
+beforeAll(() => initI18n('en'));
 
 function job(overrides?: Partial<UploadJob>): UploadJob {
   return {

@@ -34,6 +34,14 @@ Tokens live in `expo-secure-store`; the API client refreshes them on 401
 automatically. Sign-out is local (token deletion) — server-side session
 revocation is a follow-up.
 
+## Uploads
+
+Uploads go directly to Mux: `POST /assets` returns one direct-upload URL per
+file, the app PUTs each file sequentially (`src/upload/`), then calls
+`POST /assets/{id}/complete`. The queue lives in a persisted Zustand store —
+interrupted uploads survive restarts as retryable entries (a retry re-uploads
+the whole file; chunked resume is a follow-up).
+
 ## Regenerating
 
 - API types: `pnpm run generate:api` (after `../docs/openapi.yaml` changes)
