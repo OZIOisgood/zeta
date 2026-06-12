@@ -10,3 +10,6 @@ export function createQueryClient() {
     },
   });
 }
+
+/** Shared app-wide query client; screens and the upload manager invalidate through it. */
+export const queryClient = createQueryClient();

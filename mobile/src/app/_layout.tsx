@@ -5,9 +5,7 @@ import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { initI18n } from '../i18n';
 import { authStore, useAuth } from '../auth/auth-store';
-import { createQueryClient } from '../api/query-client';
-
-const queryClient = createQueryClient();
+import { queryClient } from '../api/query-client';
 
 void initI18n();
 
