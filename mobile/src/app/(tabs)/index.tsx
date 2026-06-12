@@ -1,9 +1,13 @@
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CloudOff, Video as VideoIcon } from 'lucide-react-native';
+import { CloudOff, Plus, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../api/queries/assets';
+import { useAuth } from '../../auth/auth-store';
+import { uploadStore, useUploads } from '../../upload/upload-store';
+import type { UploadJob } from '../../upload/upload-store';
 import { AssetCard } from '../../components/asset-card';
+import { UploadProgressCard } from '../../components/upload-progress-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 
@@ -23,44 +27,91 @@ function ListSkeleton() {
   );
 }
 
+function JobCards({ jobs }: { jobs: UploadJob[] }) {
+  if (jobs.length === 0) return null;
+  return (
+    <View className="gap-2 p-4 pb-0">
+      {jobs.map((j) => (
+        <UploadProgressCard
+          key={j.id}
+          job={j}
+          onRetry={(id, vid) => void uploadStore.getState().retryFile(id, vid)}
+          onDismiss={(id) => uploadStore.getState().dismissJob(id)}
+        />
+      ))}
+    </View>
+  );
+}
+
 export default function VideosScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { data, isPending, isError, refetch, isRefetching } = useAssetsQuery();
+  const permissions = useAuth((s) => s.user?.permissions ?? null);
+  const canCreate = permissions !== null && permissions.includes('assets:create');
+  const jobs = useUploads((s) => s.jobs);
 
-  if (isPending) return <View className="flex-1 bg-z-bg"><ListSkeleton /></View>;
+  let content: React.ReactNode;
 
-  if (isError) {
-    return (
-      <View className="flex-1 items-center justify-center gap-4 bg-z-bg px-8">
-        <CloudOff color="#735f4d" size={32} />
-        <Text className="text-center text-z-muted">Your videos could not be loaded.</Text>
-        <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
+  if (isPending) {
+    content = (
+      <View className="flex-1 bg-z-bg">
+        <JobCards jobs={jobs} />
+        <ListSkeleton />
       </View>
     );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <View testID="videos-empty" className="flex-1 items-center justify-center gap-3 bg-z-bg px-8">
-        <VideoIcon color="#735f4d" size={32} />
-        <Text className="text-lg font-semibold text-z-text">{t('videos.noVideosYet')}</Text>
-        <Text className="text-center text-z-muted">Videos you upload appear here.</Text>
+  } else if (isError) {
+    content = (
+      <View className="flex-1 bg-z-bg">
+        <JobCards jobs={jobs} />
+        <View className="flex-1 items-center justify-center gap-4 px-8">
+          <CloudOff color="#735f4d" size={32} />
+          <Text className="text-center text-z-muted">Your videos could not be loaded.</Text>
+          <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
+        </View>
+      </View>
+    );
+  } else if (!data || data.length === 0) {
+    content = (
+      <View testID="videos-empty" className="flex-1 bg-z-bg">
+        <JobCards jobs={jobs} />
+        <View className="flex-1 items-center justify-center gap-3 px-8">
+          <VideoIcon color="#735f4d" size={32} />
+          <Text className="text-lg font-semibold text-z-text">{t('videos.noVideosYet')}</Text>
+          <Text className="text-center text-z-muted">Videos you upload appear here.</Text>
+        </View>
+      </View>
+    );
+  } else {
+    content = (
+      <View className="flex-1 bg-z-bg">
+        <FlatList
+          data={data}
+          keyExtractor={(a) => a.id}
+          contentContainerStyle={{ padding: 16 }}
+          ListHeaderComponent={<JobCards jobs={jobs} />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+          renderItem={({ item }) => (
+            <AssetCard asset={item} onPress={() => router.push(`/asset/${item.id}`)} />
+          )}
+        />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-z-bg">
-      <FlatList
-        data={data}
-        keyExtractor={(a) => a.id}
-        contentContainerStyle={{ padding: 16 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
-        renderItem={({ item }) => (
-          <AssetCard asset={item} onPress={() => router.push(`/asset/${item.id}`)} />
-        )}
-      />
+    <View className="flex-1">
+      {content}
+      {canCreate && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Upload video"
+          onPress={() => router.push('/upload')}
+          className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-z-primary"
+        >
+          <Plus color="white" size={24} />
+        </Pressable>
+      )}
     </View>
   );
 }

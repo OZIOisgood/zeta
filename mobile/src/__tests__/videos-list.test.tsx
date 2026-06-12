@@ -8,6 +8,16 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
+jest.mock('../../src/auth/auth-store', () => ({
+  ...jest.requireActual('../../src/auth/auth-store'),
+  useAuth: (selector: (s: { user: null }) => unknown) => selector({ user: null }),
+}));
+
+jest.mock('../../src/upload/upload-store', () => ({
+  ...jest.requireActual('../../src/upload/upload-store'),
+  useUploads: (selector: (s: { jobs: never[] }) => unknown) => selector({ jobs: [] }),
+}));
+
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
 const mockUseAssetsQuery = jest.fn();

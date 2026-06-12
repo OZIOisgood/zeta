@@ -37,7 +37,14 @@
       ],
       "expo-localization",
       "expo-secure-store",
-      "expo-video"
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Zeta to access your video library to upload videos for review.",
+          "cameraPermission": "Allow Zeta to access your camera."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
