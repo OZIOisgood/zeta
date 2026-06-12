@@ -9,7 +9,8 @@ services:
       POSTGRES_PASSWORD: zeta
       POSTGRES_DB: zeta
     ports:
-      - "5433:5432"
+      # Host port for Postgres; the Makefile exports it from .env (ZETA_DB_PORT).
+      - "${ZETA_DB_PORT:-5433}:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
 
