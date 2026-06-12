@@ -33,6 +33,7 @@ export function ZIconButton({
   shape = 'rounded',
   disabled = false,
   className = '',
+  testID,
 }: {
   label: string;
   children: ReactNode;
@@ -43,9 +44,11 @@ export function ZIconButton({
   disabled?: boolean;
   /** Layout-only extensions (margins, positioning) — never visual identity. */
   className?: string;
+  testID?: string;
 }) {
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}

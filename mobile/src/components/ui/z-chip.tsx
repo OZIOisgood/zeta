@@ -10,14 +10,17 @@ export function ZChip({
   selected = false,
   onPress,
   disabled = false,
+  testID,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
   disabled?: boolean;
+  testID?: string;
 }) {
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected, disabled }}
