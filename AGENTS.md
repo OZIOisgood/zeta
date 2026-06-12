@@ -58,6 +58,7 @@
 - Prioritize correctness, authorization/visibility regressions, data leaks, config drift, missing tests, and broken build paths.
 - Check permission changes against `internal/permissions/permissions.go`.
 - For UI reviews, check responsive layout, accessible primitives, keyboard behavior, loading/empty/error states, and copy terminology.
+- Mobile UI changes must include an emulator screenshot of the affected screens in the PR description.
 - For logging reviews, treat sensitive data in logs as high severity.
 
 ## Subagents
