@@ -55,6 +55,10 @@ const defaultDeps: UploadDeps = {
   },
 };
 
+// Re-entrancy guard: tracks which job IDs are currently being processed.
+// processJob returns immediately if its jobId is already in this set.
+const processing = new Set<string>();
+
 export function createUploadStore(deps: UploadDeps = defaultDeps) {
   const store = createStore<UploadState>((set, get) => {
     function patchFile(jobId: string, videoId: string, patch: Partial<UploadFileState>) {
@@ -74,9 +78,21 @@ export function createUploadStore(deps: UploadDeps = defaultDeps) {
     }
 
     async function uploadOne(jobId: string, file: UploadFileState): Promise<boolean> {
+      // Pre-flight: a blank localUri means the file could not be matched to a
+      // picked file — fail immediately without calling the transfer.
+      if (file.localUri === '') {
+        patchFile(jobId, file.videoId, { status: 'failed' });
+        return false;
+      }
+
       patchFile(jobId, file.videoId, { status: 'uploading', progress: 0 });
       try {
         const handle = deps.transfer(file.localUri, file.uploadUrl, (fraction) => {
+          // Terminal-state progress guard: ignore stale callbacks once the file
+          // has already reached a final state (done or failed).
+          const currentJob = get().jobs.find((j) => j.id === jobId);
+          const currentFile = currentJob?.files.find((f) => f.videoId === file.videoId);
+          if (currentFile?.status === 'done' || currentFile?.status === 'failed') return;
           patchFile(jobId, file.videoId, { progress: fraction });
         });
         const { status } = await handle.start();
@@ -92,6 +108,13 @@ export function createUploadStore(deps: UploadDeps = defaultDeps) {
     }
 
     async function processJob(jobId: string): Promise<void> {
+      // Re-entrancy guard: if this job is already being processed (e.g. a
+      // retryFile call arrives while a transfer is still in flight), return
+      // immediately so we don't create duplicate transfers.
+      if (processing.has(jobId)) return;
+      processing.add(jobId);
+
+      try {
       patchJob(jobId, { status: 'uploading' });
 
       // Collect videoIds upfront, but read file state fresh each iteration so
@@ -120,21 +143,41 @@ export function createUploadStore(deps: UploadDeps = defaultDeps) {
       }
       patchJob(jobId, { status: 'done' });
       deps.invalidateAssets();
+      } finally {
+        processing.delete(jobId);
+      }
     }
 
     return {
       jobs: [],
 
       enqueue: async (created, picked, title) => {
+        // The backend creates one video + upload URL per `filenames` entry IN
+        // ORDER (see internal/assets/handler.go, the per-filename Mux upload
+        // creation loop). Match created.videos[i] to picked[i] by index.
+        // Filename-based lookup is kept as a fallback for the case where the
+        // order contract is violated; if that also fails, localUri is '' and
+        // the pre-flight check in uploadOne will mark the file failed.
         const byFilename = new Map(picked.map((p) => [p.filename, p.localUri]));
-        const files: UploadFileState[] = created.videos.map((v) => ({
-          videoId: v.id,
-          uploadUrl: v.upload_url,
-          localUri: byFilename.get(v.filename) ?? '',
-          filename: v.filename,
-          progress: 0,
-          status: 'pending',
-        }));
+        const files: UploadFileState[] = created.videos.map((v, i) => {
+          const indexMatch = picked[i];
+          let localUri: string;
+          if (indexMatch && indexMatch.filename === v.filename) {
+            // Happy path: order contract holds.
+            localUri = indexMatch.localUri;
+          } else {
+            // Fallback: filename lookup (e.g. if server reorders).
+            localUri = byFilename.get(v.filename) ?? '';
+          }
+          return {
+            videoId: v.id,
+            uploadUrl: v.upload_url,
+            localUri,
+            filename: v.filename,
+            progress: 0,
+            status: 'pending' as const,
+          };
+        });
         set((state) => ({
           jobs: [...state.jobs, { id: created.asset_id, title, files, status: 'uploading' }],
         }));
