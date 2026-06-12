@@ -105,8 +105,9 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    ```bash
    make mobile:start
    ```
-   Expo dev server for the `mobile/` app (Expo Go works until native modules
-   arrive; later work packages require a development build via EAS).
+   Expo dev server for the `mobile/` app. Expo Go works for all features
+   **except live video calls** — those require a development build (APK) built
+   via EAS. See `mobile/README.md` → Development builds.
 
 ### Auth Flow
 
@@ -253,6 +254,7 @@ graph TD
     API -->|List objects + signed URLs| Storage
     Mux -->|Pull recording MP4| Storage
     Web -->|Video Call| Agora
+    Mobile -->|Video Call| Agora
     Scheduler[GCP Cloud Scheduler] -->|POST /internal/coaching/reminders| API
     Scheduler -->|POST /internal/coaching/recordings/cleanup/process| API
 ```

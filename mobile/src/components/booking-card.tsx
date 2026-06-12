@@ -59,7 +59,7 @@ export function BookingCard({
 }: BookingCardProps) {
   const { t } = useTranslation();
 
-  const sessionTypeName = booking.session_type_name ?? 'Session';
+  const sessionTypeName = booking.session_type_name ?? t('sessions.sessionFallback');
 
   // Status label — mirrors web statusLabel() in sessions-page.component.ts
   // web uses: cancelled → common.status.cancelled; upcoming → common.status.upcoming; else → common.status.done

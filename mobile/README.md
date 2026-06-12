@@ -17,13 +17,44 @@ Expo / React Native app for the Zeta platform.
 
 ```bash
 pnpm install
-pnpm run start        # Expo dev server (Expo Go works — no native modules yet)
+pnpm run start        # Expo dev server
 pnpm run test
 pnpm run lint
 pnpm exec tsc --noEmit
 ```
 
 From the repo root: `make mobile:start`, `make mobile:lint`, `make mobile:test`, `make mobile:typecheck`.
+
+## Development builds
+
+Most features work in **Expo Go**. The exception is **live video calls**: `react-native-agora`
+is a native module that Expo Go cannot load. A custom development client (APK) is required for
+any screen that uses the Agora RTC engine — i.e. `/call/[bookingId]`.
+
+### Build
+
+```bash
+npx eas-cli@latest build --profile development --platform android
+```
+
+EAS Build uploads the project to Expo's build service and returns a link when the build
+finishes (10–25 min on the free tier). Find the APK on
+[expo.dev → Projects → zeta → Builds](https://expo.dev/accounts/henry2k/projects/zeta/builds)
+or at the URL printed by `eas build`.
+
+### Install and run
+
+1. Download the `.apk` from the build page.
+2. Install on a connected device or running emulator:
+   ```bash
+   adb install build.apk
+   ```
+3. Start the Metro bundler:
+   ```bash
+   pnpm run start
+   ```
+   With `expo-dev-client` installed the custom client connects to the running Metro server
+   automatically, giving you fast refresh just like Expo Go — but with full native-module support.
 
 ## Authentication
 
@@ -62,8 +93,11 @@ code; the confirmation step shows the group before accepting.
 
 The Coaching tab lists your sessions (upcoming and past; recordings link to
 the review screen). Users with `coaching:book` book through a guided flow:
-group → expert → session type → free slot → confirm. Live calls (Agora) are
-not in the Expo Go build yet — they arrive with the dev-client work package.
+group → expert → session type → free slot → confirm. Users with
+`coaching:video:connect` see a **Join** button during the connect window;
+tapping it opens the live Agora video call. Live calls require the development
+build APK (see [Development builds](#development-builds)) — Expo Go cannot
+load the `react-native-agora` native module.
 
 ## Regenerating
 

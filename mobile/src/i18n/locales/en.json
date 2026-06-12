@@ -102,8 +102,12 @@
     "search": "Search"
   },
   "reports": {
-    "expert": { "title": "Expert report" },
-    "student": { "title": "Student report" },
+    "expert": {
+      "title": "Expert report"
+    },
+    "student": {
+      "title": "Student report"
+    },
     "description": "{{kind}} for {{name}} · {{count}} activities.",
     "kind": {
       "month": "Monthly report",
@@ -562,7 +566,8 @@
       "grantCamera": "Grant camera access",
       "grantMicrophone": "Grant microphone access",
       "switchCamera": "Switch camera"
-    }
+    },
+    "sessionFallback": "Session"
   },
   "preferences": {
     "title": "Preferences",

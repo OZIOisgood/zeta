@@ -102,8 +102,12 @@
     "search": "Suchen"
   },
   "reports": {
-    "expert": { "title": "Experten-Bericht" },
-    "student": { "title": "Schüler-Bericht" },
+    "expert": {
+      "title": "Experten-Bericht"
+    },
+    "student": {
+      "title": "Schüler-Bericht"
+    },
     "description": "{{kind}} für {{name}} · {{count}} Aktivitäten.",
     "kind": {
       "month": "Monatsbericht",
@@ -562,7 +566,8 @@
       "grantCamera": "Kamerazugriff erlauben",
       "grantMicrophone": "Mikrofonzugriff erlauben",
       "switchCamera": "Kamera wechseln"
-    }
+    },
+    "sessionFallback": "Termin"
   },
   "preferences": {
     "title": "Einstellungen",

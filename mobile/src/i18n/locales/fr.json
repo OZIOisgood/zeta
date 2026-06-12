@@ -102,8 +102,12 @@
     "search": "Rechercher"
   },
   "reports": {
-    "expert": { "title": "Rapport expert" },
-    "student": { "title": "Rapport élève" },
+    "expert": {
+      "title": "Rapport expert"
+    },
+    "student": {
+      "title": "Rapport élève"
+    },
     "description": "{{kind}} pour {{name}} · {{count}} activités.",
     "kind": {
       "month": "Rapport mensuel",
@@ -562,7 +566,8 @@
       "grantCamera": "Autoriser la caméra",
       "grantMicrophone": "Autoriser le microphone",
       "switchCamera": "Changer de caméra"
-    }
+    },
+    "sessionFallback": "Séance"
   },
   "preferences": {
     "title": "Préférences",
