@@ -204,8 +204,7 @@ export default function CoachingScreen() {
             label={t('common.actions.bookSession')}
             variant="secondary"
             onPress={() =>
-              // TEMPORARY: /book route arrives in Task 4
-              router.push('/book' as never)
+              router.push('/book')
             }
             icon={<CalendarClock color={colors.text} size={16} />}
           />
