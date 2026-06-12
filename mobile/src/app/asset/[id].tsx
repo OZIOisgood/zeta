@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { ArrowLeft, Clock } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useAssetQuery } from '../../api/queries/assets';
 import type { components } from '../../api/schema';
 import { ZButton } from '../../components/ui/z-button';
@@ -20,6 +21,7 @@ function Player({ video }: { video: AssetVideo }) {
 }
 
 export default function AssetDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data, isPending, isError, refetch } = useAssetQuery(id ?? '');
@@ -45,8 +47,8 @@ export default function AssetDetailScreen() {
     return (
       <View className="flex-1 items-center justify-center gap-4 bg-z-bg px-8">
         <Text className="text-center text-z-muted">This video could not be loaded.</Text>
-        <ZButton label="Try again" variant="secondary" onPress={() => void refetch()} />
-        <ZButton label="Back" variant="ghost" onPress={() => router.back()} />
+        <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
+        <ZButton label={t('common.actions.back')} variant="ghost" onPress={() => router.back()} />
       </View>
     );
   }
@@ -67,7 +69,7 @@ export default function AssetDetailScreen() {
       </View>
       <View className="gap-2 p-4">
         <View className="flex-row items-center gap-2">
-          <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => router.back()}>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('common.actions.back')} onPress={() => router.back()}>
             <ArrowLeft color="#26180f" size={22} />
           </Pressable>
           <Text className="flex-1 text-xl font-semibold text-z-text" numberOfLines={2}>
@@ -81,13 +83,13 @@ export default function AssetDetailScreen() {
               <Pressable
                 key={v.id}
                 accessibilityRole="button"
-                accessibilityLabel={`Part ${i + 1}`}
+                accessibilityLabel={t('videos.phase4.videoPart', { count: i + 1 })}
                 onPress={() => setActiveId(v.id)}
                 className={`rounded-full border px-3 py-1 ${
                   v.id === active?.id ? 'border-z-primary bg-z-primary-soft' : 'border-z-border bg-z-surface'
                 }`}
               >
-                <Text className="text-sm text-z-text">Part {i + 1}</Text>
+                <Text className="text-sm text-z-text">{t('videos.phase4.videoPart', { count: i + 1 })}</Text>
               </Pressable>
             ))}
           </View>

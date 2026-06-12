@@ -1,6 +1,7 @@
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CloudOff, Video as VideoIcon } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../api/queries/assets';
 import { AssetCard } from '../../components/asset-card';
 import { ZButton } from '../../components/ui/z-button';
@@ -23,6 +24,7 @@ function ListSkeleton() {
 }
 
 export default function VideosScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { data, isPending, isError, refetch, isRefetching } = useAssetsQuery();
 
@@ -33,7 +35,7 @@ export default function VideosScreen() {
       <View className="flex-1 items-center justify-center gap-4 bg-z-bg px-8">
         <CloudOff color="#735f4d" size={32} />
         <Text className="text-center text-z-muted">Your videos could not be loaded.</Text>
-        <ZButton label="Try again" variant="secondary" onPress={() => void refetch()} />
+        <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
       </View>
     );
   }
@@ -42,7 +44,7 @@ export default function VideosScreen() {
     return (
       <View testID="videos-empty" className="flex-1 items-center justify-center gap-3 bg-z-bg px-8">
         <VideoIcon color="#735f4d" size={32} />
-        <Text className="text-lg font-semibold text-z-text">No videos yet</Text>
+        <Text className="text-lg font-semibold text-z-text">{t('videos.noVideosYet')}</Text>
         <Text className="text-center text-z-muted">Videos you upload appear here.</Text>
       </View>
     );

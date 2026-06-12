@@ -8,6 +8,8 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
+jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
+
 const mockUseAssetsQuery = jest.fn();
 jest.mock('../api/queries/assets', () => ({
   ...jest.requireActual('../api/queries/assets'),
@@ -19,7 +21,10 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+import { initI18n } from '../i18n';
 import VideosScreen from '../app/(tabs)/index';
+
+beforeAll(() => initI18n('en'));
 
 let client: QueryClient;
 beforeEach(() => {

@@ -9,6 +9,8 @@ Expo / React Native app for the Zeta platform.
   sync with `web/dashboard-next/src/styles.scss`
 - Typed API client generated from `../docs/openapi.yaml` (`pnpm run generate:api`)
 - i18next with translations synced from the dashboard (`pnpm run sync:i18n`)
+- TanStack Query for server state (query hooks in `src/api/queries/`)
+- `expo-video` for Mux HLS playback
 - Jest (`jest-expo`) + React Native Testing Library
 
 ## Development

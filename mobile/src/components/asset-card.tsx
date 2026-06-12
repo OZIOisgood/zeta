@@ -1,15 +1,23 @@
 import { Image, Pressable, Text, View } from 'react-native';
 import { MessageSquare, Video as VideoIcon } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import type { Asset } from '../api/queries/assets';
 
-const STATUS_STYLES: Record<Asset['status'], { label: string; className: string }> = {
-  waiting_upload: { label: 'Uploading', className: 'bg-z-surface-muted text-z-muted' },
-  pending: { label: 'In review', className: 'bg-z-primary-soft text-z-primary-strong' },
-  completed: { label: 'Reviewed', className: 'bg-z-surface-muted text-z-success' },
+const STATUS_CLASS: Record<Asset['status'], string> = {
+  waiting_upload: 'bg-z-surface-muted text-z-muted',
+  pending: 'bg-z-primary-soft text-z-primary-strong',
+  completed: 'bg-z-surface-muted text-z-success',
 };
 
 export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => void }) {
-  const status = STATUS_STYLES[asset.status];
+  const { t } = useTranslation();
+  const statusClass = STATUS_CLASS[asset.status];
+  const statusLabel =
+    asset.status === 'waiting_upload'
+      ? 'Uploading'
+      : asset.status === 'pending'
+        ? t('videos.reviewStatus.inReview')
+        : t('videos.reviewStatus.reviewed');
   return (
     <Pressable
       accessibilityRole="button"
@@ -31,9 +39,9 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
         <View className="flex-row items-center gap-2">
           <Text
             testID={`asset-status-${asset.status}`}
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusClass}`}
           >
-            {status.label}
+            {statusLabel}
           </Text>
           <View className="flex-row items-center gap-1">
             <MessageSquare color="#735f4d" size={14} />

@@ -240,6 +240,8 @@ graph LR
 graph TD
     User[User] -->|Browser| Web[Angular Dashboard]
     Web -->|HTTP API| API[Go API Server]
+    Mobile[Mobile App] -->|HTTP API + Bearer| API
+    Mobile -->|HLS Playback| Mux
     API -->|SQL| DB[(PostgreSQL)]
     API -->|Email| Resend[Resend]
     API -->|Auth| WorkOS[WorkOS]

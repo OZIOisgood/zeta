@@ -1,5 +1,11 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
+
+jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
+
+import { initI18n } from '../i18n';
 import { AssetCard } from './asset-card';
+
+beforeAll(() => initI18n('en'));
 
 const ASSET = {
   id: 'a1', title: 'Kata 1', description: 'desc', owner_id: 'u1',
