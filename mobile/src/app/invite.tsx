@@ -98,10 +98,10 @@ export default function InviteScreen() {
             ) : (
               <View className="mb-4 items-center gap-3 rounded-xl border border-z-border bg-z-surface p-6">
                 <Text className="text-center text-sm text-z-muted">
-                  Camera access is needed to scan a QR code.
+                  {t('groups.invite.cameraHint')}
                 </Text>
                 <ZButton
-                  label="Grant camera access"
+                  label={t('groups.invite.grantCamera')}
                   variant="secondary"
                   onPress={() => void requestPermission()}
                 />
@@ -111,7 +111,7 @@ export default function InviteScreen() {
             {/* Divider */}
             <View className="my-4 flex-row items-center gap-3">
               <View className="h-px flex-1 bg-z-border" />
-              <Text className="text-sm text-z-muted">or enter code manually</Text>
+              <Text className="text-sm text-z-muted">{t('groups.invite.manualDivider')}</Text>
               <View className="h-px flex-1 bg-z-border" />
             </View>
 
@@ -125,7 +125,7 @@ export default function InviteScreen() {
                 setManualInput(v);
                 if (manualInputError) setManualInputError(false);
               }}
-              placeholder="e.g. ABC123"
+              placeholder={t('groups.invite.codePlaceholder')}
               invalid={manualInputError}
               autoCapitalize="characters"
               autoCorrect={false}
@@ -137,13 +137,13 @@ export default function InviteScreen() {
                 testID="invite-code-error"
                 className="mt-1 text-sm text-z-danger"
               >
-                Enter the 6-character code from the invitation.
+                {t('groups.invite.codeInvalid')}
               </Text>
             )}
             <View className="mt-3">
               <ZButton
                 testID="invite-code-submit"
-                label="Look up code"
+                label={t('groups.invite.lookUp')}
                 disabled={manualInput.trim().length === 0}
                 onPress={handleManualSubmit}
               />
@@ -169,11 +169,11 @@ export default function InviteScreen() {
             {infoQuery.isError && (
               <View className="gap-4">
                 <Text className="text-center text-z-danger">
-                  Invitation code not found or expired.
+                  {t('groups.invite.notFound')}
                 </Text>
                 <ZButton
                   testID="invite-reset"
-                  label="Try a different code"
+                  label={t('groups.invite.tryDifferent')}
                   variant="secondary"
                   onPress={handleReset}
                 />
@@ -202,7 +202,7 @@ export default function InviteScreen() {
                 {/* Mutation error */}
                 {(acceptMutation.isError || declineMutation.isError) && (
                   <Text className="text-sm text-z-danger">
-                    Something went wrong. Please try again.
+                    {t('groups.invite.genericError')}
                   </Text>
                 )}
 
@@ -213,7 +213,7 @@ export default function InviteScreen() {
                     </Text>
                     <ZButton
                       testID="invite-open-group"
-                      label="Open group"
+                      label={t('groups.invite.openGroup')}
                       onPress={() => router.replace(`/group/${info.group_id}`)}
                     />
                   </>

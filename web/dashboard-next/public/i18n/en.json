@@ -367,6 +367,18 @@
       "notFound": "This invitation is invalid, expired, or already used.",
       "alreadyMember": "You're already a member of {{group}}."
     },
+    "invite": {
+      "cameraHint": "Camera access is needed to scan a QR code.",
+      "codeInvalid": "Enter the 6-character code from the invitation.",
+      "codePlaceholder": "e.g. ABC123",
+      "genericError": "Something went wrong. Please try again.",
+      "grantCamera": "Grant camera access",
+      "lookUp": "Look up code",
+      "manualDivider": "or enter code manually",
+      "notFound": "Invitation code not found or expired.",
+      "openGroup": "Open group",
+      "tryDifferent": "Try a different code"
+    },
     "inviteDialog": {
       "cardDescription": "Create a shareable invitation link or send one directly by email.",
       "title": "Create invitation",

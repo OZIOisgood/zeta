@@ -367,6 +367,18 @@
       "notFound": "Diese Einladung ist ungültig, abgelaufen oder bereits verwendet.",
       "alreadyMember": "Du bist bereits Mitglied von {{group}}."
     },
+    "invite": {
+      "cameraHint": "Für das Scannen des QR-Codes wird Kamerazugriff benötigt.",
+      "codeInvalid": "Gib den 6-stelligen Code aus der Einladung ein.",
+      "codePlaceholder": "z. B. ABC123",
+      "genericError": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+      "grantCamera": "Kamerazugriff erlauben",
+      "lookUp": "Code nachschlagen",
+      "manualDivider": "oder Code manuell eingeben",
+      "notFound": "Einladungscode nicht gefunden oder abgelaufen.",
+      "openGroup": "Gruppe öffnen",
+      "tryDifferent": "Anderen Code versuchen"
+    },
     "inviteDialog": {
       "cardDescription": "Erstelle einen teilbaren Einladungslink oder sende eine Einladung direkt per E-Mail.",
       "title": "Einladung erstellen",

@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react-native';
 
+import { initI18n } from '../i18n';
 import { MemberRow } from './member-row';
 import type { GroupUser } from '../api/queries/groups';
+
+beforeAll(() => initI18n('en'));
 
 const MEMBER: GroupUser = {
   id: 'u1',
@@ -15,7 +18,7 @@ const MEMBER: GroupUser = {
 test('renders full name and role', async () => {
   await render(<MemberRow member={MEMBER} />);
   expect(screen.getByText('Alice Smith')).toBeOnTheScreen();
-  expect(screen.getByText('student')).toBeOnTheScreen();
+  expect(screen.getByText('Student')).toBeOnTheScreen();
 });
 
 test('shows initials when there is no avatar (testID member-initials)', async () => {

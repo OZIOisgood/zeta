@@ -52,8 +52,8 @@ LLM enhancer remain web-only for now.
 ## Groups & Invites
 
 The Groups tab lists the user's groups; the detail screen shows members
-(sections are permission-gated: students need `groups:expert-list:read`,
-experts/admins additionally `groups:user-list:read`) and offers leaving via
+(sections are permission-gated: students list needs `groups:user-list:read`,
+experts list needs `groups:expert-list:read`) and offers leaving via
 `groups:membership:leave` (owners cannot leave). Joining works by scanning an
 invite QR code (`expo-camera`, works in Expo Go) or entering the 6-character
 code; the confirmation step shows the group before accepting.
