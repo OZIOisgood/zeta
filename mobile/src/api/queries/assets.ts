@@ -27,5 +27,6 @@ export function useAssetQuery(id: string, client: Fetcher = api) {
       if (error || !data) throw new Error('Failed to load video');
       return data;
     },
+    enabled: id !== '',
   });
 }
