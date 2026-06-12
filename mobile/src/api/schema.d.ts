@@ -1019,6 +1019,20 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Caller is not the asset owner */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Asset not found or not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     listGroups: {
