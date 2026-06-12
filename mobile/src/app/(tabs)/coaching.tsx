@@ -163,8 +163,7 @@ export default function CoachingScreen() {
                   onOpenRecording={(assetId) => router.push(`/asset/${assetId}`)}
                   onJoin={
                     canConnect && isJoinable(booking, now)
-                      // router type stubs don't include /call/[bookingId] until `expo export` regenerates them
-                      ? () => router.push(`/call/${booking.id}?groupId=${booking.group_id}` as never)
+                      ? () => router.push(`/call/${booking.id}?groupId=${booking.group_id}`)
                       : undefined
                   }
                 />
