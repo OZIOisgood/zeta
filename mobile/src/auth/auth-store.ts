@@ -83,7 +83,17 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
   return store;
 }
 
-export const authStore = createAuthStore();
+function handleSignOut() {
+  authStore.setState({ status: 'signedOut', user: null });
+}
+
+/**
+ * Shared authenticated client. Lives in this module (not api/) because its
+ * onSignOut must flip the auth store — colocating avoids an import cycle.
+ */
+export const api = createAuthenticatedClient({ onSignOut: handleSignOut });
+
+export const authStore = createAuthStore(api);
 
 export function useAuth<T>(selector: (state: AuthState) => T): T {
   return useStore(authStore, selector);
