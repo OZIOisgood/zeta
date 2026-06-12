@@ -227,6 +227,176 @@ paths:
           description: Not authenticated
         "403":
           description: Missing groups:read permission
+  /groups/{groupID}:
+    get:
+      tags: [groups]
+      summary: Get a single group by ID
+      operationId: getGroup
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Group detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:read permission or caller is not a member
+        "404":
+          description: Group not found
+  /groups/{groupID}/membership:
+    delete:
+      tags: [groups]
+      summary: Leave a group
+      operationId: leaveGroup
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Successfully left the group
+        "400":
+          description: Invalid group ID or caller is the group owner
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:membership:leave permission or caller is not a member
+        "404":
+          description: Group not found
+        "409":
+          description: Cannot leave the group as the last member
+  /groups/{groupID}/users:
+    get:
+      tags: [groups]
+      summary: List student members of a group
+      operationId: listGroupStudents
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Student members of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupUserList"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:user-list:read permission
+  /groups/{groupID}/experts:
+    get:
+      tags: [groups]
+      summary: List expert members of a group
+      operationId: listGroupExperts
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Expert and admin members of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupUserList"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:expert-list:read permission
+  /groups/invitations/{code}:
+    get:
+      tags: [groups]
+      summary: Get invitation info by code
+      operationId: getInvitationInfo
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invitation details including group info and membership status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationInfo"
+        "400":
+          description: Invitation already used (and caller is not a member)
+        "401":
+          description: Not authenticated
+        "404":
+          description: Invitation or group not found
+  /groups/invitations/accept:
+    post:
+      tags: [groups]
+      summary: Accept a group invitation
+      operationId: acceptInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptInvitationRequest"
+      responses:
+        "200":
+          description: Invitation accepted (or caller was already a member)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptInvitationResponse"
+        "400":
+          description: Missing or empty code, or invitation already used
+        "401":
+          description: Not authenticated
+        "404":
+          description: Invitation not found
+  /groups/invitations/decline:
+    post:
+      tags: [groups]
+      summary: Decline a group invitation
+      operationId: declineInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeclineInvitationRequest"
+      responses:
+        "204":
+          description: Invitation declined (or generic-link notification dismissed)
+        "400":
+          description: Missing or empty code
+        "401":
+          description: Not authenticated
+        "404":
+          description: Invitation not found or caller is not the addressed recipient
   /assets/videos/{id}/reviews:
     get:
       tags: [assets]
@@ -585,3 +755,61 @@ components:
         parent_id:
           type: string
       required: [content]
+    GroupUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded avatar; omitted when unset
+        role:
+          type: string
+      required: [id, email, first_name, last_name, role]
+    GroupUserList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupUser"
+      required: [data]
+    InvitationInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        group_id:
+          type: string
+        group_name:
+          type: string
+        group_avatar:
+          type: string
+          description: Base64-encoded group avatar; empty string when the group has no avatar set
+        already_member:
+          type: boolean
+      required: [code, group_id, group_name, group_avatar, already_member]
+    AcceptInvitationRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required: [code]
+    AcceptInvitationResponse:
+      type: object
+      properties:
+        group_id:
+          type: string
+      required: [group_id]
+    DeclineInvitationRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required: [code]
