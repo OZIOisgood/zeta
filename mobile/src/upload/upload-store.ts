@@ -1,4 +1,5 @@
-import { createStore } from 'zustand/vanilla';
+import { createStore, type StoreApi } from 'zustand/vanilla';
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import { useStore } from 'zustand';
 import type { components } from '../api/schema';
 import { api } from '../auth/auth-store';
@@ -33,6 +34,7 @@ export type UploadDeps = {
   ) => TransferHandle;
   completeAsset: (assetId: string) => Promise<void>;
   invalidateAssets: () => void;
+  storage?: StateStorage;
 };
 
 type UploadState = {
@@ -40,6 +42,19 @@ type UploadState = {
   enqueue: (created: CreateAssetResponse, picked: PickedFile[], title: string) => Promise<void>;
   retryFile: (jobId: string, videoId: string) => Promise<void>;
   dismissJob: (jobId: string) => void;
+};
+
+/** Store type when persist middleware is applied. Exposes `store.persist.*`. */
+export type PersistedUploadStore = StoreApi<UploadState> & {
+  persist: {
+    rehydrate: () => Promise<void> | void;
+    hasHydrated: () => boolean;
+    onHydrate: (fn: (state: UploadState) => void) => () => void;
+    onFinishHydration: (fn: (state: UploadState) => void) => () => void;
+    setOptions: (options: Partial<{ name: string }>) => void;
+    clearStorage: () => void;
+    getOptions: () => object;
+  };
 };
 
 const defaultDeps: UploadDeps = {
@@ -59,8 +74,35 @@ const defaultDeps: UploadDeps = {
 // processJob returns immediately if its jobId is already in this set.
 const processing = new Set<string>();
 
-export function createUploadStore(deps: UploadDeps = defaultDeps) {
-  const store = createStore<UploadState>((set, get) => {
+/**
+ * Sanitize jobs loaded from persisted storage.
+ * - Drops jobs that are already 'done' (no point showing them after restart).
+ * - Marks all remaining jobs and their in-flight files as 'failed' so the user
+ *   can retry them (upload URLs remain valid for hours).
+ * - Files that already reached 'done' keep that status so only remaining files
+ *   need to be re-uploaded on retry.
+ */
+export function sanitizeJobs(jobs: UploadJob[]): UploadJob[] {
+  return jobs
+    .filter((j) => j.status !== 'done')
+    .map((j) => ({
+      ...j,
+      status: 'failed' as const,
+      files: j.files.map((f) =>
+        f.status === 'done' ? f : { ...f, status: 'failed' as const },
+      ),
+    }));
+}
+
+/**
+ * Build the state creator function shared by both plain and persisted stores.
+ * The `deps` closure is captured here so both code paths use the same logic.
+ */
+function buildStateCreator(deps: UploadDeps) {
+  return (
+    set: (partial: UploadState | Partial<UploadState> | ((s: UploadState) => UploadState | Partial<UploadState>)) => void,
+    get: () => UploadState,
+  ): UploadState => {
     function patchFile(jobId: string, videoId: string, patch: Partial<UploadFileState>) {
       set((state) => ({
         jobs: state.jobs.map((j) =>
@@ -115,34 +157,34 @@ export function createUploadStore(deps: UploadDeps = defaultDeps) {
       processing.add(jobId);
 
       try {
-      patchJob(jobId, { status: 'uploading' });
+        patchJob(jobId, { status: 'uploading' });
 
-      // Collect videoIds upfront, but read file state fresh each iteration so
-      // retryFile correctly skips files already marked done.
-      const job = get().jobs.find((j) => j.id === jobId);
-      const videoIds = job?.files.map((f) => f.videoId) ?? [];
+        // Collect videoIds upfront, but read file state fresh each iteration so
+        // retryFile correctly skips files already marked done.
+        const job = get().jobs.find((j) => j.id === jobId);
+        const videoIds = job?.files.map((f) => f.videoId) ?? [];
 
-      for (const videoId of videoIds) {
-        // Re-read current file state so we skip already-done files.
-        const currentJob = get().jobs.find((j) => j.id === jobId);
-        const file = currentJob?.files.find((f) => f.videoId === videoId);
-        if (!file || file.status === 'done') continue;
-        const ok = await uploadOne(jobId, file);
-        if (!ok) {
+        for (const videoId of videoIds) {
+          // Re-read current file state so we skip already-done files.
+          const currentJob = get().jobs.find((j) => j.id === jobId);
+          const file = currentJob?.files.find((f) => f.videoId === videoId);
+          if (!file || file.status === 'done') continue;
+          const ok = await uploadOne(jobId, file);
+          if (!ok) {
+            patchJob(jobId, { status: 'failed' });
+            return;
+          }
+        }
+
+        patchJob(jobId, { status: 'completing' });
+        try {
+          await deps.completeAsset(jobId);
+        } catch {
           patchJob(jobId, { status: 'failed' });
           return;
         }
-      }
-
-      patchJob(jobId, { status: 'completing' });
-      try {
-        await deps.completeAsset(jobId);
-      } catch {
-        patchJob(jobId, { status: 'failed' });
-        return;
-      }
-      patchJob(jobId, { status: 'done' });
-      deps.invalidateAssets();
+        patchJob(jobId, { status: 'done' });
+        deps.invalidateAssets();
       } finally {
         processing.delete(jobId);
       }
@@ -193,12 +235,46 @@ export function createUploadStore(deps: UploadDeps = defaultDeps) {
         set((state) => ({ jobs: state.jobs.filter((j) => j.id !== jobId) }));
       },
     };
-  });
-
-  return store;
+  };
 }
 
-export const uploadStore = createUploadStore();
+export function createUploadStore(deps: UploadDeps = defaultDeps): StoreApi<UploadState> {
+  if (deps.storage) {
+    // When a storage backend is provided, wrap with persist middleware so the
+    // queue survives app restarts. Interrupted uploads are sanitized to 'failed'
+    // on rehydration so the user can retry them.
+    const store = createStore<UploadState>()(
+      persist(
+        buildStateCreator(deps) as Parameters<typeof persist<UploadState>>[0],
+        {
+          name: 'zeta.uploadQueue',
+          storage: createJSONStorage(() => deps.storage!),
+          partialize: (s) => ({ jobs: s.jobs }) as UploadState,
+          merge: (persisted, current) => {
+            if (persisted == null) return current;
+            return {
+              ...current,
+              jobs: sanitizeJobs(((persisted as { jobs?: UploadJob[] })?.jobs) ?? []),
+            };
+          },
+        },
+      ),
+    );
+    return store as unknown as PersistedUploadStore;
+  }
+
+  // No storage provided: plain store without persistence.
+  // All existing tests that don't pass a storage dep hit this path unchanged.
+  return createStore<UploadState>(buildStateCreator(deps));
+}
+
+export const uploadStore = (() => {
+  // Lazily require AsyncStorage only when creating the singleton so that jest
+  // tests not using storage never touch the native module.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const AsyncStorage = require('@react-native-async-storage/async-storage').default as StateStorage;
+  return createUploadStore({ ...defaultDeps, storage: AsyncStorage });
+})();
 
 export function useUploads<T>(selector: (state: UploadState) => T): T {
   return useStore(uploadStore, selector);

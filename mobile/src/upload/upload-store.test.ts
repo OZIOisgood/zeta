@@ -1,4 +1,4 @@
-import { createUploadStore, type UploadDeps } from './upload-store';
+import { createUploadStore, type UploadDeps, type PersistedUploadStore } from './upload-store';
 
 type TransferCall = { localUri: string; uploadUrl: string; onProgress: (f: number) => void };
 
@@ -233,4 +233,138 @@ test('retryFile during an active run is a no-op', async () => {
 
   // Each file should have been transferred exactly once — no duplicates from retryFile.
   expect(calls).toHaveLength(2);
+});
+
+// ── Persistence tests ───────────────────────────────────────────────────────
+
+function makeStorage(initial?: Record<string, string>) {
+  const data = new Map(Object.entries(initial ?? {}));
+  return {
+    getItem: jest.fn(async (k: string) => data.get(k) ?? null),
+    setItem: jest.fn(async (k: string, v: string) => void data.set(k, v)),
+    removeItem: jest.fn(async (k: string) => void data.delete(k)),
+    data,
+  };
+}
+
+test('queue state is persisted after enqueue', async () => {
+  const storage = makeStorage();
+  const { deps } = makeDeps();
+  const store = createUploadStore({ ...deps, storage });
+
+  await store.getState().enqueue(CREATE_RESPONSE, PICKED, 'Persist test');
+
+  // Flush microtasks so the persist middleware writes to storage.
+  await new Promise((r) => setTimeout(r, 0));
+
+  expect(storage.setItem).toHaveBeenCalled();
+
+  // Find the last call and parse the stored JSON.
+  const calls = storage.setItem.mock.calls;
+  const lastValue = calls[calls.length - 1][1] as string;
+  const parsed = JSON.parse(lastValue) as { state: { jobs: unknown[] }; version: number };
+
+  expect(parsed.state.jobs).toHaveLength(1);
+  const job = parsed.state.jobs[0] as Record<string, unknown>;
+  expect(job.status).toBe('done');
+  // No function fields serialized.
+  expect(typeof job.enqueue).toBe('undefined');
+  expect(typeof job.retryFile).toBe('undefined');
+});
+
+test('interrupted uploads rehydrate as failed', async () => {
+  const seedState = JSON.stringify({
+    state: {
+      jobs: [
+        {
+          id: 'asset_interrupted',
+          title: 'Interrupted',
+          status: 'uploading',
+          files: [
+            {
+              videoId: 'v1',
+              uploadUrl: 'https://mux.example/u1',
+              localUri: 'file:///a.mp4',
+              filename: 'a.mp4',
+              progress: 0.5,
+              status: 'uploading',
+            },
+            {
+              videoId: 'v2',
+              uploadUrl: 'https://mux.example/u2',
+              localUri: 'file:///b.mp4',
+              filename: 'b.mp4',
+              progress: 0,
+              status: 'pending',
+            },
+          ],
+        },
+      ],
+    },
+    version: 0,
+  });
+
+  const storage = makeStorage({ 'zeta.uploadQueue': seedState });
+  const { deps } = makeDeps();
+  const store = createUploadStore({ ...deps, storage }) as PersistedUploadStore;
+
+  await store.persist.rehydrate();
+
+  const jobs = store.getState().jobs;
+  expect(jobs).toHaveLength(1);
+  expect(jobs[0].status).toBe('failed');
+  expect(jobs[0].files[0].status).toBe('failed');
+  expect(jobs[0].files[1].status).toBe('failed');
+});
+
+test('done jobs are dropped on rehydrate', async () => {
+  const seedState = JSON.stringify({
+    state: {
+      jobs: [
+        {
+          id: 'asset_done',
+          title: 'Done upload',
+          status: 'done',
+          files: [
+            {
+              videoId: 'v1',
+              uploadUrl: 'https://mux.example/u1',
+              localUri: 'file:///a.mp4',
+              filename: 'a.mp4',
+              progress: 1,
+              status: 'done',
+            },
+          ],
+        },
+        {
+          id: 'asset_interrupted',
+          title: 'Interrupted',
+          status: 'uploading',
+          files: [
+            {
+              videoId: 'v2',
+              uploadUrl: 'https://mux.example/u2',
+              localUri: 'file:///b.mp4',
+              filename: 'b.mp4',
+              progress: 0.3,
+              status: 'uploading',
+            },
+          ],
+        },
+      ],
+    },
+    version: 0,
+  });
+
+  const storage = makeStorage({ 'zeta.uploadQueue': seedState });
+  const { deps } = makeDeps();
+  const store = createUploadStore({ ...deps, storage }) as PersistedUploadStore;
+
+  await store.persist.rehydrate();
+
+  const jobs = store.getState().jobs;
+  // Only the interrupted job remains (now marked failed); done job is dropped.
+  expect(jobs).toHaveLength(1);
+  expect(jobs[0].id).toBe('asset_interrupted');
+  expect(jobs[0].status).toBe('failed');
 });
