@@ -25,12 +25,13 @@ test('untimed review renders no timestamp chip', async () => {
 test('reply affordance fires for top-level items and is absent on replies', async () => {
   const onReply = jest.fn();
   const user = userEvent.setup();
+
   await render(<ReviewItem review={REVIEW} onReply={onReply} />);
   await user.press(screen.getByTestId('review-reply'));
   expect(onReply).toHaveBeenCalledWith(REVIEW);
 
   await render(<ReviewItem review={{ ...REVIEW, id: 'r2', parent_id: 'r1' }} onReply={onReply} isReply />);
-  expect(screen.getAllByTestId('review-reply')).toHaveLength(1); // only the first render's
+  expect(screen.queryByTestId('review-reply')).toBeNull();
 });
 
 test('missing author falls back to a neutral label', async () => {

@@ -46,10 +46,8 @@ export type ReviewItemProps = {
  */
 export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewItemProps) {
   const authorName = review.author?.name ?? 'Unknown';
-  // Show the reply button whenever onReply is provided.
-  // isReply controls indentation and styling; the host is responsible for
-  // not wiring onReply to nested replies if infinite threading is undesired.
-  const showReplyButton = Boolean(onReply);
+  // Suppress the reply affordance on replies — one-level threads only.
+  const showReplyButton = Boolean(onReply) && !isReply;
 
   return (
     <View className={isReply ? 'pl-8' : undefined}>
@@ -63,7 +61,7 @@ export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewI
       </Text>
 
       {/* Body */}
-      <Text className="mt-1 text-sm leading-6 text-z-text">{review.content}</Text>
+      <Text className={`mt-1 text-sm leading-6 ${isReply ? 'text-z-muted' : 'text-z-text'}`}>{review.content}</Text>
 
       {/* Meta row */}
       <View className="mt-1 flex-row flex-wrap items-center gap-2">
