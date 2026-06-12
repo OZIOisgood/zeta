@@ -1,4 +1,17 @@
-import { exchangeCode, workosDiscovery } from './login';
+jest.mock('expo-secure-store', () => {
+  const store = new Map<string, string>();
+  return {
+    getItemAsync: jest.fn(async (k: string) => store.get(k) ?? null),
+    setItemAsync: jest.fn(async (k: string, v: string) => void store.set(k, v)),
+    deleteItemAsync: jest.fn(async (k: string) => void store.delete(k)),
+  };
+});
+
+import { completeLogin, exchangeCode, workosDiscovery } from './login';
+
+test('completeLogin without a stashed verifier is a no-op', async () => {
+  await expect(completeLogin('code_without_verifier')).resolves.toBe(false);
+});
 
 test('discovery points at the WorkOS user management authorize endpoint', () => {
   expect(workosDiscovery.authorizationEndpoint).toBe(

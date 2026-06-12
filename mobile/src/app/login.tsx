@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { makeRedirectUri, ResponseType, useAuthRequest } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { ZButton } from '../components/ui/z-button';
-import { exchangeCode, workosClientId, workosDiscovery } from '../auth/login';
+import { completeLogin, stashCodeVerifier, workosClientId, workosDiscovery } from '../auth/login';
 import { authStore } from '../auth/auth-store';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -37,13 +37,16 @@ export default function LoginScreen() {
     setBusy(true);
     setFailed(false);
     try {
+      // Stash the verifier first: in Expo Go the redirect may reload the
+      // project, in which case the auth/callback route finishes the login.
+      if (request.codeVerifier) await stashCodeVerifier(request.codeVerifier);
       const result = await promptAsync();
-      if (result.type !== 'success' || !result.params.code || !request.codeVerifier) {
+      if (result.type !== 'success' || !result.params.code) {
         if (result.type !== 'cancel' && result.type !== 'dismiss') setFailed(true);
         return;
       }
-      const tokens = await exchangeCode(result.params.code, request.codeVerifier);
-      await authStore.getState().signIn(tokens);
+      const ok = await completeLogin(result.params.code);
+      if (!ok && authStore.getState().status !== 'signedIn') setFailed(true);
     } catch {
       setFailed(true);
     } finally {
