@@ -145,6 +145,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/assets/videos/{id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List reviews for a video */
+        get: operations["listVideoReviews"];
+        put?: never;
+        /** Create a review on a video */
+        post: operations["createVideoReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -276,6 +294,31 @@ export interface components {
             created_at: string;
             updated_at: string;
         };
+        ReviewAuthor: {
+            name: string;
+            /** @description Base64-encoded avatar; omitted when unset */
+            avatar?: string;
+        };
+        Review: {
+            id: string;
+            content: string;
+            /**
+             * Format: int32
+             * @description Player position the comment refers to; omitted for untimed comments
+             */
+            timestamp_seconds?: number;
+            /** @description Present on replies */
+            parent_id?: string;
+            author?: components["schemas"]["ReviewAuthor"];
+            /** Format: date-time */
+            created_at: string;
+        };
+        CreateReviewRequest: {
+            content: string;
+            /** Format: int32 */
+            timestamp_seconds?: number;
+            parent_id?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -341,6 +384,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Rate limit exceeded for this client */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     refreshToken: {
@@ -374,6 +424,13 @@ export interface operations {
             };
             /** @description Refresh token expired or revoked */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limit exceeded for this client */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -627,6 +684,112 @@ export interface operations {
             };
             /** @description Missing groups:read permission */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listVideoReviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description video id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reviews for the video */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Review"][];
+                };
+            };
+            /** @description Invalid video id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing reviews:read permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Video not found or not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createVideoReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description video id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Review created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Review"];
+                };
+            };
+            /** @description Invalid video id, invalid body, missing content, or invalid parent_id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing reviews:create permission or video is part of a completed asset */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Video not found or not visible */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

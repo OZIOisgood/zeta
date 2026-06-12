@@ -227,6 +227,69 @@ paths:
           description: Not authenticated
         "403":
           description: Missing groups:read permission
+  /assets/videos/{id}/reviews:
+    get:
+      tags: [assets]
+      summary: List reviews for a video
+      operationId: listVideoReviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: video id
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Reviews for the video
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid video id
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing reviews:read permission
+        "404":
+          description: Video not found or not visible
+    post:
+      tags: [assets]
+      summary: Create a review on a video
+      operationId: createVideoReview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: video id
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewRequest"
+      responses:
+        "201":
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid video id, invalid body, missing content, or invalid parent_id
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing reviews:create permission or video is part of a completed asset
+        "404":
+          description: Video not found or not visible
   /auth/logout:
     post:
       tags: [auth]
@@ -482,3 +545,43 @@ components:
         updated_at:
           type: string
       required: [id, name, owner_id, avatar, description, created_at, updated_at]
+    ReviewAuthor:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded avatar; omitted when unset
+      required: [name]
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        timestamp_seconds:
+          type: integer
+          format: int32
+          description: Player position the comment refers to; omitted for untimed comments
+        parent_id:
+          type: string
+          description: Present on replies
+        author:
+          $ref: "#/components/schemas/ReviewAuthor"
+        created_at:
+          type: string
+          format: date-time
+      required: [id, content, created_at]
+    CreateReviewRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        timestamp_seconds:
+          type: integer
+          format: int32
+        parent_id:
+          type: string
+      required: [content]
