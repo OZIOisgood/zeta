@@ -13,6 +13,7 @@ servers:
 tags:
   - name: auth
   - name: system
+  - name: assets
 paths:
   /health:
     get:
@@ -111,6 +112,47 @@ paths:
           description: Invalid or missing timezone, invalid body
         "401":
           description: Not authenticated
+  /assets:
+    get:
+      tags: [assets]
+      summary: List assets visible to the current user
+      operationId: listAssets
+      responses:
+        "200":
+          description: Visible assets (students see their own, experts their groups')
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Asset"
+        "401":
+          description: Not authenticated
+  /assets/{id}:
+    get:
+      tags: [assets]
+      summary: Get a single visible asset including its video parts
+      operationId: getAsset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The asset with its videos and group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "400":
+          description: Invalid asset id
+        "401":
+          description: Not authenticated
+        "404":
+          description: Asset not found or not visible
   /auth/logout:
     post:
       tags: [auth]
@@ -254,3 +296,60 @@ components:
         email_preferences:
           $ref: "#/components/schemas/EmailPreferences"
       required: [timezone]
+    AssetGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded group avatar; omitted when unset
+      required: [id, name]
+    AssetVideo:
+      type: object
+      properties:
+        id:
+          type: string
+        playback_id:
+          type: string
+          description: Mux public playback ID; empty while the upload is processing
+        status:
+          type: string
+        review_count:
+          type: integer
+          format: int64
+      required: [id, playback_id, status, review_count]
+    Asset:
+      type: object
+      description: >
+        Parent reviewable submission (UI copy calls it a video). List responses
+        omit videos and group; the detail response includes them.
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        owner_id:
+          type: string
+        status:
+          type: string
+          enum: [waiting_upload, pending, completed]
+        thumbnail:
+          type: string
+          description: Mux thumbnail URL; omitted while no playback ID exists
+        playback_id:
+          type: string
+        review_count:
+          type: integer
+          format: int64
+        videos:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetVideo"
+        group:
+          $ref: "#/components/schemas/AssetGroup"
+      required: [id, title, description, owner_id, status, review_count]

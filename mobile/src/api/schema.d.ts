@@ -76,6 +76,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List assets visible to the current user */
+        get: operations["listAssets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single visible asset including its video parts */
+        get: operations["getAsset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -149,6 +183,36 @@ export interface components {
             avatar?: string;
             timezone: string;
             email_preferences?: components["schemas"]["EmailPreferences"];
+        };
+        AssetGroup: {
+            id: string;
+            name: string;
+            /** @description Base64-encoded group avatar; omitted when unset */
+            avatar?: string;
+        };
+        AssetVideo: {
+            id: string;
+            /** @description Mux public playback ID; empty while the upload is processing */
+            playback_id: string;
+            status: string;
+            /** Format: int64 */
+            review_count: number;
+        };
+        /** @description Parent reviewable submission (UI copy calls it a video). List responses omit videos and group; the detail response includes them. */
+        Asset: {
+            id: string;
+            title: string;
+            description: string;
+            owner_id: string;
+            /** @enum {string} */
+            status: "waiting_upload" | "pending" | "completed";
+            /** @description Mux thumbnail URL; omitted while no playback ID exists */
+            thumbnail?: string;
+            playback_id?: string;
+            /** Format: int64 */
+            review_count: number;
+            videos?: components["schemas"]["AssetVideo"][];
+            group?: components["schemas"]["AssetGroup"];
         };
     };
     responses: never;
@@ -313,6 +377,76 @@ export interface operations {
             };
             /** @description Not authenticated */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listAssets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Visible assets (students see their own, experts their groups') */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Asset"][];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The asset with its videos and group */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Asset"];
+                };
+            };
+            /** @description Invalid asset id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Asset not found or not visible */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
