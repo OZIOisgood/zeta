@@ -1,6 +1,7 @@
 import { createAuthStore, type AuthenticatedClientLike } from './auth-store';
 import { clearTokens, getTokens, setTokens } from './token-store';
 import { queryClient } from '../api/query-client';
+import * as WebBrowser from 'expo-web-browser';
 
 jest.mock('expo-secure-store', () => {
   const store = new Map<string, string>();
@@ -10,6 +11,10 @@ jest.mock('expo-secure-store', () => {
     deleteItemAsync: jest.fn(async (k: string) => void store.delete(k)),
   };
 });
+
+jest.mock('expo-web-browser', () => ({
+  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+}));
 
 const ME = {
   id: 'user_1', first_name: 'Heinrich', last_name: 'M', email: 'h@example.test',
@@ -31,6 +36,7 @@ function clientReturning(me: typeof ME | null) {
 
 beforeEach(async () => {
   await clearTokens();
+  (WebBrowser.openBrowserAsync as jest.Mock).mockClear();
 });
 
 test('restore without stored tokens lands on signedOut', async () => {
@@ -75,7 +81,11 @@ test('signOut clears tokens and user', async () => {
 test('clears the query cache on sign-out', async () => {
   const clearSpy = jest.spyOn(queryClient, 'clear');
   clearSpy.mockClear(); // robust against any prior signOut in the suite
-  const store = createAuthStore(); // default client; signOut only touches tokens + cache
+  const client = {
+    GET: jest.fn(async () => ({ data: ME, error: undefined })),
+    POST: jest.fn(async () => ({ data: { logoutUrl: 'https://workos.test/logout' }, error: undefined })),
+  };
+  const store = createAuthStore(client as unknown as AuthenticatedClientLike);
   await store.getState().signOut();
   expect(clearSpy).toHaveBeenCalledTimes(1);
   clearSpy.mockRestore();
@@ -105,5 +115,54 @@ test('signIn with network failure clears tokens and rethrows', async () => {
     store.getState().signIn({ accessToken: 'a', refreshToken: 'r' }),
   ).rejects.toThrow('Network request failed');
   expect(store.getState().status).toBe('signedOut');
+  expect(await getTokens()).toBeNull();
+});
+
+// ── signOut hits /auth/logout before clearing ─────────────────────────────────
+
+function logoutClient(result: { data?: { logoutUrl: string }; error?: unknown }) {
+  return {
+    GET: jest.fn(async () => ({ data: ME, error: undefined })),
+    POST: jest.fn(async () => result),
+  };
+}
+
+test('signOut posts to /auth/logout and opens the returned logout URL', async () => {
+  await setTokens({ accessToken: 'a', refreshToken: 'r' });
+  const client = logoutClient({ data: { logoutUrl: 'https://workos.test/logout?sid=1' } });
+  const store = createAuthStore(client as unknown as AuthenticatedClientLike);
+  await store.getState().signOut();
+
+  expect(client.POST).toHaveBeenCalledWith('/auth/logout');
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith('https://workos.test/logout?sid=1');
+  expect(store.getState().status).toBe('signedOut');
+  expect(store.getState().user).toBeNull();
+  expect(await getTokens()).toBeNull();
+});
+
+test('signOut still clears locally when the logout call returns an error', async () => {
+  await setTokens({ accessToken: 'a', refreshToken: 'r' });
+  const client = logoutClient({ data: undefined, error: { message: 'boom' } });
+  const store = createAuthStore(client as unknown as AuthenticatedClientLike);
+  await store.getState().signOut();
+
+  expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
+  expect(store.getState().status).toBe('signedOut');
+  expect(await getTokens()).toBeNull();
+});
+
+test('signOut still clears locally when the logout call throws (offline)', async () => {
+  await setTokens({ accessToken: 'a', refreshToken: 'r' });
+  const throwing = {
+    GET: jest.fn(async () => ({ data: ME, error: undefined })),
+    POST: jest.fn(async () => {
+      throw new TypeError('Network request failed');
+    }),
+  };
+  const store = createAuthStore(throwing as unknown as AuthenticatedClientLike);
+  await expect(store.getState().signOut()).resolves.toBeUndefined();
+
+  expect(store.getState().status).toBe('signedOut');
+  expect(store.getState().user).toBeNull();
   expect(await getTokens()).toBeNull();
 });

@@ -1,6 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import i18next from 'i18next';
+import * as WebBrowser from 'expo-web-browser';
 import type { components } from '../api/schema';
 import type { AuthenticatedClient } from '../api/authenticated-client';
 import { createAuthenticatedClient } from '../api/authenticated-client';
@@ -12,7 +13,7 @@ export type UpdateMeRequest = components['schemas']['UpdateMeRequest'];
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 
 /** Minimal interface the store needs — allows test doubles without full client shape. */
-export type AuthenticatedClientLike = Pick<AuthenticatedClient, 'GET' | 'PUT'>;
+export type AuthenticatedClientLike = Pick<AuthenticatedClient, 'GET' | 'PUT' | 'POST'>;
 
 type AuthState = {
   status: AuthStatus;
@@ -84,6 +85,19 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
       },
 
       signOut: async () => {
+        // End the WorkOS session first, while the access token still exists so the
+        // client attaches the Bearer header. Mirrors the web shell logout, which
+        // opens the returned logoutUrl. Best-effort: any failure (offline, non-2xx,
+        // thrown) must still clear the session locally so the user is not trapped.
+        try {
+          const { data, error } = await api.POST('/auth/logout' as never);
+          const logoutUrl = (data as { logoutUrl?: string } | undefined)?.logoutUrl;
+          if (!error && logoutUrl) {
+            await WebBrowser.openBrowserAsync(logoutUrl);
+          }
+        } catch {
+          // Swallow: local teardown below is the source of truth for sign-out.
+        }
         await clearTokens();
         queryClient.clear();
         set({ status: 'signedOut', user: null });
