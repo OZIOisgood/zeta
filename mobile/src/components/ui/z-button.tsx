@@ -2,13 +2,16 @@ import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
 
-export type ZButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ZButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link';
 
 const containerClasses: Record<ZButtonVariant, string> = {
   primary: 'bg-z-primary active:bg-z-primary-strong',
   secondary: 'bg-z-surface border border-z-border active:bg-z-surface-warm',
   ghost: 'bg-transparent active:bg-z-surface-muted',
   danger: 'bg-z-danger active:opacity-90',
+  // Inline primary-colored text link (web's `text-sm text-[var(--z-primary)]`
+  // anchor): transparent, no button chrome, dims on press.
+  link: 'bg-transparent active:opacity-70',
 };
 
 const labelClasses: Record<ZButtonVariant, string> = {
@@ -16,6 +19,7 @@ const labelClasses: Record<ZButtonVariant, string> = {
   secondary: 'text-z-text',
   ghost: 'text-z-text',
   danger: 'text-white',
+  link: 'text-z-primary',
 };
 
 /** Spinner color matching each variant's label color. */
@@ -24,6 +28,7 @@ const spinnerColor: Record<ZButtonVariant, string> = {
   secondary: colors.text,
   ghost: colors.text,
   danger: colors.onPrimary,
+  link: colors.primary,
 };
 
 export function ZButton({
@@ -46,6 +51,11 @@ export function ZButton({
   testID?: string;
 }) {
   const isDisabled = disabled || loading;
+  const isLink = variant === 'link';
+  // The link variant drops the button chrome (padding/rounding) and uses the
+  // web link's 14px size; all other variants keep the standard button sizing.
+  const chromeClasses = isLink ? '' : 'rounded-lg px-4 py-3';
+  const labelSizeClasses = isLink ? 'text-sm' : 'text-base';
   return (
     <Pressable
       testID={testID}
@@ -54,7 +64,7 @@ export function ZButton({
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       onPress={onPress}
-      className={`flex-row items-center justify-center gap-2 rounded-lg px-4 py-3 ${containerClasses[variant]} ${isDisabled ? 'opacity-50' : ''}`}
+      className={`flex-row items-center justify-center gap-2 ${chromeClasses} ${containerClasses[variant]} ${isDisabled ? 'opacity-50' : ''}`}
     >
       {loading ? (
         <ActivityIndicator
@@ -65,7 +75,7 @@ export function ZButton({
       ) : icon ? (
         <View>{icon}</View>
       ) : null}
-      <Text className={`text-base font-semibold ${labelClasses[variant]}`}>{label}</Text>
+      <Text className={`${labelSizeClasses} font-semibold ${labelClasses[variant]}`}>{label}</Text>
     </Pressable>
   );
 }

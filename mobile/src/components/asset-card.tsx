@@ -53,7 +53,7 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
             className="flex-row items-center gap-1"
           >
             <MessageSquare color={colors.muted} size={14} />
-            <Text className="text-xs text-z-muted">{asset.review_count}</Text>
+            <Text className="text-xs font-semibold text-z-muted">{asset.review_count}</Text>
           </View>
         </View>
       </View>

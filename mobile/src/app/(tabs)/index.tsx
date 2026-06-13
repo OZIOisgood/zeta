@@ -239,7 +239,7 @@ export default function HomeScreen() {
             <ZButton
               testID="latest-videos-view-all"
               label={t('common.actions.viewAll')}
-              variant="ghost"
+              variant="link"
               onPress={() => router.push('/videos')}
             />
           </View>
