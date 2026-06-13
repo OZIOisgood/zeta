@@ -182,3 +182,17 @@ test('loading state renders a skeleton', async () => {
   await render(<Providers><AssetDetailScreen /></Providers>);
   expect(screen.getByTestId('asset-detail-skeleton')).toBeOnTheScreen();
 });
+
+// ── i18n fix: partsProcessing pluralization ───────────────────────────────────
+
+test('processing-parts banner renders via i18n plural key (testID present)', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  // DETAIL has 2 videos, one processing (playback_id === '')
+  // Must render the testID for the processing banner
+  expect(screen.getByTestId('processing-parts-banner')).toBeOnTheScreen();
+  // English plural: "1 more part still processing."
+  expect(screen.getByText('1 more part still processing.')).toBeOnTheScreen();
+  // Must NOT render the old hardcoded hand-rolled plural string pattern
+  expect(screen.queryByText(/more parts still processing\./)).toBeNull();
+});

@@ -97,7 +97,9 @@ export function ReviewComposer({
   }
 
   const timestampLabel =
-    capturedTime !== null ? `at ${formatTimestamp(capturedTime)}` : 'at 0:00';
+    capturedTime !== null
+      ? t('videos.atTime', { time: formatTimestamp(capturedTime) })
+      : t('videos.atTime', { time: '0:00' });
 
   return (
     <View className="gap-2">
@@ -105,13 +107,12 @@ export function ReviewComposer({
       {replyingTo && (
         <View className="flex-row items-center gap-2 rounded-md bg-z-surface-warm px-3 py-2">
           <Text className="flex-1 text-xs text-z-muted" numberOfLines={1}>
-            Replying to{' '}
-            <Text className="font-semibold text-z-text">
-              {replyingTo.author?.name ?? t('videos.unknownAuthor')}
-            </Text>
+            {t('videos.replyingTo', {
+              name: replyingTo.author?.name ?? t('videos.unknownAuthor'),
+            })}
           </Text>
           <ZIconButton
-            label="Cancel reply"
+            label={t('videos.cancelReply')}
             size="sm"
             testID="review-cancel-reply"
             onPress={onCancelReply}
@@ -156,7 +157,7 @@ export function ReviewComposer({
           </ZIconButton>
         ) : null}
         <ZIconButton
-          label="Send"
+          label={t('videos.send')}
           variant="primary"
           size="sm"
           testID="review-send"

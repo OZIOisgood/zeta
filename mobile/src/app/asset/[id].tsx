@@ -473,8 +473,8 @@ export default function AssetDetailScreen() {
                 })}
               </View>
               {processingParts > 0 ? (
-                <Text className="text-sm text-z-muted">
-                  {processingParts} more part{processingParts > 1 ? 's' : ''} still processing.
+                <Text testID="processing-parts-banner" className="text-sm text-z-muted">
+                  {t('videos.partsProcessing', { count: processingParts })}
                 </Text>
               ) : null}
             </ZCard>
