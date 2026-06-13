@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, Text } from 'react-native';
+import { FlatList, Modal, Pressable, Text } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import { colors } from '../../theme/colors';
 import { ZTextInput } from './z-text-input';
@@ -21,6 +21,7 @@ export function ZCombobox({
   disabled = false,
   accessibilityLabel,
   searchPlaceholder = '',
+  closeLabel = 'Close',
   testID,
 }: {
   value?: string;
@@ -31,6 +32,7 @@ export function ZCombobox({
   disabled?: boolean;
   accessibilityLabel?: string;
   searchPlaceholder?: string;
+  closeLabel?: string;
   testID?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -65,7 +67,7 @@ export function ZCombobox({
       </Pressable>
 
       <Modal transparent visible={open} animationType="fade" onRequestClose={close}>
-        <Pressable accessibilityLabel="Close" onPress={close} className="flex-1 justify-end bg-black/40">
+        <Pressable accessibilityLabel={closeLabel} onPress={close} className="flex-1 justify-end bg-black/40">
           <Pressable onPress={() => {}} className="m-4 rounded-lg border border-z-border bg-z-surface">
             <ZTextInput
               accessibilityLabel={searchPlaceholder || 'Search'}
@@ -73,28 +75,33 @@ export function ZCombobox({
               onChangeText={setQuery}
               placeholder={searchPlaceholder}
             />
-            {filtered.map((option) => {
-              const isSelected = option.value === value;
-              return (
-                <Pressable
-                  key={option.value}
-                  accessibilityRole="button"
-                  accessibilityLabel={option.label}
-                  accessibilityState={{ selected: isSelected }}
-                  onPress={() => {
-                    onValueChange(option.value);
-                    close();
-                  }}
-                  className="border-b border-z-border px-4 py-3 last:border-b-0"
-                >
-                  <Text
-                    className={isSelected ? 'font-semibold text-z-primary-strong' : 'text-z-text'}
+            <FlatList
+              data={filtered}
+              keyExtractor={(option) => option.value}
+              keyboardShouldPersistTaps="handled"
+              style={{ maxHeight: 320 }}
+              renderItem={({ item: option }) => {
+                const isSelected = option.value === value;
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={option.label}
+                    accessibilityState={{ selected: isSelected }}
+                    onPress={() => {
+                      onValueChange(option.value);
+                      close();
+                    }}
+                    className="border-b border-z-border px-4 py-3"
                   >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    <Text
+                      className={isSelected ? 'font-semibold text-z-primary-strong' : 'text-z-text'}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              }}
+            />
           </Pressable>
         </Pressable>
       </Modal>

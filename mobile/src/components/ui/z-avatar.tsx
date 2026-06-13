@@ -26,17 +26,15 @@ export function ZAvatar({
   return (
     <View
       testID={testID}
+      accessible
+      accessibilityLabel={alt}
       className={`items-center justify-center overflow-hidden bg-z-surface-warm ${
         shape === 'circle' ? 'rounded-full' : 'rounded-md'
       }`}
       style={{ width: size, height: size }}
     >
       {image ? (
-        <Image
-          source={{ uri: avatarSrc(image) }}
-          accessibilityLabel={alt}
-          style={{ width: size, height: size }}
-        />
+        <Image source={{ uri: avatarSrc(image) }} style={{ width: size, height: size }} />
       ) : (
         <Text className="text-sm font-semibold text-z-primary">{fallback}</Text>
       )}

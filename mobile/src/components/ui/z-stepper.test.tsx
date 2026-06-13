@@ -28,3 +28,17 @@ test('tapping an upcoming step does not call onStepPress', async () => {
   fireEvent.press(screen.getByRole('button', { name: 'Review' }));
   expect(onStepPress).not.toHaveBeenCalled();
 });
+
+test('renders all five step labels without dropping any on narrow widths', async () => {
+  const fiveSteps: ZStep[] = [
+    { label: 'Upload', state: 'completed' },
+    { label: 'Details', state: 'completed' },
+    { label: 'Review', state: 'active' },
+    { label: 'Publish', state: 'upcoming' },
+    { label: 'Done', state: 'upcoming' },
+  ];
+  await render(<ZStepper steps={fiveSteps} />);
+  for (const step of fiveSteps) {
+    expect(screen.getByText(step.label)).toBeOnTheScreen();
+  }
+});

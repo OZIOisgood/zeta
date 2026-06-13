@@ -67,6 +67,37 @@ test('selecting a filtered option calls onValueChange', async () => {
   expect(onValueChange).toHaveBeenCalledWith('de');
 });
 
+test('renders all options in the scrollable list when opened', async () => {
+  const user = userEvent.setup();
+  await render(
+    <ZCombobox
+      options={options}
+      onValueChange={jest.fn()}
+      accessibilityLabel="Language"
+      searchPlaceholder="Search languages"
+    />,
+  );
+  await user.press(screen.getByRole('button', { name: 'Language' }));
+  expect(screen.getByRole('button', { name: 'English' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'German' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'French' })).toBeOnTheScreen();
+});
+
+test('uses the closeLabel prop for the backdrop accessibility label', async () => {
+  const user = userEvent.setup();
+  const onValueChange = jest.fn();
+  await render(
+    <ZCombobox
+      options={options}
+      onValueChange={onValueChange}
+      accessibilityLabel="Language"
+      closeLabel="Schließen"
+    />,
+  );
+  await user.press(screen.getByRole('button', { name: 'Language' }));
+  expect(screen.getByLabelText('Schließen')).toBeOnTheScreen();
+});
+
 test('disabled trigger does not open the modal', async () => {
   const user = userEvent.setup();
   const onValueChange = jest.fn();

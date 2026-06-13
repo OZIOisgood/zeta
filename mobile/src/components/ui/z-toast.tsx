@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Check, CircleAlert, Info, X } from 'lucide-react-native';
 import { createStore } from 'zustand/vanilla';
 import { colors } from '../../theme/colors';
@@ -77,6 +78,7 @@ const ToastIcon = {
 } as const;
 
 function ToastCard({ toast, onDismiss }: { toast: ZToast; onDismiss: (id: number) => void }) {
+  const { t } = useTranslation();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const Icon = ToastIcon[toast.tone];
 
@@ -104,7 +106,7 @@ function ToastCard({ toast, onDismiss }: { toast: ZToast; onDismiss: (id: number
           <Text className="mt-1 text-sm leading-5 text-z-muted">{toast.message}</Text>
         ) : null}
       </View>
-      <ZIconButton label="Dismiss notification" size="sm" onPress={() => onDismiss(toast.id)}>
+      <ZIconButton label={t('common.dismiss')} size="sm" onPress={() => onDismiss(toast.id)}>
         <X color={colors.muted} size={16} />
       </ZIconButton>
     </View>

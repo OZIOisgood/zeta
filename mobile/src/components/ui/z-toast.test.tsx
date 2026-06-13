@@ -1,6 +1,12 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, render, screen, userEvent } from '@testing-library/react-native';
+
+jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
+
+import { initI18n } from '../../i18n';
 import { ZToastHost, showToast, toastStore } from './z-toast';
+
+beforeAll(() => initI18n('en'));
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -56,7 +62,7 @@ test('pressing dismiss removes the toast', async () => {
   await act(async () => {
     showToast('Saved', 'Your changes are live');
   });
-  await user.press(screen.getByRole('button', { name: 'Dismiss notification' }));
+  await user.press(screen.getByRole('button', { name: 'Dismiss' }));
   expect(screen.queryByText('Saved')).toBeNull();
 });
 

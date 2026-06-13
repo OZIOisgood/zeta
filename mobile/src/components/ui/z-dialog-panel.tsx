@@ -11,17 +11,19 @@ export function ZDialogPanel({
   visible,
   onClose,
   children,
+  closeLabel = 'Close',
   testID,
 }: {
   visible: boolean;
   onClose: () => void;
   children: ReactNode;
+  closeLabel?: string;
   testID?: string;
 }) {
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable
-        accessibilityLabel="Close"
+        accessibilityLabel={closeLabel}
         onPress={onClose}
         className="flex-1 items-center justify-center bg-black/40 p-4"
       >

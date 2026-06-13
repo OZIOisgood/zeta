@@ -32,6 +32,18 @@ test('pressing the backdrop calls onClose', async () => {
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
+test('uses the closeLabel prop for the backdrop accessibility label', async () => {
+  const user = userEvent.setup();
+  const onClose = jest.fn();
+  await render(
+    <ZDialogPanel visible onClose={onClose} closeLabel="Schließen">
+      <Text>Panel body</Text>
+    </ZDialogPanel>,
+  );
+  await user.press(screen.getByLabelText('Schließen'));
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
+
 test('pressing the panel does not call onClose', async () => {
   const user = userEvent.setup();
   const onClose = jest.fn();

@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
 
 export type ZStepState = 'completed' | 'active' | 'upcoming';
@@ -35,14 +35,19 @@ export function ZStepper({
   testID?: string;
 }) {
   return (
-    <View testID={testID} className="flex-row items-start">
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      testID={testID}
+      contentContainerStyle={{ flexDirection: 'row', alignItems: 'flex-start' }}
+    >
       {steps.map((step, index) => {
         const disabled = step.state === 'upcoming';
         return (
           <View key={index} className="flex-row items-start">
             {index > 0 ? (
               <View
-                className={`mt-4 h-0.5 flex-1 ${
+                className={`mt-4 h-0.5 w-8 ${
                   step.state !== 'upcoming' ? 'bg-z-primary' : 'bg-z-border'
                 }`}
               />
@@ -73,6 +78,6 @@ export function ZStepper({
           </View>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
