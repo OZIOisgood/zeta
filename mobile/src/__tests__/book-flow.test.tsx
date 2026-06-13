@@ -38,8 +38,9 @@ jest.mock('../api/queries/coaching', () => ({
 // ── router mock ───────────────────────────────────────────────────────────────
 
 const mockBack = jest.fn();
+const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ back: mockBack }),
+  useRouter: () => ({ back: mockBack, replace: mockReplace }),
 }));
 
 // ── i18n + component imports (after mocks) ────────────────────────────────────
@@ -118,6 +119,7 @@ function dataHook<T>(data: T) {
 let client: QueryClient;
 beforeEach(() => {
   mockBack.mockClear();
+  mockReplace.mockClear();
   mockMutateAsync.mockClear();
   mockUseGroupsQuery.mockReset();
   mockUseCoachingExpertsQuery.mockReset();
@@ -204,9 +206,9 @@ test('selecting expert then session type calls useSlotsQuery with all three ids'
   });
 });
 
-// ── Test 3: full flow → mutateAsync called → router.back ──────────────────────
+// ── Test 3: full flow → mutateAsync called → success screen ───────────────────
 
-test('full flow: pick slot → confirm section → submit → mutateAsync called → router.back', async () => {
+test('full flow: pick slot → confirm section → submit → mutateAsync called → success screen', async () => {
   mockUseGroupsQuery.mockReturnValue(dataHook([GROUP_A]));
   mockUseCoachingExpertsQuery.mockReturnValue(dataHook([EXPERT_1]));
   mockUseSessionTypesQuery.mockReturnValue(dataHook([SESSION_TYPE_1]));
@@ -231,9 +233,11 @@ test('full flow: pick slot → confirm section → submit → mutateAsync called
   await waitFor(() => expect(screen.getByTestId('book-submit')).toBeOnTheScreen());
 
   // Press submit
-  fireEvent.press(screen.getByTestId('book-submit'));
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('book-submit'));
+  });
 
-  // mutateAsync resolves → router.back() is called synchronously after it
+  // mutateAsync resolves → success screen replaces the flow, no router.back
   await waitFor(() => {
     expect(mockMutateAsync).toHaveBeenCalledWith({
       expertId: 'e1',
@@ -241,8 +245,13 @@ test('full flow: pick slot → confirm section → submit → mutateAsync called
       scheduledAt: SLOT_1.starts_at,
       notes: undefined,
     });
-    expect(mockBack).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('book-success')).toBeOnTheScreen();
   });
+  expect(mockBack).not.toHaveBeenCalled();
+
+  // "View My Sessions" navigates to the sessions list
+  fireEvent.press(screen.getByTestId('book-view-sessions'));
+  expect(mockReplace).toHaveBeenCalledWith('/coaching');
 });
 
 
@@ -274,9 +283,11 @@ test('full flow with notes: notes value passed to mutateAsync', async () => {
     fireEvent.changeText(screen.getByTestId('book-notes'), 'My prep notes');
   });
 
-  fireEvent.press(screen.getByTestId('book-submit'));
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('book-submit'));
+  });
 
-  // mutateAsync resolves → router.back() is called synchronously after it
+  // mutateAsync resolves with the typed notes → success screen, no router.back
   await waitFor(() => {
     expect(mockMutateAsync).toHaveBeenCalledWith({
       expertId: 'e1',
@@ -284,8 +295,9 @@ test('full flow with notes: notes value passed to mutateAsync', async () => {
       scheduledAt: SLOT_1.starts_at,
       notes: 'My prep notes',
     });
-    expect(mockBack).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('book-success')).toBeOnTheScreen();
   });
+  expect(mockBack).not.toHaveBeenCalled();
 });
 
 
@@ -330,7 +342,9 @@ test('notes reset when expert changes: submitted body has notes: undefined', asy
   await waitFor(() => expect(screen.getByTestId('book-submit')).toBeOnTheScreen());
 
   // Step 5: submit — notes field was reset so submitted body has notes: undefined
-  fireEvent.press(screen.getByTestId('book-submit'));
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('book-submit'));
+  });
   await waitFor(() => {
     expect(mockMutateAsync).toHaveBeenCalledWith(
       expect.objectContaining({ notes: undefined }),
