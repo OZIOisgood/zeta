@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Check, ChevronLeft, CloudOff } from 'lucide-react-native';
+import { ArrowLeft, Check, CloudOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { CoachingExpert, CoachingSlot, SessionType } from '../api/queries/coaching';
 import {
@@ -217,9 +217,9 @@ export default function BookScreen() {
           variant="ghost"
           size="sm"
         >
-          <ChevronLeft color={colors.text} size={20} />
+          <ArrowLeft color={colors.text} size={24} />
         </ZIconButton>
-        <Text className="text-xl font-semibold text-z-text">{t('sessions.bookLive')}</Text>
+        <Text className="text-lg font-semibold text-z-text">{t('sessions.bookLive')}</Text>
       </View>
 
       {booked ? (
@@ -260,7 +260,7 @@ export default function BookScreen() {
 
             {/* ── Group section (hidden when exactly one group) ─────────────────── */}
             {groups.length !== 1 && (
-              <View>
+              <ZCard>
                 <Text className="mb-2 text-base font-semibold text-z-text">
                   {t('sessions.book.selectGroup')}
                 </Text>
@@ -277,11 +277,16 @@ export default function BookScreen() {
                   >
                     <ZButton
                       testID="book-groups-retry"
-                      label={t('upload.retry')}
+                      label={t('common.actions.retry')}
                       variant="secondary"
                       onPress={() => void groupsQuery.refetch()}
                     />
                   </ZEmptyState>
+                ) : groups.length === 0 ? (
+                  <ZEmptyState
+                    title={t('groups.noGroupsYet')}
+                    description={t('groups.noGroupsJoined')}
+                  />
                 ) : (
                   <View className="flex-row flex-wrap gap-2">
                     {groups.map((g) => (
@@ -295,12 +300,12 @@ export default function BookScreen() {
                     ))}
                   </View>
                 )}
-              </View>
+              </ZCard>
             )}
 
             {/* ── Expert section ────────────────────────────────────────────────── */}
             {groupId !== '' && (
-              <View>
+              <ZCard>
                 <Text className="mb-2 text-base font-semibold text-z-text">
                   {t('sessions.book.selectExpert')}
                 </Text>
@@ -317,7 +322,7 @@ export default function BookScreen() {
                   >
                     <ZButton
                       testID="book-experts-retry"
-                      label={t('upload.retry')}
+                      label={t('common.actions.retry')}
                       variant="secondary"
                       onPress={() => void expertsQuery.refetch()}
                     />
@@ -340,7 +345,7 @@ export default function BookScreen() {
                     ))}
                   </View>
                 )}
-              </View>
+              </ZCard>
             )}
 
             {/* ── Session Type section ──────────────────────────────────────────── */}
@@ -362,7 +367,7 @@ export default function BookScreen() {
                   >
                     <ZButton
                       testID="book-types-retry"
-                      label={t('upload.retry')}
+                      label={t('common.actions.retry')}
                       variant="secondary"
                       onPress={() => void sessionTypesQuery.refetch()}
                     />
@@ -388,7 +393,7 @@ export default function BookScreen() {
                           <ZCard className={isSelected ? 'border-z-primary bg-z-primary-soft' : ''}>
                             <View className="flex-row items-start justify-between gap-2">
                               <Text className="flex-1 font-semibold text-z-text">{st.name}</Text>
-                              <ZBadge label={`${st.duration_minutes} min`} tone="primary" />
+                              <ZBadge label={`${st.duration_minutes} min`} />
                             </View>
                             <Text className="mt-2 text-sm leading-6 text-z-muted">
                               {st.description}
@@ -404,7 +409,7 @@ export default function BookScreen() {
 
             {/* ── Slot section ──────────────────────────────────────────────────── */}
             {groupId !== '' && expertId !== '' && sessionTypeId !== '' && (
-              <View>
+              <ZCard>
                 <Text className="mb-2 text-base font-semibold text-z-text">
                   {t('sessions.book.selectTime')}
                 </Text>
@@ -425,7 +430,7 @@ export default function BookScreen() {
                   >
                     <ZButton
                       testID="book-slots-retry"
-                      label={t('upload.retry')}
+                      label={t('common.actions.retry')}
                       variant="secondary"
                       onPress={() => void slotsQuery.refetch()}
                     />
@@ -457,7 +462,7 @@ export default function BookScreen() {
                     ))}
                   </View>
                 )}
-              </View>
+              </ZCard>
             )}
 
             {/* Inline submit error — shown outside confirm section so it persists after slot reset */}

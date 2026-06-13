@@ -166,6 +166,18 @@ test('single group auto-selected: expert step immediately active', async () => {
   });
 });
 
+// ── Test: no groups → empty state in group section ────────────────────────────
+
+test('no groups joined: group section shows the no-groups empty state', async () => {
+  mockUseGroupsQuery.mockReturnValue(dataHook([] as Group[]));
+
+  await render(<Providers client={client}><BookScreen /></Providers>);
+
+  await waitFor(() => expect(screen.getByText('No groups yet')).toBeOnTheScreen());
+  // No expert step yet — no group is selected
+  expect(screen.queryByTestId('book-expert-e1')).toBeNull();
+});
+
 // ── Test 2: selecting expert + session type fires slots query ──────────────────
 
 test('selecting expert then session type calls useSlotsQuery with all three ids', async () => {
