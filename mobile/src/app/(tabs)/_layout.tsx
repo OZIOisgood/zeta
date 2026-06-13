@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { CalendarClock, UserRound, Users, Video } from 'lucide-react-native';
+import { CalendarClock, Home, UserRound, Users, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { colors } from '../../theme/colors';
 
@@ -15,11 +15,15 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
+        options={{ title: t('common.nav.home'), tabBarIcon: ({ color, size }) => <Home color={color} size={size} /> }}
+      />
+      <Tabs.Screen
+        name="videos"
         options={{ title: t('common.nav.videos'), tabBarIcon: ({ color, size }) => <Video color={color} size={size} /> }}
       />
       <Tabs.Screen
         name="coaching"
-        options={{ title: 'Coaching', tabBarIcon: ({ color, size }) => <CalendarClock color={color} size={size} /> }}
+        options={{ title: t('common.nav.sessions'), tabBarIcon: ({ color, size }) => <CalendarClock color={color} size={size} /> }}
       />
       <Tabs.Screen
         name="groups"
@@ -27,7 +31,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: 'Profile', tabBarIcon: ({ color, size }) => <UserRound color={color} size={size} /> }}
+        options={{ title: t('preferences.title'), tabBarIcon: ({ color, size }) => <UserRound color={color} size={size} /> }}
       />
     </Tabs>
   );
