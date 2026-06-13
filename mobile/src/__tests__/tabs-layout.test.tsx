@@ -1,9 +1,10 @@
 /**
  * Tests for the tabs layout (src/app/(tabs)/_layout.tsx).
- * Each tab's `title` option comes from t(), so this asserts the five titles
- * resolve to non-empty translated strings (not the raw i18n keys).
+ * Asserts permission-gating of Groups and Coaching tabs and that
+ * Home, Videos, and Profile are always rendered.
  */
-import { render } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
+import { View } from 'react-native';
 
 // ── native module mocks (before importing the layout) ─────────────────────────
 
@@ -11,59 +12,74 @@ jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' 
 
 // ── expo-router mock ──────────────────────────────────────────────────────────
 
-// Capture each Tabs.Screen's options so the test can read the resolved titles.
-const capturedScreens: Record<string, { title?: string }> = {};
-
+// Render each <Tabs.Screen> as a testID-tagged node so we can assert
+// presence/absence by route name. Tabs itself is a passthrough.
 jest.mock('expo-router', () => {
-  function Tabs({ children }: { children: React.ReactNode }) {
-    return children;
-  }
-  function TabsScreen({ name, options }: { name: string; options?: { title?: string } }) {
-    capturedScreens[name] = options ?? {};
-    return null;
-  }
-  Tabs.Screen = TabsScreen;
+  const { View: RNView } = require('react-native');
+  const Tabs = ({ children }: { children: React.ReactNode }) => <RNView>{children}</RNView>;
+  Tabs.Screen = ({ name }: { name: string }) => <RNView testID={`tab-${name}`} />;
   return { Tabs };
 });
 
-// ── i18n + component imports (after mocks) ────────────────────────────────────
+// ── auth-store mock ───────────────────────────────────────────────────────────
 
-import i18next from 'i18next';
+// Drive permissions through useAuth, matching the screen-test idiom. Spread the
+// real module first so the mock stays robust if _layout imports anything else
+// from auth-store later.
+let mockPermissions: string[] | null = [];
+jest.mock('../auth/auth-store', () => ({
+  ...jest.requireActual('../auth/auth-store'),
+  useAuth: (selector: (s: { user: { permissions: string[] } | null }) => unknown) =>
+    selector({ user: mockPermissions !== null ? { permissions: mockPermissions } : null }),
+}));
+
+// ── imports (after mocks) ─────────────────────────────────────────────────────
+
 import { initI18n } from '../i18n';
 import TabsLayout from '../app/(tabs)/_layout';
 
+// Suppress the unused View import lint warning — kept for parity with screen test headers.
+void View;
+
 beforeAll(() => initI18n('en'));
-
 beforeEach(() => {
-  for (const key of Object.keys(capturedScreens)) delete capturedScreens[key];
+  mockPermissions = [];
 });
 
-// Each tab maps a route name to the i18n key its title is derived from.
-const TAB_TITLE_KEYS: Record<string, string> = {
-  index: 'common.nav.home',
-  videos: 'common.nav.videos',
-  coaching: 'common.nav.sessions',
-  groups: 'common.nav.groups',
-  profile: 'preferences.title',
-};
+// ── tests ─────────────────────────────────────────────────────────────────────
 
-test('renders all five tabs', async () => {
+test('always renders Home, Videos, and Profile tabs', async () => {
+  mockPermissions = [];
   await render(<TabsLayout />);
-
-  expect(Object.keys(capturedScreens).sort()).toEqual(
-    ['coaching', 'groups', 'index', 'profile', 'videos'],
-  );
+  expect(screen.getByTestId('tab-index')).toBeOnTheScreen();
+  expect(screen.getByTestId('tab-videos')).toBeOnTheScreen();
+  expect(screen.getByTestId('tab-profile')).toBeOnTheScreen();
 });
 
-test('each tab title resolves to a non-empty translated string', async () => {
+test('hides Groups and Coaching tabs without the permissions', async () => {
+  mockPermissions = ['assets:read'];
   await render(<TabsLayout />);
+  expect(screen.queryByTestId('tab-groups')).toBeNull();
+  expect(screen.queryByTestId('tab-coaching')).toBeNull();
+});
 
-  for (const [name, key] of Object.entries(TAB_TITLE_KEYS)) {
-    const title = capturedScreens[name]?.title;
-    expect(typeof title).toBe('string');
-    expect(title?.length ?? 0).toBeGreaterThan(0);
-    // A resolved translation differs from the raw key and matches i18next.
-    expect(title).not.toBe(key);
-    expect(title).toBe(i18next.t(key));
-  }
+test('shows the Groups tab with groups:read', async () => {
+  mockPermissions = ['groups:read'];
+  await render(<TabsLayout />);
+  expect(screen.getByTestId('tab-groups')).toBeOnTheScreen();
+  expect(screen.queryByTestId('tab-coaching')).toBeNull();
+});
+
+test('shows the Coaching tab with coaching:bookings:read', async () => {
+  mockPermissions = ['coaching:bookings:read'];
+  await render(<TabsLayout />);
+  expect(screen.getByTestId('tab-coaching')).toBeOnTheScreen();
+  expect(screen.queryByTestId('tab-groups')).toBeNull();
+});
+
+test('shows both gated tabs when both permissions are present', async () => {
+  mockPermissions = ['groups:read', 'coaching:bookings:read'];
+  await render(<TabsLayout />);
+  expect(screen.getByTestId('tab-groups')).toBeOnTheScreen();
+  expect(screen.getByTestId('tab-coaching')).toBeOnTheScreen();
 });
