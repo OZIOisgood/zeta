@@ -31,7 +31,6 @@ export default function InviteScreen() {
   const [code, setCode] = useState('');
   const [manualInput, setManualInput] = useState('');
   const [manualInputError, setManualInputError] = useState(false);
-  const manualInputRef = useRef('');
   const scannedRef = useRef(false);
 
   const infoQuery = useInvitationInfoQuery(code);
@@ -48,7 +47,7 @@ export default function InviteScreen() {
   }
 
   function handleManualSubmit() {
-    const current = manualInputRef.current;
+    const current = manualInput;
     const parsed = parseInviteCode(current);
     if (!parsed) {
       setManualInputError(true);
@@ -62,7 +61,6 @@ export default function InviteScreen() {
     setCode('');
     setManualInput('');
     setManualInputError(false);
-    manualInputRef.current = '';
     scannedRef.current = false;
   }
 
@@ -161,7 +159,6 @@ export default function InviteScreen() {
                 accessibilityLabel={t('groups.invite.codePlaceholder')}
                 value={manualInput}
                 onChangeText={(v) => {
-                  manualInputRef.current = v;
                   setManualInput(v);
                   if (manualInputError) setManualInputError(false);
                 }}
