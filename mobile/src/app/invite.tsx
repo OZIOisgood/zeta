@@ -232,7 +232,7 @@ export default function InviteScreen() {
               {info && (
                 <View className="gap-4">
                   {/* Invitation headline */}
-                  <Text className="text-center text-base font-semibold text-z-text">
+                  <Text className="text-center text-sm text-z-muted">
                     {t('groups.invitationDialog.invited', { group: info.group_name })}
                   </Text>
 
