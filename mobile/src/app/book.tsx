@@ -475,7 +475,7 @@ export default function BookScreen() {
             {/* ── Confirm section ───────────────────────────────────────────────── */}
             {slot !== null && selectedExpert !== null && selectedSessionType !== null && (
               <ZCard className="gap-3">
-                <Text className="text-base font-semibold text-z-text">
+                <Text className="text-lg font-semibold text-z-text">
                   {t('sessions.book.confirmDescription')}
                 </Text>
 
