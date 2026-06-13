@@ -1,7 +1,8 @@
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { GroupUser } from '../api/queries/groups';
-import { avatarSrc } from '../lib/avatar';
+import { ZAvatar } from './ui/z-avatar';
+import { ZBadge } from './ui/z-badge';
 
 function initials(member: GroupUser): string {
   const first = member.first_name.charAt(0).toUpperCase();
@@ -22,22 +23,20 @@ export function MemberRow({ member }: { member: GroupUser }) {
   const roleLabel = roleKey ? t(roleKey) : member.role;
   return (
     <View className="flex-row items-center gap-3 py-2">
-      <View className="h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-z-surface-muted">
-        {member.avatar ? (
-          <Image
-            source={{ uri: avatarSrc(member.avatar) }}
-            className="h-full w-full"
-            resizeMode="cover"
-          />
-        ) : (
-          <View testID="member-initials" className="items-center justify-center">
-            <Text className="text-sm font-semibold text-z-text">{initials(member)}</Text>
-          </View>
-        )}
-      </View>
+      <ZAvatar
+        image={member.avatar}
+        fallback={initials(member)}
+        size={44}
+        shape="circle"
+        alt={fullName}
+        testID={member.avatar ? undefined : 'member-initials'}
+      />
       <View className="flex-1">
-        <Text className="text-sm font-semibold text-z-text">{fullName}</Text>
-        <Text className="text-xs text-z-muted">{roleLabel}</Text>
+        <View className="flex-row flex-wrap items-center gap-2">
+          <Text className="text-sm font-semibold text-z-text">{fullName}</Text>
+          <ZBadge label={roleLabel} tone="primary" />
+        </View>
+        <Text className="text-xs text-z-muted">{member.email}</Text>
       </View>
     </View>
   );

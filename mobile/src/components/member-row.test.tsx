@@ -21,6 +21,11 @@ test('renders full name and role', async () => {
   expect(screen.getByText('Student')).toBeOnTheScreen();
 });
 
+test('renders the member email line', async () => {
+  await render(<MemberRow member={MEMBER} />);
+  expect(screen.getByText('alice@example.com')).toBeOnTheScreen();
+});
+
 test('shows initials when there is no avatar (testID member-initials)', async () => {
   await render(<MemberRow member={MEMBER} />);
   expect(screen.getByTestId('member-initials')).toBeOnTheScreen();
