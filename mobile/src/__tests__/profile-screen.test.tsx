@@ -85,7 +85,8 @@ test('renders the editable personal-data fields for the signed-in user', async (
   await render(<ProfileScreen />);
 
   expect(screen.getByText('Preferences')).toBeOnTheScreen();
-  expect(screen.getByText('student')).toBeOnTheScreen();
+  // Role renders as a localized badge label, not the raw enum.
+  expect(screen.getByText('Student')).toBeOnTheScreen();
   expect(screen.getByDisplayValue('Heinrich')).toBeOnTheScreen();
   expect(screen.getByDisplayValue('Mergel')).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Save' })).toBeOnTheScreen();
@@ -123,19 +124,41 @@ test('saves successfully: calls the mutation and shows a success toast', async (
   );
 });
 
-test('shows the error banner when the mutation fails', async () => {
+test('disables Save while the form is pristine and enables it once a field changes', async () => {
+  const user = userEvent.setup();
+  const updateSpy = jest.fn(async (_body: UpdateMeRequest): Promise<Me | null> => makeUser());
+  authStore.setState({ status: 'signedIn', user: makeUser(), updateCurrentUser: updateSpy });
+
+  await render(<ProfileScreen />);
+
+  // Pristine: Save is disabled and pressing it is a no-op.
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  await user.press(screen.getByRole('button', { name: 'Save' }));
+  expect(updateSpy).not.toHaveBeenCalled();
+
+  // Editing a field makes the form dirty and enables Save.
+  const firstName = screen.getByDisplayValue('Heinrich');
+  await user.type(firstName, 'a');
+  expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+});
+
+test('shows the error via ZFieldError when the mutation fails', async () => {
   const user = userEvent.setup();
   const updateSpy = jest.fn(async (_body: UpdateMeRequest): Promise<Me | null> => null);
   authStore.setState({ status: 'signedIn', user: makeUser(), updateCurrentUser: updateSpy });
 
   await render(<ProfileScreen />);
+  // Dirty the form so Save is enabled, then submit.
+  await user.type(screen.getByDisplayValue('Heinrich'), 'a');
   await user.press(screen.getByRole('button', { name: 'Save' }));
 
   await waitFor(() => expect(updateSpy).toHaveBeenCalledTimes(1));
+  // The failure surfaces through the ZFieldError primitive (which carries
+  // role=alert on its container) rather than the old hand-rolled rose banner.
   await waitFor(() =>
     expect(screen.getByText('Failed to update preferences')).toBeOnTheScreen(),
   );
-  // Button stays enabled (not busy) after a failure.
+  // Button stays available (not busy) after a failure.
   expect(screen.getByRole('button', { name: 'Save' })).toBeOnTheScreen();
 });
 
