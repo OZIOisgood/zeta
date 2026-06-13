@@ -31,7 +31,8 @@ Ordered by (a) risk/size, (b) dependency. ✅ = detailed sub-plan already exists
 
 | # | Package | Size | Own plan? | Blocks on |
 | --- | --- | --- | --- | --- |
-| **WP0** | Correctness quick-fixes (auth logout, tab permission-gating, small mobile-only deltas) | S | 🆕 `*_parity_quick_fixes.md` | nothing — **do first** |
+| **WP-UI0** | Shared UI foundation: `ZBackHeader`, `ZIconTile`, `ZDangerZoneCard`, shared `lib/datetime.ts` (anti-drift primitives) | S-M | 🆕 `20260613233000_mobile_shared_ui_foundation.md` | nothing — **prerequisite for WP3–WP8** |
+| **WP0** | Correctness quick-fixes (auth logout, tab permission-gating, small mobile-only deltas) | S | 🆕 `20260613233001_mobile_parity_quick_fixes.md` | nothing — **do first** |
 | **WP1** | Groups create + invite **screens** (G-T3) | M | ✅ `20260613203444_mobile_groups_expert_create_invite.md` | parallel session done |
 | **WP2** | Push **Phase B** (device registration, tap-deep-link, profile push section) | M | ✅ `20260613191948_mobile_plan_9_push_notifications.md` (Phase B) | WP6 Profile rebuild?; new EAS build |
 | **WP3** | In-app **Notifications center** | L | 🆕 `*_mobile_notifications_center.md` | contract surfacing; pairs with WP2 |
@@ -41,12 +42,20 @@ Ordered by (a) risk/size, (b) dependency. ✅ = detailed sub-plan already exists
 | **WP7** | **Reports analytics** | L | 🆕 `*_mobile_reports.md` | **brainstorm scope first** (full vs trimmed) + contract surfacing |
 | **WP8** | Compliance/release: **account deletion + Sign-in-with-Apple** | M | 🆕 `*_mobile_compliance_release.md` | design decision (Apple guideline) |
 
-**Recommended execution order:** WP0 → WP1 → WP4 → WP5 → WP3 → WP2 → WP6 → WP7 → WP8.
-Rationale: WP0 is small + security-relevant. WP1 is already-scaffolded and unblocks the groups-admin parity story. WP4/WP5 are medium contract-surfacing wins reusing the slice pattern. WP3+WP2 together complete the notifications story (in-app + push). WP6/WP7 are the largest and most design-laden (availability UX; reports scope). WP8 is release-gating but independent.
+**Recommended execution order:** **WP-UI0 → WP0** → WP1 → WP4 → WP5 → WP3 → WP2 → WP6 → WP7 → WP8.
+Rationale: **WP-UI0 lands first** — it builds the shared header/icon-tile/danger-card primitives + the one datetime helper that WP3–WP8 all consume, so the seven feature plans compose one consistent UI instead of drifting into five different headers and two icon-tile color systems (the cross-plan UI-drift the audit's plan-review caught). WP0 is small + security-relevant. WP1 is already-scaffolded and unblocks the groups-admin parity story. WP4/WP5 are medium contract-surfacing wins reusing the slice pattern. WP3+WP2 together complete the notifications story (in-app + push). WP6/WP7 are the largest and most design-laden (availability UX; reports scope). WP8 is release-gating but independent.
 
 ---
 
 ## Per-package scope specs (the brief each 🆕 sub-plan must satisfy)
+
+### WP-UI0 — Shared UI foundation  *(plan: `20260613233000_mobile_shared_ui_foundation.md` — build FIRST)*
+The anti-drift layer. Builds four shared pieces once, so WP3–WP8 compose them instead of hand-rolling divergent versions:
+- **`ZBackHeader`** (`mobile/src/components/ui/`) — back-button + title header for pushed sub-screens (reports, availability, notifications screen, group-preferences). ZPageHeader stays reserved for the 5 tab index screens.
+- **`ZIconTile`** — the rounded icon tile with a `tone`→z-token map (no raw `bg-green-50/amber-50/rose-50`, no `text-white`).
+- **`ZDangerZoneCard`** — the one destructive-action card (group-delete WP5, account-delete WP8).
+- **`mobile/src/lib/datetime.ts`** — one `formatRelativeTime`/`formatDate`; consolidates `review-item`'s local formatter (which it migrates). All time/date display routes through it.
+Each TDD with tests. **WP3, WP4, WP5, WP6, WP7, WP8 all declare a dependency on this.** Conflict-free (new primitive files).
 
 ### WP0 — Correctness quick-fixes  *(author `…_parity_quick_fixes.md` first; small enough to be one plan)*
 Backend exists; pure mobile. Must cover:
