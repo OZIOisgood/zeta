@@ -11,6 +11,7 @@ import {
   type GroupUser,
 } from '../../api/queries/groups';
 import { useAuth } from '../../auth/auth-store';
+import { initialsFromName } from '../../lib/avatar';
 import { MemberRow } from '../../components/member-row';
 import { ZAvatar } from '../../components/ui/z-avatar';
 import { ZBadge } from '../../components/ui/z-badge';
@@ -23,19 +24,6 @@ import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { showToast } from '../../components/ui/z-toast';
 import { colors } from '../../theme/colors';
-
-/** Avatar fallback initials from a group name; mirrors the web `groupInitials` helper. */
-function groupInitials(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0))
-      .join('')
-      .toUpperCase() || '?'
-  );
-}
 
 function MembersSkeleton() {
   return (
@@ -215,7 +203,7 @@ export default function GroupDetailScreen() {
           </ZIconButton>
           <ZAvatar
             image={data.avatar ?? undefined}
-            fallback={groupInitials(data.name)}
+            fallback={initialsFromName(data.name)}
             alt={data.name}
             size={56}
           />

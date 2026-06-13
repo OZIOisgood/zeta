@@ -20,20 +20,9 @@ import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
 import { ZTextInput } from '../components/ui/z-text-input';
 import { showToast } from '../components/ui/z-toast';
+import { initialsFromName } from '../lib/avatar';
 import { parseInviteCode } from '../lib/invite-code';
 import { colors } from '../theme/colors';
-
-/** Avatar fallback initials from a group name; mirrors the web `invitationFallback`. */
-function groupInitials(name: string): string {
-  return (
-    name
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((word) => word[0].toUpperCase())
-      .join('') || 'G'
-  );
-}
 
 export default function InviteScreen() {
   const { t } = useTranslation();
@@ -241,7 +230,7 @@ export default function InviteScreen() {
                     <View className="flex-row items-center gap-3">
                       <ZAvatar
                         image={info.group_avatar || undefined}
-                        fallback={groupInitials(info.group_name)}
+                        fallback={initialsFromName(info.group_name, 'G')}
                         size={48}
                         alt={info.group_name}
                       />

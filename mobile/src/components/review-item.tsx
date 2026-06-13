@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 import { Reply } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Review } from '../api/queries/reviews';
+import { initialsFromName } from '../lib/avatar';
 import { colors } from '../theme/colors';
 import { ZAvatar } from './ui/z-avatar';
 import { ZChip } from './ui/z-chip';
@@ -34,23 +35,6 @@ function formatRelativeTime(isoString: string): string {
   return new Date(isoString).toLocaleDateString();
 }
 
-/**
- * Builds avatar initials from an author name: first letter of up to two
- * words, uppercased. Falls back to "?" when the name is empty.
- * Mirrors the web `authorInitials`/`groupInitials` helper.
- */
-function authorInitials(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0))
-      .join('')
-      .toUpperCase() || '?'
-  );
-}
-
 export type ReviewItemProps = {
   review: Review;
   onSeek?: (seconds: number) => void;
@@ -75,7 +59,7 @@ export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewI
       {/* Avatar column — smaller on replies so nesting reads visually. */}
       <ZAvatar
         image={review.author?.avatar}
-        fallback={authorInitials(authorName)}
+        fallback={initialsFromName(authorName)}
         alt={authorName}
         size={isReply ? 28 : 36}
       />

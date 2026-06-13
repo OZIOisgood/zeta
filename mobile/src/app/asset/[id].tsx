@@ -9,6 +9,7 @@ import { useCreateReviewMutation, useReviewsQuery } from '../../api/queries/revi
 import type { CreateReviewInput, Review } from '../../api/queries/reviews';
 import type { components } from '../../api/schema';
 import { useAuth } from '../../auth/auth-store';
+import { initialsFromName } from '../../lib/avatar';
 import { ReviewComposer } from '../../components/review-composer';
 import { ReviewItem } from '../../components/review-item';
 import { ZAvatar } from '../../components/ui/z-avatar';
@@ -26,19 +27,6 @@ type AssetVideo = components['schemas']['AssetVideo'];
 
 function streamUrl(playbackId: string) {
   return `https://stream.mux.com/${playbackId}.m3u8`;
-}
-
-/** Initials from a name: first letter of up to two words. Mirrors the web helper. */
-function groupInitials(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0))
-      .join('')
-      .toUpperCase() || '?'
-  );
 }
 
 // ── Player ───────────────────────────────────────────────────────────────────
@@ -295,7 +283,7 @@ export default function AssetDetailScreen() {
                 onPress={() => router.push(`/group/${group.id}`)}
                 className="flex-row items-center gap-2"
               >
-                <ZAvatar image={group.avatar} fallback={groupInitials(group.name)} size={36} alt={group.name} />
+                <ZAvatar image={group.avatar} fallback={initialsFromName(group.name)} size={36} alt={group.name} />
                 <Text className="flex-1 text-sm font-semibold text-z-primary" numberOfLines={1}>
                   {group.name}
                 </Text>

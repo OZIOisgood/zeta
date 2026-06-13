@@ -1,20 +1,8 @@
 import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { Group } from '../api/queries/groups';
+import { initialsFromName } from '../lib/avatar';
 import { ZAvatar } from './ui/z-avatar';
-
-/** Avatar fallback initials from a group name; mirrors the web `groupInitials` helper. */
-function groupInitials(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0))
-      .join('')
-      .toUpperCase() || '?'
-  );
-}
 
 export function GroupCard({ group, onPress }: { group: Group; onPress: () => void }) {
   const { t } = useTranslation();
@@ -27,7 +15,7 @@ export function GroupCard({ group, onPress }: { group: Group; onPress: () => voi
     >
       <ZAvatar
         image={group.avatar ?? undefined}
-        fallback={groupInitials(group.name)}
+        fallback={initialsFromName(group.name)}
         alt={group.name}
         size={48}
         testID={group.avatar ? undefined : 'group-avatar-fallback'}
