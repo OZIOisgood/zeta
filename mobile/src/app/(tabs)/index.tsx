@@ -195,11 +195,11 @@ export default function HomeScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-        {/* Home has no create action, so no FAB and no header action slot; the
-            subtitle is omitted (no existing home summary key to surface). */}
-        <ZPageHeader title={t('common.nav.home')} />
-
+      {/* Header sits OUTSIDE the ScrollView so its built-in 16px inset aligns
+          with the content padding below (matching the videos screen); Home has
+          no create action, so no FAB/action slot and no subtitle key. */}
+      <ZPageHeader title={t('common.nav.home')} />
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 16 }}>
         {/* Stat cards: live counts that double as section navigation. */}
         <View className="flex-row gap-3">
           <StatCard
