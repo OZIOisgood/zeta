@@ -142,8 +142,19 @@ with a co-located `*.test.tsx`. Build, do not wire into screens yet.
 ### Phase 4 — Cross-cutting hardening
 - **T-Tests** (M) — `login.tsx` (busy/failed), `auth/callback.tsx` redirect branches,
   `_layout.tsx` `Stack.Protected` auth guard, `(tabs)/_layout` localized tab titles.
-- **T-Headers** (S) — a shared, localized screen-header pattern (title + optional
-  action slot) so tabs stop hand-rolling inconsistent header rows.
+- **T-Headers** (M) — adopt the new `ZPageHeader` primitive (compact title + optional
+  one-line subtitle + trailing action slot; mobile-only, no web counterpart) across the
+  list/index screens (Home, Videos, Sessions, Groups), replacing the hand-rolled header rows.
+  **Decision (SOTA, recorded):** the web's bordered header-card (title + description + action
+  buttons) is a desktop pattern and is **not** ported verbatim to mobile list screens — it is
+  decomposed: title+subtitle → `ZPageHeader`; the primary *create* CTA → **FAB** (the existing
+  `assets:create`-gated pattern; never a header button); secondary/config actions (e.g.
+  manage-availability) → header icon-button/overflow. The card-header form is retained **only**
+  for detail heroes (group/video-detail entity cards) and form summaries (book/upload).
+  Principle: *parity of information, not parity of layout.* Reconciles the conflicting
+  per-screen header notes (P-Coaching "restore `sessions.title`+`sessions.summary` header",
+  upload "Header card (title + summary)") against one policy; codified in `mobile/AGENTS.md`
+  (Parity-hardening rules → Headers).
 
 ## Deferred (documented decisions)
 In-app Notifications; Create-group on mobile; group-preferences edit/delete; Reports;
