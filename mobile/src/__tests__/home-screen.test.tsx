@@ -167,7 +167,7 @@ test('tapping a stat card navigates to its tab', async () => {
   expect(mockPush).toHaveBeenCalledWith('/coaching');
 });
 
-test('latest videos preview is bounded to five and View all navigates to the Videos tab', async () => {
+test('latest videos preview is bounded to four and View all navigates to the Videos tab', async () => {
   const user = userEvent.setup();
   const many = Array.from({ length: 8 }, (_, i) =>
     asset(`a${i}`, 'pending', `Kata ${i}`),
@@ -180,10 +180,10 @@ test('latest videos preview is bounded to five and View all navigates to the Vid
     </Providers>,
   );
 
-  // First five render, the sixth+ do not.
+  // First four render, the fifth+ do not.
   expect(screen.getByText('Kata 0')).toBeOnTheScreen();
-  expect(screen.getByText('Kata 4')).toBeOnTheScreen();
-  expect(screen.queryByText('Kata 5')).toBeNull();
+  expect(screen.getByText('Kata 3')).toBeOnTheScreen();
+  expect(screen.queryByText('Kata 4')).toBeNull();
   expect(screen.queryByText('Kata 7')).toBeNull();
 
   await user.press(screen.getByTestId('latest-videos-view-all'));
@@ -198,6 +198,24 @@ test('latest videos shows an empty state when there are no videos', async () => 
   );
   expect(screen.getByText('No videos yet')).toBeOnTheScreen();
   expect(screen.queryByTestId('latest-videos-list')).toBeNull();
+  // Without assets:create there is no upload CTA in the empty state.
+  expect(screen.queryByTestId('latest-videos-upload')).toBeNull();
+});
+
+test('latest videos empty state shows an upload CTA when the user can create assets', async () => {
+  const user = userEvent.setup();
+  mockPermissions = ['assets:create'];
+  mockUseAssetsQuery.mockReturnValue(success([]));
+
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+
+  expect(screen.getByText('No videos yet')).toBeOnTheScreen();
+  await user.press(screen.getByTestId('latest-videos-upload'));
+  expect(mockPush).toHaveBeenCalledWith('/upload');
 });
 
 test('latest videos shows skeletons (not text) while loading', async () => {

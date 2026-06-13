@@ -17,9 +17,10 @@ import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
 
-// Mirror the web home page: surface only the five most recent videos in the
-// preview; the full list lives in the Videos tab behind "View all".
-const LATEST_VIDEOS_LIMIT = 5;
+// Mirror the web home page recentVideos slice: surface only the four most
+// recent videos in the preview; the full list lives in the Videos tab behind
+// "View all".
+const LATEST_VIDEOS_LIMIT = 4;
 
 type HomeStep = {
   completed: boolean;
@@ -46,6 +47,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const has = (perm: string) => permissions !== null && permissions.includes(perm);
+  const canCreate = has('assets:create');
 
   const assets = useAssetsQuery();
   const groups = useGroupsQuery();
@@ -93,7 +95,7 @@ export default function HomeScreen() {
       });
     }
 
-    if (has('assets:create')) {
+    if (canCreate) {
       list.push({
         completed: hasVideos,
         labelKey: hasVideos ? 'home.firstSteps.videoUploaded' : 'home.firstSteps.uploadFirstVideo',
@@ -166,7 +168,15 @@ export default function HomeScreen() {
         title={t('videos.noVideosYet')}
         description={t('videos.uploadFirstDescription')}
         icon={<VideoIcon color={colors.primary} size={24} />}
-      />
+      >
+        {canCreate ? (
+          <ZButton
+            testID="latest-videos-upload"
+            label={t('videos.uploadNew')}
+            onPress={() => router.push('/upload')}
+          />
+        ) : null}
+      </ZEmptyState>
     );
   } else {
     latestContent = (
@@ -210,7 +220,7 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Latest videos preview, bounded to the five most recent. */}
+        {/* Latest videos preview, bounded to the four most recent. */}
         <ZCard testID="latest-videos-card">
           <View className="flex-row items-start justify-between gap-3">
             <View className="min-w-0 flex-1">
