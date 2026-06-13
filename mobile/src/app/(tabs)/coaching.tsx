@@ -99,6 +99,7 @@ function CancelDialog({
       description={t('sessions.cancel.descriptionText', { otherParty, scheduledAt })}
       confirmLabel={t('sessions.cancel.title')}
       cancelLabel={t('sessions.cancel.keep')}
+      confirmDisabled={isPending}
       onConfirm={() => void handleConfirm()}
       onCancel={onAbort}
     >

@@ -69,6 +69,26 @@ test('renders the children slot between description and footer', async () => {
   expect(screen.getByText('Extra slot content')).toBeOnTheScreen();
 });
 
+test('disables the confirm button when confirmDisabled', async () => {
+  const user = userEvent.setup();
+  const onConfirm = jest.fn();
+  await render(
+    <ZConfirmDialog
+      visible
+      title="Delete video"
+      confirmLabel="Delete"
+      cancelLabel="Cancel"
+      confirmDisabled
+      onConfirm={onConfirm}
+      onCancel={jest.fn()}
+    />,
+  );
+  const confirm = screen.getByRole('button', { name: 'Delete' });
+  expect(confirm).toBeDisabled();
+  await user.press(confirm);
+  expect(onConfirm).not.toHaveBeenCalled();
+});
+
 test('hides the cancel button when confirmOnly', async () => {
   await render(
     <ZConfirmDialog

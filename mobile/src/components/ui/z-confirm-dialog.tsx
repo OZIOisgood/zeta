@@ -40,6 +40,7 @@ export function ZConfirmDialog({
   confirmLabel,
   cancelLabel,
   confirmOnly = false,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
   children,
@@ -52,6 +53,8 @@ export function ZConfirmDialog({
   confirmLabel: string;
   cancelLabel?: string;
   confirmOnly?: boolean;
+  /** When true, the confirm button is disabled (e.g. an in-flight mutation). */
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   children?: ReactNode;
@@ -84,6 +87,7 @@ export function ZConfirmDialog({
         <ZButton
           label={confirmLabel}
           variant={tone === 'danger' ? 'danger' : 'primary'}
+          disabled={confirmDisabled}
           onPress={onConfirm}
         />
       </View>

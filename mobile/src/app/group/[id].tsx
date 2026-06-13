@@ -155,7 +155,7 @@ export default function GroupDetailScreen() {
     refetch: refetchStudents,
   } = useGroupStudentsQuery(id ?? '', canSeeStudents);
 
-  const { mutateAsync } = useLeaveGroupMutation(id ?? '');
+  const { mutateAsync, isPending: leaveIsPending } = useLeaveGroupMutation(id ?? '');
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
@@ -284,6 +284,7 @@ export default function GroupDetailScreen() {
                 description={t('groups.leave.confirm', { group: data.name })}
                 confirmLabel={t('groups.leave.action')}
                 cancelLabel={t('common.actions.cancel')}
+                confirmDisabled={leaveIsPending}
                 onConfirm={() => void handleConfirmLeave()}
                 onCancel={() => setShowLeaveConfirm(false)}
               />
