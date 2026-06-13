@@ -124,7 +124,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
       await mutateAsync(input);
       setReplyingTo(null);
     } catch {
-      setMutationError('Failed to post comment. Please try again.');
+      setMutationError(t('videos.phase4.commentsFailed'));
     }
   }
 
@@ -141,7 +141,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
       {isError && (
         <View className="items-start gap-2">
           <Text className="text-sm text-z-muted">{t('videos.phase4.commentsFailed')}</Text>
-          <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
+          <ZButton label={t('common.actions.retry')} variant="secondary" onPress={() => void refetch()} />
         </View>
       )}
 
@@ -237,8 +237,8 @@ export default function AssetDetailScreen() {
   if (isError || !data) {
     return (
       <ZScreen className="items-center justify-center gap-4 px-8">
-        <Text className="text-center text-z-muted">This video could not be loaded.</Text>
-        <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
+        <Text className="text-center text-z-muted">{t('videos.phase4.detailFailed')}</Text>
+        <ZButton label={t('common.actions.retry')} variant="secondary" onPress={() => void refetch()} />
         <ZButton label={t('common.actions.back')} variant="ghost" onPress={() => router.back()} />
       </ZScreen>
     );
