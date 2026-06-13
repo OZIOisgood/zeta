@@ -39,7 +39,7 @@ export function ZTabs({
             }`}
           >
             <Text
-              className={`text-sm ${selected ? 'font-semibold text-z-text' : 'text-z-muted'}`}
+              className={`text-sm font-semibold ${selected ? 'text-z-text' : 'text-z-muted'}`}
             >
               {tab.label}
             </Text>

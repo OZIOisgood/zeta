@@ -45,7 +45,7 @@ export function ZTextInput({
       autoCorrect={autoCorrect}
       returnKeyType={returnKeyType}
       onSubmitEditing={onSubmitEditing}
-      className={`min-h-11 w-full rounded-md border px-3 py-2 ${
+      className={`min-h-11 w-full rounded-md border px-3 py-2 text-sm ${
         disabled ? 'bg-z-surface-warm text-z-muted' : 'bg-z-surface text-z-text'
       } ${invalid ? 'border-z-danger' : 'border-z-border'}`}
     />

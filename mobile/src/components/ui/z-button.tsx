@@ -17,7 +17,7 @@ const containerClasses: Record<ZButtonVariant, string> = {
 const labelClasses: Record<ZButtonVariant, string> = {
   primary: 'text-white',
   secondary: 'text-z-text',
-  ghost: 'text-z-text',
+  ghost: 'text-z-muted',
   danger: 'text-white',
   link: 'text-z-primary',
 };
@@ -55,7 +55,8 @@ export function ZButton({
   // The link variant drops the button chrome (padding/rounding) and uses the
   // web link's 14px size; all other variants keep the standard button sizing.
   const chromeClasses = isLink ? '' : 'rounded-lg px-4 py-3';
-  const labelSizeClasses = isLink ? 'text-sm' : 'text-base';
+  // All variants use the web's 14px label size; only the link variant changes chrome.
+  const labelSizeClasses = 'text-sm';
   return (
     <Pressable
       testID={testID}

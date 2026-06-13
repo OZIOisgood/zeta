@@ -65,9 +65,9 @@ export function ZStepper({
                   <Check color={colors.onPrimary} size={16} />
                 ) : (
                   <Text
-                    className={
-                      step.state === 'active' ? 'font-semibold text-z-primary' : 'text-z-muted'
-                    }
+                    className={`text-sm font-semibold ${
+                      step.state === 'active' ? 'text-z-primary' : 'text-z-muted'
+                    }`}
                   >
                     {index + 1}
                   </Text>

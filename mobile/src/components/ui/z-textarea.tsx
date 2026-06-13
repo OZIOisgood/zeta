@@ -37,7 +37,7 @@ export function ZTextarea({
       multiline
       numberOfLines={rows}
       textAlignVertical="top"
-      className={`min-h-20 w-full rounded-md border px-3 py-2 ${
+      className={`min-h-20 w-full rounded-md border px-3 py-2 text-sm ${
         disabled ? 'bg-z-surface-warm text-z-muted' : 'bg-z-surface text-z-text'
       } ${invalid ? 'border-z-danger' : 'border-z-border'}`}
     />
