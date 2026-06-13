@@ -119,3 +119,55 @@ func TestRedeemAlreadyActiveIsNoOp(t *testing.T) {
 		t.Fatalf("status = %d, want 200", rec.Code)
 	}
 }
+
+func TestListCodesLazilySeedsFiveForExpert(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	q.EXPECT().CountSignupCodesByOwner(gomock.Any(), "exp_1").Return(int64(0), nil)
+	q.EXPECT().CreateSignupCode(gomock.Any(), gomock.Any()).Times(ExpertCodeAllotment).Return(db.SignupCode{}, nil)
+	q.EXPECT().ListSignupCodesByOwner(gomock.Any(), "exp_1").Return([]db.SignupCode{
+		{Code: "AAAA1111", Status: db.SignupCodeStatusAvailable},
+	}, nil)
+
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	req := httptest.NewRequest(http.MethodGet, "/access/codes", nil).
+		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "exp_1", Role: permissions.RoleExpert}))
+	rec := httptest.NewRecorder()
+	h.ListCodes(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestGenerateCodesRequiresAdmin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+
+	body := bytes.NewReader([]byte(`{"count":3}`))
+	req := httptest.NewRequest(http.MethodPost, "/access/codes", body).
+		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "exp_1", Role: permissions.RoleExpert}))
+	rec := httptest.NewRecorder()
+	h.GenerateCodes(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want 403", rec.Code)
+	}
+}
+
+func TestGenerateCodesAdminMintsCount(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	q.EXPECT().CreateSignupCode(gomock.Any(), gomock.Any()).Times(3).Return(db.SignupCode{}, nil)
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+
+	body := bytes.NewReader([]byte(`{"count":3}`))
+	req := httptest.NewRequest(http.MethodPost, "/access/codes", body).
+		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "adm_1", Role: permissions.RoleAdmin}))
+	rec := httptest.NewRecorder()
+	h.GenerateCodes(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201", rec.Code)
+	}
+}

@@ -166,7 +166,7 @@ func (h *Handler) activateAndRespond(w http.ResponseWriter, r *http.Request, use
 		ActivatedVia: pgtypeText(via),
 	}); err != nil {
 		log.ErrorContext(ctx, "access_activate_failed",
-			slog.String("component", "access"), slog.String("user_id", userID), slog.Any("err", err))
+			slog.String("component", "access"), slog.String("user_id", userID), slog.String("via", via), slog.Any("err", err))
 		http.Error(w, "Failed to activate account", http.StatusInternalServerError)
 		return
 	}
@@ -192,4 +192,95 @@ func writeRedeemResponse(w http.ResponseWriter, status db.AccessStatus, role str
 
 func pgtypeText(s string) pgtype.Text {
 	return pgtype.Text{String: s, Valid: s != ""}
+}
+
+type signupCodeView struct {
+	Code   string `json:"code"`
+	Status string `json:"status"`
+}
+
+// ListCodes returns the caller's signup codes. Experts get a lazily-created
+// allotment of ExpertCodeAllotment on first call.
+func (h *Handler) ListCodes(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if user.Role != permissions.RoleExpert && user.Role != permissions.RoleAdmin {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	if user.Role == permissions.RoleExpert {
+		count, err := h.q.CountSignupCodesByOwner(ctx, user.ID)
+		if err != nil {
+			log.ErrorContext(ctx, "access_codes_count_failed", slog.String("component", "access"), slog.Any("err", err))
+			http.Error(w, "Failed to load codes", http.StatusInternalServerError)
+			return
+		}
+		for i := count; i < ExpertCodeAllotment; i++ {
+			if err := h.mintCode(ctx, user.ID); err != nil {
+				log.ErrorContext(ctx, "access_codes_seed_failed", slog.String("component", "access"), slog.Any("err", err))
+				http.Error(w, "Failed to create codes", http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+	codes, err := h.q.ListSignupCodesByOwner(ctx, user.ID)
+	if err != nil {
+		log.ErrorContext(ctx, "access_codes_list_failed", slog.String("component", "access"), slog.Any("err", err))
+		http.Error(w, "Failed to load codes", http.StatusInternalServerError)
+		return
+	}
+	views := make([]signupCodeView, 0, len(codes))
+	for _, c := range codes {
+		views = append(views, signupCodeView{Code: c.Code, Status: string(c.Status)})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"codes": views})
+}
+
+// GenerateCodes mints additional expert codes. Admin only, no cap.
+func (h *Handler) GenerateCodes(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if user.Role != permissions.RoleAdmin {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+	var req struct {
+		Count int `json:"count"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Count < 1 || req.Count > 100 {
+		http.Error(w, "Invalid count (1-100)", http.StatusBadRequest)
+		return
+	}
+	for i := 0; i < req.Count; i++ {
+		if err := h.mintCode(ctx, user.ID); err != nil {
+			log.ErrorContext(ctx, "access_codes_generate_failed", slog.String("component", "access"), slog.Any("err", err))
+			http.Error(w, "Failed to generate codes", http.StatusInternalServerError)
+			return
+		}
+	}
+	log.InfoContext(ctx, "access_codes_generated",
+		slog.String("component", "access"), slog.String("user_id", user.ID), slog.Int("count", req.Count))
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *Handler) mintCode(ctx context.Context, ownerID string) error {
+	code, err := generateCode(signupCodeLength)
+	if err != nil {
+		return err
+	}
+	_, err = h.q.CreateSignupCode(ctx, db.CreateSignupCodeParams{Code: code, OwnerUserID: ownerID})
+	return err
 }
