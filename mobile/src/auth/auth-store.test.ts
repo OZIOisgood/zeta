@@ -72,8 +72,9 @@ test('signOut clears tokens and user', async () => {
   expect(store.getState().user).toBeNull();
 });
 
-it('clears the query cache on sign-out', async () => {
+test('clears the query cache on sign-out', async () => {
   const clearSpy = jest.spyOn(queryClient, 'clear');
+  clearSpy.mockClear(); // robust against any prior signOut in the suite
   const store = createAuthStore(); // default client; signOut only touches tokens + cache
   await store.getState().signOut();
   expect(clearSpy).toHaveBeenCalledTimes(1);
