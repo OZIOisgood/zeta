@@ -279,8 +279,10 @@ test('useCancelBookingMutation PUTs cancel and invalidates bookings', async () =
 
 // ── formatBookingDateTime ─────────────────────────────────────────────────────
 
-it('formatBookingDateTime renders a medium date + short time', () => {
+test('formatBookingDateTime renders a medium date + short time', () => {
   const out = formatBookingDateTime('2026-06-13T09:30:00.000Z');
   expect(typeof out).toBe('string');
-  expect(out.length).toBeGreaterThan(0);
+  // Proves both dateStyle and timeStyle rendered, without pinning locale ordering.
+  expect(out).toMatch(/2026/);
+  expect(out).toMatch(/\d{1,2}[:.]\d{2}/);
 });
