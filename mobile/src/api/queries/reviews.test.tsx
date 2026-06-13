@@ -8,7 +8,13 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
-import { useCreateReviewMutation, useReviewsQuery } from './reviews';
+import {
+  useCreateReviewMutation,
+  useDeleteReviewMutation,
+  useEnhanceReviewTextMutation,
+  useReviewsQuery,
+  useUpdateReviewMutation,
+} from './reviews';
 
 let client: QueryClient;
 
@@ -76,4 +82,88 @@ test('useCreateReviewMutation surfaces API errors', async () => {
   );
   await expect(result.current.mutateAsync({ content: 'x' })).rejects.toThrow();
   expect(qc.invalidateQueries).not.toHaveBeenCalled();
+});
+
+test('useUpdateReviewMutation puts the content and invalidates reviews and assets', async () => {
+  const PUT = jest.fn(async () => ({ data: { ...REVIEW, content: 'Edited' }, error: undefined }));
+  const invalidated: unknown[] = [];
+  const qc = { invalidateQueries: jest.fn(async (args: unknown) => void invalidated.push(args)) };
+  const { result } = await renderHook(
+    () => useUpdateReviewMutation('v1', { PUT } as never, qc as never),
+    { wrapper },
+  );
+  const data = await result.current.mutateAsync({ reviewId: 'r1', content: 'Edited' });
+  expect(data.content).toBe('Edited');
+  expect(PUT).toHaveBeenCalledWith('/assets/videos/{id}/reviews/{reviewId}', {
+    params: { path: { id: 'v1', reviewId: 'r1' } },
+    body: { content: 'Edited' },
+  });
+  expect(invalidated).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ queryKey: ['reviews', 'v1'] }),
+      expect.objectContaining({ queryKey: ['assets'] }),
+    ]),
+  );
+});
+
+test('useUpdateReviewMutation surfaces API errors and does not invalidate', async () => {
+  const PUT = jest.fn(async () => ({ data: undefined, error: { message: 'forbidden' } }));
+  const qc = { invalidateQueries: jest.fn() };
+  const { result } = await renderHook(
+    () => useUpdateReviewMutation('v1', { PUT } as never, qc as never),
+    { wrapper },
+  );
+  await expect(result.current.mutateAsync({ reviewId: 'r1', content: 'x' })).rejects.toThrow();
+  expect(qc.invalidateQueries).not.toHaveBeenCalled();
+});
+
+test('useDeleteReviewMutation deletes and invalidates reviews and assets (204 no body)', async () => {
+  const DELETE = jest.fn(async () => ({ data: undefined, error: undefined }));
+  const invalidated: unknown[] = [];
+  const qc = { invalidateQueries: jest.fn(async (args: unknown) => void invalidated.push(args)) };
+  const { result } = await renderHook(
+    () => useDeleteReviewMutation('v1', { DELETE } as never, qc as never),
+    { wrapper },
+  );
+  await result.current.mutateAsync({ reviewId: 'r1' });
+  expect(DELETE).toHaveBeenCalledWith('/assets/videos/{id}/reviews/{reviewId}', {
+    params: { path: { id: 'v1', reviewId: 'r1' } },
+  });
+  expect(invalidated).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ queryKey: ['reviews', 'v1'] }),
+      expect.objectContaining({ queryKey: ['assets'] }),
+    ]),
+  );
+});
+
+test('useDeleteReviewMutation surfaces API errors', async () => {
+  const DELETE = jest.fn(async () => ({ data: undefined, error: { message: 'forbidden' } }));
+  const qc = { invalidateQueries: jest.fn() };
+  const { result } = await renderHook(
+    () => useDeleteReviewMutation('v1', { DELETE } as never, qc as never),
+    { wrapper },
+  );
+  await expect(result.current.mutateAsync({ reviewId: 'r1' })).rejects.toThrow();
+  expect(qc.invalidateQueries).not.toHaveBeenCalled();
+});
+
+test('useEnhanceReviewTextMutation posts the text and returns the enhanced string', async () => {
+  const POST = jest.fn(async () => ({ data: { enhanced_text: 'Polished feedback.' }, error: undefined }));
+  const { result } = await renderHook(
+    () => useEnhanceReviewTextMutation({ POST } as never),
+    { wrapper },
+  );
+  const enhanced = await result.current.mutateAsync({ text: 'good job' });
+  expect(enhanced).toBe('Polished feedback.');
+  expect(POST).toHaveBeenCalledWith('/reviews/enhance', { body: { text: 'good job' } });
+});
+
+test('useEnhanceReviewTextMutation surfaces API errors', async () => {
+  const POST = jest.fn(async () => ({ data: undefined, error: { message: 'boom' } }));
+  const { result } = await renderHook(
+    () => useEnhanceReviewTextMutation({ POST } as never),
+    { wrapper },
+  );
+  await expect(result.current.mutateAsync({ text: 'x' })).rejects.toThrow();
 });
