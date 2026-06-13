@@ -284,3 +284,30 @@ func (h *Handler) mintCode(ctx context.Context, ownerID string) error {
 	_, err = h.q.CreateSignupCode(ctx, db.CreateSignupCodeParams{Code: code, OwnerUserID: ownerID})
 	return err
 }
+
+// RequireActiveAccess blocks waitlisted users from protected feature routes.
+// Admins always pass. Apply to the feature-route group, NOT to /access/redeem.
+func (h *Handler) RequireActiveAccess(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		user := auth.GetUser(ctx)
+		if user == nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if user.Role == permissions.RoleAdmin {
+			next.ServeHTTP(w, r)
+			return
+		}
+		acc, err := h.q.GetUserAccess(ctx, user.ID)
+		if err != nil || acc.Status != db.AccessStatusActive {
+			if err != nil && err != pgx.ErrNoRows {
+				logger.From(ctx, h.logger).ErrorContext(ctx, "access_gate_lookup_failed",
+					slog.String("component", "access"), slog.Any("err", err))
+			}
+			http.Error(w, "Account not yet activated", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

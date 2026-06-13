@@ -171,3 +171,40 @@ func TestGenerateCodesAdminMintsCount(t *testing.T) {
 		t.Fatalf("status = %d, want 201", rec.Code)
 	}
 }
+
+func TestRequireActiveAccessBlocksWaitlisted(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	q.EXPECT().GetUserAccess(gomock.Any(), "wl_1").Return(db.UserAccess{Status: db.AccessStatusWaitlisted}, nil)
+
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+	req := httptest.NewRequest(http.MethodGet, "/groups", nil).
+		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "wl_1", Role: permissions.RoleStudent}))
+	rec := httptest.NewRecorder()
+	h.RequireActiveAccess(next).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want 403", rec.Code)
+	}
+}
+
+func TestRequireActiveAccessAllowsActiveAndAdmin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	q.EXPECT().GetUserAccess(gomock.Any(), "act_1").Return(db.UserAccess{Status: db.AccessStatusActive}, nil)
+	// Admin path makes no DB call (no EXPECT for adm_1).
+
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+
+	for _, tc := range []struct{ id, role string }{{"act_1", permissions.RoleStudent}, {"adm_1", permissions.RoleAdmin}} {
+		req := httptest.NewRequest(http.MethodGet, "/groups", nil).
+			WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: tc.id, Role: tc.role}))
+		rec := httptest.NewRecorder()
+		h.RequireActiveAccess(next).ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("role %s: status = %d, want 200", tc.role, rec.Code)
+		}
+	}
+}
