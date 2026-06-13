@@ -11,6 +11,7 @@ import type { UploadJob } from '../../upload/upload-store';
 import { AssetCard } from '../../components/asset-card';
 import { UploadProgressCard } from '../../components/upload-progress-card';
 import { ZButton } from '../../components/ui/z-button';
+import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
@@ -106,10 +107,18 @@ export default function VideosScreen() {
     content = (
       <View className="flex-1 bg-z-bg">
         <JobCards jobs={jobs} />
-        <View className="flex-1 items-center justify-center gap-4 px-8">
-          <CloudOff color={colors.muted} size={32} />
-          <Text className="text-center text-z-muted">{t('videos.phase4.loadFailed')}</Text>
-          <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
+        <View className="flex-1 justify-center p-4">
+          <ZEmptyState
+            title={t('videos.phase4.loadFailed')}
+            description={t('videos.phase4.summary')}
+            icon={<CloudOff color={colors.danger} size={24} />}
+          >
+            <ZButton
+              label={t('common.actions.retry')}
+              variant="secondary"
+              onPress={() => void refetch()}
+            />
+          </ZEmptyState>
         </View>
       </View>
     );
@@ -120,14 +129,18 @@ export default function VideosScreen() {
     content = (
       <View testID="videos-empty" className="flex-1 bg-z-bg">
         <JobCards jobs={jobs} />
-        <View className="flex-1 items-center justify-center gap-3 px-8">
-          <VideoIcon color={colors.muted} size={32} />
-          <Text className="text-lg font-semibold text-z-text">
-            {noVideosAtAll ? t('videos.noVideosYet') : t('videos.noVideosMatch')}
-          </Text>
-          <Text className="text-center text-z-muted">
-            {noVideosAtAll ? t('videos.uploadFirstDescription') : t('videos.noVideosForStatuses')}
-          </Text>
+        <View className="flex-1 justify-center p-4">
+          <ZEmptyState
+            title={noVideosAtAll ? t('videos.noVideosYet') : t('videos.noVideosMatch')}
+            description={
+              noVideosAtAll ? t('videos.uploadFirstDescription') : t('videos.noVideosForStatuses')
+            }
+            icon={<VideoIcon color={colors.primary} size={24} />}
+          >
+            {canCreate ? (
+              <ZButton label={t('videos.uploadFirst')} onPress={() => router.push('/upload')} />
+            ) : null}
+          </ZEmptyState>
         </View>
       </View>
     );
@@ -151,11 +164,16 @@ export default function VideosScreen() {
 
   return (
     <ZScreen edges={['top']}>
+      {/* Header: title + summary subtitle (mirrors coaching.tsx) */}
+      <View className="px-4 pb-3 pt-4">
+        <Text className="text-xl font-semibold text-z-text">{t('videos.allMyVideos')}</Text>
+        <Text className="mt-1 text-sm leading-5 text-z-muted">{t('videos.phase4.summary')}</Text>
+      </View>
       {filterRow}
       {content}
       {canCreate && (
         <ZIconButton
-          label="Upload video"
+          label={t('upload.title')}
           variant="primary"
           size="lg"
           shape="circle"

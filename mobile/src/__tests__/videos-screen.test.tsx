@@ -78,11 +78,24 @@ test('empty state explains there are no videos yet', async () => {
   expect(screen.getByText('No videos yet')).toBeOnTheScreen();
 });
 
+test('empty state offers an upload CTA when the user can create', async () => {
+  const user = userEvent.setup();
+  mockPush.mockClear();
+  mockPermissions = ['assets:create'];
+  mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [], refetch: jest.fn(), isRefetching: false });
+  await render(<Providers><VideosScreen /></Providers>);
+
+  const cta = screen.getByRole('button', { name: 'Upload your first video' });
+  expect(cta).toBeOnTheScreen();
+  await user.press(cta);
+  expect(mockPush).toHaveBeenCalledWith('/upload');
+});
+
 test('error state offers retry', async () => {
   const refetch = jest.fn();
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: true, data: undefined, refetch, isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
-  expect(screen.getByRole('button', { name: 'Try again' })).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Retry' })).toBeOnTheScreen();
   expect(screen.getByText('Videos could not be loaded')).toBeOnTheScreen();
 });
 
@@ -96,14 +109,14 @@ test('upload FAB shows with assets:create permission', async () => {
   mockPermissions = ['assets:create'];
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
-  expect(screen.getByLabelText('Upload video')).toBeOnTheScreen();
+  expect(screen.getByLabelText('Upload Video')).toBeOnTheScreen();
 });
 
 test('upload FAB hidden without permission', async () => {
   mockPermissions = [];
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
-  expect(screen.queryByLabelText('Upload video')).toBeNull();
+  expect(screen.queryByLabelText('Upload Video')).toBeNull();
 });
 
 test('filter tabs render with counts derived from the assets query', async () => {
