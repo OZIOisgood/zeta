@@ -1,4 +1,4 @@
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CloudOff, QrCode, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import { useGroupsQuery } from '../../api/queries/groups';
 import { GroupCard } from '../../components/group-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
+import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
@@ -87,10 +88,13 @@ export default function GroupsScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* Header: title + summary subtitle (mirrors videos.tsx) with join action */}
-      <View className="px-4 pb-3 pt-4">
-        <View className="flex-row items-center justify-between">
-          <Text className="text-xl font-semibold text-z-text">{t('groups.myGroups')}</Text>
+      {/* List/index header: compact title + summary subtitle. Join is a secondary
+          action (create-group is desktop-only), so it lives in the header action
+          slot, not a FAB. */}
+      <ZPageHeader
+        title={t('groups.myGroups')}
+        subtitle={t('groups.phase4.summary')}
+        action={
           <ZButton
             testID="groups-join"
             label={t('groups.invitationDialog.joinGroup')}
@@ -98,9 +102,8 @@ export default function GroupsScreen() {
             onPress={() => router.push('/invite')}
             icon={<QrCode color={colors.text} size={16} />}
           />
-        </View>
-        <Text className="mt-1 text-sm leading-5 text-z-muted">{t('groups.phase4.summary')}</Text>
-      </View>
+        }
+      />
       {content}
     </ZScreen>
   );
