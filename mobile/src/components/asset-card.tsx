@@ -18,15 +18,17 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
     asset.status === 'waiting_upload'
       ? t('upload.uploading')
       : asset.status === 'pending'
-        ? t('videos.reviewStatus.inReview')
-        : t('videos.reviewStatus.reviewed');
-  const secondaryLine = asset.description || asset.group?.name;
+        ? t('common.status.inReview')
+        : t('common.status.reviewed');
+  // Mirror the web card's single secondary line so the group name never renders
+  // twice: prefer the group accent, fall back to the description.
+  const secondaryLine = asset.group?.name || asset.description;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={asset.title}
       onPress={onPress}
-      className="mb-3 flex-row items-center gap-3 rounded-lg border border-z-border bg-z-surface p-3 active:bg-z-surface-warm"
+      className="flex-row items-center gap-3 rounded-lg border border-z-border bg-z-surface p-3 active:bg-z-surface-warm"
     >
       <View className="h-16 w-24 overflow-hidden rounded-md">
         <ZVideoPreview thumbnail={asset.thumbnail} alt={asset.title} />
@@ -38,11 +40,6 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
         {secondaryLine ? (
           <Text numberOfLines={1} className="text-sm text-z-muted">
             {secondaryLine}
-          </Text>
-        ) : null}
-        {asset.group ? (
-          <Text numberOfLines={1} className="text-xs font-semibold text-z-primary">
-            {asset.group.name}
           </Text>
         ) : null}
         <View className="flex-row items-center gap-2">

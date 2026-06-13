@@ -40,26 +40,28 @@ test('renders the description as the secondary line', async () => {
   expect(screen.getByText('desc')).toBeOnTheScreen();
 });
 
-test('shows the group name accent alongside the description', async () => {
+test('uses the group name as the single secondary line, hiding the description', async () => {
+  // Mirror the web card: group name takes the secondary line and the description
+  // is not shown so the group name never renders twice.
   await render(
     <AssetCard
       asset={{ ...ASSET, description: 'My kata', group: { id: 'g1', name: 'Brown Belts' } }}
       onPress={jest.fn()}
     />,
   );
-  expect(screen.getByText('My kata')).toBeOnTheScreen();
   expect(screen.getByText('Brown Belts')).toBeOnTheScreen();
+  expect(screen.queryByText('My kata')).toBeNull();
 });
 
-test('falls back to the group name as the secondary line when there is no description', async () => {
+test('uses the group name as the secondary line when there is no description', async () => {
   await render(
     <AssetCard
       asset={{ ...ASSET, description: '', group: { id: 'g1', name: 'Blue Belts' } }}
       onPress={jest.fn()}
     />,
   );
-  // Group name appears as both the secondary line and the accent line.
-  expect(screen.getAllByText('Blue Belts').length).toBeGreaterThanOrEqual(1);
+  // The group name renders exactly once as the single secondary line.
+  expect(screen.getAllByText('Blue Belts')).toHaveLength(1);
 });
 
 test('exposes the review count as an accessible comment count', async () => {

@@ -170,7 +170,7 @@ export default function HomeScreen() {
     );
   } else {
     latestContent = (
-      <View testID="latest-videos-list">
+      <View testID="latest-videos-list" className="gap-3">
         {latestVideos.map((asset) => (
           <AssetCard
             key={asset.id}
