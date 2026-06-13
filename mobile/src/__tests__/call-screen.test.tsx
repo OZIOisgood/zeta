@@ -77,9 +77,13 @@ jest.mock('../call/call-store', () => ({
 
 // ── router mock ───────────────────────────────────────────────────────────────
 
+// Mutable route params controlled per-test (the missingBooking guard depends on them).
+let mockBookingId: string | undefined = 'b1';
+let mockGroupId: string | undefined = 'g1';
+
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
-  useLocalSearchParams: () => ({ bookingId: 'b1', groupId: 'g1' }),
+  useLocalSearchParams: () => ({ bookingId: mockBookingId, groupId: mockGroupId }),
   useRouter: () => ({ back: mockBack }),
 }));
 
@@ -98,6 +102,8 @@ beforeEach(() => {
   mockRemoteUid = null;
   mockMicMuted = false;
   mockCameraEnabled = true;
+  mockBookingId = 'b1';
+  mockGroupId = 'g1';
 });
 
 // ── Test 1: permissions granted + phase connecting ────────────────────────────
@@ -168,18 +174,49 @@ test('camera permission denied → call-permission-denied state, join NOT called
   expect(mockJoin).not.toHaveBeenCalled();
 });
 
-// ── Test 6: phase error → localized card error state + back affordance ────────
+// ── Test 6: phase error → localized empty-state error + back affordance ───────
 
-test('phase error → localized heading + body in card with back button', async () => {
+test('phase error → localized title + body in empty state with retry + back buttons', async () => {
   mockPhase = 'error';
   await act(async () => {
     render(<CallScreen />);
   });
-  // Card heading is the generic couldNotJoin; body is the code mapped to a key.
+  // ZEmptyState title is the generic couldNotJoin; description is the mapped key.
   expect(screen.getByText('Could not join session')).toBeOnTheScreen();
   // The 'engine' code maps to sessions.call.connectFailed.
   expect(screen.getByText('Failed to connect to session')).toBeOnTheScreen();
   // Raw English literal must no longer be rendered.
   expect(screen.queryByText('A call error occurred')).toBeNull();
+  expect(screen.getByText('Retry')).toBeOnTheScreen();
   expect(screen.getByTestId('call-back')).toBeOnTheScreen();
+});
+
+// ── Test 7: missing booking params → error state, join NOT called ──────────────
+
+test('missing groupId → call-error state with missingBooking body, join NOT called', async () => {
+  mockGroupId = undefined;
+  await act(async () => {
+    render(<CallScreen />);
+  });
+  expect(screen.getByTestId('call-error')).toBeOnTheScreen();
+  expect(screen.getByText('Missing booking information')).toBeOnTheScreen();
+  expect(screen.getByTestId('call-back')).toBeOnTheScreen();
+  expect(mockJoin).not.toHaveBeenCalled();
+});
+
+// ── Test 8: both permissions denied → single primary Grant (no stacked primaries)
+
+test('both permissions denied → camera grant + mic grant + back, join NOT called', async () => {
+  mockCameraStatus = 'denied';
+  mockMicStatus = 'denied';
+  await act(async () => {
+    render(<CallScreen />);
+  });
+  expect(screen.getByTestId('call-permission-denied')).toBeOnTheScreen();
+  // Both grant CTAs and the back affordance are present; hierarchy (single
+  // primary) is enforced by variant props in the screen, not asserted on style.
+  expect(screen.getByText('Grant camera access')).toBeOnTheScreen();
+  expect(screen.getByText('Grant microphone access')).toBeOnTheScreen();
+  expect(screen.getByTestId('call-back')).toBeOnTheScreen();
+  expect(mockJoin).not.toHaveBeenCalled();
 });

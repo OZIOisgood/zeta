@@ -18,13 +18,22 @@ import { useEffect, useRef } from 'react';
 import { View, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
-import { Mic, MicOff, Video, VideoOff, SwitchCamera, PhoneOff } from 'lucide-react-native';
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  SwitchCamera,
+  PhoneOff,
+  CameraOff,
+  TriangleAlert,
+} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { callStore, useCall, type CallErrorCode } from '../../call/call-store';
 import { CallVideo } from '../../call/call-view';
 import { ZScreen } from '../../components/ui/z-screen';
-import { ZCard } from '../../components/ui/z-card';
 import { ZButton } from '../../components/ui/z-button';
+import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
@@ -58,12 +67,17 @@ export default function CallScreen() {
   const micGranted = micPermission?.granted ?? false;
   const bothGranted = cameraGranted && micGranted;
 
+  // Mirrors the web ngOnInit guard: a missing route param means we have nothing
+  // to join, so we render the error state and never attempt a join.
+  const missingBooking = !bookingId || !groupId;
+
   useEffect(() => {
+    if (missingBooking) return;
     if (!bothGranted) return;
     if (joinedRef.current) return;
     joinedRef.current = true;
     void callStore.getState().join(groupId ?? '', bookingId ?? '');
-  }, [bothGranted, groupId, bookingId]);
+  }, [missingBooking, bothGranted, groupId, bookingId]);
 
   // Teardown on unmount — covers hardware back, gesture dismiss, and explicit leave.
   useEffect(() => {
@@ -79,41 +93,65 @@ export default function CallScreen() {
     router.back();
   }
 
-  // ── Permission denied state ──────────────────────────────────────────────────
-  if (!cameraGranted || !micGranted) {
+  // ── Missing booking guard ────────────────────────────────────────────────────
+  // Mirrors the web ngOnInit guard: without both route params there is nothing to
+  // join, so we surface the error state and skip the join entirely.
+  if (missingBooking) {
     return (
       <ZScreen edges={['top', 'bottom']}>
-        <View testID="call-permission-denied" className="flex-1 items-center justify-center px-8">
-          <ZCard className="w-full gap-4">
-            <View className="gap-2">
-              <Text className="text-center text-base font-semibold text-z-text">
-                {t('sessions.call.permissionHeading')}
-              </Text>
-              <Text className="text-center text-sm text-z-muted">
-                {t('sessions.call.permissionBody')}
-              </Text>
-            </View>
-            {!cameraGranted ? (
-              <ZButton
-                label={t('sessions.call.grantCamera')}
-                variant="primary"
-                onPress={() => void requestCameraPermission()}
-              />
-            ) : null}
-            {!micGranted ? (
-              <ZButton
-                label={t('sessions.call.grantMicrophone')}
-                variant="primary"
-                onPress={() => void requestMicPermission()}
-              />
-            ) : null}
+        <View testID="call-error" className="flex-1 items-center justify-center px-8">
+          <ZEmptyState
+            icon={<TriangleAlert color={colors.danger} size={24} />}
+            title={t('sessions.call.couldNotJoin')}
+            description={t('sessions.call.missingBooking')}
+          >
             <ZButton
               testID="call-back"
               label={t('sessions.call.backToSessions')}
               variant="ghost"
               onPress={() => router.back()}
             />
-          </ZCard>
+          </ZEmptyState>
+        </View>
+      </ZScreen>
+    );
+  }
+
+  // ── Permission denied state ──────────────────────────────────────────────────
+  if (!cameraGranted || !micGranted) {
+    return (
+      <ZScreen edges={['top', 'bottom']}>
+        <View testID="call-permission-denied" className="flex-1 items-center justify-center px-8">
+          <ZEmptyState
+            icon={<CameraOff color={colors.danger} size={24} />}
+            title={t('sessions.call.permissionHeading')}
+            description={t('sessions.call.permissionBody')}
+          >
+            <View className="gap-2">
+              {!cameraGranted ? (
+                <ZButton
+                  label={t('sessions.call.grantCamera')}
+                  variant="primary"
+                  onPress={() => void requestCameraPermission()}
+                />
+              ) : null}
+              {!micGranted ? (
+                <ZButton
+                  label={t('sessions.call.grantMicrophone')}
+                  // Avoid two stacked primaries: when both are denied the camera
+                  // grant is the single primary CTA and the mic grant is secondary.
+                  variant={cameraGranted ? 'primary' : 'secondary'}
+                  onPress={() => void requestMicPermission()}
+                />
+              ) : null}
+              <ZButton
+                testID="call-back"
+                label={t('sessions.call.backToSessions')}
+                variant="ghost"
+                onPress={() => router.back()}
+              />
+            </View>
+          </ZEmptyState>
         </View>
       </ZScreen>
     );
@@ -125,28 +163,28 @@ export default function CallScreen() {
     return (
       <ZScreen edges={['top', 'bottom']}>
         <View testID="call-error" className="flex-1 items-center justify-center px-8">
-          <ZCard className="w-full gap-4">
+          <ZEmptyState
+            icon={<TriangleAlert color={colors.danger} size={24} />}
+            title={t('sessions.call.couldNotJoin')}
+            description={t(messageKey)}
+          >
             <View className="gap-2">
-              <Text className="text-center text-base font-semibold text-z-text">
-                {t('sessions.call.couldNotJoin')}
-              </Text>
-              <Text className="text-center text-sm text-z-muted">{t(messageKey)}</Text>
+              <ZButton
+                label={t('common.actions.retry')}
+                variant="primary"
+                onPress={() => {
+                  joinedRef.current = false;
+                  void callStore.getState().join(groupId ?? '', bookingId ?? '');
+                }}
+              />
+              <ZButton
+                testID="call-back"
+                label={t('sessions.call.backToSessions')}
+                variant="ghost"
+                onPress={() => router.back()}
+              />
             </View>
-            <ZButton
-              label={t('common.actions.retry')}
-              variant="primary"
-              onPress={() => {
-                joinedRef.current = false;
-                void callStore.getState().join(groupId ?? '', bookingId ?? '');
-              }}
-            />
-            <ZButton
-              testID="call-back"
-              label={t('sessions.call.backToSessions')}
-              variant="ghost"
-              onPress={() => router.back()}
-            />
-          </ZCard>
+          </ZEmptyState>
         </View>
       </ZScreen>
     );
