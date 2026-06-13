@@ -189,6 +189,36 @@ func decodeAuthStateCookie(t *testing.T, value string) authReturnState {
 	return state
 }
 
+func TestRefreshSessionCookiesReissuesCookies(t *testing.T) {
+	t.Setenv("WORKOS_CLIENT_ID", "client_test")
+	t.Setenv("DEFAULT_ORG_ID", "org_123")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().AuthenticateWithRefreshToken(gomock.Any(), gomock.Any()).Return(
+		usermanagement.RefreshAuthenticationResponse{AccessToken: "new_access", RefreshToken: "new_refresh"}, nil,
+	)
+
+	h := NewHandler(slog.Default(), nil, workos)
+	req := httptest.NewRequest(http.MethodPost, "/access/redeem", nil)
+	req.AddCookie(&http.Cookie{Name: RefreshCookieName, Value: "old_refresh"})
+	rec := httptest.NewRecorder()
+
+	if err := h.RefreshSessionCookies(req.Context(), rec, req); err != nil {
+		t.Fatalf("RefreshSessionCookies returned error: %v", err)
+	}
+
+	var gotAccess string
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == CookieName {
+			gotAccess = c.Value
+		}
+	}
+	if gotAccess != "new_access" {
+		t.Fatalf("session cookie = %q, want %q", gotAccess, "new_access")
+	}
+}
+
 func testAccessToken(t *testing.T) string {
 	t.Helper()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"sid": "session_123"})

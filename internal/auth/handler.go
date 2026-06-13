@@ -472,6 +472,22 @@ func (h *Handler) refreshSessionForDefaultOrg(ctx context.Context, refreshToken 
 	})
 }
 
+// RefreshSessionCookies re-mints the session for the default org from the request's
+// refresh-token cookie and writes fresh session cookies. Used after a role change so
+// the new role/permissions take effect without a manual re-login.
+func (h *Handler) RefreshSessionCookies(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	refreshCookie, err := r.Cookie(RefreshCookieName)
+	if err != nil || refreshCookie.Value == "" {
+		return fmt.Errorf("no refresh token cookie")
+	}
+	resp, err := h.refreshSessionForDefaultOrg(ctx, refreshCookie.Value)
+	if err != nil {
+		return err
+	}
+	setSessionCookies(w, resp.AccessToken, resp.RefreshToken, true)
+	return nil
+}
+
 // getPermissionsForRole fetches the permissions for a given role slug from WorkOS.
 // The Go SDK's roles.Role struct does not include Permissions, so we call the
 // WorkOS REST API directly and decode into a custom response struct.
