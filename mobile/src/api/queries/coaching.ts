@@ -31,6 +31,14 @@ export type CancelBookingInput = {
   reason?: string;
 };
 
+/**
+ * Localized booking timestamp (medium date + short time). Shared by the booking
+ * card and the cancel dialog so the displayed format stays in lockstep.
+ */
+export function formatBookingDateTime(iso: string): string {
+  return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 export function useMyBookingsQuery(client: Fetcher = api) {
   return useQuery({
     queryKey: ['bookings'],

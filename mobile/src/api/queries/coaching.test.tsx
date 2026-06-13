@@ -16,6 +16,7 @@ import {
   useCreateBookingMutation,
   useCancelBookingMutation,
   BookingError,
+  formatBookingDateTime,
 } from './coaching';
 
 let client: QueryClient;
@@ -274,4 +275,12 @@ test('useCancelBookingMutation PUTs cancel and invalidates bookings', async () =
   expect(invalidated).toEqual(
     expect.arrayContaining([expect.objectContaining({ queryKey: ['bookings'] })]),
   );
+});
+
+// ── formatBookingDateTime ─────────────────────────────────────────────────────
+
+it('formatBookingDateTime renders a medium date + short time', () => {
+  const out = formatBookingDateTime('2026-06-13T09:30:00.000Z');
+  expect(typeof out).toBe('string');
+  expect(out.length).toBeGreaterThan(0);
 });

@@ -4,7 +4,11 @@ import { useRouter } from 'expo-router';
 import { CalendarClock, CalendarPlus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../api/queries/coaching';
-import { useMyBookingsQuery, useCancelBookingMutation } from '../../api/queries/coaching';
+import {
+  useMyBookingsQuery,
+  useCancelBookingMutation,
+  formatBookingDateTime,
+} from '../../api/queries/coaching';
 import { useAuth } from '../../auth/auth-store';
 import { BookingCard } from '../../components/booking-card';
 import { isJoinable } from '../../lib/connect-window';
@@ -75,10 +79,7 @@ function CancelDialog({
     booking.student_id === currentUserId
       ? (booking.expert_name ?? booking.expert_id)
       : (booking.student_name ?? booking.student_id);
-  const scheduledAt = new Date(booking.scheduled_at).toLocaleString([], {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  const scheduledAt = formatBookingDateTime(booking.scheduled_at);
 
   async function handleConfirm() {
     setError(null);

@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 import { Ban, Phone, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../api/queries/coaching';
+import { formatBookingDateTime } from '../api/queries/coaching';
 import { ZBadge, type ZBadgeTone } from './ui/z-badge';
 import { ZButton } from './ui/z-button';
 import { ZCard } from './ui/z-card';
@@ -111,10 +112,7 @@ export function BookingCard({
     counterpartRole === 'expert' ? 'common.labels.expert' : 'common.labels.student',
   );
 
-  const dateText = new Date(booking.scheduled_at).toLocaleString([], {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  const dateText = formatBookingDateTime(booking.scheduled_at);
 
   const recordingBadge = booking.recording
     ? resolveRecordingBadge(booking.recording.status)
