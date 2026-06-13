@@ -10,7 +10,7 @@ const redeemResponse: RedeemResponse = {
 };
 
 const codes: SignupCode[] = [
-  { code: 'ABC123', status: 'unused' },
+  { code: 'ABC123', status: 'available' },
   { code: 'DEF456', status: 'consumed' },
 ];
 
