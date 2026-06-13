@@ -85,14 +85,14 @@ export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewI
         {/* Author line */}
         <Text
           testID="review-author"
-          className={`text-sm font-semibold ${isReply ? 'text-z-muted' : 'text-z-text'}`}
+          className="text-sm font-semibold text-z-text"
           numberOfLines={1}
         >
           {authorName}
         </Text>
 
         {/* Body */}
-        <Text className={`mt-1 text-sm leading-6 ${isReply ? 'text-z-muted' : 'text-z-text'}`}>{review.content}</Text>
+        <Text className="mt-1 text-sm leading-6 text-z-text">{review.content}</Text>
 
         {/* Meta row */}
         <View className="mt-1 flex-row flex-wrap items-center gap-2">

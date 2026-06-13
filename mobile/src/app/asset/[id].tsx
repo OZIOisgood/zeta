@@ -132,7 +132,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
     <ZCard className="gap-4">
       <View className="flex-row items-center gap-2">
         <MessageCircle color={colors.primary} size={18} />
-        <Text className="text-base font-semibold text-z-text">{t('videos.comments')}</Text>
+        <Text className="text-sm font-semibold text-z-text">{t('videos.comments')}</Text>
         <ZBadge label={String(topLevel.length)} />
       </View>
 
@@ -296,12 +296,12 @@ export default function AssetDetailScreen() {
                 className="flex-row items-center gap-2"
               >
                 <ZAvatar image={group.avatar} fallback={groupInitials(group.name)} size={36} alt={group.name} />
-                <Text className="flex-1 text-sm font-semibold text-z-primary-strong" numberOfLines={1}>
+                <Text className="flex-1 text-sm font-semibold text-z-primary" numberOfLines={1}>
                   {group.name}
                 </Text>
               </Pressable>
             ) : null}
-            <Text className="text-z-muted">
+            <Text className="text-sm text-z-muted">
               {data.description ? data.description : t('videos.phase4.noDescription')}
             </Text>
           </ZCard>
@@ -310,7 +310,7 @@ export default function AssetDetailScreen() {
           {videos.length > 0 ? (
             <ZCard className="gap-3">
               <View className="flex-row items-center gap-2">
-                <Text className="text-base font-semibold text-z-text">
+                <Text className="text-sm font-semibold text-z-text">
                   {t('videos.phase4.videoParts')}
                 </Text>
                 <ZBadge label={String(videos.length)} />
