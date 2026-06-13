@@ -14,6 +14,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/coaching"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/devices"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/groups"
 	"github.com/OZIOisgood/zeta/internal/invitations"
@@ -88,6 +89,7 @@ func (s *Server) routes(ctx context.Context) {
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	reportsHandler := reports.NewHandler(queries, s.Logger)
+	devicesHandler := devices.NewHandler(queries, s.Logger)
 
 	// In-app notifications: a per-instance hub fed by a Postgres LISTEN/NOTIFY
 	// listener (started below) delivers events to connected SSE clients.
@@ -202,6 +204,7 @@ func (s *Server) routes(ctx context.Context) {
 		r.Route("/notifications", notificationsHandler.RegisterRoutes)
 		reportsHandler.RegisterRoutes(r)
 		coachingHandler.RegisterRoutes(r)
+		devicesHandler.RegisterRoutes(r)
 	})
 
 	// Internal routes (not behind user auth — protected by scheduler secret)
