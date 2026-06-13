@@ -19,5 +19,7 @@ describe('ZQueryError', () => {
       <ZQueryError title="x" onRetry={() => {}} retryLabel="upload.retry" testID="r" />,
     );
     expect(screen.getByTestId('r')).toBeOnTheScreen();
+    expect(screen.getByText('upload.retry')).toBeOnTheScreen();
+    expect(screen.queryByText('common.actions.retry')).toBeNull();
   });
 });
