@@ -1,15 +1,17 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
+import i18next from 'i18next';
 import type { components } from '../api/schema';
 import type { AuthenticatedClient } from '../api/authenticated-client';
 import { createAuthenticatedClient } from '../api/authenticated-client';
 import { clearTokens, getTokens, setTokens, type TokenPair } from './token-store';
 
 export type Me = components['schemas']['Me'];
+export type UpdateMeRequest = components['schemas']['UpdateMeRequest'];
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 
 /** Minimal interface the store needs — allows test doubles without full client shape. */
-export type AuthenticatedClientLike = Pick<AuthenticatedClient, 'GET'>;
+export type AuthenticatedClientLike = Pick<AuthenticatedClient, 'GET' | 'PUT'>;
 
 type AuthState = {
   status: AuthStatus;
@@ -17,6 +19,13 @@ type AuthState = {
   restore: () => Promise<void>;
   signIn: (tokens: TokenPair) => Promise<void>;
   signOut: () => Promise<void>;
+  /**
+   * Update the current user's profile and notification preferences via
+   * PUT /auth/me. On success the store's `user` is replaced with the response
+   * and, when the language changed, i18next is switched to match (mirrors the
+   * web shell.setLanguage). Returns the updated user, or null on failure.
+   */
+  updateCurrentUser: (body: UpdateMeRequest) => Promise<Me | null>;
 };
 
 export function createAuthStore(client?: AuthenticatedClientLike) {
@@ -76,6 +85,18 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
       signOut: async () => {
         await clearTokens();
         set({ status: 'signedOut', user: null });
+      },
+
+      updateCurrentUser: async (body: UpdateMeRequest) => {
+        const previousLanguage = get().user?.language;
+        const { data, error } = await api.PUT('/auth/me' as never, { body } as never);
+        if (error || !data) return null;
+        const user = data as Me;
+        set({ status: 'signedIn', user });
+        if (user.language !== previousLanguage) {
+          await i18next.changeLanguage(user.language);
+        }
+        return user;
       },
     };
   });
