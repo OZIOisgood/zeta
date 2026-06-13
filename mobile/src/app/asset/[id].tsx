@@ -2,10 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { ArrowLeft, Clock, MessageCircle } from 'lucide-react-native';
+import { ArrowLeft, Check, ChevronDown, ChevronRight, Clock, MessageCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { useAssetQuery } from '../../api/queries/assets';
-import { useCreateReviewMutation, useReviewsQuery } from '../../api/queries/reviews';
+import { useAssetQuery, useFinalizeAssetMutation } from '../../api/queries/assets';
+import {
+  useCreateReviewMutation,
+  useDeleteReviewMutation,
+  useEnhanceReviewTextMutation,
+  useReviewsQuery,
+  useUpdateReviewMutation,
+} from '../../api/queries/reviews';
 import type { CreateReviewInput, Review } from '../../api/queries/reviews';
 import type { components } from '../../api/schema';
 import { useAuth } from '../../auth/auth-store';
@@ -19,8 +25,10 @@ import { ZCard } from '../../components/ui/z-card';
 import { ZChip } from '../../components/ui/z-chip';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
+import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { showToast } from '../../components/ui/z-toast';
 import { colors } from '../../theme/colors';
 
 type AssetVideo = components['schemas']['AssetVideo'];
@@ -70,15 +78,66 @@ type ReviewsSectionProps = {
   seekTo: (seconds: number) => void;
   getCurrentTime: () => number;
   canCompose: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
 };
 
-function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: ReviewsSectionProps) {
+function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, canDelete }: ReviewsSectionProps) {
   const { t } = useTranslation();
   const [replyingTo, setReplyingTo] = useState<Review | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
   const { data, isPending, isError, refetch } = useReviewsQuery(videoId);
   const { mutateAsync } = useCreateReviewMutation(videoId);
+  const { mutateAsync: updateReview } = useUpdateReviewMutation(videoId);
+  const { mutateAsync: deleteReview } = useDeleteReviewMutation(videoId);
+  const { mutateAsync: enhanceText } = useEnhanceReviewTextMutation();
+  const [pendingDelete, setPendingDelete] = useState<Review | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
+
+  function toggleThread(rootId: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(rootId)) next.delete(rootId);
+      else next.add(rootId);
+      return next;
+    });
+  }
+
+  async function handleEnhance(text: string): Promise<string | null> {
+    try {
+      const enhanced = await enhanceText({ text });
+      showToast(t('toast.successTitle'), t('videos.textEnhanced'), 'success');
+      return enhanced;
+    } catch {
+      showToast(t('toast.errorTitle'), t('videos.textEnhanceFailed'), 'error');
+      return null;
+    }
+  }
+
+  async function handleEdit(review: Review, content: string) {
+    setMutationError(null);
+    try {
+      await updateReview({ reviewId: review.id, content });
+    } catch {
+      setMutationError(t('videos.reviewUpdateFailed'));
+    }
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete || deleting) return;
+    setMutationError(null);
+    setDeleting(true);
+    try {
+      await deleteReview({ reviewId: pendingDelete.id });
+      setPendingDelete(null);
+    } catch {
+      setMutationError(t('videos.commentDeleteFailed'));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   // Thread: top-level reviews sorted by created_at ASC
   const topLevel = useMemo(
@@ -148,10 +207,44 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
               review={review}
               onSeek={seekTo}
               onReply={(r) => setReplyingTo(r)}
+              onEdit={canEdit ? handleEdit : undefined}
+              onDelete={canDelete ? (r) => setPendingDelete(r) : undefined}
+              onEnhance={canEdit ? handleEnhance : undefined}
+              deleting={deleting && pendingDelete?.id === review.id}
             />
-            {(repliesByParent.get(review.id) ?? []).map((reply) => (
-              <ReviewItem key={reply.id} review={reply} onSeek={seekTo} isReply />
-            ))}
+            {(repliesByParent.get(review.id) ?? []).length > 0 &&
+              (() => {
+                const replyCount = (repliesByParent.get(review.id) ?? []).length;
+                const isCollapsed = collapsed.has(review.id);
+                return (
+                  <ZButton
+                    label={`${replyCount} ${t('videos.reply', { count: replyCount })}`}
+                    variant="ghost"
+                    testID={`thread-collapse-${review.id}`}
+                    icon={
+                      isCollapsed ? (
+                        <ChevronRight color={colors.muted} size={14} />
+                      ) : (
+                        <ChevronDown color={colors.muted} size={14} />
+                      )
+                    }
+                    onPress={() => toggleThread(review.id)}
+                  />
+                );
+              })()}
+            {!collapsed.has(review.id) &&
+              (repliesByParent.get(review.id) ?? []).map((reply) => (
+                <ReviewItem
+                  key={reply.id}
+                  review={reply}
+                  onSeek={seekTo}
+                  isReply
+                  onEdit={canEdit ? handleEdit : undefined}
+                  onDelete={canDelete ? (r) => setPendingDelete(r) : undefined}
+                  onEnhance={canEdit ? handleEnhance : undefined}
+                  deleting={deleting && pendingDelete?.id === reply.id}
+                />
+              ))}
           </View>
         ))}
 
@@ -162,12 +255,26 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
             getCurrentTime={replyingTo ? undefined : getCurrentTime}
             replyingTo={replyingTo ?? undefined}
             onCancelReply={() => setReplyingTo(null)}
+            onEnhance={canEdit ? handleEnhance : undefined}
           />
           {mutationError ? (
             <Text className="text-sm text-z-danger">{mutationError}</Text>
           ) : null}
         </View>
       )}
+
+      <ZConfirmDialog
+        visible={pendingDelete !== null}
+        title={t('videos.confirmDeleteCommentTitle')}
+        description={t('videos.confirmDeleteComment')}
+        tone="danger"
+        confirmLabel={t('common.actions.delete')}
+        cancelLabel={t('common.actions.cancel')}
+        confirmDisabled={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setPendingDelete(null)}
+        testID="review-delete-confirm"
+      />
     </ZCard>
   );
 }
@@ -181,7 +288,40 @@ export default function AssetDetailScreen() {
   const { data, isPending, isError, refetch } = useAssetQuery(id ?? '');
 
   const permissions = useAuth((s) => s.user?.permissions ?? null);
-  const canCompose = (permissions?.includes('reviews:create') ?? false) && data?.status !== 'completed';
+  const isFinalized = data?.status === 'completed';
+  const canCompose = (permissions?.includes('reviews:create') ?? false) && !isFinalized;
+  const canEdit = (permissions?.includes('reviews:edit') ?? false) && !isFinalized;
+  const canDelete = (permissions?.includes('reviews:delete') ?? false) && !isFinalized;
+  const canFinalize = (permissions?.includes('assets:finalize') ?? false) && !isFinalized;
+
+  // Finalize
+  const { mutateAsync: finalizeAsset } = useFinalizeAssetMutation(id ?? '');
+  const [finalizeOpen, setFinalizeOpen] = useState(false);
+  const [unreviewedOpen, setUnreviewedOpen] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
+
+  async function confirmFinalize() {
+    if (finalizing) return;
+    setFinalizing(true);
+    try {
+      await finalizeAsset();
+      setFinalizeOpen(false);
+      showToast(t('toast.successTitle'), t('videos.markedReviewed'), 'success');
+    } catch {
+      showToast(t('toast.errorTitle'), t('videos.markReviewedFailed'), 'error');
+    } finally {
+      setFinalizing(false);
+    }
+  }
+
+  function onPressFinalize() {
+    const hasUnreviewed = (data?.videos ?? []).some((v) => v.review_count === 0);
+    if (hasUnreviewed) {
+      setUnreviewedOpen(true);
+    } else {
+      setFinalizeOpen(true);
+    }
+  }
 
   // Player ref for seeking
   const playerRef = useRef<ReturnType<typeof useVideoPlayer> | null>(null);
@@ -292,6 +432,14 @@ export default function AssetDetailScreen() {
             <Text className="text-sm text-z-muted">
               {data.description ? data.description : t('videos.phase4.noDescription')}
             </Text>
+            {canFinalize ? (
+              <ZButton
+                label={t('videos.markReviewed')}
+                testID="asset-finalize"
+                icon={<Check color={colors.onPrimary} size={16} />}
+                onPress={onPressFinalize}
+              />
+            ) : null}
           </ZCard>
 
           {/* Video-parts card. */}
@@ -340,8 +488,34 @@ export default function AssetDetailScreen() {
               seekTo={seekTo}
               getCurrentTime={getCurrentTime}
               canCompose={canCompose}
+              canEdit={canEdit}
+              canDelete={canDelete}
             />
           ) : null}
+
+          <ZConfirmDialog
+            visible={finalizeOpen}
+            title={t('videos.markVideoReviewed')}
+            description={t('videos.confirmMarkReviewed')}
+            tone="warning"
+            confirmLabel={t('videos.markReviewed')}
+            cancelLabel={t('common.actions.cancel')}
+            confirmDisabled={finalizing}
+            onConfirm={() => void confirmFinalize()}
+            onCancel={() => setFinalizeOpen(false)}
+            testID="asset-finalize-confirm"
+          />
+          <ZConfirmDialog
+            visible={unreviewedOpen}
+            title={t('videos.cannotMarkReviewedTitle')}
+            description={t('videos.cannotMarkReviewed')}
+            tone="info"
+            confirmOnly
+            confirmLabel={t('common.actions.done')}
+            onConfirm={() => setUnreviewedOpen(false)}
+            onCancel={() => setUnreviewedOpen(false)}
+            testID="asset-finalize-unreviewed"
+          />
         </View>
       </ScrollView>
     </ZScreen>

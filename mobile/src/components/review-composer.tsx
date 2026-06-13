@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Send, X } from 'lucide-react-native';
+import { Send, Sparkles, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { CreateReviewInput, Review } from '../api/queries/reviews';
 import { colors } from '../theme/colors';
@@ -24,6 +24,8 @@ export type ReviewComposerProps = {
   /** When set, the composer is in reply mode: no timestamp chip, banner shows. */
   replyingTo?: Pick<Review, 'id' | 'content' | 'author' | 'created_at'>;
   onCancelReply?: () => void;
+  /** Async text enhancer; when set, a Sparkles button rewrites the draft. */
+  onEnhance?: (text: string) => Promise<string | null>;
 };
 
 /**
@@ -35,14 +37,28 @@ export function ReviewComposer({
   getCurrentTime,
   replyingTo,
   onCancelReply,
+  onEnhance,
 }: ReviewComposerProps) {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [includeTimestamp, setIncludeTimestamp] = useState(false);
   const [capturedTime, setCapturedTime] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
 
   const isReplyMode = Boolean(replyingTo);
+
+  async function handleEnhance() {
+    const trimmed = content.trim();
+    if (!trimmed || enhancing || !onEnhance) return;
+    setEnhancing(true);
+    try {
+      const enhanced = await onEnhance(trimmed);
+      if (enhanced) setContent(enhanced);
+    } finally {
+      setEnhancing(false);
+    }
+  }
   const canAttachTimestamp = Boolean(getCurrentTime) && !isReplyMode;
 
   function handleToggleTimestamp() {
@@ -128,6 +144,17 @@ export function ReviewComposer({
             disabled={busy}
           />
         </View>
+        {onEnhance && !isReplyMode ? (
+          <ZIconButton
+            label={enhancing ? t('videos.enhancing') : t('videos.enhanceText')}
+            size="sm"
+            testID="review-enhance"
+            disabled={!content.trim() || busy || enhancing}
+            onPress={() => void handleEnhance()}
+          >
+            <Sparkles color={colors.muted} size={16} />
+          </ZIconButton>
+        ) : null}
         <ZIconButton
           label="Send"
           variant="primary"
