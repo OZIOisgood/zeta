@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,12 @@ import (
 	"time"
 
 	authmocks "github.com/OZIOisgood/zeta/internal/auth/mocks"
+	"github.com/OZIOisgood/zeta/internal/db"
+	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
+	"github.com/OZIOisgood/zeta/internal/preferences"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 	"go.uber.org/mock/gomock"
 )
@@ -335,4 +341,117 @@ func TestTokenRefreshRejectsFailedRefresh(t *testing.T) {
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("got status %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
+}
+
+// contextWithUser injects a UserContext into the request context so that
+// handler tests can exercise Me/UpdateMe without running the JWT middleware.
+func contextWithUser(r *http.Request, u *UserContext) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), UserKey, u))
+}
+
+// testUserPrefs returns a fully-populated UserPreference row suitable for
+// handler response assertions.
+func testUserPrefs() db.UserPreference {
+	return db.UserPreference{
+		UserID:    "user-1",
+		FirstName: "Alice",
+		LastName:  "Smith",
+		// Push fields
+		PushNotificationsEnabled:          true,
+		PushAssetUploadsEnabled:           true,
+		PushAssetReviewsEnabled:           false,
+		PushInvitationUpdatesEnabled:      true,
+		PushGroupMembershipUpdatesEnabled: false,
+		PushCoachingBookingUpdatesEnabled: true,
+	}
+}
+
+func TestMe_IncludesPushPreferences(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	q.EXPECT().
+		GetUserPreferences(gomock.Any(), "user-1").
+		Return(testUserPrefs(), nil)
+
+	workos := authmocks.NewMockUserManagement(ctrl)
+	h := NewHandler(slog.Default(), q, workos)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req = contextWithUser(req, &UserContext{ID: "user-1", Role: "student", Permissions: []string{}})
+	rec := httptest.NewRecorder()
+
+	h.Me(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	var body map[string]json.RawMessage
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&body))
+	require.Contains(t, body, "push_preferences", "response must contain push_preferences")
+
+	var pp preferences.PushPreferences
+	require.NoError(t, json.Unmarshal(body["push_preferences"], &pp))
+	assert.True(t, pp.NotificationsEnabled)
+	assert.True(t, pp.AssetUploadsEnabled)
+	assert.False(t, pp.AssetReviewsEnabled)
+	assert.True(t, pp.InvitationUpdatesEnabled)
+	assert.False(t, pp.GroupMembershipUpdatesEnabled)
+	assert.True(t, pp.CoachingBookingUpdatesEnabled)
+}
+
+func TestUpdateMe_PersistsPushPreferences(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+
+	basePrefs := testUserPrefs()
+
+	updatedPrefs := basePrefs
+	updatedPrefs.PushNotificationsEnabled = false
+	updatedPrefs.PushAssetUploadsEnabled = false
+
+	q.EXPECT().
+		UpdateUserProfilePreferences(gomock.Any(), gomock.Any()).
+		Return(basePrefs, nil)
+
+	q.EXPECT().
+		UpdateUserPushPreferences(gomock.Any(), db.UpdateUserPushPreferencesParams{
+			UserID:                            "user-1",
+			PushNotificationsEnabled:          false,
+			PushAssetUploadsEnabled:           false,
+			PushAssetReviewsEnabled:           false,
+			PushInvitationUpdatesEnabled:      false,
+			PushGroupMembershipUpdatesEnabled: false,
+			PushCoachingBookingUpdatesEnabled: false,
+		}).
+		Return(updatedPrefs, nil)
+
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(usermanagement.User{}, nil).AnyTimes()
+
+	h := NewHandler(slog.Default(), q, workos)
+
+	body := strings.NewReader(`{
+		"timezone": "UTC",
+		"push_preferences": {
+			"notifications_enabled": false,
+			"asset_uploads_enabled": false,
+			"asset_reviews_enabled": false,
+			"invitation_updates_enabled": false,
+			"group_membership_updates_enabled": false,
+			"coaching_booking_updates_enabled": false
+		}
+	}`)
+	req := httptest.NewRequest(http.MethodPut, "/auth/me", body)
+	req = contextWithUser(req, &UserContext{ID: "user-1", Role: "student", Permissions: []string{}})
+	rec := httptest.NewRecorder()
+
+	h.UpdateMe(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	var resp map[string]json.RawMessage
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	require.Contains(t, resp, "push_preferences")
+
+	var pp preferences.PushPreferences
+	require.NoError(t, json.Unmarshal(resp["push_preferences"], &pp))
+	assert.False(t, pp.NotificationsEnabled)
+	assert.False(t, pp.AssetUploadsEnabled)
 }

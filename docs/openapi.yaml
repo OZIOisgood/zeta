@@ -16,6 +16,7 @@ tags:
   - name: assets
   - name: groups
   - name: coaching
+  - name: devices
 paths:
   /health:
     get:
@@ -819,6 +820,62 @@ paths:
         "409":
           description: Booking is already cancelled
 
+  # --- Devices ---
+
+  /devices:
+    post:
+      tags: [devices]
+      summary: Register a device for push notifications
+      description: >
+        Registers (or updates) the calling user's device with an Expo push
+        token. If the token is already registered to this user, the record is
+        refreshed (last_seen_at updated). Requires a valid bearer token.
+      operationId: registerDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterDeviceRequest"
+      responses:
+        "200":
+          description: Device registered or refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                required: [status]
+        "400":
+          description: Missing expo_push_token or invalid request body
+        "401":
+          description: Not authenticated
+
+  /devices/{token}:
+    delete:
+      tags: [devices]
+      summary: Unregister a device push token
+      description: >
+        Removes the push token from the calling user's device list. Silently
+        succeeds when the token is not found (idempotent). Requires a valid
+        bearer token.
+      operationId: deleteDevice
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: Expo push token to remove
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Device unregistered (or was already absent)
+        "401":
+          description: Not authenticated
+
 security:
   - bearerAuth: []
 components:
@@ -894,6 +951,41 @@ components:
         - group_membership_updates_enabled
         - coaching_booking_updates_enabled
         - coaching_reminders_enabled
+    PushPreferences:
+      type: object
+      description: >
+        Push notification preferences. Mirrors EmailPreferences but omits
+        coaching_reminders (push reminders are out of scope).
+      properties:
+        notifications_enabled:
+          type: boolean
+        asset_uploads_enabled:
+          type: boolean
+        asset_reviews_enabled:
+          type: boolean
+        invitation_updates_enabled:
+          type: boolean
+        group_membership_updates_enabled:
+          type: boolean
+        coaching_booking_updates_enabled:
+          type: boolean
+      required:
+        - notifications_enabled
+        - asset_uploads_enabled
+        - asset_reviews_enabled
+        - invitation_updates_enabled
+        - group_membership_updates_enabled
+        - coaching_booking_updates_enabled
+    RegisterDeviceRequest:
+      type: object
+      properties:
+        expo_push_token:
+          type: string
+          description: Expo push notification token from the device
+        platform:
+          type: string
+          description: Device platform (e.g. ios, android); omit when unknown
+      required: [expo_push_token]
     Me:
       type: object
       properties:
@@ -915,6 +1007,8 @@ components:
           type: string
         email_preferences:
           $ref: "#/components/schemas/EmailPreferences"
+        push_preferences:
+          $ref: "#/components/schemas/PushPreferences"
         role:
           type: string
         permissions:
@@ -930,6 +1024,7 @@ components:
         - avatar
         - timezone
         - email_preferences
+        - push_preferences
         - role
         - permissions
     UpdateMeRequest:
@@ -949,6 +1044,8 @@ components:
           type: string
         email_preferences:
           $ref: "#/components/schemas/EmailPreferences"
+        push_preferences:
+          $ref: "#/components/schemas/PushPreferences"
       required: [timezone]
     AssetGroup:
       type: object

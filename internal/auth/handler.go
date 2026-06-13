@@ -691,6 +691,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"avatar":            prefs.Avatar,
 		"timezone":          prefs.Timezone,
 		"email_preferences": preferences.FromUserPreferences(prefs),
+		"push_preferences":  preferences.FromUserPreferencesPush(prefs),
 		"role":              user.Role,
 		"permissions":       user.Permissions,
 	}
@@ -706,6 +707,7 @@ type UpdateUserRequest struct {
 	Avatar           *string                       `json:"avatar"`
 	Timezone         string                        `json:"timezone"`
 	EmailPreferences *preferences.EmailPreferences `json:"email_preferences"`
+	PushPreferences  *preferences.PushPreferences  `json:"push_preferences"`
 }
 
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
@@ -757,6 +759,20 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 				slog.Any("err", err),
 			)
 			http.Error(w, "Failed to update email preferences", http.StatusInternalServerError)
+			return
+		}
+		prefs = updated
+	}
+
+	if req.PushPreferences != nil {
+		updated, err := h.q.UpdateUserPushPreferences(ctx, preferences.ToUpdatePushParams(user.ID, *req.PushPreferences))
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_update_push_preferences_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to update push preferences", http.StatusInternalServerError)
 			return
 		}
 		prefs = updated
@@ -829,6 +845,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		"avatar":            prefs.Avatar,
 		"timezone":          prefs.Timezone,
 		"email_preferences": preferences.FromUserPreferences(prefs),
+		"push_preferences":  preferences.FromUserPreferencesPush(prefs),
 		"role":              user.Role,
 		"permissions":       user.Permissions,
 	}

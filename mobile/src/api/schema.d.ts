@@ -459,6 +459,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register a device for push notifications
+         * @description Registers (or updates) the calling user's device with an Expo push token. If the token is already registered to this user, the record is refreshed (last_seen_at updated). Requires a valid bearer token.
+         */
+        post: operations["registerDevice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/devices/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unregister a device push token
+         * @description Removes the push token from the calling user's device list. Silently succeeds when the token is not found (idempotent). Requires a valid bearer token.
+         */
+        delete: operations["deleteDevice"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -492,6 +532,21 @@ export interface components {
             coaching_booking_updates_enabled: boolean;
             coaching_reminders_enabled: boolean;
         };
+        /** @description Push notification preferences. Mirrors EmailPreferences but omits coaching_reminders (push reminders are out of scope). */
+        PushPreferences: {
+            notifications_enabled: boolean;
+            asset_uploads_enabled: boolean;
+            asset_reviews_enabled: boolean;
+            invitation_updates_enabled: boolean;
+            group_membership_updates_enabled: boolean;
+            coaching_booking_updates_enabled: boolean;
+        };
+        RegisterDeviceRequest: {
+            /** @description Expo push notification token from the device */
+            expo_push_token: string;
+            /** @description Device platform (e.g. ios, android); omit when unknown */
+            platform?: string;
+        };
         Me: {
             id: string;
             first_name: string;
@@ -503,6 +558,7 @@ export interface components {
             avatar: string;
             timezone: string;
             email_preferences: components["schemas"]["EmailPreferences"];
+            push_preferences: components["schemas"]["PushPreferences"];
             role: string;
             permissions: string[];
         };
@@ -515,6 +571,7 @@ export interface components {
             avatar?: string;
             timezone: string;
             email_preferences?: components["schemas"]["EmailPreferences"];
+            push_preferences?: components["schemas"]["PushPreferences"];
         };
         AssetGroup: {
             id: string;
@@ -1985,6 +2042,75 @@ export interface operations {
             };
             /** @description Booking is already cancelled */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    registerDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description Device registered or refreshed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "ok";
+                    };
+                };
+            };
+            /** @description Missing expo_push_token or invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Expo push token to remove */
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Device unregistered (or was already absent) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

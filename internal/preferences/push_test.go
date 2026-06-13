@@ -30,6 +30,45 @@ func fullOnPushPrefs() db.GetUserPushPreferencesRow {
 	}
 }
 
+// --- FromUserPreferencesPush / ToUpdatePushParams round-trip ---
+
+func TestFromUserPreferencesPush_MapsAllFields(t *testing.T) {
+	p := db.UserPreference{
+		PushNotificationsEnabled:          true,
+		PushAssetUploadsEnabled:           false,
+		PushAssetReviewsEnabled:           true,
+		PushInvitationUpdatesEnabled:      false,
+		PushGroupMembershipUpdatesEnabled: true,
+		PushCoachingBookingUpdatesEnabled: false,
+	}
+	got := FromUserPreferencesPush(p)
+	assert.Equal(t, true, got.NotificationsEnabled)
+	assert.Equal(t, false, got.AssetUploadsEnabled)
+	assert.Equal(t, true, got.AssetReviewsEnabled)
+	assert.Equal(t, false, got.InvitationUpdatesEnabled)
+	assert.Equal(t, true, got.GroupMembershipUpdatesEnabled)
+	assert.Equal(t, false, got.CoachingBookingUpdatesEnabled)
+}
+
+func TestToUpdatePushParams_RoundTrip(t *testing.T) {
+	in := PushPreferences{
+		NotificationsEnabled:          true,
+		AssetUploadsEnabled:           false,
+		AssetReviewsEnabled:           true,
+		InvitationUpdatesEnabled:      false,
+		GroupMembershipUpdatesEnabled: true,
+		CoachingBookingUpdatesEnabled: false,
+	}
+	params := ToUpdatePushParams("user-42", in)
+	assert.Equal(t, "user-42", params.UserID)
+	assert.Equal(t, in.NotificationsEnabled, params.PushNotificationsEnabled)
+	assert.Equal(t, in.AssetUploadsEnabled, params.PushAssetUploadsEnabled)
+	assert.Equal(t, in.AssetReviewsEnabled, params.PushAssetReviewsEnabled)
+	assert.Equal(t, in.InvitationUpdatesEnabled, params.PushInvitationUpdatesEnabled)
+	assert.Equal(t, in.GroupMembershipUpdatesEnabled, params.PushGroupMembershipUpdatesEnabled)
+	assert.Equal(t, in.CoachingBookingUpdatesEnabled, params.PushCoachingBookingUpdatesEnabled)
+}
+
 // --- AllowsPush unit tests (no DB, synchronous) ---
 
 func TestAllowsPush_MasterOff_BlocksAll(t *testing.T) {
