@@ -8,7 +8,7 @@ This document describes Zeta deployment, infrastructure ownership, and runtime c
 | --- | --- | --- | --- | --- |
 | `local` | Developer command | Docker Compose | Local Angular | Local files/container |
 | `dev` | Push to `main` | `zeta-api-dev` | `zeta-dashboard-dev` | Not deployed |
-| `prod` | Push of a `v*` tag | `zeta-api-prod` | `zeta-dashboard-prod` | `zeta-landing` |
+| `prod` | `v*` tag for API/dashboard; landing change on `main` | `zeta-api-prod` | `zeta-dashboard-prod` | `zeta-landing` |
 
 Public domains:
 
@@ -29,7 +29,8 @@ Cloud Run domain mappings are Terraform-managed. DNS records live at the registr
 | --- | --- | --- |
 | `.github/workflows/ci.yml` | Pull request to `main` | Build/test API and dashboard; build landing image |
 | `.github/workflows/deploy-dev.yml` | Push to `main` | Migrate and deploy dev API/dashboard |
-| `.github/workflows/deploy-prod.yml` | Push of `v*` tag | Migrate and deploy prod API/dashboard/landing |
+| `.github/workflows/deploy-prod.yml` | Push of `v*` tag | Migrate and deploy prod API/dashboard |
+| `.github/workflows/deploy-landing.yml` | Landing change on `main`, or manual | Build and deploy production landing only |
 | `.github/workflows/infra.yml` | Manual | Terraform plan or apply for dev/prod |
 
 All workflows authenticate through Workload Identity Federation. GitHub stores no long-lived GCP service-account JSON key.

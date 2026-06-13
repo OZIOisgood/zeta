@@ -1,0 +1,61 @@
+name: Deploy - Landing
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "web/landing/**"
+      - ".github/workflows/deploy-landing.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-landing-prod
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  REGION: europe-west1
+  IMAGE_LANDING: europe-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/zeta/landing
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy Landing to Prod
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push image
+        working-directory: web/landing
+        run: |
+          IMAGE_TAG="${{ env.IMAGE_LANDING }}:${{ github.sha }}"
+          docker build -t "$IMAGE_TAG" -t "${{ env.IMAGE_LANDING }}:stable" .
+          docker push "$IMAGE_TAG"
+          docker push "${{ env.IMAGE_LANDING }}:stable"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy zeta-landing \
+            --image "${{ env.IMAGE_LANDING }}:${{ github.sha }}" \
+            --region ${{ env.REGION }} \
+            --project ${{ vars.GCP_PROJECT_ID }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --quiet

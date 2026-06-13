@@ -81,7 +81,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 | Development dashboard | `https://app.dev.strido.net` | `zeta-dashboard-dev`  |
 | Development API       | `https://api.dev.strido.net` | `zeta-api-dev`        |
 
-`strido.de` redirects to `https://strido.net` at the registrar and is not mapped to Cloud Run. The placeholder landing page is a static nginx container under `web/landing`; it can later be replaced with plain HTML, CSS, JavaScript, and assets without changing the infrastructure.
+`strido.de` redirects to `https://strido.net` at the registrar and is not mapped to Cloud Run. The landing page is a static nginx container under `web/landing`; its HTML and bundled assets can be updated without changing the infrastructure.
 
 1. Verify ownership of `strido.net` with the Google accounts that apply the dev and prod Terraform environments. Verifying the apex domain also permits mapping its subdomains.
 2. In WorkOS Dashboard > Configuration > Redirect URIs, add both callbacks before deploying:
@@ -102,7 +102,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    ```
 
 5. In Spaceship DNS, the expected hosts are `@`, `app`, `api`, `app.dev`, and `api.dev`. Remove only conflicting `A`, `AAAA`, or `CNAME` records for those hosts; keep all Resend MX/TXT/DKIM records.
-6. Deploy `main` for the dev services, then create a production release tag. The workflows configure CORS, frontend and API URLs, WorkOS callbacks, logout redirects, email branding, and the landing container.
+6. Deploy `main` for the dev services, then create a production release tag. API/dashboard workflows configure CORS, frontend and API URLs, WorkOS callbacks, logout redirects, and email branding. Landing changes under `web/landing` deploy independently on pushes to `main`; the workflow can also be run manually.
 7. After all five domains and authentication flows are verified, the legacy `zeta-api` and `zeta-dashboard` Cloud Run services can be removed manually.
 
 Google currently labels direct Cloud Run domain mapping as Preview and does not recommend it for production services. This repository still uses the existing mapping approach; use a global external Application Load Balancer for a GA domain-routing product or advanced traffic controls.
