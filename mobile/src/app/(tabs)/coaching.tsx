@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CalendarClock, CloudOff } from 'lucide-react-native';
+import { CalendarClock, CalendarPlus, CloudOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../api/queries/coaching';
 import { useMyBookingsQuery, useCancelBookingMutation } from '../../api/queries/coaching';
@@ -11,6 +11,8 @@ import { isJoinable } from '../../lib/connect-window';
 import { ZButton } from '../../components/ui/z-button';
 import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
+import { ZIconButton } from '../../components/ui/z-icon-button';
+import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { ZTabs } from '../../components/ui/z-tabs';
@@ -226,22 +228,7 @@ export default function CoachingScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* Header: title + summary subtitle, permission-gated Book action */}
-      <View className="flex-row items-start justify-between gap-3 px-4 pb-3 pt-4">
-        <View className="min-w-0 flex-1">
-          <Text className="text-xl font-semibold text-z-text">{t('sessions.title')}</Text>
-          <Text className="mt-1 text-sm leading-5 text-z-muted">{t('sessions.summary')}</Text>
-        </View>
-        {canBook ? (
-          <ZButton
-            testID="coaching-book"
-            label={t('sessions.bookLive')}
-            variant="secondary"
-            onPress={() => router.push('/book')}
-            icon={<CalendarClock color={colors.text} size={16} />}
-          />
-        ) : null}
-      </View>
+      <ZPageHeader title={t('sessions.title')} subtitle={t('sessions.summary')} />
 
       <View className="px-4">
         <ZTabs
@@ -261,6 +248,20 @@ export default function CoachingScreen() {
           onDone={() => setCancellingId(null)}
           onAbort={() => setCancellingId(null)}
         />
+      ) : null}
+
+      {canBook ? (
+        <ZIconButton
+          testID="coaching-book"
+          label={t('sessions.bookLive')}
+          variant="primary"
+          size="lg"
+          shape="circle"
+          onPress={() => router.push('/book')}
+          className="absolute bottom-6 right-6"
+        >
+          <CalendarPlus color={colors.onPrimary} size={24} />
+        </ZIconButton>
       ) : null}
     </ZScreen>
   );

@@ -237,9 +237,11 @@ test('empty cancelled tab shows the cancelled empty copy', async () => {
   await waitFor(() => expect(screen.getByText('No cancelled sessions')).toBeOnTheScreen());
 });
 
-// ── Book session button ───────────────────────────────────────────────────────
+// ── Book FAB ──────────────────────────────────────────────────────────────────
+// Booking is the primary CREATE action, so it lives as a bottom-right FAB
+// (ZIconButton) found by its accessibilityLabel, not a header button.
 
-test('"Book session" button shown with coaching:book permission', async () => {
+test('Book FAB shown with coaching:book permission, labelled by sessions.bookLive', async () => {
   mockPermissions = ['coaching:book'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -250,9 +252,10 @@ test('"Book session" button shown with coaching:book permission', async () => {
   });
   await render(<Providers><CoachingScreen /></Providers>);
   expect(screen.getByTestId('coaching-book')).toBeOnTheScreen();
+  expect(screen.getByLabelText('Book Live Coaching')).toBeOnTheScreen();
 });
 
-test('"Book session" button NOT shown without coaching:book permission', async () => {
+test('Book FAB NOT shown without coaching:book permission', async () => {
   mockPermissions = [];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -263,9 +266,10 @@ test('"Book session" button NOT shown without coaching:book permission', async (
   });
   await render(<Providers><CoachingScreen /></Providers>);
   expect(screen.queryByTestId('coaching-book')).toBeNull();
+  expect(screen.queryByLabelText('Book Live Coaching')).toBeNull();
 });
 
-test('"Book session" button navigates to /book', async () => {
+test('Book FAB navigates to /book', async () => {
   mockPermissions = ['coaching:book'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -275,7 +279,7 @@ test('"Book session" button navigates to /book', async () => {
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
-  fireEvent.press(screen.getByTestId('coaching-book'));
+  fireEvent.press(screen.getByLabelText('Book Live Coaching'));
   expect(mockPush).toHaveBeenCalledWith('/book');
 });
 
