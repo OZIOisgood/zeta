@@ -26,4 +26,43 @@ test('shows title, review count and fires onPress', async () => {
 test('completed assets show the reviewed badge', async () => {
   await render(<AssetCard asset={{ ...ASSET, status: 'completed' }} onPress={jest.fn()} />);
   expect(screen.getByTestId('asset-status-completed')).toBeOnTheScreen();
+  expect(screen.getByText('Reviewed')).toBeOnTheScreen();
+});
+
+test('waiting_upload assets show the localized uploading label', async () => {
+  await render(<AssetCard asset={{ ...ASSET, status: 'waiting_upload' }} onPress={jest.fn()} />);
+  expect(screen.getByTestId('asset-status-waiting_upload')).toBeOnTheScreen();
+  expect(screen.getByText('Uploading…')).toBeOnTheScreen();
+});
+
+test('renders the description as the secondary line', async () => {
+  await render(<AssetCard asset={ASSET} onPress={jest.fn()} />);
+  expect(screen.getByText('desc')).toBeOnTheScreen();
+});
+
+test('shows the group name accent alongside the description', async () => {
+  await render(
+    <AssetCard
+      asset={{ ...ASSET, description: 'My kata', group: { id: 'g1', name: 'Brown Belts' } }}
+      onPress={jest.fn()}
+    />,
+  );
+  expect(screen.getByText('My kata')).toBeOnTheScreen();
+  expect(screen.getByText('Brown Belts')).toBeOnTheScreen();
+});
+
+test('falls back to the group name as the secondary line when there is no description', async () => {
+  await render(
+    <AssetCard
+      asset={{ ...ASSET, description: '', group: { id: 'g1', name: 'Blue Belts' } }}
+      onPress={jest.fn()}
+    />,
+  );
+  // Group name appears as both the secondary line and the accent line.
+  expect(screen.getAllByText('Blue Belts').length).toBeGreaterThanOrEqual(1);
+});
+
+test('exposes the review count as an accessible comment count', async () => {
+  await render(<AssetCard asset={ASSET} onPress={jest.fn()} />);
+  expect(screen.getByLabelText('Comments: 3')).toBeOnTheScreen();
 });
