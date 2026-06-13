@@ -4,7 +4,6 @@
  * Home, Videos, and Profile are always rendered.
  */
 import { render, screen } from '@testing-library/react-native';
-import { View } from 'react-native';
 
 // ── native module mocks (before importing the layout) ─────────────────────────
 
@@ -12,13 +11,24 @@ jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' 
 
 // ── expo-router mock ──────────────────────────────────────────────────────────
 
-// Render each <Tabs.Screen> as a testID-tagged node so we can assert
-// presence/absence by route name. Tabs itself is a passthrough.
+// Render each <Tabs.Screen> as a testID-tagged View so we can assert
+// presence/absence by route name. Tabs itself is a passthrough View.
+// All identifiers are prefixed with 'mock' so jest's factory-scope rules allow them.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const mockRN = require('react-native');
 jest.mock('expo-router', () => {
-  const { View: RNView } = require('react-native');
-  const Tabs = ({ children }: { children: React.ReactNode }) => <RNView>{children}</RNView>;
-  Tabs.Screen = ({ name }: { name: string }) => <RNView testID={`tab-${name}`} />;
-  return { Tabs };
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mockReact = require('react');
+  function mockTabsRoot({ children }: { children: unknown }) {
+    return mockReact.createElement(mockRN.View, null, children);
+  }
+  function mockTabsScreen({ name }: { name: string }) {
+    return mockReact.createElement(mockRN.View, { testID: `tab-${name}` });
+  }
+  mockTabsRoot.displayName = 'Tabs';
+  mockTabsScreen.displayName = 'Tabs.Screen';
+  const mockTabs = Object.assign(mockTabsRoot, { Screen: mockTabsScreen });
+  return { Tabs: mockTabs };
 });
 
 // ── auth-store mock ───────────────────────────────────────────────────────────
@@ -37,9 +47,6 @@ jest.mock('../auth/auth-store', () => ({
 
 import { initI18n } from '../i18n';
 import TabsLayout from '../app/(tabs)/_layout';
-
-// Suppress the unused View import lint warning — kept for parity with screen test headers.
-void View;
 
 beforeAll(() => initI18n('en'));
 beforeEach(() => {
