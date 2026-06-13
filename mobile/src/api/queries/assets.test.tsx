@@ -8,7 +8,7 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
-import { useAssetQuery, useAssetsQuery } from './assets';
+import { useAssetQuery, useAssetsQuery, useFinalizeAssetMutation } from './assets';
 
 let client: QueryClient;
 
@@ -49,4 +49,36 @@ test('useAssetQuery requests the asset by id', async () => {
   const { result } = await renderHook(() => useAssetQuery('a1', { GET } as never), { wrapper });
   await waitFor(() => expect(result.current.isSuccess).toBe(true));
   expect(GET).toHaveBeenCalledWith('/assets/{id}', { params: { path: { id: 'a1' } } });
+});
+
+test('useFinalizeAssetMutation posts finalize and invalidates the asset and list', async () => {
+  const POST = jest.fn(async () => ({ data: { status: 'completed' }, error: undefined }));
+  const invalidated: unknown[] = [];
+  const qc = { invalidateQueries: jest.fn(async (args: unknown) => void invalidated.push(args)) };
+  const { result } = await renderHook(
+    () => useFinalizeAssetMutation('a1', { POST } as never, qc as never),
+    { wrapper },
+  );
+  const data = await result.current.mutateAsync();
+  expect(data.status).toBe('completed');
+  expect(POST).toHaveBeenCalledWith('/assets/{id}/finalize', {
+    params: { path: { id: 'a1' } },
+  });
+  expect(invalidated).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ queryKey: ['assets', 'a1'] }),
+      expect.objectContaining({ queryKey: ['assets'] }),
+    ]),
+  );
+});
+
+test('useFinalizeAssetMutation surfaces the unreviewed-parts 400 and does not invalidate', async () => {
+  const POST = jest.fn(async () => ({ data: undefined, error: { message: 'no reviews' } }));
+  const qc = { invalidateQueries: jest.fn() };
+  const { result } = await renderHook(
+    () => useFinalizeAssetMutation('a1', { POST } as never, qc as never),
+    { wrapper },
+  );
+  await expect(result.current.mutateAsync()).rejects.toThrow();
+  expect(qc.invalidateQueries).not.toHaveBeenCalled();
 });
