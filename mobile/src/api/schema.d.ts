@@ -128,6 +128,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/assets/{id}/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark the video as reviewed (finalize)
+         * @description Transitions the asset to completed. Requires assets:finalize and that every video part already has at least one review (400 otherwise).
+         */
+        post: operations["finalizeAsset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/groups": {
         parameters: {
             query?: never;
@@ -294,6 +314,41 @@ export interface paths {
         put?: never;
         /** Create a review on a video */
         post: operations["createVideoReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/videos/{id}/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Edit a review on a video */
+        put: operations["updateVideoReview"];
+        post?: never;
+        /** Delete a review on a video */
+        delete: operations["deleteVideoReview"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reviews/enhance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rewrite review text with the AI enhancer */
+        post: operations["enhanceReviewText"];
         delete?: never;
         options?: never;
         head?: never;
@@ -672,6 +727,25 @@ export interface components {
             /** Format: int32 */
             timestamp_seconds?: number;
             parent_id?: string;
+        };
+        UpdateReviewRequest: {
+            content: string;
+        };
+        UpdateReviewResponse: {
+            id: string;
+            content: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        EnhanceTextRequest: {
+            text: string;
+        };
+        EnhanceTextResponse: {
+            enhanced_text: string;
+        };
+        FinalizeAssetResponse: {
+            /** @enum {string} */
+            status: "completed";
         };
         GroupUser: {
             id: string;
@@ -1167,6 +1241,56 @@ export interface operations {
                 content?: never;
             };
             /** @description Asset not found or not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    finalizeAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Video marked as reviewed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinalizeAssetResponse"];
+                };
+            };
+            /** @description Invalid asset id, or a video part has no reviews */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing assets:finalize permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Video not found or not visible */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1736,6 +1860,166 @@ export interface operations {
             };
             /** @description Video not found or not visible */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateVideoReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description video id */
+                id: string;
+                /** @description review id */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Review updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateReviewResponse"];
+                };
+            };
+            /** @description Invalid id, invalid body, or missing content */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing reviews:edit permission, not the author, or video is part of a completed asset */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Review not found or video not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteVideoReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description video id */
+                id: string;
+                /** @description review id */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Review deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing reviews:delete permission, not the author, or video is part of a completed asset */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Review not found or video not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    enhanceReviewText: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnhanceTextRequest"];
+            };
+        };
+        responses: {
+            /** @description Enhanced text */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnhanceTextResponse"];
+                };
+            };
+            /** @description Invalid body or missing text */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing reviews:edit permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Enhancement failed */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

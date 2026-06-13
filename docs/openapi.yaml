@@ -215,6 +215,36 @@ paths:
           description: Caller is not the asset owner
         "404":
           description: Asset not found or not visible
+  /assets/{id}/finalize:
+    post:
+      tags: [assets]
+      summary: Mark the video as reviewed (finalize)
+      description: >
+        Transitions the asset to completed. Requires assets:finalize and that
+        every video part already has at least one review (400 otherwise).
+      operationId: finalizeAsset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Video marked as reviewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinalizeAssetResponse"
+        "400":
+          description: Invalid asset id, or a video part has no reviews
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing assets:finalize permission
+        "404":
+          description: Video not found or not visible
   /groups:
     get:
       tags: [groups]
@@ -597,6 +627,32 @@ paths:
           description: Missing reviews:delete permission, not the author, or video is part of a completed asset
         "404":
           description: Review not found or video not visible
+  /reviews/enhance:
+    post:
+      tags: [assets]
+      summary: Rewrite review text with the AI enhancer
+      operationId: enhanceReviewText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnhanceTextRequest"
+      responses:
+        "200":
+          description: Enhanced text
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnhanceTextResponse"
+        "400":
+          description: Invalid body or missing text
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing reviews:edit permission
+        "500":
+          description: Enhancement failed
   /auth/logout:
     post:
       tags: [auth]
@@ -1345,6 +1401,25 @@ components:
           type: string
           format: date-time
       required: [id, content, created_at]
+    EnhanceTextRequest:
+      type: object
+      properties:
+        text:
+          type: string
+      required: [text]
+    EnhanceTextResponse:
+      type: object
+      properties:
+        enhanced_text:
+          type: string
+      required: [enhanced_text]
+    FinalizeAssetResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [completed]
+      required: [status]
     GroupUser:
       type: object
       properties:
