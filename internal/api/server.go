@@ -21,6 +21,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/notifications"
+	"github.com/OZIOisgood/zeta/internal/push"
 	"github.com/OZIOisgood/zeta/internal/reports"
 	"github.com/OZIOisgood/zeta/internal/reviews"
 	"github.com/OZIOisgood/zeta/internal/users"
@@ -76,6 +77,11 @@ func (s *Server) routes(ctx context.Context) {
 	jwksCache := auth.NewJWKSCache(jwksURL, time.Hour)
 
 	queries := db.New(s.Pool)
+
+	// Wire push delivery into the notifications pipeline. push.Sender satisfies
+	// the Notifier interface defined in notifications; the import is one-way
+	// (api → push; notifications → preferences; push does not import notifications).
+	notifications.SetNotifier(push.NewSender(queries, s.Logger))
 
 	// Initialize Handlers
 	workosClient := auth.NewWorkOSClient()
