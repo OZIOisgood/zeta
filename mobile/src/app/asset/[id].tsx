@@ -251,7 +251,7 @@ export default function AssetDetailScreen() {
           ) : (
             <View className="items-center gap-2">
               <Clock color={colors.bg} size={28} />
-              <Text className="text-z-bg">Processing…</Text>
+              <Text className="text-z-bg">{t('videos.processingUnavailable')}</Text>
             </View>
           )}
         </View>
