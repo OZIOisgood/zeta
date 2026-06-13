@@ -93,6 +93,12 @@
       "reviewed": "Révisé",
       "upcoming": "à venir"
     },
+    "time": {
+      "justNow": "à l'instant",
+      "minutesAgo": "il y a {{count}} min",
+      "hoursAgo": "il y a {{count}} h",
+      "daysAgo": "il y a {{count}} j"
+    },
     "closeNavigation": "Fermer la navigation",
     "dismiss": "Fermer",
     "language": "Langue",
@@ -102,12 +108,8 @@
     "search": "Rechercher"
   },
   "reports": {
-    "expert": {
-      "title": "Rapport expert"
-    },
-    "student": {
-      "title": "Rapport élève"
-    },
+    "expert": { "title": "Rapport expert" },
+    "student": { "title": "Rapport élève" },
     "description": "{{kind}} pour {{name}} · {{count}} activités.",
     "kind": {
       "month": "Rapport mensuel",

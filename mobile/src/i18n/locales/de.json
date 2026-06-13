@@ -93,6 +93,12 @@
       "reviewed": "Überprüft",
       "upcoming": "bevorstehend"
     },
+    "time": {
+      "justNow": "gerade eben",
+      "minutesAgo": "vor {{count}} Min.",
+      "hoursAgo": "vor {{count}} Std.",
+      "daysAgo": "vor {{count}} T."
+    },
     "closeNavigation": "Navigation schließen",
     "dismiss": "Schließen",
     "language": "Sprache",
@@ -102,12 +108,8 @@
     "search": "Suchen"
   },
   "reports": {
-    "expert": {
-      "title": "Experten-Bericht"
-    },
-    "student": {
-      "title": "Schüler-Bericht"
-    },
+    "expert": { "title": "Experten-Bericht" },
+    "student": { "title": "Schüler-Bericht" },
     "description": "{{kind}} für {{name}} · {{count}} Aktivitäten.",
     "kind": {
       "month": "Monatsbericht",

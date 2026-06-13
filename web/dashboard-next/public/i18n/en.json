@@ -93,6 +93,12 @@
       "reviewed": "Reviewed",
       "upcoming": "upcoming"
     },
+    "time": {
+      "justNow": "just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
     "closeNavigation": "Close navigation",
     "dismiss": "Dismiss",
     "language": "Language",

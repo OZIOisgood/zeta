@@ -93,6 +93,12 @@
       "reviewed": "Reviewed",
       "upcoming": "upcoming"
     },
+    "time": {
+      "justNow": "just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
     "closeNavigation": "Close navigation",
     "dismiss": "Dismiss",
     "language": "Language",
@@ -102,12 +108,8 @@
     "search": "Search"
   },
   "reports": {
-    "expert": {
-      "title": "Expert report"
-    },
-    "student": {
-      "title": "Student report"
-    },
+    "expert": { "title": "Expert report" },
+    "student": { "title": "Student report" },
     "description": "{{kind}} for {{name}} · {{count}} activities.",
     "kind": {
       "month": "Monthly report",
