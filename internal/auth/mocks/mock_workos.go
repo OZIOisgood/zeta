@@ -177,6 +177,21 @@ func (mr *MockUserManagementMockRecorder) ListUsers(ctx, opts any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockUserManagement)(nil).ListUsers), ctx, opts)
 }
 
+// UpdateOrganizationMembership mocks base method.
+func (m *MockUserManagement) UpdateOrganizationMembership(ctx context.Context, organizationMembershipID string, opts usermanagement.UpdateOrganizationMembershipOpts) (usermanagement.OrganizationMembership, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateOrganizationMembership", ctx, organizationMembershipID, opts)
+	ret0, _ := ret[0].(usermanagement.OrganizationMembership)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateOrganizationMembership indicates an expected call of UpdateOrganizationMembership.
+func (mr *MockUserManagementMockRecorder) UpdateOrganizationMembership(ctx, organizationMembershipID, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganizationMembership", reflect.TypeOf((*MockUserManagement)(nil).UpdateOrganizationMembership), ctx, organizationMembershipID, opts)
+}
+
 // UpdateUser mocks base method.
 func (m *MockUserManagement) UpdateUser(ctx context.Context, opts usermanagement.UpdateUserOpts) (usermanagement.User, error) {
 	m.ctrl.T.Helper()
