@@ -11,12 +11,14 @@ export function ZCheckbox({
   value,
   onValueChange,
   label,
+  labelClassName,
   disabled = false,
   testID,
 }: {
   value: boolean;
   onValueChange: (value: boolean) => void;
   label?: string;
+  labelClassName?: string;
   disabled?: boolean;
   testID?: string;
 }) {
@@ -37,7 +39,9 @@ export function ZCheckbox({
       >
         {value ? <Check color={colors.onPrimary} size={14} /> : null}
       </View>
-      {label ? <Text className="text-sm text-z-text">{label}</Text> : null}
+      {label ? (
+        <Text className={`text-sm text-z-text ${labelClassName ?? ''}`}>{label}</Text>
+      ) : null}
     </Pressable>
   );
 }

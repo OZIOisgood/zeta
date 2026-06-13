@@ -57,6 +57,14 @@ function makeUser(overrides: Partial<Me> = {}): Me {
       coaching_booking_updates_enabled: true,
       coaching_reminders_enabled: true,
     },
+    push_preferences: {
+      notifications_enabled: true,
+      asset_uploads_enabled: true,
+      asset_reviews_enabled: true,
+      invitation_updates_enabled: true,
+      group_membership_updates_enabled: true,
+      coaching_booking_updates_enabled: true,
+    },
     ...overrides,
   };
 }
@@ -142,7 +150,7 @@ test('disables Save while the form is pristine and enables it once a field chang
   expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
 });
 
-test('shows the error via ZFieldError when the mutation fails', async () => {
+test('shows an alert message when the mutation fails', async () => {
   const user = userEvent.setup();
   const updateSpy = jest.fn(async (_body: UpdateMeRequest): Promise<Me | null> => null);
   authStore.setState({ status: 'signedIn', user: makeUser(), updateCurrentUser: updateSpy });
@@ -153,8 +161,7 @@ test('shows the error via ZFieldError when the mutation fails', async () => {
   await user.press(screen.getByRole('button', { name: 'Save' }));
 
   await waitFor(() => expect(updateSpy).toHaveBeenCalledTimes(1));
-  // The failure surfaces through the ZFieldError primitive (which carries
-  // role=alert on its container) rather than the old hand-rolled rose banner.
+  // The failure surfaces as an alert-role save-error message.
   await waitFor(() =>
     expect(screen.getByText('Failed to update preferences')).toBeOnTheScreen(),
   );

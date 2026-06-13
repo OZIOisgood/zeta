@@ -411,6 +411,7 @@ function PreferencesForm({ user }: { user: Me }) {
                   <ZCheckbox
                     value={notificationsEnabled}
                     label={t('preferences.email.all')}
+                    labelClassName="font-semibold"
                     onValueChange={(value) => setEmailPreference('notifications_enabled', value)}
                   />
                   <Text className="text-xs leading-5 text-z-muted">
@@ -431,6 +432,7 @@ function PreferencesForm({ user }: { user: Me }) {
                         <ZCheckbox
                           value={emailPreferences[row.key]}
                           label={row.label}
+                          labelClassName="font-semibold"
                           disabled={!notificationsEnabled}
                           onValueChange={(value) => setEmailPreference(row.key, value)}
                         />
@@ -440,7 +442,14 @@ function PreferencesForm({ user }: { user: Me }) {
               </ZCard>
             )}
 
-            {saveFailed ? <ZFieldError message={t('preferences.saveFailed')} /> : null}
+            {saveFailed ? (
+              <Text
+                accessibilityRole="alert"
+                className="text-sm font-medium text-z-danger"
+              >
+                {t('preferences.saveFailed')}
+              </Text>
+            ) : null}
 
             <ZButton
               label={saving ? t('preferences.saving') : t('common.actions.save')}
