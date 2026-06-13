@@ -105,6 +105,9 @@ test('manual code entry: type code and submit → invitation info card appears',
   await waitFor(() => {
     expect(getByText('Karate Club')).toBeOnTheScreen();
   });
+
+  // Invitation headline tells the user they are being invited
+  expect(getByText("You've been invited to join Karate Club")).toBeOnTheScreen();
 });
 
 // ── Test 2: Accept flow ───────────────────────────────────────────────────────
@@ -147,7 +150,7 @@ test('accept: press accept button → mutateAsync called with code, router.repla
 
 // ── Test 2b: decline flow ─────────────────────────────────────────────────────
 
-test('decline: press decline button → mutateAsync called with code, toast fires, router.back', async () => {
+test('decline: press decline button → mutateAsync called with code, no toast, router.back', async () => {
   mockUseInvitationInfoQuery.mockImplementation((code: string) => {
     if (code === 'ABC123') {
       return { isPending: false, isError: false, data: INVITATION_INFO };
@@ -174,7 +177,8 @@ test('decline: press decline button → mutateAsync called with code, toast fire
     expect(mockBack).toHaveBeenCalled();
   });
 
-  expect(mockShowToast).toHaveBeenCalledWith('Group Invitation', undefined, 'info');
+  // Web shows no toast on decline success — none should fire here either
+  expect(mockShowToast).not.toHaveBeenCalled();
 });
 
 // ── Test 2c: accept failure → error toast ─────────────────────────────────────
@@ -276,7 +280,7 @@ test('unknown code: error shown with invite-reset button; press reset → code i
     return { isPending: false, isError: false, data: undefined };
   });
 
-  const { getByTestId, queryByTestId } = await render(<Providers><InviteScreen /></Providers>);
+  const { getByTestId, getByText, queryByTestId } = await render(<Providers><InviteScreen /></Providers>);
 
   fireEvent.changeText(getByTestId('invite-code-input'), 'BAD000');
   await waitFor(() =>
@@ -285,6 +289,10 @@ test('unknown code: error shown with invite-reset button; press reset → code i
   fireEvent.press(getByTestId('invite-code-submit'));
 
   await waitFor(() => expect(getByTestId('invite-reset')).toBeOnTheScreen());
+
+  // Reset button uses a distinct action label, not the description copy
+  expect(getByTestId('invite-reset')).toHaveTextContent('Retry');
+  expect(getByText('Try a different code')).toBeOnTheScreen();
 
   // Error text visible, accept not visible
   expect(queryByTestId('invite-accept')).toBeNull();

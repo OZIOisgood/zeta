@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { AccessibilityInfo, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ArrowLeft } from 'lucide-react-native';
@@ -54,6 +54,7 @@ export default function InviteScreen() {
     const parsed = parseInviteCode(data);
     if (!parsed) return;
     scannedRef.current = true;
+    AccessibilityInfo.announceForAccessibility(t('groups.invitationDialog.title'));
     setCode(parsed);
   }
 
@@ -97,7 +98,6 @@ export default function InviteScreen() {
   async function handleDecline() {
     try {
       await declineMutation.mutateAsync({ code });
-      showToast(t('groups.invitationDialog.title'), undefined, 'info');
       router.back();
     } catch {
       showToast(
@@ -136,7 +136,7 @@ export default function InviteScreen() {
               {permission?.granted ? (
                 <View
                   accessible
-                  accessibilityLabel={t('groups.invite.cameraHint')}
+                  accessibilityLabel={`${t('common.labels.camera')}. ${t('groups.invite.cameraHint')}`}
                   className="mb-4 overflow-hidden rounded-xl"
                   style={{ height: 280 }}
                 >
@@ -169,7 +169,7 @@ export default function InviteScreen() {
               {/* Manual entry */}
               <ZTextInput
                 testID="invite-code-input"
-                accessibilityLabel="Invite code"
+                accessibilityLabel={t('groups.invite.codePlaceholder')}
                 value={manualInput}
                 onChangeText={(v) => {
                   manualInputRef.current = v;
@@ -222,7 +222,7 @@ export default function InviteScreen() {
                 >
                   <ZButton
                     testID="invite-reset"
-                    label={t('groups.invite.tryDifferent')}
+                    label={t('common.actions.retry')}
                     variant="secondary"
                     onPress={handleReset}
                   />
@@ -231,6 +231,11 @@ export default function InviteScreen() {
 
               {info && (
                 <View className="gap-4">
+                  {/* Invitation headline */}
+                  <Text className="text-center text-base font-semibold text-z-text">
+                    {t('groups.invitationDialog.invited', { group: info.group_name })}
+                  </Text>
+
                   {/* Group card */}
                   <ZCard>
                     <View className="flex-row items-center gap-3">
