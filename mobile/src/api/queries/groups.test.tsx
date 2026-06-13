@@ -8,7 +8,7 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
-import { useGroupsQuery, useGroupQuery, useGroupStudentsQuery, useGroupExpertsQuery, useLeaveGroupMutation } from './groups';
+import { useGroupsQuery, useGroupQuery, useGroupStudentsQuery, useGroupExpertsQuery, useCreateGroupMutation, useLeaveGroupMutation } from './groups';
 
 let client: QueryClient;
 
@@ -112,6 +112,38 @@ test('useGroupExpertsQuery unwraps the {data:[...]} envelope', async () => {
   expect(mockGet).toHaveBeenCalledWith('/groups/{groupID}/experts', {
     params: { path: { groupID: 'g1' } },
   });
+});
+
+// ── useCreateGroupMutation ────────────────────────────────────────────────────
+
+test('useCreateGroupMutation posts the body, returns the group, invalidates [groups]', async () => {
+  const POST = jest.fn(async () => ({ data: GROUP, error: undefined }));
+  const invalidated: unknown[] = [];
+  const qc = { invalidateQueries: jest.fn(async (args: unknown) => void invalidated.push(args)) };
+  const { result } = await renderHook(
+    () => useCreateGroupMutation({ POST } as never, qc as never),
+    { wrapper },
+  );
+  const input = { name: 'Karate Club', description: 'Dojo', avatar: 'data:image/png;base64,AAA' };
+  const group = await result.current.mutateAsync(input);
+  expect(POST).toHaveBeenCalledWith('/groups', { body: input });
+  expect(group).toEqual(GROUP);
+  expect(invalidated).toEqual(
+    expect.arrayContaining([expect.objectContaining({ queryKey: ['groups'] })]),
+  );
+});
+
+test('useCreateGroupMutation does not invalidate on error', async () => {
+  const POST = jest.fn(async () => ({ data: undefined, error: { message: 'boom' } }));
+  const qc = { invalidateQueries: jest.fn() };
+  const { result } = await renderHook(
+    () => useCreateGroupMutation({ POST } as never, qc as never),
+    { wrapper },
+  );
+  await expect(
+    result.current.mutateAsync({ name: 'x', avatar: 'data:image/png;base64,AAA' }),
+  ).rejects.toThrow();
+  expect(qc.invalidateQueries).not.toHaveBeenCalled();
 });
 
 // ── useLeaveGroupMutation ─────────────────────────────────────────────────────

@@ -233,6 +233,31 @@ paths:
           description: Not authenticated
         "403":
           description: Missing groups:read permission
+    post:
+      tags: [groups]
+      summary: Create a group
+      operationId: createGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+      responses:
+        "200":
+          description: The created group (caller is added as the owner/first member)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          description: Invalid body, or missing name/avatar
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:create permission
+        "500":
+          description: Failed to create the group
   /groups/{groupID}:
     get:
       tags: [groups]
@@ -335,6 +360,39 @@ paths:
           description: Not authenticated
         "403":
           description: Missing groups:expert-list:read permission
+  /groups/{groupID}/invitations:
+    post:
+      tags: [groups]
+      summary: Create a group invitation (link/QR, optionally emailed)
+      operationId: createInvitation
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvitationRequest"
+      responses:
+        "201":
+          description: The created invitation (carries the shareable code)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupInvitation"
+        "400":
+          description: Invalid group ID, invalid body, or invalid email address
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:invites:create permission or caller is not a member
+        "500":
+          description: Failed to create the invitation
   # Linter flags this as ambiguous vs /groups/{groupID}/...; chi resolves static
   # segments before path params, so /groups/invitations/* always wins at runtime.
   /groups/invitations/{code}:
@@ -1257,6 +1315,32 @@ components:
         code:
           type: string
       required: [code]
+    CreateGroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded image data (max 300KB)
+      required: [name, avatar]
+    CreateInvitationRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Optional invitee email; if it maps to a registered user, an email + in-app notification are sent
+      required: []
+    GroupInvitation:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+      required: [id, code]
 
     # --- Coaching schemas ---
 

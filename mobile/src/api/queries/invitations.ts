@@ -4,6 +4,7 @@ import { api } from '../../auth/auth-store';
 import { queryClient } from '../query-client';
 
 export type InvitationInfo = components['schemas']['InvitationInfo'];
+export type GroupInvitation = components['schemas']['GroupInvitation'];
 
 type Fetcher = Pick<typeof api, 'GET'>;
 type Poster = Pick<typeof api, 'POST'>;
@@ -18,6 +19,22 @@ export function useInvitationInfoQuery(code: string, client: Fetcher = api) {
         params: { path: { code } },
       });
       if (error || !data) throw new Error('Failed to load invitation info');
+      return data;
+    },
+  });
+}
+
+export function useCreateInvitationMutation(client: Poster = api) {
+  return useMutation({
+    mutationFn: async (input: { groupID: string; email?: string }) => {
+      const { data, error } = await (client as typeof api).POST(
+        '/groups/{groupID}/invitations',
+        {
+          params: { path: { groupID: input.groupID } },
+          body: { email: input.email || undefined },
+        },
+      );
+      if (error || !data) throw new Error('Failed to create invitation');
       return data;
     },
   });

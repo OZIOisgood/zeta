@@ -138,7 +138,8 @@ export interface paths {
         /** List groups the current user belongs to */
         get: operations["listGroups"];
         put?: never;
-        post?: never;
+        /** Create a group */
+        post: operations["createGroup"];
         delete?: never;
         options?: never;
         head?: never;
@@ -207,6 +208,23 @@ export interface paths {
         get: operations["listGroupExperts"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a group invitation (link/QR, optionally emailed) */
+        post: operations["createInvitation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -682,6 +700,20 @@ export interface components {
             group_id: string;
         };
         DeclineInvitationRequest: {
+            code: string;
+        };
+        CreateGroupRequest: {
+            name: string;
+            description?: string;
+            /** @description Base64-encoded image data (max 300KB) */
+            avatar: string;
+        };
+        CreateInvitationRequest: {
+            /** @description Optional invitee email; if it maps to a registered user, an email + in-app notification are sent */
+            email?: string;
+        };
+        GroupInvitation: {
+            id: string;
             code: string;
         };
         /** @description Recording metadata attached to a completed booking */
@@ -1177,6 +1209,58 @@ export interface operations {
             };
         };
     };
+    createGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description The created group (caller is added as the owner/first member) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Group"];
+                };
+            };
+            /** @description Invalid body, or missing name/avatar */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing groups:create permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to create the group */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getGroup: {
         parameters: {
             query?: never;
@@ -1361,6 +1445,60 @@ export interface operations {
             };
             /** @description Missing groups:expert-list:read permission */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateInvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description The created invitation (carries the shareable code) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupInvitation"];
+                };
+            };
+            /** @description Invalid group ID, invalid body, or invalid email address */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing groups:invites:create permission or caller is not a member */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to create the invitation */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -5,8 +5,10 @@ import { queryClient } from '../query-client';
 
 export type Group = components['schemas']['Group'];
 export type GroupUser = components['schemas']['GroupUser'];
+export type CreateGroupInput = components['schemas']['CreateGroupRequest'];
 
 type Fetcher = Pick<typeof api, 'GET'>;
+type Poster = Pick<typeof api, 'POST'>;
 type Deleter = Pick<typeof api, 'DELETE'>;
 type Invalidator = Pick<typeof queryClient, 'invalidateQueries'>;
 
@@ -67,6 +69,24 @@ export function useGroupExpertsQuery(
       });
       if (error || !data) throw new Error('Failed to load group experts');
       return data.data as GroupUser[];
+    },
+  });
+}
+
+export function useCreateGroupMutation(
+  client: Poster = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (input: CreateGroupInput) => {
+      const { data, error } = await (client as typeof api).POST('/groups', {
+        body: input,
+      });
+      if (error || !data) throw new Error('Failed to create group');
+      return data;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['groups'] });
     },
   });
 }

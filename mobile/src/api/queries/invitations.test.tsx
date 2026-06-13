@@ -8,7 +8,7 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
-import { useInvitationInfoQuery, useAcceptInvitationMutation, useDeclineInvitationMutation } from './invitations';
+import { useInvitationInfoQuery, useCreateInvitationMutation, useAcceptInvitationMutation, useDeclineInvitationMutation } from './invitations';
 
 let client: QueryClient;
 
@@ -57,6 +57,58 @@ test('useInvitationInfoQuery is disabled when code is empty', async () => {
   );
   expect(mockGet).not.toHaveBeenCalled();
   expect(result.current.isPending).toBe(true);
+});
+
+// ── useCreateInvitationMutation ───────────────────────────────────────────────
+
+test('useCreateInvitationMutation posts email and returns {id, code}', async () => {
+  const POST = jest.fn(async () => ({ data: { id: 'inv1', code: 'ABC123' }, error: undefined }));
+  const { result } = await renderHook(
+    () => useCreateInvitationMutation({ POST } as never),
+    { wrapper },
+  );
+  const invitation = await result.current.mutateAsync({ groupID: 'g1', email: 'student@example.com' });
+  expect(POST).toHaveBeenCalledWith('/groups/{groupID}/invitations', {
+    params: { path: { groupID: 'g1' } },
+    body: { email: 'student@example.com' },
+  });
+  expect(invitation).toEqual({ id: 'inv1', code: 'ABC123' });
+});
+
+test('useCreateInvitationMutation omits email when not provided', async () => {
+  const POST = jest.fn(async () => ({ data: { id: 'inv2', code: 'XYZ789' }, error: undefined }));
+  const { result } = await renderHook(
+    () => useCreateInvitationMutation({ POST } as never),
+    { wrapper },
+  );
+  await result.current.mutateAsync({ groupID: 'g1' });
+  expect(POST).toHaveBeenCalledWith('/groups/{groupID}/invitations', {
+    params: { path: { groupID: 'g1' } },
+    body: { email: undefined },
+  });
+});
+
+test('useCreateInvitationMutation coerces an empty-string email to undefined', async () => {
+  // A controlled invite form submits '' (not undefined) when the field is blank.
+  const POST = jest.fn(async () => ({ data: { id: 'inv3', code: 'QWE456' }, error: undefined }));
+  const { result } = await renderHook(
+    () => useCreateInvitationMutation({ POST } as never),
+    { wrapper },
+  );
+  await result.current.mutateAsync({ groupID: 'g1', email: '' });
+  expect(POST).toHaveBeenCalledWith('/groups/{groupID}/invitations', {
+    params: { path: { groupID: 'g1' } },
+    body: { email: undefined },
+  });
+});
+
+test('useCreateInvitationMutation surfaces errors', async () => {
+  const POST = jest.fn(async () => ({ data: undefined, error: { message: 'forbidden' } }));
+  const { result } = await renderHook(
+    () => useCreateInvitationMutation({ POST } as never),
+    { wrapper },
+  );
+  await expect(result.current.mutateAsync({ groupID: 'g1' })).rejects.toThrow();
 });
 
 // ── useAcceptInvitationMutation ───────────────────────────────────────────────
