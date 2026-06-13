@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { makeRedirectUri, ResponseType, useAuthRequest } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { ZButton } from '../components/ui/z-button';
+import { ZCard } from '../components/ui/z-card';
 import { ZScreen } from '../components/ui/z-screen';
 import { completeLogin, stashCodeVerifier, workosClientId, workosDiscovery } from '../auth/login';
 import { authStore } from '../auth/auth-store';
@@ -18,6 +20,7 @@ if (__DEV__) {
 }
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -56,15 +59,49 @@ export default function LoginScreen() {
   }
 
   return (
-    <ZScreen className="items-center justify-center gap-6 px-8">
-      <Text className="text-3xl font-bold text-z-text">Zeta</Text>
-      <Text className="text-center text-z-muted">
-        Digital video coaching — sign in to continue.
-      </Text>
-      <View className="w-full">
-        <ZButton label={busy ? 'Signing in…' : 'Sign in'} onPress={signIn} disabled={busy || !request} />
+    <ZScreen className="items-center justify-center px-6">
+      <View className="w-full max-w-sm">
+        <ZCard className="p-8">
+          {/* Brand mark — text only; the web card pairs this with a logo image
+              asset that does not yet exist in mobile assets (see follow-up). */}
+          <View className="flex-row items-center gap-3">
+            <View className="size-11 shrink-0 items-center justify-center rounded-lg bg-z-primary-soft">
+              <Text className="text-lg font-bold text-z-primary-strong">{t('app.brand')[0]}</Text>
+            </View>
+            <View>
+              <Text className="text-sm font-semibold text-z-text">{t('app.brand')}</Text>
+              <Text className="text-xs text-z-muted">{t('app.tagline')}</Text>
+            </View>
+          </View>
+
+          {/* Heading + description. No auth.login.* keys exist in the synced
+              dashboard source, so these stay as literals (see follow-up). */}
+          <Text className="mt-7 text-xl font-semibold text-z-text">Sign in to continue</Text>
+          <Text className="mt-2 text-sm leading-6 text-z-muted">
+            Digital video coaching — sign in to review and record sessions.
+          </Text>
+
+          <View className="mt-7">
+            <ZButton
+              label="Sign in"
+              onPress={signIn}
+              loading={busy}
+              disabled={!request}
+              testID="login-submit"
+            />
+          </View>
+
+          {failed ? (
+            <Text
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+              className="mt-4 text-sm text-z-danger"
+            >
+              Sign-in failed. Please try again.
+            </Text>
+          ) : null}
+        </ZCard>
       </View>
-      {failed ? <Text className="text-z-danger">Sign-in failed. Please try again.</Text> : null}
     </ZScreen>
   );
 }
