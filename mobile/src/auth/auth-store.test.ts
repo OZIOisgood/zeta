@@ -1,5 +1,6 @@
 import { createAuthStore, type AuthenticatedClientLike } from './auth-store';
 import { clearTokens, getTokens, setTokens } from './token-store';
+import { queryClient } from '../api/query-client';
 
 jest.mock('expo-secure-store', () => {
   const store = new Map<string, string>();
@@ -69,6 +70,14 @@ test('signOut clears tokens and user', async () => {
   await store.getState().signOut();
   expect(store.getState().status).toBe('signedOut');
   expect(store.getState().user).toBeNull();
+});
+
+it('clears the query cache on sign-out', async () => {
+  const clearSpy = jest.spyOn(queryClient, 'clear');
+  const store = createAuthStore(); // default client; signOut only touches tokens + cache
+  await store.getState().signOut();
+  expect(clearSpy).toHaveBeenCalledTimes(1);
+  clearSpy.mockRestore();
 });
 
 test('restore with network failure keeps tokens but settles to signedOut', async () => {

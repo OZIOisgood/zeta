@@ -4,6 +4,7 @@ import i18next from 'i18next';
 import type { components } from '../api/schema';
 import type { AuthenticatedClient } from '../api/authenticated-client';
 import { createAuthenticatedClient } from '../api/authenticated-client';
+import { queryClient } from '../api/query-client';
 import { clearTokens, getTokens, setTokens, type TokenPair } from './token-store';
 
 export type Me = components['schemas']['Me'];
@@ -84,6 +85,7 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
 
       signOut: async () => {
         await clearTokens();
+        queryClient.clear();
         set({ status: 'signedOut', user: null });
       },
 
@@ -105,6 +107,7 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
 }
 
 function handleSignOut() {
+  queryClient.clear();
   authStore.setState({ status: 'signedOut', user: null });
 }
 
