@@ -36,9 +36,10 @@ jest.mock('../auth/auth-store', () => ({
 }));
 
 const mockBack = jest.fn();
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'g1' }),
-  useRouter: () => ({ back: mockBack }),
+  useRouter: () => ({ back: mockBack, push: mockPush }),
 }));
 
 import { initI18n } from '../i18n';
@@ -49,12 +50,13 @@ beforeAll(() => initI18n('en'));
 let client: QueryClient;
 beforeEach(() => {
   mockBack.mockClear();
+  mockPush.mockClear();
   mockMutateAsync.mockClear();
   mockPermissions = ['groups:expert-list:read', 'groups:user-list:read', 'groups:membership:leave'];
   mockUserId = 'u1';
   mockUseLeaveGroupMutation.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false, isError: false });
-  mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [] });
-  mockUseGroupExpertsQuery.mockReturnValue({ isPending: false, isError: false, data: [] });
+  mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [], refetch: jest.fn() });
+  mockUseGroupExpertsQuery.mockReturnValue({ isPending: false, isError: false, data: [], refetch: jest.fn() });
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
 afterEach(() => client.clear());
@@ -202,4 +204,61 @@ test('leave error: mutateAsync rejects → translated error message appears', as
   await waitFor(() =>
     expect(screen.getByText('Failed to leave group.')).toBeOnTheScreen(),
   );
+});
+
+// ── member error branch (bug fix) ─────────────────────────────────────────────
+
+test('experts error branch: failed fetch shows error message + retry, not empty state', async () => {
+  mockPermissions = ['groups:expert-list:read'];
+  const refetchExperts = jest.fn();
+  mockUseGroupQuery.mockReturnValue({ isPending: false, isError: false, data: GROUP, refetch: jest.fn() });
+  mockUseGroupExpertsQuery.mockReturnValue({
+    isPending: false,
+    isError: true,
+    data: undefined,
+    refetch: refetchExperts,
+  });
+  mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [], refetch: jest.fn() });
+
+  await render(<Providers><GroupDetailScreen /></Providers>);
+
+  // Error copy is shown; the "no experts yet" empty state is NOT
+  expect(screen.getByText('Group members could not be loaded.')).toBeOnTheScreen();
+  expect(screen.queryByText('No experts yet')).toBeNull();
+
+  // Retry button refetches that section
+  fireEvent.press(screen.getByTestId('members-retry-experts'));
+  expect(refetchExperts).toHaveBeenCalledTimes(1);
+});
+
+test('students error branch: failed fetch shows error message + retry, not empty state', async () => {
+  mockPermissions = ['groups:user-list:read'];
+  const refetchStudents = jest.fn();
+  mockUseGroupQuery.mockReturnValue({ isPending: false, isError: false, data: GROUP, refetch: jest.fn() });
+  mockUseGroupStudentsQuery.mockReturnValue({
+    isPending: false,
+    isError: true,
+    data: undefined,
+    refetch: refetchStudents,
+  });
+  mockUseGroupExpertsQuery.mockReturnValue({ isPending: false, isError: false, data: [], refetch: jest.fn() });
+
+  await render(<Providers><GroupDetailScreen /></Providers>);
+
+  expect(screen.getByText('Group members could not be loaded.')).toBeOnTheScreen();
+  expect(screen.queryByText('No students yet')).toBeNull();
+
+  fireEvent.press(screen.getByTestId('members-retry-students'));
+  expect(refetchStudents).toHaveBeenCalledTimes(1);
+});
+
+// ── members unavailable (no read permissions) ─────────────────────────────────
+
+test('members unavailable state when user lacks both read permissions', async () => {
+  mockPermissions = [];
+  mockUseGroupQuery.mockReturnValue({ isPending: false, isError: false, data: GROUP, refetch: jest.fn() });
+  await render(<Providers><GroupDetailScreen /></Providers>);
+  expect(screen.getByText('Member lists are not available')).toBeOnTheScreen();
+  expect(screen.queryByText('Experts')).toBeNull();
+  expect(screen.queryByText('Students')).toBeNull();
 });
