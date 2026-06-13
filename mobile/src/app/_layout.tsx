@@ -7,6 +7,7 @@ import { initI18n } from '../i18n';
 import { authStore, useAuth } from '../auth/auth-store';
 import { queryClient } from '../api/query-client';
 import { colors } from '../theme/colors';
+import { ZToastHost } from '../components/ui/z-toast';
 
 void initI18n();
 
@@ -40,6 +41,9 @@ export default function RootLayout() {
     );
 
   return (
-    <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {content}
+      <ZToastHost />
+    </QueryClientProvider>
   );
 }
