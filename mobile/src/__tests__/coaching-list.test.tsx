@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 jest.mock('expo-secure-store', () => ({
@@ -18,6 +18,12 @@ jest.mock('../api/queries/coaching', () => ({
   ...jest.requireActual('../api/queries/coaching'),
   useMyBookingsQuery: () => mockUseMyBookingsQuery(),
   useCancelBookingMutation: (_groupId: string) => mockUseCancelBookingMutation(_groupId),
+}));
+
+const mockShowToast = jest.fn();
+jest.mock('../components/ui/z-toast', () => ({
+  ...jest.requireActual('../components/ui/z-toast'),
+  showToast: (...args: unknown[]) => mockShowToast(...args),
 }));
 
 let mockPermissions: string[] | null = ['coaching:book'];
@@ -46,6 +52,7 @@ let client: QueryClient;
 beforeEach(() => {
   mockPush.mockClear();
   mockMutateAsync.mockClear();
+  mockShowToast.mockClear();
   mockPermissions = ['coaching:book'];
   mockUserId = 's1';
   mockUseCancelBookingMutation.mockReturnValue({
@@ -54,7 +61,15 @@ beforeEach(() => {
   });
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
-afterEach(() => client.clear());
+afterEach(async () => {
+  // Flush any pending VirtualizedList cell-render timers so they don't leak into
+  // the next test's act() scope (FlatList schedules _updateCellsToRender via
+  // setTimeout(0); an unflushed one corrupts the next render).
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  client.clear();
+});
 
 function Providers({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
@@ -132,6 +147,8 @@ test('empty state shows coaching-empty testID', async () => {
   });
   await render(<Providers><CoachingScreen /></Providers>);
   expect(screen.getByTestId('coaching-empty')).toBeOnTheScreen();
+  // Default tab is upcoming → upcoming empty copy
+  expect(screen.getByText('No upcoming sessions')).toBeOnTheScreen();
 });
 
 // ── error + retry ─────────────────────────────────────────────────────────────
@@ -146,42 +163,78 @@ test('error state shows retry button', async () => {
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.getByTestId('coaching-error')).toBeOnTheScreen();
   const retryBtn = screen.getByRole('button', { name: /try again/i });
   expect(retryBtn).toBeOnTheScreen();
   fireEvent.press(retryBtn);
   expect(refetch).toHaveBeenCalledTimes(1);
 });
 
-// ── data: section layout ──────────────────────────────────────────────────────
+// ── tabs: three distinct lists by status ──────────────────────────────────────
 
-test('upcoming booking appears in upcoming section, not past section', async () => {
+test('tab counts reflect upcoming / past / cancelled buckets', async () => {
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
-    data: [UPCOMING_BOOKING, PAST_BOOKING],
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
     refetch: jest.fn(),
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
-  const upcomingSection = screen.getByTestId('coaching-upcoming');
-  const pastSection = screen.getByTestId('coaching-past');
-  expect(upcomingSection).toBeOnTheScreen();
-  expect(pastSection).toBeOnTheScreen();
-  // Strategy Session is in upcoming, Past Session is in past
+  // Default (upcoming) tab shows only the upcoming booking.
   expect(screen.getByText('Strategy Session')).toBeOnTheScreen();
-  expect(screen.getByText('Past Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Past Session')).toBeNull();
+  expect(screen.queryByText('Cancelled Session')).toBeNull();
 });
 
-test('cancelled booking appears in past section', async () => {
+test('switching to the past tab shows past sessions only (cancelled NOT folded in)', async () => {
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
-    data: [CANCELLED_BOOKING],
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
     refetch: jest.fn(),
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
-  expect(screen.getByText('Cancelled Session')).toBeOnTheScreen();
+
+  fireEvent.press(screen.getByRole('tab', { name: /past/i }));
+
+  await waitFor(() => expect(screen.getByText('Past Session')).toBeOnTheScreen());
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+  // Cancelled sessions must NOT appear in the past tab.
+  expect(screen.queryByText('Cancelled Session')).toBeNull();
+});
+
+test('switching to the cancelled tab shows cancelled sessions only', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  fireEvent.press(screen.getByRole('tab', { name: /cancelled/i }));
+
+  await waitFor(() => expect(screen.getByText('Cancelled Session')).toBeOnTheScreen());
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+  expect(screen.queryByText('Past Session')).toBeNull();
+});
+
+test('empty cancelled tab shows the cancelled empty copy', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  fireEvent.press(screen.getByRole('tab', { name: /cancelled/i }));
+
+  await waitFor(() => expect(screen.getByText('No cancelled sessions')).toBeOnTheScreen());
 });
 
 // ── Book session button ───────────────────────────────────────────────────────
@@ -228,7 +281,7 @@ test('"Book session" button navigates to /book', async () => {
 
 // ── cancel flow ───────────────────────────────────────────────────────────────
 
-test('cancel flow: press booking-cancel → confirm UI → confirm → mutateAsync called with bookingId', async () => {
+test('cancel flow: press booking-cancel → dialog → confirm → mutateAsync called with bookingId + reason, toast shown', async () => {
   mockMutateAsync.mockResolvedValueOnce(undefined);
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -239,22 +292,64 @@ test('cancel flow: press booking-cancel → confirm UI → confirm → mutateAsy
   });
   await render(<Providers><CoachingScreen /></Providers>);
 
-  // Cancel button visible (upcoming pending booking)
-  const cancelBtn = screen.getByTestId('booking-cancel');
+  // Cancel affordance visible (upcoming pending booking)
+  const cancelBtn = await screen.findByTestId('booking-cancel');
   expect(cancelBtn).toBeOnTheScreen();
 
-  // Step 1: press cancel → confirm UI appears
+  // Step 1: press cancel → dialog appears
   fireEvent.press(cancelBtn);
   await waitFor(() => expect(screen.getByTestId('booking-cancel-confirm')).toBeOnTheScreen());
 
-  // Step 2: press confirm → mutateAsync called
+  // Step 2: type a reason — wait for the controlled value to flush so the
+  // confirm handler closes over the latest reason before we press confirm.
+  fireEvent.changeText(screen.getByTestId('booking-cancel-reason'), 'Schedule conflict');
+  await waitFor(() =>
+    expect(screen.getByTestId('booking-cancel-reason').props.value).toBe('Schedule conflict'),
+  );
+
+  // Step 3: confirm → mutateAsync called with the bookingId AND the reason
   fireEvent.press(screen.getByTestId('booking-cancel-confirm'));
   await waitFor(() =>
-    expect(mockMutateAsync).toHaveBeenCalledWith({ bookingId: UPCOMING_BOOKING.id }),
+    expect(mockMutateAsync).toHaveBeenCalledWith({
+      bookingId: UPCOMING_BOOKING.id,
+      reason: 'Schedule conflict',
+    }),
   );
+
+  // Success toast surfaced
+  await waitFor(() => expect(mockShowToast).toHaveBeenCalledTimes(1));
+  expect(mockShowToast).toHaveBeenCalledWith('Success', undefined, 'success');
+
+  // Dialog dismisses on success (lets the floated mutation promise fully settle)
+  await waitFor(() => expect(screen.queryByTestId('booking-cancel-confirm')).toBeNull());
 });
 
-test('cancel flow: mutateAsync rejects → sessions.cancel.failed text appears', async () => {
+test('cancel flow: confirming without a reason passes reason undefined', async () => {
+  mockMutateAsync.mockResolvedValueOnce(undefined);
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  fireEvent.press(await screen.findByTestId('booking-cancel'));
+  await waitFor(() => expect(screen.getByTestId('booking-cancel-confirm')).toBeOnTheScreen());
+
+  fireEvent.press(screen.getByTestId('booking-cancel-confirm'));
+  await waitFor(() =>
+    expect(mockMutateAsync).toHaveBeenCalledWith({
+      bookingId: UPCOMING_BOOKING.id,
+      reason: undefined,
+    }),
+  );
+  // Wait for the dialog to dismiss so the floated mutation promise fully settles.
+  await waitFor(() => expect(screen.queryByTestId('booking-cancel-confirm')).toBeNull());
+});
+
+test('cancel flow: mutateAsync rejects → sessions.cancel.failed text appears, no toast', async () => {
   mockMutateAsync.mockRejectedValueOnce(new Error('network'));
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -265,14 +360,15 @@ test('cancel flow: mutateAsync rejects → sessions.cancel.failed text appears',
   });
   await render(<Providers><CoachingScreen /></Providers>);
 
-  fireEvent.press(screen.getByTestId('booking-cancel'));
+  fireEvent.press(await screen.findByTestId('booking-cancel'));
   await waitFor(() => expect(screen.getByTestId('booking-cancel-confirm')).toBeOnTheScreen());
 
   fireEvent.press(screen.getByTestId('booking-cancel-confirm'));
   await waitFor(() => expect(screen.getByText('Failed to cancel booking.')).toBeOnTheScreen());
+  expect(mockShowToast).not.toHaveBeenCalled();
 });
 
-test('cancel flow: pressing abort button unmounts confirm row and cancel affordance reappears', async () => {
+test('cancel flow: pressing keep dismisses the dialog and cancel affordance reappears', async () => {
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -283,19 +379,18 @@ test('cancel flow: pressing abort button unmounts confirm row and cancel afforda
   await render(<Providers><CoachingScreen /></Providers>);
 
   // Cancel button visible initially
-  expect(screen.getByTestId('booking-cancel')).toBeOnTheScreen();
+  expect(await screen.findByTestId('booking-cancel')).toBeOnTheScreen();
 
-  // Press cancel → confirm row appears
+  // Press cancel → dialog appears
   fireEvent.press(screen.getByTestId('booking-cancel'));
   await waitFor(() => expect(screen.getByTestId('booking-cancel-confirm')).toBeOnTheScreen());
-  // The original cancel affordance should be hidden while confirming
+  // The original cancel affordance is hidden while the dialog is open
   expect(screen.queryByTestId('booking-cancel')).toBeNull();
 
-  // Press abort (the ghost "Cancel" button in the confirm row)
-  const [abortBtn] = screen.getAllByRole('button', { name: /cancel/i });
-  fireEvent.press(abortBtn);
+  // Press "Keep Session" → dialog closes
+  fireEvent.press(screen.getByRole('button', { name: /keep session/i }));
 
-  // Confirm row gone, cancel affordance reappears
+  // Dialog gone, cancel affordance reappears
   await waitFor(() => expect(screen.queryByTestId('booking-cancel-confirm')).toBeNull());
   expect(screen.getByTestId('booking-cancel')).toBeOnTheScreen();
 });
@@ -315,7 +410,7 @@ test('recording press navigates to /asset/<id>', async () => {
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
-  fireEvent.press(screen.getByTestId('booking-recording'));
+  fireEvent.press(await screen.findByTestId('booking-recording'));
   expect(mockPush).toHaveBeenCalledWith('/asset/asset-xyz');
 });
 
@@ -355,7 +450,7 @@ test('joinable booking with coaching:video:connect → Join button visible and n
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
-  const joinBtn = screen.getByTestId('booking-join');
+  const joinBtn = await screen.findByTestId('booking-join');
   expect(joinBtn).toBeOnTheScreen();
   fireEvent.press(joinBtn);
   expect(mockPush).toHaveBeenCalledWith('/call/b1?groupId=g1');
@@ -371,6 +466,8 @@ test('joinable booking WITHOUT coaching:video:connect → Join button absent', a
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
+  // Wait for the row to mount before asserting the Join affordance is absent.
+  await screen.findByText('Strategy Session');
   expect(screen.queryByTestId('booking-join')).toBeNull();
 });
 
@@ -384,5 +481,7 @@ test('booking outside join window → Join button absent even with permission', 
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
+  // Wait for the row to mount before asserting the Join affordance is absent.
+  await screen.findByText('Strategy Session');
   expect(screen.queryByTestId('booking-join')).toBeNull();
 });
