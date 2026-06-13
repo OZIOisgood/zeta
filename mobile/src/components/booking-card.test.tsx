@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { render, screen, fireEvent, within } from '@testing-library/react-native';
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
@@ -39,6 +39,51 @@ test('renders session type name, expert name (student view), date/time, duration
   expect(screen.getByText(/60 min/)).toBeOnTheScreen();
   // status chip
   expect(screen.getByTestId('booking-status-pending')).toBeOnTheScreen();
+});
+
+test('status label is driven by the server status, not the date: server `done` in the client-future still reads "done"', async () => {
+  // Clock-skew / boundary case: server already derived status=done, but the
+  // client clock still sees scheduled_at as future. The label must follow the
+  // server status (done) so it cannot disagree with the neutral `done` tone.
+  const doneInFuture: Booking = {
+    ...BASE_BOOKING,
+    status: 'done',
+    scheduled_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  };
+  await render(
+    <BookingCard
+      booking={doneInFuture}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  const badge = screen.getByTestId('booking-status-done');
+  expect(within(badge).getByText('done')).toBeOnTheScreen();
+  expect(screen.queryByText('upcoming')).toBeNull();
+});
+
+test('status label is driven by the server status, not the date: server `pending` in the client-past still reads "upcoming"', async () => {
+  // Boundary case: server status=pending, but scheduled_at just slipped into the
+  // client past. The label must stay "upcoming" to match the primary `pending` tone.
+  const pendingInPast: Booking = {
+    ...BASE_BOOKING,
+    status: 'pending',
+    scheduled_at: new Date(Date.now() - 60 * 1000).toISOString(),
+  };
+  await render(
+    <BookingCard
+      booking={pendingInPast}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  const badge = screen.getByTestId('booking-status-pending');
+  expect(within(badge).getByText('upcoming')).toBeOnTheScreen();
+  expect(screen.queryByText('done')).toBeNull();
 });
 
 test('shows student name when current user is the expert', async () => {
@@ -122,6 +167,89 @@ test('recording affordance NOT shown when recording.asset_id absent', async () =
   expect(screen.queryByTestId('booking-recording')).toBeNull();
 });
 
+test('recording affordance NOT shown when status not ready even if asset_id present', async () => {
+  const bookingNotReady: Booking = {
+    ...BASE_BOOKING,
+    recording: { status: 'stopped', asset_id: 'asset-123' },
+  };
+  await render(
+    <BookingCard
+      booking={bookingNotReady}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  expect(screen.queryByTestId('booking-recording')).toBeNull();
+});
+
+test('recording-status badge shown whenever a recording exists', async () => {
+  const bookingProcessing: Booking = {
+    ...BASE_BOOKING,
+    recording: { status: 'processing' },
+  };
+  await render(
+    <BookingCard
+      booking={bookingProcessing}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  expect(screen.getByTestId('booking-recording-status')).toBeOnTheScreen();
+});
+
+test('recording-status badge absent when booking has no recording', async () => {
+  await render(
+    <BookingCard
+      booking={BASE_BOOKING}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  expect(screen.queryByTestId('booking-recording-status')).toBeNull();
+});
+
+test('recording-status badge labels a ready recording', async () => {
+  const bookingReady: Booking = {
+    ...BASE_BOOKING,
+    recording: { status: 'ready', asset_id: 'asset-123' },
+  };
+  await render(
+    <BookingCard
+      booking={bookingReady}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  const badge = screen.getByTestId('booking-recording-status');
+  expect(within(badge).getByText('recording ready')).toBeOnTheScreen();
+});
+
+test('recording-status badge labels a failed recording', async () => {
+  const bookingFailed: Booking = {
+    ...BASE_BOOKING,
+    recording: { status: 'failed' },
+  };
+  await render(
+    <BookingCard
+      booking={bookingFailed}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  const badge = screen.getByTestId('booking-recording-status');
+  expect(within(badge).getByText('recording failed')).toBeOnTheScreen();
+});
+
 test('cancelled booking shows booking-status-cancelled chip and no cancel affordance', async () => {
   const cancelledBooking: Booking = {
     ...BASE_BOOKING,
@@ -138,6 +266,44 @@ test('cancelled booking shows booking-status-cancelled chip and no cancel afford
   );
   expect(screen.getByTestId('booking-status-cancelled')).toBeOnTheScreen();
   expect(screen.queryByTestId('booking-cancel')).toBeNull();
+});
+
+test('cancelled booking with a reason renders the cancellation reason line', async () => {
+  const cancelledWithReason: Booking = {
+    ...BASE_BOOKING,
+    status: 'cancelled',
+    cancellation_reason: 'Coach unavailable',
+  };
+  await render(
+    <BookingCard
+      booking={cancelledWithReason}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  const reasonLine = screen.getByTestId('booking-cancellation-reason');
+  expect(reasonLine).toBeOnTheScreen();
+  expect(screen.getByText(/Coach unavailable/)).toBeOnTheScreen();
+});
+
+test('cancellation reason line absent when not cancelled even if reason present', async () => {
+  const pendingWithReason: Booking = {
+    ...BASE_BOOKING,
+    status: 'pending',
+    cancellation_reason: 'should not show',
+  };
+  await render(
+    <BookingCard
+      booking={pendingWithReason}
+      currentUserId="s1"
+      canCancel={false}
+      onCancel={jest.fn()}
+      onOpenRecording={jest.fn()}
+    />,
+  );
+  expect(screen.queryByTestId('booking-cancellation-reason')).toBeNull();
 });
 
 test('session type name falls back to "Session" when missing', async () => {

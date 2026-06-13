@@ -2,41 +2,67 @@ import { Text, View } from 'react-native';
 import { Ban, Phone, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../api/queries/coaching';
+import { ZBadge, type ZBadgeTone } from './ui/z-badge';
 import { ZButton } from './ui/z-button';
+import { ZCard } from './ui/z-card';
 import { ZIconButton } from './ui/z-icon-button';
 import { colors } from '../theme/colors';
 
 /**
- * Resolve the status display label for a booking.
- * Extracted as a pure utility so the impure Date.now() call
- * is outside the React component render path (mirrors review-item.tsx pattern).
+ * Resolve the status display label for a booking from the server-provided
+ * status — never from the scheduled date. The server already derives the
+ * `done` status (scheduled_at in the past), so keying the label off the date
+ * could disagree with the badge tone at the time boundary or under clock skew
+ * (e.g. a server `pending` whose start just passed). Mapping pending → upcoming,
+ * done → done, cancelled → cancelled keeps label and tone in lockstep with the
+ * source of truth.
  */
 export function resolveStatusLabel(
   status: Booking['status'],
-  scheduledAt: string,
   labels: { cancelled: string; upcoming: string; done: string },
 ): string {
-  if (status === 'cancelled') return labels.cancelled;
-  return new Date(scheduledAt).getTime() > Date.now() ? labels.upcoming : labels.done;
+  switch (status) {
+    case 'cancelled':
+      return labels.cancelled;
+    case 'done':
+      return labels.done;
+    default:
+      return labels.upcoming;
+  }
 }
 
-/** Status chip: inline badge that mirrors the web z-badge tone. */
-function StatusChip({ status, label }: { status: Booking['status']; label: string }) {
-  const chipClass = status === 'pending' ? 'bg-z-primary-soft' : 'bg-z-surface-muted';
-  const textClass =
-    status === 'pending'
-      ? 'text-z-primary-strong'
-      : status === 'cancelled'
-        ? 'text-z-danger'
-        : 'text-z-muted';
-  return (
-    <View
-      testID={`booking-status-${status}`}
-      className={`rounded-full px-2 py-0.5 ${chipClass}`}
-    >
-      <Text className={`text-xs font-medium ${textClass}`}>{label}</Text>
-    </View>
-  );
+/**
+ * Map the server-provided booking status to a badge tone. Driven by the
+ * server status (not the date) so the badge can never disagree with the
+ * source of truth: cancelled → danger, pending → primary, done → neutral.
+ */
+const statusTones: Record<Booking['status'], ZBadgeTone> = {
+  cancelled: 'danger',
+  pending: 'primary',
+  done: 'neutral',
+};
+
+/**
+ * Map the recording pipeline status to a badge tone + label key.
+ * Mirrors web recordingStatusLabel() in sessions-page.component.ts.
+ */
+function resolveRecordingBadge(status: string | undefined): {
+  tone: ZBadgeTone;
+  labelKey: string;
+} {
+  switch (status) {
+    case 'ready':
+      return { tone: 'success', labelKey: 'common.status.recordingReady' };
+    case 'failed':
+      return { tone: 'danger', labelKey: 'common.status.recordingFailed' };
+    case 'starting':
+    case 'started':
+    case 'stopping':
+    case 'stopped':
+      return { tone: 'primary', labelKey: 'common.status.recordingCaptured' };
+    default:
+      return { tone: 'primary', labelKey: 'common.status.recordingProcessing' };
+  }
 }
 
 export type BookingCardProps = {
@@ -61,9 +87,11 @@ export function BookingCard({
 
   const sessionTypeName = booking.session_type_name ?? t('sessions.sessionFallback');
 
-  // Status label — mirrors web statusLabel() in sessions-page.component.ts
-  // web uses: cancelled → common.status.cancelled; upcoming → common.status.upcoming; else → common.status.done
-  const statusLabel = resolveStatusLabel(booking.status, booking.scheduled_at, {
+  // Status label — driven by the server status (not the date) so it can never
+  // disagree with the badge tone (statusTones[booking.status]). Web's
+  // statusLabel() keys off the date, but web shares the `primary` tone across
+  // pending/done so the mismatch stays invisible there; mobile splits the tones.
+  const statusLabel = resolveStatusLabel(booking.status, {
     cancelled: t('common.status.cancelled'),
     upcoming: t('common.status.upcoming'),
     done: t('common.status.done'),
@@ -80,16 +108,32 @@ export function BookingCard({
     timeStyle: 'short',
   });
 
-  const hasRecording = !!booking.recording?.asset_id;
+  const recordingBadge = booking.recording
+    ? resolveRecordingBadge(booking.recording.status)
+    : null;
+
+  // Open-recording button gated on a ready recording with a processed asset.
+  const recordingReady = booking.recording?.status === 'ready' && !!booking.recording?.asset_id;
 
   return (
-    <View className="mb-3 rounded-lg border border-z-border bg-z-surface p-3">
-      {/* Row 1: session type name + status chip */}
+    <ZCard className="mb-3">
+      {/* Row 1: session type name + status + recording badges */}
       <View className="flex-row flex-wrap items-center gap-2">
         <Text className="flex-shrink text-base font-semibold text-z-text" numberOfLines={1}>
           {sessionTypeName}
         </Text>
-        <StatusChip status={booking.status} label={statusLabel} />
+        <ZBadge
+          testID={`booking-status-${booking.status}`}
+          tone={statusTones[booking.status]}
+          label={statusLabel}
+        />
+        {recordingBadge ? (
+          <ZBadge
+            testID="booking-recording-status"
+            tone={recordingBadge.tone}
+            label={t(recordingBadge.labelKey)}
+          />
+        ) : null}
       </View>
 
       {/* Row 2: counterpart name */}
@@ -107,8 +151,15 @@ export function BookingCard({
         </Text>
       ) : null}
 
+      {/* Cancellation reason — danger-toned, mirrors web rose-700 line */}
+      {booking.status === 'cancelled' && booking.cancellation_reason ? (
+        <Text testID="booking-cancellation-reason" className="mt-2 text-sm text-z-danger">
+          {t('common.labels.reason', { reason: booking.cancellation_reason })}
+        </Text>
+      ) : null}
+
       {/* Footer row: join + recording + cancel */}
-      {(onJoin || hasRecording || canCancel) ? (
+      {(onJoin || recordingReady || canCancel) ? (
         <View className="mt-3 flex-row items-center gap-2">
           {onJoin ? (
             <ZButton
@@ -119,7 +170,7 @@ export function BookingCard({
               onPress={onJoin}
             />
           ) : null}
-          {hasRecording ? (
+          {recordingReady ? (
             <ZButton
               testID="booking-recording"
               label={t('common.status.recordingReady')}
@@ -140,6 +191,6 @@ export function BookingCard({
           ) : null}
         </View>
       ) : null}
-    </View>
+    </ZCard>
   );
 }
