@@ -367,6 +367,18 @@
       "notFound": "Diese Einladung ist ungültig, abgelaufen oder bereits verwendet.",
       "alreadyMember": "Du bist bereits Mitglied von {{group}}."
     },
+    "invite": {
+      "cameraHint": "Für das Scannen des QR-Codes wird Kamerazugriff benötigt.",
+      "codeInvalid": "Gib den 6-stelligen Code aus der Einladung ein.",
+      "codePlaceholder": "z. B. ABC123",
+      "genericError": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+      "grantCamera": "Kamerazugriff erlauben",
+      "lookUp": "Code nachschlagen",
+      "manualDivider": "oder Code manuell eingeben",
+      "notFound": "Einladungscode nicht gefunden oder abgelaufen.",
+      "openGroup": "Gruppe öffnen",
+      "tryDifferent": "Anderen Code versuchen"
+    },
     "inviteDialog": {
       "cardDescription": "Erstelle einen teilbaren Einladungslink oder sende eine Einladung direkt per E-Mail.",
       "title": "Einladung erstellen",
@@ -476,11 +488,13 @@
       "booking": "Wird gebucht...",
       "bookSession": "Termin buchen",
       "slotTaken": "Dieser Termin wurde gerade vergeben. Bitte wähle einen anderen.",
+      "tooLate": "Dieser Termin kann nicht mehr gebucht werden. Bitte wähle einen späteren Slot.",
       "failed": "Termin konnte nicht gebucht werden. Bitte versuche es erneut.",
       "loadExpertsFailed": "Experten konnten nicht geladen werden",
       "loadSessionTypesFailed": "Terminarten konnten nicht geladen werden",
       "loadSlotsFailed": "Verfügbare Termine konnten nicht geladen werden"
     },
+    "loadFailed": "Deine Sessions konnten nicht geladen werden.",
     "cancel": {
       "title": "Termin absagen",
       "description": "Dies sagt den Termin mit <strong>{{otherParty}}</strong> am {{scheduledAt}} ab.",
@@ -542,7 +556,12 @@
       "joinFailed": "Videoanruf konnte nicht gestartet werden",
       "connectFailed": "Verbindung zum Termin fehlgeschlagen",
       "microphoneFallback": "Mikrofon {{index}}",
-      "cameraFallback": "Kamera {{index}}"
+      "cameraFallback": "Kamera {{index}}",
+      "permissionHeading": "Kamera und Mikrofon erforderlich",
+      "permissionBody": "Für Live-Coaching-Sitzungen benötigst du Zugriff auf Kamera und Mikrofon.",
+      "grantCamera": "Kamerazugriff erlauben",
+      "grantMicrophone": "Mikrofonzugriff erlauben",
+      "switchCamera": "Kamera wechseln"
     }
   },
   "preferences": {

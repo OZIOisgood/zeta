@@ -1,0 +1,1356 @@
+openapi: 3.1.0
+info:
+  title: Zeta API
+  version: 0.1.0
+  description: >
+    Contract for the Zeta API consumed by the mobile app. This spec currently
+    covers the auth and health endpoints; it grows with each mobile work
+    package. The mobile TypeScript client is generated from this file with
+    openapi-typescript / openapi-fetch.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+tags:
+  - name: auth
+  - name: system
+  - name: assets
+  - name: groups
+  - name: coaching
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Health check
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /auth/token:
+    post:
+      tags: [auth]
+      summary: Exchange an AuthKit authorization code (PKCE) for a token pair
+      operationId: exchangeToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenExchangeRequest"
+      responses:
+        "200":
+          description: Token pair for the authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400":
+          description: Missing code or invalid request body
+        "401":
+          description: WorkOS rejected the authorization code
+        "429":
+          description: Rate limit exceeded for this client
+  /auth/token/refresh:
+    post:
+      tags: [auth]
+      summary: Rotate a token pair using a refresh token
+      description: >
+        WorkOS invalidates the presented refresh token. Clients must always
+        replace their stored pair with the returned one.
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRefreshRequest"
+      responses:
+        "200":
+          description: Rotated token pair
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "400":
+          description: Missing refresh_token or invalid request body
+        "401":
+          description: Refresh token expired or revoked
+        "429":
+          description: Rate limit exceeded for this client
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Current user profile, role, permissions, and preferences
+      operationId: getMe
+      responses:
+        "200":
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "401":
+          description: Not authenticated
+    put:
+      tags: [auth]
+      summary: Update profile and notification preferences
+      operationId: updateMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+        "400":
+          description: Invalid or missing timezone, invalid body
+        "401":
+          description: Not authenticated
+  /assets:
+    get:
+      tags: [assets]
+      summary: List assets visible to the current user
+      operationId: listAssets
+      responses:
+        "200":
+          description: Visible assets (students see their own, experts their groups')
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Asset"
+        "401":
+          description: Not authenticated
+    post:
+      tags: [assets]
+      summary: Create a new asset and get upload URLs for each video file
+      operationId: createAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAssetRequest"
+      responses:
+        "200":
+          description: Asset created with Mux upload URLs for each video file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAssetResponse"
+        "400":
+          description: Missing title or group_id, invalid body
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing assets:create permission or not a group member
+  /assets/{id}:
+    get:
+      tags: [assets]
+      summary: Get a single visible asset including its video parts
+      operationId: getAsset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The asset with its videos and group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+        "400":
+          description: Invalid asset id
+        "401":
+          description: Not authenticated
+        "404":
+          description: Asset not found or not visible
+  /assets/{id}/complete:
+    post:
+      tags: [assets]
+      summary: Mark all video parts as uploaded and transition the asset to pending review
+      operationId: completeAssetUpload
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Upload marked as complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                required: [status]
+        "400":
+          description: Invalid asset id
+        "401":
+          description: Not authenticated
+        "403":
+          description: Caller is not the asset owner
+        "404":
+          description: Asset not found or not visible
+  /groups:
+    get:
+      tags: [groups]
+      summary: List groups the current user belongs to
+      operationId: listGroups
+      responses:
+        "200":
+          description: Groups the authenticated user is a member of
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:read permission
+  /groups/{groupID}:
+    get:
+      tags: [groups]
+      summary: Get a single group by ID
+      operationId: getGroup
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Group detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:read permission or caller is not a member
+        "404":
+          description: Group not found
+  /groups/{groupID}/membership:
+    delete:
+      tags: [groups]
+      summary: Leave a group
+      operationId: leaveGroup
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Successfully left the group
+        "400":
+          description: Invalid group ID or caller is the group owner
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:membership:leave permission or caller is not a member
+        "404":
+          description: Group not found
+        "409":
+          description: Cannot leave the group as the last member
+  /groups/{groupID}/users:
+    get:
+      tags: [groups]
+      summary: List student members of a group
+      operationId: listGroupStudents
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Student members of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupUserList"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:user-list:read permission
+  /groups/{groupID}/experts:
+    get:
+      tags: [groups]
+      summary: List expert members of a group
+      operationId: listGroupExperts
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Expert and admin members of the group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupUserList"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:expert-list:read permission
+  # Linter flags this as ambiguous vs /groups/{groupID}/...; chi resolves static
+  # segments before path params, so /groups/invitations/* always wins at runtime.
+  /groups/invitations/{code}:
+    get:
+      tags: [groups]
+      summary: Get invitation info by code
+      operationId: getInvitationInfo
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invitation details including group info and membership status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationInfo"
+        "400":
+          description: Invitation already used (and caller is not a member)
+        "401":
+          description: Not authenticated
+        "404":
+          description: Invitation or group not found
+  /groups/invitations/accept:
+    post:
+      tags: [groups]
+      summary: Accept a group invitation
+      operationId: acceptInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptInvitationRequest"
+      responses:
+        "200":
+          description: Invitation accepted (or caller was already a member)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptInvitationResponse"
+        "400":
+          description: Missing or empty code, or invitation already used
+        "401":
+          description: Not authenticated
+        "404":
+          description: Invitation not found
+  /groups/invitations/decline:
+    post:
+      tags: [groups]
+      summary: Decline a group invitation
+      operationId: declineInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeclineInvitationRequest"
+      responses:
+        "204":
+          description: Invitation declined (or generic-link notification dismissed)
+        "400":
+          description: Missing or empty code
+        "401":
+          description: Not authenticated
+        "404":
+          description: Invitation not found or caller is not the addressed recipient
+  /assets/videos/{id}/reviews:
+    get:
+      tags: [assets]
+      summary: List reviews for a video
+      operationId: listVideoReviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: video id
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Reviews for the video
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid video id
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing reviews:read permission
+        "404":
+          description: Video not found or not visible
+    post:
+      tags: [assets]
+      summary: Create a review on a video
+      operationId: createVideoReview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: video id
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewRequest"
+      responses:
+        "201":
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid video id, invalid body, missing content, or invalid parent_id
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing reviews:create permission or video is part of a completed asset
+        "404":
+          description: Video not found or not visible
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: End the session and get the WorkOS logout URL
+      operationId: logout
+      responses:
+        "200":
+          description: Logout URL to open for session termination at WorkOS
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutResponse"
+
+  # --- Coaching ---
+
+  /coaching/bookings:
+    get:
+      tags: [coaching]
+      summary: List all bookings for the current user across all groups
+      description: >
+        Returns every booking where the caller is either the student or the
+        expert, regardless of group. Requires the coaching:bookings:read
+        permission.
+      operationId: listMyBookings
+      responses:
+        "200":
+          description: Bookings across all groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing coaching:bookings:read permission
+
+  /groups/{groupID}/coaching/session-types:
+    get:
+      tags: [coaching]
+      summary: List coaching session types for a group
+      description: >
+        Experts with coaching:availability:manage see only their own session
+        types. Users with coaching:slots:read see all active types in the
+        group. Returns 403 if the caller has neither permission.
+      operationId: listGroupSessionTypes
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session types available in this group
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionType"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member, or has neither
+            coaching:availability:manage nor coaching:slots:read permission
+
+  /groups/{groupID}/coaching/experts:
+    get:
+      tags: [coaching]
+      summary: List coaching experts in a group
+      description: >
+        Returns the active experts for the given group. Requires group
+        membership and coaching:slots:read.
+      operationId: listCoachingExperts
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Experts in the group
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingExpert"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:slots:read
+            permission
+
+  /groups/{groupID}/coaching/slots:
+    get:
+      tags: [coaching]
+      summary: List available booking slots for an expert
+      description: >
+        Computes open time slots for the given expert and session type over
+        the next 28 days, excluding blocked slots, existing bookings, and
+        times that fall within the minimum booking notice window. Both
+        expert_id and session_type_id are required.
+      operationId: listAvailableSlots
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: expert_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: WorkOS user ID of the expert
+        - name: session_type_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Session type whose duration governs slot sizing
+      responses:
+        "200":
+          description: Available slots within the lookahead window
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingSlot"
+        "400":
+          description: >
+            Invalid group ID, missing expert_id, missing or invalid
+            session_type_id
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:slots:read
+            permission
+        "404":
+          description: Session type not found in this group
+
+  /groups/{groupID}/coaching/bookings:
+    post:
+      tags: [coaching]
+      summary: Book a coaching session
+      description: >
+        Creates a booking for the authenticated user with the specified
+        expert, session type, and scheduled time. The slot is checked for
+        conflicts inside a serializable transaction. Requires group
+        membership and coaching:book.
+      operationId: createBooking
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingRequest"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: >
+            Invalid group ID, missing expert_id, invalid session_type_id,
+            invalid scheduled_at (must be RFC3339), or session must be booked
+            further in advance (minimum booking notice not met)
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:book permission
+        "404":
+          description: Session type not found in this group
+        "409":
+          description: Time slot is no longer available (conflict)
+
+  /groups/{groupID}/coaching/bookings/{bookingID}/connect:
+    get:
+      tags: [coaching]
+      summary: Generate an Agora RTC token for a coaching session
+      description: >
+        Returns the Agora app ID, channel name, a short-lived RTC token, and a
+        participant UID for the authenticated user. The caller must hold the
+        coaching:video:connect permission and be a participant (student or
+        expert) of the booking. The connect window opens 15 minutes before the
+        scheduled start time and closes at the session end
+        (scheduled_at + duration_minutes). If recording is enabled and has not
+        yet been started, this call also triggers recording — a recording
+        start failure returns 500 (the token is NOT issued in that case).
+      operationId: connectToBooking
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: bookingID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Agora RTC credentials for the session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingConnectInfo"
+        "400":
+          description: >
+            Invalid booking ID; booking is cancelled; or the current time is
+            outside the connect window (too early or session has already ended)
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:video:connect
+            permission
+        "404":
+          description: Booking not found or caller is not a participant
+        "500":
+          description: Failed to generate the Agora token or start recording
+        "503":
+          description: Video calling is not configured on the server
+
+  /groups/{groupID}/coaching/bookings/{bookingID}/recording/stop:
+    post:
+      tags: [coaching]
+      summary: Stop the cloud recording for a coaching booking
+      description: >
+        Stops the Agora Cloud Recording for the given booking. The caller must
+        hold the coaching:video:connect permission and be a participant of the
+        booking. If recording is disabled or there is no active recording to
+        stop, the call succeeds silently (idempotent). Returns 200 with a
+        status confirmation body on success.
+      operationId: stopBookingRecording
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: bookingID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Recording stopped (or was already stopped / not running)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                required: [status]
+        "400":
+          description: Invalid booking ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: >
+            Caller is not a group member or missing coaching:video:connect
+            permission
+        "404":
+          description: Booking not found or caller is not a participant
+        "500":
+          description: Failed to stop the recording
+
+  /groups/{groupID}/coaching/bookings/{bookingID}/cancel:
+    put:
+      tags: [coaching]
+      summary: Cancel a coaching booking
+      description: >
+        Cancels a booking. The caller must be a participant (either the
+        student or the expert) — this is enforced inside the handler without
+        a permission middleware. Returns 404 if the booking does not exist
+        or the caller is not a participant. Cancellations must be made at
+        least the configured cancellation-notice period before the session.
+      operationId: cancelBooking
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: bookingID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelBookingRequest"
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: >
+            Invalid booking ID or cancellation is too close to the session
+            start (cancellation notice period not met)
+        "401":
+          description: Not authenticated
+        "403":
+          description: Caller is not a group member
+        "404":
+          description: Booking not found or caller is not a participant
+        "409":
+          description: Booking is already cancelled
+
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: WorkOS access token, validated via JWKS
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+      required: [status]
+    LogoutResponse:
+      type: object
+      properties:
+        logoutUrl:
+          type: string
+      required: [logoutUrl]
+    TokenExchangeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Authorization code from the AuthKit redirect
+        code_verifier:
+          type: string
+          description: >
+            PKCE code verifier matching the code_challenge sent to AuthKit.
+            Required for the mobile PKCE flow; omitted only when a confidential
+            client exchanges a code without PKCE.
+      required: [code]
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required: [refresh_token]
+    TokenPair:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+      required: [access_token, refresh_token]
+    EmailPreferences:
+      type: object
+      properties:
+        notifications_enabled:
+          type: boolean
+        asset_uploads_enabled:
+          type: boolean
+        asset_reviews_enabled:
+          type: boolean
+        invitation_updates_enabled:
+          type: boolean
+        group_membership_updates_enabled:
+          type: boolean
+        coaching_booking_updates_enabled:
+          type: boolean
+        coaching_reminders_enabled:
+          type: boolean
+      required:
+        - notifications_enabled
+        - asset_uploads_enabled
+        - asset_reviews_enabled
+        - invitation_updates_enabled
+        - group_membership_updates_enabled
+        - coaching_booking_updates_enabled
+        - coaching_reminders_enabled
+    Me:
+      type: object
+      properties:
+        id:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        language:
+          type: string
+          enum: [en, de, fr]
+        avatar:
+          type: string
+          description: Base64-encoded avatar image, empty when unset
+        timezone:
+          type: string
+        email_preferences:
+          $ref: "#/components/schemas/EmailPreferences"
+        role:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - first_name
+        - last_name
+        - email
+        - language
+        - avatar
+        - timezone
+        - email_preferences
+        - role
+        - permissions
+    UpdateMeRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        language:
+          type: string
+          enum: [en, de, fr]
+        avatar:
+          type: string
+          description: Base64-encoded avatar image; omit to keep the current one
+        timezone:
+          type: string
+        email_preferences:
+          $ref: "#/components/schemas/EmailPreferences"
+      required: [timezone]
+    AssetGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded group avatar; omitted when unset
+      required: [id, name]
+    AssetVideo:
+      type: object
+      properties:
+        id:
+          type: string
+        playback_id:
+          type: string
+          description: Mux public playback ID; empty while the upload is processing
+        status:
+          type: string
+        review_count:
+          type: integer
+          format: int64
+      required: [id, playback_id, status, review_count]
+    Asset:
+      type: object
+      description: >
+        Parent reviewable submission (UI copy calls it a video). List responses
+        omit videos and group; the detail response includes them.
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        owner_id:
+          type: string
+        status:
+          type: string
+          enum: [waiting_upload, pending, completed]
+        thumbnail:
+          type: string
+          description: Mux thumbnail URL; omitted while no playback ID exists
+        playback_id:
+          type: string
+        review_count:
+          type: integer
+          format: int64
+        videos:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetVideo"
+        group:
+          $ref: "#/components/schemas/AssetGroup"
+      required: [id, title, description, owner_id, status, review_count]
+    CreateAssetRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        filenames:
+          type: array
+          items:
+            type: string
+        group_id:
+          type: string
+          format: uuid
+      required: [title, description, filenames, group_id]
+    CreateAssetVideo:
+      type: object
+      properties:
+        id:
+          type: string
+        upload_url:
+          type: string
+          description: Mux direct-upload URL; PUT the file binary here
+        filename:
+          type: string
+      required: [id, upload_url, filename]
+    CreateAssetResponse:
+      type: object
+      properties:
+        asset_id:
+          type: string
+        videos:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateAssetVideo"
+      required: [asset_id, videos]
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        owner_id:
+          type: string
+        avatar:
+          type: [string, "null"]
+          description: Base64-encoded group avatar
+        description:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+      required: [id, name, owner_id, avatar, description, created_at, updated_at]
+    ReviewAuthor:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded avatar; omitted when unset
+      required: [name]
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        timestamp_seconds:
+          type: integer
+          format: int32
+          description: Player position the comment refers to; omitted for untimed comments
+        parent_id:
+          type: string
+          description: Present on replies
+        author:
+          $ref: "#/components/schemas/ReviewAuthor"
+        created_at:
+          type: string
+          format: date-time
+      required: [id, content, created_at]
+    CreateReviewRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        timestamp_seconds:
+          type: integer
+          format: int32
+        parent_id:
+          type: string
+      required: [content]
+    GroupUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded avatar; omitted when unset
+        role:
+          type: string
+      required: [id, email, first_name, last_name, role]
+    GroupUserList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupUser"
+      required: [data]
+    InvitationInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        group_id:
+          type: string
+        group_name:
+          type: string
+        group_avatar:
+          type: string
+          description: Base64-encoded group avatar; empty string when the group has no avatar set
+        already_member:
+          type: boolean
+      required: [code, group_id, group_name, group_avatar, already_member]
+    AcceptInvitationRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required: [code]
+    AcceptInvitationResponse:
+      type: object
+      properties:
+        group_id:
+          type: string
+      required: [group_id]
+    DeclineInvitationRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required: [code]
+
+    # --- Coaching schemas ---
+
+    BookingRecording:
+      type: object
+      description: Recording metadata attached to a completed booking
+      properties:
+        status:
+          type: string
+          description: Recording pipeline status
+        asset_id:
+          type: string
+          format: uuid
+          description: Parent asset ID; present once the recording is processed
+        video_id:
+          type: string
+          format: uuid
+          description: Video part ID; present once the recording is processed
+      required: [status]
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        expert_id:
+          type: string
+        expert_name:
+          type: string
+        student_id:
+          type: string
+        student_name:
+          type: string
+        group_id:
+          type: string
+          format: uuid
+        session_type_id:
+          type: string
+          format: uuid
+        session_type_name:
+          type: string
+          description: Omitted when not available (e.g. after cancel without a name lookup)
+        scheduled_at:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum: [pending, done, cancelled]
+          description: >
+            Derived at response time: cancelled if is_cancelled is set;
+            done if scheduled_at is in the past; otherwise pending.
+        cancellation_reason:
+          type: string
+          description: Provided reason; omitted when not cancelled or no reason given
+        cancelled_by:
+          type: string
+          description: User ID of whoever cancelled; omitted when not cancelled
+        notes:
+          type: string
+          description: Optional notes from the student; omitted when absent
+        recording:
+          $ref: "#/components/schemas/BookingRecording"
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - expert_id
+        - expert_name
+        - student_id
+        - student_name
+        - group_id
+        - session_type_id
+        - scheduled_at
+        - duration_minutes
+        - status
+        - created_at
+
+    SessionType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        expert_id:
+          type: string
+        group_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        duration_minutes:
+          type: integer
+          format: int32
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - expert_id
+        - group_id
+        - name
+        - description
+        - duration_minutes
+        - is_active
+        - created_at
+
+    CoachingSlot:
+      type: object
+      properties:
+        expert_id:
+          type: string
+          description: WorkOS user ID of the expert this slot belongs to
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+          format: int32
+      required: [expert_id, starts_at, ends_at, duration_minutes]
+
+    CoachingExpert:
+      type: object
+      properties:
+        expert_id:
+          type: string
+          description: WorkOS user ID
+        first_name:
+          type: string
+        last_name:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded avatar; omitted when unset
+      required: [expert_id, first_name, last_name]
+
+    CreateBookingRequest:
+      type: object
+      properties:
+        expert_id:
+          type: string
+          description: WorkOS user ID of the expert to book
+        session_type_id:
+          type: string
+          format: uuid
+        scheduled_at:
+          type: string
+          format: date-time
+          description: Desired session start time (RFC3339)
+        notes:
+          type: string
+          description: Optional notes to share with the expert
+      required: [expert_id, session_type_id, scheduled_at]
+
+    CancelBookingRequest:
+      type: object
+      properties:
+        cancellation_reason:
+          type: string
+          description: Optional reason for cancellation
+
+    BookingConnectInfo:
+      type: object
+      description: Agora RTC credentials returned by the connect endpoint
+      properties:
+        app_id:
+          type: string
+          description: Agora application ID
+        channel:
+          type: string
+          description: Agora channel name for this booking session
+        token:
+          type: string
+          description: >
+            Short-lived Agora RTC credential — never log it. Valid for 3600
+            seconds from issuance.
+        uid:
+          type: integer
+          minimum: 0
+          description: >
+            Participant UID for the Agora channel (uint32). Students always
+            receive UID 1; experts always receive UID 2.
+      required: [app_id, channel, token, uid]

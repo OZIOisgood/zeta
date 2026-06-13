@@ -179,6 +179,105 @@ func TestFinalizeAsset_NotVisibleReturnsNotFound(t *testing.T) {
 	}
 }
 
+func TestCompleteUpload_OwnerUpdatesStatus(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+
+	user := &auth.UserContext{ID: "student-1", Role: permissions.RoleStudent}
+	assetID := assetTestUUID()
+	assetIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
+	q.EXPECT().GetVisibleAsset(gomock.Any(), db.GetVisibleAssetParams{
+		AssetID:   assetID,
+		UserID:    user.ID,
+		IsStudent: true,
+	}).Return(db.GetVisibleAssetRow{ID: assetID, OwnerID: user.ID}, nil)
+	q.EXPECT().UpdateAssetStatus(gomock.Any(), db.UpdateAssetStatusParams{
+		ID:     assetID,
+		Status: db.AssetStatusPending,
+	}).Return(nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/assets/"+assetIDStr+"/complete", nil)
+	req = assetWithChiURLParam(req, "id", assetIDStr)
+	req = req.WithContext(assetTestUserCtx(req.Context(), user))
+	rec := httptest.NewRecorder()
+
+	h.CompleteUpload(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+}
+
+func TestCompleteUpload_NonOwnerReturnsForbidden(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+
+	user := &auth.UserContext{ID: "expert-1", Role: permissions.RoleExpert}
+	assetID := assetTestUUID()
+	assetIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
+	q.EXPECT().GetVisibleAsset(gomock.Any(), db.GetVisibleAssetParams{
+		AssetID:   assetID,
+		UserID:    user.ID,
+		IsStudent: false,
+	}).Return(db.GetVisibleAssetRow{ID: assetID, OwnerID: "student-1"}, nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/assets/"+assetIDStr+"/complete", nil)
+	req = assetWithChiURLParam(req, "id", assetIDStr)
+	req = req.WithContext(assetTestUserCtx(req.Context(), user))
+	rec := httptest.NewRecorder()
+
+	h.CompleteUpload(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("got %d, want %d", rec.Code, http.StatusForbidden)
+	}
+}
+
+func TestCompleteUpload_NotVisibleReturnsNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+
+	user := &auth.UserContext{ID: "student-2", Role: permissions.RoleStudent}
+	assetID := assetTestUUID()
+	assetIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
+	q.EXPECT().GetVisibleAsset(gomock.Any(), db.GetVisibleAssetParams{
+		AssetID:   assetID,
+		UserID:    user.ID,
+		IsStudent: true,
+	}).Return(db.GetVisibleAssetRow{}, pgx.ErrNoRows)
+
+	req := httptest.NewRequest(http.MethodPost, "/assets/"+assetIDStr+"/complete", nil)
+	req = assetWithChiURLParam(req, "id", assetIDStr)
+	req = req.WithContext(assetTestUserCtx(req.Context(), user))
+	rec := httptest.NewRecorder()
+
+	h.CompleteUpload(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("got %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestCompleteUpload_UnauthenticatedReturnsUnauthorized(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+
+	assetIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
+	req := httptest.NewRequest(http.MethodPost, "/assets/"+assetIDStr+"/complete", nil)
+	req = assetWithChiURLParam(req, "id", assetIDStr)
+	rec := httptest.NewRecorder()
+
+	h.CompleteUpload(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("got %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+}
+
 func TestBackfillVideoDurations_RejectsWithoutSecret(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)

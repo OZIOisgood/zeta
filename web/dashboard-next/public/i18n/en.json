@@ -367,6 +367,18 @@
       "notFound": "This invitation is invalid, expired, or already used.",
       "alreadyMember": "You're already a member of {{group}}."
     },
+    "invite": {
+      "cameraHint": "Camera access is needed to scan a QR code.",
+      "codeInvalid": "Enter the 6-character code from the invitation.",
+      "codePlaceholder": "e.g. ABC123",
+      "genericError": "Something went wrong. Please try again.",
+      "grantCamera": "Grant camera access",
+      "lookUp": "Look up code",
+      "manualDivider": "or enter code manually",
+      "notFound": "Invitation code not found or expired.",
+      "openGroup": "Open group",
+      "tryDifferent": "Try a different code"
+    },
     "inviteDialog": {
       "cardDescription": "Create a shareable invitation link or send one directly by email.",
       "title": "Create invitation",
@@ -476,11 +488,13 @@
       "booking": "Booking...",
       "bookSession": "Book Session",
       "slotTaken": "That slot was just taken. Please choose another.",
+      "tooLate": "This time can no longer be booked. Please pick a later slot.",
       "failed": "Failed to book session. Please try again.",
       "loadExpertsFailed": "Failed to load experts",
       "loadSessionTypesFailed": "Failed to load session types",
       "loadSlotsFailed": "Failed to load available slots"
     },
+    "loadFailed": "Your sessions could not be loaded.",
     "cancel": {
       "title": "Cancel Session",
       "description": "This will cancel the session with <strong>{{otherParty}}</strong> on {{scheduledAt}}.",
@@ -542,7 +556,12 @@
       "joinFailed": "Failed to join video call",
       "connectFailed": "Failed to connect to session",
       "microphoneFallback": "Microphone {{index}}",
-      "cameraFallback": "Camera {{index}}"
+      "cameraFallback": "Camera {{index}}",
+      "permissionHeading": "Camera and Microphone Required",
+      "permissionBody": "Camera and microphone access are required for live coaching sessions.",
+      "grantCamera": "Grant camera access",
+      "grantMicrophone": "Grant microphone access",
+      "switchCamera": "Switch camera"
     }
   },
   "preferences": {

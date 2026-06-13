@@ -159,9 +159,19 @@ func (s *Server) routes(ctx context.Context) {
 		r.Post("/auth/logout", authHandler.Logout)
 		r.Get("/auth/me", authHandler.Me)
 		r.Put("/auth/me", authHandler.UpdateMe)
+		// Credential endpoints are unauthenticated and fan out to WorkOS —
+		// throttle per client IP against brute force and cost amplification.
+		tokenLimiter := auth.NewIPRateLimiter(s.Logger, 10, 10)
+		r.Group(func(r chi.Router) {
+			r.Use(tokenLimiter.Middleware)
+			// Mobile PKCE flow: exchanges an AuthKit code for a JSON token pair
+			r.Post("/auth/token", authHandler.TokenExchange)
+			// Mobile flow: rotates a token pair using a refresh token
+			r.Post("/auth/token/refresh", authHandler.TokenRefresh)
+		})
 		// Dev-only: issues a Zeta JWT via password auth — never enable in production
 		if os.Getenv("DEV_AUTH_ENABLED") == "true" {
-			r.Post("/auth/token", authHandler.DevToken)
+			r.Post("/auth/dev/token", authHandler.DevToken)
 		}
 	})
 

@@ -11,7 +11,7 @@
 
 # Binaries
 bin/
-api
+/api
 build/
 
 # IDE

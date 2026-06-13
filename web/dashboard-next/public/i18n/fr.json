@@ -367,6 +367,18 @@
       "notFound": "Cette invitation est invalide, expirée ou déjà utilisée.",
       "alreadyMember": "Vous êtes déjà membre de {{group}}."
     },
+    "invite": {
+      "cameraHint": "L'accès à la caméra est nécessaire pour scanner un code QR.",
+      "codeInvalid": "Saisissez le code à 6 caractères de l'invitation.",
+      "codePlaceholder": "p. ex. ABC123",
+      "genericError": "Une erreur est survenue. Veuillez réessayer.",
+      "grantCamera": "Autoriser la caméra",
+      "lookUp": "Vérifier le code",
+      "manualDivider": "ou saisir le code manuellement",
+      "notFound": "Code d'invitation introuvable ou expiré.",
+      "openGroup": "Ouvrir le groupe",
+      "tryDifferent": "Essayer un autre code"
+    },
     "inviteDialog": {
       "cardDescription": "Créez un lien d’invitation partageable ou envoyez une invitation directement par e-mail.",
       "title": "Créer une invitation",
@@ -476,11 +488,13 @@
       "booking": "Réservation en cours...",
       "bookSession": "Réserver la séance",
       "slotTaken": "Ce créneau vient d'être pris. Veuillez en choisir un autre.",
+      "tooLate": "Ce créneau ne peut plus être réservé. Veuillez en choisir un plus tardif.",
       "failed": "Échec de la réservation. Veuillez réessayer.",
       "loadExpertsFailed": "Échec du chargement des experts",
       "loadSessionTypesFailed": "Échec du chargement des types de séances",
       "loadSlotsFailed": "Échec du chargement des créneaux disponibles"
     },
+    "loadFailed": "Vos sessions n'ont pas pu être chargées.",
     "cancel": {
       "title": "Annuler la séance",
       "description": "Cela annulera la séance avec <strong>{{otherParty}}</strong> le {{scheduledAt}}.",
@@ -542,7 +556,12 @@
       "joinFailed": "Échec du démarrage de l'appel vidéo",
       "connectFailed": "Échec de la connexion à la séance",
       "microphoneFallback": "Microphone {{index}}",
-      "cameraFallback": "Caméra {{index}}"
+      "cameraFallback": "Caméra {{index}}",
+      "permissionHeading": "Caméra et microphone requis",
+      "permissionBody": "L'accès à la caméra et au microphone est requis pour les séances de coaching en direct.",
+      "grantCamera": "Autoriser la caméra",
+      "grantMicrophone": "Autoriser le microphone",
+      "switchCamera": "Changer de caméra"
     }
   },
   "preferences": {

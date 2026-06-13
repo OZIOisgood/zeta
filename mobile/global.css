@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* BEGIN GENERATED TOKENS (scripts/sync-tokens.mjs — do not edit by hand) */
+:root {
+  --z-bg: #fff8ed;
+  --z-surface: #ffffff;
+  --z-surface-warm: #fff1dc;
+  --z-surface-muted: #f7e4c7;
+  --z-text: #26180f;
+  --z-muted: #735f4d;
+  --z-primary: #ea580c;
+  --z-primary-strong: #c2410c;
+  --z-primary-soft: #fed7aa;
+  --z-accent: #f59e0b;
+  --z-border: #ead2b8;
+  --z-success: #15803d;
+  --z-warning: #b45309;
+  --z-danger: #be123c;
+}
+/* END GENERATED TOKENS */
