@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react-native';
 import { colors } from '../../theme/colors';
@@ -27,7 +28,9 @@ const toneIconColors: Record<ZConfirmDialogTone, string> = {
 /**
  * Confirmation dialog. Mobile counterpart of the web `z-confirm-dialog`
  * (web/dashboard-next/src/app/shared/ui/dialog/). Renders a tone icon, title,
- * optional description, and a cancel/confirm footer inside a `ZDialogPanel`.
+ * optional description, an optional content slot, and a cancel/confirm footer
+ * inside a `ZDialogPanel`. Pass `children` to inject extra content (e.g. a
+ * reason textarea) between the description and the footer buttons.
  */
 export function ZConfirmDialog({
   visible,
@@ -39,6 +42,7 @@ export function ZConfirmDialog({
   confirmOnly = false,
   onConfirm,
   onCancel,
+  children,
   testID,
 }: {
   visible: boolean;
@@ -50,6 +54,7 @@ export function ZConfirmDialog({
   confirmOnly?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  children?: ReactNode;
   testID?: string;
 }) {
   const Icon = toneIcon[tone];
@@ -69,6 +74,8 @@ export function ZConfirmDialog({
           ) : null}
         </View>
       </View>
+
+      {children}
 
       <View className="mt-6 flex-row justify-end gap-2">
         {!confirmOnly && cancelLabel ? (

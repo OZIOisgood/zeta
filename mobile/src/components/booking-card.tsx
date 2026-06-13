@@ -103,6 +103,14 @@ export function BookingCard({
       ? (booking.expert_name ?? booking.expert_id)
       : (booking.student_name ?? booking.student_id);
 
+  // Counterpart role label, prefixed to the name like web (otherPartyRole):
+  // when the current user is the student, the counterpart is the expert.
+  const counterpartRole =
+    booking.student_id === currentUserId ? 'expert' : 'student';
+  const counterpartLabel = t(
+    counterpartRole === 'expert' ? 'common.labels.expert' : 'common.labels.student',
+  );
+
   const dateText = new Date(booking.scheduled_at).toLocaleString([], {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -136,8 +144,10 @@ export function BookingCard({
         ) : null}
       </View>
 
-      {/* Row 2: counterpart name */}
-      <Text className="mt-1 text-sm text-z-muted">{counterpart}</Text>
+      {/* Row 2: counterpart role + name */}
+      <Text className="mt-1 text-sm text-z-muted">
+        {counterpartLabel}: {counterpart}
+      </Text>
 
       {/* Row 3: date/time + duration */}
       <Text className="mt-1 text-sm text-z-muted">

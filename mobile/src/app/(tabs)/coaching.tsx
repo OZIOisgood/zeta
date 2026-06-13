@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CalendarClock, CloudOff, Trash2 } from 'lucide-react-native';
+import { CalendarClock, CloudOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../api/queries/coaching';
 import { useMyBookingsQuery, useCancelBookingMutation } from '../../api/queries/coaching';
@@ -9,7 +9,7 @@ import { useAuth } from '../../auth/auth-store';
 import { BookingCard } from '../../components/booking-card';
 import { isJoinable } from '../../lib/connect-window';
 import { ZButton } from '../../components/ui/z-button';
-import { ZDialogPanel } from '../../components/ui/z-dialog-panel';
+import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
@@ -47,15 +47,18 @@ function ListSkeleton() {
  * CancelDialog owns the useCancelBookingMutation hook for a single booking.
  * React rules forbid calling hooks in loops, so the cancellation flow gets its
  * own component instance — mounted only while a booking is selected — that holds
- * the mutation for that booking's group. Composes ZDialogPanel + ZTextarea so the
- * student can attach an optional reason, which is passed through to the mutation.
+ * the mutation for that booking's group. Composes ZConfirmDialog (danger tone)
+ * with a ZTextarea slot so the student can attach an optional reason, which is
+ * passed through to the mutation.
  */
 function CancelDialog({
   booking,
+  currentUserId,
   onDone,
   onAbort,
 }: {
   booking: Booking;
+  currentUserId: string;
   onDone: () => void;
   onAbort: () => void;
 }) {
@@ -63,6 +66,17 @@ function CancelDialog({
   const { mutateAsync, isPending } = useCancelBookingMutation(booking.group_id);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Counterpart + formatted time for the descriptive context line, mirroring
+  // web cancelDescription(): the student sees the expert, the expert the student.
+  const otherParty =
+    booking.student_id === currentUserId
+      ? (booking.expert_name ?? booking.expert_id)
+      : (booking.student_name ?? booking.student_id);
+  const scheduledAt = new Date(booking.scheduled_at).toLocaleString([], {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
 
   async function handleConfirm() {
     setError(null);
@@ -77,18 +91,17 @@ function CancelDialog({
   }
 
   return (
-    <ZDialogPanel visible onClose={onAbort} testID="booking-cancel-dialog">
-      <View className="flex-row items-start gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-md bg-rose-50">
-          <Trash2 color={colors.danger} size={20} />
-        </View>
-        <View className="min-w-0 flex-1">
-          <Text className="text-base font-semibold leading-6 text-z-text">
-            {t('sessions.cancel.title')}
-          </Text>
-        </View>
-      </View>
-
+    <ZConfirmDialog
+      visible
+      tone="danger"
+      testID="booking-cancel-dialog"
+      title={t('sessions.cancel.title')}
+      description={t('sessions.cancel.descriptionText', { otherParty, scheduledAt })}
+      confirmLabel={t('sessions.cancel.title')}
+      cancelLabel={t('sessions.cancel.keep')}
+      onConfirm={() => void handleConfirm()}
+      onCancel={onAbort}
+    >
       <View className="mt-4">
         <ZTextarea
           testID="booking-cancel-reason"
@@ -99,22 +112,9 @@ function CancelDialog({
           rows={3}
           disabled={isPending}
         />
+        {error ? <Text className="mt-2 text-sm text-z-danger">{error}</Text> : null}
       </View>
-
-      {error ? <Text className="mt-2 text-sm text-z-danger">{error}</Text> : null}
-
-      <View className="mt-6 flex-row justify-end gap-2">
-        <ZButton label={t('sessions.cancel.keep')} variant="secondary" onPress={onAbort} />
-        <ZButton
-          testID="booking-cancel-confirm"
-          label={t('sessions.cancel.title')}
-          variant="danger"
-          loading={isPending}
-          disabled={isPending}
-          onPress={() => void handleConfirm()}
-        />
-      </View>
-    </ZDialogPanel>
+    </ZConfirmDialog>
   );
 }
 
@@ -191,7 +191,7 @@ export default function CoachingScreen() {
       <View testID="coaching-error" className="p-4">
         <ZEmptyState
           title={t('sessions.loadFailed')}
-          description={t('sessions.empty.upcomingDescription')}
+          description={t('home.error.description')}
           icon={<CloudOff color={colors.danger} size={24} />}
         >
           <ZButton
@@ -234,7 +234,7 @@ export default function CoachingScreen() {
         {canBook ? (
           <ZButton
             testID="coaching-book"
-            label={t('common.actions.bookSession')}
+            label={t('sessions.bookLive')}
             variant="secondary"
             onPress={() => router.push('/book')}
             icon={<CalendarClock color={colors.text} size={16} />}
@@ -256,6 +256,7 @@ export default function CoachingScreen() {
       {cancellingBooking ? (
         <CancelDialog
           booking={cancellingBooking}
+          currentUserId={currentUserId}
           onDone={() => setCancellingId(null)}
           onAbort={() => setCancellingId(null)}
         />

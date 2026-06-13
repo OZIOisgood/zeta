@@ -34,7 +34,7 @@ test('renders session type name, expert name (student view), date/time, duration
     />,
   );
   expect(screen.getByText('Strategy Session')).toBeOnTheScreen();
-  expect(screen.getByText('Coach Ana')).toBeOnTheScreen();
+  expect(screen.getByText('Expert: Coach Ana')).toBeOnTheScreen();
   // duration
   expect(screen.getByText(/60 min/)).toBeOnTheScreen();
   // status chip
@@ -96,7 +96,7 @@ test('shows student name when current user is the expert', async () => {
       onOpenRecording={jest.fn()}
     />,
   );
-  expect(screen.getByText('Bob Student')).toBeOnTheScreen();
+  expect(screen.getByText('Student: Bob Student')).toBeOnTheScreen();
 });
 
 test('cancel affordance shown when canCancel=true and fires onCancel', async () => {
