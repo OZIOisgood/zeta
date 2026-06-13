@@ -3,6 +3,7 @@ import { Reply } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Review } from '../api/queries/reviews';
 import { initialsFromName } from '../lib/avatar';
+import { formatRelativeTime } from '../lib/datetime';
 import { colors } from '../theme/colors';
 import { ZAvatar } from './ui/z-avatar';
 import { ZChip } from './ui/z-chip';
@@ -18,22 +19,6 @@ export function formatTimestamp(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-/**
- * Formats a short relative/absolute date without adding new dependencies.
- * Web uses a RelativeTimePipe; here we do a lightweight approximation.
- */
-function formatRelativeTime(isoString: string): string {
-  const now = Date.now();
-  const then = new Date(isoString).getTime();
-  if (Number.isNaN(then)) return '';
-  const diffSec = Math.floor((now - then) / 1000);
-  if (diffSec < 60) return 'just now';
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-  if (diffSec < 604800) return `${Math.floor(diffSec / 86400)}d ago`;
-  // Fallback: locale date string
-  return new Date(isoString).toLocaleDateString();
-}
 
 export type ReviewItemProps = {
   review: Review;
@@ -87,7 +72,7 @@ export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewI
             />
           )}
 
-          <Text className="text-xs text-z-muted">{formatRelativeTime(review.created_at)}</Text>
+          <Text className="text-xs text-z-muted">{formatRelativeTime(review.created_at, t)}</Text>
 
           {showReplyButton && (
             <ZIconButton
