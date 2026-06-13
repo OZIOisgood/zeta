@@ -125,7 +125,6 @@ export default function UploadScreen() {
             <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
               <ArrowLeft color={colors.muted} size={24} />
             </ZIconButton>
-            <Text className="text-lg font-semibold text-z-text">{t('upload.title')}</Text>
           </View>
   
           {/* Header card */}
@@ -165,7 +164,7 @@ export default function UploadScreen() {
                       className="flex-row items-center rounded-lg border border-z-border bg-z-surface px-3 py-2"
                     >
                       <FileVideo color={colors.primary} size={18} />
-                      <Text className="ml-2 flex-1 text-sm text-z-text" numberOfLines={1}>
+                      <Text className="ml-2 flex-1 text-sm font-semibold text-z-text" numberOfLines={1}>
                         {file.filename}
                       </Text>
                       <ZIconButton
@@ -281,7 +280,7 @@ export default function UploadScreen() {
               </View>
   
               {failed && (
-                <Text className="mt-3 text-sm text-z-danger">{t('upload.uploadFailed')}</Text>
+                <Text className="mt-3 text-sm font-semibold text-z-danger">{t('upload.uploadFailed')}</Text>
               )}
   
               <View className="mt-4 flex-row justify-end gap-2">
