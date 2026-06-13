@@ -428,7 +428,7 @@ erDiagram
         string user_id PK "WorkOS User ID ref"
         enum status "waitlisted, active"
         timestamptz activated_at
-        string activated_via "expert_code, group_invite, grandfathered"
+        string activated_via "expert_code, group_code, grandfathered"
         timestamp created_at
     }
 
