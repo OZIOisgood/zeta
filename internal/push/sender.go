@@ -73,6 +73,15 @@ type expoResponse struct {
 	Data []expoTicket `json:"data"`
 }
 
+// tokenPrefix returns the first 32 characters of an Expo push token for safe
+// logging — enough to correlate device logs without exposing the full token.
+func tokenPrefix(token string) string {
+	if len(token) <= 32 {
+		return token
+	}
+	return token[:32] + "..."
+}
+
 // Notify looks up all registered devices for recipientID, builds the Expo
 // push message from the notification type and payload, and POSTs to the Expo
 // push API. Any token reported as DeviceNotRegistered is pruned from the DB.
@@ -209,7 +218,7 @@ func (s *Sender) Notify(ctx context.Context, recipientID string, notificationTyp
 		if i >= len(devices) {
 			break
 		}
-		if ticket.Details.Error == "DeviceNotRegistered" {
+		if ticket.Status == "error" && ticket.Details.Error == "DeviceNotRegistered" {
 			token := devices[i].ExpoPushToken
 			if pruneErr := s.q.DeleteDeviceByToken(ctx, token); pruneErr != nil {
 				log.WarnContext(ctx, "push_send_failed",

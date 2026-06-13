@@ -61,15 +61,6 @@ type coachingBookingCreatedPayload struct {
 	ScheduledAt string `json:"scheduled_at,omitempty"` // RFC3339
 }
 
-// tokenPrefix returns the first 32 characters of an Expo push token for safe
-// logging — enough to correlate device logs without exposing the full token.
-func tokenPrefix(token string) string {
-	if len(token) <= 32 {
-		return token
-	}
-	return token[:32] + "..."
-}
-
 // BuildMessage translates a notification type and its JSON payload into the
 // OS-level push strings (title, body) and a data map for deep-linking.
 //
