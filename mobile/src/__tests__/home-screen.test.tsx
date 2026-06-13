@@ -110,6 +110,16 @@ function Providers({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
+test('renders the compact page header title', async () => {
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+
+  expect(screen.getByText('Home')).toBeOnTheScreen();
+});
+
 test('stat cards render live counts from the assets, groups, and bookings queries', async () => {
   mockUseAssetsQuery.mockReturnValue(
     success([asset('a1', 'pending', 'Kata 1'), asset('a2', 'completed', 'Kata 2')]),

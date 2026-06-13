@@ -13,6 +13,7 @@ import { StatCard } from '../../components/stat-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
+import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
@@ -195,6 +196,10 @@ export default function HomeScreen() {
   return (
     <ZScreen edges={['top']}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
+        {/* Home has no create action, so no FAB and no header action slot; the
+            subtitle is omitted (no existing home summary key to surface). */}
+        <ZPageHeader title={t('common.nav.home')} />
+
         {/* Stat cards: live counts that double as section navigation. */}
         <View className="flex-row gap-3">
           <StatCard
