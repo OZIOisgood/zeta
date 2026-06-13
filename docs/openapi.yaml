@@ -526,6 +526,77 @@ paths:
           description: Missing reviews:create permission or video is part of a completed asset
         "404":
           description: Video not found or not visible
+  /assets/videos/{id}/reviews/{reviewId}:
+    put:
+      tags: [assets]
+      summary: Edit a review on a video
+      operationId: updateVideoReview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: video id
+          schema:
+            type: string
+            format: uuid
+        - name: reviewId
+          in: path
+          required: true
+          description: review id
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReviewRequest"
+      responses:
+        "200":
+          description: Review updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateReviewResponse"
+        "400":
+          description: Invalid id, invalid body, or missing content
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing reviews:edit permission, not the author, or video is part of a completed asset
+        "404":
+          description: Review not found or video not visible
+    delete:
+      tags: [assets]
+      summary: Delete a review on a video
+      operationId: deleteVideoReview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: video id
+          schema:
+            type: string
+            format: uuid
+        - name: reviewId
+          in: path
+          required: true
+          description: review id
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Review deleted
+        "400":
+          description: Invalid id
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing reviews:delete permission, not the author, or video is part of a completed asset
+        "404":
+          description: Review not found or video not visible
   /auth/logout:
     post:
       tags: [auth]
@@ -1257,6 +1328,23 @@ components:
         parent_id:
           type: string
       required: [content]
+    UpdateReviewRequest:
+      type: object
+      properties:
+        content:
+          type: string
+      required: [content]
+    UpdateReviewResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required: [id, content, created_at]
     GroupUser:
       type: object
       properties:
