@@ -118,23 +118,25 @@ describe('call-store', () => {
     expect(store.getState().remoteUid).toBeNull();
   });
 
-  test('fetchConnect rejection → error phase, no engine created', async () => {
+  test('fetchConnect rejection → error phase with "connect" code, no engine created', async () => {
     const { deps, fakeEngines } = makeDeps({ fetchConnectResult: 'reject' });
     const store = createCallStore(deps);
 
     await store.getState().join('grp1', 'book1');
 
     expect(store.getState().phase).toBe('error');
+    expect(store.getState().error).toBe('connect');
     expect(fakeEngines).toHaveLength(0);
   });
 
-  test('engine.join rejection → error phase + cleanup called', async () => {
+  test('engine.join rejection → error phase with "join" code + cleanup called', async () => {
     const { deps, fakeEngines } = makeDeps({ joinResult: 'reject' });
     const store = createCallStore(deps);
 
     await store.getState().join('grp1', 'book1');
 
     expect(store.getState().phase).toBe('error');
+    expect(store.getState().error).toBe('join');
     expect(fakeEngines).toHaveLength(1);
     expect(fakeEngines[0].leaveCallCount).toBe(1);
   });
@@ -222,7 +224,8 @@ describe('call-store', () => {
 
     fakeEngines[0]._events.onError('Something went wrong');
     expect(store.getState().phase).toBe('error');
-    expect(store.getState().error).not.toBeNull();
+    // A stable code is stored, never the raw engine message.
+    expect(store.getState().error).toBe('engine');
   });
 
   // ─── Fix 1: stopRecording rejection tolerance ────────────────────────────────
@@ -351,6 +354,8 @@ describe('call-store', () => {
 
     const { error } = store.getState();
     if (error !== null) {
+      // error is a stable code — never the raw (token-bearing) message.
+      expect(['connect', 'engine', 'join']).toContain(error);
       expect(error).not.toContain(TOKEN);
     }
     // The phase may be inCall or error but the token must not appear in stored error

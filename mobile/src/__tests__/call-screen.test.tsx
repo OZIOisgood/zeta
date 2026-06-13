@@ -63,14 +63,15 @@ jest.mock('../call/call-store', () => ({
     remoteUid: number | null;
     micMuted: boolean;
     cameraEnabled: boolean;
-    error: string | null;
+    error: 'connect' | 'engine' | 'join' | null;
   }) => unknown) =>
     selector({
       phase: mockPhase,
       remoteUid: mockRemoteUid,
       micMuted: mockMicMuted,
       cameraEnabled: mockCameraEnabled,
-      error: mockPhase === 'error' ? 'A call error occurred' : null,
+      // Store now holds a stable error CODE, not an English string.
+      error: mockPhase === 'error' ? 'engine' : null,
     }),
 }));
 
@@ -167,13 +168,18 @@ test('camera permission denied → call-permission-denied state, join NOT called
   expect(mockJoin).not.toHaveBeenCalled();
 });
 
-// ── Test 6: phase error → error text + back affordance ───────────────────────
+// ── Test 6: phase error → localized card error state + back affordance ────────
 
-test('phase error → error message visible with back button', async () => {
+test('phase error → localized heading + body in card with back button', async () => {
   mockPhase = 'error';
   await act(async () => {
     render(<CallScreen />);
   });
-  expect(screen.getByText('A call error occurred')).toBeOnTheScreen();
+  // Card heading is the generic couldNotJoin; body is the code mapped to a key.
+  expect(screen.getByText('Could not join session')).toBeOnTheScreen();
+  // The 'engine' code maps to sessions.call.connectFailed.
+  expect(screen.getByText('Failed to connect to session')).toBeOnTheScreen();
+  // Raw English literal must no longer be rendered.
+  expect(screen.queryByText('A call error occurred')).toBeNull();
   expect(screen.getByTestId('call-back')).toBeOnTheScreen();
 });

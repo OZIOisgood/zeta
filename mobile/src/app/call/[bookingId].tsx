@@ -20,13 +20,22 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { Mic, MicOff, Video, VideoOff, SwitchCamera, PhoneOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { callStore, useCall } from '../../call/call-store';
+import { callStore, useCall, type CallErrorCode } from '../../call/call-store';
 import { CallVideo } from '../../call/call-view';
 import { ZScreen } from '../../components/ui/z-screen';
+import { ZCard } from '../../components/ui/z-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
+
+// Maps a stable store error code to a localized message key. The raw provider
+// message never reaches the UI (it may carry connection details).
+const ERROR_MESSAGE_KEY: Record<CallErrorCode, string> = {
+  connect: 'sessions.call.connectFailed',
+  join: 'sessions.call.joinFailed',
+  engine: 'sessions.call.connectFailed',
+};
 
 export default function CallScreen() {
   const { bookingId, groupId } = useLocalSearchParams<{ bookingId: string; groupId: string }>();
@@ -74,33 +83,37 @@ export default function CallScreen() {
   if (!cameraGranted || !micGranted) {
     return (
       <ZScreen edges={['top', 'bottom']}>
-        <View testID="call-permission-denied" className="flex-1 items-center justify-center gap-4 px-8">
-          <Text className="text-center text-base font-semibold text-z-text">
-            {t('sessions.call.permissionHeading')}
-          </Text>
-          <Text className="text-center text-sm text-z-muted">
-            {t('sessions.call.permissionBody')}
-          </Text>
-          {!cameraGranted ? (
+        <View testID="call-permission-denied" className="flex-1 items-center justify-center px-8">
+          <ZCard className="w-full gap-4">
+            <View className="gap-2">
+              <Text className="text-center text-base font-semibold text-z-text">
+                {t('sessions.call.permissionHeading')}
+              </Text>
+              <Text className="text-center text-sm text-z-muted">
+                {t('sessions.call.permissionBody')}
+              </Text>
+            </View>
+            {!cameraGranted ? (
+              <ZButton
+                label={t('sessions.call.grantCamera')}
+                variant="primary"
+                onPress={() => void requestCameraPermission()}
+              />
+            ) : null}
+            {!micGranted ? (
+              <ZButton
+                label={t('sessions.call.grantMicrophone')}
+                variant="primary"
+                onPress={() => void requestMicPermission()}
+              />
+            ) : null}
             <ZButton
-              label={t('sessions.call.grantCamera')}
-              variant="primary"
-              onPress={() => void requestCameraPermission()}
+              testID="call-back"
+              label={t('sessions.call.backToSessions')}
+              variant="ghost"
+              onPress={() => router.back()}
             />
-          ) : null}
-          {!micGranted ? (
-            <ZButton
-              label={t('sessions.call.grantMicrophone')}
-              variant="primary"
-              onPress={() => void requestMicPermission()}
-            />
-          ) : null}
-          <ZButton
-            testID="call-back"
-            label={t('sessions.call.backToSessions')}
-            variant="ghost"
-            onPress={() => router.back()}
-          />
+          </ZCard>
         </View>
       </ZScreen>
     );
@@ -108,26 +121,32 @@ export default function CallScreen() {
 
   // ── Error state ──────────────────────────────────────────────────────────────
   if (phase === 'error') {
+    const messageKey = error ? ERROR_MESSAGE_KEY[error] : 'sessions.call.connectFailed';
     return (
       <ZScreen edges={['top', 'bottom']}>
-        <View className="flex-1 items-center justify-center gap-4 px-8">
-          <Text className="text-center text-base font-semibold text-z-text">
-            {error ?? t('sessions.call.connectFailed')}
-          </Text>
-          <ZButton
-            label={t('common.actions.retry')}
-            variant="primary"
-            onPress={() => {
-              joinedRef.current = false;
-              void callStore.getState().join(groupId ?? '', bookingId ?? '');
-            }}
-          />
-          <ZButton
-            testID="call-back"
-            label={t('sessions.call.backToSessions')}
-            variant="ghost"
-            onPress={() => router.back()}
-          />
+        <View testID="call-error" className="flex-1 items-center justify-center px-8">
+          <ZCard className="w-full gap-4">
+            <View className="gap-2">
+              <Text className="text-center text-base font-semibold text-z-text">
+                {t('sessions.call.couldNotJoin')}
+              </Text>
+              <Text className="text-center text-sm text-z-muted">{t(messageKey)}</Text>
+            </View>
+            <ZButton
+              label={t('common.actions.retry')}
+              variant="primary"
+              onPress={() => {
+                joinedRef.current = false;
+                void callStore.getState().join(groupId ?? '', bookingId ?? '');
+              }}
+            />
+            <ZButton
+              testID="call-back"
+              label={t('sessions.call.backToSessions')}
+              variant="ghost"
+              onPress={() => router.back()}
+            />
+          </ZCard>
         </View>
       </ZScreen>
     );
@@ -142,9 +161,6 @@ export default function CallScreen() {
           <ZSkeleton className="h-6 w-48" />
           <ZSkeleton className="h-4 w-64" />
           <ZSkeleton className="h-4 w-40" />
-          <Text className="mt-4 text-sm text-gray-400">
-            {t('sessions.call.connecting')}
-          </Text>
         </View>
       </ZScreen>
     );

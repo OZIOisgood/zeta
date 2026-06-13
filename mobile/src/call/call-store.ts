@@ -6,6 +6,17 @@ import { createCallEngine, type CallEngine } from './call-engine';
 
 export type CallPhase = 'idle' | 'connecting' | 'inCall' | 'error';
 
+/**
+ * Stable error code stored in state. The screen maps each code to a localized
+ * message (sessions.call.*) — the raw provider message is never stored or
+ * logged because it may carry connection details (token/appId/channel).
+ *
+ * - `connect`: failed to fetch the booking connect info
+ * - `join`:    the call engine rejected the join
+ * - `engine`:  a runtime error surfaced by the engine while in the call
+ */
+export type CallErrorCode = 'connect' | 'engine' | 'join';
+
 export type CallDeps = {
   createEngine: typeof createCallEngine;
   fetchConnect: (groupId: string, bookingId: string) => Promise<components['schemas']['BookingConnectInfo']>;
@@ -17,7 +28,7 @@ type CallState = {
   remoteUid: number | null;
   micMuted: boolean;
   cameraEnabled: boolean;
-  error: string | null;
+  error: CallErrorCode | null;
 
   join: (groupId: string, bookingId: string) => Promise<void>;
   leave: (groupId: string, bookingId: string) => Promise<void>;
@@ -79,7 +90,7 @@ export function createCallStore(deps: CallDeps = defaultDeps) {
         connectInfo = await deps.fetchConnect(groupId, bookingId);
       } catch {
         if (gen === generation) {
-          set({ phase: 'error', error: 'Failed to get connection info' });
+          set({ phase: 'error', error: 'connect' });
         }
         return;
       }
@@ -93,8 +104,8 @@ export function createCallStore(deps: CallDeps = defaultDeps) {
         },
         onError: (_message) => {
           // Never store or log the raw message — it may contain connection details.
-          // Provide a generic error to the UI.
-          set({ phase: 'error', error: 'A call error occurred' });
+          // Store a stable code; the screen localizes it.
+          set({ phase: 'error', error: 'engine' });
         },
       });
 
@@ -110,7 +121,7 @@ export function createCallStore(deps: CallDeps = defaultDeps) {
         // Attempt cleanup — ignore secondary failures
         void newEngine.leave().catch(() => {});
         if (gen === generation) {
-          set({ phase: 'error', error: 'Failed to join the call' });
+          set({ phase: 'error', error: 'join' });
         }
         return;
       }
