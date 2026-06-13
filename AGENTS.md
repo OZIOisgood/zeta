@@ -39,8 +39,16 @@
 - Use structured `log/slog` JSON logging. Inject `*slog.Logger`; in handlers use `logger.From(ctx, h.logger)`.
 - Log stable snake_case event names, include `component`, and log errors with the `err` field.
 - Never log tokens, cookies, passwords, API keys, full email bodies, or raw PII such as full email addresses.
-- When env/config changes, update `.env.example`, docs if relevant, and Terraform wiring under `infra/terraform/` in the same task.
+- For env, secrets, Cloud Run, GitHub Actions, DNS, IAM, or Terraform changes, use `.agents/skills/infra-configuration/SKILL.md`; classify ownership before editing and update every applicable parity surface.
 - Update README diagrams when database tables, API flows, architecture, or user journeys change.
+
+## Infrastructure Rules
+
+- Plain runtime configuration such as public URLs, sender addresses, feature flags, and limits belongs in Cloud Run `--set-env-vars`, not Secret Manager.
+- Credentials, passwords, signing material, and private connection strings belong in Secret Manager and are bound with `--set-secrets`.
+- Workflow-level `env:` only configures GitHub Actions; a value reaches Cloud Run only when the deploy command passes it explicitly.
+- Terraform owns infrastructure shape and generated secrets. Inspect state and plan before apply; do not manually mutate Terraform-owned resources without a reconciliation plan.
+- Keep dev/prod workflows, `.env.example`, provider callbacks, DNS, docs, and live runtime bindings aligned when their behavior depends on the same setting.
 
 ## Frontend Rules
 

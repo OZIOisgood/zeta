@@ -8,16 +8,19 @@ import (
 
 func TestNewServiceReadsConfiguredSender(t *testing.T) {
 	t.Setenv("RESEND_API_KEY", "re_test")
-	t.Setenv("RESEND_FROM_EMAIL", "notifications@dev.zeta.m4xon.com")
+	t.Setenv("RESEND_FROM_EMAIL", "notifications@strido.net")
 
 	service := NewService(slog.Default())
 
-	if service.from != "notifications@dev.zeta.m4xon.com" {
-		t.Fatalf("expected sender %q, got %q", "notifications@dev.zeta.m4xon.com", service.from)
+	if service.from != "notifications@strido.net" {
+		t.Fatalf("expected sender %q, got %q", "notifications@strido.net", service.from)
 	}
 }
 
 func TestRenderNotificationTemplateInlinesCSS(t *testing.T) {
+	t.Setenv("EMAIL_LOGO_URL", "")
+	t.Setenv("FRONTEND_URL", "")
+
 	rendered, err := RenderTemplate(TemplateNotification, Message{
 		Copy: Copy{
 			Preheader: "Your video has been reviewed.",
@@ -34,7 +37,7 @@ func TestRenderNotificationTemplateInlinesCSS(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		"https://dev.zeta.m4xon.com/app-full-icon.png",
+		"https://app.dev.strido.net/assets/brand/mark/zeta-horse-mark-orange-128.png",
 		"Your video has been reviewed",
 		"Backhand drill",
 		"style=",
@@ -47,6 +50,24 @@ func TestRenderNotificationTemplateInlinesCSS(t *testing.T) {
 	}
 	if !strings.Contains(rendered.Text, "Backhand drill") {
 		t.Fatalf("expected text fallback to contain detail value, got:\n%s", rendered.Text)
+	}
+}
+
+func TestRenderTemplateBuildsLogoURLFromFrontendURL(t *testing.T) {
+	t.Setenv("EMAIL_LOGO_URL", "")
+	t.Setenv("FRONTEND_URL", "https://app.strido.net/")
+
+	rendered, err := RenderTemplate(TemplateNotification, Message{
+		Copy: Copy{
+			Title: "Frontend logo",
+			Intro: "Logo URL should use the configured frontend.",
+		},
+	})
+	if err != nil {
+		t.Fatalf("render template: %v", err)
+	}
+	if !strings.Contains(rendered.HTML, "https://app.strido.net/assets/brand/mark/zeta-horse-mark-orange-128.png") {
+		t.Fatalf("expected rendered HTML to derive the logo URL from FRONTEND_URL, got:\n%s", rendered.HTML)
 	}
 }
 

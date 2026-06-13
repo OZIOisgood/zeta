@@ -114,7 +114,7 @@ func logoURL() string {
 		return v
 	}
 	if v := strings.TrimSpace(os.Getenv("FRONTEND_URL")); v != "" {
-		return strings.TrimRight(v, "/") + "/app-full-icon.png"
+		return strings.TrimRight(v, "/") + "/assets/brand/mark/zeta-horse-mark-orange-128.png"
 	}
-	return "https://dev.zeta.m4xon.com/app-full-icon.png"
+	return "https://app.dev.strido.net/assets/brand/mark/zeta-horse-mark-orange-128.png"
 }

@@ -25,10 +25,10 @@ data "google_project" "current" {
 
 locals {
   cloud_run_runtime_service_account = "${data.google_project.current.number}-compute@developer.gserviceaccount.com"
-  dashboard_domain                  = "dev.zeta.m4xon.com"
-  api_domain                        = "api.dev.zeta.m4xon.com"
-  resend_from_email                 = "notifications@${local.dashboard_domain}"
-  email_logo_url                    = "https://${local.dashboard_domain}/app-full-icon.png"
+  dashboard_domain                  = "app.dev.strido.net"
+  api_domain                        = "api.dev.strido.net"
+  resend_from_email                 = "notifications@strido.net"
+  email_logo_url                    = "https://${local.dashboard_domain}/assets/brand/mark/zeta-horse-mark-orange-128.png"
 }
 
 variable "project_id" {
@@ -40,6 +40,41 @@ variable "region" {
   default = "europe-west1"
 }
 
+# Dev and prod originally shared these Cloud Run resources in the same GCP
+# project. Forget the prod services from dev state without deleting them, then
+# create dedicated dev services below.
+removed {
+  from = module.cloud_run.google_cloud_run_v2_service.app
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = module.cloud_run.google_cloud_run_v2_service_iam_member.public
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = module.cloud_run_dashboard.google_cloud_run_v2_service.app
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+removed {
+  from = module.cloud_run_dashboard.google_cloud_run_v2_service_iam_member.public
+
+  lifecycle {
+    destroy = false
+  }
+}
+
 # Artifact Registry repository for Docker images.
 resource "google_artifact_registry_repository" "images" {
   project       = var.project_id
@@ -49,12 +84,12 @@ resource "google_artifact_registry_repository" "images" {
   description   = "Docker images for Zeta"
 }
 
-module "cloud_run" {
+module "cloud_run_dev" {
   source = "../../modules/cloud-run"
 
   project_id    = var.project_id
   region        = var.region
-  service_name  = "zeta-api"
+  service_name  = "zeta-api-dev"
   environment   = "dev"
   image         = "${var.region}-docker.pkg.dev/${var.project_id}/zeta/api:latest"
   min_instances = 0
@@ -63,12 +98,12 @@ module "cloud_run" {
   cpu           = "1"
 }
 
-module "cloud_run_dashboard" {
+module "cloud_run_dashboard_dev" {
   source = "../../modules/cloud-run"
 
   project_id    = var.project_id
   region        = var.region
-  service_name  = "zeta-dashboard"
+  service_name  = "zeta-dashboard-dev"
   environment   = "dev"
   image         = "${var.region}-docker.pkg.dev/${var.project_id}/zeta/dashboard:latest"
   min_instances = 0
@@ -121,7 +156,7 @@ resource "google_service_account_iam_member" "api_recording_signed_url_token_cre
 }
 
 output "service_url" {
-  value = module.cloud_run.service_url
+  value = module.cloud_run_dev.service_url
 }
 
 output "wif_provider" {
@@ -148,7 +183,9 @@ module "domain_mapping_dashboard" {
   project_id   = var.project_id
   region       = var.region
   domain       = local.dashboard_domain
-  service_name = "zeta-dashboard"
+  service_name = "zeta-dashboard-dev"
+
+  depends_on = [module.cloud_run_dashboard_dev]
 }
 
 module "domain_mapping_api" {
@@ -157,11 +194,13 @@ module "domain_mapping_api" {
   project_id   = var.project_id
   region       = var.region
   domain       = local.api_domain
-  service_name = "zeta-api"
+  service_name = "zeta-api-dev"
+
+  depends_on = [module.cloud_run_dev]
 }
 
 output "dashboard_url" {
-  value = module.cloud_run_dashboard.service_url
+  value = module.cloud_run_dashboard_dev.service_url
 }
 
 # /* --------------------------------- CLOUD SCHEDULER --------------------------------- */
@@ -180,7 +219,7 @@ resource "google_cloud_scheduler_job" "coaching_reminders" {
   depends_on       = [module.github_wif]
 
   http_target {
-    uri         = "${module.cloud_run.service_url}/internal/coaching/reminders"
+    uri         = "${module.cloud_run_dev.service_url}/internal/coaching/reminders"
     http_method = "POST"
     headers = {
       "Authorization" = "Bearer ${var.scheduler_secret}"
@@ -197,7 +236,7 @@ resource "google_cloud_scheduler_job" "coaching_recordings_cleanup" {
   depends_on       = [module.github_wif]
 
   http_target {
-    uri         = "${module.cloud_run.service_url}/internal/coaching/recordings/cleanup"
+    uri         = "${module.cloud_run_dev.service_url}/internal/coaching/recordings/cleanup"
     http_method = "POST"
     headers = {
       "Authorization" = "Bearer ${var.scheduler_secret}"
@@ -211,6 +250,16 @@ output "dashboard_domain" {
 
 output "api_domain" {
   value = local.api_domain
+}
+
+output "dashboard_dns_records" {
+  description = "DNS records to configure for the development dashboard domain"
+  value       = module.domain_mapping_dashboard.dns_records
+}
+
+output "api_dns_records" {
+  description = "DNS records to configure for the development API domain"
+  value       = module.domain_mapping_api.dns_records
 }
 
 output "resend_from_email" {

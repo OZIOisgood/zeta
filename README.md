@@ -55,8 +55,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 5. **Resend Configuration**:
    - Create a Resend API key and set `RESEND_API_KEY`.
    - Verify the sender domain in Resend.
-   - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@dev.zeta.m4xon.com` for the deployed development environment.
-   - Optionally set `EMAIL_LOGO_URL` to the absolute hosted app icon URL used in HTML emails. If unset, emails use `FRONTEND_URL + /app-full-icon.png`, then `https://dev.zeta.m4xon.com/app-full-icon.png`.
+   - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@strido.net`.
+   - Optionally set `EMAIL_LOGO_URL` to the absolute hosted app icon URL used in HTML emails. If unset, emails use `FRONTEND_URL + /assets/brand/mark/zeta-horse-mark-orange-128.png`, then `https://app.dev.strido.net/assets/brand/mark/zeta-horse-mark-orange-128.png`.
    - To render local email previews with fake data, run `make email:preview`. Final inlined HTML files are written to `build/email-previews/`.
 
 6. **Agora Configuration**:
@@ -70,6 +70,42 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
    - `CANCELLATION_NOTICE` — minimum notice to cancel (default: `1h`)
    - `CONNECT_WINDOW` — how early participants can join a call (default: `15m`)
+
+### Custom Domains
+
+| Environment           | URL                          | Cloud Run service     |
+| --------------------- | ---------------------------- | --------------------- |
+| Landing               | `https://strido.net`         | `zeta-landing`        |
+| Production dashboard  | `https://app.strido.net`     | `zeta-dashboard-prod` |
+| Production API        | `https://api.strido.net`     | `zeta-api-prod`       |
+| Development dashboard | `https://app.dev.strido.net` | `zeta-dashboard-dev`  |
+| Development API       | `https://api.dev.strido.net` | `zeta-api-dev`        |
+
+`strido.de` redirects to `https://strido.net` at the registrar and is not mapped to Cloud Run. The placeholder landing page is a static nginx container under `web/landing`; it can later be replaced with plain HTML, CSS, JavaScript, and assets without changing the infrastructure.
+
+1. Verify ownership of `strido.net` with the Google accounts that apply the dev and prod Terraform environments. Verifying the apex domain also permits mapping its subdomains.
+2. In WorkOS Dashboard > Configuration > Redirect URIs, add both callbacks before deploying:
+   - `https://api.strido.net/auth/callback`
+   - `https://api.dev.strido.net/auth/callback`
+3. Run the `Infra` GitHub Actions workflow for `dev` and `prod`, first with `plan` and then with `apply`. Terraform creates the five Cloud Run domain mappings, dedicated `*-dev` and `*-prod` services, and the landing service. Both states deliberately forget the legacy shared services with `destroy = false`, so the existing deployment remains online during migration.
+4. Inspect the required records from the Terraform outputs if DNS needs verification:
+
+   ```bash
+   cd infra/terraform/envs/dev
+   terraform output dashboard_dns_records
+   terraform output api_dns_records
+
+   cd ../prod
+   terraform output landing_dns_records
+   terraform output dashboard_dns_records
+   terraform output api_dns_records
+   ```
+
+5. In Spaceship DNS, the expected hosts are `@`, `app`, `api`, `app.dev`, and `api.dev`. Remove only conflicting `A`, `AAAA`, or `CNAME` records for those hosts; keep all Resend MX/TXT/DKIM records.
+6. Deploy `main` for the dev services, then create a production release tag. The workflows configure CORS, frontend and API URLs, WorkOS callbacks, logout redirects, email branding, and the landing container.
+7. After all five domains and authentication flows are verified, the legacy `zeta-api` and `zeta-dashboard` Cloud Run services can be removed manually.
+
+Google currently labels direct Cloud Run domain mapping as Preview and does not recommend it for production services. This repository still uses the existing mapping approach; use a global external Application Load Balancer for a GA domain-routing product or advanced traffic controls.
 
 ### Quick Start
 
@@ -86,13 +122,17 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    ```
 
 3. **Run Backend**:
+
    ```bash
    make api:start
    ```
+
    For live reload during Go API development, run:
+
    ```bash
    make api:dev
    ```
+
    This uses the project-pinned Air tool through `go tool air`.
 
 4. **Run Frontend**:

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Infra Configuration"
+  short_description: "Manage Zeta runtime config and cloud secrets"
+  default_prompt: "Use $infra-configuration to update Zeta environment variables, Secret Manager bindings, Terraform, and deployment workflows safely."

@@ -12,6 +12,7 @@ Before non-trivial work, read:
 - `AGENTS.md` (repo map: commands, backend rules, product terminology, durable workflow)
 - `.agents/skills/backend-api/SKILL.md` (backend workflow: handlers, sqlc, migrations, logging, email, provider docs)
 - `.agents/skills/go-testing-patterns/SKILL.md` (before writing or changing tests)
+- `.agents/skills/infra-configuration/SKILL.md` (before env, Secret Manager, Cloud Run, GitHub Actions, DNS, IAM, or Terraform changes)
 
 ## How the backend is shaped
 
@@ -25,7 +26,7 @@ Before non-trivial work, read:
 - After a schema change, create a migration: `make db:migrate:create`.
 - Structured logging only: `log := logger.From(ctx, h.logger)`; stable `snake_case` event names; always an `err` field and a `component` field on errors; validation failures are WARN, never ERROR; never log tokens/passwords/PII.
 - Terminology: an **`asset`** is the parent submission, **`video`** rows are child media. Don't rename DB tables/API fields to match UI copy.
-- Config parity: a new/changed env var must be updated in `.env.example` *and* the Terraform under `infra/terraform/` in the same task.
+- Config ownership: classify each value with the infra skill. Update `.env.example`, application reads/tests, dev/prod deployment bindings, Terraform, provider settings, and docs wherever applicable; do not put ordinary public values in Secret Manager.
 - Run `make api:build` and `make test:unit` (relevant `-run` subset is fine) before calling work done.
 - Never `git push` without asking. Never run destructive DB commands without asking.
 
