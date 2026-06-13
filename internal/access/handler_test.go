@@ -15,6 +15,7 @@ import (
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 	"go.uber.org/mock/gomock"
 )
@@ -70,7 +71,7 @@ func TestRedeemGroupCodeActivatesStudent(t *testing.T) {
 
 	q.EXPECT().GetUserAccess(gomock.Any(), "user_s").Return(db.UserAccess{Status: db.AccessStatusWaitlisted}, nil)
 	q.EXPECT().ConsumeSignupCode(gomock.Any(), gomock.Any()).Return(db.SignupCode{}, pgx.ErrNoRows)
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "GRP123").Return(db.GroupInvitation{}, nil)
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "GRP123").Return(db.GroupInvitation{Status: db.InvitationStatusPending}, nil)
 	q.EXPECT().CheckUserGroup(gomock.Any(), gomock.Any()).Return(false, nil)
 	q.EXPECT().AddUserToGroup(gomock.Any(), gomock.Any()).Return(nil)
 	q.EXPECT().ActivateUserAccess(gomock.Any(), gomock.Any()).Return(db.UserAccess{Status: db.AccessStatusActive}, nil)
@@ -86,6 +87,48 @@ func TestRedeemGroupCodeActivatesStudent(t *testing.T) {
 	json.Unmarshal(rec.Body.Bytes(), &body)
 	if body["role"] != "student" || body["role_upgraded"] != false {
 		t.Fatalf("body = %v, want student/no-upgrade", body)
+	}
+}
+
+func TestRedeemConsumedEmailInviteIsRejected(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+
+	q.EXPECT().GetUserAccess(gomock.Any(), "user_e").Return(db.UserAccess{Status: db.AccessStatusWaitlisted}, nil)
+	q.EXPECT().ConsumeSignupCode(gomock.Any(), gomock.Any()).Return(db.SignupCode{}, pgx.ErrNoRows)
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "EMAILCODE").Return(
+		db.GroupInvitation{Email: pgtype.Text{String: "x@y.z", Valid: true}, Status: db.InvitationStatusAccepted}, nil)
+	q.EXPECT().CheckUserGroup(gomock.Any(), gomock.Any()).Return(false, nil)
+	// No AddUserToGroup / ActivateUserAccess — a replayed single-use email invite must be rejected.
+
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	rec := httptest.NewRecorder()
+	h.Redeem(rec, redeemRequestFor("user_e", permissions.RoleStudent, "EMAILCODE"))
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400 (replayed email invite rejected)", rec.Code)
+	}
+}
+
+func TestRedeemPendingEmailInviteMarksAccepted(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+
+	q.EXPECT().GetUserAccess(gomock.Any(), "user_p").Return(db.UserAccess{Status: db.AccessStatusWaitlisted}, nil)
+	q.EXPECT().ConsumeSignupCode(gomock.Any(), gomock.Any()).Return(db.SignupCode{}, pgx.ErrNoRows)
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "EMAILPEND").Return(
+		db.GroupInvitation{Email: pgtype.Text{String: "x@y.z", Valid: true}, Status: db.InvitationStatusPending}, nil)
+	q.EXPECT().CheckUserGroup(gomock.Any(), gomock.Any()).Return(false, nil)
+	q.EXPECT().AddUserToGroup(gomock.Any(), gomock.Any()).Return(nil)
+	q.EXPECT().UpdateGroupInvitationStatus(gomock.Any(), gomock.Any()).Return(nil)
+	q.EXPECT().ActivateUserAccess(gomock.Any(), gomock.Any()).Return(db.UserAccess{Status: db.AccessStatusActive}, nil)
+
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	rec := httptest.NewRecorder()
+	h.Redeem(rec, redeemRequestFor("user_p", permissions.RoleStudent, "EMAILPEND"))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
 	}
 }
 

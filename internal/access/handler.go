@@ -144,15 +144,34 @@ func (h *Handler) tryGroupRedeem(ctx context.Context, w http.ResponseWriter, r *
 		http.Error(w, "Failed to verify group membership", http.StatusInternalServerError)
 		return true
 	}
+
 	if !isMember {
+		// Mirror invitations.AcceptInvitation: email-specific invitations are single-use,
+		// so a non-pending one must not be replayable. Generic link/QR invitations carry no
+		// email, stay pending, and remain multi-use.
+		if inv.Status != db.InvitationStatusPending {
+			return false // already used / not joinable → caller emits the neutral error
+		}
 		if err := h.q.AddUserToGroup(ctx, db.AddUserToGroupParams{UserID: user.ID, GroupID: inv.GroupID}); err != nil {
 			log.ErrorContext(ctx, "access_redeem_add_to_group_failed",
 				slog.String("component", "access"), slog.Any("err", err))
 			http.Error(w, "Failed to join group", http.StatusInternalServerError)
 			return true
 		}
+		// Email-specific invitations are single-use — mark consumed (non-fatal on error,
+		// matching AcceptInvitation which logs and continues).
+		if inv.Email.Valid && strings.TrimSpace(inv.Email.String) != "" {
+			if err := h.q.UpdateGroupInvitationStatus(ctx, db.UpdateGroupInvitationStatusParams{
+				ID:     inv.ID,
+				Status: db.InvitationStatusAccepted,
+			}); err != nil {
+				log.ErrorContext(ctx, "access_redeem_invitation_status_update_failed",
+					slog.String("component", "access"), slog.Any("err", err))
+			}
+		}
 	}
-	// Group-invite codes stay multi-use (not consumed). Role stays student.
+
+	// Role stays student (the default). Generic codes remain multi-use.
 	h.activateAndRespond(w, r, user.ID, "group_code", user.Role, false)
 	return true
 }
