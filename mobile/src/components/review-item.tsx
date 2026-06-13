@@ -3,6 +3,7 @@ import { Reply } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Review } from '../api/queries/reviews';
 import { colors } from '../theme/colors';
+import { ZAvatar } from './ui/z-avatar';
 import { ZChip } from './ui/z-chip';
 import { ZIconButton } from './ui/z-icon-button';
 
@@ -33,6 +34,23 @@ function formatRelativeTime(isoString: string): string {
   return new Date(isoString).toLocaleDateString();
 }
 
+/**
+ * Builds avatar initials from an author name: first letter of up to two
+ * words, uppercased. Falls back to "?" when the name is empty.
+ * Mirrors the web `authorInitials`/`groupInitials` helper.
+ */
+function authorInitials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
+
 export type ReviewItemProps = {
   review: Review;
   onSeek?: (seconds: number) => void;
@@ -42,8 +60,9 @@ export type ReviewItemProps = {
 
 /**
  * Single review row. Matches the web video-details thread layout:
- * author line → body → meta row (timestamp chip + date + reply button).
- * Replies are indented and use slightly muted styling.
+ * an avatar column + a content column (author line → body → meta row with
+ * timestamp chip + date + reply button). Replies use a smaller avatar and
+ * slightly muted styling so nesting reads visually.
  */
 export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewItemProps) {
   const { t } = useTranslation();
@@ -52,40 +71,51 @@ export function ReviewItem({ review, onSeek, onReply, isReply = false }: ReviewI
   const showReplyButton = Boolean(onReply) && !isReply;
 
   return (
-    <View className={isReply ? 'pl-8' : undefined}>
-      {/* Author line */}
-      <Text
-        testID="review-author"
-        className={`text-sm font-semibold ${isReply ? 'text-z-muted' : 'text-z-text'}`}
-        numberOfLines={1}
-      >
-        {authorName}
-      </Text>
+    <View className="flex-row items-start gap-2">
+      {/* Avatar column — smaller on replies so nesting reads visually. */}
+      <ZAvatar
+        image={review.author?.avatar}
+        fallback={authorInitials(authorName)}
+        alt={authorName}
+        size={isReply ? 28 : 36}
+      />
 
-      {/* Body */}
-      <Text className={`mt-1 text-sm leading-6 ${isReply ? 'text-z-muted' : 'text-z-text'}`}>{review.content}</Text>
+      {/* Content column */}
+      <View className="min-w-0 flex-1">
+        {/* Author line */}
+        <Text
+          testID="review-author"
+          className={`text-sm font-semibold ${isReply ? 'text-z-muted' : 'text-z-text'}`}
+          numberOfLines={1}
+        >
+          {authorName}
+        </Text>
 
-      {/* Meta row */}
-      <View className="mt-1 flex-row flex-wrap items-center gap-2">
-        {review.timestamp_seconds !== undefined && review.timestamp_seconds !== null && (
-          <ZChip
-            label={formatTimestamp(review.timestamp_seconds)}
-            onPress={onSeek ? () => onSeek(review.timestamp_seconds!) : undefined}
-          />
-        )}
+        {/* Body */}
+        <Text className={`mt-1 text-sm leading-6 ${isReply ? 'text-z-muted' : 'text-z-text'}`}>{review.content}</Text>
 
-        <Text className="text-xs text-z-muted">{formatRelativeTime(review.created_at)}</Text>
+        {/* Meta row */}
+        <View className="mt-1 flex-row flex-wrap items-center gap-2">
+          {review.timestamp_seconds !== undefined && review.timestamp_seconds !== null && (
+            <ZChip
+              label={formatTimestamp(review.timestamp_seconds)}
+              onPress={onSeek ? () => onSeek(review.timestamp_seconds!) : undefined}
+            />
+          )}
 
-        {showReplyButton && (
-          <ZIconButton
-            label={t('videos.reply')}
-            size="sm"
-            testID="review-reply"
-            onPress={() => onReply!(review)}
-          >
-            <Reply color={colors.muted} size={14} />
-          </ZIconButton>
-        )}
+          <Text className="text-xs text-z-muted">{formatRelativeTime(review.created_at)}</Text>
+
+          {showReplyButton && (
+            <ZIconButton
+              label={t('videos.reply')}
+              size="sm"
+              testID="review-reply"
+              onPress={() => onReply!(review)}
+            >
+              <Reply color={colors.muted} size={14} />
+            </ZIconButton>
+          )}
+        </View>
       </View>
     </View>
   );

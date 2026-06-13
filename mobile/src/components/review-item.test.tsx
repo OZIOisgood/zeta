@@ -38,3 +38,9 @@ test('missing author falls back to a neutral label', async () => {
   await render(<ReviewItem review={{ ...REVIEW, author: undefined }} />);
   expect(screen.getByTestId('review-author')).toBeOnTheScreen();
 });
+
+test('renders avatar fallback initials when no image is set', async () => {
+  await render(<ReviewItem review={REVIEW} />);
+  // "Coach Carter" → first letters of up to two words, uppercased.
+  expect(screen.getByText('CC')).toBeOnTheScreen();
+});
