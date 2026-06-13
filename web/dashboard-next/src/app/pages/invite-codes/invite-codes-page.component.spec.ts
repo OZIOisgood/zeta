@@ -30,7 +30,7 @@ async function setup(role: string): Promise<ComponentFixture<InviteCodesPageComp
   access = {
     codes: signal<SignupCode[]>([
       { code: 'ALPHA1', status: 'available' },
-      { code: 'BETA22', status: 'redeemed' },
+      { code: 'BETA22', status: 'consumed' },
     ]),
     codesSlice: signal<AsyncSlice>({ status: 'success', error: null }),
     loadCodes: vi.fn(async () => undefined),

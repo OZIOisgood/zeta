@@ -5,13 +5,20 @@ import { AccessStore } from '../../features/access/access.store';
 import { SessionStore } from '../../features/session/session.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 
 type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger';
 
 @Component({
   selector: 'app-invite-codes-page',
-  imports: [TranslocoPipe, ZBadgeComponent, ZButtonComponent, ZSkeletonComponent],
+  imports: [
+    TranslocoPipe,
+    ZBadgeComponent,
+    ZButtonComponent,
+    ZEmptyStateComponent,
+    ZSkeletonComponent,
+  ],
   template: `
     <div class="mx-auto grid max-w-2xl gap-5">
       <div class="grid gap-1">
@@ -27,6 +34,10 @@ type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger';
           <z-skeleton class="h-12"></z-skeleton>
           <z-skeleton class="h-12"></z-skeleton>
         </div>
+      } @else if (access.codesSlice().status === 'error') {
+        <p class="text-sm leading-6 text-[var(--z-danger)]">
+          {{ 'access.codes.loadError' | transloco }}
+        </p>
       } @else {
         <ul class="grid gap-2">
           @for (c of access.codes(); track c.code) {
@@ -44,6 +55,13 @@ type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger';
                   }}</z-button>
                 }
               </div>
+            </li>
+          } @empty {
+            <li>
+              <z-empty-state
+                [title]="'access.codes.empty' | transloco"
+                [description]="'access.codes.emptyDescription' | transloco"
+              ></z-empty-state>
             </li>
           }
         </ul>
@@ -74,7 +92,7 @@ export class InviteCodesPageComponent implements OnInit {
     switch (status) {
       case 'available':
         return 'success';
-      case 'redeemed':
+      case 'consumed':
         return 'neutral';
       default:
         return 'neutral';
