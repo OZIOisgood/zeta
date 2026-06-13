@@ -105,6 +105,12 @@ test('data state lists assets', async () => {
   expect(screen.getByText('Kata 1')).toBeOnTheScreen();
 });
 
+test('renders the page header title via ZPageHeader', async () => {
+  mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
+  await render(<Providers><VideosScreen /></Providers>);
+  expect(screen.getByText('All my videos')).toBeOnTheScreen();
+});
+
 test('upload FAB shows with assets:create permission', async () => {
   mockPermissions = ['assets:create'];
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });

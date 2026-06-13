@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CloudOff, Plus, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import { UploadProgressCard } from '../../components/upload-progress-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
+import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { ZTabs } from '../../components/ui/z-tabs';
@@ -164,11 +165,7 @@ export default function VideosScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* Header: title + summary subtitle (mirrors coaching.tsx) */}
-      <View className="px-4 pb-3 pt-4">
-        <Text className="text-xl font-semibold text-z-text">{t('videos.allMyVideos')}</Text>
-        <Text className="mt-1 text-sm leading-5 text-z-muted">{t('videos.phase4.summary')}</Text>
-      </View>
+      <ZPageHeader title={t('videos.allMyVideos')} subtitle={t('videos.phase4.summary')} />
       {filterRow}
       {content}
       {canCreate && (
