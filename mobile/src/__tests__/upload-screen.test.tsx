@@ -90,28 +90,36 @@ function Providers({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-test('submit button disabled until title, group, and file are present', async () => {
-  await render(<Providers><UploadScreen /></Providers>);
-  const submit = screen.getByRole('button', { name: 'Upload' });
-  expect(submit).toBeDisabled();
-});
-
-test('fill title, select group, pick file, submit → calls api.POST, enqueue, router.back', async () => {
+test('files step: Next is disabled until a video is picked', async () => {
   const user = userEvent.setup();
   await render(<Providers><UploadScreen /></Providers>);
 
-  // Fill title
+  // First step shows the file picker; Next is gated on having >=1 file.
+  // (testID disambiguates the pick button from the "Select Video" stepper label)
+  expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+
+  await user.press(screen.getByTestId('upload-pick'));
+
+  expect(screen.getByRole('button', { name: 'Next' })).not.toBeDisabled();
+});
+
+test('walk the wizard, submit → calls api.POST, enqueue, router.back', async () => {
+  const user = userEvent.setup();
+  await render(<Providers><UploadScreen /></Providers>);
+
+  // Step 1: files
+  await user.press(screen.getByTestId('upload-pick'));
+  await user.press(screen.getByRole('button', { name: 'Next' }));
+
+  // Step 2: details — fill title and select the group
   const titleInput = screen.getByLabelText('Title');
   await user.type(titleInput, 'Kata 1');
-
-  // Select group chip
+  await user.press(screen.getByLabelText('Group')); // open the select modal
   await user.press(screen.getByRole('button', { name: 'Group 1' }));
+  await user.press(screen.getByRole('button', { name: 'Next' }));
 
-  // Pick videos
-  await user.press(screen.getByRole('button', { name: 'Pick videos' }));
-
-  // Submit should now be enabled
-  const submit = screen.getByRole('button', { name: 'Upload' });
+  // Step 3: review — submit (testID disambiguates from the "Upload" stepper label)
+  const submit = screen.getByTestId('upload-submit');
   expect(submit).not.toBeDisabled();
   await user.press(submit);
 
