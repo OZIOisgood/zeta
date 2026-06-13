@@ -1,22 +1,39 @@
 import { useRef, useState } from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { ArrowLeft, Users } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import {
   useInvitationInfoQuery,
   useAcceptInvitationMutation,
   useDeclineInvitationMutation,
 } from '../api/queries/invitations';
+import { ZAvatar } from '../components/ui/z-avatar';
 import { ZButton } from '../components/ui/z-button';
+import { ZCard } from '../components/ui/z-card';
+import { ZEmptyState } from '../components/ui/z-empty-state';
+import { ZFieldError } from '../components/ui/z-field-error';
 import { ZIconButton } from '../components/ui/z-icon-button';
+import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
 import { ZTextInput } from '../components/ui/z-text-input';
+import { showToast } from '../components/ui/z-toast';
 import { parseInviteCode } from '../lib/invite-code';
-import { avatarSrc } from '../lib/avatar';
 import { colors } from '../theme/colors';
+
+/** Avatar fallback initials from a group name; mirrors the web `invitationFallback`. */
+function groupInitials(name: string): string {
+  return (
+    name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0].toUpperCase())
+      .join('') || 'G'
+  );
+}
 
 export default function InviteScreen() {
   const { t } = useTranslation();
@@ -60,13 +77,35 @@ export default function InviteScreen() {
   }
 
   async function handleAccept() {
-    const result = await acceptMutation.mutateAsync({ code });
-    router.replace(`/group/${result.group_id}`);
+    try {
+      const result = await acceptMutation.mutateAsync({ code });
+      showToast(
+        t('groups.invitationDialog.title'),
+        t('groups.invitationDialog.joined', { group: info?.group_name ?? '' }),
+        'success',
+      );
+      router.replace(`/group/${result.group_id}`);
+    } catch {
+      showToast(
+        t('groups.invitationDialog.title'),
+        t('groups.invitationDialog.joinFailed'),
+        'error',
+      );
+    }
   }
 
   async function handleDecline() {
-    await declineMutation.mutateAsync({ code });
-    router.back();
+    try {
+      await declineMutation.mutateAsync({ code });
+      showToast(t('groups.invitationDialog.title'), undefined, 'info');
+      router.back();
+    } catch {
+      showToast(
+        t('groups.invitationDialog.title'),
+        t('groups.invite.genericError'),
+        'error',
+      );
+    }
   }
 
   const info = infoQuery.data;
@@ -74,171 +113,180 @@ export default function InviteScreen() {
 
   return (
     <ZScreen>
-      <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ padding: 16 }}>
-        {/* Header */}
-        <View className="mb-4 flex-row items-center gap-3">
-          <ZIconButton label="Back" onPress={() => router.back()}>
-            <ArrowLeft color={colors.muted} size={24} />
-          </ZIconButton>
-          <Text className="text-lg font-semibold text-z-text">{t('home.firstSteps.joinGroup')}</Text>
-        </View>
+      <ZKeyboardAvoidingView>
+        <ScrollView
+          className="flex-1 bg-z-bg"
+          contentContainerStyle={{ padding: 16 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <View className="mb-4 flex-row items-center gap-3">
+            <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
+              <ArrowLeft color={colors.muted} size={24} />
+            </ZIconButton>
+            <Text className="text-lg font-semibold text-z-text">
+              {t('home.firstSteps.joinGroup')}
+            </Text>
+          </View>
 
-        {/* Capture phase */}
-        {!isConfirmPhase && (
-          <>
-            {/* Camera or permission prompt */}
-            {permission?.granted ? (
-              <View className="mb-4 overflow-hidden rounded-xl" style={{ height: 280 }}>
-                <CameraView
-                  style={{ flex: 1 }}
-                  barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-                  onBarcodeScanned={handleBarcodeScanned}
-                />
-              </View>
-            ) : (
-              <View className="mb-4 items-center gap-3 rounded-xl border border-z-border bg-z-surface p-6">
-                <Text className="text-center text-sm text-z-muted">
-                  {t('groups.invite.cameraHint')}
-                </Text>
-                <ZButton
-                  label={t('groups.invite.grantCamera')}
-                  variant="secondary"
-                  onPress={() => void requestPermission()}
-                />
-              </View>
-            )}
-
-            {/* Divider */}
-            <View className="my-4 flex-row items-center gap-3">
-              <View className="h-px flex-1 bg-z-border" />
-              <Text className="text-sm text-z-muted">{t('groups.invite.manualDivider')}</Text>
-              <View className="h-px flex-1 bg-z-border" />
-            </View>
-
-            {/* Manual entry */}
-            <ZTextInput
-              testID="invite-code-input"
-              accessibilityLabel="Invite code"
-              value={manualInput}
-              onChangeText={(v) => {
-                manualInputRef.current = v;
-                setManualInput(v);
-                if (manualInputError) setManualInputError(false);
-              }}
-              placeholder={t('groups.invite.codePlaceholder')}
-              invalid={manualInputError}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              returnKeyType="go"
-              onSubmitEditing={handleManualSubmit}
-            />
-            {manualInputError && (
-              <Text
-                testID="invite-code-error"
-                className="mt-1 text-sm text-z-danger"
-              >
-                {t('groups.invite.codeInvalid')}
-              </Text>
-            )}
-            <View className="mt-3">
-              <ZButton
-                testID="invite-code-submit"
-                label={t('groups.invite.lookUp')}
-                disabled={manualInput.trim().length === 0}
-                onPress={handleManualSubmit}
-              />
-            </View>
-          </>
-        )}
-
-        {/* Confirm phase */}
-        {isConfirmPhase && (
-          <>
-            {infoQuery.isPending && (
-              <View className="gap-3 rounded-xl border border-z-border bg-z-surface p-4">
-                <View className="flex-row items-center gap-3">
-                  <ZSkeleton className="h-12 w-12 rounded-md" />
-                  <View className="flex-1 gap-2">
-                    <ZSkeleton className="h-4 w-3/5" />
-                    <ZSkeleton className="h-3 w-2/5" />
-                  </View>
+          {/* Capture phase */}
+          {!isConfirmPhase && (
+            <>
+              {/* Camera or permission prompt */}
+              {permission?.granted ? (
+                <View
+                  accessible
+                  accessibilityLabel={t('groups.invite.cameraHint')}
+                  className="mb-4 overflow-hidden rounded-xl"
+                  style={{ height: 280 }}
+                >
+                  <CameraView
+                    style={{ flex: 1 }}
+                    barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                    onBarcodeScanned={handleBarcodeScanned}
+                  />
                 </View>
-              </View>
-            )}
-
-            {infoQuery.isError && (
-              <View className="gap-4">
-                <Text className="text-center text-z-danger">
-                  {t('groups.invite.notFound')}
-                </Text>
-                <ZButton
-                  testID="invite-reset"
-                  label={t('groups.invite.tryDifferent')}
-                  variant="secondary"
-                  onPress={handleReset}
-                />
-              </View>
-            )}
-
-            {info && (
-              <View className="gap-4">
-                {/* Group card */}
-                <View className="flex-row items-center gap-3 rounded-xl border border-z-border bg-z-surface p-4">
-                  {info.group_avatar ? (
-                    <Image
-                      source={{ uri: avatarSrc(info.group_avatar) }}
-                      className="h-12 w-12 rounded-md"
-                    />
-                  ) : (
-                    <View className="h-12 w-12 items-center justify-center rounded-md bg-z-surface-warm">
-                      <Users color={colors.muted} size={24} />
-                    </View>
-                  )}
-                  <View className="flex-1">
-                    <Text className="text-base font-semibold text-z-text">{info.group_name}</Text>
-                  </View>
-                </View>
-
-                {/* Mutation error */}
-                {(acceptMutation.isError || declineMutation.isError) && (
-                  <Text className="text-sm text-z-danger">
-                    {t('groups.invite.genericError')}
+              ) : (
+                <ZCard className="mb-4 items-center gap-3">
+                  <Text className="text-center text-sm text-z-muted">
+                    {t('groups.invite.cameraHint')}
                   </Text>
-                )}
+                  <ZButton
+                    label={t('groups.invite.grantCamera')}
+                    variant="secondary"
+                    onPress={() => void requestPermission()}
+                  />
+                </ZCard>
+              )}
 
-                {info.already_member ? (
-                  <>
-                    <Text className="text-center text-sm text-z-muted">
-                      {t('groups.invitationDialog.alreadyMember', { group: info.group_name })}
-                    </Text>
-                    <ZButton
-                      testID="invite-open-group"
-                      label={t('groups.invite.openGroup')}
-                      onPress={() => router.replace(`/group/${info.group_id}`)}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <ZButton
-                      testID="invite-accept"
-                      label={t('groups.invitationDialog.joinGroup')}
-                      disabled={acceptMutation.isPending || declineMutation.isPending}
-                      onPress={() => void handleAccept()}
-                    />
-                    <ZButton
-                      testID="invite-decline"
-                      label={t('common.actions.decline')}
-                      variant="ghost"
-                      disabled={acceptMutation.isPending || declineMutation.isPending}
-                      onPress={() => void handleDecline()}
-                    />
-                  </>
-                )}
+              {/* Divider */}
+              <View className="my-4 flex-row items-center gap-3">
+                <View className="h-px flex-1 bg-z-border" />
+                <Text className="text-sm text-z-muted">{t('groups.invite.manualDivider')}</Text>
+                <View className="h-px flex-1 bg-z-border" />
               </View>
-            )}
-          </>
-        )}
-      </ScrollView>
+
+              {/* Manual entry */}
+              <ZTextInput
+                testID="invite-code-input"
+                accessibilityLabel="Invite code"
+                value={manualInput}
+                onChangeText={(v) => {
+                  manualInputRef.current = v;
+                  setManualInput(v);
+                  if (manualInputError) setManualInputError(false);
+                }}
+                placeholder={t('groups.invite.codePlaceholder')}
+                invalid={manualInputError}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                returnKeyType="go"
+                onSubmitEditing={handleManualSubmit}
+              />
+              {manualInputError && (
+                <ZFieldError
+                  testID="invite-code-error"
+                  message={t('groups.invite.codeInvalid')}
+                />
+              )}
+              <View className="mt-3">
+                <ZButton
+                  testID="invite-code-submit"
+                  label={t('groups.invite.lookUp')}
+                  disabled={manualInput.trim().length === 0}
+                  onPress={handleManualSubmit}
+                />
+              </View>
+            </>
+          )}
+
+          {/* Confirm phase */}
+          {isConfirmPhase && (
+            <>
+              {infoQuery.isPending && (
+                <ZCard>
+                  <View className="flex-row items-center gap-3">
+                    <ZSkeleton className="h-12 w-12 rounded-md" />
+                    <View className="flex-1 gap-2">
+                      <ZSkeleton className="h-4 w-3/5" />
+                      <ZSkeleton className="h-3 w-2/5" />
+                    </View>
+                  </View>
+                </ZCard>
+              )}
+
+              {infoQuery.isError && (
+                <ZEmptyState
+                  title={t('groups.invite.notFound')}
+                  description={t('groups.invite.tryDifferent')}
+                >
+                  <ZButton
+                    testID="invite-reset"
+                    label={t('groups.invite.tryDifferent')}
+                    variant="secondary"
+                    onPress={handleReset}
+                  />
+                </ZEmptyState>
+              )}
+
+              {info && (
+                <View className="gap-4">
+                  {/* Group card */}
+                  <ZCard>
+                    <View className="flex-row items-center gap-3">
+                      <ZAvatar
+                        image={info.group_avatar || undefined}
+                        fallback={groupInitials(info.group_name)}
+                        size={48}
+                        alt={info.group_name}
+                      />
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-z-text">
+                          {info.group_name}
+                        </Text>
+                      </View>
+                    </View>
+                  </ZCard>
+
+                  {/* Mutation error */}
+                  {(acceptMutation.isError || declineMutation.isError) && (
+                    <ZFieldError message={t('groups.invite.genericError')} />
+                  )}
+
+                  {info.already_member ? (
+                    <>
+                      <Text className="text-center text-sm text-z-muted">
+                        {t('groups.invitationDialog.alreadyMember', { group: info.group_name })}
+                      </Text>
+                      <ZButton
+                        testID="invite-open-group"
+                        label={t('groups.invite.openGroup')}
+                        onPress={() => router.replace(`/group/${info.group_id}`)}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <ZButton
+                        testID="invite-accept"
+                        label={t('groups.invitationDialog.joinGroup')}
+                        disabled={acceptMutation.isPending || declineMutation.isPending}
+                        onPress={() => void handleAccept()}
+                      />
+                      <ZButton
+                        testID="invite-decline"
+                        label={t('common.actions.decline')}
+                        variant="ghost"
+                        disabled={acceptMutation.isPending || declineMutation.isPending}
+                        onPress={() => void handleDecline()}
+                      />
+                    </>
+                  )}
+                </View>
+              )}
+            </>
+          )}
+        </ScrollView>
+      </ZKeyboardAvoidingView>
     </ZScreen>
   );
 }

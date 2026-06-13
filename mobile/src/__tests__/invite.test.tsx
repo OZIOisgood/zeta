@@ -38,6 +38,12 @@ jest.mock('../api/queries/invitations', () => ({
   useDeclineInvitationMutation: () => mockUseDeclineInvitationMutation(),
 }));
 
+// Toast spy: assert success/decline/error notifications fire
+const mockShowToast = jest.fn();
+jest.mock('../components/ui/z-toast', () => ({
+  showToast: (...args: unknown[]) => mockShowToast(...args),
+}));
+
 import { initI18n } from '../i18n';
 import InviteScreen from '../app/invite';
 
@@ -130,6 +136,79 @@ test('accept: press accept button → mutateAsync called with code, router.repla
     expect(mockAcceptMutateAsync).toHaveBeenCalledWith({ code: 'ABC123' });
     expect(mockReplace).toHaveBeenCalledWith('/group/g1');
   });
+
+  // Success toast fired with the joined message + success tone
+  expect(mockShowToast).toHaveBeenCalledWith(
+    'Group Invitation',
+    'You joined Karate Club.',
+    'success',
+  );
+});
+
+// ── Test 2b: decline flow ─────────────────────────────────────────────────────
+
+test('decline: press decline button → mutateAsync called with code, toast fires, router.back', async () => {
+  mockUseInvitationInfoQuery.mockImplementation((code: string) => {
+    if (code === 'ABC123') {
+      return { isPending: false, isError: false, data: INVITATION_INFO };
+    }
+    return { isPending: false, isError: false, data: undefined };
+  });
+
+  mockDeclineMutateAsync.mockResolvedValueOnce(undefined);
+
+  const { getByTestId } = await render(<Providers><InviteScreen /></Providers>);
+
+  fireEvent.changeText(getByTestId('invite-code-input'), 'ABC123');
+  await waitFor(() =>
+    expect(getByTestId('invite-code-input').props.value).toBe('ABC123'),
+  );
+  fireEvent.press(getByTestId('invite-code-submit'));
+
+  await waitFor(() => expect(getByTestId('invite-decline')).toBeOnTheScreen());
+
+  fireEvent.press(getByTestId('invite-decline'));
+
+  await waitFor(() => {
+    expect(mockDeclineMutateAsync).toHaveBeenCalledWith({ code: 'ABC123' });
+    expect(mockBack).toHaveBeenCalled();
+  });
+
+  expect(mockShowToast).toHaveBeenCalledWith('Group Invitation', undefined, 'info');
+});
+
+// ── Test 2c: accept failure → error toast ─────────────────────────────────────
+
+test('accept failure: mutation rejects → error toast fires, no navigation', async () => {
+  mockUseInvitationInfoQuery.mockImplementation((code: string) => {
+    if (code === 'ABC123') {
+      return { isPending: false, isError: false, data: INVITATION_INFO };
+    }
+    return { isPending: false, isError: false, data: undefined };
+  });
+
+  mockAcceptMutateAsync.mockRejectedValueOnce(new Error('boom'));
+
+  const { getByTestId } = await render(<Providers><InviteScreen /></Providers>);
+
+  fireEvent.changeText(getByTestId('invite-code-input'), 'ABC123');
+  await waitFor(() =>
+    expect(getByTestId('invite-code-input').props.value).toBe('ABC123'),
+  );
+  fireEvent.press(getByTestId('invite-code-submit'));
+
+  await waitFor(() => expect(getByTestId('invite-accept')).toBeOnTheScreen());
+
+  fireEvent.press(getByTestId('invite-accept'));
+
+  await waitFor(() => {
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'Group Invitation',
+      'Failed to join the group. Please try again.',
+      'error',
+    );
+  });
+  expect(mockReplace).not.toHaveBeenCalled();
 });
 
 // ── Test 3: already_member flow ───────────────────────────────────────────────
