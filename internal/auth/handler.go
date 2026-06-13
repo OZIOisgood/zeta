@@ -687,6 +687,20 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Lazily ensure a user_access row exists (defaults to waitlisted) so clients
+	// can route waitlisted users to the invite-code screen. A failure here must
+	// never break login: log and fall back to the waitlisted default.
+	accessStatus := string(db.AccessStatusWaitlisted)
+	if acc, accErr := h.q.EnsureUserAccess(ctx, user.ID); accErr != nil {
+		h.logger.ErrorContext(ctx, "auth_ensure_access_failed",
+			slog.String("component", "auth"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", accErr),
+		)
+	} else {
+		accessStatus = string(acc.Status)
+	}
+
 	// Construct response using local preferences for display profile fields.
 	resp := map[string]interface{}{
 		"id":                user.ID,
@@ -699,6 +713,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"email_preferences": preferences.FromUserPreferences(prefs),
 		"role":              user.Role,
 		"permissions":       user.Permissions,
+		"access_status":     accessStatus,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

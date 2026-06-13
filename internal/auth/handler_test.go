@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"log/slog"
@@ -12,6 +13,8 @@ import (
 	"time"
 
 	authmocks "github.com/OZIOisgood/zeta/internal/auth/mocks"
+	"github.com/OZIOisgood/zeta/internal/db"
+	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 	"go.uber.org/mock/gomock"
@@ -216,6 +219,37 @@ func TestRefreshSessionCookiesReissuesCookies(t *testing.T) {
 	}
 	if gotAccess != "new_access" {
 		t.Fatalf("session cookie = %q, want %q", gotAccess, "new_access")
+	}
+}
+
+func TestMeIncludesAccessStatus(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	workos := authmocks.NewMockUserManagement(ctrl)
+
+	q.EXPECT().EnsureUserAccess(gomock.Any(), "user_123").Return(
+		db.UserAccess{UserID: "user_123", Status: db.AccessStatusActive}, nil,
+	)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user_123").Return(
+		db.UserPreference{UserID: "user_123", Language: db.LanguageCodeEn, Timezone: "UTC"}, nil,
+	)
+
+	h := NewHandler(slog.Default(), q, workos)
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req = req.WithContext(context.WithValue(req.Context(), UserKey, &UserContext{ID: "user_123", Role: "student", Permissions: []string{}}))
+	rec := httptest.NewRecorder()
+
+	h.Me(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
+	}
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body["access_status"] != "active" {
+		t.Fatalf("access_status = %v, want active", body["access_status"])
 	}
 }
 
