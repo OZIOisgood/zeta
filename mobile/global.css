@@ -16,7 +16,10 @@
   --z-accent: #f59e0b;
   --z-border: #ead2b8;
   --z-success: #15803d;
+  --z-success-soft: #dcfce7;
   --z-warning: #b45309;
+  --z-warning-soft: #fef3c7;
   --z-danger: #be123c;
+  --z-danger-soft: #ffe4e6;
 }
 /* END GENERATED TOKENS */

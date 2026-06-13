@@ -18,8 +18,11 @@ export const colors = {
   accent: '#f59e0b',
   border: '#ead2b8',
   success: '#15803d',
+  successSoft: '#dcfce7',
   warning: '#b45309',
+  warningSoft: '#fef3c7',
   danger: '#be123c',
+  dangerSoft: '#ffe4e6',
   /** Mobile-only: icon/text on primary-colored surfaces (e.g. the FAB). */
   onPrimary: '#ffffff',
 } as const;
