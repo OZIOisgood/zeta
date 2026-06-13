@@ -27,7 +27,7 @@ test('shows title and file counter while uploading', async () => {
   expect(screen.getByText('1/2')).toBeOnTheScreen();
 });
 
-test('failed job shows retry', async () => {
+test('failed job shows retry with localized label', async () => {
   const onRetry = jest.fn();
   const failed = job({
     status: 'failed',
@@ -35,15 +35,17 @@ test('failed job shows retry', async () => {
   });
   const user = userEvent.setup();
   await render(<UploadProgressCard job={failed} onRetry={onRetry} onDismiss={jest.fn()} />);
+  expect(screen.getByLabelText('Retry')).toBeOnTheScreen();
   await user.press(screen.getByTestId('upload-retry'));
   expect(onRetry).toHaveBeenCalledWith('asset_1', 'v1');
 });
 
-test('done job shows dismiss', async () => {
+test('done job shows dismiss with localized label', async () => {
   const onDismiss = jest.fn();
   const done = job({ status: 'done', files: job().files.map((f) => ({ ...f, status: 'done' as const, progress: 1 })) });
   const user = userEvent.setup();
   await render(<UploadProgressCard job={done} onRetry={jest.fn()} onDismiss={onDismiss} />);
+  expect(screen.getByLabelText('Close')).toBeOnTheScreen();
   await user.press(screen.getByTestId('upload-dismiss'));
   expect(onDismiss).toHaveBeenCalledWith('asset_1');
 });

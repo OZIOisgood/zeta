@@ -1,8 +1,9 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { RotateCcw, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { UploadJob } from '../upload/upload-store';
 import { colors } from '../theme/colors';
+import { ZIconButton } from './ui/z-icon-button';
 
 export function UploadProgressCard({
   job,
@@ -27,25 +28,25 @@ export function UploadProgressCard({
         <Text className="text-sm font-semibold text-z-text">{job.title}</Text>
 
         {job.status === 'done' && (
-          <Pressable
+          <ZIconButton
             testID="upload-dismiss"
-            accessibilityRole="button"
-            accessibilityLabel="Dismiss"
+            label={t('common.actions.close')}
+            size="sm"
             onPress={() => onDismiss(job.id)}
           >
             <X color={colors.muted} size={16} />
-          </Pressable>
+          </ZIconButton>
         )}
 
         {job.status === 'failed' && firstFailed && (
-          <Pressable
+          <ZIconButton
             testID="upload-retry"
-            accessibilityRole="button"
-            accessibilityLabel="Retry"
+            label={t('common.actions.retry')}
+            size="sm"
             onPress={() => onRetry(job.id, firstFailed.videoId)}
           >
             <RotateCcw color={colors.muted} size={16} />
-          </Pressable>
+          </ZIconButton>
         )}
       </View>
 
