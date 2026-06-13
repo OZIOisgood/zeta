@@ -385,6 +385,34 @@ func (mr *MockQuerierMockRecorder) DeleteBlockedSlot(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBlockedSlot", reflect.TypeOf((*MockQuerier)(nil).DeleteBlockedSlot), ctx, arg)
 }
 
+// DeleteDevice mocks base method.
+func (m *MockQuerier) DeleteDevice(ctx context.Context, arg db.DeleteDeviceParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDevice", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteDevice indicates an expected call of DeleteDevice.
+func (mr *MockQuerierMockRecorder) DeleteDevice(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDevice", reflect.TypeOf((*MockQuerier)(nil).DeleteDevice), ctx, arg)
+}
+
+// DeleteDeviceByToken mocks base method.
+func (m *MockQuerier) DeleteDeviceByToken(ctx context.Context, expoPushToken string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDeviceByToken", ctx, expoPushToken)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteDeviceByToken indicates an expected call of DeleteDeviceByToken.
+func (mr *MockQuerierMockRecorder) DeleteDeviceByToken(ctx, expoPushToken any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDeviceByToken", reflect.TypeOf((*MockQuerier)(nil).DeleteDeviceByToken), ctx, expoPushToken)
+}
+
 // DeleteGroup mocks base method.
 func (m *MockQuerier) DeleteGroup(ctx context.Context, arg db.DeleteGroupParams) error {
 	m.ctrl.T.Helper()
@@ -668,6 +696,21 @@ func (mr *MockQuerierMockRecorder) GetUserPreferences(ctx, userID any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPreferences", reflect.TypeOf((*MockQuerier)(nil).GetUserPreferences), ctx, userID)
 }
 
+// GetUserPushPreferences mocks base method.
+func (m *MockQuerier) GetUserPushPreferences(ctx context.Context, userID string) (db.GetUserPushPreferencesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserPushPreferences", ctx, userID)
+	ret0, _ := ret[0].(db.GetUserPushPreferencesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserPushPreferences indicates an expected call of GetUserPushPreferences.
+func (mr *MockQuerierMockRecorder) GetUserPushPreferences(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserPushPreferences", reflect.TypeOf((*MockQuerier)(nil).GetUserPushPreferences), ctx, userID)
+}
+
 // GetUserTimezone mocks base method.
 func (m *MockQuerier) GetUserTimezone(ctx context.Context, userID string) (string, error) {
 	m.ctrl.T.Helper()
@@ -846,6 +889,21 @@ func (m *MockQuerier) ListBookingsByExpertInRange(ctx context.Context, arg db.Li
 func (mr *MockQuerierMockRecorder) ListBookingsByExpertInRange(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBookingsByExpertInRange", reflect.TypeOf((*MockQuerier)(nil).ListBookingsByExpertInRange), ctx, arg)
+}
+
+// ListDevicesForUser mocks base method.
+func (m *MockQuerier) ListDevicesForUser(ctx context.Context, userID string) ([]db.UserDevice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDevicesForUser", ctx, userID)
+	ret0, _ := ret[0].([]db.UserDevice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDevicesForUser indicates an expected call of ListDevicesForUser.
+func (mr *MockQuerierMockRecorder) ListDevicesForUser(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDevicesForUser", reflect.TypeOf((*MockQuerier)(nil).ListDevicesForUser), ctx, userID)
 }
 
 // ListGroupBookings mocks base method.
@@ -1467,6 +1525,21 @@ func (mr *MockQuerierMockRecorder) UpdateUserProfilePreferences(ctx, arg any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserProfilePreferences", reflect.TypeOf((*MockQuerier)(nil).UpdateUserProfilePreferences), ctx, arg)
 }
 
+// UpdateUserPushPreferences mocks base method.
+func (m *MockQuerier) UpdateUserPushPreferences(ctx context.Context, arg db.UpdateUserPushPreferencesParams) (db.UserPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserPushPreferences", ctx, arg)
+	ret0, _ := ret[0].(db.UserPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUserPushPreferences indicates an expected call of UpdateUserPushPreferences.
+func (mr *MockQuerierMockRecorder) UpdateUserPushPreferences(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPushPreferences", reflect.TypeOf((*MockQuerier)(nil).UpdateUserPushPreferences), ctx, arg)
+}
+
 // UpdateVideoMuxAssetID mocks base method.
 func (m *MockQuerier) UpdateVideoMuxAssetID(ctx context.Context, arg db.UpdateVideoMuxAssetIDParams) error {
 	m.ctrl.T.Helper()
@@ -1522,4 +1595,19 @@ func (m *MockQuerier) UpdateVideoStatusByUploadID(ctx context.Context, arg db.Up
 func (mr *MockQuerierMockRecorder) UpdateVideoStatusByUploadID(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateVideoStatusByUploadID", reflect.TypeOf((*MockQuerier)(nil).UpdateVideoStatusByUploadID), ctx, arg)
+}
+
+// UpsertDevice mocks base method.
+func (m *MockQuerier) UpsertDevice(ctx context.Context, arg db.UpsertDeviceParams) (db.UserDevice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertDevice", ctx, arg)
+	ret0, _ := ret[0].(db.UserDevice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertDevice indicates an expected call of UpsertDevice.
+func (mr *MockQuerierMockRecorder) UpsertDevice(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertDevice", reflect.TypeOf((*MockQuerier)(nil).UpsertDevice), ctx, arg)
 }
