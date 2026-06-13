@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { ArrowLeft, Clock } from 'lucide-react-native';
+import { ArrowLeft, Clock, MessageCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAssetQuery } from '../../api/queries/assets';
 import { useCreateReviewMutation, useReviewsQuery } from '../../api/queries/reviews';
@@ -11,8 +11,12 @@ import type { components } from '../../api/schema';
 import { useAuth } from '../../auth/auth-store';
 import { ReviewComposer } from '../../components/review-composer';
 import { ReviewItem } from '../../components/review-item';
+import { ZAvatar } from '../../components/ui/z-avatar';
+import { ZBadge } from '../../components/ui/z-badge';
 import { ZButton } from '../../components/ui/z-button';
+import { ZCard } from '../../components/ui/z-card';
 import { ZChip } from '../../components/ui/z-chip';
+import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
@@ -22,6 +26,19 @@ type AssetVideo = components['schemas']['AssetVideo'];
 
 function streamUrl(playbackId: string) {
   return `https://stream.mux.com/${playbackId}.m3u8`;
+}
+
+/** Initials from a name: first letter of up to two words. Mirrors the web helper. */
+function groupInitials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() || '?'
+  );
 }
 
 // ── Player ───────────────────────────────────────────────────────────────────
@@ -112,8 +129,12 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
   }
 
   return (
-    <View className="gap-4 pt-4">
-      <Text className="text-base font-semibold text-z-text">{t('videos.comments')}</Text>
+    <ZCard className="gap-4">
+      <View className="flex-row items-center gap-2">
+        <MessageCircle color={colors.primary} size={18} />
+        <Text className="text-base font-semibold text-z-text">{t('videos.comments')}</Text>
+        <ZBadge label={String(topLevel.length)} />
+      </View>
 
       {isPending && <ReviewsSkeleton />}
 
@@ -125,7 +146,10 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
       )}
 
       {!isPending && !isError && topLevel.length === 0 && (
-        <Text className="text-sm text-z-muted">{t('videos.noComments')}</Text>
+        <ZEmptyState
+          title={t('videos.noComments')}
+          description={canCompose ? t('videos.leaveComment') : t('videos.reviewerNoComments')}
+        />
       )}
 
       {!isPending &&
@@ -156,7 +180,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose }: Reviews
           ) : null}
         </View>
       )}
-    </View>
+    </ZCard>
   );
 }
 
@@ -220,7 +244,9 @@ export default function AssetDetailScreen() {
     );
   }
 
-  const processingParts = (data.videos ?? []).length - playable.length;
+  const videos = data.videos ?? [];
+  const processingParts = videos.length - playable.length;
+  const group = data.group;
 
   return (
     // The video player stays edge-to-edge at the top; the content below it
@@ -241,34 +267,84 @@ export default function AssetDetailScreen() {
             </View>
           )}
         </View>
-        <View className="gap-2 p-4">
-          <View className="flex-row items-center gap-2">
+
+        <View className="gap-4 p-4">
+          {/* Back row — the prominent title lives in the metadata card below. */}
+          <View className="flex-row items-center">
             <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
               <ArrowLeft color={colors.text} size={22} />
             </ZIconButton>
-            <Text className="flex-1 text-xl font-semibold text-z-text" numberOfLines={2}>
+          </View>
+
+          {/* Metadata card: status, title, group, description. */}
+          <ZCard className="gap-3">
+            <ZBadge
+              label={
+                data.status === 'completed'
+                  ? t('common.status.reviewed')
+                  : t('common.status.inReview')
+              }
+              tone={data.status === 'completed' ? 'success' : 'primary'}
+            />
+            <Text className="text-xl font-semibold text-z-text" numberOfLines={2}>
               {data.title}
             </Text>
-          </View>
-          {data.description ? <Text className="text-z-muted">{data.description}</Text> : null}
-          {playable.length > 1 ? (
-            <View className="flex-row flex-wrap gap-2 pt-2">
-              {playable.map((v, i) => (
-                <ZChip
-                  key={v.id}
-                  label={t('videos.phase4.videoPart', { count: i + 1 })}
-                  selected={v.id === active?.id}
-                  onPress={() => setActiveId(v.id)}
-                />
-              ))}
-            </View>
-          ) : null}
-          {processingParts > 0 ? (
-            <Text className="text-sm text-z-muted">
-              {processingParts} more part{processingParts > 1 ? 's' : ''} still processing.
+            {group ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push(`/group/${group.id}`)}
+                className="flex-row items-center gap-2"
+              >
+                <ZAvatar image={group.avatar} fallback={groupInitials(group.name)} size={36} alt={group.name} />
+                <Text className="flex-1 text-sm font-semibold text-z-primary-strong" numberOfLines={1}>
+                  {group.name}
+                </Text>
+              </Pressable>
+            ) : null}
+            <Text className="text-z-muted">
+              {data.description ? data.description : t('videos.phase4.noDescription')}
             </Text>
+          </ZCard>
+
+          {/* Video-parts card. */}
+          {videos.length > 0 ? (
+            <ZCard className="gap-3">
+              <View className="flex-row items-center gap-2">
+                <Text className="text-base font-semibold text-z-text">
+                  {t('videos.phase4.videoParts')}
+                </Text>
+                <ZBadge label={String(videos.length)} />
+              </View>
+              <View className="gap-2">
+                {videos.map((v, i) => {
+                  const isPlayable = v.playback_id !== '';
+                  return (
+                    <View key={v.id} className="flex-row items-center justify-between gap-3">
+                      <ZChip
+                        label={t('videos.phase4.videoPart', { count: i + 1 })}
+                        selected={isPlayable && v.id === active?.id}
+                        disabled={!isPlayable}
+                        onPress={isPlayable ? () => setActiveId(v.id) : undefined}
+                      />
+                      <View className="flex-1 flex-row items-center justify-end gap-2">
+                        <Text className="text-xs text-z-muted" numberOfLines={1}>
+                          {v.status}
+                        </Text>
+                        <ZBadge label={String(v.review_count)} />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+              {processingParts > 0 ? (
+                <Text className="text-sm text-z-muted">
+                  {processingParts} more part{processingParts > 1 ? 's' : ''} still processing.
+                </Text>
+              ) : null}
+            </ZCard>
           ) : null}
 
+          {/* Comments card. */}
           {active ? (
             <ReviewsSection
               key={active.id}
