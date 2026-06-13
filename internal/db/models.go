@@ -11,6 +11,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AccessStatus string
+
+const (
+	AccessStatusWaitlisted AccessStatus = "waitlisted"
+	AccessStatusActive     AccessStatus = "active"
+)
+
+func (e *AccessStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AccessStatus(s)
+	case string:
+		*e = AccessStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AccessStatus: %T", src)
+	}
+	return nil
+}
+
+type NullAccessStatus struct {
+	AccessStatus AccessStatus `json:"access_status"`
+	Valid        bool         `json:"valid"` // Valid is true if AccessStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAccessStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.AccessStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AccessStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAccessStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AccessStatus), nil
+}
+
 type AssetStatus string
 
 const (
@@ -275,6 +317,48 @@ func (ns NullNotificationType) Value() (driver.Value, error) {
 	return string(ns.NotificationType), nil
 }
 
+type SignupCodeStatus string
+
+const (
+	SignupCodeStatusAvailable SignupCodeStatus = "available"
+	SignupCodeStatusConsumed  SignupCodeStatus = "consumed"
+)
+
+func (e *SignupCodeStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SignupCodeStatus(s)
+	case string:
+		*e = SignupCodeStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SignupCodeStatus: %T", src)
+	}
+	return nil
+}
+
+type NullSignupCodeStatus struct {
+	SignupCodeStatus SignupCodeStatus `json:"signup_code_status"`
+	Valid            bool             `json:"valid"` // Valid is true if SignupCodeStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSignupCodeStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.SignupCodeStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SignupCodeStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSignupCodeStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SignupCodeStatus), nil
+}
+
 type VideoStatus string
 
 const (
@@ -444,6 +528,24 @@ type Notification struct {
 	Payload     []byte             `json:"payload"`
 	ReadAt      pgtype.Timestamptz `json:"read_at"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type SignupCode struct {
+	ID               pgtype.UUID        `json:"id"`
+	Code             string             `json:"code"`
+	OwnerUserID      string             `json:"owner_user_id"`
+	Status           SignupCodeStatus   `json:"status"`
+	RedeemedByUserID pgtype.Text        `json:"redeemed_by_user_id"`
+	ConsumedAt       pgtype.Timestamptz `json:"consumed_at"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+type UserAccess struct {
+	UserID       string             `json:"user_id"`
+	Status       AccessStatus       `json:"status"`
+	ActivatedAt  pgtype.Timestamptz `json:"activated_at"`
+	ActivatedVia pgtype.Text        `json:"activated_via"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type UserGroup struct {
