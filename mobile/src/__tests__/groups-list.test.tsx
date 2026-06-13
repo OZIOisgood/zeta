@@ -64,7 +64,7 @@ test('error state offers retry', async () => {
   const refetch = jest.fn();
   mockUseGroupsQuery.mockReturnValue({ isPending: false, isError: true, data: undefined, refetch, isRefetching: false });
   await render(<Providers><GroupsScreen /></Providers>);
-  const retryBtn = screen.getByRole('button', { name: /try again/i });
+  const retryBtn = screen.getByRole('button', { name: /retry/i });
   expect(retryBtn).toBeOnTheScreen();
   fireEvent.press(retryBtn);
   expect(refetch).toHaveBeenCalledTimes(1);

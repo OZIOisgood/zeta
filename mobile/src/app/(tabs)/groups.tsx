@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../../api/queries/groups';
 import { GroupCard } from '../../components/group-card';
 import { ZButton } from '../../components/ui/z-button';
+import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
@@ -44,18 +45,28 @@ export default function GroupsScreen() {
     );
   } else if (isError) {
     content = (
-      <View className="flex-1 items-center justify-center gap-4 bg-z-bg px-8">
-        <CloudOff color={colors.muted} size={32} />
-        <Text className="text-center text-z-muted">{t('groups.phase4.loadFailed')}</Text>
-        <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
+      <View className="flex-1 justify-center bg-z-bg p-4">
+        <ZEmptyState
+          title={t('groups.phase4.loadFailed')}
+          description={t('home.error.description')}
+          icon={<CloudOff color={colors.danger} size={24} />}
+        >
+          <ZButton
+            label={t('common.actions.retry')}
+            variant="secondary"
+            onPress={() => void refetch()}
+          />
+        </ZEmptyState>
       </View>
     );
   } else if (!data || data.length === 0) {
     content = (
-      <View testID="groups-empty" className="flex-1 items-center justify-center gap-3 bg-z-bg px-8">
-        <Users color={colors.muted} size={32} />
-        <Text className="text-lg font-semibold text-z-text">{t('groups.noGroupsYet')}</Text>
-        <Text className="text-center text-z-muted">{t('groups.noGroupsJoined')}</Text>
+      <View testID="groups-empty" className="flex-1 justify-center bg-z-bg p-4">
+        <ZEmptyState
+          title={t('groups.noGroupsYet')}
+          description={t('groups.noGroupsJoined')}
+          icon={<Users color={colors.primary} size={24} />}
+        />
       </View>
     );
   } else {
@@ -76,16 +87,19 @@ export default function GroupsScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* Header row */}
-      <View className="flex-row items-center justify-between px-4 pb-2 pt-4">
-        <Text className="text-xl font-semibold text-z-text">{t('common.nav.groups')}</Text>
-        <ZButton
-          testID="groups-join"
-          label={t('groups.invitationDialog.joinGroup')}
-          variant="secondary"
-          onPress={() => router.push('/invite')}
-          icon={<QrCode color={colors.text} size={16} />}
-        />
+      {/* Header: title + summary subtitle (mirrors videos.tsx) with join action */}
+      <View className="px-4 pb-3 pt-4">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-xl font-semibold text-z-text">{t('groups.myGroups')}</Text>
+          <ZButton
+            testID="groups-join"
+            label={t('groups.invitationDialog.joinGroup')}
+            variant="secondary"
+            onPress={() => router.push('/invite')}
+            icon={<QrCode color={colors.text} size={16} />}
+          />
+        </View>
+        <Text className="mt-1 text-sm leading-5 text-z-muted">{t('groups.phase4.summary')}</Text>
       </View>
       {content}
     </ZScreen>

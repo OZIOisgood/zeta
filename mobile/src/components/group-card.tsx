@@ -1,10 +1,23 @@
-import { Image, Pressable, Text, View } from 'react-native';
-import { Users } from 'lucide-react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { Group } from '../api/queries/groups';
-import { avatarSrc } from '../lib/avatar';
-import { colors } from '../theme/colors';
+import { ZAvatar } from './ui/z-avatar';
+
+/** Avatar fallback initials from a group name; mirrors the web `groupInitials` helper. */
+function groupInitials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
 
 export function GroupCard({ group, onPress }: { group: Group; onPress: () => void }) {
+  const { t } = useTranslation();
   return (
     <Pressable
       accessibilityRole="button"
@@ -12,28 +25,20 @@ export function GroupCard({ group, onPress }: { group: Group; onPress: () => voi
       onPress={onPress}
       className="mb-3 flex-row items-center gap-3 rounded-lg border border-z-border bg-z-surface p-3 active:bg-z-surface-warm"
     >
-      <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-md bg-z-surface-warm">
-        {group.avatar ? (
-          <Image
-            source={{ uri: avatarSrc(group.avatar) }}
-            className="h-full w-full"
-            resizeMode="cover"
-          />
-        ) : (
-          <View testID="group-avatar-fallback" className="items-center justify-center">
-            <Users color={colors.primary} size={24} />
-          </View>
-        )}
-      </View>
+      <ZAvatar
+        image={group.avatar ?? undefined}
+        fallback={groupInitials(group.name)}
+        alt={group.name}
+        size={48}
+        testID={group.avatar ? undefined : 'group-avatar-fallback'}
+      />
       <View className="flex-1 gap-1">
         <Text numberOfLines={1} className="text-base font-semibold text-z-text">
           {group.name}
         </Text>
-        {group.description ? (
-          <Text numberOfLines={1} className="text-sm text-z-muted">
-            {group.description}
-          </Text>
-        ) : null}
+        <Text numberOfLines={2} className="text-sm text-z-muted">
+          {group.description ? group.description : t('groups.phase4.noDescription')}
+        </Text>
       </View>
     </Pressable>
   );
