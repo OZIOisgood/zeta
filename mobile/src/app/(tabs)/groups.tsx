@@ -1,12 +1,13 @@
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CloudOff, QrCode, Users } from 'lucide-react-native';
+import { QrCode, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../../api/queries/groups';
 import { GroupCard } from '../../components/group-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZPageHeader } from '../../components/ui/z-page-header';
+import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
@@ -47,17 +48,7 @@ export default function GroupsScreen() {
   } else if (isError) {
     content = (
       <View className="flex-1 justify-center bg-z-bg p-4">
-        <ZEmptyState
-          title={t('groups.phase4.loadFailed')}
-          description={t('home.error.description')}
-          icon={<CloudOff color={colors.danger} size={24} />}
-        >
-          <ZButton
-            label={t('common.actions.retry')}
-            variant="secondary"
-            onPress={() => void refetch()}
-          />
-        </ZEmptyState>
+        <ZQueryError title={t('groups.phase4.loadFailed')} onRetry={() => void refetch()} />
       </View>
     );
   } else if (!data || data.length === 0) {

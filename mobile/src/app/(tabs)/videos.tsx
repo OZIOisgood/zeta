@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CloudOff, Plus, Video as VideoIcon } from 'lucide-react-native';
+import { Plus, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Asset } from '../../api/queries/assets';
 import { useAssetsQuery } from '../../api/queries/assets';
@@ -14,6 +14,7 @@ import { ZButton } from '../../components/ui/z-button';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZPageHeader } from '../../components/ui/z-page-header';
+import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { ZTabs } from '../../components/ui/z-tabs';
@@ -109,17 +110,11 @@ export default function VideosScreen() {
       <View className="flex-1 bg-z-bg">
         <JobCards jobs={jobs} />
         <View className="flex-1 justify-center p-4">
-          <ZEmptyState
+          <ZQueryError
             title={t('videos.phase4.loadFailed')}
             description={t('videos.phase4.summary')}
-            icon={<CloudOff color={colors.danger} size={24} />}
-          >
-            <ZButton
-              label={t('common.actions.retry')}
-              variant="secondary"
-              onPress={() => void refetch()}
-            />
-          </ZEmptyState>
+            onRetry={() => void refetch()}
+          />
         </View>
       </View>
     );

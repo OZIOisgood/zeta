@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CalendarClock, CalendarPlus, CloudOff } from 'lucide-react-native';
+import { CalendarClock, CalendarPlus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../api/queries/coaching';
 import { useMyBookingsQuery, useCancelBookingMutation } from '../../api/queries/coaching';
 import { useAuth } from '../../auth/auth-store';
 import { BookingCard } from '../../components/booking-card';
 import { isJoinable } from '../../lib/connect-window';
-import { ZButton } from '../../components/ui/z-button';
 import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZPageHeader } from '../../components/ui/z-page-header';
+import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { ZTabs } from '../../components/ui/z-tabs';
@@ -192,17 +192,11 @@ export default function CoachingScreen() {
   } else if (isError) {
     content = (
       <View testID="coaching-error" className="p-4">
-        <ZEmptyState
+        <ZQueryError
           title={t('sessions.loadFailed')}
-          description={t('home.error.description')}
-          icon={<CloudOff color={colors.danger} size={24} />}
-        >
-          <ZButton
-            label={t('upload.retry')}
-            variant="secondary"
-            onPress={() => void refetch()}
-          />
-        </ZEmptyState>
+          retryLabel={t('upload.retry')}
+          onRetry={() => void refetch()}
+        />
       </View>
     );
   } else {

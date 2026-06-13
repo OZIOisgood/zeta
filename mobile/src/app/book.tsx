@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Check, CloudOff } from 'lucide-react-native';
+import { ArrowLeft, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { CoachingExpert, CoachingSlot, SessionType } from '../api/queries/coaching';
 import {
@@ -21,6 +21,7 @@ import { ZChip } from '../components/ui/z-chip';
 import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZIconButton } from '../components/ui/z-icon-button';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
+import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
 import { ZStepper } from '../components/ui/z-stepper';
@@ -270,18 +271,11 @@ export default function BookScreen() {
                     <ZSkeleton className="h-8 w-1/3 rounded-full" />
                   </View>
                 ) : groupsQuery.isError ? (
-                  <ZEmptyState
+                  <ZQueryError
                     title={t('home.error.title')}
-                    description={t('home.error.description')}
-                    icon={<CloudOff color={colors.danger} size={24} />}
-                  >
-                    <ZButton
-                      testID="book-groups-retry"
-                      label={t('common.actions.retry')}
-                      variant="secondary"
-                      onPress={() => void groupsQuery.refetch()}
-                    />
-                  </ZEmptyState>
+                    onRetry={() => void groupsQuery.refetch()}
+                    testID="book-groups-retry"
+                  />
                 ) : groups.length === 0 ? (
                   <ZEmptyState
                     title={t('groups.noGroupsYet')}
@@ -315,18 +309,11 @@ export default function BookScreen() {
                     <ZSkeleton className="h-8 w-24 rounded-full" />
                   </View>
                 ) : expertsQuery.isError ? (
-                  <ZEmptyState
+                  <ZQueryError
                     title={t('sessions.book.loadExpertsFailed')}
-                    description={t('home.error.description')}
-                    icon={<CloudOff color={colors.danger} size={24} />}
-                  >
-                    <ZButton
-                      testID="book-experts-retry"
-                      label={t('common.actions.retry')}
-                      variant="secondary"
-                      onPress={() => void expertsQuery.refetch()}
-                    />
-                  </ZEmptyState>
+                    onRetry={() => void expertsQuery.refetch()}
+                    testID="book-experts-retry"
+                  />
                 ) : experts.length === 0 ? (
                   <ZEmptyState
                     title={t('sessions.book.noExperts')}
@@ -360,18 +347,11 @@ export default function BookScreen() {
                     <ZSkeleton className="h-20 w-full rounded-lg" />
                   </View>
                 ) : sessionTypesQuery.isError ? (
-                  <ZEmptyState
+                  <ZQueryError
                     title={t('sessions.book.loadSessionTypesFailed')}
-                    description={t('home.error.description')}
-                    icon={<CloudOff color={colors.danger} size={24} />}
-                  >
-                    <ZButton
-                      testID="book-types-retry"
-                      label={t('common.actions.retry')}
-                      variant="secondary"
-                      onPress={() => void sessionTypesQuery.refetch()}
-                    />
-                  </ZEmptyState>
+                    onRetry={() => void sessionTypesQuery.refetch()}
+                    testID="book-types-retry"
+                  />
                 ) : sessionTypes.length === 0 ? (
                   <ZEmptyState
                     title={t('sessions.book.noSessionTypes')}
@@ -423,18 +403,11 @@ export default function BookScreen() {
                     </View>
                   </View>
                 ) : slotsQuery.isError ? (
-                  <ZEmptyState
+                  <ZQueryError
                     title={t('sessions.book.loadSlotsFailed')}
-                    description={t('home.error.description')}
-                    icon={<CloudOff color={colors.danger} size={24} />}
-                  >
-                    <ZButton
-                      testID="book-slots-retry"
-                      label={t('common.actions.retry')}
-                      variant="secondary"
-                      onPress={() => void slotsQuery.refetch()}
-                    />
-                  </ZEmptyState>
+                    onRetry={() => void slotsQuery.refetch()}
+                    testID="book-slots-retry"
+                  />
                 ) : slots.length === 0 ? (
                   <ZEmptyState
                     title={t('sessions.book.noTimes')}

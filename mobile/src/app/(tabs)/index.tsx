@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CalendarDays, CloudOff, Users, Video as VideoIcon } from 'lucide-react-native';
+import { CalendarDays, Users, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../api/queries/assets';
 import { useGroupsQuery } from '../../api/queries/groups';
@@ -14,6 +14,7 @@ import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZPageHeader } from '../../components/ui/z-page-header';
+import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { colors } from '../../theme/colors';
@@ -151,17 +152,10 @@ export default function HomeScreen() {
     );
   } else if (assets.isError) {
     latestContent = (
-      <ZEmptyState
+      <ZQueryError
         title={t('videos.phase4.loadFailed')}
-        description={t('home.error.description')}
-        icon={<CloudOff color={colors.danger} size={24} />}
-      >
-        <ZButton
-          label={t('common.actions.retry')}
-          variant="secondary"
-          onPress={() => void assets.refetch()}
-        />
-      </ZEmptyState>
+        onRetry={() => void assets.refetch()}
+      />
     );
   } else if (latestVideos.length === 0) {
     latestContent = (
