@@ -220,7 +220,7 @@ export default function GroupDetailScreen() {
             size={56}
           />
           <View className="flex-1">
-            <Text className="text-xl font-semibold text-z-text" numberOfLines={2}>
+            <Text className="text-2xl font-semibold text-z-text" numberOfLines={2}>
               {data.name}
             </Text>
           </View>
