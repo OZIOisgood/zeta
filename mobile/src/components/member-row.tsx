@@ -36,7 +36,7 @@ export function MemberRow({ member }: { member: GroupUser }) {
           <Text className="text-sm font-semibold text-z-text">{fullName}</Text>
           <ZBadge label={roleLabel} tone="primary" />
         </View>
-        <Text className="text-xs text-z-muted">{member.email}</Text>
+        <Text className="text-sm text-z-muted">{member.email}</Text>
       </View>
     </View>
   );

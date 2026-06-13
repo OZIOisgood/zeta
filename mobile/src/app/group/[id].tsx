@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlatList, Image, ScrollView, Text, View } from 'react-native';
+import { FlatList, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, ShieldCheck, TriangleAlert, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -11,16 +11,31 @@ import {
   type GroupUser,
 } from '../../api/queries/groups';
 import { useAuth } from '../../auth/auth-store';
-import { avatarSrc } from '../../lib/avatar';
 import { MemberRow } from '../../components/member-row';
+import { ZAvatar } from '../../components/ui/z-avatar';
 import { ZBadge } from '../../components/ui/z-badge';
 import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
+import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { showToast } from '../../components/ui/z-toast';
 import { colors } from '../../theme/colors';
+
+/** Avatar fallback initials from a group name; mirrors the web `groupInitials` helper. */
+function groupInitials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
 
 function MembersSkeleton() {
   return (
@@ -77,14 +92,19 @@ function MemberSection({
       {isLoading ? (
         <MembersSkeleton />
       ) : isError ? (
-        <View className="mt-5 gap-3">
-          <Text className="text-sm text-z-danger">{t('groups.membersLoadFailed')}</Text>
-          <ZButton
-            testID={`members-retry-${kind}`}
-            label={t('common.actions.retry')}
-            variant="secondary"
-            onPress={onRetry}
-          />
+        <View className="mt-5">
+          <ZEmptyState
+            title={t('groups.membersLoadFailed')}
+            description={t('home.error.description')}
+            icon={<TriangleAlert color={colors.primary} size={24} />}
+          >
+            <ZButton
+              testID={`members-retry-${kind}`}
+              label={t('common.actions.retry')}
+              variant="secondary"
+              onPress={onRetry}
+            />
+          </ZEmptyState>
         </View>
       ) : count > 0 ? (
         <View className="mt-5">
@@ -135,18 +155,18 @@ export default function GroupDetailScreen() {
     refetch: refetchStudents,
   } = useGroupStudentsQuery(id ?? '', canSeeStudents);
 
-  const { mutateAsync, isPending: leaving } = useLeaveGroupMutation(id ?? '');
+  const { mutateAsync } = useLeaveGroupMutation(id ?? '');
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [leaveError, setLeaveError] = useState<string | null>(null);
 
   async function handleConfirmLeave() {
-    setLeaveError(null);
+    setShowLeaveConfirm(false);
     try {
       await mutateAsync();
+      showToast(t('groups.leave.success', { group: data?.name ?? '' }), undefined, 'success');
       router.back();
     } catch {
-      setLeaveError(t('groups.leave.failed'));
+      showToast(t('groups.leave.failed'), undefined, 'error');
     }
   }
 
@@ -162,10 +182,25 @@ export default function GroupDetailScreen() {
 
   if (isError || !data) {
     return (
-      <ZScreen className="items-center justify-center gap-4 px-8">
-        <Text className="text-center text-z-muted">{t('groups.phase4.detailFailed')}</Text>
-        <ZButton label={t('upload.retry')} variant="secondary" onPress={() => void refetch()} />
-        <ZButton label={t('common.actions.back')} variant="ghost" onPress={() => router.back()} />
+      <ZScreen className="items-center justify-center px-8">
+        <ZEmptyState
+          title={t('groups.phase4.detailFailed')}
+          description={t('home.error.description')}
+          icon={<TriangleAlert color={colors.primary} size={24} />}
+        >
+          <View className="gap-2">
+            <ZButton
+              label={t('common.actions.retry')}
+              variant="secondary"
+              onPress={() => void refetch()}
+            />
+            <ZButton
+              label={t('common.actions.back')}
+              variant="ghost"
+              onPress={() => router.back()}
+            />
+          </View>
+        </ZEmptyState>
       </ZScreen>
     );
   }
@@ -178,17 +213,12 @@ export default function GroupDetailScreen() {
           <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
             <ArrowLeft color={colors.text} size={22} />
           </ZIconButton>
-          <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-z-surface-warm">
-            {data.avatar ? (
-              <Image
-                source={{ uri: avatarSrc(data.avatar) }}
-                className="h-full w-full"
-                resizeMode="cover"
-              />
-            ) : (
-              <Users color={colors.primary} size={28} />
-            )}
-          </View>
+          <ZAvatar
+            image={data.avatar ?? undefined}
+            fallback={groupInitials(data.name)}
+            alt={data.name}
+            size={56}
+          />
           <View className="flex-1">
             <Text className="text-xl font-semibold text-z-text" numberOfLines={2}>
               {data.name}
@@ -196,11 +226,11 @@ export default function GroupDetailScreen() {
           </View>
         </View>
 
-        {data.description ? (
-          <View className="px-4 pb-4">
-            <Text className="text-sm text-z-muted">{data.description}</Text>
-          </View>
-        ) : null}
+        <View className="px-4 pb-4">
+          <Text className="text-sm text-z-muted">
+            {data.description || t('groups.phase4.noDescription')}
+          </Text>
+        </View>
 
         <View className="gap-6 px-4">
           {/* Member sections */}
@@ -239,37 +269,24 @@ export default function GroupDetailScreen() {
 
           {/* Danger zone */}
           {canLeave && (
-            <View className="gap-3 pt-4">
-              {!showLeaveConfirm ? (
-                <ZButton
-                  testID="group-leave"
-                  label={t('groups.leave.action')}
-                  variant="danger"
-                  onPress={() => setShowLeaveConfirm(true)}
-                />
-              ) : (
-                <View className="gap-2">
-                  <Text className="text-sm text-z-muted">{t('groups.leave.summary')}</Text>
-                  <ZButton
-                    testID="group-leave-confirm"
-                    label={t('groups.leave.action')}
-                    variant="danger"
-                    disabled={leaving}
-                    onPress={() => void handleConfirmLeave()}
-                  />
-                  <ZButton
-                    label={t('common.actions.cancel')}
-                    variant="ghost"
-                    onPress={() => {
-                      setShowLeaveConfirm(false);
-                      setLeaveError(null);
-                    }}
-                  />
-                </View>
-              )}
-              {leaveError ? (
-                <Text className="text-sm text-z-danger">{leaveError}</Text>
-              ) : null}
+            <View className="pt-4">
+              <ZButton
+                testID="group-leave"
+                label={t('groups.leave.action')}
+                variant="danger"
+                onPress={() => setShowLeaveConfirm(true)}
+              />
+              <ZConfirmDialog
+                testID="group-leave-dialog"
+                visible={showLeaveConfirm}
+                tone="danger"
+                title={t('groups.leave.title')}
+                description={t('groups.leave.confirm', { group: data.name })}
+                confirmLabel={t('groups.leave.action')}
+                cancelLabel={t('common.actions.cancel')}
+                onConfirm={() => void handleConfirmLeave()}
+                onCancel={() => setShowLeaveConfirm(false)}
+              />
             </View>
           )}
         </View>

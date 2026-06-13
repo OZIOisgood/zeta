@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 jest.mock('expo-secure-store', () => ({
@@ -149,7 +149,7 @@ test('leave button visible when user has permission and is not owner', async () 
 
 // ── leave flow ────────────────────────────────────────────────────────────────
 
-test('leave flow: press leave → confirm UI → press confirm → mutateAsync called', async () => {
+test('leave flow: press leave → confirm dialog → press confirm → mutateAsync called', async () => {
   mockPermissions = ['groups:membership:leave'];
   mockUserId = 'u1';
   mockMutateAsync.mockResolvedValueOnce(undefined);
@@ -157,20 +157,22 @@ test('leave flow: press leave → confirm UI → press confirm → mutateAsync c
 
   await render(<Providers><GroupDetailScreen /></Providers>);
 
-  // Step 1: initial leave button visible; confirm row not visible yet
+  // Step 1: initial leave button visible; confirm dialog not visible yet
   expect(screen.getByTestId('group-leave')).toBeOnTheScreen();
-  expect(screen.queryByTestId('group-leave-confirm')).toBeNull();
+  expect(screen.queryByTestId('group-leave-dialog')).toBeNull();
 
-  // Step 2: press leave → confirm row appears
+  // Step 2: press leave → confirm dialog appears with its prompt
   fireEvent.press(screen.getByTestId('group-leave'));
-  await waitFor(() => expect(screen.getByTestId('group-leave-confirm')).toBeOnTheScreen());
+  await waitFor(() => expect(screen.getByTestId('group-leave-dialog')).toBeOnTheScreen());
+  expect(screen.getByText('Leave group?')).toBeOnTheScreen();
 
-  // Step 3: press confirm → mutateAsync called
-  fireEvent.press(screen.getByTestId('group-leave-confirm'));
+  // Step 3: press the dialog confirm button → mutateAsync called
+  const dialog = screen.getByTestId('group-leave-dialog');
+  fireEvent.press(within(dialog).getByRole('button', { name: 'Leave group' }));
   await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
 });
 
-test('cancel in leave confirm row hides the confirm UI', async () => {
+test('cancel in leave dialog hides the dialog', async () => {
   mockPermissions = ['groups:membership:leave'];
   mockUserId = 'u1';
   mockUseGroupQuery.mockReturnValue({ isPending: false, isError: false, data: GROUP, refetch: jest.fn() });
@@ -178,14 +180,14 @@ test('cancel in leave confirm row hides the confirm UI', async () => {
   await render(<Providers><GroupDetailScreen /></Providers>);
 
   fireEvent.press(screen.getByTestId('group-leave'));
-  await waitFor(() => expect(screen.getByTestId('group-leave-confirm')).toBeOnTheScreen());
+  await waitFor(() => expect(screen.getByTestId('group-leave-dialog')).toBeOnTheScreen());
 
   fireEvent.press(screen.getByRole('button', { name: /cancel/i }));
-  await waitFor(() => expect(screen.queryByTestId('group-leave-confirm')).toBeNull());
+  await waitFor(() => expect(screen.queryByTestId('group-leave-dialog')).toBeNull());
   expect(screen.getByTestId('group-leave')).toBeOnTheScreen();
 });
 
-test('leave error: mutateAsync rejects → translated error message appears', async () => {
+test('leave error: mutateAsync rejects → dialog closes without leaving the screen', async () => {
   mockPermissions = ['groups:membership:leave'];
   mockUserId = 'u1';
   mockMutateAsync.mockRejectedValueOnce(new Error('network error'));
@@ -193,17 +195,17 @@ test('leave error: mutateAsync rejects → translated error message appears', as
 
   await render(<Providers><GroupDetailScreen /></Providers>);
 
-  // Open confirm UI
+  // Open the confirm dialog
   fireEvent.press(screen.getByTestId('group-leave'));
-  await waitFor(() => expect(screen.getByTestId('group-leave-confirm')).toBeOnTheScreen());
+  await waitFor(() => expect(screen.getByTestId('group-leave-dialog')).toBeOnTheScreen());
 
   // Trigger the failing mutation
-  fireEvent.press(screen.getByTestId('group-leave-confirm'));
+  const dialog = screen.getByTestId('group-leave-dialog');
+  fireEvent.press(within(dialog).getByRole('button', { name: 'Leave group' }));
 
-  // Translated error text should appear
-  await waitFor(() =>
-    expect(screen.getByText('Failed to leave group.')).toBeOnTheScreen(),
-  );
+  // Mutation attempted; the failure does not navigate back
+  await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
+  expect(mockBack).not.toHaveBeenCalled();
 });
 
 // ── member error branch (bug fix) ─────────────────────────────────────────────
