@@ -10,3 +10,9 @@ test('renders an image when an image is provided', async () => {
   await render(<ZAvatar image="abc123" alt="Jane Doe" />);
   expect(screen.getByLabelText('Jane Doe')).toBeOnTheScreen();
 });
+
+test('renders with the circle shape', async () => {
+  await render(<ZAvatar fallback="HM" shape="circle" testID="avatar" />);
+  expect(screen.getByTestId('avatar')).toBeOnTheScreen();
+  expect(screen.getByText('HM')).toBeOnTheScreen();
+});

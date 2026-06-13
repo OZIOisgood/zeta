@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { colors } from '../../theme/colors';
 
 export type ZButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -17,11 +18,20 @@ const labelClasses: Record<ZButtonVariant, string> = {
   danger: 'text-white',
 };
 
+/** Spinner color matching each variant's label color. */
+const spinnerColor: Record<ZButtonVariant, string> = {
+  primary: colors.onPrimary,
+  secondary: colors.text,
+  ghost: colors.text,
+  danger: colors.onPrimary,
+};
+
 export function ZButton({
   label,
   onPress,
   variant = 'primary',
   disabled = false,
+  loading = false,
   icon,
   testID,
 }: {
@@ -29,21 +39,32 @@ export function ZButton({
   onPress?: () => void;
   variant?: ZButtonVariant;
   disabled?: boolean;
+  /** When true, shows a spinner and disables the button. */
+  loading?: boolean;
   /** Optional leading icon node. */
   icon?: ReactNode;
   testID?: string;
 }) {
+  const isDisabled = disabled || loading;
   return (
     <Pressable
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      disabled={isDisabled}
       onPress={onPress}
-      className={`flex-row items-center justify-center gap-2 rounded-lg px-4 py-3 ${containerClasses[variant]} ${disabled ? 'opacity-50' : ''}`}
+      className={`flex-row items-center justify-center gap-2 rounded-lg px-4 py-3 ${containerClasses[variant]} ${isDisabled ? 'opacity-50' : ''}`}
     >
-      {icon ? <View>{icon}</View> : null}
+      {loading ? (
+        <ActivityIndicator
+          testID={testID ? `${testID}-spinner` : 'z-button-spinner'}
+          size="small"
+          color={spinnerColor[variant]}
+        />
+      ) : icon ? (
+        <View>{icon}</View>
+      ) : null}
       <Text className={`text-base font-semibold ${labelClasses[variant]}`}>{label}</Text>
     </Pressable>
   );

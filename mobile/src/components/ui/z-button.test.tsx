@@ -16,3 +16,13 @@ test('disabled button does not fire onPress', async () => {
   await user.press(screen.getByRole('button', { name: 'Save' }));
   expect(onPress).not.toHaveBeenCalled();
 });
+
+test('loading button shows a spinner, is busy, and does not fire onPress', async () => {
+  const user = userEvent.setup();
+  const onPress = jest.fn();
+  await render(<ZButton label="Save" onPress={onPress} loading testID="save" />);
+  expect(screen.getByTestId('save-spinner')).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Save' })).toBeBusy();
+  await user.press(screen.getByRole('button', { name: 'Save' }));
+  expect(onPress).not.toHaveBeenCalled();
+});
