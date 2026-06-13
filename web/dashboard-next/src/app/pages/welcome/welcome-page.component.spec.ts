@@ -16,6 +16,7 @@ const redeemResult: RedeemResponse = {
 type AccessStub = {
   redeemStatus: ReturnType<typeof signal<string>>;
   redeem: ReturnType<typeof vi.fn>;
+  resetRedeem: ReturnType<typeof vi.fn>;
 };
 type SessionStub = {
   loadCurrentUser: ReturnType<typeof vi.fn>;
@@ -29,6 +30,7 @@ async function setup(): Promise<ComponentFixture<WelcomePageComponent>> {
   access = {
     redeemStatus: signal<string>('idle'),
     redeem: vi.fn(async () => redeemResult),
+    resetRedeem: vi.fn(),
   };
   session = {
     loadCurrentUser: vi.fn(async () => undefined),

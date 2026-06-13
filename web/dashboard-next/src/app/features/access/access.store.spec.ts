@@ -11,7 +11,7 @@ const redeemResponse: RedeemResponse = {
 
 const codes: SignupCode[] = [
   { code: 'ABC123', status: 'unused' },
-  { code: 'DEF456', status: 'redeemed' },
+  { code: 'DEF456', status: 'consumed' },
 ];
 
 describe('AccessStore', () => {

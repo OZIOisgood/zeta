@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -55,7 +55,11 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
             }
           </label>
           @if (access.redeemStatus() === 'error') {
-            <p class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+            <p
+              role="alert"
+              aria-live="assertive"
+              class="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
+            >
               {{ 'access.welcome.invalidCode' | transloco }}
             </p>
           }
@@ -78,7 +82,7 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
     </div>
   `,
 })
-export class WelcomePageComponent {
+export class WelcomePageComponent implements OnInit {
   protected readonly access = inject(AccessStore);
   protected readonly session = inject(SessionStore);
   private readonly router = inject(Router);
@@ -88,6 +92,10 @@ export class WelcomePageComponent {
       validators: [Validators.required, Validators.pattern(/\S/)],
     }),
   });
+
+  ngOnInit(): void {
+    this.access.resetRedeem();
+  }
 
   protected async submit(): Promise<void> {
     if (this.form.invalid) {

@@ -76,6 +76,7 @@
     "nav": {
       "groups": "Groupes",
       "home": "Accueil",
+      "inviteCodes": "Codes d'invitation",
       "menu": "Menu",
       "report": "Rapport",
       "sessions": "Séances",
@@ -658,6 +659,31 @@
       "videoUploadedNoGroup": "{{uploader}} a téléversé une vidéo pour vous",
       "coachingBookingCreated": "{{student}} a réservé une séance avec vous",
       "generic": "Vous avez une nouvelle notification"
+    }
+  },
+  "access": {
+    "welcome": {
+      "title": "Vous y êtes presque",
+      "subtitle": "Saisissez votre code d'invitation pour activer votre compte.",
+      "codeLabel": "Code d'invitation",
+      "codePlaceholder": "Saisissez votre code",
+      "codeRequired": "Veuillez saisir votre code d'invitation.",
+      "invalidCode": "Ce code est invalide ou a déjà été utilisé.",
+      "redeeming": "Activation…",
+      "submit": "Activer",
+      "logout": "Se déconnecter"
+    },
+    "codes": {
+      "title": "Codes d'invitation",
+      "subtitle": "Partagez ces codes pour inviter de nouveaux experts.",
+      "empty": "Aucun code d'invitation pour le moment",
+      "emptyDescription": "Générez des codes pour commencer à inviter des experts.",
+      "loadError": "Impossible de charger vos codes d'invitation. Veuillez réessayer.",
+      "copy": "Copier",
+      "generate": "Générer plus de codes",
+      "generateErrorTitle": "Impossible de générer les codes",
+      "generateError": "Une erreur s'est produite. Veuillez réessayer.",
+      "status": { "available": "Disponible", "consumed": "Utilisé" }
     }
   }
 }

@@ -28,6 +28,9 @@ export const AccessStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
   withMethods((store, api = inject(AccessApiClient)) => ({
+    resetRedeem(): void {
+      patchState(store, { redeemError: null, redeemStatus: 'idle' });
+    },
     async redeem(code: string): Promise<RedeemResponse | null> {
       patchState(store, { redeemError: null, redeemStatus: 'loading' });
       try {

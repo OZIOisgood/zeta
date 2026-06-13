@@ -110,4 +110,25 @@ describe('InviteCodesPageComponent', () => {
       'error',
     );
   });
+
+  it('renders the empty state when there are no codes and the slice succeeded', async () => {
+    const fixture = await setup('expert');
+
+    access.codes.set([]);
+    access.codesSlice.set({ status: 'success', error: null });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('z-empty-state')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('access.codes.empty');
+  });
+
+  it('renders the error notice when the slice failed', async () => {
+    const fixture = await setup('expert');
+
+    access.codesSlice.set({ status: 'error', error: 'boom' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('z-empty-state')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('access.codes.loadError');
+  });
 });
