@@ -505,6 +505,84 @@ export default function AvailabilityScreen() {
     );
   }
 
+  // ── groups loading / error / no-groups / no-group-selected gates ───────────
+  // These must come BEFORE the tabs are built so the three section queries
+  // (which are disabled when groupId === '') never render their isPending
+  // skeletons in the "no group yet" case.  Mirror the web's status/groups check
+  // in manage-availability-page.component.ts lines 127–153.
+
+  if (groupsQuery.isPending) {
+    return (
+      <ZScreen edges={['top']}>
+        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+        <View testID="availability-groups-loading" className="gap-3 p-4">
+          <ZSkeleton className="h-32 w-full rounded-lg" />
+          <ZSkeleton className="h-32 w-full rounded-lg" />
+        </View>
+      </ZScreen>
+    );
+  }
+
+  if (groupsQuery.isError) {
+    return (
+      <ZScreen edges={['top']}>
+        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+        <View testID="availability-groups-error" className="p-4">
+          <ZQueryError
+            title={t('groups.loadFailed')}
+            onRetry={() => void groupsQuery.refetch()}
+          />
+        </View>
+      </ZScreen>
+    );
+  }
+
+  if (groups.length === 0) {
+    return (
+      <ZScreen edges={['top']}>
+        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+        <View testID="availability-no-groups" className="p-4">
+          <ZEmptyState
+            title={t('sessions.availability.noGroups')}
+            description={t('sessions.availability.noGroupsDescription')}
+          />
+        </View>
+      </ZScreen>
+    );
+  }
+
+  // Multi-group: show a group-picker prompt until the expert selects one.
+  // No tabs or section content until groupId is resolved — this prevents the
+  // three section queries from staying in the disabled/pending limbo state.
+  if (groupId === '') {
+    return (
+      <ZScreen edges={['top']}>
+        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+        <ZKeyboardAvoidingView>
+          <ZCard className="m-4 gap-1">
+            <Text className="text-2xl font-semibold text-z-text">
+              {t('sessions.availability.title')}
+            </Text>
+            <Text className="text-sm leading-6 text-z-muted">
+              {t('sessions.availability.summary')}
+            </Text>
+          </ZCard>
+          <View testID="availability-group-prompt" className="mx-4 gap-1">
+            <ZFieldLabel label={t('common.fields.group')} />
+            <ZSelect
+              testID="availability-group-select"
+              value={undefined}
+              options={groups.map((g) => ({ value: g.id, label: g.name }))}
+              placeholder={t('sessions.book.selectGroup')}
+              accessibilityLabel={t('common.fields.group')}
+              onValueChange={setSelectedGroupId}
+            />
+          </View>
+        </ZKeyboardAvoidingView>
+      </ZScreen>
+    );
+  }
+
   const tabs = [
     {
       id: 'session-types',
@@ -739,12 +817,15 @@ export default function AvailabilityScreen() {
           </Text>
         </ZCard>
 
+        {/* For multi-group experts, a group-change selector is shown once a
+            group has been selected (the first selection goes through the early-
+            return group-prompt above; this lets them switch after). */}
         {groups.length > 1 ? (
           <View className="mx-4 mb-2 gap-1">
             <ZFieldLabel label={t('common.fields.group')} />
             <ZSelect
               testID="availability-group-select"
-              value={groupId || undefined}
+              value={groupId}
               options={groups.map((g) => ({ value: g.id, label: g.name }))}
               placeholder={t('sessions.book.selectGroup')}
               accessibilityLabel={t('common.fields.group')}
