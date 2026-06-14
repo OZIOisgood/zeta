@@ -1,4 +1,4 @@
-import { render, fireEvent, waitFor, cleanup } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, cleanup, act } from '@testing-library/react-native';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(async () => null),
@@ -101,4 +101,41 @@ test('save is disabled until the form is dirty', async () => {
   await waitFor(() => expect(getByTestId('group-save')).not.toBeDisabled());
   fireEvent.press(getByTestId('group-save'));
   await waitFor(() => expect(updateMutate).toHaveBeenCalledTimes(1));
+});
+
+// Cold-cache path: the component mounts while isPending=true (data undefined),
+// then data resolves. The lazy-init bug causes the form to stay empty and the
+// save button to be permanently disabled. The fix (useEffect hydration) must
+// populate the name field with the real server value after data arrives.
+test('cold-cache: form hydrates with real server values after pending resolves', async () => {
+  // Start in pending state — simulates cold cache / deep-link / gcTime eviction
+  mockUseGroupQuery.mockReturnValue({
+    data: undefined,
+    isPending: true,
+    isError: false,
+    refetch: jest.fn(),
+  });
+
+  const { getByTestId, queryByTestId, rerender } = await render(<GroupPreferencesScreen />);
+
+  // While pending, the skeleton is shown — no form fields
+  expect(getByTestId('group-preferences-skeleton')).toBeTruthy();
+  expect(queryByTestId('group-name-input')).toBeNull();
+
+  // Data arrives — transition to loaded state
+  await act(async () => {
+    mockUseGroupQuery.mockReturnValue({
+      data: { id: 'g1', name: 'Karate Club', owner_id: 'u1', avatar: null, description: 'Dojo', created_at: '', updated_at: '' },
+      isPending: false,
+      isError: false,
+      refetch: jest.fn(),
+    });
+    await rerender(<GroupPreferencesScreen />);
+  });
+
+  // The form must show the real server name (not empty string from lazy init)
+  await waitFor(() => expect(queryByTestId('group-name-input')).not.toBeNull());
+  expect(getByTestId('group-name-input').props.value).toBe('Karate Club');
+  // Save button must be disabled (form is not dirty — server value matches field value)
+  expect(getByTestId('group-save')).toBeDisabled();
 });

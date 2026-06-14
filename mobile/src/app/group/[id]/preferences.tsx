@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -42,16 +42,39 @@ export default function GroupPreferencesScreen() {
   // deleteUnavailable copy is shown only when neither delete nor leave applies.
   const canLeave = permissions?.includes('groups:membership:leave') ?? false;
 
-  // Form fields — initialized from server data on first render of the data
-  // branch. The isPending guard above means this branch only mounts after data
-  // is available, so lazy init captures the real values synchronously.
-  const [name, setName] = useState(() => data?.name ?? '');
-  const [description, setDescription] = useState(() => data?.description ?? '');
-  const [avatar, setAvatar] = useState<string | undefined>(() => data?.avatar ?? undefined);
-  // Snapshot of the server values at load time, used for dirty tracking.
-  const [serverName] = useState(() => data?.name ?? '');
-  const [serverDescription] = useState(() => data?.description ?? '');
-  const [serverAvatar] = useState<string | undefined>(() => data?.avatar ?? undefined);
+  // Form fields start empty; a useEffect hydrates them once data resolves.
+  // We cannot use lazy-init (useState(() => data?.name ?? '')) because React
+  // runs hook initializers on the very first render — which happens while
+  // isPending=true and data is undefined on any cold-cache path (deep-link,
+  // gcTime eviction, slow network). Lazy initializers are never re-run, so the
+  // form would stay empty and the Save button would be permanently disabled.
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [avatar, setAvatar] = useState<string | undefined>(undefined);
+  // Baseline snapshot of the server values, used for dirty tracking.
+  // null = not yet hydrated; set once data first loads.
+  const [baseline, setBaseline] = useState<{
+    name: string;
+    description: string;
+    avatar: string | undefined;
+  } | null>(null);
+
+  // Hydrate form + baseline once data arrives (handles cold-cache path).
+  // data.id in the dep-array means we also reset if the user somehow navigates
+  // between two group preferences screens without unmounting.
+  useEffect(() => {
+    if (!data) return;
+    const initial = {
+      name: data.name,
+      description: data.description ?? '',
+      avatar: data.avatar ?? undefined,
+    };
+    setName(initial.name);
+    setDescription(initial.description);
+    setAvatar(initial.avatar);
+    setBaseline(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.id]);
 
   const [nameTouched, setNameTouched] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -60,13 +83,14 @@ export default function GroupPreferencesScreen() {
   const { mutateAsync: deleteGroup, isPending: deleting } = useDeleteGroupMutation(groupId);
 
   const nameInvalid = nameTouched && name.trim() === '';
-  // Compute dirty by comparing against server values.
+  // Compute dirty by comparing current fields against the hydrated baseline.
+  // baseline=null means data hasn't arrived yet — treat as not dirty.
   const invalid = name.trim() === '';
   const hasChanges =
-    serverName !== '' && // only dirty-check once we have server data
-    (name !== serverName ||
-      description !== serverDescription ||
-      avatar !== serverAvatar);
+    baseline !== null &&
+    (name !== baseline.name ||
+      description !== baseline.description ||
+      avatar !== baseline.avatar);
   // Mirrors the web `saveDisabled = invalid || !hasChanges || loading`.
   const saveDisabled = invalid || !hasChanges || saving;
 
@@ -79,8 +103,10 @@ export default function GroupPreferencesScreen() {
         name: name.trim(),
         description: description.trim(),
         // Only send avatar when the user picked a new one; empty keeps the existing image.
-        avatar: avatar && avatar !== (data?.avatar ?? undefined) ? avatar : undefined,
+        avatar: avatar && avatar !== (baseline?.avatar ?? undefined) ? avatar : undefined,
       });
+      // Advance the baseline so the form is no longer dirty after a successful save.
+      setBaseline({ name, description, avatar });
       showToast(t('toast.successTitle'), t('groups.updated'), 'success');
     } catch {
       setFormError(t('groups.updateFailed'));
