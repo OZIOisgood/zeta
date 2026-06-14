@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { NotificationRow } from './notification-row';
 import type { NotificationItem } from '../api/queries/notifications';
 
