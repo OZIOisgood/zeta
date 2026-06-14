@@ -862,6 +862,119 @@ paths:
           description: >
             Caller is not a group member, or has neither
             coaching:availability:manage nor coaching:slots:read permission
+    post:
+      tags: [coaching]
+      summary: Create a coaching session type
+      description: >
+        Creates a session type owned by the calling expert in the given group.
+        Requires group membership and coaching:availability:manage. name is
+        required; duration_minutes must be between 15 and 120 in 5-minute
+        increments.
+      operationId: createSessionType
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionTypeRequest"
+      responses:
+        "201":
+          description: Session type created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionType"
+        "400":
+          description: Missing name or invalid duration_minutes
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "500":
+          description: Failed to create session type
+
+  /groups/{groupID}/coaching/session-types/{sessionTypeID}:
+    put:
+      tags: [coaching]
+      summary: Update a coaching session type
+      description: >
+        Updates a session type owned by the calling expert. Requires group
+        membership and coaching:availability:manage. Same validation as create.
+      operationId: updateSessionType
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sessionTypeID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionTypeRequest"
+      responses:
+        "200":
+          description: Session type updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionType"
+        "400":
+          description: Invalid ID, missing name, or invalid duration_minutes
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "404":
+          description: Session type not found or not owned by caller
+        "500":
+          description: Failed to update session type
+    delete:
+      tags: [coaching]
+      summary: Deactivate a coaching session type
+      description: >
+        Soft-deletes (deactivates) a session type owned by the calling expert.
+        Requires group membership and coaching:availability:manage.
+      operationId: deactivateSessionType
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sessionTypeID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Session type deactivated
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "404":
+          description: Session type not found or not owned by caller
+        "500":
+          description: Failed to deactivate session type
 
   /groups/{groupID}/coaching/experts:
     get:
@@ -1791,6 +1904,21 @@ components:
         - duration_minutes
         - status
         - created_at
+
+    CreateSessionTypeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        duration_minutes:
+          type: integer
+          format: int32
+          description: Between 15 and 120 in 5-minute increments
+      required:
+        - name
+        - duration_minutes
 
     SessionType:
       type: object
