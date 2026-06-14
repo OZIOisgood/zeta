@@ -83,7 +83,12 @@ export default function HomeScreen() {
   const hasReviewedVideos = videoList.some((a) => a.status === 'completed');
   const firstGroupId = groupList[0]?.id;
 
-  const availabilityQuery = useMyAvailabilityQuery(firstGroupId ?? '');
+  // Gate on the permission so users without coaching:availability:manage do not
+  // trigger a 403 on this endpoint.  Passing '' disables the query via the
+  // existing `enabled: groupId !== ''` guard inside useMyAvailabilityQuery.
+  const availabilityQuery = useMyAvailabilityQuery(
+    has('coaching:availability:manage') ? (firstGroupId ?? '') : '',
+  );
   const hasAvailability = (availabilityQuery.data ?? []).length > 0;
 
   const steps = useMemo<HomeStep[]>(() => {

@@ -30,9 +30,11 @@ jest.mock('../api/queries/groups', () => ({
 }));
 
 const mockUseMyBookingsQuery = jest.fn();
+const mockUseMyAvailabilityQuery = jest.fn();
 jest.mock('../api/queries/coaching', () => ({
   ...jest.requireActual('../api/queries/coaching'),
   useMyBookingsQuery: () => mockUseMyBookingsQuery(),
+  useMyAvailabilityQuery: (...args: unknown[]) => mockUseMyAvailabilityQuery(...args),
 }));
 
 const mockPush = jest.fn();
@@ -102,6 +104,7 @@ beforeEach(() => {
   mockUseAssetsQuery.mockReturnValue(success([]));
   mockUseGroupsQuery.mockReturnValue(success([]));
   mockUseMyBookingsQuery.mockReturnValue(success([]));
+  mockUseMyAvailabilityQuery.mockReturnValue(success([]));
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
 afterEach(() => client.clear());
@@ -295,4 +298,34 @@ test('tapping an incomplete first step navigates to its mobile route', async () 
 
   await user.press(screen.getByTestId('first-step-upload'));
   expect(mockPush).toHaveBeenCalledWith('/upload');
+});
+
+// ── fix (6): availability query gated on coaching:availability:manage ─────────
+
+test('availability query is NOT called when user lacks coaching:availability:manage', async () => {
+  mockPermissions = ['assets:create']; // has assets:create but NOT coaching:availability:manage
+  mockUseGroupsQuery.mockReturnValue(success([group('g1', 'Dojo')]));
+
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+
+  // useMyAvailabilityQuery should be called with an empty groupId so the
+  // internal `enabled: groupId !== ''` guard prevents the network request.
+  expect(mockUseMyAvailabilityQuery).toHaveBeenCalledWith('');
+});
+
+test('availability query IS called with the groupId when user has coaching:availability:manage', async () => {
+  mockPermissions = ['coaching:availability:manage'];
+  mockUseGroupsQuery.mockReturnValue(success([group('g1', 'Dojo')]));
+
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+
+  expect(mockUseMyAvailabilityQuery).toHaveBeenCalledWith('g1');
 });
