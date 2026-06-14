@@ -127,12 +127,14 @@ func TestAcceptInvitationKeepsGenericInvitationPending(t *testing.T) {
 	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
 	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
 
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+	// The request sends the non-canonical "AbC123"; the handler normalizes it to
+	// "ABC123" before looking up the stored invitation.
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "ABC123").Return(db.GroupInvitation{
 		ID:        invitationID,
 		GroupID:   groupID,
 		InviterID: "user-1",
 		Email:     pgtype.Text{},
-		Code:      "AbC123",
+		Code:      "ABC123",
 		Status:    db.InvitationStatusPending,
 	}, nil)
 	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{
@@ -180,11 +182,11 @@ func TestDeclineInvitationMarksEmailInvitationDeclined(t *testing.T) {
 	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
 	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
 
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "ABC123").Return(db.GroupInvitation{
 		ID:      invitationID,
 		GroupID: groupID,
 		Email:   pgtype.Text{String: "invitee@example.com", Valid: true},
-		Code:    "AbC123",
+		Code:    "ABC123",
 		Status:  db.InvitationStatusPending,
 	}, nil)
 	// Single-recipient invitation: must be persisted as declined.
@@ -216,11 +218,11 @@ func TestDeclineInvitationRejectsNonRecipient(t *testing.T) {
 	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
 	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
 
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "ABC123").Return(db.GroupInvitation{
 		ID:      invitationID,
 		GroupID: groupID,
 		Email:   pgtype.Text{String: "invitee@example.com", Valid: true},
-		Code:    "AbC123",
+		Code:    "ABC123",
 		Status:  db.InvitationStatusPending,
 	}, nil)
 	// A user who is NOT the addressed recipient must not be able to decline it.
@@ -250,10 +252,10 @@ func TestAcceptInvitationNotifiesGroupOwner(t *testing.T) {
 
 	// Generic (no email) invitation so the accept path skips the email goroutine;
 	// the only background work is the member-joined notification.
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "ABC123").Return(db.GroupInvitation{
 		ID:      invitationID,
 		GroupID: groupID,
-		Code:    "AbC123",
+		Code:    "ABC123",
 		Status:  db.InvitationStatusPending,
 	}, nil)
 	q.EXPECT().CheckUserGroup(gomock.Any(), gomock.Any()).Return(false, nil)
@@ -301,18 +303,19 @@ func TestDeclineInvitationKeepsGenericInvitationPending(t *testing.T) {
 	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
 	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
 
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "ABC123").Return(db.GroupInvitation{
 		ID:      invitationID,
 		GroupID: groupID,
-		Code:    "AbC123",
+		Code:    "ABC123",
 		Status:  db.InvitationStatusPending,
 	}, nil)
 	// Generic link/QR invitation (no email): invitation status must NOT change so
 	// the shared link stays usable for others. The handler must mark the user's own
-	// notification as read so the UI hides the accept/decline prompt.
+	// notification as read so the UI hides the accept/decline prompt. The lookup uses
+	// the normalized code, not the raw "AbC123" the client sent.
 	q.EXPECT().MarkNotificationReadByInviteCode(gomock.Any(), db.MarkNotificationReadByInviteCodeParams{
 		RecipientID: "user-2",
-		Code:        []byte("AbC123"),
+		Code:        []byte("ABC123"),
 	}).Return(nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/groups/invitations/decline", strings.NewReader(`{"code":"AbC123"}`))
@@ -335,12 +338,12 @@ func TestGetInvitationInfoMarksExistingMember(t *testing.T) {
 	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
 	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
 
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "ABC123").Return(db.GroupInvitation{
 		ID:        invitationID,
 		GroupID:   groupID,
 		InviterID: "user-1",
 		Email:     pgtype.Text{},
-		Code:      "AbC123",
+		Code:      "ABC123",
 		Status:    db.InvitationStatusAccepted,
 	}, nil)
 	q.EXPECT().GetGroup(gomock.Any(), groupID).Return(db.Group{
@@ -395,12 +398,12 @@ func TestAcceptInvitationReturnsExistingMemberGroup(t *testing.T) {
 	groupID := invitationTestUUID(t, "11111111-1111-1111-1111-111111111111")
 	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
 
-	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "AbC123").Return(db.GroupInvitation{
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "ABC123").Return(db.GroupInvitation{
 		ID:        invitationID,
 		GroupID:   groupID,
 		InviterID: "user-1",
 		Email:     pgtype.Text{},
-		Code:      "AbC123",
+		Code:      "ABC123",
 		Status:    db.InvitationStatusAccepted,
 	}, nil)
 	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{

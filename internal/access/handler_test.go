@@ -176,6 +176,22 @@ func TestRedeemInvalidCodeReturnsNeutralError(t *testing.T) {
 	}
 }
 
+// TestRedeemRejectsEmptyCode verifies a whitespace-only code is rejected with 400
+// before any lookup. No GetUserAccess/ConsumeSignupCode expectations are set, so
+// strict gomock fails the test if the handler reaches the DB.
+func TestRedeemRejectsEmptyCode(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	rec := httptest.NewRecorder()
+	h.Redeem(rec, redeemRequestFor("user_empty", permissions.RoleStudent, "   "))
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400 (empty code rejected before lookup)", rec.Code)
+	}
+}
+
 func TestRedeemAlreadyActiveIsNoOp(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)

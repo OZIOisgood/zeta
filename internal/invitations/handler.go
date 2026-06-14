@@ -253,6 +253,8 @@ func (h *Handler) GetInvitationInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
+	// Normalize user-entered input to match generated (uppercase Crockford) codes.
+	code = tools.NormalizeCode(code)
 
 	invitation, err := h.q.GetGroupInvitationByCode(ctx, code)
 	if err != nil {
@@ -324,8 +326,10 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
+	// Normalize user-entered input to match generated (uppercase Crockford) codes.
+	code := tools.NormalizeCode(req.Code)
 
-	invitation, err := h.q.GetGroupInvitationByCode(ctx, req.Code)
+	invitation, err := h.q.GetGroupInvitationByCode(ctx, code)
 	if err != nil {
 		log.WarnContext(ctx, "invitation_accept_not_found",
 			slog.String("component", "invitations"),
@@ -534,8 +538,10 @@ func (h *Handler) DeclineInvitation(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
+	// Normalize user-entered input to match generated (uppercase Crockford) codes.
+	code := tools.NormalizeCode(req.Code)
 
-	invitation, err := h.q.GetGroupInvitationByCode(ctx, req.Code)
+	invitation, err := h.q.GetGroupInvitationByCode(ctx, code)
 	if err != nil {
 		log.WarnContext(ctx, "invitation_decline_not_found",
 			slog.String("component", "invitations"),
@@ -578,7 +584,7 @@ func (h *Handler) DeclineInvitation(w http.ResponseWriter, r *http.Request) {
 		// the accept/decline prompt.
 		if err := h.q.MarkNotificationReadByInviteCode(ctx, db.MarkNotificationReadByInviteCodeParams{
 			RecipientID: user.ID,
-			Code:        []byte(req.Code),
+			Code:        []byte(code),
 		}); err != nil {
 			log.WarnContext(ctx, "invitation_decline_notification_dismiss_failed",
 				slog.String("component", "invitations"),
