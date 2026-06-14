@@ -665,6 +665,10 @@
     "welcome": {
       "title": "Fast geschafft",
       "subtitle": "Gib deinen Einladungscode ein, um dein Konto zu aktivieren.",
+      "waitlistTitle": "Du bist auf der Warteliste",
+      "waitlistSubtitle": "Wir benachrichtigen dich, sobald du Zugang erhältst.",
+      "haveCode": "Ich habe einen Einladungscode",
+      "back": "Zurück",
       "codeLabel": "Einladungscode",
       "codePlaceholder": "Code eingeben",
       "codeRequired": "Bitte gib deinen Einladungscode ein.",

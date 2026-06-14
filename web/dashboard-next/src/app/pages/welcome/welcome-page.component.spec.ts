@@ -82,9 +82,48 @@ function setCode(fixture: ComponentFixture<WelcomePageComponent>, value: string)
   fixture.detectChanges();
 }
 
+function revealCodeEntry(fixture: ComponentFixture<WelcomePageComponent>): void {
+  fixture.componentInstance['showCodeEntry'].set(true);
+  fixture.detectChanges();
+}
+
+function findButtonByText(
+  fixture: ComponentFixture<WelcomePageComponent>,
+  text: string,
+): HTMLButtonElement | undefined {
+  const buttons = Array.from(
+    fixture.nativeElement.querySelectorAll('button'),
+  ) as HTMLButtonElement[];
+  return buttons.find((button) => button.textContent?.includes(text));
+}
+
 describe('WelcomePageComponent', () => {
+  it('renders the waitlist state by default without the code-entry form', async () => {
+    const fixture = await setup();
+
+    expect(fixture.nativeElement.textContent).toContain('access.welcome.waitlistTitle');
+    expect(fixture.nativeElement.textContent).toContain('access.welcome.waitlistSubtitle');
+    expect(findButtonByText(fixture, 'access.welcome.haveCode')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    expect(fixture.nativeElement.querySelector('z-otp-input')).toBeNull();
+  });
+
+  it('reveals the code-entry form when the "I have an invite code" button is clicked', async () => {
+    const fixture = await setup();
+
+    const haveCodeButton = findButtonByText(fixture, 'access.welcome.haveCode');
+    expect(haveCodeButton).toBeTruthy();
+    haveCodeButton?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['showCodeEntry']()).toBe(true);
+    expect(fixture.nativeElement.querySelector('form')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('z-otp-input')).toBeTruthy();
+  });
+
   it('redeems a trimmed code, reloads the user, and navigates to the root on success', async () => {
     const fixture = await setup();
+    revealCodeEntry(fixture);
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
@@ -101,6 +140,7 @@ describe('WelcomePageComponent', () => {
 
   it('does not redeem when the code is empty and marks the control touched', async () => {
     const fixture = await setup();
+    revealCodeEntry(fixture);
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
@@ -114,9 +154,11 @@ describe('WelcomePageComponent', () => {
     expect(fixture.componentInstance['form'].controls.code.touched).toBe(true);
   });
 
-  it('pre-fills the code control from the ?code query param, uppercased', async () => {
+  it('starts in the code-entry state with the control pre-filled from the ?code query param', async () => {
     const fixture = await setup({ code: 'abc12345' });
 
+    expect(fixture.componentInstance['showCodeEntry']()).toBe(true);
     expect(fixture.componentInstance['form'].controls.code.value).toBe('ABC12345');
+    expect(fixture.nativeElement.querySelector('form')).toBeTruthy();
   });
 });

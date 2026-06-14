@@ -665,6 +665,10 @@
     "welcome": {
       "title": "You're almost in",
       "subtitle": "Enter your invite code to activate your account.",
+      "waitlistTitle": "You're on the waitlist",
+      "waitlistSubtitle": "We'll let you know as soon as you get access.",
+      "haveCode": "I have an invite code",
+      "back": "Back",
       "codeLabel": "Invite code",
       "codePlaceholder": "Enter your code",
       "codeRequired": "Please enter your invite code.",
