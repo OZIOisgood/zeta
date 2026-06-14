@@ -17,6 +17,7 @@ tags:
   - name: groups
   - name: coaching
   - name: devices
+  - name: notifications
 paths:
   /health:
     get:
@@ -579,6 +580,57 @@ paths:
           description: Not authenticated
         "404":
           description: Invitation not found or caller is not the addressed recipient
+  # /notifications/read-all is a static segment resolved before /notifications/{id}/read
+  # (same chi ordering as /groups/invitations/* above /groups/invitations/{code}).
+  /notifications:
+    get:
+      tags: [notifications]
+      summary: List the current user's recent notifications with the unread count
+      operationId: listNotifications
+      responses:
+        "200":
+          description: The 30 most recent notifications plus the unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+        "401":
+          description: Not authenticated
+        "500":
+          description: Failed to list notifications
+  /notifications/{id}/read:
+    post:
+      tags: [notifications]
+      summary: Mark a single notification as read
+      operationId: markNotificationRead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Notification marked read (no-op if already read or not the recipient's)
+        "400":
+          description: Invalid notification ID
+        "401":
+          description: Not authenticated
+        "500":
+          description: Failed to update the notification
+  /notifications/read-all:
+    post:
+      tags: [notifications]
+      summary: Mark all of the current user's notifications as read
+      operationId: markAllNotificationsRead
+      responses:
+        "204":
+          description: All notifications marked read
+        "401":
+          description: Not authenticated
+        "500":
+          description: Failed to update notifications
   /assets/videos/{id}/reviews:
     get:
       tags: [assets]
@@ -1601,6 +1653,63 @@ components:
         code:
           type: string
       required: [id, code]
+    NotificationPayload:
+      type: object
+      description: >
+        Denormalized, type-dependent payload. Every field is optional; which are
+        present depends on the notification type. additionalProperties is allowed
+        so new server fields do not break the client.
+      additionalProperties: true
+      properties:
+        group_id: { type: string }
+        group_name: { type: string }
+        inviter_name: { type: string }
+        code: { type: string }
+        member_name: { type: string }
+        asset_id: { type: string }
+        video_title: { type: string }
+        reviewer_name: { type: string }
+        uploader_name: { type: string }
+        booking_id: { type: string }
+        student_name: { type: string }
+        session_name: { type: string }
+        scheduled_at: { type: string }
+    NotificationItem:
+      type: object
+      description: A single in-app notification (list item / SSE frame shape).
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          description: >
+            One of group_invitation_received, group_member_joined, video_reviewed,
+            video_uploaded, coaching_booking_created.
+        payload:
+          $ref: "#/components/schemas/NotificationPayload"
+        read:
+          type: boolean
+        invite_status:
+          type: string
+          description: >
+            pending | accepted | declined | expired. Present only for
+            group_invitation_received; absent for live pushes (treated actionable).
+        created_at:
+          type: string
+          format: date-time
+      required: [id, type, payload, read, created_at]
+    NotificationListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationItem"
+        unread_count:
+          type: integer
+          format: int64
+      required: [items, unread_count]
 
     # --- Coaching schemas ---
 

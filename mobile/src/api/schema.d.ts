@@ -321,6 +321,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the current user's recent notifications with the unread count */
+        get: operations["listNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a single notification as read */
+        post: operations["markNotificationRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark all of the current user's notifications as read */
+        post: operations["markAllNotificationsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/assets/videos/{id}/reviews": {
         parameters: {
             query?: never;
@@ -814,6 +865,42 @@ export interface components {
         GroupInvitation: {
             id: string;
             code: string;
+        };
+        /** @description Denormalized, type-dependent payload. Every field is optional; which are present depends on the notification type. additionalProperties is allowed so new server fields do not break the client. */
+        NotificationPayload: {
+            group_id?: string;
+            group_name?: string;
+            inviter_name?: string;
+            code?: string;
+            member_name?: string;
+            asset_id?: string;
+            video_title?: string;
+            reviewer_name?: string;
+            uploader_name?: string;
+            booking_id?: string;
+            student_name?: string;
+            session_name?: string;
+            scheduled_at?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description A single in-app notification (list item / SSE frame shape). */
+        NotificationItem: {
+            /** Format: uuid */
+            id: string;
+            /** @description One of group_invitation_received, group_member_joined, video_reviewed, video_uploaded, coaching_booking_created. */
+            type: string;
+            payload: components["schemas"]["NotificationPayload"];
+            read: boolean;
+            /** @description pending | accepted | declined | expired. Present only for group_invitation_received; absent for live pushes (treated actionable). */
+            invite_status?: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        NotificationListResponse: {
+            items: components["schemas"]["NotificationItem"][];
+            /** Format: int64 */
+            unread_count: number;
         };
         /** @description Recording metadata attached to a completed booking */
         BookingRecording: {
@@ -1944,6 +2031,113 @@ export interface operations {
             };
             /** @description Invitation not found or caller is not the addressed recipient */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The 30 most recent notifications plus the unread count */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationListResponse"];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to list notifications */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    markNotificationRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Notification marked read (no-op if already read or not the recipient's) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid notification ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to update the notification */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    markAllNotificationsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All notifications marked read */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to update notifications */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
