@@ -1,10 +1,21 @@
-import type { ReactNode } from 'react';
-import { Pressable } from 'react-native';
+/**
+ * ZIconButton — NativeWind fallback (web / Storybook / jest).
+ *
+ * This file is the public contract and test surface for ZIconButton. It renders
+ * correctly in react-native-web-vite Storybook and passes jest via RNTL.
+ *
+ * Native internals live in:
+ *   - z-icon-button.ios.tsx     (SwiftUI Button via @expo/ui/swift-ui)
+ *   - z-icon-button.android.tsx (Jetpack Compose IconButton/FAB via @expo/ui/jetpack-compose)
+ *
+ * DO NOT add @expo/ui imports here — this file must work in the web/Storybook
+ * environment where native modules are unavailable.
+ */
 
-export type ZIconButtonVariant = 'primary' | 'secondary' | 'ghost';
-// `lg` has no web counterpart yet; it exists for the mobile FAB.
-export type ZIconButtonSize = 'sm' | 'md' | 'lg';
-export type ZIconButtonShape = 'rounded' | 'circle';
+import { Pressable } from 'react-native';
+import type { ZIconButtonProps, ZIconButtonVariant, ZIconButtonSize } from './z-icon-button.types';
+
+export type { ZIconButtonVariant, ZIconButtonSize, ZIconButtonShape, ZIconButtonProps } from './z-icon-button.types';
 
 const containerClasses: Record<ZIconButtonVariant, string> = {
   primary: 'border border-z-primary bg-z-primary active:bg-z-primary-strong',
@@ -34,18 +45,7 @@ export function ZIconButton({
   disabled = false,
   className = '',
   testID,
-}: {
-  label: string;
-  children: ReactNode;
-  onPress?: () => void;
-  variant?: ZIconButtonVariant;
-  size?: ZIconButtonSize;
-  shape?: ZIconButtonShape;
-  disabled?: boolean;
-  /** Layout-only extensions (margins, positioning) — never visual identity. */
-  className?: string;
-  testID?: string;
-}) {
+}: ZIconButtonProps) {
   return (
     <Pressable
       testID={testID}

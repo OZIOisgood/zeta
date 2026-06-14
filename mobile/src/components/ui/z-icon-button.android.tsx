@@ -1,0 +1,140 @@
+/**
+ * ZIconButton — Android implementation (Jetpack Compose via @expo/ui/jetpack-compose).
+ *
+ * Renders a native Compose icon button inside a Host wrapper (matchContents).
+ *
+ * Variant → Compose component mapping (Material 3):
+ *   ghost     → IconButton          — standard no-background icon button
+ *   secondary → OutlinedIconButton  — bordered icon button (no fill)
+ *   primary   → FilledIconButton    — filled icon button with accent background
+ *
+ * FAB: when variant='primary' AND size='lg' AND shape='circle', renders a
+ * Material 3 FloatingActionButton (standard size). For size='md' primary+circle
+ * uses SmallFloatingActionButton. This matches Material 3's FAB guidance:
+ * https://m3.material.io/components/floating-action-button/overview
+ *
+ * Disabled via `enabled` prop (Compose convention; no `disabled` prop).
+ * testID forwarded via semantics modifier.
+ * Colors from theme/native.ts role tokens (useRoleColors). No hardcoded hex.
+ *
+ * Material 3 reference: https://m3.material.io/components/icon-buttons/overview
+ *
+ * @expo/ui version: ~56.0.17
+ */
+
+import {
+  FilledIconButton,
+  FloatingActionButton,
+  Host,
+  IconButton,
+  OutlinedIconButton,
+  SmallFloatingActionButton,
+} from '@expo/ui/jetpack-compose';
+import { testID as testIDModifier } from '@expo/ui/jetpack-compose/modifiers';
+import { View } from 'react-native';
+
+import { useRoleColors } from '../../theme/native';
+import type { ZIconButtonProps, ZIconButtonVariant, ZIconButtonSize, ZIconButtonShape } from './z-icon-button.types';
+
+export type { ZIconButtonVariant, ZIconButtonSize, ZIconButtonShape, ZIconButtonProps } from './z-icon-button.types';
+
+/** Returns true when the combination should render as a Material FAB. */
+function isFAB(variant: ZIconButtonVariant, size: ZIconButtonSize, shape: ZIconButtonShape): boolean {
+  return variant === 'primary' && shape === 'circle' && (size === 'lg' || size === 'md');
+}
+
+export function ZIconButton({
+  label,
+  children,
+  onPress,
+  variant = 'ghost',
+  size = 'md',
+  shape = 'rounded',
+  disabled = false,
+  testID,
+}: ZIconButtonProps) {
+  const { color } = useRoleColors();
+  const modifiers = testID ? [testIDModifier(testID)] : [];
+
+  // FAB path: Material 3 FloatingActionButton (lg) or SmallFloatingActionButton (md).
+  // FloatingActionButton does not expose an `enabled` prop in @expo/ui — disable
+  // by omitting onPress; this is acceptable for the FAB use case.
+  if (isFAB(variant, size, shape)) {
+    const FABComponent = size === 'lg' ? FloatingActionButton : SmallFloatingActionButton;
+
+    return (
+      <Host matchContents>
+        <FABComponent
+          onClick={disabled ? undefined : onPress}
+          containerColor={color('accent')}
+          modifiers={modifiers}
+        >
+          <FABComponent.Icon>
+            <View accessibilityLabel={label}>{children}</View>
+          </FABComponent.Icon>
+        </FABComponent>
+      </Host>
+    );
+  }
+
+  // Standard icon button path.
+  const iconContent = (
+    <View accessibilityLabel={label}>{children}</View>
+  );
+
+  if (variant === 'secondary') {
+    return (
+      <Host matchContents>
+        <OutlinedIconButton
+          onClick={onPress}
+          enabled={!disabled}
+          colors={{
+            contentColor: color('accent'),
+            disabledContainerColor: 'transparent',
+            disabledContentColor: color('onSurfaceVariant'),
+          }}
+          modifiers={modifiers}
+        >
+          {iconContent}
+        </OutlinedIconButton>
+      </Host>
+    );
+  }
+
+  if (variant === 'primary') {
+    return (
+      <Host matchContents>
+        <FilledIconButton
+          onClick={onPress}
+          enabled={!disabled}
+          colors={{
+            containerColor: color('accent'),
+            contentColor: color('onAccent'),
+            disabledContainerColor: color('surfaceVariant'),
+            disabledContentColor: color('onSurfaceVariant'),
+          }}
+          modifiers={modifiers}
+        >
+          {iconContent}
+        </FilledIconButton>
+      </Host>
+    );
+  }
+
+  // ghost (default)
+  return (
+    <Host matchContents>
+      <IconButton
+        onClick={onPress}
+        enabled={!disabled}
+        colors={{
+          contentColor: color('onSurface'),
+          disabledContentColor: color('onSurfaceVariant'),
+        }}
+        modifiers={modifiers}
+      >
+        {iconContent}
+      </IconButton>
+    </Host>
+  );
+}

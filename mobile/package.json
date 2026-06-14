@@ -132,7 +132,16 @@
       "^(\\./|(\\.\\./)+)(.*/)?(z-checkbox)$": "<rootDir>/src/components/ui/z-checkbox.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-checkbox)\\.ios$": "<rootDir>/src/components/ui/z-checkbox.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-checkbox)\\.android$": "<rootDir>/src/components/ui/z-checkbox.tsx",
-      ".*/components/ui/z-checkbox(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-checkbox.tsx"
+      ".*/components/ui/z-checkbox(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-checkbox.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-icon-button)$": "<rootDir>/src/components/ui/z-icon-button.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-icon-button)\\.ios$": "<rootDir>/src/components/ui/z-icon-button.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-icon-button)\\.android$": "<rootDir>/src/components/ui/z-icon-button.tsx",
+      ".*/components/ui/z-icon-button(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-icon-button.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-badge)$": "<rootDir>/src/components/ui/z-badge.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-chip)$": "<rootDir>/src/components/ui/z-chip.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-chip)\\.ios$": "<rootDir>/src/components/ui/z-chip.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-chip)\\.android$": "<rootDir>/src/components/ui/z-chip.tsx",
+      ".*/components/ui/z-chip(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-chip.tsx"
     }
   },
   "private": true,
