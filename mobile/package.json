@@ -100,7 +100,11 @@
       "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock",
       "^react-native-agora$": "<rootDir>/src/call/__mocks__/react-native-agora.ts",
       "^react-native-qrcode-svg$": "<rootDir>/src/__mocks__/react-native-qrcode-svg.tsx",
-      ".*/components/ui/z-avatar-input$": "<rootDir>/src/__mocks__/z-avatar-input.tsx"
+      ".*/components/ui/z-avatar-input$": "<rootDir>/src/__mocks__/z-avatar-input.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-button)$": "<rootDir>/src/components/ui/z-button.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-button)\\.ios$": "<rootDir>/src/components/ui/z-button.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-button)\\.android$": "<rootDir>/src/components/ui/z-button.tsx",
+      ".*/components/ui/z-button(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-button.tsx"
     }
   },
   "private": true,

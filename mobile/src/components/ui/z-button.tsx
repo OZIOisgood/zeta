@@ -1,8 +1,22 @@
-import type { ReactNode } from 'react';
+/**
+ * ZButton — NativeWind fallback (web / Storybook / jest).
+ *
+ * This file is the public contract and test surface for ZButton. It renders
+ * correctly in react-native-web-vite Storybook and passes jest via RNTL.
+ *
+ * Native internals live in:
+ *   - z-button.ios.tsx      (SwiftUI Button via @expo/ui/swift-ui)
+ *   - z-button.android.tsx  (Jetpack Compose Button via @expo/ui/jetpack-compose)
+ *
+ * DO NOT add @expo/ui imports here — this file must work in the web/Storybook
+ * environment where native modules are unavailable.
+ */
+
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
+import type { ZButtonProps, ZButtonVariant } from './z-button.types';
 
-export type ZButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link';
+export type { ZButtonVariant, ZButtonProps } from './z-button.types';
 
 const containerClasses: Record<ZButtonVariant, string> = {
   primary: 'bg-z-primary active:bg-z-primary-strong',
@@ -39,17 +53,7 @@ export function ZButton({
   loading = false,
   icon,
   testID,
-}: {
-  label: string;
-  onPress?: () => void;
-  variant?: ZButtonVariant;
-  disabled?: boolean;
-  /** When true, shows a spinner and disables the button. */
-  loading?: boolean;
-  /** Optional leading icon node. */
-  icon?: ReactNode;
-  testID?: string;
-}) {
+}: ZButtonProps) {
   const isDisabled = disabled || loading;
   const isLink = variant === 'link';
   // The link variant drops the button chrome (padding/rounding) and uses the
