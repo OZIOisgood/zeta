@@ -5,6 +5,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // ── Legacy flat tokens (kept for un-migrated screens — do not remove) ──
         'z-bg': 'var(--z-bg)',
         'z-surface': 'var(--z-surface)',
         'z-surface-warm': 'var(--z-surface-warm)',
@@ -22,6 +23,34 @@ module.exports = {
         'z-warning-soft': 'var(--z-warning-soft)',
         'z-danger': 'var(--z-danger)',
         'z-danger-soft': 'var(--z-danger-soft)',
+        // ── Semantic role tokens (light+dark via CSS vars) ────────────────────
+        // Brand accent: bg-accent / text-on-accent / bg-accent-container etc.
+        'accent': 'var(--role-accent)',
+        'on-accent': 'var(--role-on-accent)',
+        'accent-container': 'var(--role-accent-container)',
+        'on-accent-container': 'var(--role-on-accent-container)',
+        // Status
+        'role-success': 'var(--role-success)',
+        'on-success': 'var(--role-on-success)',
+        'success-container': 'var(--role-success-container)',
+        'on-success-container': 'var(--role-on-success-container)',
+        'role-warning': 'var(--role-warning)',
+        'on-warning': 'var(--role-on-warning)',
+        'warning-container': 'var(--role-warning-container)',
+        'on-warning-container': 'var(--role-on-warning-container)',
+        'role-danger': 'var(--role-danger)',
+        'on-danger': 'var(--role-on-danger)',
+        'danger-container': 'var(--role-danger-container)',
+        'on-danger-container': 'var(--role-on-danger-container)',
+        // Surfaces: bg-surface / bg-surface-variant / bg-background
+        'background': 'var(--role-background)',
+        'surface': 'var(--role-surface)',
+        'surface-variant': 'var(--role-surface-variant)',
+        // Text hierarchy: text-on-surface / text-on-surface-variant
+        'on-surface': 'var(--role-on-surface)',
+        'on-surface-variant': 'var(--role-on-surface-variant)',
+        // Border / divider: border-outline
+        'outline': 'var(--role-outline)',
       },
     },
   },

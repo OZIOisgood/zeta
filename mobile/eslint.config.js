@@ -80,6 +80,7 @@ module.exports = defineConfig([
       'src/app/**',
       'src/call/**',
       'src/theme/colors.ts',
+      'src/theme/roles.ts',
       'src/components/ui/z-screen.tsx',
     ],
     rules: {
