@@ -560,7 +560,14 @@
       "durationInvalid": "Gib eine Dauer größer als null ein.",
       "startTimeRequired": "Die Startzeit ist erforderlich.",
       "endTimeRequired": "Die Endzeit ist erforderlich.",
-      "dateRequired": "Das Datum ist erforderlich."
+      "dateRequired": "Das Datum ist erforderlich.",
+      "manageTitle": "Verfügbarkeit",
+      "noPermission": "Verfügbarkeit nicht verfügbar",
+      "noPermissionDescription": "Du hast keine Berechtigung, die Coaching-Verfügbarkeit zu verwalten.",
+      "endBeforeStart": "Die Endzeit muss nach der Startzeit liegen.",
+      "selectDayPlaceholder": "Tag auswählen",
+      "selectTimePlaceholder": "Uhrzeit auswählen",
+      "selectDatePlaceholder": "Datum auswählen"
     },
     "call": {
       "connecting": "Verbindung zum Termin wird hergestellt...",

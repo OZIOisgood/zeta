@@ -560,7 +560,14 @@
       "durationInvalid": "Enter a duration greater than zero.",
       "startTimeRequired": "Start time is required.",
       "endTimeRequired": "End time is required.",
-      "dateRequired": "Date is required."
+      "dateRequired": "Date is required.",
+      "manageTitle": "Availability",
+      "noPermission": "Availability not available",
+      "noPermissionDescription": "You do not have permission to manage coaching availability.",
+      "endBeforeStart": "End time must be after start time.",
+      "selectDayPlaceholder": "Select a day",
+      "selectTimePlaceholder": "Select a time",
+      "selectDatePlaceholder": "Select a date"
     },
     "call": {
       "connecting": "Connecting to session...",

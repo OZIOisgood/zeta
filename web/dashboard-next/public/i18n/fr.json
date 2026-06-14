@@ -560,7 +560,14 @@
       "durationInvalid": "Saisissez une durée supérieure à zéro.",
       "startTimeRequired": "L’heure de début est obligatoire.",
       "endTimeRequired": "L’heure de fin est obligatoire.",
-      "dateRequired": "La date est obligatoire."
+      "dateRequired": "La date est obligatoire.",
+      "manageTitle": "Disponibilités",
+      "noPermission": "Disponibilités non disponibles",
+      "noPermissionDescription": "Vous n’avez pas la permission de gérer les disponibilités de coaching.",
+      "endBeforeStart": "L’heure de fin doit être après l’heure de début.",
+      "selectDayPlaceholder": "Sélectionner un jour",
+      "selectTimePlaceholder": "Sélectionner une heure",
+      "selectDatePlaceholder": "Sélectionner une date"
     },
     "call": {
       "connecting": "Connexion à la séance...",
