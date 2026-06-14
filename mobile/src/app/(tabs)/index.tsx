@@ -6,9 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../api/queries/assets';
 import { useGroupsQuery } from '../../api/queries/groups';
 import { useMyBookingsQuery } from '../../api/queries/coaching';
+import { useNotificationsQuery } from '../../api/queries/notifications';
 import { useAuth } from '../../auth/auth-store';
 import { AssetCard } from '../../components/asset-card';
 import { FirstStepRow } from '../../components/first-step-row';
+import { NotificationBell } from '../../components/notification-bell';
 import { StatCard } from '../../components/stat-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
@@ -54,6 +56,8 @@ export default function HomeScreen() {
   const assets = useAssetsQuery();
   const groups = useGroupsQuery();
   const bookings = useMyBookingsQuery();
+  const notifications = useNotificationsQuery();
+  const unreadCount = notifications.data?.unread_count ?? 0;
 
   const videoList = useMemo(() => assets.data ?? [], [assets.data]);
   const groupList = useMemo(() => groups.data ?? [], [groups.data]);
@@ -192,7 +196,15 @@ export default function HomeScreen() {
       {/* Header sits OUTSIDE the ScrollView so its built-in 16px inset aligns
           with the content padding below (matching the videos screen); Home has
           no create action, so no FAB/action slot and no subtitle key. */}
-      <ZPageHeader title={t('common.nav.home')} />
+      <ZPageHeader
+        title={t('common.nav.home')}
+        action={
+          <NotificationBell
+            unreadCount={unreadCount}
+            onPress={() => router.push('/notifications')}
+          />
+        }
+      />
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 16 }}>
         {/* Stat cards: live counts that double as section navigation. */}
         <View className="flex-row gap-3">
