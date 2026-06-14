@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Clock, MessageCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAssetQuery, useFinalizeAssetMutation } from '../../api/queries/assets';
 import {
@@ -29,6 +28,8 @@ import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { showToast } from '../../components/ui/z-toast';
+import { ZSymbol } from '../../components/ui/z-symbol';
+import { Touchable } from '../../components/ui/touchable';
 import { colors } from '../../theme/colors';
 
 type AssetVideo = components['schemas']['AssetVideo'];
@@ -179,7 +180,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
   return (
     <ZCard className="gap-4">
       <View className="flex-row items-center gap-2">
-        <MessageCircle color={colors.primary} size={18} />
+        <ZSymbol name="message" label={t('videos.comments')} size={18} color={colors.primary} />
         <Text className="text-sm font-semibold text-z-text">{t('videos.comments')}</Text>
         <ZBadge label={String(topLevel.length)} />
       </View>
@@ -224,9 +225,9 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
                     testID={`thread-collapse-${review.id}`}
                     icon={
                       isCollapsed ? (
-                        <ChevronRight color={colors.muted} size={14} />
+                        <ZSymbol name="chevron-right" label={t('videos.reply', { count: replyCount })} size={14} color={colors.muted} />
                       ) : (
-                        <ChevronDown color={colors.muted} size={14} />
+                        <ZSymbol name="chevron-down" label={t('videos.reply', { count: replyCount })} size={14} color={colors.muted} />
                       )
                     }
                     onPress={() => toggleThread(review.id)}
@@ -390,7 +391,7 @@ export default function AssetDetailScreen() {
             />
           ) : (
             <View className="items-center gap-2">
-              <Clock color={colors.bg} size={28} />
+              <ZSymbol name="clock" label={t('videos.processingUnavailable')} size={28} color={colors.bg} />
               <Text className="text-z-bg">{t('videos.processingUnavailable')}</Text>
             </View>
           )}
@@ -400,7 +401,7 @@ export default function AssetDetailScreen() {
           {/* Back row — the prominent title lives in the metadata card below. */}
           <View className="flex-row items-center">
             <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-              <ArrowLeft color={colors.text} size={22} />
+              <ZSymbol name="back" label={t('common.actions.back')} size={22} color={colors.text} />
             </ZIconButton>
           </View>
 
@@ -418,16 +419,16 @@ export default function AssetDetailScreen() {
               {data.title}
             </Text>
             {group ? (
-              <Pressable
-                accessibilityRole="button"
+              <Touchable
                 onPress={() => router.push(`/group/${group.id}`)}
+                accessibilityLabel={group.name}
                 className="flex-row items-center gap-2"
               >
                 <ZAvatar image={group.avatar} fallback={initialsFromName(group.name)} size={36} alt={group.name} />
                 <Text className="flex-1 text-sm font-semibold text-z-primary" numberOfLines={1}>
                   {group.name}
                 </Text>
-              </Pressable>
+              </Touchable>
             ) : null}
             <Text className="text-sm text-z-muted">
               {data.description ? data.description : t('videos.phase4.noDescription')}
@@ -436,7 +437,7 @@ export default function AssetDetailScreen() {
               <ZButton
                 label={t('videos.markReviewed')}
                 testID="asset-finalize"
-                icon={<Check color={colors.onPrimary} size={16} />}
+                icon={<ZSymbol name="check" label={t('videos.markReviewed')} size={16} color={colors.onPrimary} />}
                 onPress={onPressFinalize}
               />
             ) : null}

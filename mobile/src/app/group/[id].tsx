@@ -4,18 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import {
-  ArrowLeft,
-  Copy,
-  Link,
-  Mail,
-  QrCode,
-  Settings,
-  Share2,
-  ShieldCheck,
-  TriangleAlert,
-  Users,
-} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import QRCodeSvg from 'react-native-qrcode-svg';
 import {
@@ -46,6 +34,7 @@ import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { showToast } from '../../components/ui/z-toast';
 import { ZTextInput } from '../../components/ui/z-text-input';
+import { ZSymbol } from '../../components/ui/z-symbol';
 import { colors } from '../../theme/colors';
 
 /** Web invite base URL: produce the same link the web app generates so a QR
@@ -97,7 +86,7 @@ function MemberSection({
 }) {
   const { t } = useTranslation();
   const count = members?.length ?? 0;
-  const Icon = kind === 'experts' ? ShieldCheck : Users;
+  const iconName = kind === 'experts' ? 'shield-check' : 'users';
   const emptyTitle = kind === 'experts' ? t('groups.noExperts') : t('groups.noStudents');
   const emptyDescription =
     kind === 'experts' ? t('groups.noExpertsDescription') : t('groups.inviteStudents');
@@ -105,7 +94,7 @@ function MemberSection({
   return (
     <ZCard>
       <View className="flex-row items-start gap-3">
-        <ZIconTile tone="neutral" icon={<Icon color={colors.primary} size={20} />} />
+        <ZIconTile tone="neutral" icon={<ZSymbol name={iconName} label={title} size={20} color={colors.primary} />} />
         <View className="flex-1">
           <View className="flex-row flex-wrap items-center gap-2">
             <Text className="text-base font-semibold text-z-text">{title}</Text>
@@ -122,7 +111,7 @@ function MemberSection({
           <ZEmptyState
             title={t('groups.membersLoadFailed')}
             description={t('home.error.description')}
-            icon={<TriangleAlert color={colors.primary} size={24} />}
+            icon={<ZSymbol name="warning" label={t('groups.membersLoadFailed')} size={24} color={colors.primary} />}
           >
             <ZButton
               testID={`members-retry-${kind}`}
@@ -153,7 +142,7 @@ function MemberSection({
         </View>
       ) : (
         <View className="mt-5">
-          <ZEmptyState title={emptyTitle} description={emptyDescription} icon={<Icon color={colors.primary} size={24} />} />
+          <ZEmptyState title={emptyTitle} description={emptyDescription} icon={<ZSymbol name={iconName} label={emptyTitle} size={24} color={colors.primary} />} />
         </View>
       )}
     </ZCard>
@@ -256,7 +245,7 @@ function InviteSection({ groupId }: { groupId: string }) {
     <ZCard testID="group-invite-section">
       {/* Header */}
       <View className="flex-row items-start gap-3">
-        <ZIconTile tone="neutral" icon={<QrCode color={colors.primary} size={20} />} />
+        <ZIconTile tone="neutral" icon={<ZSymbol name="qr-code" label={t('groups.inviteDialog.title')} size={20} color={colors.primary} />} />
         <View className="flex-1">
           <Text className="text-base font-semibold text-z-text">
             {t('groups.inviteDialog.title')}
@@ -287,7 +276,7 @@ function InviteSection({ groupId }: { groupId: string }) {
 
           {/* Email hint */}
           <View className="flex-row items-start gap-2 rounded-md border border-z-border bg-z-bg p-3">
-            <Mail color={colors.primary} size={16} />
+            <ZSymbol name="mail" label={t('groups.inviteDialog.emailHint')} size={16} color={colors.primary} />
             <Text className="flex-1 text-sm leading-6 text-z-muted">
               {t('groups.inviteDialog.emailHint')}
             </Text>
@@ -323,7 +312,7 @@ function InviteSection({ groupId }: { groupId: string }) {
             <View className="items-center justify-center rounded-md border border-dashed border-z-border bg-z-surface p-3">
               {qrError ? (
                 <View className="items-center p-3">
-                  <QrCode color={colors.muted} size={32} />
+                  <ZSymbol name="qr-code" label={t('groups.inviteDialog.qrUnavailable')} size={32} color={colors.muted} />
                   <Text className="mt-2 text-center text-xs text-z-muted">
                     {t('groups.inviteDialog.qrUnavailable')}
                   </Text>
@@ -342,7 +331,7 @@ function InviteSection({ groupId }: { groupId: string }) {
             {/* Share link */}
             <View>
               <View className="flex-row items-center gap-2">
-                <Link color={colors.primary} size={16} />
+                <ZSymbol name="link" label={t('groups.inviteDialog.shareLink')} size={16} color={colors.primary} />
                 <Text className="text-sm font-semibold text-z-text">
                   {t('groups.inviteDialog.shareLink')}
                 </Text>
@@ -362,7 +351,7 @@ function InviteSection({ groupId }: { groupId: string }) {
               testID="group-invite-copy-btn"
               label={t('common.actions.copyLink')}
               variant="secondary"
-              icon={<Copy color={colors.text} size={16} />}
+              icon={<ZSymbol name="copy" label={t('common.actions.copyLink')} size={16} color={colors.text} />}
               onPress={() => void handleCopyLink()}
             />
             {!qrError && (
@@ -370,7 +359,7 @@ function InviteSection({ groupId }: { groupId: string }) {
                 testID="group-invite-share-qr-btn"
                 label={t('common.actions.downloadQr')}
                 variant="secondary"
-                icon={<Share2 color={colors.text} size={16} />}
+                icon={<ZSymbol name="share" label={t('common.actions.downloadQr')} size={16} color={colors.text} />}
                 onPress={() => void handleShareQr()}
               />
             )}
@@ -485,7 +474,7 @@ export default function GroupDetailScreen() {
           {/* Header */}
           <View className="flex-row items-center gap-3 p-4">
             <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-              <ArrowLeft color={colors.text} size={22} />
+              <ZSymbol name="back" label={t('common.actions.back')} size={22} color={colors.text} />
             </ZIconButton>
             <ZAvatar
               image={data.avatar ?? undefined}
@@ -504,7 +493,7 @@ export default function GroupDetailScreen() {
                 label={t('groups.preferences')}
                 onPress={() => router.push(`/group/${id ?? ''}/preferences`)}
               >
-                <Settings color={colors.text} size={22} />
+                <ZSymbol name="settings" label={t('groups.preferences')} size={22} color={colors.text} />
               </ZIconButton>
             ) : null}
           </View>
@@ -553,7 +542,7 @@ export default function GroupDetailScreen() {
               <ZEmptyState
                 title={t('groups.membersUnavailable')}
                 description={t('groups.membersUnavailableDescription')}
-                icon={<TriangleAlert color={colors.primary} size={24} />}
+                icon={<ZSymbol name="warning" label={t('groups.membersUnavailable')} size={24} color={colors.primary} />}
               />
             )}
 
