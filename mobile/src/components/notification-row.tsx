@@ -39,18 +39,22 @@ const ICON_TONE: Record<NotificationIcon, ZIconTileTone> = {
   member: 'success',
   review: 'success',
   booking: 'warning',
-  upload: 'primary',
+  // Web uses the default case (bg-z-surface-warm / text-z-primary-strong) for
+  // both upload and invite — align to 'neutral' tone (see notification-list.component.ts
+  // iconClasses: default → bg-[var(--z-surface-warm)] text-[var(--z-primary-strong)]).
+  upload: 'neutral',
   invite: 'neutral',
 };
 
 // ZIconTile maps tone→foreground; pass the matching glyph color so the lucide
-// stroke matches the tile's foreground token.
+// stroke matches the tile's foreground token. For neutral tiles the web uses
+// --z-primary-strong (not --z-primary), so we follow suit.
 const ICON_COLOR: Record<NotificationIcon, string> = {
   member: colors.success,
   review: colors.success,
   booking: colors.warning,
-  upload: colors.primary,
-  invite: colors.primary,
+  upload: colors.primaryStrong,
+  invite: colors.primaryStrong,
 };
 
 function TypeGlyph({ icon }: { icon: NotificationIcon }) {
