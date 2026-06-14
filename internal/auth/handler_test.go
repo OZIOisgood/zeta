@@ -206,6 +206,111 @@ func testAccessToken(t *testing.T) string {
 	return signed
 }
 
+// ── Logout ────────────────────────────────────────────────────────────────────
+
+// logoutURL is the canonical WorkOS logout URL shape produced by GetLogoutURL.
+const logoutBaseURL = "https://api.workos.test/user_management/sessions/logout"
+
+func parseLogoutURL(t *testing.T, raw string) *url.URL {
+	t.Helper()
+	u, err := url.Parse(raw)
+	require.NoError(t, err)
+	return u
+}
+
+// TestLogout_CookiePath verifies the existing web-cookie path: the session ID
+// is extracted from the JWT stored in the zeta_session cookie and handed to
+// WorkOS, with the frontend URL as ReturnTo.
+func TestLogout_CookiePath(t *testing.T) {
+	t.Setenv("DEV_AUTH_ENABLED", "true")
+	t.Setenv("FRONTEND_URL", "https://app.example.test")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().GetLogoutURL(usermanagement.GetLogoutURLOpts{
+		SessionID: "session_cookie",
+		ReturnTo:  "https://app.example.test",
+	}).Return(url.Parse(logoutBaseURL + "?session_id=session_cookie&return_to=https%3A%2F%2Fapp.example.test"))
+
+	h := NewHandler(slog.Default(), nil, workos)
+
+	// Build a JWT with the sid embedded (matches what Callback stores in the cookie).
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"sid": "session_cookie"})
+	cookieVal, err := token.SignedString([]byte("test-secret"))
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req.AddCookie(&http.Cookie{Name: CookieName, Value: cookieVal})
+	rec := httptest.NewRecorder()
+
+	h.Logout(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	var resp map[string]string
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	u := parseLogoutURL(t, resp["logoutUrl"])
+	assert.Equal(t, "session_cookie", u.Query().Get("session_id"))
+}
+
+// TestLogout_BearerFallback is the core regression test for WP0: when no
+// cookie is present (Bearer/mobile caller) the handler falls back to the SID
+// from the JWT-middleware-populated UserContext and calls GetLogoutURL without
+// a ReturnTo (no browser redirect needed for API callers).
+func TestLogout_BearerFallback(t *testing.T) {
+	t.Setenv("DEV_AUTH_ENABLED", "true")
+	t.Setenv("FRONTEND_URL", "https://app.example.test")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().GetLogoutURL(usermanagement.GetLogoutURLOpts{
+		SessionID: "session_bearer",
+		ReturnTo:  "",
+	}).Return(url.Parse(logoutBaseURL + "?session_id=session_bearer"))
+
+	h := NewHandler(slog.Default(), nil, workos)
+
+	// No cookie — simulate Bearer caller with UserContext pre-populated by middleware.
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req = contextWithUser(req, &UserContext{ID: "user_1", SID: "session_bearer"})
+	rec := httptest.NewRecorder()
+
+	h.Logout(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	var resp map[string]string
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	u := parseLogoutURL(t, resp["logoutUrl"])
+	assert.Equal(t, "session_bearer", u.Query().Get("session_id"),
+		"WorkOS session must be revoked via the Bearer-path SID")
+	assert.Empty(t, u.Query().Get("return_to"),
+		"Bearer callers must not receive a browser ReturnTo")
+}
+
+// TestLogout_NeitherCookieNorSID verifies graceful degradation when there is
+// no cookie and no SID in context (unauthenticated or already-expired token):
+// the response is still 200 with the frontend URL so the client can sign out locally.
+func TestLogout_NeitherCookieNorSID(t *testing.T) {
+	t.Setenv("DEV_AUTH_ENABLED", "true")
+	t.Setenv("FRONTEND_URL", "https://app.example.test")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	// GetLogoutURL must NOT be called.
+
+	h := NewHandler(slog.Default(), nil, workos)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	// No cookie, no user context.
+	rec := httptest.NewRecorder()
+
+	h.Logout(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	var resp map[string]string
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	assert.Equal(t, "https://app.example.test", resp["logoutUrl"])
+}
+
 func TestTokenExchangeReturnsTokenPair(t *testing.T) {
 	t.Setenv("WORKOS_CLIENT_ID", "client_test")
 

@@ -391,7 +391,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	// 1. Clear local cookies
-	cookie, err := r.Cookie(CookieName)
+	cookie, cookieErr := r.Cookie(CookieName)
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    "",
@@ -411,43 +411,65 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		SameSite: cookieSameSite(),
 	})
 
-	// 2. Determine redirect URL
+	// 2. Resolve the WorkOS session ID.
+	//
+	// Web callers send the access token in a cookie; Bearer/mobile callers have
+	// no cookie but the JWT middleware has already validated their token and
+	// populated UserContext.SID. We try the cookie path first (preserving the
+	// existing web behaviour), then fall back to the context user so that mobile
+	// callers also have their WorkOS session revoked.
+	var sid string
+	var isBearerCaller bool
+
+	if cookieErr == nil && cookie.Value != "" {
+		var logoutClaims jwt.MapClaims
+		_, _, _ = jwt.NewParser().ParseUnverified(cookie.Value, &logoutClaims)
+		sid, _ = logoutClaims["sid"].(string)
+	} else {
+		if cookieErr != nil {
+			h.logger.WarnContext(ctx, "auth_logout_no_cookie",
+				slog.String("component", "auth"),
+				slog.Any("err", cookieErr),
+			)
+		} else {
+			h.logger.WarnContext(ctx, "auth_logout_empty_cookie",
+				slog.String("component", "auth"),
+			)
+		}
+		// Fall back to the SID populated by the JWT middleware for Bearer callers.
+		if u := GetUser(ctx); u != nil && u.SID != "" {
+			sid = u.SID
+			isBearerCaller = true
+		}
+	}
+
+	// 3. Determine redirect / logout URL.
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
 		frontendURL = "http://localhost:4200"
 	}
 	redirectTarget := frontendURL
 
-	if err != nil {
-		h.logger.WarnContext(ctx, "auth_logout_no_cookie",
-			slog.String("component", "auth"),
-			slog.Any("err", err),
-		)
-	} else if cookie.Value == "" {
-		h.logger.WarnContext(ctx, "auth_logout_empty_cookie",
-			slog.String("component", "auth"),
-		)
-	}
-
-	if err == nil && cookie.Value != "" {
-		tokenString := cookie.Value
-
-		var logoutClaims jwt.MapClaims
-		_, _, _ = jwt.NewParser().ParseUnverified(tokenString, &logoutClaims)
-
-		if sid, ok := logoutClaims["sid"].(string); ok && sid != "" {
-			logoutURL, err := h.workos.GetLogoutURL(usermanagement.GetLogoutURLOpts{
-				SessionID: sid,
-				ReturnTo:  frontendURL,
-			})
-			if err != nil {
-				h.logger.ErrorContext(ctx, "auth_logout_url_failed",
-					slog.String("component", "auth"),
-					slog.Any("err", err),
-				)
-			} else {
-				redirectTarget = logoutURL.String()
-			}
+	if sid != "" {
+		// For Bearer/mobile callers we do not supply a ReturnTo: there is no
+		// browser session to redirect after WorkOS terminates the server-side
+		// session. Web callers keep the existing behaviour of returning to the
+		// frontend URL.
+		returnTo := frontendURL
+		if isBearerCaller {
+			returnTo = ""
+		}
+		logoutURL, err := h.workos.GetLogoutURL(usermanagement.GetLogoutURLOpts{
+			SessionID: sid,
+			ReturnTo:  returnTo,
+		})
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_logout_url_failed",
+				slog.String("component", "auth"),
+				slog.Any("err", err),
+			)
+		} else {
+			redirectTarget = logoutURL.String()
 		}
 	}
 
@@ -455,7 +477,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		slog.String("component", "auth"),
 	)
 
-	// 3. Return the logout URL as JSON instead of redirecting
+	// 4. Return the logout URL as JSON instead of redirecting.
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"logoutUrl": redirectTarget,
