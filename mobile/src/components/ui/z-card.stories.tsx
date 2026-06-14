@@ -6,7 +6,7 @@ const meta = {
   title: 'UI/Card',
   component: ZCard,
   args: {
-    children: <Text className="text-z-foreground">Section card content</Text>,
+    children: <Text className="text-z-text">Section card content</Text>,
   },
 } satisfies Meta<typeof ZCard>;
 export default meta;
@@ -20,20 +20,20 @@ export const States: Story = {
     <View className="gap-3">
       {/* Single text child */}
       <ZCard>
-        <Text className="text-z-foreground">Single line of content</Text>
+        <Text className="text-z-text">Single line of content</Text>
       </ZCard>
 
       {/* With a title + body (multiple children) */}
       <ZCard>
-        <Text className="mb-1 text-base font-semibold text-z-foreground">Card title</Text>
-        <Text className="text-z-muted-foreground">
+        <Text className="mb-1 text-base font-semibold text-z-text">Card title</Text>
+        <Text className="text-z-muted">
           Supporting body copy that sits beneath the card title.
         </Text>
       </ZCard>
 
       {/* Long-text overflow */}
       <ZCard>
-        <Text className="text-z-foreground">
+        <Text className="text-z-text">
           A very long stretch of content that keeps going and going to verify the card grows
           vertically and wraps its text instead of overflowing its rounded bordered surface.
         </Text>
@@ -46,14 +46,14 @@ export const States: Story = {
 
       {/* className override (extra spacing) */}
       <ZCard className="gap-2 p-6">
-        <Text className="text-z-foreground">Card with a className padding override</Text>
+        <Text className="text-z-text">Card with a className padding override</Text>
       </ZCard>
 
       {/* Nested rows of content */}
       <ZCard>
         <View className="flex-row items-center justify-between">
-          <Text className="text-z-foreground">Label</Text>
-          <Text className="text-z-muted-foreground">Value</Text>
+          <Text className="text-z-text">Label</Text>
+          <Text className="text-z-muted">Value</Text>
         </View>
       </ZCard>
     </View>

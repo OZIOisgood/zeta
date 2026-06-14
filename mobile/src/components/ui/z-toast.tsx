@@ -77,7 +77,9 @@ const ToastIcon = {
   info: Info,
 } as const;
 
-function ToastCard({ toast, onDismiss }: { toast: ZToast; onDismiss: (id: number) => void }) {
+/** Presentational toast card (web counterpart: the standalone `z-toast`). Exported
+ *  so stories/tests can render a toast without driving the auto-dismissing store. */
+export function ToastCard({ toast, onDismiss }: { toast: ZToast; onDismiss: (id: number) => void }) {
   const { t } = useTranslation();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const Icon = ToastIcon[toast.tone];
