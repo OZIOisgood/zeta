@@ -976,6 +976,157 @@ paths:
         "500":
           description: Failed to deactivate session type
 
+  /groups/{groupID}/coaching/availability:
+    get:
+      tags: [coaching]
+      summary: List the calling expert's weekly availability for a group
+      description: >
+        Returns the calling expert's active availability blocks in the group.
+        Requires group membership and coaching:availability:manage.
+      operationId: listMyAvailability
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The expert's availability blocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingAvailability"
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "500":
+          description: Failed to list availability
+    post:
+      tags: [coaching]
+      summary: Add a weekly availability block
+      description: >
+        Adds a recurring weekly availability block (day_of_week 0-6, start_time
+        before end_time, HH:MM). Overlapping or adjacent blocks for the same day
+        are merged server-side, so the response is the full merged list for the
+        expert in this group. Requires coaching:availability:manage.
+      operationId: createAvailability
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilityRequest"
+      responses:
+        "201":
+          description: Availability created; full merged list returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingAvailability"
+        "400":
+          description: Invalid day_of_week or time range
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "500":
+          description: Failed to create availability
+
+  /groups/{groupID}/coaching/availability/{availabilityID}:
+    put:
+      tags: [coaching]
+      summary: Update a weekly availability block
+      description: >
+        Updates an availability block owned by the calling expert. Overlapping
+        blocks are re-merged, so the response is the full merged list. Requires
+        coaching:availability:manage.
+      operationId: updateAvailability
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: availabilityID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilityRequest"
+      responses:
+        "200":
+          description: Availability updated; full merged list returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingAvailability"
+        "400":
+          description: Invalid ID or time range
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "404":
+          description: Availability not found or not owned by caller
+        "500":
+          description: Failed to update availability
+    delete:
+      tags: [coaching]
+      summary: Delete a weekly availability block
+      description: >
+        Deletes an availability block owned by the calling expert. Requires
+        coaching:availability:manage.
+      operationId: deleteAvailability
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: availabilityID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Availability deleted
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "404":
+          description: Availability not found or not owned by caller
+        "500":
+          description: Failed to delete availability
+
   /groups/{groupID}/coaching/experts:
     get:
       tags: [coaching]
@@ -1904,6 +2055,58 @@ components:
         - duration_minutes
         - status
         - created_at
+
+    CoachingAvailability:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        expert_id:
+          type: string
+        group_id:
+          type: string
+          format: uuid
+        day_of_week:
+          type: integer
+          description: 0 = Sunday … 6 = Saturday
+        start_time:
+          type: string
+          description: HH:MM (24-hour)
+        end_time:
+          type: string
+          description: HH:MM (24-hour)
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - expert_id
+        - group_id
+        - day_of_week
+        - start_time
+        - end_time
+        - is_active
+        - created_at
+
+    AvailabilityRequest:
+      type: object
+      properties:
+        day_of_week:
+          type: integer
+          description: 0 = Sunday … 6 = Saturday
+        start_time:
+          type: string
+          description: HH:MM (24-hour)
+        end_time:
+          type: string
+          description: HH:MM (24-hour)
+      required:
+        - day_of_week
+        - start_time
+        - end_time
 
     CreateSessionTypeRequest:
       type: object
