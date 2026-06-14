@@ -245,6 +245,7 @@ export default function GroupPreferencesScreen() {
                       fallback={initialsFromName(name)}
                       alt={name}
                       label={t('avatar.selectImage')}
+                      helperText={t('avatar.requirement')}
                       disabled={saving}
                     />
                   </View>

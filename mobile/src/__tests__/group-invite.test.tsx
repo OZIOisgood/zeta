@@ -226,7 +226,7 @@ test('copy link button copies the invite URL to clipboard', async () => {
 
 // ── mutation error ────────────────────────────────────────────────────────────
 
-test('failed invitation shows error toast', async () => {
+test('failed invitation shows inline error banner, not a toast', async () => {
   mockPermissions = ['groups:invites:create'];
   mockCreateInvitationMutateAsync.mockRejectedValueOnce(new Error('network'));
   const { Providers } = setup();
@@ -234,9 +234,9 @@ test('failed invitation shows error toast', async () => {
   await render(<Providers><GroupDetailScreen /></Providers>);
   await act(async () => { fireEvent.press(screen.getByTestId('group-invite-create-btn')); });
 
-  await waitFor(() =>
-    expect(showToast).toHaveBeenCalledWith(expect.any(String), undefined, 'error'),
-  );
+  // Form-save failures surface in-form (mirrors create-group + web), not via a toast.
+  await waitFor(() => expect(screen.getByTestId('group-invite-error')).toBeOnTheScreen());
+  expect(showToast).not.toHaveBeenCalledWith(expect.any(String), undefined, 'error');
   // QR result view not shown
   expect(screen.queryByTestId('qr-code')).toBeNull();
 });

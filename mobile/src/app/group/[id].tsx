@@ -185,6 +185,7 @@ function InviteSection({ groupId }: { groupId: string }) {
   const [email, setEmail] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
   const [invitation, setInvitation] = useState<{ id: string; code: string } | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [qrError, setQrError] = useState(false);
   const qrRef = useRef<{ toDataURL: (cb: (data: string) => void) => void } | null>(null);
 
@@ -201,6 +202,7 @@ function InviteSection({ groupId }: { groupId: string }) {
       return;
     }
     setEmailTouched(false);
+    setErrorBanner(null);
     const sentByEmail = email.trim().length > 0;
     try {
       const result = await createInvitation({ groupID: groupId, email: email.trim() || undefined });
@@ -211,7 +213,7 @@ function InviteSection({ groupId }: { groupId: string }) {
         'success',
       );
     } catch {
-      showToast(t('groups.inviteDialog.failed'), undefined, 'error');
+      setErrorBanner(t('groups.inviteDialog.failed'));
     }
   }
 
@@ -246,6 +248,7 @@ function InviteSection({ groupId }: { groupId: string }) {
     setInvitation(null);
     setEmail('');
     setEmailTouched(false);
+    setErrorBanner(null);
     setQrError(false);
   }
 
@@ -290,6 +293,18 @@ function InviteSection({ groupId }: { groupId: string }) {
             </Text>
           </View>
 
+          {/* Inline error banner on create failure — mirrors create-group form
+              (create.tsx) and the web invitation dialog, which surface failures
+              in-form rather than via a toast. */}
+          {errorBanner && (
+            <View
+              testID="group-invite-error"
+              className="rounded-md border border-z-danger bg-z-danger/10 p-3"
+            >
+              <Text className="text-sm text-z-danger">{errorBanner}</Text>
+            </View>
+          )}
+
           <View className="flex-row justify-end">
             <ZButton
               testID="group-invite-create-btn"
@@ -305,7 +320,7 @@ function InviteSection({ groupId }: { groupId: string }) {
           {/* QR + link panel */}
           <View className="gap-4 rounded-lg border border-z-border bg-z-bg p-4">
             {/* QR code */}
-            <View className="items-center justify-center rounded-md border border-dashed border-z-border bg-white p-3">
+            <View className="items-center justify-center rounded-md border border-dashed border-z-border bg-z-surface p-3">
               {qrError ? (
                 <View className="items-center p-3">
                   <QrCode color={colors.muted} size={32} />

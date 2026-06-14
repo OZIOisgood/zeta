@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { ZAvatar } from './z-avatar';
 import { ZButton } from './z-button';
 
@@ -8,8 +8,9 @@ import { ZButton } from './z-button';
  * wrapper (web/dashboard-next/src/app/shared/ui/avatar-input/).
  * Shows the current avatar via `ZAvatar` plus a secondary button that opens
  * the image library; on a successful pick the base-64 payload is emitted.
- * `label` is passed already-translated by the consumer — primitives do not
- * translate.
+ * `label` and `helperText` are passed already-translated by the consumer —
+ * primitives do not translate. `helperText` mirrors the web requirement hint
+ * (avatar.requirement) shown next to the select button.
  */
 export function ZAvatarInput({
   value,
@@ -17,6 +18,7 @@ export function ZAvatarInput({
   fallback,
   alt,
   label,
+  helperText,
   disabled = false,
   testID,
 }: {
@@ -25,6 +27,7 @@ export function ZAvatarInput({
   fallback?: string;
   alt?: string;
   label: string;
+  helperText?: string;
   disabled?: boolean;
   testID?: string;
 }) {
@@ -43,14 +46,21 @@ export function ZAvatarInput({
   }
 
   return (
-    <View testID={testID} className="flex-row items-center gap-3">
+    <View testID={testID} className="flex-row items-start gap-3">
       <ZAvatar image={value} fallback={fallback} alt={alt} size={72} />
-      <ZButton
-        label={label}
-        variant="secondary"
-        disabled={disabled}
-        onPress={() => void handlePick()}
-      />
+      <View className="flex-1 gap-2">
+        <View className="flex-row">
+          <ZButton
+            label={label}
+            variant="secondary"
+            disabled={disabled}
+            onPress={() => void handlePick()}
+          />
+        </View>
+        {helperText ? (
+          <Text className="text-xs leading-5 text-z-muted">{helperText}</Text>
+        ) : null}
+      </View>
     </View>
   );
 }

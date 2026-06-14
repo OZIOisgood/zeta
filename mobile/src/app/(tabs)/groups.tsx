@@ -60,7 +60,7 @@ export default function GroupsScreen() {
       <View testID="groups-empty" className="flex-1 justify-center bg-z-bg p-4">
         <ZEmptyState
           title={t('groups.noGroupsYet')}
-          description={t('groups.noGroupsJoined')}
+          description={t(canCreate ? 'groups.createFirstDescription' : 'groups.noGroupsJoined')}
           icon={<Users color={colors.primary} size={24} />}
         />
       </View>

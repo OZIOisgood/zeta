@@ -99,6 +99,7 @@ export default function CreateGroupScreen() {
                 value={avatar ?? undefined}
                 onChange={(b64) => setAvatar(b64)}
                 label={t('avatar.selectImage')}
+                helperText={t('avatar.requirement')}
                 disabled={isPending}
               />
               {touched && avatarMissing && (
