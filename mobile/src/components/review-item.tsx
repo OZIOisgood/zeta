@@ -73,6 +73,11 @@ export function ReviewItem({
     try {
       await onEdit(review, trimmed);
       setIsEditing(false);
+    } catch {
+      // onEdit (the parent's handleEdit) sets the error banner and re-throws so
+      // setIsEditing(false) is skipped — the form stays open with the user's draft.
+      // We catch here to avoid an unhandled-promise-rejection; user feedback is
+      // handled by the parent via the mutationError banner.
     } finally {
       setSavingEdit(false);
     }

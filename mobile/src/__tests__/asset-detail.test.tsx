@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 jest.mock('expo-secure-store', () => ({
@@ -18,17 +18,25 @@ jest.mock('expo-video', () => ({
 }));
 
 const mockUseAssetQuery = jest.fn();
+const mockUseFinalizeAssetMutation = jest.fn();
 jest.mock('../api/queries/assets', () => ({
   ...jest.requireActual('../api/queries/assets'),
   useAssetQuery: (id: string) => mockUseAssetQuery(id),
+  useFinalizeAssetMutation: (id: string) => mockUseFinalizeAssetMutation(id),
 }));
 
 const mockUseReviewsQuery = jest.fn();
 const mockUseCreateReviewMutation = jest.fn();
+const mockUseUpdateReviewMutation = jest.fn();
+const mockUseDeleteReviewMutation = jest.fn();
+const mockUseEnhanceReviewTextMutation = jest.fn();
 jest.mock('../api/queries/reviews', () => ({
   ...jest.requireActual('../api/queries/reviews'),
   useReviewsQuery: (videoId: string) => mockUseReviewsQuery(videoId),
   useCreateReviewMutation: (videoId: string) => mockUseCreateReviewMutation(videoId),
+  useUpdateReviewMutation: (videoId: string) => mockUseUpdateReviewMutation(videoId),
+  useDeleteReviewMutation: (videoId: string) => mockUseDeleteReviewMutation(videoId),
+  useEnhanceReviewTextMutation: () => mockUseEnhanceReviewTextMutation(),
 }));
 
 let mockPermissions: string[] | null = null;
@@ -56,6 +64,10 @@ beforeEach(() => {
   // Default: no reviews
   mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: [] });
   mockUseCreateReviewMutation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false, isError: false });
+  mockUseUpdateReviewMutation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false, isError: false });
+  mockUseDeleteReviewMutation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false, isError: false });
+  mockUseEnhanceReviewTextMutation.mockReturnValue({ mutateAsync: jest.fn() });
+  mockUseFinalizeAssetMutation.mockReturnValue({ mutateAsync: jest.fn() });
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
 afterEach(() => client.clear());
@@ -195,4 +207,61 @@ test('processing-parts banner renders via i18n plural key (testID present)', asy
   expect(screen.getByText('1 more part still processing.')).toBeOnTheScreen();
   // Must NOT render the old hardcoded hand-rolled plural string pattern
   expect(screen.queryByText(/more parts still processing\./)).toBeNull();
+});
+
+// ── Fix 1: handleEdit re-throws on failure so inline form stays open ──────────
+
+test('edit form stays open and draft is preserved when the update mutation fails', async () => {
+  // reviews:edit but NOT reviews:create (simulates edit-only role)
+  mockPermissions = ['reviews:edit'];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  const failingUpdate = jest.fn().mockRejectedValue(new Error('network error'));
+  mockUseUpdateReviewMutation.mockReturnValue({ mutateAsync: failingUpdate });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // Open inline edit form on the first review (there are multiple edit buttons)
+  await act(async () => { fireEvent.press(screen.getAllByTestId('review-edit')[0]); });
+
+  // Modify the draft
+  await act(async () => {
+    fireEvent.changeText(screen.getByTestId('review-edit-input'), 'My updated note');
+  });
+
+  // Attempt to save — the mutation rejects; handleEdit re-throws so setIsEditing(false)
+  // is skipped; saveEdit catches the rethrow to avoid unhandled rejection.
+  await act(async () => { fireEvent.press(screen.getByTestId('review-edit-save')); });
+
+  // The edit form must still be visible (draft not discarded)
+  await waitFor(() => expect(screen.getByTestId('review-edit-form')).toBeOnTheScreen());
+
+  // The draft text must still be present in the input
+  expect(screen.getByTestId('review-edit-input').props.value).toBe('My updated note');
+});
+
+// ── Fix 2: mutationError banner visible outside canCompose guard ──────────────
+
+test('mutation error banner shows for edit-only role (no reviews:create)', async () => {
+  // edit-only role: can edit/delete but NOT compose
+  mockPermissions = ['reviews:edit', 'reviews:delete'];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  const failingUpdate = jest.fn().mockRejectedValue(new Error('network error'));
+  mockUseUpdateReviewMutation.mockReturnValue({ mutateAsync: failingUpdate });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // Open inline edit form on the first review (there are multiple edit buttons)
+  await act(async () => { fireEvent.press(screen.getAllByTestId('review-edit')[0]); });
+  // Save triggers the failing mutation; handleEdit sets mutationError and re-throws;
+  // saveEdit catches the rethrow so no unhandled rejection surfaces.
+  await act(async () => { fireEvent.press(screen.getByTestId('review-edit-save')); });
+
+  // The error banner must appear even though canCompose is false
+  await waitFor(() =>
+    expect(screen.getByTestId('mutation-error-banner')).toBeOnTheScreen()
+  );
 });

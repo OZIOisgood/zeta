@@ -120,8 +120,9 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
     setMutationError(null);
     try {
       await updateReview({ reviewId: review.id, content });
-    } catch {
+    } catch (e) {
       setMutationError(t('videos.reviewUpdateFailed'));
+      throw e;
     }
   }
 
@@ -248,19 +249,18 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
           </View>
         ))}
 
+      {mutationError ? (
+        <Text testID="mutation-error-banner" className="text-sm text-z-danger">{mutationError}</Text>
+      ) : null}
+
       {canCompose && (
-        <View className="gap-1">
-          <ReviewComposer
-            onSubmit={handleSubmit}
-            getCurrentTime={replyingTo ? undefined : getCurrentTime}
-            replyingTo={replyingTo ?? undefined}
-            onCancelReply={() => setReplyingTo(null)}
-            onEnhance={canEdit ? handleEnhance : undefined}
-          />
-          {mutationError ? (
-            <Text className="text-sm text-z-danger">{mutationError}</Text>
-          ) : null}
-        </View>
+        <ReviewComposer
+          onSubmit={handleSubmit}
+          getCurrentTime={replyingTo ? undefined : getCurrentTime}
+          replyingTo={replyingTo ?? undefined}
+          onCancelReply={() => setReplyingTo(null)}
+          onEnhance={canEdit ? handleEnhance : undefined}
+        />
       )}
 
       <ZConfirmDialog
