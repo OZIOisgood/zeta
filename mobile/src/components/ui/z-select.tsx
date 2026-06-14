@@ -2,13 +2,21 @@ import { useState } from 'react';
 import { Modal, Pressable, Text } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import { colors } from '../../theme/colors';
+import type { ZSelectProps } from './z-select.types';
 
-export type ZSelectOption = { value: string; label: string };
+export type { ZSelectOption, ZSelectProps } from './z-select.types';
 
 /**
- * Single-choice select. Mobile counterpart of the web `z-select` wrapper
+ * Single-choice select — NativeWind fallback (web / Storybook / jest).
+ *
+ * Mobile counterpart of the web `z-select` wrapper
  * (web/dashboard-next/src/app/shared/ui/select/). The web opens a hover
  * dropdown; the native equivalent is a trigger that opens a `Modal` list.
+ *
+ * On iOS this file is superseded by z-select.ios.tsx (SwiftUI Picker menu).
+ * On Android this file is superseded by z-select.android.tsx (Compose
+ * ExposedDropdownMenuBox). This bare fallback is the test surface and
+ * Storybook entry point.
  */
 export function ZSelect({
   value,
@@ -19,16 +27,7 @@ export function ZSelect({
   disabled = false,
   accessibilityLabel,
   testID,
-}: {
-  value?: string;
-  options: ZSelectOption[];
-  placeholder?: string;
-  onValueChange: (value: string) => void;
-  invalid?: boolean;
-  disabled?: boolean;
-  accessibilityLabel?: string;
-  testID?: string;
-}) {
+}: ZSelectProps) {
   const [open, setOpen] = useState(false);
   const selectedLabel = options.find((option) => option.value === value)?.label;
 

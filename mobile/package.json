@@ -104,7 +104,11 @@
       "^(\\./|(\\.\\./)+)(.*/)?(z-button)$": "<rootDir>/src/components/ui/z-button.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-button)\\.ios$": "<rootDir>/src/components/ui/z-button.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-button)\\.android$": "<rootDir>/src/components/ui/z-button.tsx",
-      ".*/components/ui/z-button(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-button.tsx"
+      ".*/components/ui/z-button(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-button.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-select)$": "<rootDir>/src/components/ui/z-select.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-select)\\.ios$": "<rootDir>/src/components/ui/z-select.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-select)\\.android$": "<rootDir>/src/components/ui/z-select.tsx",
+      ".*/components/ui/z-select(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-select.tsx"
     }
   },
   "private": true,
