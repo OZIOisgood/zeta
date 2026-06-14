@@ -14,6 +14,7 @@ export const TIERS: Record<string, Tier> = {
   'z-dialog-panel': 'native',
   'z-confirm-dialog': 'native',
   'z-toast': 'native',
+  'z-toast.shared': 'native',
   'z-empty-state': 'native',
   'z-query-error': 'native',
   'z-combobox': 'native',

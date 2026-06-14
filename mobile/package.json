@@ -128,7 +128,11 @@
       "^(\\./|(\\.\\./)+)(.*/)?(z-textarea)$": "<rootDir>/src/components/ui/z-textarea.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-textarea)\\.ios$": "<rootDir>/src/components/ui/z-textarea.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-textarea)\\.android$": "<rootDir>/src/components/ui/z-textarea.tsx",
-      ".*/components/ui/z-textarea(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-textarea.tsx"
+      ".*/components/ui/z-textarea(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-textarea.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-checkbox)$": "<rootDir>/src/components/ui/z-checkbox.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-checkbox)\\.ios$": "<rootDir>/src/components/ui/z-checkbox.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-checkbox)\\.android$": "<rootDir>/src/components/ui/z-checkbox.tsx",
+      ".*/components/ui/z-checkbox(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-checkbox.tsx"
     }
   },
   "private": true,
