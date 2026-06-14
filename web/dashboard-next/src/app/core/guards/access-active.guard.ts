@@ -19,7 +19,9 @@ export const accessActiveGuard: CanActivateFn = (_route, state) => {
     if (session.user()?.access_status === 'active') {
       return true;
     }
-    return router.createUrlTree(['/welcome']);
+    const tree = router.parseUrl(state.url);
+    const code = tree.queryParams['invite'] ?? tree.queryParams['code'];
+    return router.createUrlTree(['/welcome'], code ? { queryParams: { code } } : {});
   };
 
   if (isSettled(session.status())) {

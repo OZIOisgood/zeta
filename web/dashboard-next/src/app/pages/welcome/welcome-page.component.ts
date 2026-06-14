@@ -1,13 +1,13 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AccessStore } from '../../features/access/access.store';
 import { SessionStore } from '../../features/session/session.store';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
 import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
-import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
+import { ZOtpInputComponent } from '../../shared/ui/otp-input/z-otp-input.component';
 
 @Component({
   selector: 'app-welcome-page',
@@ -17,7 +17,7 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
     ZButtonComponent,
     ZFieldErrorComponent,
     ZFieldLabelComponent,
-    ZTextInputComponent,
+    ZOtpInputComponent,
   ],
   template: `
     <div class="grid min-h-dvh place-items-center bg-[var(--z-bg)] p-6">
@@ -36,9 +36,9 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
               [label]="'access.welcome.codeLabel' | transloco"
               [control]="form.controls.code"
             />
-            <z-text-input
+            <z-otp-input
               formControlName="code"
-              [placeholder]="'access.welcome.codePlaceholder' | transloco"
+              [length]="8"
               ariaDescribedBy="welcome-code-error"
               [invalid]="
                 (form.controls.code.dirty || form.controls.code.touched) &&
@@ -63,13 +63,15 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
               {{ 'access.welcome.invalidCode' | transloco }}
             </p>
           }
-          <z-button type="submit" [disabled]="access.redeemStatus() === 'loading'">
-            {{
-              access.redeemStatus() === 'loading'
-                ? ('access.welcome.redeeming' | transloco)
-                : ('access.welcome.submit' | transloco)
-            }}
-          </z-button>
+          <div class="flex justify-end">
+            <z-button type="submit" [disabled]="access.redeemStatus() === 'loading'">
+              {{
+                access.redeemStatus() === 'loading'
+                  ? ('access.welcome.redeeming' | transloco)
+                  : ('access.welcome.submit' | transloco)
+              }}
+            </z-button>
+          </div>
         </form>
         <button
           type="button"
@@ -86,15 +88,20 @@ export class WelcomePageComponent implements OnInit {
   protected readonly access = inject(AccessStore);
   protected readonly session = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected readonly form = new FormGroup({
     code: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(/\S/)],
+      validators: [Validators.required, Validators.minLength(8)],
     }),
   });
 
   ngOnInit(): void {
     this.access.resetRedeem();
+    const code = this.route.snapshot.queryParamMap.get('code');
+    if (code) {
+      this.form.controls.code.setValue(code.toUpperCase());
+    }
   }
 
   protected async submit(): Promise<void> {

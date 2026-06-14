@@ -43,6 +43,21 @@ describe('accessActiveGuard', () => {
     expect(result).toBeInstanceOf(UrlTree);
     expect((result as UrlTree).toString()).toBe('/welcome');
   });
+
+  it('forwards an invite code from the attempted URL to /welcome', () => {
+    configure({
+      status: signal('success'),
+      user: signal({ access_status: 'waitlisted' }),
+      login: vi.fn(),
+    });
+
+    const result = TestBed.runInInjectionContext(() =>
+      accessActiveGuard(routeStub, { url: '/groups?invite=XYZ' } as RouterStateSnapshot),
+    );
+
+    expect(result).toBeInstanceOf(UrlTree);
+    expect((result as UrlTree).toString()).toBe('/welcome?code=XYZ');
+  });
 });
 
 describe('waitlistedOnlyGuard', () => {

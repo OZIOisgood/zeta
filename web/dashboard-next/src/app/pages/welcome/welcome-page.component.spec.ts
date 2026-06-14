@@ -1,6 +1,12 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import {
+  ActivatedRoute,
+  Router,
+  convertToParamMap,
+  ParamMap,
+  provideRouter,
+} from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { RedeemResponse } from '../../core/http/access-api.service';
 import { AccessStore } from '../../features/access/access.store';
@@ -26,7 +32,15 @@ type SessionStub = {
 let access: AccessStub;
 let session: SessionStub;
 
-async function setup(): Promise<ComponentFixture<WelcomePageComponent>> {
+function routeStub(queryParams: Record<string, string> = {}): {
+  snapshot: { queryParamMap: ParamMap };
+} {
+  return { snapshot: { queryParamMap: convertToParamMap(queryParams) } };
+}
+
+async function setup(
+  queryParams: Record<string, string> = {},
+): Promise<ComponentFixture<WelcomePageComponent>> {
   access = {
     redeemStatus: signal<string>('idle'),
     redeem: vi.fn(async () => redeemResult),
@@ -46,7 +60,7 @@ async function setup(): Promise<ComponentFixture<WelcomePageComponent>> {
         preloadLangs: true,
       }),
     ],
-    providers: [provideRouter([])],
+    providers: [provideRouter([]), { provide: ActivatedRoute, useValue: routeStub(queryParams) }],
   })
     .overrideComponent(WelcomePageComponent, {
       set: {
@@ -64,9 +78,7 @@ async function setup(): Promise<ComponentFixture<WelcomePageComponent>> {
 }
 
 function setCode(fixture: ComponentFixture<WelcomePageComponent>, value: string): void {
-  const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
-  input.value = value;
-  input.dispatchEvent(new Event('input'));
+  fixture.componentInstance['form'].controls.code.setValue(value);
   fixture.detectChanges();
 }
 
@@ -76,13 +88,13 @@ describe('WelcomePageComponent', () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    setCode(fixture, '  ABC123  ');
+    setCode(fixture, '  ABC12345  ');
 
     const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
     form.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
 
-    expect(access.redeem).toHaveBeenCalledWith('ABC123');
+    expect(access.redeem).toHaveBeenCalledWith('ABC12345');
     expect(session.loadCurrentUser).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/']);
   });
@@ -100,5 +112,11 @@ describe('WelcomePageComponent', () => {
     expect(session.loadCurrentUser).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalled();
     expect(fixture.componentInstance['form'].controls.code.touched).toBe(true);
+  });
+
+  it('pre-fills the code control from the ?code query param, uppercased', async () => {
+    const fixture = await setup({ code: 'abc12345' });
+
+    expect(fixture.componentInstance['form'].controls.code.value).toBe('ABC12345');
   });
 });
