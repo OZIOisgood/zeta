@@ -159,7 +159,7 @@
       "errorTitle": "Échec de l'export PDF",
       "errorMessage": "Veuillez réessayer.",
       "toastMessage": "{{count}} entrées · {{period}}",
-      "fileName": "Zeta-Rapport",
+      "fileName": "Strido-Rapport",
       "total": "Total"
     },
     "columns": {
@@ -180,7 +180,7 @@
       "button": "Réserver un coaching en direct"
     },
     "firstSteps": {
-      "eyebrow": "Bienvenue sur Zeta",
+      "eyebrow": "Bienvenue sur Strido",
       "title": "Premiers pas",
       "description": "Effectuez les étapes de base pour commencer à partager des vidéos et travailler avec votre groupe de coaching.",
       "groupCreated": "Groupe créé",
@@ -551,7 +551,7 @@
     "personalData": "Données personnelles",
     "personalSummary": "Mettez à jour les informations utilisées dans votre tableau de bord et vos séances de coaching.",
     "emailPreferences": "Préférences e-mail",
-    "emailSummary": "Choisissez les activités Zeta qui doivent arriver dans votre boîte de réception.",
+    "emailSummary": "Choisissez les activités Strido qui doivent arriver dans votre boîte de réception.",
     "firstName": "Prénom",
     "firstNameRequired": "Le prénom est obligatoire.",
     "lastName": "Nom de famille",
@@ -605,7 +605,7 @@
     "6": "Samedi"
   },
   "app": {
-    "brand": "Zeta",
+    "brand": "Strido",
     "tagline": "Coaching vidéo"
   },
   "toast": {
@@ -616,8 +616,8 @@
   },
   "user": {
     "initials": "ZT",
-    "name": "Équipe Zeta",
-    "role": "Zeta"
+    "name": "Équipe Strido",
+    "role": "Strido"
   },
   "notifications": {
     "title": "Notifications",

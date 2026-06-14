@@ -84,14 +84,11 @@ func previewScenarios() []scenario {
 			name: "group-invitation",
 			message: email.Message{
 				Copy: email.Copy{
-					Preheader:  "Alex Morgan invited you to join a group on Zeta.",
+					Preheader:  "Alex Morgan invited you to join a group on Strido.",
 					Title:      "You have been invited to join a group",
-					Intro:      "Alex Morgan invited you to join a group on Zeta.",
+					Intro:      "Alex Morgan invited you to join a group on Strido.",
 					Button:     "Accept invitation",
-					FooterNote: "This invitation was sent from Zeta because someone entered this email address while sharing a group.",
-				},
-				Details: []email.Detail{
-					{Label: "Invitation link", Value: "http://localhost:4200/groups?invite=AbC123"},
+					FooterNote: "This invitation was sent from Strido because someone entered this email address while sharing a group.",
 				},
 				Action: &email.Action{URL: "http://localhost:4200/groups?invite=AbC123"},
 			},
@@ -100,13 +97,9 @@ func previewScenarios() []scenario {
 			name: "invitation-accepted",
 			message: email.Message{
 				Copy: email.Copy{
-					Preheader: "Jamie Lee has accepted your invitation and joined Advanced Tennis.",
+					Preheader: "Jamie Lee has accepted your invitation and joined Dressage Team.",
 					Title:     "Invitation accepted",
-					Intro:     "Jamie Lee has accepted your invitation and joined Advanced Tennis.",
-				},
-				Details: []email.Detail{
-					{Label: "Member", Value: "Jamie Lee"},
-					{Label: "Group", Value: "Advanced Tennis"},
+					Intro:     "**Jamie Lee** has accepted your invitation and joined **“Dressage Team”**.",
 				},
 			},
 		},
@@ -116,12 +109,7 @@ func previewScenarios() []scenario {
 				Copy: email.Copy{
 					Preheader: "Jamie Lee uploaded a new video.",
 					Title:     "New video uploaded",
-					Intro:     "Jamie Lee uploaded a new video to your group.",
-				},
-				Details: []email.Detail{
-					{Label: "Video", Value: "Backhand drill, set 3"},
-					{Label: "Group", Value: "Advanced Tennis"},
-					{Label: "Uploaded by", Value: "Jamie Lee"},
+					Intro:     "**Jamie Lee** uploaded **“Trot transitions, session 3”** to **“Dressage Team”** for review.",
 				},
 			},
 		},
@@ -129,12 +117,9 @@ func previewScenarios() []scenario {
 			name: "video-reviewed",
 			message: email.Message{
 				Copy: email.Copy{
-					Preheader: "Your video Backhand drill, set 3 has been reviewed.",
+					Preheader: "Your video Trot transitions, session 3 has been reviewed.",
 					Title:     "Your video has been reviewed",
-					Intro:     "Your video has been reviewed and is now finalized.",
-				},
-				Details: []email.Detail{
-					{Label: "Video", Value: "Backhand drill, set 3"},
+					Intro:     "Your video **“Trot transitions, session 3”** has been reviewed and the feedback is ready.",
 				},
 			},
 		},
@@ -144,15 +129,8 @@ func previewScenarios() []scenario {
 				Copy: email.Copy{
 					Preheader: "Your live coaching session has been confirmed.",
 					Title:     "Live coaching session confirmed",
-					Intro:     "Your live coaching session has been confirmed.",
-				},
-				Details: []email.Detail{
-					{Label: "Session", Value: "Technique review"},
-					{Label: "With", Value: "Alex Morgan"},
-					{Label: "Group", Value: "Advanced Tennis"},
-					{Label: "Date and time", Value: "Friday, May 8, 2026 at 15:00 UTC"},
-					{Label: "Duration", Value: "45 min"},
-					{Label: "Notes", Value: "Please focus on the serve motion."},
+					Intro:     "Your **“Dressage review”** session with **Alex Morgan** for **“Dressage Team”** is booked for **Friday, May 8, 2026 at 15:00 UTC** and lasts 45 min.",
+					Note:      "Booking note: Please focus on rider position through the transition.",
 				},
 			},
 		},
@@ -162,15 +140,8 @@ func previewScenarios() []scenario {
 				Copy: email.Copy{
 					Preheader: "A coaching session has been cancelled.",
 					Title:     "Live coaching session cancelled",
-					Intro:     "A coaching session has been cancelled.",
-				},
-				Details: []email.Detail{
-					{Label: "Session", Value: "Technique review"},
-					{Label: "Group", Value: "Advanced Tennis"},
-					{Label: "Date and time", Value: "Friday, May 8, 2026 at 15:00 UTC"},
-					{Label: "Duration", Value: "45 min"},
-					{Label: "Cancelled by", Value: "Jamie Lee"},
-					{Label: "Reason", Value: "Schedule conflict"},
+					Intro:     "The **“Dressage review”** session for **“Dressage Team”**, scheduled for **Friday, May 8, 2026 at 15:00 UTC**, was cancelled by **Jamie Lee**.",
+					Note:      "Reason: Schedule conflict",
 				},
 			},
 		},
@@ -180,12 +151,8 @@ func previewScenarios() []scenario {
 				Copy: email.Copy{
 					Preheader: "You have an upcoming coaching session.",
 					Title:     "Coaching session reminder",
-					Intro:     "Your session starts in 1 hour.",
+					Intro:     "Your coaching session starts at **Friday, May 8, 2026 at 15:00 UTC** and lasts 45 min.",
 					Button:    "Join session",
-				},
-				Details: []email.Detail{
-					{Label: "Date and time", Value: "Friday, May 8, 2026 at 15:00 UTC"},
-					{Label: "Duration", Value: "45 min"},
 				},
 				Action: &email.Action{URL: "http://localhost:4200/sessions/group-id/booking-id/call"},
 			},
@@ -194,12 +161,9 @@ func previewScenarios() []scenario {
 			name: "group-member-removed",
 			message: email.Message{
 				Copy: email.Copy{
-					Preheader: "You have been removed from Advanced Tennis.",
+					Preheader: "You have been removed from Dressage Team.",
 					Title:     "Group membership updated",
-					Intro:     "You have been removed from a group.",
-				},
-				Details: []email.Detail{
-					{Label: "Group", Value: "Advanced Tennis"},
+					Intro:     "You have been removed from the **“Dressage Team”** group.",
 				},
 			},
 		},

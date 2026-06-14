@@ -661,12 +661,11 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			Copy: email.Copy{
 				Preheader: i18n.T(loc, "email.video_uploaded.preheader", map[string]any{"UploaderName": userName}),
 				Title:     i18n.T(loc, "email.video_uploaded.title"),
-				Intro:     i18n.T(loc, "email.video_uploaded.intro", map[string]any{"UploaderName": userName}),
-			},
-			Details: []email.Detail{
-				{Label: i18n.T(loc, "email.detail.video"), Value: asset.Name},
-				{Label: i18n.T(loc, "email.detail.group"), Value: group.Name},
-				{Label: i18n.T(loc, "email.detail.uploaded_by"), Value: userName},
+				Intro: i18n.T(loc, "email.video_uploaded.intro", map[string]any{
+					"UploaderName": userName,
+					"VideoName":    asset.Name,
+					"GroupName":    group.Name,
+				}),
 			},
 		}
 		subject := i18n.T(loc, "email.video_uploaded.subject")
@@ -845,10 +844,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 					Copy: email.Copy{
 						Preheader: i18n.T(loc, "email.video_reviewed.preheader", map[string]any{"VideoName": asset.Name}),
 						Title:     i18n.T(loc, "email.video_reviewed.title"),
-						Intro:     i18n.T(loc, "email.video_reviewed.intro"),
-					},
-					Details: []email.Detail{
-						{Label: i18n.T(loc, "email.detail.video"), Value: asset.Name},
+						Intro:     i18n.T(loc, "email.video_reviewed.intro", map[string]any{"VideoName": asset.Name}),
 					},
 				}
 				err = h.email.SendTemplate([]string{owner.Email}, subject, email.TemplateNotification, message)

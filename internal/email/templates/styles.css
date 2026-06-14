@@ -26,23 +26,33 @@ a {
 
 .email-shell {
   background: #fff8ed;
-  padding: 32px 16px;
+  padding: 40px 16px;
 }
 
 .email-card {
-  max-width: 600px;
+  max-width: 620px;
   background: #ffffff;
-  border: 1px solid #ead2b8;
-  border-radius: 8px;
+  border: 1px solid #e4c9aa;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(86, 49, 23, 0.08);
+  overflow: hidden;
+}
+
+.email-accent {
+  height: 5px;
+  background: #ea580c;
+  font-size: 0;
+  line-height: 0;
 }
 
 .email-header {
-  padding: 24px 28px 16px;
+  padding: 30px 34px 20px;
+  background: #ffffff;
 }
 
 .brand-logo {
   display: block;
-  width: 124px;
+  width: 150px;
   max-width: 100%;
   height: auto;
   border: 0;
@@ -51,13 +61,14 @@ a {
 }
 
 .email-content {
-  padding: 12px 28px 28px;
+  padding: 24px 34px 36px;
+  border-top: 1px solid #f1dfca;
 }
 
 h1 {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   color: #26180f;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   line-height: 1.25;
 }
@@ -69,44 +80,34 @@ h1 {
   line-height: 1.55;
 }
 
-.details {
-  margin: 0 0 24px;
-  background: #fff8ed;
-  border: 1px solid #ead2b8;
-  border-radius: 8px;
-}
-
-.detail-label,
-.detail-value {
-  padding: 12px 14px;
-  font-size: 14px;
-  line-height: 1.45;
-  vertical-align: top;
-}
-
-.detail-label {
-  width: 36%;
-  color: #735f4d;
-  font-weight: 600;
-}
-
-.detail-value {
+.intro strong {
   color: #26180f;
+  font-weight: 700;
+}
+
+.note {
+  margin: -8px 0 26px;
+  padding: 14px 16px;
+  background: #fff8ed;
+  border-left: 3px solid #ea580c;
+  color: #735f4d;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .action-row {
-  margin: 0 0 24px;
+  margin: 4px 0 26px;
 }
 
 .action-cell {
-  text-align: center;
+  text-align: left;
 }
 
 .button {
   display: inline-block;
-  padding: 12px 20px;
+  padding: 14px 22px;
   background: #ea580c;
-  border-radius: 6px;
+  border-radius: 10px;
   color: #ffffff;
   font-size: 15px;
   font-weight: 700;
@@ -122,11 +123,18 @@ h1 {
 }
 
 .email-footer {
-  padding: 20px 28px 24px;
+  padding: 22px 34px 26px;
   border-top: 1px solid #ead2b8;
+  background: #fff8ed;
   color: #735f4d;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.email-footer a {
+  color: #c2410c;
+  font-weight: 700;
+  text-decoration: none;
 }
 
 @media only screen and (max-width: 640px) {
@@ -142,13 +150,6 @@ h1 {
   }
 
   h1 {
-    font-size: 21px;
-  }
-
-  .detail-label,
-  .detail-value {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
+    font-size: 24px;
   }
 }

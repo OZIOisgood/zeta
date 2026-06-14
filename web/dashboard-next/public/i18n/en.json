@@ -159,7 +159,7 @@
       "errorTitle": "PDF export failed",
       "errorMessage": "Please try again.",
       "toastMessage": "{{count}} entries · {{period}}",
-      "fileName": "Zeta-Report",
+      "fileName": "Strido-Report",
       "total": "Total"
     },
     "columns": {
@@ -180,7 +180,7 @@
       "button": "Book Live Coaching"
     },
     "firstSteps": {
-      "eyebrow": "Welcome to Zeta",
+      "eyebrow": "Welcome to Strido",
       "title": "First steps",
       "description": "Complete the basics to start sharing videos and working with your coaching group.",
       "groupCreated": "Group created",
@@ -551,7 +551,7 @@
     "personalData": "Personal data",
     "personalSummary": "Update the details used across your dashboard and coaching sessions.",
     "emailPreferences": "Email preferences",
-    "emailSummary": "Choose which Zeta activity should reach your inbox.",
+    "emailSummary": "Choose which Strido activity should reach your inbox.",
     "firstName": "First Name",
     "firstNameRequired": "First name is required.",
     "lastName": "Last Name",
@@ -605,7 +605,7 @@
     "6": "Saturday"
   },
   "app": {
-    "brand": "Zeta",
+    "brand": "Strido",
     "tagline": "Video coaching"
   },
   "toast": {
@@ -616,8 +616,8 @@
   },
   "user": {
     "initials": "ZT",
-    "name": "Zeta Team",
-    "role": "Zeta"
+    "name": "Strido Team",
+    "role": "Strido"
   },
   "notifications": {
     "title": "Notifications",

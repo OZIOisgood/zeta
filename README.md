@@ -56,7 +56,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - Create a Resend API key and set `RESEND_API_KEY`.
    - Verify the sender domain in Resend.
    - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@strido.net`.
-   - Optionally set `EMAIL_LOGO_URL` to the absolute hosted app icon URL used in HTML emails. If unset, emails use `FRONTEND_URL + /assets/brand/mark/zeta-horse-mark-orange-128.png`, then `https://app.dev.strido.net/assets/brand/mark/zeta-horse-mark-orange-128.png`.
+   - HTML emails use the hosted Strido logo at `FRONTEND_URL + /assets/brand/strido/strido-logo-320.png`, with the dev dashboard URL as a local fallback.
    - To render local email previews with fake data, run `make email:preview`. Final inlined HTML files are written to `build/email-previews/`.
 
 6. **Agora Configuration**:

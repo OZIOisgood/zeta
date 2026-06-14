@@ -93,11 +93,10 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 				Copy: email.Copy{
 					Preheader: i18n.T(loc, "email.reminder.preheader"),
 					Title:     i18n.T(loc, "email.reminder.title"),
-					Intro:     i18n.T(loc, introKey),
-				},
-				Details: []email.Detail{
-					{Label: i18n.T(loc, "email.detail.date_and_time"), Value: scheduledStr},
-					{Label: i18n.T(loc, "email.detail.duration"), Value: formatDuration(rem.DurationMinutes)},
+					Intro: i18n.T(loc, introKey, map[string]any{
+						"ScheduledAt": scheduledStr,
+						"Duration":    formatDuration(rem.DurationMinutes),
+					}),
 				},
 			}
 			if joinURL != "" {

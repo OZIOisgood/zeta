@@ -30,7 +30,7 @@ const mockUser: User = {
 
 const translocoLangs = {
   en: {
-    app: { brand: 'Zeta', tagline: 'Video coaching' },
+    app: { brand: 'Strido', tagline: 'Video coaching' },
     auth: { logout: 'Sign out' },
     common: {
       closeNavigation: 'Close navigation',
@@ -97,7 +97,7 @@ describe('ShellComponent', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('aside[aria-label="Primary navigation"]')).toBeTruthy();
-    expect(el.textContent).toContain('Zeta');
+    expect(el.querySelector('img[alt="Strido"]')).toBeTruthy();
   });
 
   it('should open mobile navigation from the header control', async () => {
@@ -124,7 +124,7 @@ describe('ShellComponent', () => {
     menuButton?.click();
     fixture.detectChanges();
 
-    expect(menuButton?.querySelector('z-avatar')?.classList).toContain('size-8');
+    expect(menuButton?.querySelector('z-avatar')?.classList).toContain('size-9');
     expect(menuButton?.getAttribute('aria-expanded')).toBe('true');
     expect(el.textContent).toContain('ada@example.com');
     expect(el.querySelector('.absolute .border-b z-avatar')?.classList).toContain('size-10');

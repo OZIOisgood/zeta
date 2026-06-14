@@ -18,17 +18,13 @@ func TestNewServiceReadsConfiguredSender(t *testing.T) {
 }
 
 func TestRenderNotificationTemplateInlinesCSS(t *testing.T) {
-	t.Setenv("EMAIL_LOGO_URL", "")
 	t.Setenv("FRONTEND_URL", "")
 
 	rendered, err := RenderTemplate(TemplateNotification, Message{
 		Copy: Copy{
 			Preheader: "Your video has been reviewed.",
 			Title:     "Your video has been reviewed",
-			Intro:     "Your video has been reviewed and is now finalized.",
-		},
-		Details: []Detail{
-			{Label: "Video", Value: "Backhand drill"},
+			Intro:     "Your video **“Backhand drill”** has been reviewed.",
 		},
 		Action: &Action{URL: "http://localhost:4200"},
 	})
@@ -37,24 +33,26 @@ func TestRenderNotificationTemplateInlinesCSS(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		"https://app.dev.strido.net/assets/brand/mark/zeta-horse-mark-orange-128.png",
+		"https://app.dev.strido.net/assets/brand/strido/strido-logo-320.png",
 		"Your video has been reviewed",
 		"Backhand drill",
 		"style=",
 		"#ea580c",
-		"text-align:center",
+		"text-align:left",
 	} {
 		if !strings.Contains(rendered.HTML, want) {
 			t.Fatalf("expected rendered HTML to contain %q, got:\n%s", want, rendered.HTML)
 		}
 	}
+	if !strings.Contains(rendered.HTML, "<strong") {
+		t.Fatalf("expected rich intro emphasis, got:\n%s", rendered.HTML)
+	}
 	if !strings.Contains(rendered.Text, "Backhand drill") {
-		t.Fatalf("expected text fallback to contain detail value, got:\n%s", rendered.Text)
+		t.Fatalf("expected text fallback to contain intro value, got:\n%s", rendered.Text)
 	}
 }
 
 func TestRenderTemplateBuildsLogoURLFromFrontendURL(t *testing.T) {
-	t.Setenv("EMAIL_LOGO_URL", "")
 	t.Setenv("FRONTEND_URL", "https://app.strido.net/")
 
 	rendered, err := RenderTemplate(TemplateNotification, Message{
@@ -66,25 +64,15 @@ func TestRenderTemplateBuildsLogoURLFromFrontendURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("render template: %v", err)
 	}
-	if !strings.Contains(rendered.HTML, "https://app.strido.net/assets/brand/mark/zeta-horse-mark-orange-128.png") {
+	if !strings.Contains(rendered.HTML, "https://app.strido.net/assets/brand/strido/strido-logo-320.png") {
 		t.Fatalf("expected rendered HTML to derive the logo URL from FRONTEND_URL, got:\n%s", rendered.HTML)
 	}
 }
 
-func TestRenderTemplateUsesConfiguredLogoURL(t *testing.T) {
-	t.Setenv("EMAIL_LOGO_URL", "https://example.com/logo.png")
-
-	rendered, err := RenderTemplate(TemplateNotification, Message{
-		Copy: Copy{
-			Title: "Configured logo",
-			Intro: "Logo URL should be configurable.",
-		},
-	})
-	if err != nil {
-		t.Fatalf("render template: %v", err)
-	}
-	if !strings.Contains(rendered.HTML, "https://example.com/logo.png") {
-		t.Fatalf("expected rendered HTML to use configured logo URL, got:\n%s", rendered.HTML)
+func TestFormatRichTextEscapesUserContent(t *testing.T) {
+	got := string(formatRichText("Hello **<script>alert(1)</script>**"))
+	if strings.Contains(got, "<script>") || !strings.Contains(got, "<strong>&lt;script&gt;") {
+		t.Fatalf("expected escaped emphasized content, got %q", got)
 	}
 }
 

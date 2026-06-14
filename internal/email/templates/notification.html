@@ -1,23 +1,8 @@
 {{define "notification"}} {{template "layout.start" .}}
 <h1>{{.Copy.Title}}</h1>
-<p class="intro">{{.Copy.Intro}}</p>
-
-{{if .Details}}
-<table
-  role="presentation"
-  class="details"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
->
-  {{range .Details}}
-  <tr>
-    <td class="detail-label">{{.Label}}</td>
-    <td class="detail-value">{{.Value}}</td>
-  </tr>
-  {{end}}
-</table>
-{{end}} {{if .Action}}
+<p class="intro">{{richText .Copy.Intro}}</p>
+{{if .Copy.Note}}<p class="note">{{richText .Copy.Note}}</p>{{end}}
+{{if .Action}}
 <table
   role="presentation"
   class="action-row"
@@ -26,7 +11,7 @@
   cellspacing="0"
 >
   <tr>
-    <td class="action-cell" align="center">
+    <td class="action-cell" align="left">
       <a class="button" href="{{.Action.URL}}">{{.Copy.Button}}</a>
     </td>
   </tr>
