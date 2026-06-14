@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { RefreshControl, SectionList, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, CheckCheck } from 'lucide-react-native';
@@ -20,10 +21,13 @@ import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
+import { ZTabs, type ZTab } from '../components/ui/z-tabs';
 import { showToast } from '../components/ui/z-toast';
 import { groupByDay } from '../lib/notification-groups';
-import { presentNotification } from '../lib/notification-presenter';
+import { presentNotification, resolvedInvite } from '../lib/notification-presenter';
 import { colors } from '../theme/colors';
+
+type NotificationFilter = 'all' | 'unread';
 
 function ListSkeleton() {
   return (
@@ -50,9 +54,25 @@ export default function NotificationsScreen() {
   const accept = useAcceptInvitationMutation();
   const decline = useDeclineInvitationMutation();
 
+  const [filter, setFilter] = useState<NotificationFilter>('all');
+
   const items = data?.items ?? [];
   const unreadCount = data?.unread_count ?? 0;
-  const sections = groupByDay(items);
+
+  // Mirror the web filter: unread = not read and not declined (so a declined
+  // invite doesn't linger in the unread tab). Uses server invite_status because
+  // mobile has no client-side inviteState optimistic field.
+  const filteredItems =
+    filter === 'unread'
+      ? items.filter((item) => !item.read && resolvedInvite(item) !== 'declined')
+      : items;
+
+  const sections = groupByDay(filteredItems);
+
+  const tabs: ZTab[] = [
+    { id: 'all', label: t('notifications.page.tabs.all'), count: items.length },
+    { id: 'unread', label: t('notifications.page.tabs.unread'), count: unreadCount },
+  ];
 
   function onOpen(item: NotificationItem) {
     if (!item.read) markRead.mutate({ id: item.id });
@@ -91,6 +111,11 @@ export default function NotificationsScreen() {
     }
   }
 
+  // Empty-state copy depends on whether we are in the unread tab or showing all.
+  const emptyTitle = filter === 'unread' ? t('notifications.page.allRead') : t('notifications.empty');
+  const emptyDescription =
+    filter === 'unread' ? t('notifications.emptyDescription') : t('notifications.page.emptyDescription');
+
   let content: ReactNode;
   if (isPending) {
     content = <ListSkeleton />;
@@ -104,12 +129,12 @@ export default function NotificationsScreen() {
         />
       </View>
     );
-  } else if (items.length === 0) {
+  } else if (filteredItems.length === 0) {
     content = (
       <View testID="notifications-empty" className="flex-1 justify-center p-4">
         <ZEmptyState
-          title={t('notifications.empty')}
-          description={t('notifications.emptyDescription')}
+          title={emptyTitle}
+          description={emptyDescription}
           icon={<Bell color={colors.primary} size={24} />}
         />
       </View>
@@ -152,6 +177,14 @@ export default function NotificationsScreen() {
           ) : undefined
         }
       />
+      {!isPending && !isError ? (
+        <ZTabs
+          testID="notifications-tabs"
+          tabs={tabs}
+          activeId={filter}
+          onChange={(id) => setFilter(id as NotificationFilter)}
+        />
+      ) : null}
       {content}
     </ZScreen>
   );
