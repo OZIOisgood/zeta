@@ -123,7 +123,8 @@ test('submit with valid name + avatar calls mutateAsync and navigates to group',
     description: undefined,
   }));
   await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/group/g1'));
-  expect(showToast).toHaveBeenCalledWith(expect.any(String), undefined, 'success');
+  // Success toast must use a proper title (not the button label) and a body message
+  expect(showToast).toHaveBeenCalledWith('Success', 'Group created successfully', 'success');
 });
 
 // ── error path ────────────────────────────────────────────────────────────────
@@ -146,6 +147,8 @@ test('mutateAsync failure shows inline error banner', async () => {
   await waitFor(() =>
     expect(screen.getByTestId('create-group-error')).toBeOnTheScreen(),
   );
+  // Error banner must say "Failed to create group" (not the update verb)
+  expect(screen.getByText('Failed to create group')).toBeOnTheScreen();
   expect(mockReplace).not.toHaveBeenCalled();
 });
 

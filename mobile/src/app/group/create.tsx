@@ -47,23 +47,23 @@ export default function CreateGroupScreen() {
         avatar: avatar!,
         description: description.trim() || undefined,
       });
-      showToast(t('groups.create'), undefined, 'success');
+      showToast(t('toast.successTitle'), t('groups.created'), 'success');
       router.replace(`/group/${group.id}`);
     } catch {
-      setErrorBanner(t('groups.updateFailed'));
+      setErrorBanner(t('groups.createFailed'));
     }
   }
 
   return (
-    <ZScreen>
+    <ZScreen edges={['top', 'bottom']}>
+      {/* Pinned back header — outside ScrollView so it never scrolls away */}
+      <ZBackHeader title={t('groups.create')} />
       <ZKeyboardAvoidingView>
         <ScrollView
           className="flex-1 bg-z-bg"
           contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Back navigation */}
-          <ZBackHeader title={t('groups.create')} />
 
           {/* Header card — mirrors the web form card */}
           <ZCard className="mb-4 mt-2">

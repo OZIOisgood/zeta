@@ -440,7 +440,9 @@
       "preferencesSummary": "Mettez à jour le nom, la description et l’image du groupe."
     },
     "namePlaceholder": "p. ex. Groupe Academy",
-    "descriptionPlaceholder": "Décrivez à qui ce groupe est destiné."
+    "descriptionPlaceholder": "Décrivez à qui ce groupe est destiné.",
+    "createFailed": "Impossible de créer le groupe",
+    "created": "Groupe créé avec succès"
   },
   "upload": {
     "title": "Téléverser une vidéo",

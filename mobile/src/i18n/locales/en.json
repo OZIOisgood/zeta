@@ -440,7 +440,9 @@
       "preferencesSummary": "Update the group name, description, and image."
     },
     "namePlaceholder": "e.g. Academy Group",
-    "descriptionPlaceholder": "Describe who this group is for."
+    "descriptionPlaceholder": "Describe who this group is for.",
+    "createFailed": "Failed to create group",
+    "created": "Group created successfully"
   },
   "upload": {
     "title": "Upload Video",
