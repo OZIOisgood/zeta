@@ -18,6 +18,7 @@ tags:
   - name: coaching
   - name: devices
   - name: notifications
+  - name: reports
 paths:
   /health:
     get:
@@ -1565,6 +1566,29 @@ paths:
         "401":
           description: Not authenticated
 
+  /reports/events:
+    get:
+      tags: [reports]
+      summary: The authenticated user's activity as a flat event list
+      description: >
+        Every video upload and live coaching for the requester, scoped to their
+        own id by the backend. Experts see activity in groups they own; students
+        see their own. The client period-filters and aggregates these events.
+      operationId: getReportEvents
+      responses:
+        "200":
+          description: The viewer's role and their flat event list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEventsResponse"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing reports:read permission
+        "500":
+          description: Failed to build the report
+
 security:
   - bearerAuth: []
 components:
@@ -2382,3 +2406,52 @@ components:
             Participant UID for the Agora channel (uint32). Students always
             receive UID 1; experts always receive UID 2.
       required: [app_id, channel, token, uid]
+
+    ReportRef:
+      type: object
+      description: A display reference to a user or group (id + resolved name).
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ReportEvent:
+      type: object
+      description: >
+        One report row — a video upload ("video") or a live coaching ("live").
+        Both carry the group, the student and the expert so the client can nest
+        under either leaf. duration_seconds unifies video length and
+        (session minutes × 60).
+      required: [kind, group, student, expert, title, at, duration_seconds]
+      properties:
+        kind:
+          type: string
+          enum: [video, live]
+        group:
+          $ref: "#/components/schemas/ReportRef"
+        student:
+          $ref: "#/components/schemas/ReportRef"
+        expert:
+          $ref: "#/components/schemas/ReportRef"
+        title:
+          type: string
+        at:
+          type: string
+          format: date-time
+        duration_seconds:
+          type: number
+          format: double
+    ReportEventsResponse:
+      type: object
+      required: [role, viewer, events]
+      properties:
+        role:
+          type: string
+          enum: [expert, student]
+        viewer:
+          $ref: "#/components/schemas/ReportRef"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportEvent"
