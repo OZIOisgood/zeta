@@ -58,19 +58,28 @@ function Providers({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-test('FAB is hidden without groups:create permission', async () => {
+test('students get the Join FAB, not the Create FAB (no groups:create)', async () => {
   mockPermissions = [];
   await render(<Providers><GroupsScreen /></Providers>);
   expect(screen.queryByTestId('groups-create-fab')).toBeNull();
+  expect(screen.getByTestId('groups-join-fab')).toBeOnTheScreen();
 });
 
-test('FAB is visible with groups:create permission', async () => {
+test('Join FAB press navigates to /invite', async () => {
+  mockPermissions = [];
+  await render(<Providers><GroupsScreen /></Providers>);
+  fireEvent.press(screen.getByTestId('groups-join-fab'));
+  expect(mockPush).toHaveBeenCalledWith('/invite');
+});
+
+test('experts get the Create FAB, not the Join FAB (groups:create)', async () => {
   mockPermissions = ['groups:create'];
   await render(<Providers><GroupsScreen /></Providers>);
   expect(screen.getByTestId('groups-create-fab')).toBeOnTheScreen();
+  expect(screen.queryByTestId('groups-join-fab')).toBeNull();
 });
 
-test('FAB press navigates to /group/create', async () => {
+test('Create FAB press navigates to /group/create', async () => {
   mockPermissions = ['groups:create'];
   await render(<Providers><GroupsScreen /></Providers>);
   fireEvent.press(screen.getByTestId('groups-create-fab'));

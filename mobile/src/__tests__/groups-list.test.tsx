@@ -76,13 +76,13 @@ test('data state shows group name', async () => {
   expect(screen.getByText('Karate Club')).toBeOnTheScreen();
 });
 
-test('Join group action present in header and pushes /invite on press', async () => {
+test('Join is the primary FAB for students and pushes /invite on press', async () => {
   mockUseGroupsQuery.mockReturnValue({ isPending: false, isError: false, data: [], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><GroupsScreen /></Providers>);
-  // Join now lives in the ZPageHeader action slot; still found by its label/testID.
-  expect(screen.getByText('Join Group')).toBeOnTheScreen();
-  const joinBtn = screen.getByTestId('groups-join');
-  expect(joinBtn).toBeOnTheScreen();
-  fireEvent.press(joinBtn);
+  // Default render = no permissions (student); Join is the role's primary FAB,
+  // not a header button (experts get the Create FAB + a secondary header Join).
+  const joinFab = screen.getByTestId('groups-join-fab');
+  expect(joinFab).toBeOnTheScreen();
+  fireEvent.press(joinFab);
   expect(mockPush).toHaveBeenCalledWith('/invite');
 });

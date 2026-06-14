@@ -83,23 +83,28 @@ export default function GroupsScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* List/index header: compact title + summary subtitle. Join is a secondary
-          action; Create is the primary FAB (groups:create-gated). */}
+      {/* List/index header: compact title + summary subtitle. The FAB is the
+          screen's PRIMARY action for the user's role — Create for experts
+          (groups:create), Join for students (mutually exclusive, so no clash).
+          Experts can also join, so they keep a secondary "Join" header action;
+          students don't need it (the Join FAB covers them). */}
       <ZPageHeader
         title={t('groups.myGroups')}
         subtitle={t('groups.phase4.summary')}
         action={
-          <ZButton
-            testID="groups-join"
-            label={t('groups.invitationDialog.joinGroup')}
-            variant="secondary"
-            onPress={() => router.push('/invite')}
-            icon={<QrCode color={colors.text} size={16} />}
-          />
+          canCreate ? (
+            <ZButton
+              testID="groups-join"
+              label={t('groups.invitationDialog.joinGroup')}
+              variant="secondary"
+              onPress={() => router.push('/invite')}
+              icon={<QrCode color={colors.text} size={16} />}
+            />
+          ) : undefined
         }
       />
       {content}
-      {canCreate && (
+      {canCreate ? (
         <ZIconButton
           testID="groups-create-fab"
           label={t('groups.create')}
@@ -110,6 +115,18 @@ export default function GroupsScreen() {
           className="absolute bottom-6 right-6"
         >
           <Plus color={colors.onPrimary} size={24} />
+        </ZIconButton>
+      ) : (
+        <ZIconButton
+          testID="groups-join-fab"
+          label={t('groups.invitationDialog.joinGroup')}
+          variant="primary"
+          size="lg"
+          shape="circle"
+          onPress={() => router.push('/invite')}
+          className="absolute bottom-6 right-6"
+        >
+          <QrCode color={colors.onPrimary} size={24} />
         </ZIconButton>
       )}
     </ZScreen>
