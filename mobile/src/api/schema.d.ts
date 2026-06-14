@@ -762,6 +762,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The authenticated user's activity as a flat event list
+         * @description Every video upload and live coaching for the requester, scoped to their own id by the backend. Experts see activity in groups they own; students see their own. The client period-filters and aggregates these events.
+         */
+        get: operations["getReportEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1184,6 +1204,30 @@ export interface components {
             token: string;
             /** @description Participant UID for the Agora channel (uint32). Students always receive UID 1; experts always receive UID 2. */
             uid: number;
+        };
+        /** @description A display reference to a user or group (id + resolved name). */
+        ReportRef: {
+            id: string;
+            name: string;
+        };
+        /** @description One report row — a video upload ("video") or a live coaching ("live"). Both carry the group, the student and the expert so the client can nest under either leaf. duration_seconds unifies video length and (session minutes × 60). */
+        ReportEvent: {
+            /** @enum {string} */
+            kind: "video" | "live";
+            group: components["schemas"]["ReportRef"];
+            student: components["schemas"]["ReportRef"];
+            expert: components["schemas"]["ReportRef"];
+            title: string;
+            /** Format: date-time */
+            at: string;
+            /** Format: double */
+            duration_seconds: number;
+        };
+        ReportEventsResponse: {
+            /** @enum {string} */
+            role: "expert" | "student";
+            viewer: components["schemas"]["ReportRef"];
+            events: components["schemas"]["ReportEvent"][];
         };
     };
     responses: never;
@@ -3619,6 +3663,47 @@ export interface operations {
             };
             /** @description Not authenticated */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getReportEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The viewer's role and their flat event list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportEventsResponse"];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing reports:read permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to build the report */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
