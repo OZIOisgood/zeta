@@ -25,3 +25,14 @@ export function formatDate(iso: string): string {
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleDateString();
 }
+
+/**
+ * Locale-aware month + year label — e.g. "March 2026" (month: long, year: numeric).
+ * Used by the reports period selector for the month granularity.
+ * Empty on invalid input.
+ */
+export function formatMonthYear(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
