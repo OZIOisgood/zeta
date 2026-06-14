@@ -662,6 +662,7 @@
     "today": "Aujourd'hui",
     "earlier": "Plus tôt",
     "unread": "Non lues",
+    "loadFailed": "Impossible de charger les notifications",
     "viewAll": "Voir toutes les notifications",
     "invite": {
       "accept": "Accepter",

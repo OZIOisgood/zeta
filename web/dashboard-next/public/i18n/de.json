@@ -662,6 +662,7 @@
     "today": "Heute",
     "earlier": "Früher",
     "unread": "Ungelesen",
+    "loadFailed": "Benachrichtigungen konnten nicht geladen werden",
     "viewAll": "Alle Benachrichtigungen ansehen",
     "invite": {
       "accept": "Annehmen",

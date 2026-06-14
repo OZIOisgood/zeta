@@ -663,6 +663,7 @@
     "today": "Today",
     "earlier": "Earlier",
     "unread": "Unread",
+    "loadFailed": "Couldn't load notifications",
     "viewAll": "View all notifications",
     "invite": {
       "accept": "Accept",
