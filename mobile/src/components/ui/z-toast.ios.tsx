@@ -28,13 +28,16 @@
 import { useEffect, useRef } from 'react';
 import * as Burnt from 'burnt';
 
-import { toastStore, showToast, type ZToastTone } from './z-toast';
+import { toastStore, type ZToastTone } from './z-toast.shared';
 
-// Re-export the shared imperative API so importers of z-toast.ios get the
-// full public surface (Metro resolves z-toast → z-toast.ios on iOS).
-export { showToast, toastStore };
+// Re-export the shared public surface so importers of './z-toast' (which Metro
+// resolves to THIS file on iOS) get the full API. Source is './z-toast.shared'
+// — NOT './z-toast', which resolves back to this file and recurses infinitely
+// ("Maximum call stack size exceeded").
+export { toastStore };
 export type { ZToastTone };
-export { ToastCard } from './z-toast';
+export { showToast, ToastCard } from './z-toast.shared';
+export type { ZToast } from './z-toast.shared';
 
 /** Duration in seconds (burnt's unit) derived from the shared 3 000 ms constant. */
 const BURNT_DURATION_S = 3;

@@ -25,13 +25,16 @@ import { useEffect, useRef } from 'react';
 import { Host, Snackbar, SnackbarHost, type SnackbarHostRef } from '@expo/ui/jetpack-compose';
 
 import { useRoleColors, type Role } from '../../theme/native';
-import { toastStore, showToast, type ZToastTone } from './z-toast';
+import { toastStore, type ZToastTone } from './z-toast.shared';
 
-// Re-export the shared imperative API so importers of z-toast.android get
-// the full public surface (Metro resolves z-toast → z-toast.android on Android).
-export { showToast, toastStore };
+// Re-export the shared public surface so importers of './z-toast' (which Metro
+// resolves to THIS file on Android) get the full API. Source is
+// './z-toast.shared' — NOT './z-toast', which resolves back to this file and
+// recurses infinitely ("Maximum call stack size exceeded").
+export { toastStore };
 export type { ZToastTone };
-export { ToastCard } from './z-toast';
+export { showToast, ToastCard } from './z-toast.shared';
+export type { ZToast } from './z-toast.shared';
 
 type ToneColors = { containerColor: Role; contentColor: Role };
 
