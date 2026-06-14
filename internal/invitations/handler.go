@@ -2,11 +2,9 @@ package invitations
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/big"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -21,6 +19,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/OZIOisgood/zeta/internal/preferences"
+	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -114,7 +113,7 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 		invitationEmail = pgtype.Text{String: emailAddress, Valid: true}
 	}
 
-	code, err := generateCode(6)
+	code, err := tools.GenerateCode(8)
 	if err != nil {
 		log.ErrorContext(ctx, "invitation_code_generation_failed",
 			slog.String("component", "invitations"),
@@ -713,18 +712,4 @@ func invitationDelivery(email pgtype.Text) string {
 		return "email"
 	}
 	return "link"
-}
-
-const codeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
-func generateCode(length int) (string, error) {
-	b := make([]byte, length)
-	for i := range b {
-		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(codeAlphabet))))
-		if err != nil {
-			return "", err
-		}
-		b[i] = codeAlphabet[idx.Int64()]
-	}
-	return string(b), nil
 }

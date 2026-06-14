@@ -95,8 +95,8 @@ func TestCreateInvitationAllowsMissingEmail(t *testing.T) {
 	if body.ID != "22222222-2222-2222-2222-222222222222" {
 		t.Fatalf("got id %q, want invitation uuid", body.ID)
 	}
-	if len(body.Code) != 6 {
-		t.Fatalf("got code length %d, want 6", len(body.Code))
+	if len(body.Code) != 8 {
+		t.Fatalf("got code length %d, want 8", len(body.Code))
 	}
 }
 
@@ -111,7 +111,7 @@ func (m createGenericInvitationMatcher) Matches(x any) bool {
 		arg.GroupID == m.groupID &&
 		arg.InviterID == m.inviterID &&
 		!arg.Email.Valid &&
-		len(arg.Code) == 6
+		len(arg.Code) == 8
 }
 
 func (m createGenericInvitationMatcher) String() string {

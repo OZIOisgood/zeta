@@ -13,6 +13,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
@@ -75,11 +76,12 @@ func (h *Handler) Redeem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	code := strings.TrimSpace(req.Code)
-	if code == "" {
+	if strings.TrimSpace(req.Code) == "" {
 		http.Error(w, "Code is required", http.StatusBadRequest)
 		return
 	}
+	// Normalize user-entered input to match generated (uppercase Crockford) codes.
+	code := tools.NormalizeCode(req.Code)
 
 	// Idempotent: an already-active user does not consume a fresh code.
 	if acc, err := h.q.GetUserAccess(ctx, user.ID); err == nil && acc.Status == db.AccessStatusActive {
@@ -296,7 +298,7 @@ func (h *Handler) GenerateCodes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) mintCode(ctx context.Context, ownerID string) error {
-	code, err := generateCode(signupCodeLength)
+	code, err := tools.GenerateCode(signupCodeLength)
 	if err != nil {
 		return err
 	}
