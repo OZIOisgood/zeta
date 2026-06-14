@@ -211,7 +211,11 @@ export default function CoachingScreen() {
         keyExtractor={(booking) => booking.id}
         renderItem={({ item }) => renderBooking(item)}
         contentContainerStyle={{ padding: 16, flexGrow: 1 }}
-        ListEmptyComponent={<View testID="coaching-empty">{emptyState}</View>}
+        ListEmptyComponent={
+          <View testID="coaching-empty" className="flex-1 justify-center">
+            {emptyState}
+          </View>
+        }
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />
         }

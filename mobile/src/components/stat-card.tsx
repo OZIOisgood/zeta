@@ -32,8 +32,8 @@ export function StatCard({
 }) {
   const inner = (
     <>
-      <View className="flex-row items-center justify-between gap-2">
-        <Text numberOfLines={1} className="flex-1 text-sm font-medium text-z-muted">
+      <View className="min-h-10 flex-row items-start justify-between gap-2">
+        <Text numberOfLines={2} className="flex-1 text-sm font-medium leading-5 text-z-muted">
           {label}
         </Text>
         {icon}
