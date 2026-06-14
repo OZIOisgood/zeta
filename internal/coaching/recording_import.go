@@ -2,7 +2,6 @@ package coaching
 
 import (
 	"context"
-	"crypto/subtle"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -27,12 +26,6 @@ type RecordingMuxClient interface {
 func (h *Handler) ProcessRecordingImports(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-
-	secret := r.Header.Get("Authorization")
-	if h.schedulerSecret == "" || subtleCompareBearer(secret, h.schedulerSecret) != 1 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
 	result, err := h.processPendingRecordingImports(ctx, maxRecordingImportsPerRun)
 	if err != nil {
@@ -347,8 +340,4 @@ func textOrEmpty(value pgtype.Text) string {
 
 func nullableText(value string) pgtype.Text {
 	return pgtype.Text{String: value, Valid: value != ""}
-}
-
-func subtleCompareBearer(header, secret string) int {
-	return subtle.ConstantTimeCompare([]byte(header), []byte("Bearer "+secret))
 }

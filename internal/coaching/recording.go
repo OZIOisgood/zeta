@@ -3,7 +3,6 @@ package coaching
 import (
 	"bytes"
 	"context"
-	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -477,12 +476,6 @@ func (h *Handler) StopBookingRecording(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) CleanupFinishedRecordings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-
-	secret := r.Header.Get("Authorization")
-	if h.schedulerSecret == "" || subtle.ConstantTimeCompare([]byte(secret), []byte("Bearer "+h.schedulerSecret)) != 1 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
 	bookings, err := h.q.ListRecordingsPastEnd(ctx, 100)
 	if err != nil {
