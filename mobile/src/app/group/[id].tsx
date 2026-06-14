@@ -382,7 +382,9 @@ export default function GroupDetailScreen() {
     data.owner_id !== userId;
   const canInvite = permissions?.includes('groups:invites:create') ?? false;
   // Mirrors web canOpenPreferences = canEditPreferences || canLeave
-  const canOpenPreferences = permissions?.includes('groups:preferences:edit') ?? false;
+  const canOpenPreferences =
+    (permissions?.includes('groups:preferences:edit') ?? false) ||
+    (permissions?.includes('groups:membership:leave') ?? false);
   const canRemoveMembers = permissions?.includes('groups:user-list:delete') ?? false;
 
   const {

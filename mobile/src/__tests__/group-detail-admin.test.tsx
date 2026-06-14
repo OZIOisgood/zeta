@@ -109,6 +109,15 @@ test('preferences button hidden without groups:preferences:edit', async () => {
   expect(screen.queryByTestId('group-preferences-btn')).toBeNull();
 });
 
+test('preferences button visible for leave-only user (groups:membership:leave, no edit)', async () => {
+  // Non-owner member who can leave but cannot edit preferences must still
+  // reach the preferences screen (mirrors web canOpenPreferences = canEditPreferences || canLeave).
+  mockPermissions = ['groups:membership:leave'];
+  mockUserId = 'u1'; // u1 != GROUP.owner_id (u2) so canLeave is true
+  await render(<Providers><GroupDetailScreen /></Providers>);
+  expect(screen.getByTestId('group-preferences-btn')).toBeOnTheScreen();
+});
+
 test('pressing preferences button navigates to preferences screen', async () => {
   mockPermissions = ['groups:preferences:edit'];
   await render(<Providers><GroupDetailScreen /></Providers>);
