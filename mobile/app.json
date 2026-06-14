@@ -61,7 +61,8 @@
         {
           "cameraPermission": "Allow Zeta to scan QR codes to join groups."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
