@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,49 @@ import { ZButton } from '../../../components/ui/z-button';
 import { ZDangerZoneCard } from '../../../components/ui/z-danger-zone-card';
 import { showToast } from '../../../components/ui/z-toast';
 
+/** All editable form fields + the server baseline in one state slice.
+ *  Storing them together lets the hydration useEffect call a single dispatch
+ *  (avoiding the react-hooks/set-state-in-effect lint violation that results
+ *  from calling multiple setState setters inside one effect). */
+type FormState = {
+  name: string;
+  description: string;
+  avatar: string | undefined;
+  /** Server snapshot used for dirty-tracking. null = not yet hydrated. */
+  baseline: { name: string; description: string; avatar: string | undefined } | null;
+};
+
+type FormAction =
+  | { type: 'hydrate'; name: string; description: string; avatar: string | undefined }
+  | { type: 'setName'; value: string }
+  | { type: 'setDescription'; value: string }
+  | { type: 'setAvatar'; value: string | undefined }
+  | { type: 'advanceBaseline' };
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  switch (action.type) {
+    case 'hydrate':
+      return {
+        name: action.name,
+        description: action.description,
+        avatar: action.avatar,
+        baseline: { name: action.name, description: action.description, avatar: action.avatar },
+      };
+    case 'setName':
+      return { ...state, name: action.value };
+    case 'setDescription':
+      return { ...state, description: action.value };
+    case 'setAvatar':
+      return { ...state, avatar: action.value };
+    case 'advanceBaseline':
+      // Move baseline forward to the current field values after a successful save.
+      return {
+        ...state,
+        baseline: { name: state.name, description: state.description, avatar: state.avatar },
+      };
+  }
+}
+
 export default function GroupPreferencesScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,45 +85,41 @@ export default function GroupPreferencesScreen() {
   // deleteUnavailable copy is shown only when neither delete nor leave applies.
   const canLeave = permissions?.includes('groups:membership:leave') ?? false;
 
-  // Form fields start empty; a useEffect hydrates them once data resolves.
-  // We cannot use lazy-init (useState(() => data?.name ?? '')) because React
-  // runs hook initializers on the very first render — which happens while
+  // Form state starts empty; the hydration effect below populates it once data
+  // arrives. We cannot use lazy-init (useState(() => data?.name ?? '')) because
+  // React runs hook initializers on the very first render — which happens while
   // isPending=true and data is undefined on any cold-cache path (deep-link,
   // gcTime eviction, slow network). Lazy initializers are never re-run, so the
   // form would stay empty and the Save button would be permanently disabled.
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [avatar, setAvatar] = useState<string | undefined>(undefined);
-  // Baseline snapshot of the server values, used for dirty tracking.
-  // null = not yet hydrated; set once data first loads.
-  const [baseline, setBaseline] = useState<{
-    name: string;
-    description: string;
-    avatar: string | undefined;
-  } | null>(null);
+  // All editable fields live in one reducer so the hydration effect dispatches
+  // a single action (satisfying react-hooks/set-state-in-effect).
+  const [form, dispatch] = useReducer(formReducer, {
+    name: '',
+    description: '',
+    avatar: undefined,
+    baseline: null,
+  });
 
-  // Hydrate form + baseline once data arrives (handles cold-cache path).
-  // data.id in the dep-array means we also reset if the user somehow navigates
-  // between two group preferences screens without unmounting.
+  // Hydrate once data first arrives (or when the group id changes).
+  // Using data?.id in the dep-array avoids a re-hydration on every refetch
+  // while still resetting if the user navigates between two groups.
   useEffect(() => {
     if (!data) return;
-    const initial = {
+    dispatch({
+      type: 'hydrate',
       name: data.name,
       description: data.description ?? '',
       avatar: data.avatar ?? undefined,
-    };
-    setName(initial.name);
-    setDescription(initial.description);
-    setAvatar(initial.avatar);
-    setBaseline(initial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.id]);
+    });
+  }, [data?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [nameTouched, setNameTouched] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const { mutateAsync: updateGroup, isPending: saving } = useUpdateGroupMutation(groupId);
   const { mutateAsync: deleteGroup, isPending: deleting } = useDeleteGroupMutation(groupId);
+
+  const { name, description, avatar, baseline } = form;
 
   const nameInvalid = nameTouched && name.trim() === '';
   // Compute dirty by comparing current fields against the hydrated baseline.
@@ -105,8 +144,8 @@ export default function GroupPreferencesScreen() {
         // Only send avatar when the user picked a new one; empty keeps the existing image.
         avatar: avatar && avatar !== (baseline?.avatar ?? undefined) ? avatar : undefined,
       });
-      // Advance the baseline so the form is no longer dirty after a successful save.
-      setBaseline({ name, description, avatar });
+      // Advance baseline so the form is no longer dirty after a successful save.
+      dispatch({ type: 'advanceBaseline' });
       showToast(t('toast.successTitle'), t('groups.updated'), 'success');
     } catch {
       setFormError(t('groups.updateFailed'));
@@ -170,7 +209,7 @@ export default function GroupPreferencesScreen() {
                       testID="group-name-input"
                       accessibilityLabel={t('groups.groupName')}
                       value={name}
-                      onChangeText={setName}
+                      onChangeText={(v) => dispatch({ type: 'setName', value: v })}
                       placeholder={t('groups.namePlaceholder')}
                       invalid={nameInvalid}
                     />
@@ -181,7 +220,7 @@ export default function GroupPreferencesScreen() {
                     <ZFieldLabel label={t('groups.avatarTitle')} />
                     <ZAvatarInput
                       value={avatar}
-                      onChange={setAvatar}
+                      onChange={(v) => dispatch({ type: 'setAvatar', value: v })}
                       fallback={initialsFromName(name)}
                       alt={name}
                       label={t('avatar.selectImage')}
@@ -194,7 +233,7 @@ export default function GroupPreferencesScreen() {
                     <ZTextarea
                       accessibilityLabel={t('common.fields.description')}
                       value={description}
-                      onChangeText={setDescription}
+                      onChangeText={(v) => dispatch({ type: 'setDescription', value: v })}
                       placeholder={t('groups.descriptionPlaceholder')}
                     />
                   </View>
