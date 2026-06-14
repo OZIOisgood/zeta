@@ -51,17 +51,24 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@storybook/addon-a11y": "^10.4.4",
+    "@storybook/addon-docs": "^10.4.4",
+    "@storybook/react-native-web-vite": "^10.4.4",
     "@testing-library/react-native": "^14.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^25.9.3",
     "@types/react": "~19.2.2",
+    "@vitejs/plugin-react": "^6.0.2",
+    "autoprefixer": "^10.5.0",
     "eslint": "^9.39.4",
     "eslint-config-expo": "~56.0.4",
     "jest": "^29.7.0",
     "jest-expo": "^56.0.5",
     "openapi-typescript": "^7.13.0",
+    "storybook": "^10.4.4",
     "tailwindcss": "^3.4.19",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
   },
   "scripts": {
     "start": "expo start --port 8082",
@@ -72,7 +79,9 @@
     "test": "jest",
     "generate:api": "openapi-typescript ../docs/openapi.yaml -o src/api/schema.d.ts",
     "sync:i18n": "node scripts/sync-i18n.mjs",
-    "sync:tokens": "node scripts/sync-tokens.mjs"
+    "sync:tokens": "node scripts/sync-tokens.mjs",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "jest": {
     "preset": "jest-expo",
@@ -91,5 +100,10 @@
       ".*/components/ui/z-avatar-input$": "<rootDir>/src/__mocks__/z-avatar-input.tsx"
     }
   },
-  "private": true
+  "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
 }
