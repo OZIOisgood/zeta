@@ -680,6 +680,7 @@
       "emptyDescription": "Generiere Codes, um Experten einzuladen.",
       "loadError": "Deine Einladungscodes konnten nicht geladen werden. Bitte versuche es erneut.",
       "copy": "Kopieren",
+      "copied": "Einladungscode kopiert",
       "generate": "Weitere Codes generieren",
       "generateErrorTitle": "Codes konnten nicht generiert werden",
       "generateError": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",

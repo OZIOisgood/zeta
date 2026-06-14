@@ -680,6 +680,7 @@
       "emptyDescription": "Generate codes to start inviting experts.",
       "loadError": "Couldn't load your invite codes. Please try again.",
       "copy": "Copy",
+      "copied": "Invite code copied",
       "generate": "Generate more codes",
       "generateErrorTitle": "Couldn't generate codes",
       "generateError": "Something went wrong. Please try again.",

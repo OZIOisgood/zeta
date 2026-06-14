@@ -33,7 +33,6 @@ describe('AppShellStore', () => {
       'sessions',
       'reports-expert',
       'reports-student',
-      'invite-codes',
     ]);
     expect(store.openWorkCount()).toBe(3);
   });

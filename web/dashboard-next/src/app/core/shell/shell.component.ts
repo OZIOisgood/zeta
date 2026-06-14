@@ -22,7 +22,6 @@ import {
   LucideLogOut,
   LucideMenu,
   LucideSettings,
-  LucideTicket,
   LucideUserRound,
   LucideUsers,
   LucideVideo,
@@ -66,7 +65,6 @@ import { AppShellStore } from '../state/app-shell.store';
     LucideLogOut,
     LucideMenu,
     LucideSettings,
-    LucideTicket,
     LucideUserRound,
     LucideUsers,
     LucideVideo,
@@ -104,11 +102,6 @@ export class ShellComponent implements OnDestroy {
         return (
           this.permissions.hasPermission('reports:read') && this.session.user()?.role === 'student'
         );
-      }
-
-      if (item.id === 'invite-codes') {
-        const role = this.session.user()?.role;
-        return role === 'expert' || role === 'admin';
       }
 
       return true;

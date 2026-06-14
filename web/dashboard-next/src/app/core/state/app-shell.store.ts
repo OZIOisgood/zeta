@@ -11,14 +11,7 @@ type NavigationItem = {
   label: string;
   labelKey: string;
   href: string;
-  icon:
-    | 'home'
-    | 'videos'
-    | 'groups'
-    | 'sessions'
-    | 'reports-expert'
-    | 'reports-student'
-    | 'invite-codes';
+  icon: 'home' | 'videos' | 'groups' | 'sessions' | 'reports-expert' | 'reports-student';
 };
 
 type WorkQueueItem = {
@@ -98,13 +91,6 @@ const initialState: AppShellState = {
       labelKey: 'common.nav.report',
       href: '/reports/students',
       icon: 'reports-student',
-    },
-    {
-      id: 'invite-codes',
-      label: 'Invite codes',
-      labelKey: 'common.nav.inviteCodes',
-      href: '/invite-codes',
-      icon: 'invite-codes',
     },
   ],
   languages: DASHBOARD_LANGUAGES.map(({ value, label }) => ({ value, label })),

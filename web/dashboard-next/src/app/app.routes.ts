@@ -2,14 +2,12 @@ import { Routes } from '@angular/router';
 import { accessActiveGuard, waitlistedOnlyGuard } from './core/guards/access-active.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
-import { roleGuard } from './core/guards/role.guard';
 import { ShellComponent } from './core/shell/shell.component';
 import { CreateGroupPageComponent } from './pages/create-group/create-group-page.component';
 import { GroupDetailsPageComponent } from './pages/group-details/group-details-page.component';
 import { GroupPreferencesPageComponent } from './pages/group-preferences/group-preferences-page.component';
 import { GroupsPageComponent } from './pages/groups/groups-page.component';
 import { HomePageComponent } from './pages/home/home-page.component';
-import { InviteCodesPageComponent } from './pages/invite-codes/invite-codes-page.component';
 import { NotificationsPageComponent } from './pages/notifications/notifications-page.component';
 import { ReportsPageComponent } from './pages/reports/reports-page.component';
 import { BookCoachingPageComponent } from './pages/book-coaching/book-coaching-page.component';
@@ -59,13 +57,6 @@ export const routes: Routes = [
         title: 'Schüler-Bericht',
       },
       { path: 'notifications', component: NotificationsPageComponent, title: 'Notifications' },
-      {
-        path: 'invite-codes',
-        component: InviteCodesPageComponent,
-        canActivate: [roleGuard],
-        data: { roles: ['expert', 'admin'] },
-        title: 'Invite codes',
-      },
       { path: 'preferences', redirectTo: 'preferences/personal-data', pathMatch: 'full' },
       { path: 'preferences/:tab', component: PreferencesPageComponent, title: 'Preferences' },
       {

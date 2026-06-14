@@ -1,5 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { LucideTicket } from '@lucide/angular';
 import { AppShellStore } from '../../core/state/app-shell.store';
 import { AccessStore } from '../../features/access/access.store';
 import { SessionStore } from '../../features/session/session.store';
@@ -11,21 +12,34 @@ import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.componen
 type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger';
 
 @Component({
-  selector: 'app-invite-codes-page',
+  selector: 'app-invite-codes-section',
   imports: [
     TranslocoPipe,
     ZBadgeComponent,
     ZButtonComponent,
     ZEmptyStateComponent,
     ZSkeletonComponent,
+    LucideTicket,
   ],
   template: `
-    <div class="mx-auto grid max-w-2xl gap-5">
-      <div class="grid gap-1">
-        <h1 class="text-2xl font-semibold">{{ 'access.codes.title' | transloco }}</h1>
-        <p class="text-sm leading-6 text-[var(--z-muted)]">
-          {{ 'access.codes.subtitle' | transloco }}
-        </p>
+    <section class="grid gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm">
+      <div class="flex items-start gap-3 border-b border-[var(--z-border)] pb-4">
+        <span
+          class="grid size-10 shrink-0 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
+        >
+          <svg lucideTicket class="size-5" aria-hidden="true"></svg>
+        </span>
+        <div class="min-w-0 flex-1">
+          <h2 class="text-base font-semibold">{{ 'access.codes.title' | transloco }}</h2>
+          <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
+            {{ 'access.codes.subtitle' | transloco }}
+          </p>
+        </div>
+        @if (isAdmin()) {
+          <z-button variant="secondary" size="sm" (pressed)="generate()">{{
+            'access.codes.generate' | transloco
+          }}</z-button>
+        }
       </div>
 
       @if (access.codesSlice().status === 'loading') {
@@ -51,7 +65,8 @@ type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger';
                 }}</z-badge>
                 @if (c.status === 'available') {
                   <z-button variant="ghost" size="sm" (pressed)="copy(c.code)">{{
-                    'access.codes.copy' | transloco
+                    (copiedCode() === c.code ? 'common.actions.copied' : 'access.codes.copy')
+                      | transloco
                   }}</z-button>
                 }
               </div>
@@ -65,20 +80,16 @@ type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'danger';
             </li>
           }
         </ul>
-        @if (isAdmin()) {
-          <z-button variant="secondary" (pressed)="generate()">{{
-            'access.codes.generate' | transloco
-          }}</z-button>
-        }
       }
-    </div>
+    </section>
   `,
 })
-export class InviteCodesPageComponent implements OnInit {
+export class InviteCodesSectionComponent implements OnInit {
   protected readonly access = inject(AccessStore);
   private readonly session = inject(SessionStore);
   private readonly shell = inject(AppShellStore);
   private readonly transloco = inject(TranslocoService);
+  protected readonly copiedCode = signal<string | null>(null);
 
   ngOnInit(): void {
     void this.access.loadCodes();
@@ -99,8 +110,15 @@ export class InviteCodesPageComponent implements OnInit {
     }
   }
 
-  protected copy(code: string): void {
-    void navigator.clipboard?.writeText(code);
+  protected async copy(code: string): Promise<void> {
+    await navigator.clipboard?.writeText(code);
+    this.copiedCode.set(code);
+    this.shell.showToast(
+      this.transloco.translate('toast.successTitle'),
+      this.transloco.translate('access.codes.copied'),
+      'success',
+    );
+    setTimeout(() => this.copiedCode.set(null), 2000);
   }
 
   protected async generate(): Promise<void> {

@@ -7,7 +7,7 @@ import { AppShellStore } from '../../core/state/app-shell.store';
 import { AsyncSlice } from '../../core/state/async-state';
 import { AccessStore } from '../../features/access/access.store';
 import { SessionStore } from '../../features/session/session.store';
-import { InviteCodesPageComponent } from './invite-codes-page.component';
+import { InviteCodesSectionComponent } from './invite-codes-section.component';
 
 type AccessStub = {
   codes: ReturnType<typeof signal<SignupCode[]>>;
@@ -26,7 +26,7 @@ let access: AccessStub;
 let session: SessionStub;
 let shell: ShellStub;
 
-async function setup(role: string): Promise<ComponentFixture<InviteCodesPageComponent>> {
+async function setup(role: string): Promise<ComponentFixture<InviteCodesSectionComponent>> {
   access = {
     codes: signal<SignupCode[]>([
       { code: 'ALPHA1', status: 'available' },
@@ -45,7 +45,7 @@ async function setup(role: string): Promise<ComponentFixture<InviteCodesPageComp
 
   await TestBed.configureTestingModule({
     imports: [
-      InviteCodesPageComponent,
+      InviteCodesSectionComponent,
       TranslocoTestingModule.forRoot({
         langs: { en: {} },
         translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
@@ -54,7 +54,7 @@ async function setup(role: string): Promise<ComponentFixture<InviteCodesPageComp
     ],
     providers: [provideRouter([])],
   })
-    .overrideComponent(InviteCodesPageComponent, {
+    .overrideComponent(InviteCodesSectionComponent, {
       set: {
         providers: [
           { provide: AccessStore, useValue: access },
@@ -65,12 +65,12 @@ async function setup(role: string): Promise<ComponentFixture<InviteCodesPageComp
     })
     .compileComponents();
 
-  const fixture = TestBed.createComponent(InviteCodesPageComponent);
+  const fixture = TestBed.createComponent(InviteCodesSectionComponent);
   fixture.detectChanges();
   return fixture;
 }
 
-describe('InviteCodesPageComponent', () => {
+describe('InviteCodesSectionComponent', () => {
   it('loads the codes on init', async () => {
     await setup('expert');
 
@@ -130,5 +130,24 @@ describe('InviteCodesPageComponent', () => {
 
     expect(fixture.nativeElement.querySelector('z-empty-state')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('access.codes.loadError');
+  });
+
+  it('copies the code, toasts success, and toggles the button label', async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    const fixture = await setup('expert');
+
+    await fixture.componentInstance['copy']('ALPHA1');
+    fixture.detectChanges();
+
+    expect(writeText).toHaveBeenCalledWith('ALPHA1');
+    expect(shell.showToast).toHaveBeenCalledWith(
+      'toast.successTitle',
+      'access.codes.copied',
+      'success',
+    );
+    expect(fixture.componentInstance['copiedCode']()).toBe('ALPHA1');
+    expect(fixture.nativeElement.textContent).toContain('common.actions.copied');
   });
 });
