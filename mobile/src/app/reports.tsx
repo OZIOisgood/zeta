@@ -23,7 +23,7 @@ import {
   type Granularity,
   type ReportEvent,
 } from '../api/queries/reports';
-import { formatDate } from '../lib/datetime';
+import { formatDate, formatMonthYear } from '../lib/datetime';
 import { StatCard } from '../components/stat-card';
 import { ZBackHeader } from '../components/ui/z-back-header';
 import { ZBadge } from '../components/ui/z-badge';
@@ -67,7 +67,7 @@ function Skeletons() {
 
 export default function ReportsScreen() {
   const { t } = useTranslation();
-  const { data, isPending, isError, refetch } = useReportEventsQuery();
+  const { data, isPending, isError, isRefetching, refetch } = useReportEventsQuery();
 
   const [gran, setGran] = useState<Granularity>('month');
   const [cursor, setCursor] = useState<Cursor>(() => currentCursor(new Date()));
@@ -93,17 +93,19 @@ export default function ReportsScreen() {
     if (gran === 'year') return `${cursor.year}`;
     if (gran === 'quarter') return `Q${quarterOf(cursor.month) + 1} ${cursor.year}`;
     // First-of-month instant → locale-aware "March 2026" via the shared helper.
-    return formatDate(new Date(cursor.year, cursor.month, 1).toISOString());
+    return formatMonthYear(new Date(cursor.year, cursor.month, 1).toISOString());
   }, [gran, cursor]);
 
   // Per-event duration — mirrors web `eventDuration` (reports-page.component.ts):
-  // a video shows its m:ss clock with the minute unit ("1:30 min"); a live
-  // coaching shows whole minutes via the shared availability key ("30 min").
+  // both kinds use `reports.unit.minute` ("min") so the unit key is consistent
+  // across DE/FR; a video shows its m:ss clock prefix, a live coaching shows
+  // whole minutes.
   function eventDurationLabel(e: ReportEvent): string {
+    const m = t('reports.unit.minute');
     if (e.kind === 'video') {
-      return `${videoClock(e.duration_seconds)} ${t('reports.unit.minute')}`;
+      return `${videoClock(e.duration_seconds)} ${m}`;
     }
-    return t('common.labels.minutesShort', { count: Math.round(e.duration_seconds / 60) });
+    return `${Math.round(e.duration_seconds / 60)} ${m}`;
   }
 
   // Meta line via an i18n template with a localized "Video uploaded" /
@@ -137,9 +139,9 @@ export default function ReportsScreen() {
     body = (
       <FlatList
         data={flatEvents}
-        keyExtractor={(e, i) => `${e.kind}:${e.group.id}:${e.at}:${i}`}
+        keyExtractor={(e) => `${e.kind}:${e.group.id}:${e.at}`}
         contentContainerStyle={{ padding: 16, gap: 16 }}
-        refreshControl={<RefreshControl refreshing={false} onRefresh={() => void refetch()} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
         ListHeaderComponent={
           <View className="gap-4">
             {/* Period selector */}
@@ -263,12 +265,19 @@ export default function ReportsScreen() {
     );
   }
 
+  // Only show the activity count subtitle once data is available — avoids
+  // "0 activities · …" flashing during pending/error states.
+  const headerSubtitle =
+    !isPending && !isError
+      ? t('reports.period.summary', { count: report.count, period: periodLabel })
+      : undefined;
+
   return (
     <ZScreen>
       <ZBackHeader
         testID="reports-header"
         title={t(isExpert ? 'reports.expert.title' : 'reports.student.title')}
-        subtitle={t('reports.period.summary', { count: report.count, period: periodLabel })}
+        subtitle={headerSubtitle}
       />
       {body}
     </ZScreen>
