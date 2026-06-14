@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, fireEvent } from '@testing-library/react-native';
 
 import { initI18n } from '../i18n';
 import { MemberRow } from './member-row';
@@ -37,8 +37,6 @@ test('does not show initials tile when avatar is present', async () => {
   await render(<MemberRow member={withAvatar} />);
   expect(screen.queryByTestId('member-initials')).toBeNull();
 });
-
-import { fireEvent } from '@testing-library/react-native';
 
 test('shows no remove button when onRemove is omitted', async () => {
   await render(<MemberRow member={MEMBER} />);

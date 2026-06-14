@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -42,9 +42,9 @@ export default function GroupPreferencesScreen() {
   // deleteUnavailable copy is shown only when neither delete nor leave applies.
   const canLeave = permissions?.includes('groups:membership:leave') ?? false;
 
-  // Form fields — initialized lazily from data on first load.
-  // We use a ref to gate initialization to avoid re-triggering on re-renders.
-  const initializedRef = useRef(false);
+  // Form fields — initialized from server data on first render of the data
+  // branch. The isPending guard above means this branch only mounts after data
+  // is available, so lazy init captures the real values synchronously.
   const [name, setName] = useState(() => data?.name ?? '');
   const [description, setDescription] = useState(() => data?.description ?? '');
   const [avatar, setAvatar] = useState<string | undefined>(() => data?.avatar ?? undefined);
@@ -52,14 +52,6 @@ export default function GroupPreferencesScreen() {
   const [serverName] = useState(() => data?.name ?? '');
   const [serverDescription] = useState(() => data?.description ?? '');
   const [serverAvatar] = useState<string | undefined>(() => data?.avatar ?? undefined);
-
-  // If data arrived after mount (query was loading), initialize once.
-  if (data && !initializedRef.current) {
-    initializedRef.current = true;
-    if (name === '' && data.name) {
-      setName(data.name);
-    }
-  }
 
   const [nameTouched, setNameTouched] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
