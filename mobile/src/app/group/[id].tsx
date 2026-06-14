@@ -1,8 +1,22 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FlatList, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, ShieldCheck, TriangleAlert, Users } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import {
+  ArrowLeft,
+  Copy,
+  Link,
+  Mail,
+  QrCode,
+  Share2,
+  ShieldCheck,
+  TriangleAlert,
+  Users,
+} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import QRCodeSvg from 'react-native-qrcode-svg';
 import {
   useGroupQuery,
   useGroupStudentsQuery,
@@ -10,6 +24,7 @@ import {
   useLeaveGroupMutation,
   type GroupUser,
 } from '../../api/queries/groups';
+import { useCreateInvitationMutation } from '../../api/queries/invitations';
 import { useAuth } from '../../auth/auth-store';
 import { initialsFromName } from '../../lib/avatar';
 import { MemberRow } from '../../components/member-row';
@@ -19,11 +34,24 @@ import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
 import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
+import { ZFieldError } from '../../components/ui/z-field-error';
+import { ZFieldLabel } from '../../components/ui/z-field-label';
 import { ZIconButton } from '../../components/ui/z-icon-button';
+import { ZKeyboardAvoidingView } from '../../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { showToast } from '../../components/ui/z-toast';
+import { ZTextInput } from '../../components/ui/z-text-input';
 import { colors } from '../../theme/colors';
+
+/** Web invite base URL: produce the same link the web app generates so a QR
+ *  scanned by a system camera opens the web invitation page. Falls back to
+ *  localhost for local development. */
+const WEB_BASE = process.env.EXPO_PUBLIC_WEB_BASE_URL ?? 'http://localhost:4200';
+
+function buildInviteLink(code: string) {
+  return `${WEB_BASE}/groups?invite=${code}`;
+}
 
 function MembersSkeleton() {
   return (
@@ -113,6 +141,219 @@ function MemberSection({
   );
 }
 
+/**
+ * Invite section — mirrors the web `group-invitation-dialog.component.ts`.
+ *
+ * Phase 1: optional-email form → create invitation
+ * Phase 2: result view — client-side QR (react-native-qrcode-svg), share link,
+ *          copy-to-clipboard, share/download QR (expo-sharing), Done button.
+ *
+ * Parity checklist (group-invitation-dialog.ts):
+ * [x] Optional email field with validation
+ * [x] Email hint copy
+ * [x] Inline error on API failure
+ * [x] Two-variant success toast: sent (email) vs linkCreated (link only)
+ * [x] Client-side QR from invite code
+ * [x] QR render failure fallback (qrUnavailable)
+ * [x] Share link display
+ * [x] Copy-to-clipboard
+ * [x] Share/save QR (expo-sharing ≈ web downloadQr)
+ * [x] Done button resets to form
+ */
+function InviteSection({ groupId }: { groupId: string }) {
+  const { t } = useTranslation();
+
+  const [email, setEmail] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [invitation, setInvitation] = useState<{ id: string; code: string } | null>(null);
+  const [qrError, setQrError] = useState(false);
+  const qrRef = useRef<{ toDataURL: (cb: (data: string) => void) => void } | null>(null);
+
+  const { mutateAsync: createInvitation, isPending } = useCreateInvitationMutation();
+
+  // Simple email validation (empty is allowed — generates a link-only invite)
+  const emailInvalid = email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const inviteLink = invitation ? buildInviteLink(invitation.code) : '';
+
+  async function handleCreate() {
+    if (emailInvalid) {
+      setEmailTouched(true);
+      return;
+    }
+    setEmailTouched(false);
+    const sentByEmail = email.trim().length > 0;
+    try {
+      const result = await createInvitation({ groupID: groupId, email: email.trim() || undefined });
+      setInvitation(result);
+      showToast(
+        t('toast.successTitle'),
+        sentByEmail ? t('groups.inviteDialog.sent') : t('groups.inviteDialog.linkCreated'),
+        'success',
+      );
+    } catch {
+      showToast(t('groups.inviteDialog.failed'), undefined, 'error');
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!inviteLink) return;
+    await Clipboard.setStringAsync(inviteLink);
+    showToast(
+      t('toast.successTitle'),
+      t('groups.inviteDialog.linkCopied'),
+      'success',
+    );
+  }
+
+  async function handleShareQr() {
+    if (!qrRef.current) return;
+    qrRef.current.toDataURL(async (data) => {
+      try {
+        const path = `${FileSystem.cacheDirectory}invitation-qr.png`;
+        await FileSystem.writeAsStringAsync(path, data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(path, { mimeType: 'image/png', dialogTitle: t('groups.inviteDialog.qrAlt') });
+        }
+      } catch {
+        // Sharing not available — silently ignore
+      }
+    });
+  }
+
+  function handleDone() {
+    setInvitation(null);
+    setEmail('');
+    setEmailTouched(false);
+    setQrError(false);
+  }
+
+  return (
+    <ZCard testID="group-invite-section">
+      {/* Header */}
+      <View className="flex-row items-start gap-3">
+        <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
+          <QrCode color={colors.primary} size={20} />
+        </View>
+        <View className="flex-1">
+          <Text className="text-base font-semibold text-z-text">
+            {t('groups.inviteDialog.title')}
+          </Text>
+          <Text className="mt-1 text-sm leading-6 text-z-muted">
+            {t('groups.inviteDialog.cardDescription')}
+          </Text>
+        </View>
+      </View>
+
+      {!invitation ? (
+        /* Phase 1: Create form */
+        <View className="mt-4 gap-3">
+          <View>
+            <ZFieldLabel label={t('common.fields.emailAddressOptional')} />
+            <ZTextInput
+              testID="group-invite-email"
+              accessibilityLabel={t('common.fields.emailAddressOptional')}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="student@example.com"
+              invalid={emailTouched && emailInvalid}
+            />
+            {emailTouched && emailInvalid && (
+              <ZFieldError message={t('groups.inviteDialog.emailInvalid')} />
+            )}
+          </View>
+
+          {/* Email hint */}
+          <View className="flex-row items-start gap-2 rounded-md border border-z-border bg-z-bg p-3">
+            <Mail color={colors.primary} size={16} />
+            <Text className="flex-1 text-sm leading-6 text-z-muted">
+              {t('groups.inviteDialog.emailHint')}
+            </Text>
+          </View>
+
+          <View className="flex-row justify-end">
+            <ZButton
+              testID="group-invite-create-btn"
+              label={isPending ? t('groups.inviteDialog.creating') : t('common.actions.createInvitation')}
+              disabled={isPending || (emailTouched && emailInvalid)}
+              onPress={() => void handleCreate()}
+            />
+          </View>
+        </View>
+      ) : (
+        /* Phase 2: Result view */
+        <View className="mt-4 gap-4">
+          {/* QR + link panel */}
+          <View className="gap-4 rounded-lg border border-z-border bg-z-bg p-4">
+            {/* QR code */}
+            <View className="items-center justify-center rounded-md border border-dashed border-z-border bg-white p-3">
+              {qrError ? (
+                <View className="items-center p-3">
+                  <QrCode color={colors.muted} size={32} />
+                  <Text className="mt-2 text-center text-xs text-z-muted">
+                    {t('groups.inviteDialog.qrUnavailable')}
+                  </Text>
+                </View>
+              ) : (
+                <QRCodeSvg
+                  testID="qr-code"
+                  value={inviteLink}
+                  size={160}
+                  getRef={(ref) => { qrRef.current = ref as typeof qrRef.current; }}
+                  onError={() => setQrError(true)}
+                />
+              )}
+            </View>
+
+            {/* Share link */}
+            <View>
+              <View className="flex-row items-center gap-2">
+                <Link color={colors.primary} size={16} />
+                <Text className="text-sm font-semibold text-z-text">
+                  {t('groups.inviteDialog.shareLink')}
+                </Text>
+              </View>
+              <View className="mt-2 rounded-md border border-z-border bg-white px-3 py-2">
+                <Text className="text-xs text-z-muted" numberOfLines={2}>{inviteLink}</Text>
+              </View>
+              <Text className="mt-2 text-sm leading-6 text-z-muted">
+                {t('groups.inviteDialog.shareHint')}
+              </Text>
+            </View>
+          </View>
+
+          {/* Actions */}
+          <View className="gap-2">
+            <ZButton
+              testID="group-invite-copy-btn"
+              label={t('common.actions.copyLink')}
+              variant="secondary"
+              icon={<Copy color={colors.text} size={16} />}
+              onPress={() => void handleCopyLink()}
+            />
+            {!qrError && (
+              <ZButton
+                testID="group-invite-share-qr-btn"
+                label={t('common.actions.downloadQr')}
+                variant="secondary"
+                icon={<Share2 color={colors.text} size={16} />}
+                onPress={() => void handleShareQr()}
+              />
+            )}
+            <ZButton
+              testID="group-invite-done-btn"
+              label={t('common.actions.done')}
+              onPress={handleDone}
+            />
+          </View>
+        </View>
+      )}
+    </ZCard>
+  );
+}
+
 export default function GroupDetailScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -129,6 +370,7 @@ export default function GroupDetailScreen() {
     (permissions?.includes('groups:membership:leave') ?? false) &&
     data !== undefined &&
     data.owner_id !== userId;
+  const canInvite = permissions?.includes('groups:invites:create') ?? false;
 
   const {
     data: experts,
@@ -195,91 +437,100 @@ export default function GroupDetailScreen() {
 
   return (
     <ZScreen edges={['bottom']}>
-      <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* Header */}
-        <View className="flex-row items-center gap-3 p-4">
-          <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-            <ArrowLeft color={colors.text} size={22} />
-          </ZIconButton>
-          <ZAvatar
-            image={data.avatar ?? undefined}
-            fallback={initialsFromName(data.name)}
-            alt={data.name}
-            size={56}
-          />
-          <View className="flex-1">
-            <Text className="text-2xl font-semibold text-z-text" numberOfLines={2}>
-              {data.name}
+      <ZKeyboardAvoidingView>
+        <ScrollView
+          className="flex-1 bg-z-bg"
+          contentContainerStyle={{ paddingBottom: 32 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <View className="flex-row items-center gap-3 p-4">
+            <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
+              <ArrowLeft color={colors.text} size={22} />
+            </ZIconButton>
+            <ZAvatar
+              image={data.avatar ?? undefined}
+              fallback={initialsFromName(data.name)}
+              alt={data.name}
+              size={56}
+            />
+            <View className="flex-1">
+              <Text className="text-2xl font-semibold text-z-text" numberOfLines={2}>
+                {data.name}
+              </Text>
+            </View>
+          </View>
+
+          <View className="px-4 pb-4">
+            <Text className="text-sm text-z-muted">
+              {data.description || t('groups.phase4.noDescription')}
             </Text>
           </View>
-        </View>
 
-        <View className="px-4 pb-4">
-          <Text className="text-sm text-z-muted">
-            {data.description || t('groups.phase4.noDescription')}
-          </Text>
-        </View>
+          <View className="gap-6 px-4">
+            {/* Invite section (groups:invites:create gated) */}
+            {canInvite && <InviteSection groupId={id ?? ''} />}
 
-        <View className="gap-6 px-4">
-          {/* Member sections */}
-          {canSeeExperts || canSeeStudents ? (
-            <View className="gap-4">
-              {canSeeExperts && (
-                <MemberSection
-                  kind="experts"
-                  title={t('groups.experts')}
-                  description={t('groups.expertsDescription')}
-                  members={experts}
-                  isLoading={expertsLoading}
-                  isError={expertsError}
-                  onRetry={() => void refetchExperts()}
-                />
-              )}
-              {canSeeStudents && (
-                <MemberSection
-                  kind="students"
-                  title={t('groups.students')}
-                  description={t('groups.studentsDescription')}
-                  members={students}
-                  isLoading={studentsLoading}
-                  isError={studentsError}
-                  onRetry={() => void refetchStudents()}
-                />
-              )}
-            </View>
-          ) : (
-            <ZEmptyState
-              title={t('groups.membersUnavailable')}
-              description={t('groups.membersUnavailableDescription')}
-              icon={<TriangleAlert color={colors.primary} size={24} />}
-            />
-          )}
-
-          {/* Danger zone */}
-          {canLeave && (
-            <View className="pt-4">
-              <ZButton
-                testID="group-leave"
-                label={t('groups.leave.action')}
-                variant="danger"
-                onPress={() => setShowLeaveConfirm(true)}
+            {/* Member sections */}
+            {canSeeExperts || canSeeStudents ? (
+              <View className="gap-4">
+                {canSeeExperts && (
+                  <MemberSection
+                    kind="experts"
+                    title={t('groups.experts')}
+                    description={t('groups.expertsDescription')}
+                    members={experts}
+                    isLoading={expertsLoading}
+                    isError={expertsError}
+                    onRetry={() => void refetchExperts()}
+                  />
+                )}
+                {canSeeStudents && (
+                  <MemberSection
+                    kind="students"
+                    title={t('groups.students')}
+                    description={t('groups.studentsDescription')}
+                    members={students}
+                    isLoading={studentsLoading}
+                    isError={studentsError}
+                    onRetry={() => void refetchStudents()}
+                  />
+                )}
+              </View>
+            ) : (
+              <ZEmptyState
+                title={t('groups.membersUnavailable')}
+                description={t('groups.membersUnavailableDescription')}
+                icon={<TriangleAlert color={colors.primary} size={24} />}
               />
-              <ZConfirmDialog
-                testID="group-leave-dialog"
-                visible={showLeaveConfirm}
-                tone="danger"
-                title={t('groups.leave.title')}
-                description={t('groups.leave.confirm', { group: data.name })}
-                confirmLabel={t('groups.leave.action')}
-                cancelLabel={t('common.actions.cancel')}
-                confirmDisabled={leaveIsPending}
-                onConfirm={() => void handleConfirmLeave()}
-                onCancel={() => setShowLeaveConfirm(false)}
-              />
-            </View>
-          )}
-        </View>
-      </ScrollView>
+            )}
+
+            {/* Danger zone */}
+            {canLeave && (
+              <View className="pt-4">
+                <ZButton
+                  testID="group-leave"
+                  label={t('groups.leave.action')}
+                  variant="danger"
+                  onPress={() => setShowLeaveConfirm(true)}
+                />
+                <ZConfirmDialog
+                  testID="group-leave-dialog"
+                  visible={showLeaveConfirm}
+                  tone="danger"
+                  title={t('groups.leave.title')}
+                  description={t('groups.leave.confirm', { group: data.name })}
+                  confirmLabel={t('groups.leave.action')}
+                  cancelLabel={t('common.actions.cancel')}
+                  confirmDisabled={leaveIsPending}
+                  onConfirm={() => void handleConfirmLeave()}
+                  onCancel={() => setShowLeaveConfirm(false)}
+                />
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </ZKeyboardAvoidingView>
     </ZScreen>
   );
 }

@@ -9,6 +9,7 @@
     "expo": "~56.0.11",
     "expo-auth-session": "~56.0.14",
     "expo-camera": "~56.0.8",
+    "expo-clipboard": "~7.1.5",
     "expo-constants": "~56.0.18",
     "expo-crypto": "~56.0.4",
     "expo-dev-client": "~56.0.20",
@@ -22,6 +23,7 @@
     "expo-localization": "~56.0.6",
     "expo-router": "~56.2.10",
     "expo-secure-store": "~56.0.4",
+    "expo-sharing": "~13.1.5",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
     "expo-symbols": "~56.0.6",
@@ -39,6 +41,7 @@
     "react-native-agora": "^4.5.4",
     "react-native-css-interop": "0.2.5",
     "react-native-gesture-handler": "~2.31.1",
+    "react-native-qrcode-svg": "^6.3.21",
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
@@ -77,13 +80,15 @@
       "./jest.setup.js"
     ],
     "transformIgnorePatterns": [
-      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|react-native-svg|lucide-react-native|@tanstack))",
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|react-native-svg|react-native-qrcode-svg|lucide-react-native|@tanstack))",
       "/node_modules/react-native-reanimated/plugin/",
       "/node_modules/@react-native/babel-preset/"
     ],
     "moduleNameMapper": {
       "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock",
-      "^react-native-agora$": "<rootDir>/src/call/__mocks__/react-native-agora.ts"
+      "^react-native-agora$": "<rootDir>/src/call/__mocks__/react-native-agora.ts",
+      "^react-native-qrcode-svg$": "<rootDir>/src/__mocks__/react-native-qrcode-svg.tsx",
+      ".*/components/ui/z-avatar-input$": "<rootDir>/src/__mocks__/z-avatar-input.tsx"
     }
   },
   "private": true

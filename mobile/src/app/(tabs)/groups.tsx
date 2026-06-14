@@ -1,11 +1,13 @@
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { QrCode, Users } from 'lucide-react-native';
+import { Plus, QrCode, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../../api/queries/groups';
+import { useAuth } from '../../auth/auth-store';
 import { GroupCard } from '../../components/group-card';
 import { ZButton } from '../../components/ui/z-button';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
+import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
@@ -36,6 +38,8 @@ export default function GroupsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { data, isPending, isError, refetch, isRefetching } = useGroupsQuery();
+  const permissions = useAuth((s) => s.user?.permissions ?? null);
+  const canCreate = permissions !== null && permissions.includes('groups:create');
 
   let content: React.ReactNode;
 
@@ -80,8 +84,7 @@ export default function GroupsScreen() {
   return (
     <ZScreen edges={['top']}>
       {/* List/index header: compact title + summary subtitle. Join is a secondary
-          action (create-group is desktop-only), so it lives in the header action
-          slot, not a FAB. */}
+          action; Create is the primary FAB (groups:create-gated). */}
       <ZPageHeader
         title={t('groups.myGroups')}
         subtitle={t('groups.phase4.summary')}
@@ -96,6 +99,19 @@ export default function GroupsScreen() {
         }
       />
       {content}
+      {canCreate && (
+        <ZIconButton
+          testID="groups-create-fab"
+          label={t('groups.create')}
+          variant="primary"
+          size="lg"
+          shape="circle"
+          onPress={() => router.push('/group/create')}
+          className="absolute bottom-6 right-6"
+        >
+          <Plus color={colors.onPrimary} size={24} />
+        </ZIconButton>
+      )}
     </ZScreen>
   );
 }
