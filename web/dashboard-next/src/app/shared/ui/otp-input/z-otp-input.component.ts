@@ -28,7 +28,7 @@ const CROCKFORD_PATTERN = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]';
   template: `
     <div
       ngpInputOtp
-      class="relative flex gap-2"
+      class="relative flex gap-1.5 sm:gap-2"
       [ngpInputOtpValue]="value()"
       [ngpInputOtpPattern]="pattern"
       [ngpInputOtpPasteTransformer]="uppercaseTransformer"
@@ -48,7 +48,7 @@ const CROCKFORD_PATTERN = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]';
         <div
           ngpInputOtpSlot
           [ngClass]="slotClasses()"
-          class="flex h-11 w-11 items-center justify-center rounded-md border bg-white text-center text-base font-semibold uppercase tabular-nums transition outline-none data-[active]:ring-2 data-[caret]:after:ml-px data-[caret]:after:inline-block data-[caret]:after:h-5 data-[caret]:after:w-px data-[caret]:after:animate-pulse data-[caret]:after:bg-[var(--z-primary)] data-[caret]:after:content-['']"
+          class="flex h-11 w-9 items-center justify-center rounded-md border bg-white sm:w-11 text-center text-base font-semibold uppercase tabular-nums transition outline-none data-[active]:ring-2 data-[caret]:after:ml-px data-[caret]:after:inline-block data-[caret]:after:h-5 data-[caret]:after:w-px data-[caret]:after:animate-pulse data-[caret]:after:bg-[var(--z-primary)] data-[caret]:after:content-['']"
         ></div>
       }
     </div>
