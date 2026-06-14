@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, Bell, ChevronRight, CircleUserRound, LogOut, Save } from 'lucide-react-native';
+import { Touchable } from '../../components/ui/touchable';
 import { ZAvatarInput } from '../../components/ui/z-avatar-input';
 import { ZBadge } from '../../components/ui/z-badge';
 import { ZButton } from '../../components/ui/z-button';
@@ -15,6 +15,7 @@ import { ZFieldLabel } from '../../components/ui/z-field-label';
 import { ZKeyboardAvoidingView } from '../../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { ZSymbol } from '../../components/ui/z-symbol';
 import { ZTabs, type ZTab } from '../../components/ui/z-tabs';
 import { ZTextInput } from '../../components/ui/z-text-input';
 import { showToast } from '../../components/ui/z-toast';
@@ -313,7 +314,7 @@ function PreferencesForm({ user }: { user: Me }) {
               <ZCard className="gap-4">
                 <View className="flex-row items-start gap-3 border-b border-z-border pb-4">
                   <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-                    <CircleUserRound color={colors.primary} size={20} />
+                    <ZSymbol name="person" label={t('preferences.personalData')} size={20} color={colors.primary} />
                   </View>
                   <View className="flex-1">
                     <Text className="text-base font-semibold text-z-text">
@@ -398,7 +399,7 @@ function PreferencesForm({ user }: { user: Me }) {
               <ZCard className="gap-4">
                 <View className="flex-row items-start gap-3 border-b border-z-border pb-4">
                   <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-                    <Bell color={colors.primary} size={20} />
+                    <ZSymbol name="bell" label={t('preferences.emailPreferences')} size={20} color={colors.primary} />
                   </View>
                   <View className="flex-1">
                     <Text className="text-base font-semibold text-z-text">
@@ -458,32 +459,31 @@ function PreferencesForm({ user }: { user: Me }) {
               label={saving ? t('preferences.saving') : t('common.actions.save')}
               loading={saving}
               disabled={saveDisabled}
-              icon={<Save color={colors.onPrimary} size={16} />}
+              icon={<ZSymbol name="save" label={t('common.actions.save')} size={16} color={colors.onPrimary} />}
               onPress={() => void handleSave()}
             />
 
             {can('reports:read') ? (
-              <Pressable
+              <Touchable
                 testID="profile-reports-entry"
-                accessibilityRole="button"
                 accessibilityLabel={t('reports.openReport')}
                 onPress={() => router.push('/reports' as never)}
               >
                 <ZCard className="flex-row items-center gap-3">
-                  <ZIconTile tone="neutral" icon={<BarChart3 color={colors.primary} size={20} />} />
+                  <ZIconTile tone="neutral" icon={<ZSymbol name="bar-chart" label={t('reports.openReport')} size={20} color={colors.primary} />} />
                   <View className="min-w-0 flex-1">
                     <Text className="text-base font-semibold text-z-text">{t('reports.openReport')}</Text>
                     <Text className="mt-1 text-sm text-z-muted">{t('reports.entry.subtitle')}</Text>
                   </View>
-                  <ChevronRight color={colors.muted} size={20} />
+                  <ZSymbol name="chevron-right" label={t('reports.openReport')} size={20} color={colors.muted} />
                 </ZCard>
-              </Pressable>
+              </Touchable>
             ) : null}
 
             <ZButton
               label={t('common.actions.signOut')}
               variant="secondary"
-              icon={<LogOut color={colors.text} size={16} />}
+              icon={<ZSymbol name="logout" label={t('common.actions.signOut')} size={16} color={colors.text} />}
               onPress={() => void authStore.getState().signOut()}
             />
           </View>

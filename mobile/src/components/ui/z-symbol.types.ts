@@ -16,12 +16,16 @@
  */
 
 import type {
+  BarChart3,
+  Bell,
   CalendarClock,
   Check,
   ChevronDown,
   ChevronRight,
   Home,
+  LogOut,
   Plus,
+  Save,
   Search,
   UserRound,
   Users,
@@ -43,7 +47,11 @@ export type ZSymbolName =
   | 'close'
   | 'check'
   | 'plus'
-  | 'search';
+  | 'search'
+  | 'bar-chart'
+  | 'bell'
+  | 'logout'
+  | 'save';
 
 export interface ZSymbolProps {
   /** Logical icon name. */
@@ -62,7 +70,7 @@ export interface ZSymbolProps {
 }
 
 /** Lucide component type alias for the icon map. */
-export type LucideIcon = typeof Home | typeof Video | typeof CalendarClock | typeof Users | typeof UserRound | typeof ArrowLeft | typeof ChevronDown | typeof ChevronRight | typeof X | typeof Check | typeof Plus | typeof Search;
+export type LucideIcon = typeof Home | typeof Video | typeof CalendarClock | typeof Users | typeof UserRound | typeof ArrowLeft | typeof ChevronDown | typeof ChevronRight | typeof X | typeof Check | typeof Plus | typeof Search | typeof BarChart3 | typeof Bell | typeof LogOut | typeof Save;
 
 /** Per-name mapping: SF Symbol name, Android Material Symbol name, lucide component. */
 export interface ZSymbolEntry {

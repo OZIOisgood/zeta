@@ -8,12 +8,16 @@
 
 import {
   ArrowLeft,
+  BarChart3,
+  Bell,
   CalendarClock,
   Check,
   ChevronDown,
   ChevronRight,
   Home,
+  LogOut,
   Plus,
+  Save,
   Search,
   UserRound,
   Users,
@@ -83,5 +87,27 @@ export const SYMBOL_MAP: Record<ZSymbolName, ZSymbolEntry> = {
     sf: 'magnifyingglass',
     android: 'search',
     lucide: Search,
+  },
+  // Profile-screen icons (verified: SF against sf-symbols-typescript@2.2.0,
+  // Android against expo-symbols build/android/symbols.json).
+  'bar-chart': {
+    sf: 'chart.bar.fill',
+    android: 'bar_chart',
+    lucide: BarChart3,
+  },
+  bell: {
+    sf: 'bell.fill',
+    android: 'notifications',
+    lucide: Bell,
+  },
+  logout: {
+    sf: 'rectangle.portrait.and.arrow.right',
+    android: 'logout',
+    lucide: LogOut,
+  },
+  save: {
+    sf: 'square.and.arrow.down',
+    android: 'save',
+    lucide: Save,
   },
 };
