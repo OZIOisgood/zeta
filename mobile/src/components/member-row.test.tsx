@@ -37,3 +37,21 @@ test('does not show initials tile when avatar is present', async () => {
   await render(<MemberRow member={withAvatar} />);
   expect(screen.queryByTestId('member-initials')).toBeNull();
 });
+
+import { fireEvent } from '@testing-library/react-native';
+
+test('shows no remove button when onRemove is omitted', async () => {
+  await render(<MemberRow member={MEMBER} />);
+  expect(screen.queryByTestId('member-remove')).toBeNull();
+});
+
+test('renders the remove button and fires onRemove when provided', async () => {
+  const onRemove = jest.fn();
+  await render(<MemberRow member={MEMBER} onRemove={onRemove} />);
+  const button = screen.getByTestId('member-remove');
+  expect(button).toBeOnTheScreen();
+  // i18n: groups.users.removeUser → "Remove User"
+  expect(screen.getByLabelText('Remove User')).toBeOnTheScreen();
+  fireEvent.press(button);
+  expect(onRemove).toHaveBeenCalledTimes(1);
+});
