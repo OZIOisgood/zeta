@@ -1127,6 +1127,108 @@ paths:
         "500":
           description: Failed to delete availability
 
+  /groups/{groupID}/coaching/blocked-slots:
+    get:
+      tags: [coaching]
+      summary: List the calling expert's blocked dates for a group
+      description: >
+        Returns the calling expert's blocked slots over the next three months
+        (server-bounded). Requires group membership and
+        coaching:availability:manage.
+      operationId: listBlockedSlots
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The expert's blocked slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingBlockedSlot"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "500":
+          description: Failed to list blocked slots
+    post:
+      tags: [coaching]
+      summary: Block a date (optionally a time window) for a group
+      description: >
+        Blocks a calendar date for the calling expert. start_time and end_time
+        must be both present or both absent (HH:MM); when present start_time
+        must precede end_time. reason is optional. Requires
+        coaching:availability:manage.
+      operationId: createBlockedSlot
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBlockedSlotRequest"
+      responses:
+        "201":
+          description: Blocked slot created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachingBlockedSlot"
+        "400":
+          description: Invalid blocked_date, time window, or range
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "500":
+          description: Failed to create blocked slot
+
+  /groups/{groupID}/coaching/blocked-slots/{slotID}:
+    delete:
+      tags: [coaching]
+      summary: Remove a blocked date
+      description: >
+        Deletes a blocked slot owned by the calling expert. Requires
+        coaching:availability:manage.
+      operationId: deleteBlockedSlot
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: slotID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Blocked slot deleted
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a group member or missing coaching:availability:manage
+        "404":
+          description: Blocked slot not found or not owned by caller
+        "500":
+          description: Failed to delete blocked slot
+
   /groups/{groupID}/coaching/experts:
     get:
       tags: [coaching]
@@ -2055,6 +2157,51 @@ components:
         - duration_minutes
         - status
         - created_at
+
+    CoachingBlockedSlot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        expert_id:
+          type: string
+        blocked_date:
+          type: string
+          description: YYYY-MM-DD
+        start_time:
+          type: string
+          description: HH:MM (24-hour); omitted for a full-day block
+        end_time:
+          type: string
+          description: HH:MM (24-hour); omitted for a full-day block
+        reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - expert_id
+        - blocked_date
+        - created_at
+
+    CreateBlockedSlotRequest:
+      type: object
+      properties:
+        blocked_date:
+          type: string
+          description: YYYY-MM-DD
+        start_time:
+          type: string
+          description: HH:MM; both start_time and end_time, or neither
+        end_time:
+          type: string
+          description: HH:MM; both start_time and end_time, or neither
+        reason:
+          type: string
+      required:
+        - blocked_date
 
     CoachingAvailability:
       type: object
