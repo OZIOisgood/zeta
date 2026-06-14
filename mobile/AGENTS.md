@@ -33,6 +33,8 @@ Every `z-*` primitive belongs to exactly one tier. Declare it at the top of the 
 ### Public-API invariant
 Screens import `z-*` only. Each `z-*` keeps a **complete, working bare `.tsx` fallback** (web/Storybook/jest — `@expo/ui` is native-only, so the fallback is the NativeWind implementation). Native internals live only in `.ios.tsx`/`.android.tsx`. The bare `.tsx` must render correctly in react-native-web-vite Storybook and pass jest; it is the contract doc and test surface. Never let the fallback rot.
 
+**Self-import ban in platform files.** Platform files (`.ios.tsx`/`.android.tsx`) must NEVER import/re-export from their own base path `./z-<name>` — Metro resolves it to the platform file itself → infinite re-export → "Maximum call stack size exceeded" at startup (invisible to jest/web; only a real dev build catches it). Shared runtime/store/presentational code goes in `z-<name>.shared.tsx`; types in `z-<name>.types.ts`; all entry files import from those.
+
 ## Native-Fidelity Rules
 
 **Native-fidelity is the gate**: HIG (iOS) / Material 3 (Android) compliance + the tier contract. Visual divergence from `web/dashboard-next` is **expected and correct** — do not reject it.

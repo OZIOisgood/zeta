@@ -16,42 +16,126 @@
  */
 
 import type {
+  ArrowLeft,
   BarChart3,
+  Ban,
   Bell,
   CalendarClock,
+  CalendarCog,
+  CalendarDays,
+  CalendarOff,
+  CalendarPlus,
+  CameraOff,
   Check,
+  CheckCheck,
+  CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
+  Circle,
+  CircleAlert,
+  Clock,
+  CloudOff,
+  Copy,
+  Film,
+  FileVideo,
   Home,
+  Info,
+  Inbox,
+  Link,
   LogOut,
+  Mail,
+  MessageCircle,
+  Mic,
+  MicOff,
+  Pencil,
+  Phone,
+  PhoneOff,
   Plus,
+  QrCode,
+  Reply,
+  RotateCcw,
   Save,
   Search,
+  Send,
+  Settings,
+  Share2,
+  ShieldCheck,
+  Sparkles,
+  SwitchCamera,
+  Trash2,
+  TriangleAlert,
   UserRound,
   Users,
   Video,
+  VideoOff,
   X,
-  ArrowLeft,
 } from 'lucide-react-native';
 
 /** Logical icon names supported by ZSymbol. */
 export type ZSymbolName =
+  // Navigation / chrome
   | 'home'
+  | 'back'
+  | 'chevron-left'
+  | 'chevron-down'
+  | 'chevron-right'
+  | 'close'
+  // Entities
   | 'video'
   | 'calendar'
   | 'users'
   | 'person'
-  | 'back'
-  | 'chevron-down'
-  | 'chevron-right'
-  | 'close'
+  // Calendar variants
+  | 'calendar-days'
+  | 'calendar-plus'
+  | 'calendar-cog'
+  | 'calendar-off'
+  // Status / feedback
   | 'check'
+  | 'check-all'
+  | 'check-circle'
+  | 'circle'
+  | 'circle-alert'
+  | 'warning'
+  | 'info'
+  | 'cloud-off'
+  | 'inbox'
+  // Actions / verbs
   | 'plus'
   | 'search'
-  | 'bar-chart'
+  | 'trash'
+  | 'edit'
+  | 'reply'
+  | 'send'
+  | 'share'
+  | 'copy'
+  | 'link'
+  | 'mail'
+  | 'rotate-ccw'
+  | 'save'
+  // Media / call
+  | 'clock'
+  | 'file-video'
+  | 'film'
+  | 'mic'
+  | 'mic-off'
+  | 'video-off'
+  | 'camera-switch'
+  | 'camera-off'
+  | 'phone'
+  | 'phone-off'
+  | 'ban'
+  // Communication / notifications
+  | 'message'
+  | 'qr-code'
   | 'bell'
+  // Profile / account
+  | 'bar-chart'
   | 'logout'
-  | 'save';
+  | 'settings'
+  | 'shield-check'
+  | 'sparkles';
 
 export interface ZSymbolProps {
   /** Logical icon name. */
@@ -70,7 +154,61 @@ export interface ZSymbolProps {
 }
 
 /** Lucide component type alias for the icon map. */
-export type LucideIcon = typeof Home | typeof Video | typeof CalendarClock | typeof Users | typeof UserRound | typeof ArrowLeft | typeof ChevronDown | typeof ChevronRight | typeof X | typeof Check | typeof Plus | typeof Search | typeof BarChart3 | typeof Bell | typeof LogOut | typeof Save;
+export type LucideIcon =
+  | typeof ArrowLeft
+  | typeof BarChart3
+  | typeof Ban
+  | typeof Bell
+  | typeof CalendarClock
+  | typeof CalendarCog
+  | typeof CalendarDays
+  | typeof CalendarOff
+  | typeof CalendarPlus
+  | typeof CameraOff
+  | typeof Check
+  | typeof CheckCheck
+  | typeof CheckCircle2
+  | typeof ChevronDown
+  | typeof ChevronLeft
+  | typeof ChevronRight
+  | typeof Circle
+  | typeof CircleAlert
+  | typeof Clock
+  | typeof CloudOff
+  | typeof Copy
+  | typeof Film
+  | typeof FileVideo
+  | typeof Home
+  | typeof Info
+  | typeof Inbox
+  | typeof Link
+  | typeof LogOut
+  | typeof Mail
+  | typeof MessageCircle
+  | typeof Mic
+  | typeof MicOff
+  | typeof Pencil
+  | typeof Phone
+  | typeof PhoneOff
+  | typeof Plus
+  | typeof QrCode
+  | typeof Reply
+  | typeof RotateCcw
+  | typeof Save
+  | typeof Search
+  | typeof Send
+  | typeof Settings
+  | typeof Share2
+  | typeof ShieldCheck
+  | typeof Sparkles
+  | typeof SwitchCamera
+  | typeof Trash2
+  | typeof TriangleAlert
+  | typeof UserRound
+  | typeof Users
+  | typeof Video
+  | typeof VideoOff
+  | typeof X;
 
 /** Per-name mapping: SF Symbol name, Android Material Symbol name, lucide component. */
 export interface ZSymbolEntry {
