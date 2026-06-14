@@ -529,7 +529,7 @@ export default function AvailabilityScreen() {
         <ZBackHeader title={t('sessions.availability.manageTitle')} />
         <View testID="availability-groups-error" className="p-4">
           <ZQueryError
-            title={t('groups.loadFailed')}
+            title={t('groups.phase4.loadFailed')}
             onRetry={() => void groupsQuery.refetch()}
           />
         </View>
@@ -616,7 +616,7 @@ export default function AvailabilityScreen() {
       return (
         <View className="p-4">
           <ZQueryError
-            title={t('sessions.availability.failedCreateSessionType')}
+            title={t('sessions.availability.loadFailedSessionTypes')}
             onRetry={() => void typesQuery.refetch()}
           />
         </View>
@@ -624,9 +624,10 @@ export default function AvailabilityScreen() {
     }
     return (
       <FlatList
+        className="flex-1"
         data={typesQuery.data ?? []}
         keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, gap: 12 }}
+        contentContainerStyle={{ padding: 16, gap: 12, flexGrow: 1 }}
         ListHeaderComponent={
           <View className="mb-2">
             <ZButton
@@ -671,7 +672,7 @@ export default function AvailabilityScreen() {
       return (
         <View className="p-4">
           <ZQueryError
-            title={t('sessions.availability.failedAddAvailability')}
+            title={t('sessions.availability.loadFailedSchedule')}
             onRetry={() => void availabilityQuery.refetch()}
           />
         </View>
@@ -679,9 +680,10 @@ export default function AvailabilityScreen() {
     }
     return (
       <FlatList
+        className="flex-1"
         data={availabilityQuery.data ?? []}
         keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, gap: 12 }}
+        contentContainerStyle={{ padding: 16, gap: 12, flexGrow: 1 }}
         ListHeaderComponent={
           <View className="mb-2">
             <ZButton
@@ -726,7 +728,7 @@ export default function AvailabilityScreen() {
       return (
         <View className="p-4">
           <ZQueryError
-            title={t('sessions.availability.failedBlockTime')}
+            title={t('sessions.availability.loadFailedBlocked')}
             onRetry={() => void blockedQuery.refetch()}
           />
         </View>
@@ -734,9 +736,10 @@ export default function AvailabilityScreen() {
     }
     return (
       <FlatList
+        className="flex-1"
         data={blockedQuery.data ?? []}
         keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, gap: 12 }}
+        contentContainerStyle={{ padding: 16, gap: 12, flexGrow: 1 }}
         ListHeaderComponent={
           <View className="mb-2">
             <ZButton
@@ -873,10 +876,20 @@ export default function AvailabilityScreen() {
       {/* Delete confirm dialog (single, switched on deleteTarget.kind) */}
       <ZConfirmDialog
         visible={deleteTarget !== null}
-        title={t('sessions.availability.confirmDelete')}
+        title={
+          deleteTarget?.kind === 'type'
+            ? t('sessions.availability.deleteSessionType')
+            : deleteTarget?.kind === 'avail'
+              ? t('sessions.availability.deleteAvailability')
+              : t('sessions.availability.deleteBlockedDate')
+        }
+        description={t('sessions.availability.confirmDelete')}
         tone="danger"
         confirmLabel={t('common.actions.delete')}
         cancelLabel={t('common.actions.cancel')}
+        confirmDisabled={
+          deactivateType.isPending || deleteAvail.isPending || deleteBlocked.isPending
+        }
         onCancel={() => setDeleteTarget(null)}
         onConfirm={() => void handleConfirmDelete()}
       />
