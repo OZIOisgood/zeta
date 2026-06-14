@@ -34,9 +34,9 @@ export function NotificationBell({
         <View
           testID="notification-bell-badge"
           accessibilityLabel={t('notifications.unread')}
-          className="absolute -right-1 -top-1 min-w-[18px] items-center justify-center rounded-full border border-z-surface bg-z-danger px-1"
+          className="absolute -right-1 -top-1 min-w-[18px] items-center justify-center rounded-full border border-z-surface bg-z-primary px-1"
         >
-          {/* Danger-pill foreground = the onPrimary token (white-on-color) from
+          {/* Badge foreground = the onPrimary token (white-on-color) from
               theme/colors.ts, not a raw `text-white` class. There is no
               `z-on-primary` NativeWind class in tailwind.config.js, so the token
               flows in via `style` (theme/colors.ts is the sanctioned non-class
