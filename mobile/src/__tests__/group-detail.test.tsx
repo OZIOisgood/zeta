@@ -264,3 +264,20 @@ test('members unavailable state when user lacks both read permissions', async ()
   expect(screen.queryByText('Experts')).toBeNull();
   expect(screen.queryByText('Students')).toBeNull();
 });
+
+// ── fix (4): ZQueryError for top-level group query error ──────────────────────
+
+test('group query error uses ZQueryError (retry button, no TriangleAlert icon wrapper)', async () => {
+  mockPermissions = [];
+  const refetch = jest.fn();
+  mockUseGroupQuery.mockReturnValue({ isPending: false, isError: true, data: undefined, refetch });
+  await render(<Providers><GroupDetailScreen /></Providers>);
+
+  // ZQueryError renders a retry button labelled 'Retry'
+  const retryBtn = screen.getByRole('button', { name: /retry/i });
+  expect(retryBtn).toBeOnTheScreen();
+
+  // Pressing it calls refetch
+  fireEvent.press(retryBtn);
+  expect(refetch).toHaveBeenCalledTimes(1);
+});

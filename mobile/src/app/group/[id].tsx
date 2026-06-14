@@ -39,7 +39,9 @@ import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZFieldError } from '../../components/ui/z-field-error';
 import { ZFieldLabel } from '../../components/ui/z-field-label';
 import { ZIconButton } from '../../components/ui/z-icon-button';
+import { ZIconTile } from '../../components/ui/z-icon-tile';
 import { ZKeyboardAvoidingView } from '../../components/ui/z-keyboard-avoiding-view';
+import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { showToast } from '../../components/ui/z-toast';
@@ -103,9 +105,7 @@ function MemberSection({
   return (
     <ZCard>
       <View className="flex-row items-start gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-          <Icon color={colors.primary} size={20} />
-        </View>
+        <ZIconTile tone="neutral" icon={<Icon color={colors.primary} size={20} />} />
         <View className="flex-1">
           <View className="flex-row flex-wrap items-center gap-2">
             <Text className="text-base font-semibold text-z-text">{title}</Text>
@@ -253,9 +253,7 @@ function InviteSection({ groupId }: { groupId: string }) {
     <ZCard testID="group-invite-section">
       {/* Header */}
       <View className="flex-row items-start gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-          <QrCode color={colors.primary} size={20} />
-        </View>
+        <ZIconTile tone="neutral" icon={<QrCode color={colors.primary} size={20} />} />
         <View className="flex-1">
           <Text className="text-base font-semibold text-z-text">
             {t('groups.inviteDialog.title')}
@@ -334,7 +332,7 @@ function InviteSection({ groupId }: { groupId: string }) {
                   {t('groups.inviteDialog.shareLink')}
                 </Text>
               </View>
-              <View className="mt-2 rounded-md border border-z-border bg-white px-3 py-2">
+              <View className="mt-2 rounded-md border border-z-border bg-z-surface px-3 py-2">
                 <Text className="text-xs text-z-muted" numberOfLines={2}>{inviteLink}</Text>
               </View>
               <Text className="mt-2 text-sm leading-6 text-z-muted">
@@ -453,24 +451,10 @@ export default function GroupDetailScreen() {
   if (isError || !data) {
     return (
       <ZScreen className="items-center justify-center px-8">
-        <ZEmptyState
+        <ZQueryError
           title={t('groups.phase4.detailFailed')}
-          description={t('home.error.description')}
-          icon={<TriangleAlert color={colors.primary} size={24} />}
-        >
-          <View className="gap-2">
-            <ZButton
-              label={t('common.actions.retry')}
-              variant="secondary"
-              onPress={() => void refetch()}
-            />
-            <ZButton
-              label={t('common.actions.back')}
-              variant="ghost"
-              onPress={() => router.back()}
-            />
-          </View>
-        </ZEmptyState>
+          onRetry={() => void refetch()}
+        />
       </ZScreen>
     );
   }
