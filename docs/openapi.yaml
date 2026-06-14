@@ -315,6 +315,62 @@ paths:
           description: Missing groups:read permission or caller is not a member
         "404":
           description: Group not found
+    put:
+      tags: [groups]
+      summary: Update group preferences (name, description, avatar)
+      operationId: updateGroup
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroupRequest"
+      responses:
+        "200":
+          description: The updated group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          description: Invalid group ID, invalid body, or missing name
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:preferences:edit permission or caller is not a member
+        "404":
+          description: Group not found
+        "500":
+          description: Failed to update the group
+    delete:
+      tags: [groups]
+      summary: Delete a group (owner only)
+      operationId: deleteGroup
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Group deleted
+        "400":
+          description: Invalid group ID
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:delete permission
+        "500":
+          description: Failed to delete the group
   /groups/{groupID}/membership:
     delete:
       tags: [groups]
@@ -390,6 +446,36 @@ paths:
           description: Not authenticated
         "403":
           description: Missing groups:expert-list:read permission
+  /groups/{groupID}/users/{userID}:
+    delete:
+      tags: [groups]
+      summary: Remove a member from a group
+      operationId: removeGroupMember
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Member removed
+        "400":
+          description: Invalid group ID, missing user ID, or target is the group owner
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing groups:user-list:delete permission
+        "404":
+          description: Group not found
+        "500":
+          description: Failed to remove the member
   /groups/{groupID}/invitations:
     post:
       tags: [groups]
@@ -1489,6 +1575,17 @@ components:
           type: string
           description: Base64-encoded image data (max 300KB)
       required: [name, avatar]
+    UpdateGroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+          description: Base64-encoded image data (max 300KB); omit or empty to keep the current avatar
+      required: [name]
     CreateInvitationRequest:
       type: object
       properties:
