@@ -3,14 +3,23 @@ import { FlatList, Modal, Pressable, Text } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import { colors } from '../../theme/colors';
 import { ZTextInput } from './z-text-input';
+import type { ZComboboxProps } from './z-combobox.types';
 
-export type ZComboboxOption = { value: string; label: string };
+export type { ZComboboxOption, ZComboboxProps } from './z-combobox.types';
 
 /**
- * Searchable single-choice select. Mobile counterpart of the web `z-combobox`
- * wrapper (web/dashboard-next/src/app/shared/ui/combobox/). Reuses the
+ * Searchable single-choice select — NativeWind fallback (web / Storybook / jest).
+ *
+ * Mobile counterpart of the web `z-combobox` wrapper
+ * (web/dashboard-next/src/app/shared/ui/combobox/). Reuses the
  * `z-select` trigger + Modal-list pattern, adding a search field that filters
  * the options by label.
+ *
+ * On iOS this file is superseded by z-combobox.ios.tsx (native trigger →
+ * pushed /select/[field] screen). On Android this file is superseded by
+ * z-combobox.android.tsx. This bare fallback is the test surface and Storybook
+ * entry point. The Modal-based inline sheet remains the web/Storybook variant;
+ * the native variants navigate to a dedicated search screen.
  */
 export function ZCombobox({
   value,
@@ -23,18 +32,7 @@ export function ZCombobox({
   searchPlaceholder = '',
   closeLabel = 'Close',
   testID,
-}: {
-  value?: string;
-  options: ZComboboxOption[];
-  placeholder?: string;
-  onValueChange: (value: string) => void;
-  invalid?: boolean;
-  disabled?: boolean;
-  accessibilityLabel?: string;
-  searchPlaceholder?: string;
-  closeLabel?: string;
-  testID?: string;
-}) {
+}: ZComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const selectedLabel = options.find((option) => option.value === value)?.label;

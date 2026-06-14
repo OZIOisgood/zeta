@@ -33,6 +33,7 @@ export default function RootLayout() {
           <Stack.Screen name="book" options={{ presentation: 'modal' }} />
           <Stack.Screen name="invite" />
           <Stack.Screen name="reports" />
+          <Stack.Screen name="select/[field]" />
           <Stack.Screen name="call/[bookingId]" options={{ presentation: 'fullScreenModal', headerShown: false }} />
         </Stack.Protected>
         <Stack.Protected guard={status !== 'signedIn'}>

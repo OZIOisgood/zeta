@@ -18,6 +18,7 @@ export const TIERS: Record<string, Tier> = {
   'z-empty-state': 'native',
   'z-query-error': 'native',
   'z-combobox': 'native',
+  'z-combobox.shared': 'infra',
   'z-page-header': 'native',
   'z-back-header': 'native',
   'z-danger-zone-card': 'native',
