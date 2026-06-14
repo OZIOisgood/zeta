@@ -475,8 +475,128 @@ export interface paths {
          */
         get: operations["listGroupSessionTypes"];
         put?: never;
-        post?: never;
+        /**
+         * Create a coaching session type
+         * @description Creates a session type owned by the calling expert in the given group. Requires group membership and coaching:availability:manage. name is required; duration_minutes must be between 15 and 120 in 5-minute increments.
+         */
+        post: operations["createSessionType"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/session-types/{sessionTypeID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a coaching session type
+         * @description Updates a session type owned by the calling expert. Requires group membership and coaching:availability:manage. Same validation as create.
+         */
+        put: operations["updateSessionType"];
+        post?: never;
+        /**
+         * Deactivate a coaching session type
+         * @description Soft-deletes (deactivates) a session type owned by the calling expert. Requires group membership and coaching:availability:manage.
+         */
+        delete: operations["deactivateSessionType"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the calling expert's weekly availability for a group
+         * @description Returns the calling expert's active availability blocks in the group. Requires group membership and coaching:availability:manage.
+         */
+        get: operations["listMyAvailability"];
+        put?: never;
+        /**
+         * Add a weekly availability block
+         * @description Adds a recurring weekly availability block (day_of_week 0-6, start_time before end_time, HH:MM). Overlapping or adjacent blocks for the same day are merged server-side, so the response is the full merged list for the expert in this group. Requires coaching:availability:manage.
+         */
+        post: operations["createAvailability"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/availability/{availabilityID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a weekly availability block
+         * @description Updates an availability block owned by the calling expert. Overlapping blocks are re-merged, so the response is the full merged list. Requires coaching:availability:manage.
+         */
+        put: operations["updateAvailability"];
+        post?: never;
+        /**
+         * Delete a weekly availability block
+         * @description Deletes an availability block owned by the calling expert. Requires coaching:availability:manage.
+         */
+        delete: operations["deleteAvailability"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/blocked-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the calling expert's blocked dates for a group
+         * @description Returns the calling expert's blocked slots over the next three months (server-bounded). Requires group membership and coaching:availability:manage.
+         */
+        get: operations["listBlockedSlots"];
+        put?: never;
+        /**
+         * Block a date (optionally a time window) for a group
+         * @description Blocks a calendar date for the calling expert. start_time and end_time must be both present or both absent (HH:MM); when present start_time must precede end_time. reason is optional. Requires coaching:availability:manage.
+         */
+        post: operations["createBlockedSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/coaching/blocked-slots/{slotID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a blocked date
+         * @description Deletes a blocked slot owned by the calling expert. Requires coaching:availability:manage.
+         */
+        delete: operations["deleteBlockedSlot"];
         options?: never;
         head?: never;
         patch?: never;
@@ -948,6 +1068,62 @@ export interface components {
             recording?: components["schemas"]["BookingRecording"];
             /** Format: date-time */
             created_at: string;
+        };
+        CoachingBlockedSlot: {
+            /** Format: uuid */
+            id: string;
+            expert_id: string;
+            /** @description YYYY-MM-DD */
+            blocked_date: string;
+            /** @description HH:MM (24-hour); omitted for a full-day block */
+            start_time?: string;
+            /** @description HH:MM (24-hour); omitted for a full-day block */
+            end_time?: string;
+            reason?: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        CreateBlockedSlotRequest: {
+            /** @description YYYY-MM-DD */
+            blocked_date: string;
+            /** @description HH:MM; both start_time and end_time, or neither */
+            start_time?: string;
+            /** @description HH:MM; both start_time and end_time, or neither */
+            end_time?: string;
+            reason?: string;
+        };
+        CoachingAvailability: {
+            /** Format: uuid */
+            id: string;
+            expert_id: string;
+            /** Format: uuid */
+            group_id: string;
+            /** @description 0 = Sunday … 6 = Saturday */
+            day_of_week: number;
+            /** @description HH:MM (24-hour) */
+            start_time: string;
+            /** @description HH:MM (24-hour) */
+            end_time: string;
+            is_active: boolean;
+            /** Format: date-time */
+            created_at: string;
+        };
+        AvailabilityRequest: {
+            /** @description 0 = Sunday … 6 = Saturday */
+            day_of_week: number;
+            /** @description HH:MM (24-hour) */
+            start_time: string;
+            /** @description HH:MM (24-hour) */
+            end_time: string;
+        };
+        CreateSessionTypeRequest: {
+            name: string;
+            description?: string;
+            /**
+             * Format: int32
+             * @description Between 15 and 120 in 5-minute increments
+             */
+            duration_minutes: number;
         };
         SessionType: {
             /** Format: uuid */
@@ -2501,6 +2677,532 @@ export interface operations {
             };
             /** @description Caller is not a group member, or has neither coaching:availability:manage nor coaching:slots:read permission */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createSessionType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSessionTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Session type created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionType"];
+                };
+            };
+            /** @description Missing name or invalid duration_minutes */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to create session type */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateSessionType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                sessionTypeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSessionTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Session type updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionType"];
+                };
+            };
+            /** @description Invalid ID, missing name, or invalid duration_minutes */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session type not found or not owned by caller */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to update session type */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deactivateSessionType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                sessionTypeID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session type deactivated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session type not found or not owned by caller */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to deactivate session type */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyAvailability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The expert's availability blocks */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoachingAvailability"][];
+                };
+            };
+            /** @description Invalid group ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to list availability */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createAvailability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvailabilityRequest"];
+            };
+        };
+        responses: {
+            /** @description Availability created; full merged list returned */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoachingAvailability"][];
+                };
+            };
+            /** @description Invalid day_of_week or time range */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to create availability */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateAvailability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                availabilityID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvailabilityRequest"];
+            };
+        };
+        responses: {
+            /** @description Availability updated; full merged list returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoachingAvailability"][];
+                };
+            };
+            /** @description Invalid ID or time range */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Availability not found or not owned by caller */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to update availability */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteAvailability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                availabilityID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Availability deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Availability not found or not owned by caller */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to delete availability */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listBlockedSlots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The expert's blocked slots */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoachingBlockedSlot"][];
+                };
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to list blocked slots */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createBlockedSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBlockedSlotRequest"];
+            };
+        };
+        responses: {
+            /** @description Blocked slot created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoachingBlockedSlot"];
+                };
+            };
+            /** @description Invalid blocked_date, time window, or range */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to create blocked slot */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteBlockedSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                slotID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Blocked slot deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a group member or missing coaching:availability:manage */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Blocked slot not found or not owned by caller */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to delete blocked slot */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
