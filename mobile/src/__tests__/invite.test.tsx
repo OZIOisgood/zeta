@@ -21,8 +21,10 @@ jest.mock('expo-camera', () => ({
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
 const mockBack = jest.fn();
+const mockUseLocalSearchParams = jest.fn(() => ({}));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, back: mockBack }),
+  useLocalSearchParams: () => mockUseLocalSearchParams(),
 }));
 
 // Invitation hook mocks
@@ -52,6 +54,7 @@ beforeAll(() => initI18n('en'));
 let client: QueryClient;
 beforeEach(() => {
   jest.clearAllMocks();
+  mockUseLocalSearchParams.mockReturnValue({});
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 
   mockUseAcceptInvitationMutation.mockReturnValue({
@@ -268,6 +271,24 @@ test('invalid code "hello-world": shows validation hint and never queries with a
     ([code]: [string]) => code !== '',
   );
   expect(nonEmptyCalls).toHaveLength(0);
+});
+
+// ── Test N-3a: deep-link code param seeds the confirm phase ──────────────────
+
+test('prefills the confirm phase from a code deep-link param', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ code: 'aB3xZ9' });
+
+  mockUseInvitationInfoQuery.mockImplementation((code: string) => {
+    if (code === 'aB3xZ9') {
+      return { isPending: true, isError: false, data: undefined };
+    }
+    return { isPending: false, isError: false, data: undefined };
+  });
+
+  const { queryByTestId } = await render(<Providers><InviteScreen /></Providers>);
+
+  // The capture-phase input should NOT be visible — we jumped straight to confirm
+  expect(queryByTestId('invite-code-input')).toBeNull();
 });
 
 // ── Test 5: unknown code → error shown + reset ────────────────────────────────

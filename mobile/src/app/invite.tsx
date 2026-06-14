@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { AccessibilityInfo, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ArrowLeft } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -27,8 +27,12 @@ import { colors } from '../theme/colors';
 export default function InviteScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams<{ code?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
-  const [code, setCode] = useState('');
+  // Seed `code` from the deep-link param (e.g. /invite?code=aB3xZ9 from a
+  // notification row tap) so the confirm phase + useInvitationInfoQuery auto-load.
+  // parseInviteCode validates format; an empty/invalid param starts in capture phase.
+  const [code, setCode] = useState(() => parseInviteCode(params.code ?? ''));
   const [manualInput, setManualInput] = useState('');
   const [manualInputError, setManualInputError] = useState(false);
   const scannedRef = useRef(false);
