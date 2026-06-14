@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { FlatList, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import { CalendarOff, Plus, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -435,7 +434,6 @@ function BlockedSheet({
 
 export default function AvailabilityScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const permissions = useAuth((s) => (s as { user?: { permissions?: string[] } }).user?.permissions ?? null);
   const canManage = permissions !== null && permissions.includes('coaching:availability:manage');
 
