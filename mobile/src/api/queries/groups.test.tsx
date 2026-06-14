@@ -8,7 +8,7 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
-import { useGroupsQuery, useGroupQuery, useGroupStudentsQuery, useGroupExpertsQuery, useCreateGroupMutation, useLeaveGroupMutation } from './groups';
+import { useGroupsQuery, useGroupQuery, useGroupStudentsQuery, useGroupExpertsQuery, useCreateGroupMutation, useLeaveGroupMutation, useUpdateGroupMutation, useDeleteGroupMutation, useRemoveGroupMemberMutation } from './groups';
 
 let client: QueryClient;
 
@@ -163,4 +163,103 @@ test('useLeaveGroupMutation calls DELETE and invalidates [groups]', async () => 
   expect(invalidated).toEqual(
     expect.arrayContaining([expect.objectContaining({ queryKey: ['groups'] })]),
   );
+});
+
+// ── useUpdateGroupMutation ────────────────────────────────────────────────────
+
+test('useUpdateGroupMutation puts the body, returns the group, invalidates [groups]', async () => {
+  const PUT = jest.fn(async () => ({ data: GROUP, error: undefined }));
+  const invalidated: unknown[] = [];
+  const qc = { invalidateQueries: jest.fn(async (args: unknown) => void invalidated.push(args)) };
+  const { result } = await renderHook(
+    () => useUpdateGroupMutation('g1', { PUT } as never, qc as never),
+    { wrapper },
+  );
+  const input = { name: 'Karate Club', description: 'Dojo', avatar: 'data:image/png;base64,AAA' };
+  const group = await result.current.mutateAsync(input);
+  expect(PUT).toHaveBeenCalledWith('/groups/{groupID}', {
+    params: { path: { groupID: 'g1' } },
+    body: input,
+  });
+  expect(group).toEqual(GROUP);
+  expect(invalidated).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ queryKey: ['groups'] }),
+      expect.objectContaining({ queryKey: ['groups', 'g1'] }),
+    ]),
+  );
+});
+
+test('useUpdateGroupMutation does not invalidate on error', async () => {
+  const PUT = jest.fn(async () => ({ data: undefined, error: { message: 'boom' } }));
+  const qc = { invalidateQueries: jest.fn() };
+  const { result } = await renderHook(
+    () => useUpdateGroupMutation('g1', { PUT } as never, qc as never),
+    { wrapper },
+  );
+  await expect(result.current.mutateAsync({ name: 'x' })).rejects.toThrow();
+  expect(qc.invalidateQueries).not.toHaveBeenCalled();
+});
+
+// ── useDeleteGroupMutation ────────────────────────────────────────────────────
+
+test('useDeleteGroupMutation deletes by id (204) and invalidates [groups]', async () => {
+  const DELETE = jest.fn(async () => ({ data: undefined, error: undefined }));
+  const invalidated: unknown[] = [];
+  const qc = { invalidateQueries: jest.fn(async (args: unknown) => void invalidated.push(args)) };
+  const { result } = await renderHook(
+    () => useDeleteGroupMutation('g1', { DELETE } as never, qc as never),
+    { wrapper },
+  );
+  await result.current.mutateAsync();
+  expect(DELETE).toHaveBeenCalledWith('/groups/{groupID}', {
+    params: { path: { groupID: 'g1' } },
+  });
+  expect(invalidated).toEqual(
+    expect.arrayContaining([expect.objectContaining({ queryKey: ['groups'] })]),
+  );
+});
+
+test('useDeleteGroupMutation throws when the api returns an error', async () => {
+  const DELETE = jest.fn(async () => ({ data: undefined, error: { message: 'boom' } }));
+  const qc = { invalidateQueries: jest.fn() };
+  const { result } = await renderHook(
+    () => useDeleteGroupMutation('g1', { DELETE } as never, qc as never),
+    { wrapper },
+  );
+  await expect(result.current.mutateAsync()).rejects.toThrow();
+  expect(qc.invalidateQueries).not.toHaveBeenCalled();
+});
+
+// ── useRemoveGroupMemberMutation ──────────────────────────────────────────────
+
+test('useRemoveGroupMemberMutation deletes the member (204) and invalidates member lists', async () => {
+  const DELETE = jest.fn(async () => ({ data: undefined, error: undefined }));
+  const invalidated: unknown[] = [];
+  const qc = { invalidateQueries: jest.fn(async (args: unknown) => void invalidated.push(args)) };
+  const { result } = await renderHook(
+    () => useRemoveGroupMemberMutation('g1', { DELETE } as never, qc as never),
+    { wrapper },
+  );
+  await result.current.mutateAsync({ userId: 'u9' });
+  expect(DELETE).toHaveBeenCalledWith('/groups/{groupID}/users/{userID}', {
+    params: { path: { groupID: 'g1', userID: 'u9' } },
+  });
+  expect(invalidated).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ queryKey: ['groups', 'g1', 'students'] }),
+      expect.objectContaining({ queryKey: ['groups', 'g1', 'experts'] }),
+    ]),
+  );
+});
+
+test('useRemoveGroupMemberMutation throws when the api returns an error', async () => {
+  const DELETE = jest.fn(async () => ({ data: undefined, error: { message: 'forbidden' } }));
+  const qc = { invalidateQueries: jest.fn() };
+  const { result } = await renderHook(
+    () => useRemoveGroupMemberMutation('g1', { DELETE } as never, qc as never),
+    { wrapper },
+  );
+  await expect(result.current.mutateAsync({ userId: 'u9' })).rejects.toThrow();
+  expect(qc.invalidateQueries).not.toHaveBeenCalled();
 });
