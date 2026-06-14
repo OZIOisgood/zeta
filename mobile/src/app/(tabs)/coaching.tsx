@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CalendarClock, CalendarPlus } from 'lucide-react-native';
+import { CalendarClock, CalendarCog, CalendarPlus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../api/queries/coaching';
 import {
@@ -130,6 +130,8 @@ export default function CoachingScreen() {
   const currentUserId = useAuth((s) => s.user?.id ?? '');
   const canBook = permissions !== null && permissions.includes('coaching:book');
   const canConnect = permissions !== null && permissions.includes('coaching:video:connect');
+  const canManageAvailability =
+    permissions !== null && permissions.includes('coaching:availability:manage');
 
   const [activeTab, setActiveTab] = useState<SessionTab>('upcoming');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -223,7 +225,23 @@ export default function CoachingScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      <ZPageHeader title={t('sessions.title')} subtitle={t('sessions.summary')} />
+      <ZPageHeader
+        title={t('sessions.title')}
+        subtitle={t('sessions.summary')}
+        action={
+          canManageAvailability ? (
+            <ZIconButton
+              testID="coaching-manage-availability"
+              label={t('sessions.availability.manageTitle')}
+              variant="ghost"
+              size="md"
+              onPress={() => router.push('/availability' as never)}
+            >
+              <CalendarCog color={colors.text} size={22} />
+            </ZIconButton>
+          ) : undefined
+        }
+      />
 
       <View className="px-4">
         <ZTabs
