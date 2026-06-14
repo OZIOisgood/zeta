@@ -116,7 +116,11 @@
       "^(\\./|(\\.\\./)+)(.*/)?(z-confirm-dialog)$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-confirm-dialog)\\.ios$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-confirm-dialog)\\.android$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx",
-      ".*/components/ui/z-confirm-dialog(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx"
+      ".*/components/ui/z-confirm-dialog(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-toast)$": "<rootDir>/src/components/ui/z-toast.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-toast)\\.ios$": "<rootDir>/src/components/ui/z-toast.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-toast)\\.android$": "<rootDir>/src/components/ui/z-toast.tsx",
+      ".*/components/ui/z-toast(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-toast.tsx"
     }
   },
   "private": true,
