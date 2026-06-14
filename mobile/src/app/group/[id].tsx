@@ -10,6 +10,7 @@ import {
   Link,
   Mail,
   QrCode,
+  Settings,
   Share2,
   ShieldCheck,
   TriangleAlert,
@@ -22,6 +23,7 @@ import {
   useGroupStudentsQuery,
   useGroupExpertsQuery,
   useLeaveGroupMutation,
+  useRemoveGroupMemberMutation,
   type GroupUser,
 } from '../../api/queries/groups';
 import { useCreateInvitationMutation } from '../../api/queries/invitations';
@@ -74,6 +76,7 @@ function MemberSection({
   isLoading,
   isError,
   onRetry,
+  onRemoveMember,
 }: {
   kind: 'experts' | 'students';
   title: string;
@@ -82,6 +85,8 @@ function MemberSection({
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
+  /** When provided, renders a perm-gated remove button on each row. */
+  onRemoveMember?: (member: GroupUser) => void;
 }) {
   const { t } = useTranslation();
   const count = members?.length ?? 0;
@@ -129,7 +134,12 @@ function MemberSection({
             scrollEnabled={false}
             keyExtractor={(m) => m.id}
             ItemSeparatorComponent={MemberDivider}
-            renderItem={({ item }) => <MemberRow member={item} />}
+            renderItem={({ item }) => (
+              <MemberRow
+                member={item}
+                onRemove={onRemoveMember ? () => onRemoveMember(item) : undefined}
+              />
+            )}
           />
         </View>
       ) : (
@@ -371,6 +381,9 @@ export default function GroupDetailScreen() {
     data !== undefined &&
     data.owner_id !== userId;
   const canInvite = permissions?.includes('groups:invites:create') ?? false;
+  // Mirrors web canOpenPreferences = canEditPreferences || canLeave
+  const canOpenPreferences = permissions?.includes('groups:preferences:edit') ?? false;
+  const canRemoveMembers = permissions?.includes('groups:user-list:delete') ?? false;
 
   const {
     data: experts,
@@ -386,8 +399,11 @@ export default function GroupDetailScreen() {
   } = useGroupStudentsQuery(id ?? '', canSeeStudents);
 
   const { mutateAsync, isPending: leaveIsPending } = useLeaveGroupMutation(id ?? '');
+  const { mutateAsync: removeMember, isPending: removeIsPending } =
+    useRemoveGroupMemberMutation(id ?? '');
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<GroupUser | null>(null);
 
   async function handleConfirmLeave() {
     setShowLeaveConfirm(false);
@@ -397,6 +413,19 @@ export default function GroupDetailScreen() {
       router.back();
     } catch {
       showToast(t('groups.leave.failed'), undefined, 'error');
+    }
+  }
+
+  async function handleConfirmRemoveMember() {
+    if (!memberToRemove) return;
+    const member = memberToRemove;
+    setMemberToRemove(null);
+    try {
+      await removeMember({ userId: member.id });
+      const name = `${member.first_name} ${member.last_name}`.trim();
+      showToast(t('toast.successTitle'), t('groups.users.removed', { name }), 'success');
+    } catch {
+      showToast(t('toast.errorTitle'), t('groups.users.removeFailed'), 'error');
     }
   }
 
@@ -459,6 +488,15 @@ export default function GroupDetailScreen() {
                 {data.name}
               </Text>
             </View>
+            {canOpenPreferences ? (
+              <ZIconButton
+                testID="group-preferences-btn"
+                label={t('groups.preferences')}
+                onPress={() => router.push(`/group/${id ?? ''}/preferences`)}
+              >
+                <Settings color={colors.text} size={22} />
+              </ZIconButton>
+            ) : null}
           </View>
 
           <View className="px-4 pb-4">
@@ -483,6 +521,7 @@ export default function GroupDetailScreen() {
                     isLoading={expertsLoading}
                     isError={expertsError}
                     onRetry={() => void refetchExperts()}
+                    onRemoveMember={canRemoveMembers ? (m) => setMemberToRemove(m) : undefined}
                   />
                 )}
                 {canSeeStudents && (
@@ -494,6 +533,7 @@ export default function GroupDetailScreen() {
                     isLoading={studentsLoading}
                     isError={studentsError}
                     onRetry={() => void refetchStudents()}
+                    onRemoveMember={canRemoveMembers ? (m) => setMemberToRemove(m) : undefined}
                   />
                 )}
               </View>
@@ -531,6 +571,27 @@ export default function GroupDetailScreen() {
           </View>
         </ScrollView>
       </ZKeyboardAvoidingView>
+
+      {/* Remove-member confirm dialog — rendered outside the ScrollView so it
+          floats above all content via the Modal z-axis. */}
+      <ZConfirmDialog
+        testID="group-remove-member-dialog"
+        visible={memberToRemove !== null}
+        tone="danger"
+        title={t('groups.users.removeUser')}
+        description={
+          memberToRemove
+            ? t('groups.users.confirmRemove', {
+                name: `${memberToRemove.first_name} ${memberToRemove.last_name}`.trim(),
+              })
+            : ''
+        }
+        confirmLabel={t('common.actions.remove')}
+        cancelLabel={t('common.actions.cancel')}
+        confirmDisabled={removeIsPending}
+        onConfirm={() => void handleConfirmRemoveMember()}
+        onCancel={() => setMemberToRemove(null)}
+      />
     </ZScreen>
   );
 }
