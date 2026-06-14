@@ -64,7 +64,13 @@ export default function NotificationsScreen() {
     if (!code) return;
     try {
       await accept.mutateAsync({ code });
-      if (!item.read) await markRead.mutateAsync({ id: item.id });
+      if (!item.read) {
+        await markRead.mutateAsync({ id: item.id });
+      } else {
+        // markRead already invalidates when the item is unread; for already-read
+        // items we must refetch manually so the invite_status update is visible.
+        void refetch();
+      }
     } catch {
       showToast(t('notifications.invite.errorTitle'), t('notifications.invite.acceptError'), 'error');
     }
@@ -75,7 +81,11 @@ export default function NotificationsScreen() {
     if (!code) return;
     try {
       await decline.mutateAsync({ code });
-      if (!item.read) await markRead.mutateAsync({ id: item.id });
+      if (!item.read) {
+        await markRead.mutateAsync({ id: item.id });
+      } else {
+        void refetch();
+      }
     } catch {
       showToast(t('notifications.invite.errorTitle'), t('notifications.invite.declineError'), 'error');
     }
