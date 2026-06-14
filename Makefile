@@ -58,6 +58,9 @@ mobile\:test:
 mobile\:typecheck:
 	cd mobile && pnpm install && pnpm exec tsc --noEmit
 
+mobile\:check-tokens:
+	cd mobile && pnpm install && pnpm run check:tokens
+
 infra\:up:
 	docker-compose -f ./infra/docker-compose.yml up -d --build
 

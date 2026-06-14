@@ -82,6 +82,7 @@
     "generate:api": "openapi-typescript ../docs/openapi.yaml -o src/api/schema.d.ts",
     "sync:i18n": "node scripts/sync-i18n.mjs",
     "sync:tokens": "node scripts/sync-tokens.mjs",
+    "check:tokens": "node scripts/check-tokens-synced.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
