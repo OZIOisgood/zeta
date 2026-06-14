@@ -1,0 +1,148 @@
+import type { ReactNode } from 'react';
+import { RefreshControl, SectionList, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Bell, CheckCheck } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import {
+  useNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+  type NotificationItem,
+} from '../api/queries/notifications';
+import {
+  useAcceptInvitationMutation,
+  useDeclineInvitationMutation,
+} from '../api/queries/invitations';
+import { NotificationRow } from '../components/notification-row';
+import { ZBackHeader } from '../components/ui/z-back-header';
+import { ZButton } from '../components/ui/z-button';
+import { ZEmptyState } from '../components/ui/z-empty-state';
+import { ZQueryError } from '../components/ui/z-query-error';
+import { ZScreen } from '../components/ui/z-screen';
+import { ZSkeleton } from '../components/ui/z-skeleton';
+import { showToast } from '../components/ui/z-toast';
+import { groupByDay } from '../lib/notification-groups';
+import { presentNotification } from '../lib/notification-presenter';
+import { colors } from '../theme/colors';
+
+function ListSkeleton() {
+  return (
+    <View testID="notifications-skeleton" className="gap-3 p-4">
+      {[0, 1, 2, 3].map((i) => (
+        <View key={i} className="flex-row gap-3 rounded-lg border border-z-border bg-z-surface p-3">
+          <ZSkeleton className="h-9 w-9 rounded-md" />
+          <View className="flex-1 justify-center gap-2">
+            <ZSkeleton className="h-3.5 w-4/5" />
+            <ZSkeleton className="h-3 w-1/3" />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export default function NotificationsScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { data, isPending, isError, refetch, isRefetching } = useNotificationsQuery();
+  const markRead = useMarkNotificationReadMutation();
+  const markAll = useMarkAllNotificationsReadMutation();
+  const accept = useAcceptInvitationMutation();
+  const decline = useDeclineInvitationMutation();
+
+  const items = data?.items ?? [];
+  const unreadCount = data?.unread_count ?? 0;
+  const sections = groupByDay(items);
+
+  function onOpen(item: NotificationItem) {
+    if (!item.read) markRead.mutate({ id: item.id });
+    router.push(presentNotification(item).href as never);
+  }
+
+  async function onAccept(item: NotificationItem) {
+    const code = item.payload.code;
+    if (!code) return;
+    try {
+      await accept.mutateAsync({ code });
+      if (!item.read) await markRead.mutateAsync({ id: item.id });
+    } catch {
+      showToast(t('notifications.invite.errorTitle'), t('notifications.invite.acceptError'), 'error');
+    }
+  }
+
+  async function onDecline(item: NotificationItem) {
+    const code = item.payload.code;
+    if (!code) return;
+    try {
+      await decline.mutateAsync({ code });
+      if (!item.read) await markRead.mutateAsync({ id: item.id });
+    } catch {
+      showToast(t('notifications.invite.errorTitle'), t('notifications.invite.declineError'), 'error');
+    }
+  }
+
+  let content: ReactNode;
+  if (isPending) {
+    content = <ListSkeleton />;
+  } else if (isError) {
+    content = (
+      <View className="flex-1 justify-center p-4">
+        <ZQueryError
+          title={t('notifications.loadFailed')}
+          onRetry={() => void refetch()}
+          testID="notifications-error-retry"
+        />
+      </View>
+    );
+  } else if (items.length === 0) {
+    content = (
+      <View testID="notifications-empty" className="flex-1 justify-center p-4">
+        <ZEmptyState
+          title={t('notifications.empty')}
+          description={t('notifications.emptyDescription')}
+          icon={<Bell color={colors.primary} size={24} />}
+        />
+      </View>
+    );
+  } else {
+    content = (
+      <SectionList
+        sections={sections}
+        keyExtractor={(it) => it.id}
+        contentContainerStyle={{ padding: 16, gap: 12 }}
+        stickySectionHeadersEnabled={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching ?? false} onRefresh={() => void refetch()} />
+        }
+        renderSectionHeader={({ section }) => (
+          <Text className="pb-1 pt-2 text-xs font-semibold uppercase text-z-muted">
+            {t(section.titleKey)}
+          </Text>
+        )}
+        renderItem={({ item }) => (
+          <NotificationRow item={item} onOpen={onOpen} onAccept={onAccept} onDecline={onDecline} />
+        )}
+      />
+    );
+  }
+
+  return (
+    <ZScreen edges={['top']}>
+      <ZBackHeader
+        title={t('notifications.title')}
+        action={
+          unreadCount > 0 ? (
+            <ZButton
+              testID="notifications-mark-all"
+              label={t('notifications.markAllRead')}
+              variant="secondary"
+              onPress={() => markAll.mutate()}
+              icon={<CheckCheck color={colors.text} size={16} />}
+            />
+          ) : undefined
+        }
+      />
+      {content}
+    </ZScreen>
+  );
+}
