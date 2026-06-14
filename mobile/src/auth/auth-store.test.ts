@@ -1,4 +1,4 @@
-import { createAuthStore, type AuthenticatedClientLike } from './auth-store';
+import { createAuthStore, isWorkOSLogoutUrl, type AuthenticatedClientLike } from './auth-store';
 import { clearTokens, getTokens, setTokens } from './token-store';
 import { queryClient } from '../api/query-client';
 import * as WebBrowser from 'expo-web-browser';
@@ -83,7 +83,10 @@ test('clears the query cache on sign-out', async () => {
   clearSpy.mockClear(); // robust against any prior signOut in the suite
   const client = {
     GET: jest.fn(async () => ({ data: ME, error: undefined })),
-    POST: jest.fn(async () => ({ data: { logoutUrl: 'https://workos.test/logout' }, error: undefined })),
+    POST: jest.fn(async () => ({
+      data: { logoutUrl: 'https://api.workos.com/user_management/sessions/logout?session_id=x' },
+      error: undefined,
+    })),
   };
   const store = createAuthStore(client as unknown as AuthenticatedClientLike);
   await store.getState().signOut();
@@ -127,14 +130,17 @@ function logoutClient(result: { data?: { logoutUrl: string }; error?: unknown })
   };
 }
 
-test('signOut posts to /auth/logout and opens the returned logout URL', async () => {
+const WORKOS_LOGOUT_URL =
+  'https://api.workos.com/user_management/sessions/logout?session_id=session_1';
+
+test('signOut posts to /auth/logout and opens the returned logout URL when it is a WorkOS URL', async () => {
   await setTokens({ accessToken: 'a', refreshToken: 'r' });
-  const client = logoutClient({ data: { logoutUrl: 'https://workos.test/logout?sid=1' } });
+  const client = logoutClient({ data: { logoutUrl: WORKOS_LOGOUT_URL } });
   const store = createAuthStore(client as unknown as AuthenticatedClientLike);
   await store.getState().signOut();
 
   expect(client.POST).toHaveBeenCalledWith('/auth/logout');
-  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith('https://workos.test/logout?sid=1');
+  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(WORKOS_LOGOUT_URL);
   expect(store.getState().status).toBe('signedOut');
   expect(store.getState().user).toBeNull();
   expect(await getTokens()).toBeNull();
@@ -165,4 +171,32 @@ test('signOut still clears locally when the logout call throws (offline)', async
   expect(store.getState().status).toBe('signedOut');
   expect(store.getState().user).toBeNull();
   expect(await getTokens()).toBeNull();
+});
+
+// ── isWorkOSLogoutUrl guard ───────────────────────────────────────────────────
+
+test('signOut does NOT open browser when server returns the plain frontend URL', async () => {
+  // This is the pre-fix fallback: server has no SID and returns FRONTEND_URL.
+  await setTokens({ accessToken: 'a', refreshToken: 'r' });
+  const client = logoutClient({ data: { logoutUrl: 'https://app.example.com' } });
+  const store = createAuthStore(client as unknown as AuthenticatedClientLike);
+  await store.getState().signOut();
+
+  expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
+  expect(store.getState().status).toBe('signedOut');
+  expect(await getTokens()).toBeNull();
+});
+
+describe('isWorkOSLogoutUrl', () => {
+  test.each([
+    ['WorkOS logout URL', 'https://api.workos.com/user_management/sessions/logout?session_id=x', true],
+    ['WorkOS logout URL without query', 'https://api.workos.com/user_management/sessions/logout', true],
+    ['plain frontend URL', 'https://app.example.com', false],
+    ['frontend URL with path', 'https://app.example.com/dashboard', false],
+    ['workos.com but wrong path', 'https://api.workos.com/sso/something', false],
+    ['invalid/empty string', '', false],
+    ['relative path', '/logout', false],
+  ])('%s → %s', (_label, url, expected) => {
+    expect(isWorkOSLogoutUrl(url)).toBe(expected);
+  });
 });

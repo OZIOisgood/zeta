@@ -85,14 +85,18 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
       },
 
       signOut: async () => {
-        // End the WorkOS session first, while the access token still exists so the
-        // client attaches the Bearer header. Mirrors the web shell logout, which
-        // opens the returned logoutUrl. Best-effort: any failure (offline, non-2xx,
-        // thrown) must still clear the session locally so the user is not trapped.
+        // POST /auth/logout so the server revokes the WorkOS session server-side.
+        // The stored access token is attached as a Bearer header by the authenticated
+        // client, which gives the server the SID it needs to call WorkOS.
+        // The response carries a logoutUrl; we open it in a browser ONLY when it is
+        // an actual WorkOS session-logout URL (contains the WorkOS logout path).
+        // If the server fell back to the plain FRONTEND_URL (no session to revoke,
+        // or the server was unreachable) we skip the browser open and rely on
+        // local teardown. Best-effort: any failure must still clear tokens locally.
         try {
           const { data, error } = await api.POST('/auth/logout' as never);
           const logoutUrl = (data as { logoutUrl?: string } | undefined)?.logoutUrl;
-          if (!error && logoutUrl) {
+          if (!error && logoutUrl && isWorkOSLogoutUrl(logoutUrl)) {
             await WebBrowser.openBrowserAsync(logoutUrl);
           }
         } catch {
@@ -118,6 +122,21 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
   });
 
   return store;
+}
+
+/**
+ * Returns true only when `url` is a genuine WorkOS session-logout URL
+ * (i.e. the path produced by the WorkOS SDK's GetLogoutURL).
+ * The backend falls back to the plain FRONTEND_URL when no session ID is
+ * available, so we must distinguish the two before opening a browser tab.
+ */
+export function isWorkOSLogoutUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname.includes('/user_management/sessions/logout');
+  } catch {
+    return false;
+  }
 }
 
 function handleSignOut() {
