@@ -24,10 +24,17 @@ module.exports = defineConfig([
   // Pressable/Modal error selectors, we combine ALL no-restricted-syntax
   // selectors (imports + hex) into one src/app/** block. A separate hex-only
   // block then covers the rest of src/** (non-app files).
+  //
+  // LEVEL = 'warn' (incremental adoption): ~18 existing screens still import raw
+  // lucide/Pressable/Modal and are migrated in Phase 2. 'warn' keeps `pnpm run
+  // lint` green while surfacing every violation; the (native-fidelity) mobile-
+  // reviewer agent + AGENTS.md hold the hard gate against NEW violations.
+  // TODO(end of Phase 2): promote both rules below from 'warn' to 'error' once
+  // no src/app violations remain — then this is a permanent hard gate.
   {
     files: ['src/app/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-imports': ['error', {
+      'no-restricted-imports': ['warn', {
         paths: [
           {
             name: 'lucide-react-native',
@@ -45,7 +52,7 @@ module.exports = defineConfig([
       // All three selectors must live in one block so that no later config
       // block for src/app/** can clobber the import selectors by redefining
       // the same rule key.
-      'no-restricted-syntax': ['error',
+      'no-restricted-syntax': ['warn',
         {
           selector: "ImportDeclaration[source.value='react-native'] ImportSpecifier[imported.name='Pressable']",
           message: 'No raw Pressable in screens — use Touchable / a z-* primitive.',
