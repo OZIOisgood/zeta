@@ -6,9 +6,11 @@ import {
   useGroupQuery,
   useUpdateGroupMutation,
   useDeleteGroupMutation,
+  useLeaveGroupMutation,
 } from '../../../api/queries/groups';
 import { useAuth } from '../../../auth/auth-store';
 import { initialsFromName } from '../../../lib/avatar';
+import { ZBackHeader } from '../../../components/ui/z-back-header';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZQueryError } from '../../../components/ui/z-query-error';
@@ -20,6 +22,7 @@ import { ZTextInput } from '../../../components/ui/z-text-input';
 import { ZTextarea } from '../../../components/ui/z-textarea';
 import { ZAvatarInput } from '../../../components/ui/z-avatar-input';
 import { ZButton } from '../../../components/ui/z-button';
+import { ZConfirmDialog } from '../../../components/ui/z-confirm-dialog';
 import { ZDangerZoneCard } from '../../../components/ui/z-danger-zone-card';
 import { showToast } from '../../../components/ui/z-toast';
 
@@ -118,6 +121,9 @@ export default function GroupPreferencesScreen() {
 
   const { mutateAsync: updateGroup, isPending: saving } = useUpdateGroupMutation(groupId);
   const { mutateAsync: deleteGroup, isPending: deleting } = useDeleteGroupMutation(groupId);
+  const { mutateAsync: leaveGroup, isPending: leaving } = useLeaveGroupMutation(groupId);
+
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const { name, description, avatar, baseline } = form;
 
@@ -152,6 +158,17 @@ export default function GroupPreferencesScreen() {
     }
   }
 
+  async function handleConfirmLeave() {
+    setShowLeaveConfirm(false);
+    try {
+      await leaveGroup();
+      showToast(t('groups.leave.success', { group: data?.name ?? '' }), undefined, 'success');
+      router.back();
+    } catch {
+      showToast(t('toast.errorTitle'), t('groups.leave.failed'), 'error');
+    }
+  }
+
   async function handleConfirmDelete() {
     try {
       await deleteGroup();
@@ -164,7 +181,8 @@ export default function GroupPreferencesScreen() {
 
   if (isPending) {
     return (
-      <ZScreen className="gap-4 p-4">
+      <ZScreen edges={['top', 'bottom']} className="gap-4 p-4">
+        <ZBackHeader title={t('groups.preferences')} />
         <ZSkeleton testID="group-preferences-skeleton" className="h-20 w-full" />
         <ZSkeleton className="h-11 w-full" />
         <ZSkeleton className="h-20 w-full" />
@@ -174,7 +192,8 @@ export default function GroupPreferencesScreen() {
 
   if (isError || !data) {
     return (
-      <ZScreen className="items-center justify-center px-8">
+      <ZScreen edges={['top', 'bottom']} className="items-center justify-center px-8">
+        <ZBackHeader title={t('groups.preferences')} />
         <ZQueryError
           title={t('groups.phase4.detailFailed')}
           onRetry={() => void refetch()}
@@ -184,16 +203,18 @@ export default function GroupPreferencesScreen() {
   }
 
   return (
-    <ZScreen edges={['bottom']}>
+    <ZScreen edges={['top', 'bottom']}>
       <ZKeyboardAvoidingView>
         <ScrollView
           className="flex-1 bg-z-bg"
           contentContainerStyle={{ paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Form header */}
-          <View className="p-4">
-            <Text className="text-2xl font-semibold text-z-text">{t('groups.preferences')}</Text>
+          {/* Pinned back header */}
+          <ZBackHeader title={t('groups.preferences')} />
+
+          {/* Form summary */}
+          <View className="px-4 pb-4">
             <Text className="mt-1 text-sm leading-6 text-z-muted">
               {t('groups.phase4.preferencesSummary')}
             </Text>
@@ -271,14 +292,37 @@ export default function GroupPreferencesScreen() {
                 confirmLabel={t('groups.deleteGroup')}
               />
             </View>
-          ) : !canLeave ? (
+          ) : canLeave ? (
+            // Non-owner with leave permission — mirrors the web "leave group" danger surface.
+            <View className="px-4 pt-6">
+              <ZButton
+                testID="preferences-leave-btn"
+                label={t('groups.leave.action')}
+                variant="danger"
+                loading={leaving}
+                onPress={() => setShowLeaveConfirm(true)}
+              />
+              <ZConfirmDialog
+                testID="preferences-leave-dialog"
+                visible={showLeaveConfirm}
+                tone="danger"
+                title={t('groups.leave.title')}
+                description={t('groups.leave.confirm', { group: data.name })}
+                confirmLabel={t('groups.leave.action')}
+                cancelLabel={t('common.actions.cancel')}
+                confirmDisabled={leaving}
+                onConfirm={() => void handleConfirmLeave()}
+                onCancel={() => setShowLeaveConfirm(false)}
+              />
+            </View>
+          ) : (
             // Neither owner (can delete) nor a member who can leave: explain why.
             <View className="px-4 pt-6">
               <Text className="text-sm leading-6 text-z-muted">
                 {t('groups.deleteUnavailable')}
               </Text>
             </View>
-          ) : null}
+          )}
         </ScrollView>
       </ZKeyboardAvoidingView>
     </ZScreen>

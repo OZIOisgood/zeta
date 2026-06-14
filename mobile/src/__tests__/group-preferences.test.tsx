@@ -1,4 +1,4 @@
-import { render, fireEvent, waitFor, cleanup, act } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react-native';
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(async () => null),
@@ -7,35 +7,45 @@ jest.mock('expo-secure-store', () => ({
 }));
 
 const mockRouterReplace = jest.fn();
+const mockRouterBack = jest.fn();
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'g1' }),
-  useRouter: () => ({ replace: mockRouterReplace, back: jest.fn() }),
+  useRouter: () => ({ replace: mockRouterReplace, back: mockRouterBack }),
 }));
 
 const mockUseGroupQuery = jest.fn();
 const mockUseUpdateGroupMutation = jest.fn();
 const mockUseDeleteGroupMutation = jest.fn();
+const mockUseLeaveGroupMutation = jest.fn();
 
 jest.mock('../api/queries/groups', () => ({
   useGroupQuery: (...args: unknown[]) => mockUseGroupQuery(...args),
   useUpdateGroupMutation: (...args: unknown[]) => mockUseUpdateGroupMutation(...args),
   useDeleteGroupMutation: (...args: unknown[]) => mockUseDeleteGroupMutation(...args),
+  useLeaveGroupMutation: (...args: unknown[]) => mockUseLeaveGroupMutation(...args),
 }));
+
+let mockPermissions = ['groups:preferences:edit', 'groups:delete'];
 
 jest.mock('../auth/auth-store', () => ({
   useAuth: (sel: (s: unknown) => unknown) =>
     sel({
       user: {
         id: 'u1',
-        permissions: ['groups:preferences:edit', 'groups:delete'],
+        permissions: mockPermissions,
       },
     }),
   api: {},
 }));
 
+jest.mock('../components/ui/z-toast', () => ({
+  showToast: jest.fn(),
+}));
+
 import { initI18n } from '../i18n';
 import GroupPreferencesScreen from '../app/group/[id]/preferences';
+import { showToast } from '../components/ui/z-toast';
 
 beforeAll(() => initI18n('en'));
 
@@ -43,6 +53,9 @@ afterEach(() => cleanup());
 
 beforeEach(() => {
   mockRouterReplace.mockClear();
+  mockRouterBack.mockClear();
+  (showToast as jest.Mock).mockReset?.();
+  mockPermissions = ['groups:preferences:edit', 'groups:delete'];
   mockUseGroupQuery.mockReturnValue({
     data: { id: 'g1', name: 'Karate Club', owner_id: 'u1', avatar: null, description: 'Dojo', created_at: '', updated_at: '' },
     isPending: false,
@@ -51,6 +64,7 @@ beforeEach(() => {
   });
   mockUseUpdateGroupMutation.mockReturnValue({ mutateAsync: jest.fn(async () => ({})), isPending: false });
   mockUseDeleteGroupMutation.mockReturnValue({ mutateAsync: jest.fn(async () => undefined), isPending: false });
+  mockUseLeaveGroupMutation.mockReturnValue({ mutateAsync: jest.fn(async () => undefined), isPending: false });
 });
 
 test('saves edited preferences via updateGroup', async () => {
@@ -138,4 +152,58 @@ test('cold-cache: form hydrates with real server values after pending resolves',
   expect(getByTestId('group-name-input').props.value).toBe('Karate Club');
   // Save button must be disabled (form is not dirty — server value matches field value)
   expect(getByTestId('group-save')).toBeDisabled();
+});
+
+// ── fix (1): back affordance ───────────────────────────────────────────────────
+
+test('renders back button via ZBackHeader', async () => {
+  await render(<GroupPreferencesScreen />);
+  // ZBackHeader renders a ZIconButton with accessibilityLabel 'Back'
+  expect(screen.getByRole('button', { name: /back/i })).toBeOnTheScreen();
+});
+
+// ── fix (2): leave-only branch ────────────────────────────────────────────────
+
+test('leave-only member (canLeave && !canDelete) sees leave button, not dead-end', async () => {
+  // Non-owner: can leave but cannot delete
+  mockPermissions = ['groups:membership:leave'];
+  // Group owner_id !== user id, so canLeave is gated by owner check in preferences too
+  mockUseGroupQuery.mockReturnValue({
+    data: { id: 'g1', name: 'Karate Club', owner_id: 'u2', avatar: null, description: '', created_at: '', updated_at: '' },
+    isPending: false,
+    isError: false,
+    refetch: jest.fn(),
+  });
+
+  await render(<GroupPreferencesScreen />);
+
+  // Leave button must be present
+  expect(screen.getByTestId('preferences-leave-btn')).toBeOnTheScreen();
+  // The "deleteUnavailable" dead-end text must NOT appear
+  expect(screen.queryByText('Only the group owner can delete this group.')).toBeNull();
+});
+
+test('leave-only member: confirming leave calls mutation and navigates back', async () => {
+  mockPermissions = ['groups:membership:leave'];
+  const leaveMutate = jest.fn(async () => undefined);
+  mockUseLeaveGroupMutation.mockReturnValue({ mutateAsync: leaveMutate, isPending: false });
+  mockUseGroupQuery.mockReturnValue({
+    data: { id: 'g1', name: 'Karate Club', owner_id: 'u2', avatar: null, description: '', created_at: '', updated_at: '' },
+    isPending: false,
+    isError: false,
+    refetch: jest.fn(),
+  });
+
+  await render(<GroupPreferencesScreen />);
+
+  // Open confirm dialog
+  fireEvent.press(screen.getByTestId('preferences-leave-btn'));
+  await waitFor(() => expect(screen.getByTestId('preferences-leave-dialog')).toBeOnTheScreen());
+
+  // Confirm
+  const confirmBtns = screen.getAllByText('Leave group');
+  fireEvent.press(confirmBtns[confirmBtns.length - 1]);
+
+  await waitFor(() => expect(leaveMutate).toHaveBeenCalledTimes(1));
+  expect(mockRouterBack).toHaveBeenCalled();
 });
