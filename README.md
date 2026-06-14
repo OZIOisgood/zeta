@@ -148,6 +148,14 @@ Google currently labels direct Cloud Run domain mapping as Preview and does not 
 - Login: Click "Login via WorkOS" -> Redirects to WorkOS AuthKit -> Callback -> Logged In.
 - **Redirect Preservation**: When an unauthenticated user accesses a deep link (e.g., an invite URL), the Angular guards call `/auth/login?return_to=<path>`. The API validates the relative return path, stores it in a short-lived HttpOnly auth-state cookie, sends only an opaque `state` value to WorkOS, and restores the original path from `/auth/callback` after successful authentication.
 
+### Access Gate (Soft Launch)
+
+- Registration is open: WorkOS public sign-up stays **ON**. A newly registered user is created as `waitlisted` (`user_access.status`) and must redeem an invite code at `POST /access/redeem` to become `active`.
+- **Expert codes** (`signup_codes`) upgrade the redeeming user to the `expert` role. Existing group-invite codes still work and activate the user as a `student`, joining the corresponding group.
+- Experts receive **5 invite codes**, created lazily and listed at `GET /access/codes`. Admins can mint additional codes via `POST /access/codes`.
+- Protected feature routes require an active account; `waitlisted` users receive **403**. `/auth/me` returns `access_status` so clients can route to the redeem screen.
+- Existing users were grandfathered to `active`. No new environment variables are introduced.
+
 ### Asset Visibility
 
 - Students can only see assets and videos they uploaded themselves.
@@ -455,6 +463,29 @@ erDiagram
     }
 
     users ||--|| user_preferences : "has settings"
+
+    user_access {
+        string user_id PK "WorkOS User ID ref"
+        enum status "waitlisted, active"
+        timestamptz activated_at
+        string activated_via "expert_code, group_code, grandfathered"
+        timestamp created_at
+    }
+
+    users ||--|| user_access : "gated by"
+
+    signup_codes {
+        uuid id PK
+        string code "unique bearer string"
+        string owner_user_id FK "WorkOS User ID ref"
+        enum status "available, consumed"
+        string redeemed_by_user_id FK "WorkOS User ID ref"
+        timestamptz consumed_at
+        timestamp created_at
+    }
+
+    users ||--o{ signup_codes : owns
+    users ||--o{ signup_codes : redeems
 
     groups {
         uuid id PK

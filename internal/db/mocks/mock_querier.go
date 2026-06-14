@@ -42,6 +42,21 @@ func (m *MockQuerier) EXPECT() *MockQuerierMockRecorder {
 	return m.recorder
 }
 
+// ActivateUserAccess mocks base method.
+func (m *MockQuerier) ActivateUserAccess(ctx context.Context, arg db.ActivateUserAccessParams) (db.UserAccess, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ActivateUserAccess", ctx, arg)
+	ret0, _ := ret[0].(db.UserAccess)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ActivateUserAccess indicates an expected call of ActivateUserAccess.
+func (mr *MockQuerierMockRecorder) ActivateUserAccess(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActivateUserAccess", reflect.TypeOf((*MockQuerier)(nil).ActivateUserAccess), ctx, arg)
+}
+
 // AddUserToGroup mocks base method.
 func (m *MockQuerier) AddUserToGroup(ctx context.Context, arg db.AddUserToGroupParams) error {
 	m.ctrl.T.Helper()
@@ -101,6 +116,21 @@ func (mr *MockQuerierMockRecorder) CheckVideoVisibleToUser(ctx, arg any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckVideoVisibleToUser", reflect.TypeOf((*MockQuerier)(nil).CheckVideoVisibleToUser), ctx, arg)
 }
 
+// ConsumeSignupCode mocks base method.
+func (m *MockQuerier) ConsumeSignupCode(ctx context.Context, arg db.ConsumeSignupCodeParams) (db.SignupCode, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConsumeSignupCode", ctx, arg)
+	ret0, _ := ret[0].(db.SignupCode)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConsumeSignupCode indicates an expected call of ConsumeSignupCode.
+func (mr *MockQuerierMockRecorder) ConsumeSignupCode(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeSignupCode", reflect.TypeOf((*MockQuerier)(nil).ConsumeSignupCode), ctx, arg)
+}
+
 // CountConflictingBookings mocks base method.
 func (m *MockQuerier) CountConflictingBookings(ctx context.Context, arg db.CountConflictingBookingsParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -114,6 +144,21 @@ func (m *MockQuerier) CountConflictingBookings(ctx context.Context, arg db.Count
 func (mr *MockQuerierMockRecorder) CountConflictingBookings(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountConflictingBookings", reflect.TypeOf((*MockQuerier)(nil).CountConflictingBookings), ctx, arg)
+}
+
+// CountSignupCodesByOwner mocks base method.
+func (m *MockQuerier) CountSignupCodesByOwner(ctx context.Context, ownerUserID string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountSignupCodesByOwner", ctx, ownerUserID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountSignupCodesByOwner indicates an expected call of CountSignupCodesByOwner.
+func (mr *MockQuerierMockRecorder) CountSignupCodesByOwner(ctx, ownerUserID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountSignupCodesByOwner", reflect.TypeOf((*MockQuerier)(nil).CountSignupCodesByOwner), ctx, ownerUserID)
 }
 
 // CountUnreadNotifications mocks base method.
@@ -295,6 +340,21 @@ func (mr *MockQuerierMockRecorder) CreateSessionType(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSessionType", reflect.TypeOf((*MockQuerier)(nil).CreateSessionType), ctx, arg)
 }
 
+// CreateSignupCode mocks base method.
+func (m *MockQuerier) CreateSignupCode(ctx context.Context, arg db.CreateSignupCodeParams) (db.SignupCode, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSignupCode", ctx, arg)
+	ret0, _ := ret[0].(db.SignupCode)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSignupCode indicates an expected call of CreateSignupCode.
+func (mr *MockQuerierMockRecorder) CreateSignupCode(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSignupCode", reflect.TypeOf((*MockQuerier)(nil).CreateSignupCode), ctx, arg)
+}
+
 // CreateVideo mocks base method.
 func (m *MockQuerier) CreateVideo(ctx context.Context, arg db.CreateVideoParams) (db.Video, error) {
 	m.ctrl.T.Helper()
@@ -426,6 +486,21 @@ func (m *MockQuerier) EnsureRecordingImportPending(ctx context.Context, bookingI
 func (mr *MockQuerierMockRecorder) EnsureRecordingImportPending(ctx, bookingID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureRecordingImportPending", reflect.TypeOf((*MockQuerier)(nil).EnsureRecordingImportPending), ctx, bookingID)
+}
+
+// EnsureUserAccess mocks base method.
+func (m *MockQuerier) EnsureUserAccess(ctx context.Context, userID string) (db.UserAccess, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnsureUserAccess", ctx, userID)
+	ret0, _ := ret[0].(db.UserAccess)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnsureUserAccess indicates an expected call of EnsureUserAccess.
+func (mr *MockQuerierMockRecorder) EnsureUserAccess(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureUserAccess", reflect.TypeOf((*MockQuerier)(nil).EnsureUserAccess), ctx, userID)
 }
 
 // GetAsset mocks base method.
@@ -636,6 +711,21 @@ func (m *MockQuerier) GetSessionType(ctx context.Context, arg db.GetSessionTypeP
 func (mr *MockQuerierMockRecorder) GetSessionType(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionType", reflect.TypeOf((*MockQuerier)(nil).GetSessionType), ctx, arg)
+}
+
+// GetUserAccess mocks base method.
+func (m *MockQuerier) GetUserAccess(ctx context.Context, userID string) (db.UserAccess, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserAccess", ctx, userID)
+	ret0, _ := ret[0].(db.UserAccess)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserAccess indicates an expected call of GetUserAccess.
+func (mr *MockQuerierMockRecorder) GetUserAccess(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAccess", reflect.TypeOf((*MockQuerier)(nil).GetUserAccess), ctx, userID)
 }
 
 // GetUserEmailPreferences mocks base method.
@@ -983,6 +1073,21 @@ func (mr *MockQuerierMockRecorder) ListSessionTypesByGroup(ctx, groupID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSessionTypesByGroup", reflect.TypeOf((*MockQuerier)(nil).ListSessionTypesByGroup), ctx, groupID)
 }
 
+// ListSignupCodesByOwner mocks base method.
+func (m *MockQuerier) ListSignupCodesByOwner(ctx context.Context, ownerUserID string) ([]db.SignupCode, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSignupCodesByOwner", ctx, ownerUserID)
+	ret0, _ := ret[0].([]db.SignupCode)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSignupCodesByOwner indicates an expected call of ListSignupCodesByOwner.
+func (mr *MockQuerierMockRecorder) ListSignupCodesByOwner(ctx, ownerUserID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSignupCodesByOwner", reflect.TypeOf((*MockQuerier)(nil).ListSignupCodesByOwner), ctx, ownerUserID)
+}
+
 // ListUserGroups mocks base method.
 func (m *MockQuerier) ListUserGroups(ctx context.Context, userID string) ([]db.ListUserGroupsRow, error) {
 	m.ctrl.T.Helper()
@@ -1215,6 +1320,20 @@ func (m *MockQuerier) MarkReminderSent(ctx context.Context, id pgtype.UUID) erro
 func (mr *MockQuerierMockRecorder) MarkReminderSent(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkReminderSent", reflect.TypeOf((*MockQuerier)(nil).MarkReminderSent), ctx, id)
+}
+
+// ReleaseSignupCode mocks base method.
+func (m *MockQuerier) ReleaseSignupCode(ctx context.Context, id pgtype.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReleaseSignupCode", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReleaseSignupCode indicates an expected call of ReleaseSignupCode.
+func (mr *MockQuerierMockRecorder) ReleaseSignupCode(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseSignupCode", reflect.TypeOf((*MockQuerier)(nil).ReleaseSignupCode), ctx, id)
 }
 
 // RemoveUserFromGroup mocks base method.

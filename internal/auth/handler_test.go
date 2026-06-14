@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"log/slog"
@@ -12,6 +13,8 @@ import (
 	"time"
 
 	authmocks "github.com/OZIOisgood/zeta/internal/auth/mocks"
+	"github.com/OZIOisgood/zeta/internal/db"
+	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 	"go.uber.org/mock/gomock"
@@ -187,6 +190,67 @@ func decodeAuthStateCookie(t *testing.T, value string) authReturnState {
 		t.Fatal(err)
 	}
 	return state
+}
+
+func TestRefreshSessionCookiesReissuesCookies(t *testing.T) {
+	t.Setenv("WORKOS_CLIENT_ID", "client_test")
+	t.Setenv("DEFAULT_ORG_ID", "org_123")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().AuthenticateWithRefreshToken(gomock.Any(), gomock.Any()).Return(
+		usermanagement.RefreshAuthenticationResponse{AccessToken: "new_access", RefreshToken: "new_refresh"}, nil,
+	)
+
+	h := NewHandler(slog.Default(), nil, workos)
+	req := httptest.NewRequest(http.MethodPost, "/access/redeem", nil)
+	req.AddCookie(&http.Cookie{Name: RefreshCookieName, Value: "old_refresh"})
+	rec := httptest.NewRecorder()
+
+	if err := h.RefreshSessionCookies(req.Context(), rec, req); err != nil {
+		t.Fatalf("RefreshSessionCookies returned error: %v", err)
+	}
+
+	var gotAccess string
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == CookieName {
+			gotAccess = c.Value
+		}
+	}
+	if gotAccess != "new_access" {
+		t.Fatalf("session cookie = %q, want %q", gotAccess, "new_access")
+	}
+}
+
+func TestMeIncludesAccessStatus(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	workos := authmocks.NewMockUserManagement(ctrl)
+
+	q.EXPECT().EnsureUserAccess(gomock.Any(), "user_123").Return(
+		db.UserAccess{UserID: "user_123", Status: db.AccessStatusActive}, nil,
+	)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user_123").Return(
+		db.UserPreference{UserID: "user_123", Language: db.LanguageCodeEn, Timezone: "UTC"}, nil,
+	)
+
+	h := NewHandler(slog.Default(), q, workos)
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req = req.WithContext(context.WithValue(req.Context(), UserKey, &UserContext{ID: "user_123", Role: "student", Permissions: []string{}}))
+	rec := httptest.NewRecorder()
+
+	h.Me(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
+	}
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body["access_status"] != "active" {
+		t.Fatalf("access_status = %v, want active", body["access_status"])
+	}
 }
 
 func testAccessToken(t *testing.T) string {

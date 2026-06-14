@@ -23,6 +23,7 @@ const user: User = {
     'groups:create',
     'groups:invites:create',
   ],
+  access_status: 'active',
   email_preferences: {
     notifications_enabled: true,
     asset_uploads_enabled: true,

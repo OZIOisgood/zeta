@@ -20,6 +20,7 @@ type UserManagement interface {
 	UpdateUser(ctx context.Context, opts usermanagement.UpdateUserOpts) (usermanagement.User, error)
 	ListOrganizationMemberships(ctx context.Context, opts usermanagement.ListOrganizationMembershipsOpts) (usermanagement.ListOrganizationMembershipsResponse, error)
 	CreateOrganizationMembership(ctx context.Context, opts usermanagement.CreateOrganizationMembershipOpts) (usermanagement.OrganizationMembership, error)
+	UpdateOrganizationMembership(ctx context.Context, organizationMembershipID string, opts usermanagement.UpdateOrganizationMembershipOpts) (usermanagement.OrganizationMembership, error)
 	GetLogoutURL(opts usermanagement.GetLogoutURLOpts) (*url.URL, error)
 }
 
@@ -64,6 +65,10 @@ func (w *workosClient) ListOrganizationMemberships(ctx context.Context, opts use
 
 func (w *workosClient) CreateOrganizationMembership(ctx context.Context, opts usermanagement.CreateOrganizationMembershipOpts) (usermanagement.OrganizationMembership, error) {
 	return usermanagement.CreateOrganizationMembership(ctx, opts)
+}
+
+func (w *workosClient) UpdateOrganizationMembership(ctx context.Context, organizationMembershipID string, opts usermanagement.UpdateOrganizationMembershipOpts) (usermanagement.OrganizationMembership, error) {
+	return usermanagement.UpdateOrganizationMembership(ctx, organizationMembershipID, opts)
 }
 
 func (w *workosClient) GetLogoutURL(opts usermanagement.GetLogoutURLOpts) (*url.URL, error) {
