@@ -175,9 +175,11 @@ export interface paths {
         };
         /** Get a single group by ID */
         get: operations["getGroup"];
-        put?: never;
+        /** Update group preferences (name, description, avatar) */
+        put: operations["updateGroup"];
         post?: never;
-        delete?: never;
+        /** Delete a group (owner only) */
+        delete: operations["deleteGroup"];
         options?: never;
         head?: never;
         patch?: never;
@@ -229,6 +231,23 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupID}/users/{userID}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a member from a group */
+        delete: operations["removeGroupMember"];
         options?: never;
         head?: never;
         patch?: never;
@@ -781,6 +800,12 @@ export interface components {
             description?: string;
             /** @description Base64-encoded image data (max 300KB) */
             avatar: string;
+        };
+        UpdateGroupRequest: {
+            name: string;
+            description?: string;
+            /** @description Base64-encoded image data (max 300KB); omit or empty to keep the current avatar */
+            avatar?: string;
         };
         CreateInvitationRequest: {
             /** @description Optional invitee email; if it maps to a registered user, an email + in-app notification are sent */
@@ -1435,6 +1460,115 @@ export interface operations {
             };
         };
     };
+    updateGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description The updated group */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Group"];
+                };
+            };
+            /** @description Invalid group ID, invalid body, or missing name */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing groups:preferences:edit permission or caller is not a member */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Group not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to update the group */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid group ID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing groups:delete permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to delete the group */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     leaveGroup: {
         parameters: {
             query?: never;
@@ -1569,6 +1703,62 @@ export interface operations {
             };
             /** @description Missing groups:expert-list:read permission */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    removeGroupMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupID: string;
+                userID: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Member removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid group ID, missing user ID, or target is the group owner */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing groups:user-list:delete permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Group not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Failed to remove the member */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
