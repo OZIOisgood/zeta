@@ -5,7 +5,7 @@ import { CalendarDays, Users, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../api/queries/assets';
 import { useGroupsQuery } from '../../api/queries/groups';
-import { useMyBookingsQuery } from '../../api/queries/coaching';
+import { useMyAvailabilityQuery, useMyBookingsQuery } from '../../api/queries/coaching';
 import { useNotificationsQuery } from '../../api/queries/notifications';
 import { useAuth } from '../../auth/auth-store';
 import { AssetCard } from '../../components/asset-card';
@@ -83,6 +83,9 @@ export default function HomeScreen() {
   const hasReviewedVideos = videoList.some((a) => a.status === 'completed');
   const firstGroupId = groupList[0]?.id;
 
+  const availabilityQuery = useMyAvailabilityQuery(firstGroupId ?? '');
+  const hasAvailability = (availabilityQuery.data ?? []).length > 0;
+
   const steps = useMemo<HomeStep[]>(() => {
     const list: HomeStep[] = [];
 
@@ -137,9 +140,19 @@ export default function HomeScreen() {
       });
     }
 
+    if (has('coaching:availability:manage')) {
+      list.push({
+        completed: hasAvailability,
+        labelKey: 'home.firstSteps.setAvailability',
+        descriptionKey: 'home.firstSteps.setAvailabilityDescription',
+        onPress: () => router.push('/availability' as never),
+        testID: 'first-step-availability',
+      });
+    }
+
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [permissions, hasGroups, hasVideos, hasReviewedVideos, firstGroupId, upcomingCount]);
+  }, [permissions, hasGroups, hasVideos, hasReviewedVideos, firstGroupId, upcomingCount, hasAvailability]);
 
   // Match the web showFirstSteps: only after groups + videos resolve, and only
   // while at least one step is still incomplete.
