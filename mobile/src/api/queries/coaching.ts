@@ -17,6 +17,7 @@ export type CoachingExpert = components['schemas']['CoachingExpert'];
 type Fetcher = Pick<typeof api, 'GET'>;
 type Poster = Pick<typeof api, 'POST'>;
 type Putter = Pick<typeof api, 'PUT'>;
+type Deleter = Pick<typeof api, 'DELETE'>;
 type Invalidator = Pick<typeof queryClient, 'invalidateQueries'>;
 
 export type CreateBookingInput = {
@@ -155,6 +156,222 @@ export function useCancelBookingMutation(
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+}
+
+// ── Availability ──────────────────────────────────────────────────────────────
+
+export type CoachingAvailability = components['schemas']['CoachingAvailability'];
+export type CoachingBlockedSlot = components['schemas']['CoachingBlockedSlot'];
+export type AvailabilityInput = components['schemas']['AvailabilityRequest'];
+export type BlockedSlotInput = components['schemas']['CreateBlockedSlotRequest'];
+export type SessionTypeInput = components['schemas']['CreateSessionTypeRequest'];
+
+export type UpdateSessionTypeInput = {
+  sessionTypeId: string;
+  body: SessionTypeInput;
+};
+
+export type UpdateAvailabilityInput = {
+  availabilityId: string;
+  body: AvailabilityInput;
+};
+
+export function useMyAvailabilityQuery(groupId: string, client: Fetcher = api) {
+  return useQuery({
+    queryKey: ['coaching', groupId, 'availability'],
+    enabled: groupId !== '',
+    queryFn: async () => {
+      const { data, error } = await (client as typeof api).GET(
+        '/groups/{groupID}/coaching/availability',
+        { params: { path: { groupID: groupId } } },
+      );
+      if (error || !data) throw new Error('Failed to load availability');
+      return data;
+    },
+  });
+}
+
+export function useBlockedSlotsQuery(groupId: string, client: Fetcher = api) {
+  return useQuery({
+    queryKey: ['coaching', groupId, 'blocked-slots'],
+    enabled: groupId !== '',
+    queryFn: async () => {
+      const { data, error } = await (client as typeof api).GET(
+        '/groups/{groupID}/coaching/blocked-slots',
+        { params: { path: { groupID: groupId } } },
+      );
+      if (error || !data) throw new Error('Failed to load blocked slots');
+      return data;
+    },
+  });
+}
+
+export function useCreateSessionTypeMutation(
+  groupId: string,
+  client: Poster = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (body: SessionTypeInput) => {
+      const { data, error } = await (client as typeof api).POST(
+        '/groups/{groupID}/coaching/session-types',
+        { params: { path: { groupID: groupId } }, body },
+      );
+      if (error || !data) throw new Error('Failed to create session type');
+      return data;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'session-types'] });
+    },
+  });
+}
+
+export function useUpdateSessionTypeMutation(
+  groupId: string,
+  client: Putter = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (input: UpdateSessionTypeInput) => {
+      const { data, error } = await (client as typeof api).PUT(
+        '/groups/{groupID}/coaching/session-types/{sessionTypeID}',
+        {
+          params: { path: { groupID: groupId, sessionTypeID: input.sessionTypeId } },
+          body: input.body,
+        },
+      );
+      if (error || !data) throw new Error('Failed to update session type');
+      return data;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'session-types'] });
+    },
+  });
+}
+
+export function useDeactivateSessionTypeMutation(
+  groupId: string,
+  client: Deleter = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (sessionTypeId: string) => {
+      const { error } = await (client as typeof api).DELETE(
+        '/groups/{groupID}/coaching/session-types/{sessionTypeID}',
+        { params: { path: { groupID: groupId, sessionTypeID: sessionTypeId } } },
+      );
+      if (error !== undefined) throw new Error('Failed to deactivate session type');
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'session-types'] });
+    },
+  });
+}
+
+export function useCreateAvailabilityMutation(
+  groupId: string,
+  client: Poster = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (body: AvailabilityInput) => {
+      const { data, error } = await (client as typeof api).POST(
+        '/groups/{groupID}/coaching/availability',
+        { params: { path: { groupID: groupId } }, body },
+      );
+      if (error || !data) throw new Error('Failed to create availability');
+      return data;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'availability'] });
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'slots'] });
+    },
+  });
+}
+
+export function useUpdateAvailabilityMutation(
+  groupId: string,
+  client: Putter = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (input: UpdateAvailabilityInput) => {
+      const { data, error } = await (client as typeof api).PUT(
+        '/groups/{groupID}/coaching/availability/{availabilityID}',
+        {
+          params: { path: { groupID: groupId, availabilityID: input.availabilityId } },
+          body: input.body,
+        },
+      );
+      if (error || !data) throw new Error('Failed to update availability');
+      return data;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'availability'] });
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'slots'] });
+    },
+  });
+}
+
+export function useDeleteAvailabilityMutation(
+  groupId: string,
+  client: Deleter = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (availabilityId: string) => {
+      const { error } = await (client as typeof api).DELETE(
+        '/groups/{groupID}/coaching/availability/{availabilityID}',
+        { params: { path: { groupID: groupId, availabilityID: availabilityId } } },
+      );
+      if (error !== undefined) throw new Error('Failed to delete availability');
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'availability'] });
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'slots'] });
+    },
+  });
+}
+
+export function useCreateBlockedSlotMutation(
+  groupId: string,
+  client: Poster = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (body: BlockedSlotInput) => {
+      const { data, error } = await (client as typeof api).POST(
+        '/groups/{groupID}/coaching/blocked-slots',
+        { params: { path: { groupID: groupId } }, body },
+      );
+      if (error || !data) throw new Error('Failed to create blocked slot');
+      return data;
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'blocked-slots'] });
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'slots'] });
+    },
+  });
+}
+
+export function useDeleteBlockedSlotMutation(
+  groupId: string,
+  client: Deleter = api,
+  qc: Invalidator = queryClient,
+) {
+  return useMutation({
+    mutationFn: async (slotId: string) => {
+      const { error } = await (client as typeof api).DELETE(
+        '/groups/{groupID}/coaching/blocked-slots/{slotID}',
+        { params: { path: { groupID: groupId, slotID: slotId } } },
+      );
+      if (error !== undefined) throw new Error('Failed to delete blocked slot');
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'blocked-slots'] });
+      await qc.invalidateQueries({ queryKey: ['coaching', groupId, 'slots'] });
     },
   });
 }
