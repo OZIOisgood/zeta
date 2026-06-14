@@ -156,3 +156,27 @@ test('remove-member flow: press remove → confirm dialog → mutation called', 
   await waitFor(() => expect(removeMutate).toHaveBeenCalledTimes(1));
   expect(removeMutate).toHaveBeenCalledWith({ userId: 's1' });
 });
+
+// ── self-exclusion (web parity: canRemoveUsers() && !isCurrentUser(member.id)) ─
+
+test('remove button is hidden on the current user\'s own row even when canRemoveMembers is true', async () => {
+  // The current user IS the student being listed — they must not see a remove
+  // button on their own row (mirrors web group-details-page.component.ts:218).
+  mockUserId = 's1'; // same as STUDENT.id
+  mockPermissions = ['groups:user-list:read', 'groups:user-list:delete'];
+  mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [STUDENT], refetch: jest.fn() });
+  await render(<Providers><GroupDetailScreen /></Providers>);
+  // The student row renders (name visible) but the remove button must be absent.
+  expect(screen.getByText('Bob Jones')).toBeOnTheScreen();
+  expect(screen.queryByTestId('member-remove')).toBeNull();
+});
+
+test('remove button is visible for OTHER members when current user has the permission', async () => {
+  // Sanity-check: a different user in the list DOES get the remove button.
+  const OTHER: typeof STUDENT = { ...STUDENT, id: 's2', first_name: 'Carol', last_name: 'Doe', email: 'carol@example.com' };
+  mockUserId = 'u1'; // u1 is not s2
+  mockPermissions = ['groups:user-list:read', 'groups:user-list:delete'];
+  mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [OTHER], refetch: jest.fn() });
+  await render(<Providers><GroupDetailScreen /></Providers>);
+  expect(screen.getByTestId('member-remove')).toBeOnTheScreen();
+});

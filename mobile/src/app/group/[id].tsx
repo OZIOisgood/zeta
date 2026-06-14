@@ -77,6 +77,7 @@ function MemberSection({
   isError,
   onRetry,
   onRemoveMember,
+  currentUserId,
 }: {
   kind: 'experts' | 'students';
   title: string;
@@ -85,8 +86,12 @@ function MemberSection({
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
-  /** When provided, renders a perm-gated remove button on each row. */
+  /** When provided, renders a perm-gated remove button on each row.
+   *  The button is hidden for the row whose id matches currentUserId
+   *  (mirrors web group-details-page.component.ts:218 — !isCurrentUser). */
   onRemoveMember?: (member: GroupUser) => void;
+  /** The signed-in user's id — used to hide the remove button on own row. */
+  currentUserId?: string | null;
 }) {
   const { t } = useTranslation();
   const count = members?.length ?? 0;
@@ -137,7 +142,11 @@ function MemberSection({
             renderItem={({ item }) => (
               <MemberRow
                 member={item}
-                onRemove={onRemoveMember ? () => onRemoveMember(item) : undefined}
+                onRemove={
+                  onRemoveMember && item.id !== currentUserId
+                    ? () => onRemoveMember(item)
+                    : undefined
+                }
               />
             )}
           />
@@ -524,6 +533,7 @@ export default function GroupDetailScreen() {
                     isError={expertsError}
                     onRetry={() => void refetchExperts()}
                     onRemoveMember={canRemoveMembers ? (m) => setMemberToRemove(m) : undefined}
+                    currentUserId={userId}
                   />
                 )}
                 {canSeeStudents && (
@@ -536,6 +546,7 @@ export default function GroupDetailScreen() {
                     isError={studentsError}
                     onRetry={() => void refetchStudents()}
                     onRemoveMember={canRemoveMembers ? (m) => setMemberToRemove(m) : undefined}
+                    currentUserId={userId}
                   />
                 )}
               </View>
