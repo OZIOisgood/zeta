@@ -1,6 +1,5 @@
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Plus, QrCode, Users } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../../api/queries/groups';
 import { useAuth } from '../../auth/auth-store';
@@ -12,6 +11,7 @@ import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { ZSymbol } from '../../components/ui/z-symbol';
 import { colors } from '../../theme/colors';
 
 function ListSkeleton() {
@@ -61,7 +61,7 @@ export default function GroupsScreen() {
         <ZEmptyState
           title={t('groups.noGroupsYet')}
           description={t(canCreate ? 'groups.createFirstDescription' : 'groups.noGroupsJoined')}
-          icon={<Users color={colors.primary} size={24} />}
+          icon={<ZSymbol name="users" label={t('groups.myGroups')} size={24} color={colors.primary} />}
         />
       </View>
     );
@@ -98,7 +98,7 @@ export default function GroupsScreen() {
               label={t('groups.invitationDialog.joinGroup')}
               variant="secondary"
               onPress={() => router.push('/invite')}
-              icon={<QrCode color={colors.text} size={16} />}
+              icon={<ZSymbol name="qr-code" label={t('common.actions.join')} size={16} color={colors.text} />}
             />
           ) : undefined
         }
@@ -114,7 +114,7 @@ export default function GroupsScreen() {
           onPress={() => router.push('/group/create')}
           className="absolute bottom-6 right-6"
         >
-          <Plus color={colors.onPrimary} size={24} />
+          <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
         </ZIconButton>
       ) : (
         <ZIconButton
@@ -126,7 +126,7 @@ export default function GroupsScreen() {
           onPress={() => router.push('/invite')}
           className="absolute bottom-6 right-6"
         >
-          <QrCode color={colors.onPrimary} size={24} />
+          <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.onPrimary} />
         </ZIconButton>
       )}
     </ZScreen>

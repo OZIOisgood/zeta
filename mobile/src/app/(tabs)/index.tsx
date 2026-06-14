@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CalendarDays, Users, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../api/queries/assets';
 import { useGroupsQuery } from '../../api/queries/groups';
@@ -19,6 +18,7 @@ import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { ZSymbol } from '../../components/ui/z-symbol';
 import { colors } from '../../theme/colors';
 
 // Mirror the web home page recentVideos slice: surface only the four most
@@ -184,7 +184,7 @@ export default function HomeScreen() {
       <ZEmptyState
         title={t('videos.noVideosYet')}
         description={t('videos.uploadFirstDescription')}
-        icon={<VideoIcon color={colors.primary} size={24} />}
+        icon={<ZSymbol name="video" label={t('videos.title')} size={24} color={colors.primary} />}
       >
         {canCreate ? (
           <ZButton
@@ -230,21 +230,21 @@ export default function HomeScreen() {
             testID="stat-card-videos"
             label={t('videos.title')}
             count={videoList.length}
-            icon={<VideoIcon color={colors.primary} size={18} />}
+            icon={<ZSymbol name="video" label={t('videos.title')} size={18} color={colors.primary} />}
             onPress={() => router.push('/videos')}
           />
           <StatCard
             testID="stat-card-groups"
             label={t('groups.myGroups')}
             count={groupList.length}
-            icon={<Users color={colors.primary} size={18} />}
+            icon={<ZSymbol name="users" label={t('groups.myGroups')} size={18} color={colors.primary} />}
             onPress={() => router.push('/groups')}
           />
           <StatCard
             testID="stat-card-sessions"
             label={t('home.upcomingCoachingSessions')}
             count={upcomingCount}
-            icon={<CalendarDays color={colors.primary} size={18} />}
+            icon={<ZSymbol name="calendar-days" label={t('home.upcomingCoachingSessions')} size={18} color={colors.primary} />}
             onPress={() => router.push('/coaching')}
           />
         </View>

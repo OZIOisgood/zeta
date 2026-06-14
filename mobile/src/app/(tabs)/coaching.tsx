@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CalendarClock, CalendarCog, CalendarPlus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../api/queries/coaching';
 import {
@@ -19,6 +18,7 @@ import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { ZSymbol } from '../../components/ui/z-symbol';
 import { ZTabs } from '../../components/ui/z-tabs';
 import { ZTextarea } from '../../components/ui/z-textarea';
 import { showToast } from '../../components/ui/z-toast';
@@ -166,7 +166,7 @@ export default function CoachingScreen() {
     <ZEmptyState
       title={t(`sessions.empty.${activeTab}Heading`)}
       description={t(`sessions.empty.${activeTab}Description`)}
-      icon={<CalendarClock color={colors.primary} size={24} />}
+      icon={<ZSymbol name="calendar" label={t(`sessions.empty.${activeTab}Heading`)} size={24} color={colors.primary} />}
     />
   );
 
@@ -241,7 +241,7 @@ export default function CoachingScreen() {
               size="md"
               onPress={() => router.push('/availability' as never)}
             >
-              <CalendarCog color={colors.text} size={22} />
+              <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={22} color={colors.text} />
             </ZIconButton>
           ) : undefined
         }
@@ -277,7 +277,7 @@ export default function CoachingScreen() {
           onPress={() => router.push('/book')}
           className="absolute bottom-6 right-6"
         >
-          <CalendarPlus color={colors.onPrimary} size={24} />
+          <ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={colors.onPrimary} />
         </ZIconButton>
       ) : null}
     </ZScreen>

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Plus, Video as VideoIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Asset } from '../../api/queries/assets';
 import { useAssetsQuery } from '../../api/queries/assets';
@@ -17,6 +16,7 @@ import { ZPageHeader } from '../../components/ui/z-page-header';
 import { ZQueryError } from '../../components/ui/z-query-error';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
+import { ZSymbol } from '../../components/ui/z-symbol';
 import { ZTabs } from '../../components/ui/z-tabs';
 import { colors } from '../../theme/colors';
 
@@ -131,7 +131,7 @@ export default function VideosScreen() {
             description={
               noVideosAtAll ? t('videos.uploadFirstDescription') : t('videos.noVideosForStatuses')
             }
-            icon={<VideoIcon color={colors.primary} size={24} />}
+            icon={<ZSymbol name="video" label={t('videos.title')} size={24} color={colors.primary} />}
           >
             {canCreate ? (
               <ZButton label={t('videos.uploadFirst')} onPress={() => router.push('/upload')} />
@@ -172,7 +172,7 @@ export default function VideosScreen() {
           onPress={() => router.push('/upload')}
           className="absolute bottom-6 right-6"
         >
-          <Plus color={colors.onPrimary} size={24} />
+          <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
         </ZIconButton>
       )}
     </ZScreen>
