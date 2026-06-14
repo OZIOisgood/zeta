@@ -87,6 +87,8 @@ Le Fournisseur n'est pas tenu de sauvegarder régulièrement les données de l'U
 
 11.3 Pour le reste, nous ne sommes responsables — quel que soit le fondement juridique — qu'en cas de faute intentionnelle et de négligence grave. Le Service étant fourni gratuitement, la responsabilité est limitée à la faute intentionnelle et à la négligence grave, par analogie avec les articles 521 et 599 du Code civil allemand (BGB).
 
+11.3a À titre subsidiaire — dans le cas où le privilège de responsabilité prévu aux articles 521 et 599 du BGB ne s'appliquerait pas — ce qui suit s'applique : en cas de violation par simple négligence d'obligations contractuelles essentielles (obligations cardinales, c'est-à-dire les obligations dont l'exécution est indispensable à la bonne exécution du contrat et au respect desquelles l'Utilisateur peut régulièrement se fier), notre responsabilité est limitée en montant au dommage prévisible et typique du contrat.
+
 11.4 Demeure non affectée la responsabilité pour les dommages résultant d'une atteinte à la vie, à l'intégrité physique ou à la santé, ainsi que toute responsabilité légale impérative ; à cet égard, les dispositions légales s'appliquent.
 
 11.5 Nous ne garantissons pas l'adéquation du Service à un usage particulier ni l'obtention de résultats d'entraînement ou de coaching particuliers.
@@ -105,7 +107,13 @@ L'Utilisateur garantit le Fournisseur contre toutes les prétentions de tiers in
 
 ## 14. Modifications des Conditions d'utilisation
 
-Le Fournisseur peut modifier les présentes Conditions d'utilisation avec effet pour l'avenir lorsque cela est nécessaire pour un motif valable (par exemple une modification de la situation juridique, de l'étendue des fonctionnalités ou des services utilisés). Les utilisateurs sont informés des modifications en temps utile, en règle générale par e-mail. Si l'Utilisateur ne s'y oppose pas dans le délai indiqué ou s'il continue à utiliser le Service, les modifications sont réputées acceptées ; l'Utilisateur en est spécifiquement informé dans la notification.
+14.1 Le Fournisseur peut modifier les présentes Conditions d'utilisation avec effet pour l'avenir, dans la mesure où cela est nécessaire pour un motif valable (en particulier pour s'adapter à une modification de la situation juridique ou de la jurisprudence des juridictions suprêmes, ou à des modifications de l'étendue des fonctionnalités ou des services tiers utilisés), à condition que la modification soit raisonnable pour l'Utilisateur et ne déplace pas l'équilibre des droits et des obligations à son détriment. Le Fournisseur informe l'Utilisateur des modifications en temps utile avant leur entrée en vigueur, en la forme écrite (en règle générale par e-mail).
+
+14.2 Si une modification affecte le cœur de la prestation convenue ou n'est pas seulement insignifiante pour l'Utilisateur, le Fournisseur recueille le consentement exprès de l'Utilisateur (par exemple au moyen d'une nouvelle acceptation lors de la prochaine connexion). Si l'Utilisateur ne donne pas son consentement, le contrat se poursuit aux conditions antérieures ; dans ce cas, chaque partie peut résilier conformément au point 13.
+
+14.3 Les autres modifications sont réputées acceptées si l'Utilisateur ne s'y oppose pas dans un délai raisonnable indiqué dans la notification. Dans la notification, le Fournisseur attire l'attention, de manière distincte et claire, sur la modification, le délai, le droit d'opposition et la signification du silence. La simple poursuite de l'utilisation du Service ne vaut pas acceptation.
+
+14.4 En cas de modification, l'Utilisateur peut résilier le contrat gratuitement avec effet au moment de l'entrée en vigueur de la modification (point 13.1).
 
 ## 15. Dispositions finales
 

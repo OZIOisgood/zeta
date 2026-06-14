@@ -87,6 +87,8 @@ Der Anbieter ist nicht verpflichtet, die Daten des Nutzers regelmäßig zu siche
 
 11.3 Im Übrigen haften wir – unabhängig vom Rechtsgrund – nur für Vorsatz und grobe Fahrlässigkeit. Da der Dienst unentgeltlich erbracht wird, ist die Haftung in Anlehnung an die §§ 521, 599 BGB auf Vorsatz und grobe Fahrlässigkeit beschränkt.
 
+11.3a Hilfsweise – für den Fall, dass die Haftungsprivilegierung nach den §§ 521, 599 BGB nicht eingreift – gilt: Bei der leicht fahrlässigen Verletzung wesentlicher Vertragspflichten (Kardinalpflichten, d. h. solcher Pflichten, deren Erfüllung die ordnungsgemäße Durchführung des Vertrags überhaupt erst ermöglicht und auf deren Einhaltung der Nutzer regelmäßig vertrauen darf) ist unsere Haftung der Höhe nach auf den vertragstypischen, vorhersehbaren Schaden begrenzt.
+
 11.4 Unberührt bleibt die Haftung für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit sowie eine zwingende gesetzliche Haftung; insoweit gelten die gesetzlichen Bestimmungen.
 
 11.5 Eine Gewähr für die Eignung des Dienstes für einen bestimmten Zweck oder für bestimmte Trainings- bzw. Coaching-Ergebnisse übernehmen wir nicht.
@@ -105,7 +107,13 @@ Der Nutzer stellt den Anbieter von allen Ansprüchen Dritter frei, die diese weg
 
 ## 14. Änderungen der Nutzungsbedingungen
 
-Der Anbieter kann diese Nutzungsbedingungen mit Wirkung für die Zukunft ändern, wenn dies aus triftigem Grund (z. B. Änderung der Rechtslage, des Funktionsumfangs oder eingesetzter Dienste) erforderlich ist. Über Änderungen werden Nutzer rechtzeitig, in der Regel per E-Mail, informiert. Widerspricht der Nutzer nicht innerhalb der mitgeteilten Frist oder nutzt er den Dienst weiter, gelten die Änderungen als angenommen; auf diese Folge wird in der Mitteilung gesondert hingewiesen.
+14.1 Der Anbieter kann diese Nutzungsbedingungen mit Wirkung für die Zukunft ändern, soweit dies aus einem triftigen Grund erforderlich ist (insbesondere zur Anpassung an eine geänderte Rechtslage oder höchstrichterliche Rechtsprechung sowie an Änderungen des Funktionsumfangs oder der eingesetzten Drittdienste), die Änderung für den Nutzer zumutbar ist und das Verhältnis von Rechten und Pflichten nicht zu seinem Nachteil verschiebt. Über Änderungen informiert der Anbieter den Nutzer rechtzeitig vor ihrem Wirksamwerden in Textform (in der Regel per E-Mail).
+
+14.2 Berührt eine Änderung den Kern der vereinbarten Leistung oder ist sie für den Nutzer nicht nur unwesentlich, holt der Anbieter die ausdrückliche Zustimmung des Nutzers ein (z. B. durch erneutes Akzeptieren bei der nächsten Anmeldung). Erteilt der Nutzer die Zustimmung nicht, wird der Vertrag zu den bisherigen Bedingungen fortgesetzt; beide Seiten können in diesem Fall nach Ziffer 13 kündigen.
+
+14.3 Bei sonstigen Änderungen gelten diese als angenommen, wenn der Nutzer ihnen nicht innerhalb einer in der Mitteilung genannten angemessenen Frist widerspricht. Der Anbieter weist in der Mitteilung gesondert und deutlich auf die Änderung, die Frist, das Widerspruchsrecht und die Bedeutung des Schweigens hin. Die bloße Weiternutzung des Dienstes gilt nicht als Zustimmung.
+
+14.4 Im Falle einer Änderung kann der Nutzer den Vertrag mit Wirkung zum Zeitpunkt des Wirksamwerdens der Änderung kostenlos kündigen (Ziffer 13.1).
 
 ## 15. Schlussbestimmungen
 

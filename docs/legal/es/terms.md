@@ -87,6 +87,8 @@ El Proveedor no está obligado a realizar copias de seguridad periódicas de los
 
 11.3 Por lo demás, respondemos —con independencia del fundamento jurídico— únicamente por dolo y negligencia grave. Dado que el Servicio se presta de forma gratuita, la responsabilidad se limita al dolo y la negligencia grave, por analogía con los artículos 521 y 599 del Código Civil alemán (BGB).
 
+11.3a Con carácter subsidiario —para el caso de que no resulte aplicable el privilegio de responsabilidad de los artículos 521 y 599 del BGB— se aplica lo siguiente: en caso de incumplimiento por negligencia leve de obligaciones contractuales esenciales (obligaciones cardinales, es decir, aquellas cuyo cumplimiento hace posible la correcta ejecución del contrato y en cuya observancia el Usuario puede confiar habitualmente), nuestra responsabilidad queda limitada en su cuantía al daño previsible y típico del contrato.
+
 11.4 Queda inalterada la responsabilidad por daños derivados de lesiones a la vida, el cuerpo o la salud, así como cualquier responsabilidad legal imperativa; a este respecto, se aplican las disposiciones legales.
 
 11.5 No garantizamos la idoneidad del Servicio para una finalidad determinada ni la obtención de resultados de entrenamiento o de coaching determinados.
@@ -105,7 +107,13 @@ El Usuario mantiene indemne al Proveedor frente a todas las reclamaciones de ter
 
 ## 14. Modificaciones de las Condiciones de uso
 
-El Proveedor puede modificar las presentes Condiciones de uso con efecto para el futuro cuando ello sea necesario por una causa justificada (por ejemplo, una modificación de la situación jurídica, del alcance de las funcionalidades o de los servicios utilizados). Los usuarios serán informados de las modificaciones con la debida antelación, por regla general por correo electrónico. Si el Usuario no se opone dentro del plazo indicado o continúa utilizando el Servicio, las modificaciones se considerarán aceptadas; se informará al Usuario específicamente de esta consecuencia en la notificación.
+14.1 El Proveedor puede modificar las presentes Condiciones de uso con efecto para el futuro, en la medida en que ello sea necesario por una causa justificada (en particular, para adaptarlas a una modificación de la situación jurídica o de la jurisprudencia de los tribunales superiores, o a modificaciones del alcance de las funcionalidades o de los servicios de terceros utilizados), siempre que la modificación sea razonable para el Usuario y no desplace el equilibrio de derechos y obligaciones en su perjuicio. El Proveedor informa al Usuario de las modificaciones con la debida antelación antes de su entrada en vigor, en forma de texto (por regla general por correo electrónico).
+
+14.2 Si una modificación afecta al núcleo de la prestación acordada o no es meramente insignificante para el Usuario, el Proveedor recaba el consentimiento expreso del Usuario (por ejemplo, mediante una nueva aceptación en el siguiente inicio de sesión). Si el Usuario no presta su consentimiento, el contrato continúa con las condiciones anteriores; en ese caso, cualquiera de las partes puede resolver conforme al punto 13.
+
+14.3 Las demás modificaciones se considerarán aceptadas si el Usuario no se opone a ellas dentro de un plazo razonable indicado en la notificación. En la notificación, el Proveedor advierte, de forma separada y clara, sobre la modificación, el plazo, el derecho de oposición y el significado del silencio. La mera continuación del uso del Servicio no constituye aceptación.
+
+14.4 En caso de modificación, el Usuario puede resolver el contrato de forma gratuita con efecto al momento de la entrada en vigor de la modificación (punto 13.1).
 
 ## 15. Disposiciones finales
 

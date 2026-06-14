@@ -148,3 +148,13 @@ Auf jeder Seite (inkl. Landingpage) klar beschriftete Links: **Impressum · Date
 - Menschen-Aufgaben (Handoff §4): ladungsfähige Anschrift festlegen, Arbeitsvertrags-Nebentätigkeit prüfen,
   eGbR-Eintragung erwägen, Rechtsform bei Wachstum überdenken.
 - OpenRouter-Datenscope final verifizieren (welche Texte gesendet werden).
+
+## Review-Korrekturen (Multi-Agent-Review, 2026-06-14)
+
+Nach gründlichem Review (16 Agents, adversariale Verifikation; 4 Befunde bestätigt) umgesetzt und in alle 5 Sprachen gespiegelt (DE maßgeblich):
+
+- **H1 — `terms.md` Ziffer 14:** Zustimmungsfiktion bei Änderungen war in dieser Breite voraussichtlich unwirksam (BGH XI ZR 26/20; §§ 307, 308 Nr. 5 BGB). Neu gefasst als 14.1–14.4: enges, zumutbares Änderungsrecht; aktive Zustimmung bei Eingriffen in den Leistungskern; keine Fiktion aus bloßer Weiternutzung; kostenloses Kündigungsrecht.
+- **H2/H3 — `privacy.md`:** Neuer Abschnitt **11 „Empfänger und Kategorien von Empfängern"** (Art. 13 Abs. 1 lit. e DSGVO) — Coaches als eigenständig Verantwortliche sowie Sichtbarkeit von Anzeigename/Aktivität gegenüber anderen Nutzern (inkl. Push, verifiziert an `internal/push/message.go`). Folgesektionen 11–16 → 12–17 umnummeriert, Drittland-Querverweis → Ziffer 13.
+- **M1 — `terms.md` 11.3a:** Hilfsweise Kardinalpflichten-Haftungsbegrenzung, falls die §§ 521/599-Analogie nicht greift.
+
+Offen gelassen für menschliche/juristische Prüfung: DSA-Status (Hosting-Dienst vs. „Online-Plattform", N1); endgültige Bewertung der §§ 521/599-Analogie; Kontaktformular-Backend als zweite Kontaktmöglichkeit (N2).

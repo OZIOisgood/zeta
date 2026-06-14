@@ -87,6 +87,8 @@ De Aanbieder is niet verplicht de gegevens van de Gebruiker regelmatig te back-u
 
 11.3 Voor het overige zijn wij — ongeacht de rechtsgrond — uitsluitend aansprakelijk voor opzet en grove nalatigheid. Aangezien de Dienst kosteloos wordt geleverd, is de aansprakelijkheid naar analogie van de artikelen 521 en 599 van het Duitse Burgerlijk Wetboek (BGB) beperkt tot opzet en grove nalatigheid.
 
+11.3a Subsidiair — voor het geval dat het aansprakelijkheidsprivilege op grond van de artikelen 521 en 599 BGB niet van toepassing is — geldt het volgende: bij de licht nalatige schending van wezenlijke contractuele verplichtingen (kardinale verplichtingen, d.w.z. verplichtingen waarvan de nakoming de behoorlijke uitvoering van de overeenkomst pas mogelijk maakt en op de naleving waarvan de Gebruiker in de regel mag vertrouwen) is onze aansprakelijkheid in hoogte beperkt tot de voor de overeenkomst typische, voorzienbare schade.
+
 11.4 Onverlet blijft de aansprakelijkheid voor schade door letsel aan leven, lichaam of gezondheid alsmede een dwingende wettelijke aansprakelijkheid; in zoverre gelden de wettelijke bepalingen.
 
 11.5 Wij garanderen niet de geschiktheid van de Dienst voor een bepaald doel of het behalen van bepaalde trainings- of coachingresultaten.
@@ -105,7 +107,13 @@ De Gebruiker vrijwaart de Aanbieder van alle aanspraken van derden die deze geld
 
 ## 14. Wijzigingen van de Gebruiksvoorwaarden
 
-De Aanbieder kan deze Gebruiksvoorwaarden met werking voor de toekomst wijzigen wanneer dit om een gegronde reden noodzakelijk is (bijvoorbeeld een wijziging van de rechtssituatie, van de omvang van de functies of van de gebruikte diensten). Gebruikers worden tijdig, in de regel per e-mail, over wijzigingen geïnformeerd. Maakt de Gebruiker niet binnen de meegedeelde termijn bezwaar of blijft hij de Dienst gebruiken, dan worden de wijzigingen geacht te zijn aanvaard; de Gebruiker wordt in de kennisgeving uitdrukkelijk op dit gevolg gewezen.
+14.1 De Aanbieder kan deze Gebruiksvoorwaarden met werking voor de toekomst wijzigen, voor zover dit om een gegronde reden noodzakelijk is (met name ter aanpassing aan een gewijzigde rechtssituatie of rechtspraak van de hoogste rechterlijke instanties, of aan wijzigingen van de omvang van de functies of van de gebruikte diensten van derden), mits de wijziging voor de Gebruiker redelijk is en het evenwicht van rechten en verplichtingen niet in zijn nadeel verschuift. De Aanbieder informeert de Gebruiker tijdig vóór de inwerkingtreding over wijzigingen, in tekstvorm (in de regel per e-mail).
+
+14.2 Raakt een wijziging de kern van de overeengekomen prestatie of is zij voor de Gebruiker niet slechts onbeduidend, dan wint de Aanbieder de uitdrukkelijke toestemming van de Gebruiker in (bijvoorbeeld door het opnieuw aanvaarden bij de volgende aanmelding). Geeft de Gebruiker geen toestemming, dan wordt de overeenkomst tegen de bestaande voorwaarden voortgezet; in dat geval kan elke partij overeenkomstig punt 13 opzeggen.
+
+14.3 Overige wijzigingen worden geacht te zijn aanvaard indien de Gebruiker daartegen niet binnen een in de kennisgeving genoemde redelijke termijn bezwaar maakt. De Aanbieder wijst in de kennisgeving afzonderlijk en duidelijk op de wijziging, de termijn, het recht van bezwaar en de betekenis van het stilzwijgen. De enkele voortzetting van het gebruik van de Dienst geldt niet als aanvaarding.
+
+14.4 In geval van een wijziging kan de Gebruiker de overeenkomst kosteloos opzeggen met werking op het tijdstip van inwerkingtreding van de wijziging (punt 13.1).
 
 ## 15. Slotbepalingen
 

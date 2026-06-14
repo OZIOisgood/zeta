@@ -87,6 +87,8 @@ The Provider is not obliged to back up the User's data regularly. It is incumben
 
 11.3 In other respects, we are liable — regardless of the legal grounds — only for intent and gross negligence. As the Service is provided free of charge, liability is limited to intent and gross negligence by analogy with Sections 521, 599 of the German Civil Code (BGB).
 
+11.3a In the alternative — should the liability privilege under Sections 521, 599 BGB not apply — the following applies: for the slightly negligent breach of material contractual obligations (cardinal obligations, i.e. obligations whose fulfilment is essential to the proper performance of the contract and on whose observance the User may regularly rely), our liability is limited in amount to the foreseeable damage typical of the contract.
+
 11.4 Liability for damage resulting from injury to life, body or health, as well as mandatory statutory liability, remains unaffected; in this respect, the statutory provisions apply.
 
 11.5 We do not warrant the suitability of the Service for a particular purpose or for particular training or coaching results.
@@ -105,7 +107,13 @@ The User indemnifies the Provider against all claims by third parties asserted o
 
 ## 14. Changes to the Terms of Use
 
-The Provider may amend these Terms of Use with effect for the future where this is necessary for a valid reason (e.g. a change in the legal situation, in the scope of features or in the services used). Users will be informed of changes in good time, as a rule by email. If the User does not object within the notified period or continues to use the Service, the changes are deemed to be accepted; the User will be specifically informed of this consequence in the notification.
+14.1 The Provider may amend these Terms of Use with effect for the future insofar as this is necessary for a valid reason (in particular to adapt to a change in the legal situation or in supreme-court case law, or to changes in the functional scope or the third-party services used), provided the amendment is reasonable for the User and does not shift the balance of rights and obligations to the User's disadvantage. The Provider will inform the User of amendments in good time before they take effect, in text form (as a rule by email).
+
+14.2 If an amendment affects the core of the agreed service or is more than insignificant for the User, the Provider will obtain the User's express consent (e.g. by way of a renewed acceptance at the next login). If the User does not give consent, the contract continues on the previous terms; in that case either party may terminate in accordance with section 13.
+
+14.3 Other amendments are deemed to be accepted if the User does not object to them within a reasonable period stated in the notification. In the notification, the Provider will point out, separately and clearly, the amendment, the period, the right to object and the significance of silence. Mere continued use of the Service does not constitute acceptance.
+
+14.4 In the event of an amendment, the User may terminate the contract free of charge with effect from the time the amendment takes effect (section 13.1).
 
 ## 15. Final provisions
 
