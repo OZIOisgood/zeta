@@ -1,7 +1,12 @@
-import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable } from 'react-native';
 
+import type { ZDialogPanelProps } from './z-dialog-panel.types';
+
+export type { ZDialogPanelProps } from './z-dialog-panel.types';
+
 /**
+ * ZDialogPanel — NativeWind fallback (web / Storybook / jest).
+ *
  * Reusable modal surface: a dimmed backdrop with a centered panel.
  * Mobile counterpart of the web dialog panel
  * (web/dashboard-next/src/app/shared/ui/dialog/). Tapping the backdrop closes;
@@ -11,6 +16,10 @@ import { KeyboardAvoidingView, Modal, Platform, Pressable } from 'react-native';
  * the keyboard overlaps content) so dialogs that hold text inputs — e.g. the
  * availability session-type/blocked-date sheets — keep their fields and Save
  * button above the keyboard. (Android already resizes the window.)
+ *
+ * Native implementations:
+ *   - z-dialog-panel.ios.tsx     → SwiftUI BottomSheet
+ *   - z-dialog-panel.android.tsx → Compose ModalBottomSheet
  */
 export function ZDialogPanel({
   visible,
@@ -18,13 +27,7 @@ export function ZDialogPanel({
   children,
   closeLabel = 'Close',
   testID,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  children: ReactNode;
-  closeLabel?: string;
-  testID?: string;
-}) {
+}: ZDialogPanelProps) {
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable

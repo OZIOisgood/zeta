@@ -108,7 +108,15 @@
       "^(\\./|(\\.\\./)+)(.*/)?(z-select)$": "<rootDir>/src/components/ui/z-select.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-select)\\.ios$": "<rootDir>/src/components/ui/z-select.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-select)\\.android$": "<rootDir>/src/components/ui/z-select.tsx",
-      ".*/components/ui/z-select(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-select.tsx"
+      ".*/components/ui/z-select(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-select.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-dialog-panel)$": "<rootDir>/src/components/ui/z-dialog-panel.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-dialog-panel)\\.ios$": "<rootDir>/src/components/ui/z-dialog-panel.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-dialog-panel)\\.android$": "<rootDir>/src/components/ui/z-dialog-panel.tsx",
+      ".*/components/ui/z-dialog-panel(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-dialog-panel.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-confirm-dialog)$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-confirm-dialog)\\.ios$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-confirm-dialog)\\.android$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx",
+      ".*/components/ui/z-confirm-dialog(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-confirm-dialog.tsx"
     }
   },
   "private": true,

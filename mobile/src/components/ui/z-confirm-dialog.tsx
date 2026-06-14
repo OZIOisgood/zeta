@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react-native';
 import { colors } from '../../theme/colors';
 import { ZButton } from './z-button';
 import { ZDialogPanel } from './z-dialog-panel';
+import type { ZConfirmDialogProps, ZConfirmDialogTone } from './z-confirm-dialog.types';
 
-export type ZConfirmDialogTone = 'info' | 'warning' | 'danger';
+export type { ZConfirmDialogTone, ZConfirmDialogProps } from './z-confirm-dialog.types';
 
 const toneIcon = {
   info: Info,
@@ -26,11 +26,17 @@ const toneIconColors: Record<ZConfirmDialogTone, string> = {
 };
 
 /**
+ * ZConfirmDialog — NativeWind fallback (web / Storybook / jest).
+ *
  * Confirmation dialog. Mobile counterpart of the web `z-confirm-dialog`
  * (web/dashboard-next/src/app/shared/ui/dialog/). Renders a tone icon, title,
  * optional description, an optional content slot, and a cancel/confirm footer
  * inside a `ZDialogPanel`. Pass `children` to inject extra content (e.g. a
  * reason textarea) between the description and the footer buttons.
+ *
+ * Native implementations:
+ *   - z-confirm-dialog.ios.tsx     → Alert (plain) + BottomSheet (with children)
+ *   - z-confirm-dialog.android.tsx → AlertDialog (plain) + ModalBottomSheet (with children)
  */
 export function ZConfirmDialog({
   visible,
@@ -45,21 +51,7 @@ export function ZConfirmDialog({
   onCancel,
   children,
   testID,
-}: {
-  visible: boolean;
-  title: string;
-  description?: string;
-  tone?: ZConfirmDialogTone;
-  confirmLabel: string;
-  cancelLabel?: string;
-  confirmOnly?: boolean;
-  /** When true, the confirm button is disabled (e.g. an in-flight mutation). */
-  confirmDisabled?: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-  children?: ReactNode;
-  testID?: string;
-}) {
+}: ZConfirmDialogProps) {
   const Icon = toneIcon[tone];
 
   return (
