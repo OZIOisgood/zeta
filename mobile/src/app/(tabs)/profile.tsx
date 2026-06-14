@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Bell, CircleUserRound, LogOut, Save } from 'lucide-react-native';
+import { BarChart3, Bell, ChevronRight, CircleUserRound, LogOut, Save } from 'lucide-react-native';
 import { ZAvatarInput } from '../../components/ui/z-avatar-input';
 import { ZBadge } from '../../components/ui/z-badge';
 import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
+import { ZIconTile } from '../../components/ui/z-icon-tile';
 import { ZCheckbox } from '../../components/ui/z-checkbox';
 import { ZCombobox, type ZComboboxOption } from '../../components/ui/z-combobox';
 import { ZFieldError } from '../../components/ui/z-field-error';
@@ -160,6 +162,7 @@ function LoadingState() {
  */
 function PreferencesForm({ user }: { user: Me }) {
   const { t } = useTranslation();
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<PreferencesTab>('personal-data');
   const [firstName, setFirstName] = useState(user.first_name);
@@ -458,6 +461,24 @@ function PreferencesForm({ user }: { user: Me }) {
               icon={<Save color={colors.onPrimary} size={16} />}
               onPress={() => void handleSave()}
             />
+
+            {can('reports:read') ? (
+              <Pressable
+                testID="profile-reports-entry"
+                accessibilityRole="button"
+                accessibilityLabel={t('reports.openReport')}
+                onPress={() => router.push('/reports' as never)}
+              >
+                <ZCard className="flex-row items-center gap-3">
+                  <ZIconTile tone="neutral" icon={<BarChart3 color={colors.primary} size={20} />} />
+                  <View className="min-w-0 flex-1">
+                    <Text className="text-base font-semibold text-z-text">{t('reports.openReport')}</Text>
+                    <Text className="mt-1 text-sm text-z-muted">{t('reports.entry.subtitle')}</Text>
+                  </View>
+                  <ChevronRight color={colors.muted} size={20} />
+                </ZCard>
+              </Pressable>
+            ) : null}
 
             <ZButton
               label={t('common.actions.signOut')}
