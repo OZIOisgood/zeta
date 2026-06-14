@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { FlatList, ScrollView, Text, View } from 'react-native';
-import { CalendarOff, Plus, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type {
   CoachingAvailability,
@@ -35,6 +34,7 @@ import { ZFieldError } from '../components/ui/z-field-error';
 import { ZFieldLabel } from '../components/ui/z-field-label';
 import { ZIconButton } from '../components/ui/z-icon-button';
 import { ZIconTile } from '../components/ui/z-icon-tile';
+import { ZSymbol } from '../components/ui/z-symbol';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
@@ -632,7 +632,7 @@ export default function AvailabilityScreen() {
           <View className="mb-2">
             <ZButton
               label={t('sessions.availability.addSessionType')}
-              icon={<Plus color={colors.onPrimary} size={18} />}
+              icon={<ZSymbol name="plus" label={t('sessions.availability.addSessionType')} size={18} color={colors.onPrimary} />}
               onPress={() => setTypeSheet({ editing: null })}
             />
           </View>
@@ -688,7 +688,7 @@ export default function AvailabilityScreen() {
           <View className="mb-2">
             <ZButton
               label={t('sessions.availability.addAvailability')}
-              icon={<Plus color={colors.onPrimary} size={18} />}
+              icon={<ZSymbol name="plus" label={t('sessions.availability.addAvailability')} size={18} color={colors.onPrimary} />}
               onPress={() => setAvailSheet({ editing: null })}
             />
           </View>
@@ -744,7 +744,7 @@ export default function AvailabilityScreen() {
           <View className="mb-2">
             <ZButton
               label={t('sessions.availability.addBlockTime')}
-              icon={<Plus color={colors.onPrimary} size={18} />}
+              icon={<ZSymbol name="plus" label={t('sessions.availability.addBlockTime')} size={18} color={colors.onPrimary} />}
               onPress={() => setBlockedSheet(true)}
             />
           </View>
@@ -761,7 +761,7 @@ export default function AvailabilityScreen() {
           <ZCard>
             <View className="flex-row items-start gap-3">
               <ZIconTile
-                icon={<CalendarOff color={colors.text} size={18} />}
+                icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={colors.text} />}
                 tone="neutral"
                 size="sm"
               />
@@ -786,7 +786,7 @@ export default function AvailabilityScreen() {
                 size="sm"
                 onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
               >
-                <Trash2 color={colors.danger} size={16} />
+                <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={colors.danger} />
               </ZIconButton>
             </View>
           </ZCard>

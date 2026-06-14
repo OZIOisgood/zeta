@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { AccessibilityInfo, ScrollView, Text, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { ArrowLeft } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import {
   useInvitationInfoQuery,
@@ -18,6 +17,7 @@ import { ZIconButton } from '../components/ui/z-icon-button';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
+import { ZSymbol } from '../components/ui/z-symbol';
 import { ZTextInput } from '../components/ui/z-text-input';
 import { showToast } from '../components/ui/z-toast';
 import { initialsFromName } from '../lib/avatar';
@@ -113,7 +113,7 @@ export default function InviteScreen() {
           {/* Header */}
           <View className="mb-4 flex-row items-center gap-3">
             <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-              <ArrowLeft color={colors.muted} size={24} />
+              <ZSymbol name="back" label={t('common.actions.back')} size={24} color={colors.muted} />
             </ZIconButton>
             <Text className="text-lg font-semibold text-z-text">
               {t('home.firstSteps.joinGroup')}

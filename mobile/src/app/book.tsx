@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { CoachingExpert, CoachingSlot, SessionType } from '../api/queries/coaching';
 import {
@@ -14,6 +13,7 @@ import {
 import { queryClient } from '../api/query-client';
 import { useGroupsQuery } from '../api/queries/groups';
 import type { Group } from '../api/queries/groups';
+import { Touchable } from '../components/ui/touchable';
 import { ZBadge } from '../components/ui/z-badge';
 import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
@@ -26,6 +26,7 @@ import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
 import { ZStepper } from '../components/ui/z-stepper';
 import type { ZStep } from '../components/ui/z-stepper';
+import { ZSymbol } from '../components/ui/z-symbol';
 import { ZTextarea } from '../components/ui/z-textarea';
 import { showToast } from '../components/ui/z-toast';
 import { colors } from '../theme/colors';
@@ -218,7 +219,7 @@ export default function BookScreen() {
           variant="ghost"
           size="sm"
         >
-          <ArrowLeft color={colors.text} size={24} />
+          <ZSymbol name="back" label={t('common.actions.back')} size={24} color={colors.text} />
         </ZIconButton>
         <Text className="text-lg font-semibold text-z-text">{t('sessions.bookLive')}</Text>
       </View>
@@ -231,7 +232,7 @@ export default function BookScreen() {
         >
           <View testID="book-success" className="items-center gap-4">
             <View className="h-12 w-12 items-center justify-center rounded-md bg-z-primary-soft">
-              <Check color={colors.primary} size={24} />
+              <ZSymbol name="check" label={t('sessions.book.bookedHeading')} size={24} color={colors.primary} />
             </View>
             <Text className="text-center text-xl font-semibold text-z-text">
               {t('sessions.book.bookedHeading')}
@@ -362,12 +363,10 @@ export default function BookScreen() {
                     {sessionTypes.map((st) => {
                       const isSelected = sessionTypeId === st.id;
                       return (
-                        <Pressable
+                        <Touchable
                           key={st.id}
                           testID={`book-type-${st.id}`}
-                          accessibilityRole="button"
                           accessibilityLabel={st.name}
-                          accessibilityState={{ selected: isSelected }}
                           onPress={() => handleSelectSessionType(st.id)}
                         >
                           <ZCard className={isSelected ? 'border-z-primary bg-z-primary-soft' : ''}>
@@ -379,7 +378,7 @@ export default function BookScreen() {
                               {st.description}
                             </Text>
                           </ZCard>
-                        </Pressable>
+                        </Touchable>
                       );
                     })}
                   </View>
