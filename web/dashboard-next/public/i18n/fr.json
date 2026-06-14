@@ -108,8 +108,12 @@
     "search": "Rechercher"
   },
   "reports": {
-    "expert": { "title": "Rapport expert" },
-    "student": { "title": "Rapport élève" },
+    "expert": {
+      "title": "Rapport expert"
+    },
+    "student": {
+      "title": "Rapport élève"
+    },
     "description": "{{kind}} pour {{name}} · {{count}} activités.",
     "kind": {
       "month": "Rapport mensuel",
@@ -131,7 +135,8 @@
       "year": "Année",
       "prev": "Période précédente",
       "next": "Période suivante",
-      "today": "Aujourd'hui"
+      "today": "Aujourd'hui",
+      "summary": "{{count}} activités · {{period}}"
     },
     "stats": {
       "videos": "Vidéos téléversées",
@@ -150,7 +155,8 @@
     },
     "event": {
       "videoUploaded": "Vidéo téléversée",
-      "liveCoaching": "Coaching en direct"
+      "liveCoaching": "Coaching en direct",
+      "meta": "{{prefix}} · {{group}} · {{leaf}} · {{date}}"
     },
     "empty": {
       "title": "Aucune activité durant cette période",
@@ -174,7 +180,15 @@
       "type": "Type",
       "description": "Description",
       "minutes": "Durée (min)"
-    }
+    },
+    "openReport": "Ouvrir le rapport",
+    "entry": {
+      "subtitle": "Vos vidéos et coachings en direct par période"
+    },
+    "events": {
+      "sectionTitle": "Activité"
+    },
+    "loadFailed": "Impossible de charger votre rapport"
   },
   "home": {
     "latestVideos": "Dernières vidéos",

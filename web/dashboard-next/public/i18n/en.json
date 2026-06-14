@@ -108,8 +108,12 @@
     "search": "Search"
   },
   "reports": {
-    "expert": { "title": "Expert report" },
-    "student": { "title": "Student report" },
+    "expert": {
+      "title": "Expert report"
+    },
+    "student": {
+      "title": "Student report"
+    },
     "description": "{{kind}} for {{name}} · {{count}} activities.",
     "kind": {
       "month": "Monthly report",
@@ -131,7 +135,8 @@
       "year": "Year",
       "prev": "Previous period",
       "next": "Next period",
-      "today": "Today"
+      "today": "Today",
+      "summary": "{{count}} activities · {{period}}"
     },
     "stats": {
       "videos": "Videos uploaded",
@@ -150,7 +155,8 @@
     },
     "event": {
       "videoUploaded": "Video uploaded",
-      "liveCoaching": "Live coaching"
+      "liveCoaching": "Live coaching",
+      "meta": "{{prefix}} · {{group}} · {{leaf}} · {{date}}"
     },
     "empty": {
       "title": "No activity in this period",
@@ -174,7 +180,15 @@
       "type": "Type",
       "description": "Description",
       "minutes": "Length (min)"
-    }
+    },
+    "openReport": "Open report",
+    "entry": {
+      "subtitle": "Your videos and live coachings by period"
+    },
+    "events": {
+      "sectionTitle": "Activity"
+    },
+    "loadFailed": "Could not load your report"
   },
   "home": {
     "latestVideos": "Latest videos",
