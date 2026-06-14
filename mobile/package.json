@@ -120,7 +120,15 @@
       "^(\\./|(\\.\\./)+)(.*/)?(z-toast)$": "<rootDir>/src/components/ui/z-toast.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-toast)\\.ios$": "<rootDir>/src/components/ui/z-toast.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-toast)\\.android$": "<rootDir>/src/components/ui/z-toast.tsx",
-      ".*/components/ui/z-toast(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-toast.tsx"
+      ".*/components/ui/z-toast(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-toast.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-text-input)$": "<rootDir>/src/components/ui/z-text-input.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-text-input)\\.ios$": "<rootDir>/src/components/ui/z-text-input.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-text-input)\\.android$": "<rootDir>/src/components/ui/z-text-input.tsx",
+      ".*/components/ui/z-text-input(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-text-input.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-textarea)$": "<rootDir>/src/components/ui/z-textarea.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-textarea)\\.ios$": "<rootDir>/src/components/ui/z-textarea.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-textarea)\\.android$": "<rootDir>/src/components/ui/z-textarea.tsx",
+      ".*/components/ui/z-textarea(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-textarea.tsx"
     }
   },
   "private": true,

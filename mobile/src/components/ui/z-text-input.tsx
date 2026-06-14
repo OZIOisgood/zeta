@@ -1,10 +1,19 @@
 import { TextInput } from 'react-native';
-import type { TextInputProps } from 'react-native';
 import { colors } from '../../theme/colors';
+import type { ZTextInputProps } from './z-text-input.types';
+
+export type { ZTextInputProps } from './z-text-input.types';
 
 /**
- * Single-line text input. Mobile counterpart of the web `z-text-input`
- * wrapper (web/dashboard-next/src/app/shared/ui/text-input/).
+ * Single-line text input — NativeWind fallback (web / Storybook / jest).
+ *
+ * Mobile counterpart of the web `z-text-input` wrapper
+ * (web/dashboard-next/src/app/shared/ui/text-input/).
+ *
+ * On iOS this file is superseded by z-text-input.ios.tsx (SwiftUI TextField).
+ * On Android this file is superseded by z-text-input.android.tsx (Compose
+ * OutlinedTextField). This bare fallback is the test surface and Storybook
+ * entry point.
  */
 export function ZTextInput({
   value,
@@ -18,19 +27,7 @@ export function ZTextInput({
   autoCorrect,
   returnKeyType,
   onSubmitEditing,
-}: {
-  value: string;
-  onChangeText: (value: string) => void;
-  accessibilityLabel: string;
-  placeholder?: string;
-  invalid?: boolean;
-  disabled?: boolean;
-  testID?: string;
-  autoCapitalize?: TextInputProps['autoCapitalize'];
-  autoCorrect?: boolean;
-  returnKeyType?: TextInputProps['returnKeyType'];
-  onSubmitEditing?: TextInputProps['onSubmitEditing'];
-}) {
+}: ZTextInputProps) {
   return (
     <TextInput
       testID={testID}

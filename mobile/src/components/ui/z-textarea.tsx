@@ -1,9 +1,19 @@
 import { TextInput } from 'react-native';
 import { colors } from '../../theme/colors';
+import type { ZTextareaProps } from './z-textarea.types';
+
+export type { ZTextareaProps } from './z-textarea.types';
 
 /**
- * Multi-line text input. Mobile counterpart of the web `z-textarea`
- * wrapper (web/dashboard-next/src/app/shared/ui/textarea/).
+ * Multi-line text input — NativeWind fallback (web / Storybook / jest).
+ *
+ * Mobile counterpart of the web `z-textarea` wrapper
+ * (web/dashboard-next/src/app/shared/ui/textarea/).
+ *
+ * On iOS this file is superseded by z-textarea.ios.tsx (SwiftUI TextField,
+ * axis: vertical). On Android this file is superseded by z-textarea.android.tsx
+ * (Compose OutlinedTextField, multiline). This bare fallback is the test
+ * surface and Storybook entry point.
  */
 export function ZTextarea({
   value,
@@ -14,16 +24,7 @@ export function ZTextarea({
   invalid = false,
   disabled = false,
   testID,
-}: {
-  value: string;
-  onChangeText: (value: string) => void;
-  accessibilityLabel: string;
-  placeholder?: string;
-  rows?: number;
-  invalid?: boolean;
-  disabled?: boolean;
-  testID?: string;
-}) {
+}: ZTextareaProps) {
   return (
     <TextInput
       testID={testID}
