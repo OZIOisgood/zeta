@@ -1,41 +1,68 @@
 /**
- * Tests for the tabs layout (src/app/(tabs)/_layout.tsx).
- * Asserts permission-gating of Groups and Coaching tabs and that
- * Home, Videos, and Profile are always rendered.
+ * Tests for the NativeTabs layout (src/app/(tabs)/_layout.tsx).
+ *
+ * The layout uses expo-router NativeTabs with `hidden` prop for permission-gating
+ * (rather than conditional JSX). All 5 triggers are always declared; coaching and
+ * groups are hidden when the user lacks the corresponding permission.
+ *
+ * The mock renders each NativeTabs.Trigger as a View with testID=`trigger-<name>`
+ * so we can query by name and inspect the `hidden` prop via accessible attributes.
  */
 import { render, screen } from '@testing-library/react-native';
 
-// ── native module mocks (before importing the layout) ─────────────────────────
-
+// ── native module mocks ────────────────────────────────────────────────────────
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
-// ── expo-router mock ──────────────────────────────────────────────────────────
-
-// Render each <Tabs.Screen> as a testID-tagged View so we can assert
-// presence/absence by route name. Tabs itself is a passthrough View.
-// All identifiers are prefixed with 'mock' so jest's factory-scope rules allow them.
+// ── expo-router/unstable-native-tabs mock ─────────────────────────────────────
+//
+// Render NativeTabs as a passthrough View; render each Trigger as a View with
+// testID=`trigger-<name>` and data-hidden forwarded via accessibilityState so
+// tests can assert which triggers are hidden.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const mockRN = require('react-native');
-jest.mock('expo-router', () => {
+jest.mock('expo-router/unstable-native-tabs', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mockReact = require('react');
-  function mockTabsRoot({ children }: { children: unknown }) {
+
+  function NativeTabsRoot({ children }: { children: unknown }) {
     return mockReact.createElement(mockRN.View, null, children);
   }
-  function mockTabsScreen({ name }: { name: string }) {
-    return mockReact.createElement(mockRN.View, { testID: `tab-${name}` });
+
+  function NativeTabsTrigger({
+    name,
+    hidden,
+  }: {
+    name?: string;
+    hidden?: boolean;
+    children?: unknown;
+  }) {
+    return mockReact.createElement(mockRN.View, {
+      testID: `trigger-${name}`,
+      accessibilityState: { disabled: hidden === true },
+    });
   }
-  mockTabsRoot.displayName = 'Tabs';
-  mockTabsScreen.displayName = 'Tabs.Screen';
-  const mockTabs = Object.assign(mockTabsRoot, { Screen: mockTabsScreen });
-  return { Tabs: mockTabs };
+
+  function TriggerLabel({ children }: { children?: string }) {
+    return mockReact.createElement(mockRN.Text, null, children);
+  }
+  function TriggerIcon(_props: object) {
+    return null;
+  }
+
+  NativeTabsTrigger.displayName = 'NativeTabs.Trigger';
+  TriggerLabel.displayName = 'NativeTabs.Trigger.Label';
+  TriggerIcon.displayName = 'NativeTabs.Trigger.Icon';
+
+  const Trigger = Object.assign(NativeTabsTrigger, {
+    Label: TriggerLabel,
+    Icon: TriggerIcon,
+  });
+  NativeTabsRoot.displayName = 'NativeTabs';
+  const NativeTabs = Object.assign(NativeTabsRoot, { Trigger });
+  return { NativeTabs };
 });
 
 // ── auth-store mock ───────────────────────────────────────────────────────────
-
-// Drive permissions through useAuth, matching the screen-test idiom. Spread the
-// real module first so the mock stays robust if _layout imports anything else
-// from auth-store later.
 let mockPermissions: string[] | null = [];
 jest.mock('../auth/auth-store', () => ({
   ...jest.requireActual('../auth/auth-store'),
@@ -44,7 +71,6 @@ jest.mock('../auth/auth-store', () => ({
 }));
 
 // ── imports (after mocks) ─────────────────────────────────────────────────────
-
 import { initI18n } from '../i18n';
 import TabsLayout from '../app/(tabs)/_layout';
 
@@ -53,40 +79,47 @@ beforeEach(() => {
   mockPermissions = [];
 });
 
+// ── helpers ───────────────────────────────────────────────────────────────────
+function isHidden(testId: string): boolean {
+  const el = screen.queryByTestId(testId);
+  if (!el) return true; // absent counts as hidden
+  return el.props.accessibilityState?.disabled === true;
+}
+
 // ── tests ─────────────────────────────────────────────────────────────────────
 
-test('always renders Home, Videos, and Profile tabs', async () => {
+test('always renders Home, Videos, and Profile triggers (not hidden)', async () => {
   mockPermissions = [];
   await render(<TabsLayout />);
-  expect(screen.getByTestId('tab-index')).toBeOnTheScreen();
-  expect(screen.getByTestId('tab-videos')).toBeOnTheScreen();
-  expect(screen.getByTestId('tab-profile')).toBeOnTheScreen();
+  expect(isHidden('trigger-index')).toBe(false);
+  expect(isHidden('trigger-videos')).toBe(false);
+  expect(isHidden('trigger-profile')).toBe(false);
 });
 
-test('hides Groups and Coaching tabs without the permissions', async () => {
+test('hides Groups and Coaching triggers without the permissions', async () => {
   mockPermissions = ['assets:read'];
   await render(<TabsLayout />);
-  expect(screen.queryByTestId('tab-groups')).toBeNull();
-  expect(screen.queryByTestId('tab-coaching')).toBeNull();
+  expect(isHidden('trigger-groups')).toBe(true);
+  expect(isHidden('trigger-coaching')).toBe(true);
 });
 
-test('shows the Groups tab with groups:read', async () => {
+test('shows the Groups trigger with groups:read', async () => {
   mockPermissions = ['groups:read'];
   await render(<TabsLayout />);
-  expect(screen.getByTestId('tab-groups')).toBeOnTheScreen();
-  expect(screen.queryByTestId('tab-coaching')).toBeNull();
+  expect(isHidden('trigger-groups')).toBe(false);
+  expect(isHidden('trigger-coaching')).toBe(true);
 });
 
-test('shows the Coaching tab with coaching:bookings:read', async () => {
+test('shows the Coaching trigger with coaching:bookings:read', async () => {
   mockPermissions = ['coaching:bookings:read'];
   await render(<TabsLayout />);
-  expect(screen.getByTestId('tab-coaching')).toBeOnTheScreen();
-  expect(screen.queryByTestId('tab-groups')).toBeNull();
+  expect(isHidden('trigger-coaching')).toBe(false);
+  expect(isHidden('trigger-groups')).toBe(true);
 });
 
-test('shows both gated tabs when both permissions are present', async () => {
+test('shows both gated triggers when both permissions are present', async () => {
   mockPermissions = ['groups:read', 'coaching:bookings:read'];
   await render(<TabsLayout />);
-  expect(screen.getByTestId('tab-groups')).toBeOnTheScreen();
-  expect(screen.getByTestId('tab-coaching')).toBeOnTheScreen();
+  expect(isHidden('trigger-groups')).toBe(false);
+  expect(isHidden('trigger-coaching')).toBe(false);
 });
