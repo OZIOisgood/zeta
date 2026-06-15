@@ -43,7 +43,7 @@ export function applySwitcher($, locale, pageKey) {
     const active = l.code === locale;
     menu.append(
       `<a class="lp-lang-option" role="option" href="${localePath(l.code, pageKey)}" hreflang="${l.code}"${active ? ' aria-selected="true"' : ''}>` +
-        `${flagImg(l.flag)}<span class="lp-lang-short">${l.short}</span><span>${l.label}</span>` +
+        `${flagImg(l.flag)}<span class="lp-lang-name">${l.label}</span>` +
         `<span class="lp-lang-check"><i data-lucide="check"></i></span></a>`,
     );
   }
