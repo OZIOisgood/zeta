@@ -125,7 +125,7 @@
 }
 @media (max-width: 760px) { .contact-grid { grid-template-columns: 1fr; gap: 36px; } }
 
-.contact-channels { display: flex; flex-direction: column; gap: 14px; }
+.contact-channels { display: flex; flex-direction: column; gap: 14px; margin: 8px 0 18px; }
 .contact-channel {
   display: flex;
   gap: 14px;
@@ -149,8 +149,8 @@
   justify-content: center;
 }
 .contact-channel .legal-li-icon svg { width: 19px; height: 19px; }
-.contact-channel h3 { font-size: 15px; font-weight: var(--z-weight-semibold); margin-bottom: 3px; }
-.contact-channel p { font-size: 14px; color: var(--z-muted); line-height: 1.5; }
+.contact-channel h3 { font-size: 15px; font-weight: var(--z-weight-semibold); margin: 0 0 3px; }
+.contact-channel p { font-size: 14px; color: var(--z-muted); line-height: 1.5; margin: 0; }
 .contact-channel a { color: var(--z-primary-text); text-decoration: none; font-weight: var(--z-weight-medium); }
 .contact-channel a:hover { text-decoration: underline; }
 
@@ -161,7 +161,7 @@
   border-radius: var(--z-radius-lg);
   box-shadow: var(--z-shadow-sm);
 }
-.contact-form h2 { font-size: 19px; font-weight: var(--z-weight-semibold); margin-bottom: 4px; }
+.contact-form h2 { font-size: 19px; font-weight: var(--z-weight-semibold); margin: 0 0 4px; }
 .contact-form > p { font-size: 13.5px; color: var(--z-muted); margin-bottom: 20px; }
 .contact-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .contact-field label { font-size: 13px; font-weight: var(--z-weight-medium); color: var(--z-text); }

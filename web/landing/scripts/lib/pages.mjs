@@ -117,8 +117,9 @@ export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, descr
   if (locale !== DEFAULT_LOCALE) translateDom($, dict);     // translate chrome only
   $('[data-legal-content]').html(contentHtml);              // inject already-localized content
   if (slug === 'contact') {
-    $('[data-legal-content]').append(buildContactCard(dict, email)); // email card
-    $('[data-legal-content]').append(buildContactForm(dict));        // demo form
+    $('.legal-banner').remove();                            // not placeholder legal text here
+    $('.legal-main').append(buildContactCard(dict, email)); // email card (outside .legal-body prose scope)
+    $('.legal-main').append(buildContactForm(dict));        // demo form
   }
   if (h1) $('[data-legal-title]').text(h1);                 // localized page title from markdown H1
   rewriteLegalLinks($);                                     // localized legal slugs → /canonical.html
