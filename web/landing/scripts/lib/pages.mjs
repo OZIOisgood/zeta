@@ -67,6 +67,7 @@ export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, descr
   const $ = cheerio.load(shellHtml, { decodeEntities: false });
   if (locale !== DEFAULT_LOCALE) translateDom($, dict);     // translate chrome only
   $('[data-legal-content]').html(contentHtml);              // inject already-localized content
+  if (h1) $('[data-legal-title]').text(h1);                 // localized page title from markdown H1
   rewriteLinks($, locale);
   applySwitcher($, locale, slug);
   applyHead($, { locale, pageKey: slug, title: `${h1} — Strido`, description });
