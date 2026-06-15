@@ -19,9 +19,8 @@
  */
 import { Pressable, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChevronDown } from 'lucide-react-native';
-import { colors } from '../../theme/colors';
 import { openSelect } from './z-combobox.shared';
+import { ZSymbol } from './z-symbol';
 import type { ZComboboxProps } from './z-combobox.types';
 
 export type { ZComboboxOption, ZComboboxProps } from './z-combobox.types';
@@ -86,7 +85,7 @@ export function ZCombobox({
       >
         {selectedLabel ?? placeholder}
       </Text>
-      <ChevronDown color={colors.muted} size={18} />
+      <ZSymbol name="chevron-down" label="" size={18} />
     </Pressable>
   );
 }

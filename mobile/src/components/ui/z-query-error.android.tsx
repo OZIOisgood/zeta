@@ -9,10 +9,10 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { CloudOff } from 'lucide-react-native';
 import { useRoleColors } from '../../theme/native';
 import { ZEmptyState } from './z-empty-state';
 import { ZButton } from './z-button';
+import { ZSymbol } from './z-symbol';
 import type { ZQueryErrorProps } from './z-query-error.types';
 
 export type { ZQueryErrorProps } from './z-query-error.types';
@@ -31,7 +31,7 @@ export function ZQueryError({
     <ZEmptyState
       title={title}
       description={description ?? t('home.error.description')}
-      icon={<CloudOff color={color('danger')} size={24} />}
+      icon={<ZSymbol name="cloud-off" label="" size={24} color={color('danger')} />}
     >
       <ZButton
         testID={testID}

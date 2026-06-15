@@ -66,7 +66,8 @@ export function ZIconButton({
 
   // FAB path: Material 3 FloatingActionButton (lg) or SmallFloatingActionButton (md).
   // FloatingActionButton does not expose an `enabled` prop in @expo/ui — disable
-  // by omitting onPress; this is acceptable for the FAB use case.
+  // by omitting onPress; use surfaceVariant containerColor when disabled so the
+  // FAB is visually dimmed and clearly non-interactive (Material 3 disabled state).
   if (isFAB(variant, size, shape)) {
     const FABComponent = size === 'lg' ? FloatingActionButton : SmallFloatingActionButton;
 
@@ -75,7 +76,7 @@ export function ZIconButton({
         <Host matchContents>
           <FABComponent
             onClick={disabled ? undefined : onPress}
-            containerColor={color('accent')}
+            containerColor={disabled ? color('surfaceVariant') : color('accent')}
             modifiers={modifiers}
           >
             <FABComponent.Icon>

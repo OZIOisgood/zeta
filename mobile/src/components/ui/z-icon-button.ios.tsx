@@ -28,7 +28,9 @@ import { Button, Host } from '@expo/ui/swift-ui';
 import {
   accessibilityIdentifier,
   accessibilityLabel,
+  buttonBorderShape,
   buttonStyle,
+  clipShape,
   controlSize,
   disabled,
   tint,
@@ -62,6 +64,7 @@ export function ZIconButton({
   onPress,
   variant = 'ghost',
   size = 'md',
+  shape = 'rounded',
   disabled: isDisabled = false,
   className,
   testID,
@@ -71,6 +74,13 @@ export function ZIconButton({
   const tintModifier =
     variant === 'primary' ? tint(color('accent')) : variant === 'secondary' ? tint(color('outline')) : undefined;
 
+  // When shape='circle', apply a circular clip and matching border shape so
+  // the button renders round (HIG: "icon button" vs rectangular button).
+  const shapeModifiers =
+    shape === 'circle'
+      ? [clipShape('circle'), buttonBorderShape('circle')]
+      : [];
+
   const modifiers = [
     buttonStyle(STYLE_MAP[variant]),
     controlSize(SIZE_MAP[size]),
@@ -78,6 +88,7 @@ export function ZIconButton({
     accessibilityLabel(label),
     ...(testID ? [accessibilityIdentifier(testID)] : []),
     ...(tintModifier ? [tintModifier] : []),
+    ...shapeModifiers,
   ];
 
   // Outer NativeWind View carries className so that consumer layout classes

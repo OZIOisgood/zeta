@@ -16,8 +16,8 @@
 
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
-import { Inbox } from 'lucide-react-native';
 import { useRoleColors } from '../../theme/native';
+import { ZSymbol } from './z-symbol';
 import type { ZEmptyStateProps } from './z-empty-state.types';
 
 export type { ZEmptyStateProps } from './z-empty-state.types';
@@ -30,7 +30,7 @@ export function ZEmptyState({
 }: ZEmptyStateProps) {
   const { color } = useRoleColors();
 
-  const iconNode: ReactNode = icon ?? <Inbox color={color('accent')} size={24} />;
+  const iconNode: ReactNode = icon ?? <ZSymbol name="inbox" label="" size={24} color={color('accent')} />;
 
   return (
     <View

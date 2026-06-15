@@ -13,7 +13,16 @@
  *   rows                 → minLines prop (minimum visible text rows)
  *   invalid              → isError prop
  *   disabled             → enabled={false}
- *   accessibilityLabel   → semantics modifier on Host
+ *   accessibilityLabel   → LIMITATION: @expo/ui ~56.0.17 does not expose a
+ *                          contentDescription/semantics prop on OutlinedTextField
+ *                          or Host. The `semantics` modifier only accepts
+ *                          `contentType`, not `contentDescription`. The prop is
+ *                          accepted but cannot be forwarded to TalkBack in this
+ *                          release. The floating Label text is the only
+ *                          TalkBack-visible identifier for the field.
+ *                          deviceValidation: verify TalkBack reads the Label text
+ *                          on a real Android device; update when @expo/ui adds
+ *                          contentDescription support.
  *   testID               → testID modifier on Host
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
@@ -42,7 +51,10 @@ export type { ZTextareaProps } from './z-textarea.types';
 export function ZTextarea({
   value,
   onChangeText,
-  accessibilityLabel: _a11yLabel,
+  // accessibilityLabel: accepted by the public API but cannot be forwarded to
+  // TalkBack — @expo/ui ~56.0.17 exposes no contentDescription path on
+  // OutlinedTextField or Host. See header comment for details.
+  accessibilityLabel: _accessibilityLabel,
   placeholder = '',
   rows = 4,
   invalid = false,

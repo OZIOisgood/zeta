@@ -16,7 +16,16 @@
  *   autoCorrect             → keyboardOptions.autoCorrectEnabled
  *   returnKeyType           → keyboardOptions.imeAction (best-effort mapping)
  *   onSubmitEditing         → keyboardActions.onDone / onGo / onSearch / onSend / onNext
- *   accessibilityLabel      → semantics modifier on Host (not available on OutlinedTextField directly)
+ *   accessibilityLabel      → LIMITATION: @expo/ui ~56.0.17 does not expose a
+ *                             contentDescription/semantics prop on OutlinedTextField
+ *                             or Host. The `semantics` modifier only accepts
+ *                             `contentType`, not `contentDescription`. The prop is
+ *                             accepted and stored but cannot be forwarded to TalkBack
+ *                             in this release. The floating Label text is the only
+ *                             TalkBack-visible identifier for the field.
+ *                             deviceValidation: verify TalkBack reads the Label text
+ *                             on a real Android device; update when @expo/ui adds
+ *                             contentDescription support.
  *   testID                  → testID modifier on Host
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
@@ -93,7 +102,10 @@ function toComposeImeAction(
 export function ZTextInput({
   value,
   onChangeText,
-  accessibilityLabel: _a11yLabel,
+  // accessibilityLabel: accepted by the public API but cannot be forwarded to
+  // TalkBack — @expo/ui ~56.0.17 exposes no contentDescription path on
+  // OutlinedTextField or Host. See header comment for details.
+  accessibilityLabel: _accessibilityLabel,
   placeholder = '',
   invalid = false,
   disabled: isDisabled = false,
