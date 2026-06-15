@@ -77,3 +77,9 @@ design: `.agents/plans/20260615085244_landing_v2_integration_design.md`.
 - Legal canonical home is `web/landing/content/legal/` (not repo-root `docs/legal/`), required
   because the Docker build context is `web/landing`. Flagged and accepted during planning.
 - `SITE_ORIGIN` defaults to `https://strido.net` (Terraform `landing_domain`), env-overridable.
+- Post-review fix (found during user testing): swapping v1's inline `<style>` for the handoff
+  CSS files (Task 10) dropped v1's custom `.lp-photo-art` family rules, leaving the hero
+  illustration and the "Für wen" card art unstyled (empty boxes). Recovered into
+  `src/styles/photo-art.css`; removed the now-dead `.lp-tone-warm` class (v1 warm bands,
+  superseded by `ruhig`). A class-coverage audit confirms no template class lacks a CSS rule
+  (only `.lp-hero-copy` is an intentional rule-less structural hook).
