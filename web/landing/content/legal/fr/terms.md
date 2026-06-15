@@ -120,6 +120,3 @@ L'Utilisateur garantit le Fournisseur contre toutes les prétentions de tiers in
 15.1 Le droit de la République fédérale d'Allemagne s'applique, à l'exclusion de la Convention des Nations Unies sur les contrats de vente internationale de marchandises. Les dispositions impératives de protection des consommateurs de l'État dans lequel l'Utilisateur a sa résidence habituelle demeurent non affectées.
 
 15.2 Si une disposition des présentes Conditions d'utilisation est ou devient nulle, la validité des autres dispositions demeure non affectée.
-
----
-_Dernière mise à jour : {{STAND_DATUM}}_

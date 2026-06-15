@@ -41,6 +41,3 @@ Wij zijn niet bereid en niet verplicht om deel te nemen aan geschillenbeslechtin
 > De voorheen verplichte link naar het Europese platform voor onlinegeschillenbeslechting (ODR-platform) is niet langer van toepassing; het platform is op 20 juli 2025 stopgezet.
 
 <!-- Redactionele opmerking: een "inhoudelijk verantwoordelijke conform artikel 18, lid 2, MStV" is alleen vereist bij journalistiek-redactionele inhoud. Er wordt van uitgegaan dat Strido dergelijke inhoud niet aanbiedt; voeg anders hier de naam + het adres van een verantwoordelijke persoon toe. -->
-
----
-_Laatst bijgewerkt: {{STAND_DATUM}}_

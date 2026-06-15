@@ -48,7 +48,7 @@ for (const l of LOCALES) {
     const h1 = extractH1(mdText);
     const contentHtml = md.render(stripFirstH1(mdText));
     const description = descriptionFrom(stripFirstH1(mdText), `${h1} — Strido`);
-    write(join(l.dir, `${slug}.html`), buildLegalPage({ shellHtml: legalShell, contentHtml, h1, locale: l.code, slug, description, dict }));
+    write(join(l.dir, `${slug}.html`), buildLegalPage({ shellHtml: legalShell, contentHtml, h1, locale: l.code, slug, description, dict, email: legalValues.EMAIL }));
   }
 }
 

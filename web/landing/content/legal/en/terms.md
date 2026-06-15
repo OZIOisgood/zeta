@@ -120,6 +120,3 @@ The User indemnifies the Provider against all claims by third parties asserted o
 15.1 The law of the Federal Republic of Germany applies, excluding the UN Convention on Contracts for the International Sale of Goods. Mandatory consumer protection provisions of the state in which the User has their habitual residence remain unaffected.
 
 15.2 Should any provision of these Terms of Use be or become invalid, the validity of the remaining provisions remains unaffected.
-
----
-_Last updated: {{STAND_DATUM}}_

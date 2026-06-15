@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as cheerio from 'cheerio';
-import { localePath, absoluteUrl, headLinks, rewriteLinks, applySwitcher, buildLandingPage, rewriteLegalLinks, buildContactForm } from './pages.mjs';
+import { localePath, absoluteUrl, headLinks, rewriteLinks, applySwitcher, buildLandingPage, rewriteLegalLinks, buildContactForm, buildContactCard } from './pages.mjs';
 
 test('localePath: de at root, others prefixed; index vs slug', () => {
   assert.equal(localePath('de', 'index'), '/');
@@ -57,6 +57,13 @@ test('buildContactForm renders a non-wired form with consent checkbox', () => {
   assert.match(out, /<textarea/);
   assert.match(out, /type="checkbox"/);
   assert.match(out, /href="\/datenschutz"/); // privacy link (rewritten to /privacy.html at build)
+});
+
+test('buildContactCard renders an email card with a mailto link', () => {
+  const out = buildContactCard({ 'E-Mail': 'Email' }, 'support@strido.net');
+  assert.match(out, /contact-channel/);
+  assert.match(out, />Email</);
+  assert.match(out, /mailto:support@strido\.net/);
 });
 
 test('buildLandingPage sets lang and translates body for non-de', () => {

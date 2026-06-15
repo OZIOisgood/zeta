@@ -115,6 +115,3 @@ You have the right to lodge a complaint with a data protection supervisory autho
 ## 17. Data protection officer
 
 We are not legally obliged to appoint a data protection officer and have therefore not appointed one.
-
----
-_Last updated: {{STAND_DATUM}}_

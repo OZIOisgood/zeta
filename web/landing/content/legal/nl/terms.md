@@ -120,6 +120,3 @@ De Gebruiker vrijwaart de Aanbieder van alle aanspraken van derden die deze geld
 15.1 Het recht van de Bondsrepubliek Duitsland is van toepassing, met uitsluiting van het Weens Koopverdrag. Dwingende consumentenbeschermingsbepalingen van de staat waar de Gebruiker zijn gewone verblijfplaats heeft, blijven onverlet.
 
 15.2 Mocht een bepaling van deze Gebruiksvoorwaarden nietig zijn of worden, dan blijft de geldigheid van de overige bepalingen onverlet.
-
----
-_Laatst bijgewerkt: {{STAND_DATUM}}_

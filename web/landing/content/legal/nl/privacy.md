@@ -115,6 +115,3 @@ U heeft het recht om een klacht in te dienen bij een toezichthoudende autoriteit
 ## 17. Functionaris voor gegevensbescherming
 
 Wij zijn wettelijk niet verplicht een functionaris voor gegevensbescherming aan te wijzen en hebben er daarom geen aangewezen.
-
----
-_Laatst bijgewerkt: {{STAND_DATUM}}_

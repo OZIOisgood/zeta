@@ -41,6 +41,3 @@ We are neither willing nor obliged to participate in dispute resolution proceedi
 > The previously mandatory link to the EU Online Dispute Resolution (ODR) platform no longer applies; the platform was discontinued on 20 July 2025.
 
 <!-- Editorial note: A "person responsible for content under Section 18 (2) MStV" is only required for journalistic/editorial content. Strido is assumed not to offer such content; otherwise add the name + address of a responsible person here. -->
-
----
-_Last updated: {{STAND_DATUM}}_

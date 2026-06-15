@@ -41,6 +41,3 @@ Nous ne sommes ni disposés ni tenus de participer à une procédure de règleme
 > L'obligation antérieure de créer un lien vers la plateforme européenne de règlement en ligne des litiges (plateforme RLL) ne s'applique plus ; la plateforme a été fermée le 20 juillet 2025.
 
 <!-- Note de rédaction : un « responsable du contenu au sens de l'article 18, par. 2, MStV » n'est requis que pour des contenus journalistiques/rédactionnels. On suppose que Strido ne propose pas de tels contenus ; sinon, ajouter ici le nom + l'adresse d'une personne responsable. -->
-
----
-_Dernière mise à jour : {{STAND_DATUM}}_

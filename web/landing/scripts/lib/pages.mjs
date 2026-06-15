@@ -81,6 +81,16 @@ export function rewriteLegalLinks($) {
 
 // Non-wired demo contact form (matches the handoff), with strings translated via the dict.
 // Actual submission (backend) is a go-live task.
+export function buildContactCard(dict, email) {
+  const t = (k) => dict[k] || k;
+  return (
+    '<div class="contact-channels"><div class="contact-channel">' +
+    '<span class="legal-li-icon"><i data-lucide="mail"></i></span>' +
+    `<div><h3>${t('E-Mail')}</h3><p><a href="mailto:${email}">${email}</a></p></div>` +
+    '</div></div>'
+  );
+}
+
 export function buildContactForm(dict) {
   const t = (k) => dict[k] || k;
   const attr = (k) => t(k).replace(/"/g, '&quot;');
@@ -102,11 +112,14 @@ export function buildContactForm(dict) {
   );
 }
 
-export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, description, dict }) {
+export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, description, dict, email }) {
   const $ = cheerio.load(shellHtml, { decodeEntities: false });
   if (locale !== DEFAULT_LOCALE) translateDom($, dict);     // translate chrome only
   $('[data-legal-content]').html(contentHtml);              // inject already-localized content
-  if (slug === 'contact') $('[data-legal-content]').append(buildContactForm(dict)); // demo form
+  if (slug === 'contact') {
+    $('[data-legal-content]').append(buildContactCard(dict, email)); // email card
+    $('[data-legal-content]').append(buildContactForm(dict));        // demo form
+  }
   if (h1) $('[data-legal-title]').text(h1);                 // localized page title from markdown H1
   rewriteLegalLinks($);                                     // localized legal slugs → /canonical.html
   rewriteLinks($, locale);

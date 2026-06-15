@@ -41,6 +41,3 @@ Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor e
 > Die früher verpflichtende Verlinkung der EU-Plattform zur Online-Streitbeilegung (OS-Plattform) entfällt; die Plattform wurde zum 20.07.2025 eingestellt.
 
 <!-- Hinweis für die Redaktion: Ein "inhaltlich Verantwortlicher nach § 18 Abs. 2 MStV" ist nur bei journalistisch-redaktionellen Inhalten erforderlich. Für Strido wird davon ausgegangen, dass solche Inhalte nicht angeboten werden; andernfalls hier Name + Anschrift einer verantwortlichen Person ergänzen. -->
-
----
-_Stand: {{STAND_DATUM}}_

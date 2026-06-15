@@ -120,6 +120,3 @@ Der Nutzer stellt den Anbieter von allen Ansprüchen Dritter frei, die diese weg
 15.1 Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts. Zwingende Verbraucherschutzvorschriften des Staates, in dem der Nutzer seinen gewöhnlichen Aufenthalt hat, bleiben unberührt.
 
 15.2 Sollte eine Bestimmung dieser Nutzungsbedingungen unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.
-
----
-_Stand: {{STAND_DATUM}}_

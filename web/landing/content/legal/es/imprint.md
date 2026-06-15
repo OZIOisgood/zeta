@@ -41,6 +41,3 @@ No estamos dispuestos ni obligados a participar en procedimientos de resolución
 > La anterior obligación de enlazar a la plataforma europea de resolución de litigios en línea (plataforma RLL) ya no es aplicable; la plataforma se desactivó el 20 de julio de 2025.
 
 <!-- Nota de redacción: un «responsable del contenido conforme al artículo 18, apdo. 2, MStV» solo es necesario para contenidos periodísticos/editoriales. Se asume que Strido no ofrece tales contenidos; de lo contrario, añadir aquí el nombre + la dirección de una persona responsable. -->
-
----
-_Última actualización: {{STAND_DATUM}}_

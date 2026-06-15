@@ -115,6 +115,3 @@ Tiene derecho a presentar una reclamación ante una autoridad de control de prot
 ## 17. Delegado de protección de datos
 
 No estamos legalmente obligados a nombrar un delegado de protección de datos y, por tanto, no hemos nombrado ninguno.
-
----
-_Última actualización: {{STAND_DATUM}}_

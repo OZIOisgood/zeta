@@ -115,6 +115,3 @@ Vous avez le droit d'introduire une réclamation auprès d'une autorité de cont
 ## 17. Délégué à la protection des données
 
 Nous ne sommes pas légalement tenus de désigner un délégué à la protection des données et n'en avons donc pas désigné.
-
----
-_Dernière mise à jour : {{STAND_DATUM}}_

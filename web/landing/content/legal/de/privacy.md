@@ -115,6 +115,3 @@ Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren 
 ## 17. Datenschutzbeauftragter
 
 Wir sind gesetzlich nicht verpflichtet, einen Datenschutzbeauftragten zu benennen, und haben daher keinen bestellt.
-
----
-_Stand: {{STAND_DATUM}}_

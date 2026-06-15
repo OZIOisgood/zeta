@@ -120,6 +120,3 @@ El Usuario mantiene indemne al Proveedor frente a todas las reclamaciones de ter
 15.1 Se aplica el Derecho de la República Federal de Alemania, con exclusión de la Convención de las Naciones Unidas sobre los Contratos de Compraventa Internacional de Mercaderías. Las disposiciones imperativas de protección de los consumidores del Estado en el que el Usuario tenga su residencia habitual quedan inalteradas.
 
 15.2 Si alguna disposición de las presentes Condiciones de uso fuera o deviniera nula, la validez de las restantes disposiciones quedará inalterada.
-
----
-_Última actualización: {{STAND_DATUM}}_
