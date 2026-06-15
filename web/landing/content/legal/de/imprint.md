@@ -2,26 +2,7 @@
 
 > **Hinweis:** Dies ist die rechtlich maßgebliche deutsche Fassung. Fassungen in anderen Sprachen sind unverbindliche Serviceübersetzungen; im Zweifel gilt die deutsche Fassung.
 
-Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)
-
-**{{GBR_BEZEICHNUNG}}**
-Gesellschaft bürgerlichen Rechts (GbR)
-
-{{ANSCHRIFT}}
-
-## Vertreten durch
-
-Die Gesellschaft wird durch ihre Gesellschafter gemeinschaftlich vertreten:
-
-- {{NAME_1}}
-- {{NAME_2}}
-
-## Kontakt
-
-E-Mail: {{EMAIL}}
-Kontaktformular: https://{{DOMAIN}}/kontakt
-
-Eine zweite, schnell erreichbare Kontaktmöglichkeit im Sinne des § 5 Abs. 1 Nr. 2 DDG stellen wir über das vorgenannte Kontaktformular bereit, über das wir Anfragen kurzfristig beantworten.
+Eine zweite, schnell erreichbare Kontaktmöglichkeit im Sinne des § 5 Abs. 1 Nr. 2 DDG stellen wir über unser [Kontaktformular](/kontakt) bereit, über das wir Anfragen kurzfristig beantworten.
 
 ## Umsatzsteuer-Identifikationsnummer
 

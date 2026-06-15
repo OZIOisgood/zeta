@@ -112,12 +112,33 @@ export function buildContactForm(dict) {
   );
 }
 
-export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, description, dict, email }) {
+// Impressum/Imprint provider-data card (§ 5 DDG). Values come from content/legal/values.json;
+// labels are translated via the chrome dict. Mirrors the handoff's carded definition list,
+// adapted to a GbR (no commercial-register / VAT-ID rows — those don't apply to us).
+export function buildImprintCard(dict, v) {
+  const t = (k) => dict[k] || k;
+  const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const rows = [
+    [t('Diensteanbieter'), `${esc(v.GBR_BEZEICHNUNG)} (GbR)`],
+    [t('Vertretung'), `${esc(v.NAME_1)}, ${esc(v.NAME_2)}`],
+    [t('Anschrift'), esc(v.ANSCHRIFT).replace(/\s*\|\s*/g, '<br>')],
+    [t('Kontakt'), `<a href="mailto:${esc(v.EMAIL)}">${esc(v.EMAIL)}</a>`],
+  ];
+  const dl = rows.map(([k, val]) => `<dt>${k}</dt><dd>${val}</dd>`).join('');
+  return `<p class="legal-card-caption">${t('Angaben gemäß § 5 DDG')}</p><div class="legal-card"><dl>${dl}</dl></div>`;
+}
+
+export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, description, dict, values }) {
   const $ = cheerio.load(shellHtml, { decodeEntities: false });
   if (locale !== DEFAULT_LOCALE) translateDom($, dict);     // translate chrome only
   $('[data-legal-content]').html(contentHtml);              // inject already-localized content
+  if (slug === 'imprint') {                                 // § 5 DDG data card at the top of the body
+    const card = buildImprintCard(dict, values);
+    const bq = $('[data-legal-content] > blockquote').first();
+    if (bq.length) bq.after(card); else $('[data-legal-content]').prepend(card);
+  }
   if (slug === 'contact') {
-    $('.legal-main').append(buildContactCard(dict, email)); // email card (outside .legal-body prose scope)
+    $('.legal-main').append(buildContactCard(dict, values.EMAIL)); // email card (outside .legal-body prose scope)
     $('.legal-main').append(buildContactForm(dict));        // demo form
   }
   if (h1) $('[data-legal-title]').text(h1);                 // localized page title from markdown H1

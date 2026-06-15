@@ -2,26 +2,7 @@
 
 > **Opmerking:** De juridisch bindende versie van dit document is de Duitse versie. Deze Nederlandse versie is een niet-bindende servicevertaling; bij twijfel of tegenstrijdigheid prevaleert de Duitse versie.
 
-Informatie conform artikel 5 van de Duitse Wet digitale diensten (Digitale-Dienste-Gesetz – DDG)
-
-**{{GBR_BEZEICHNUNG}}**
-Maatschap naar Duits burgerlijk recht (Gesellschaft bürgerlichen Rechts – GbR)
-
-{{ANSCHRIFT}}
-
-## Vertegenwoordigd door
-
-De maatschap wordt gezamenlijk vertegenwoordigd door haar vennoten:
-
-- {{NAME_1}}
-- {{NAME_2}}
-
-## Contact
-
-E-mail: {{EMAIL}}
-Contactformulier: https://{{DOMAIN}}/contact
-
-Wij stellen via het bovengenoemde contactformulier een tweede, snel bereikbare contactmogelijkheid in de zin van artikel 5, lid 1, nr. 2, DDG ter beschikking, waarmee wij verzoeken op korte termijn beantwoorden.
+Wij stellen via ons [contactformulier](/contact) een tweede, snel bereikbare contactmogelijkheid in de zin van artikel 5, lid 1, nr. 2, DDG ter beschikking, waarmee wij verzoeken op korte termijn beantwoorden.
 
 ## Btw-identificatienummer
 

@@ -2,26 +2,7 @@
 
 > **Nota:** La versión jurídicamente determinante de este documento es la versión alemana. La presente versión española es una traducción de servicio no vinculante; en caso de duda o contradicción, prevalece la versión alemana.
 
-Información conforme al artículo 5 de la Ley alemana de Servicios Digitales (Digitale-Dienste-Gesetz – DDG)
-
-**{{GBR_BEZEICHNUNG}}**
-Sociedad civil (Gesellschaft bürgerlichen Rechts – GbR)
-
-{{ANSCHRIFT}}
-
-## Representada por
-
-La sociedad está representada conjuntamente por sus socios:
-
-- {{NAME_1}}
-- {{NAME_2}}
-
-## Contacto
-
-Correo electrónico: {{EMAIL}}
-Formulario de contacto: https://{{DOMAIN}}/contacto
-
-Ponemos a disposición una segunda vía de contacto rápidamente accesible en el sentido del artículo 5, apdo. 1, n.º 2, DDG a través del formulario de contacto antes mencionado, mediante el cual respondemos a las consultas con prontitud.
+Ponemos a disposición una segunda vía de contacto rápidamente accesible en el sentido del artículo 5, apdo. 1, n.º 2, DDG a través de nuestro [formulario de contacto](/contacto), mediante el cual respondemos a las consultas con prontitud.
 
 ## Número de identificación a efectos del IVA
 

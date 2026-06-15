@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as cheerio from 'cheerio';
-import { localePath, absoluteUrl, headLinks, rewriteLinks, applySwitcher, buildLandingPage, rewriteLegalLinks, buildContactForm, buildContactCard } from './pages.mjs';
+import { localePath, absoluteUrl, headLinks, rewriteLinks, applySwitcher, buildLandingPage, rewriteLegalLinks, buildContactForm, buildContactCard, buildImprintCard } from './pages.mjs';
 
 test('localePath: de at root, others prefixed; index vs slug', () => {
   assert.equal(localePath('de', 'index'), '/');
@@ -64,6 +64,17 @@ test('buildContactCard renders an email card with a mailto link', () => {
   assert.match(out, /contact-channel/);
   assert.match(out, />Email</);
   assert.match(out, /mailto:support@strido\.net/);
+});
+
+test('buildImprintCard renders a §5-DDG dl from values with translated labels (no GmbH rows)', () => {
+  const dict = { 'Diensteanbieter': 'Service provider', 'Vertretung': 'Represented by', 'Anschrift': 'Address', 'Kontakt': 'Contact', 'Angaben gemäß § 5 DDG': 'Information pursuant to § 5 DDG' };
+  const out = buildImprintCard(dict, { GBR_BEZEICHNUNG: 'Strido', NAME_1: 'A One', NAME_2: 'B Two', ANSCHRIFT: 'Street 1 | 12345 City | Germany', EMAIL: 'support@strido.net' });
+  assert.match(out, /class="legal-card-caption">Information pursuant to § 5 DDG</);
+  assert.match(out, /<dt>Service provider<\/dt><dd>Strido \(GbR\)<\/dd>/);
+  assert.match(out, /<dt>Represented by<\/dt><dd>A One, B Two<\/dd>/);
+  assert.match(out, /<dd>Street 1<br>12345 City<br>Germany<\/dd>/);
+  assert.match(out, /<dt>Contact<\/dt><dd><a href="mailto:support@strido\.net">support@strido\.net<\/a><\/dd>/);
+  assert.doesNotMatch(out, /Handelsregister|USt|VAT|commercial register/i);
 });
 
 test('buildLandingPage sets lang and translates body for non-de', () => {

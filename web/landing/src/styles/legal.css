@@ -75,7 +75,8 @@
 .legal-section a { color: var(--z-primary-text); font-weight: var(--z-weight-medium); text-decoration: none; }
 .legal-section a:hover { text-decoration: underline; }
 
-/* Definition-style address block */
+/* Definition-style address block (Impressum § 5 DDG data) */
+.legal-card-caption { font-size: 13px; color: var(--z-muted); margin: 0 0 8px; }
 .legal-card {
   margin-top: 16px;
   padding: 24px;

@@ -26,7 +26,10 @@ function stripFirstH1(mdText) {
 function descriptionFrom(mdText, fallback) {
   const line = mdText.split('\n').map((l) => l.trim())
     .find((l) => l && !l.startsWith('#') && !l.startsWith('>') && !l.startsWith('|') && !l.startsWith('-') && !l.startsWith('*'));
-  return (line || fallback).replace(/[*_`]/g, '').slice(0, 180);
+  return (line || fallback)
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')   // [text](url) -> text (don't leak markdown link syntax into <meta>)
+    .replace(/[*_`]/g, '')
+    .slice(0, 180);
 }
 
 rmSync(DIST, { recursive: true, force: true });
@@ -43,12 +46,13 @@ for (const l of LOCALES) {
   write(join(l.dir, 'index.html'), buildLandingPage({ templateHtml: landingTpl, dict, locale: l.code, meta }));
 
   for (const slug of LEGAL_SLUGS) {
-    const mdText = applyValues(readFileSync(join(LEGAL_DIR, l.code, `${slug}.md`), 'utf8'), legalValues);
+    const mdText = applyValues(readFileSync(join(LEGAL_DIR, l.code, `${slug}.md`), 'utf8'), legalValues)
+      .replace(/<!--[\s\S]*?-->/g, '');   // strip editor-only HTML comments (html:false would render them as visible text)
     findPlaceholders(mdText).forEach((p) => unfilledPlaceholders.add(p));
     const h1 = extractH1(mdText);
     const contentHtml = md.render(stripFirstH1(mdText));
     const description = descriptionFrom(stripFirstH1(mdText), `${h1} — Strido`);
-    write(join(l.dir, `${slug}.html`), buildLegalPage({ shellHtml: legalShell, contentHtml, h1, locale: l.code, slug, description, dict, email: legalValues.EMAIL }));
+    write(join(l.dir, `${slug}.html`), buildLegalPage({ shellHtml: legalShell, contentHtml, h1, locale: l.code, slug, description, dict, values: legalValues }));
   }
 }
 

@@ -2,26 +2,7 @@
 
 > **Note:** The legally authoritative version of this document is the German version. This English version is a non-binding service translation; in case of doubt or contradiction, the German version prevails.
 
-Information pursuant to Section 5 of the German Digital Services Act (Digitale-Dienste-Gesetz – DDG)
-
-**{{GBR_BEZEICHNUNG}}**
-Civil-law partnership (Gesellschaft bürgerlichen Rechts – GbR)
-
-{{ANSCHRIFT}}
-
-## Represented by
-
-The partnership is represented jointly by its partners:
-
-- {{NAME_1}}
-- {{NAME_2}}
-
-## Contact
-
-Email: {{EMAIL}}
-Contact form: https://{{DOMAIN}}/contact
-
-We provide a second, quickly reachable means of contact within the meaning of Section 5 (1) no. 2 DDG via the contact form mentioned above, through which we respond to enquiries promptly.
+We provide a second, quickly reachable means of contact within the meaning of Section 5 (1) no. 2 DDG via our [contact form](/contact), through which we respond to enquiries promptly.
 
 ## VAT identification number
 
