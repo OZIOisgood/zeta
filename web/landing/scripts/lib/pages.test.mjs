@@ -56,7 +56,7 @@ test('buildContactForm renders a non-wired form with consent checkbox', () => {
   assert.match(out, /placeholder="Your name"/);
   assert.match(out, /<textarea/);
   assert.match(out, /type="checkbox"/);
-  assert.match(out, /href="\/datenschutz"/); // privacy link (rewritten to /privacy.html at build)
+  assert.match(out, /href="\/privacy\.html"/); // canonical privacy link (rewriteLinks adds the locale prefix)
 });
 
 test('buildContactCard renders an email card with a mailto link', () => {

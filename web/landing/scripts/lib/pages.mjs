@@ -94,8 +94,11 @@ export function buildContactCard(dict, email) {
 export function buildContactForm(dict) {
   const t = (k) => dict[k] || k;
   const attr = (k) => t(k).replace(/"/g, '&quot;');
+  // Canonical /privacy.html (not the localized /datenschutz slug): the form is appended to
+  // .legal-main, outside rewriteLegalLinks' [data-legal-content] scope, so only rewriteLinks
+  // (locale prefix) runs on it.
   const consent = t('Ich habe die {link} gelesen und verstanden.')
-    .replace('{link}', `<a href="/datenschutz">${t('Datenschutzerklärung')}</a>`);
+    .replace('{link}', `<a href="/privacy.html">${t('Datenschutzerklärung')}</a>`);
   return (
     '<form class="contact-form" onsubmit="return false;">' +
     `<h2>${t('Nachricht senden')}</h2>` +
