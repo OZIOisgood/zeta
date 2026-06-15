@@ -15,27 +15,28 @@ module.exports = defineConfig([
   },
   // ── Architecture guardrails ──────────────────────────────────────────────────
   //
-  // src/app/** screens must not import raw @expo/ui, Pressable, Modal, or
-  // lucide-react-native — those live only in src/components/ui/** z-* primitives.
+  // src/app/** screens must not import raw react-native Pressable/Modal/
+  // TouchableOpacity/TouchableHighlight, @expo/ui, or lucide-react-native.
+  // Those live only in src/components/ui/** z-* primitives.
   //
-  // NOTE on no-restricted-syntax merge: flat-config applies the LAST matching
-  // block's rule value when the same rule key appears in multiple blocks for
-  // the same file. To prevent a later hex-warn block from overriding the
-  // Pressable/Modal error selectors, we combine ALL no-restricted-syntax
-  // selectors (imports + hex) into one src/app/** block. A separate hex-only
-  // block then covers the rest of src/** (non-app files).
+  // LEVEL = 'error' (permanent hard gate): migration complete as of Phase 4.
+  // All src/app/** screens are migrated; zero violations remain.
   //
-  // LEVEL = 'warn' (incremental adoption): ~18 existing screens still import raw
-  // lucide/Pressable/Modal and are migrated in Phase 2. 'warn' keeps `pnpm run
-  // lint` green while surfacing every violation; the (native-fidelity) mobile-
-  // reviewer agent + AGENTS.md hold the hard gate against NEW violations.
-  // TODO(end of Phase 2): promote both rules below from 'warn' to 'error' once
-  // no src/app violations remain — then this is a permanent hard gate.
+  // no-restricted-imports covers the named-import bans (react-native named
+  // exports + lucide + @expo/ui patterns). Flat-config note: since we use
+  // separate rule keys (no-restricted-imports vs no-restricted-syntax) there
+  // is no clobber risk between the import-ban block and the hex-warn block
+  // below — they govern different rule keys.
   {
     files: ['src/app/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-imports': ['warn', {
+      'no-restricted-imports': ['error', {
         paths: [
+          {
+            name: 'react-native',
+            importNames: ['Pressable', 'Modal', 'TouchableOpacity', 'TouchableHighlight'],
+            message: 'No raw Pressable/Modal/TouchableOpacity/TouchableHighlight in screens — use a z-* primitive.',
+          },
           {
             name: 'lucide-react-native',
             message: 'Use ZSymbol (expo-symbols) — icons live in components/ui.',
@@ -48,27 +49,9 @@ module.exports = defineConfig([
           },
         ],
       }],
-      // Combined: Pressable/Modal import selectors + hex literal selector.
-      // All three selectors must live in one block so that no later config
-      // block for src/app/** can clobber the import selectors by redefining
-      // the same rule key.
+      // Raw hex literals in src/app/** are a warn (stories can live in
+      // non-app directories; keep this consistent with the block below).
       'no-restricted-syntax': ['warn',
-        {
-          selector: "ImportDeclaration[source.value='react-native'] ImportSpecifier[imported.name='Pressable']",
-          message: 'No raw Pressable in screens — use Touchable / a z-* primitive.',
-        },
-        {
-          selector: "ImportDeclaration[source.value='react-native'] ImportSpecifier[imported.name='Modal']",
-          message: 'No raw Modal in screens — use the formSheet route / ZDialogPanel.',
-        },
-        {
-          selector: "ImportDeclaration[source.value='react-native'] ImportSpecifier[imported.name='TouchableOpacity']",
-          message: 'No raw TouchableOpacity in screens — use Touchable / a z-* primitive.',
-        },
-        {
-          selector: "ImportDeclaration[source.value='react-native'] ImportSpecifier[imported.name='TouchableHighlight']",
-          message: 'No raw TouchableHighlight in screens — use Touchable / a z-* primitive.',
-        },
         {
           selector: "Literal[value=/^#(?:[0-9a-fA-F]{3,8})$/]",
           message: 'No raw hex — use role tokens (theme/roles.ts) or NativeWind z-* classes.',
@@ -78,9 +61,10 @@ module.exports = defineConfig([
   },
   // Hex-only guard for the rest of src/** (components, hooks, api, …).
   // Exempts:
-  //   src/app/**          — already covered by the error block above (combined selectors)
+  //   src/app/**          — already covered by the error block above
   //   src/call/**         — sanctioned dark call/video surface (Agora + hex backgrounds)
   //   src/theme/colors.ts — GENERATED token file; it IS the hex definition layer
+  //   src/theme/roles.ts  — GENERATED token file
   //   src/components/ui/z-screen.tsx — owns the safe-area background token purposefully
   {
     files: ['src/**/*.{ts,tsx}'],

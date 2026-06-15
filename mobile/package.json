@@ -98,6 +98,7 @@
     ],
     "moduleNameMapper": {
       "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock",
+      "^react-native-reanimated$": "<rootDir>/src/__mocks__/react-native-reanimated.tsx",
       "^react-native-agora$": "<rootDir>/src/call/__mocks__/react-native-agora.ts",
       "^react-native-qrcode-svg$": "<rootDir>/src/__mocks__/react-native-qrcode-svg.tsx",
       ".*/components/ui/z-avatar-input$": "<rootDir>/src/__mocks__/z-avatar-input.tsx",

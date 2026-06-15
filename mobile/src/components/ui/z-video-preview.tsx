@@ -1,11 +1,14 @@
 import { Image, View } from 'react-native';
 import { Video } from 'lucide-react-native';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 /**
  * Video thumbnail/preview. Mobile counterpart of the web `z-video-preview`
  * wrapper (web/dashboard-next/src/app/shared/ui/video-preview/).
  * Renders the Mux thumbnail when present, otherwise a centered fallback icon.
+ *
+ * The fallback icon color uses `useRoleColors` so it adapts to dark mode
+ * (light: onSurfaceVariant #735f4d → dark: onSurfaceVariant #a8917c).
  */
 export function ZVideoPreview({
   thumbnail,
@@ -16,6 +19,8 @@ export function ZVideoPreview({
   alt?: string;
   testID?: string;
 }) {
+  const { color } = useRoleColors();
+
   return (
     <View
       testID={testID}
@@ -29,7 +34,7 @@ export function ZVideoPreview({
           className="h-full w-full"
         />
       ) : (
-        <Video color={colors.muted} size={24} />
+        <Video color={color('onSurfaceVariant')} size={24} />
       )}
     </View>
   );

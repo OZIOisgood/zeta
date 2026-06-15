@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 export type ZStepState = 'completed' | 'active' | 'upcoming';
 
@@ -24,6 +24,10 @@ const labelClasses: Record<ZStepState, string> = {
 /**
  * Multi-step flow progress. Mobile counterpart of the web `z-stepper`
  * wrapper (web/dashboard-next/src/app/shared/ui/stepper/).
+ *
+ * Uses `useRoleColors` for the checkmark icon so the color adapts to dark
+ * mode (onAccent is white in both schemes, but wired through the role adapter
+ * for consistency).
  */
 export function ZStepper({
   steps,
@@ -34,6 +38,8 @@ export function ZStepper({
   onStepPress?: (index: number) => void;
   testID?: string;
 }) {
+  const { color } = useRoleColors();
+
   return (
     <ScrollView
       horizontal
@@ -62,7 +68,7 @@ export function ZStepper({
                 className={`h-8 w-8 items-center justify-center rounded-full border-2 ${circleClasses[step.state]}`}
               >
                 {step.state === 'completed' ? (
-                  <Check color={colors.onPrimary} size={16} />
+                  <Check color={color('onAccent')} size={16} />
                 ) : (
                   <Text
                     className={`text-sm font-semibold ${
