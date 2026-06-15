@@ -79,10 +79,32 @@ export function rewriteLegalLinks($) {
   });
 }
 
+// Non-wired demo contact form (matches the handoff), with strings translated via the dict.
+// Actual submission (backend) is a go-live task.
+export function buildContactForm(dict) {
+  const t = (k) => dict[k] || k;
+  const attr = (k) => t(k).replace(/"/g, '&quot;');
+  return (
+    '<form class="contact-form" onsubmit="return false;">' +
+    `<h2>${t('Nachricht senden')}</h2>` +
+    `<p>${t('Fragen, Feedback oder Interesse an einer Zusammenarbeit? Schreib uns direkt.')}</p>` +
+    `<div class="contact-field"><label for="cf-name">${t('Name')}</label>` +
+    `<input id="cf-name" type="text" placeholder="${attr('Dein Name')}" autocomplete="name"></div>` +
+    `<div class="contact-field"><label for="cf-email">${t('E-Mail')}</label>` +
+    `<input id="cf-email" type="email" placeholder="${attr('du@beispiel.de')}" autocomplete="email"></div>` +
+    `<div class="contact-field"><label for="cf-msg">${t('Nachricht')}</label>` +
+    `<textarea id="cf-msg" placeholder="${attr('Wie können wir helfen?')}"></textarea></div>` +
+    `<button class="lp-btn lp-btn-primary" type="submit">${t('Nachricht senden')}</button>` +
+    `<p class="contact-form-note">${t('Demo-Formular — wird noch nicht versendet.')}</p>` +
+    '</form>'
+  );
+}
+
 export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, description, dict }) {
   const $ = cheerio.load(shellHtml, { decodeEntities: false });
   if (locale !== DEFAULT_LOCALE) translateDom($, dict);     // translate chrome only
   $('[data-legal-content]').html(contentHtml);              // inject already-localized content
+  if (slug === 'contact') $('[data-legal-content]').append(buildContactForm(dict)); // demo form
   if (h1) $('[data-legal-title]').text(h1);                 // localized page title from markdown H1
   rewriteLegalLinks($);                                     // localized legal slugs → /canonical.html
   rewriteLinks($, locale);

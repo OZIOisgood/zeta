@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as cheerio from 'cheerio';
-import { localePath, absoluteUrl, headLinks, rewriteLinks, applySwitcher, buildLandingPage, rewriteLegalLinks } from './pages.mjs';
+import { localePath, absoluteUrl, headLinks, rewriteLinks, applySwitcher, buildLandingPage, rewriteLegalLinks, buildContactForm } from './pages.mjs';
 
 test('localePath: de at root, others prefixed; index vs slug', () => {
   assert.equal(localePath('de', 'index'), '/');
@@ -47,6 +47,14 @@ test('rewriteLegalLinks maps localized legal slugs (and contact-form URLs) to ca
   assert.equal($('a').eq(1).attr('href'), '/contact.html');
   assert.equal($('a').eq(2).attr('href'), '/imprint.html');
   assert.equal($('a').eq(3).attr('href'), '/privacy.html');
+});
+
+test('buildContactForm renders a non-wired form with translated strings', () => {
+  const out = buildContactForm({ 'Nachricht senden': 'Send message', 'Dein Name': 'Your name', 'Name': 'Name' });
+  assert.match(out, /<form class="contact-form" onsubmit="return false;">/);
+  assert.match(out, />Send message</);
+  assert.match(out, /placeholder="Your name"/);
+  assert.match(out, /<textarea/);
 });
 
 test('buildLandingPage sets lang and translates body for non-de', () => {
