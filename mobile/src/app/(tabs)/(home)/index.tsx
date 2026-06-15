@@ -2,24 +2,23 @@ import { useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useAssetsQuery } from '../../api/queries/assets';
-import { useGroupsQuery } from '../../api/queries/groups';
-import { useMyAvailabilityQuery, useMyBookingsQuery } from '../../api/queries/coaching';
-import { useNotificationsQuery } from '../../api/queries/notifications';
-import { useAuth } from '../../auth/auth-store';
-import { AssetCard } from '../../components/asset-card';
-import { FirstStepRow } from '../../components/first-step-row';
-import { NotificationBell } from '../../components/notification-bell';
-import { StatCard } from '../../components/stat-card';
-import { ZButton } from '../../components/ui/z-button';
-import { ZCard } from '../../components/ui/z-card';
-import { ZEmptyState } from '../../components/ui/z-empty-state';
-import { ZPageHeader } from '../../components/ui/z-page-header';
-import { ZQueryError } from '../../components/ui/z-query-error';
-import { ZScreen } from '../../components/ui/z-screen';
-import { ZSkeleton } from '../../components/ui/z-skeleton';
-import { ZSymbol } from '../../components/ui/z-symbol';
-import { colors } from '../../theme/colors';
+import { useAssetsQuery } from '../../../api/queries/assets';
+import { useGroupsQuery } from '../../../api/queries/groups';
+import { useMyAvailabilityQuery, useMyBookingsQuery } from '../../../api/queries/coaching';
+import { useNotificationsQuery } from '../../../api/queries/notifications';
+import { useAuth } from '../../../auth/auth-store';
+import { AssetCard } from '../../../components/asset-card';
+import { FirstStepRow } from '../../../components/first-step-row';
+import { NotificationBell } from '../../../components/notification-bell';
+import { StatCard } from '../../../components/stat-card';
+import { ZButton } from '../../../components/ui/z-button';
+import { ZCard } from '../../../components/ui/z-card';
+import { ZEmptyState } from '../../../components/ui/z-empty-state';
+import { ZQueryError } from '../../../components/ui/z-query-error';
+import { ZScreen } from '../../../components/ui/z-screen';
+import { ZSkeleton } from '../../../components/ui/z-skeleton';
+import { ZSymbol } from '../../../components/ui/z-symbol';
+import { colors } from '../../../theme/colors';
 
 // Mirror the web home page recentVideos slice: surface only the four most
 // recent videos in the preview; the full list lives in the Videos tab behind
@@ -211,18 +210,15 @@ export default function HomeScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* Header sits OUTSIDE the ScrollView so its built-in 16px inset aligns
-          with the content padding below (matching the videos screen); Home has
-          no create action, so no FAB/action slot and no subtitle key. */}
-      <ZPageHeader
-        title={t('common.nav.home')}
-        action={
-          <NotificationBell
-            unreadCount={unreadCount}
-            onPress={() => router.push('/notifications')}
-          />
-        }
-      />
+      {/* Notification bell sits in the scroll area header row since the native
+          stack header owns the title. It is a secondary action that does not
+          map to a standard header-right button in this iteration. */}
+      <View className="flex-row items-center justify-end px-4 pb-2">
+        <NotificationBell
+          unreadCount={unreadCount}
+          onPress={() => router.push('/notifications')}
+        />
+      </View>
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 16 }}>
         {/* Stat cards: live counts that double as section navigation. */}
         <View className="flex-row gap-3">

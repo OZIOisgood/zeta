@@ -43,7 +43,7 @@ jest.mock('expo-router', () => ({
 }));
 
 import { initI18n } from '../i18n';
-import CoachingScreen from '../app/(tabs)/coaching';
+import CoachingScreen from '../app/(tabs)/coaching/index';
 import type { Booking } from '../api/queries/coaching';
 
 beforeAll(() => initI18n('en'));

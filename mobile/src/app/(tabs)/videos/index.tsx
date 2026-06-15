@@ -2,23 +2,22 @@ import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import type { Asset } from '../../api/queries/assets';
-import { useAssetsQuery } from '../../api/queries/assets';
-import { useAuth } from '../../auth/auth-store';
-import { uploadStore, useUploads } from '../../upload/upload-store';
-import type { UploadJob } from '../../upload/upload-store';
-import { AssetCard } from '../../components/asset-card';
-import { UploadProgressCard } from '../../components/upload-progress-card';
-import { ZButton } from '../../components/ui/z-button';
-import { ZEmptyState } from '../../components/ui/z-empty-state';
-import { ZIconButton } from '../../components/ui/z-icon-button';
-import { ZPageHeader } from '../../components/ui/z-page-header';
-import { ZQueryError } from '../../components/ui/z-query-error';
-import { ZScreen } from '../../components/ui/z-screen';
-import { ZSkeleton } from '../../components/ui/z-skeleton';
-import { ZSymbol } from '../../components/ui/z-symbol';
-import { ZTabs } from '../../components/ui/z-tabs';
-import { colors } from '../../theme/colors';
+import type { Asset } from '../../../api/queries/assets';
+import { useAssetsQuery } from '../../../api/queries/assets';
+import { useAuth } from '../../../auth/auth-store';
+import { uploadStore, useUploads } from '../../../upload/upload-store';
+import type { UploadJob } from '../../../upload/upload-store';
+import { AssetCard } from '../../../components/asset-card';
+import { UploadProgressCard } from '../../../components/upload-progress-card';
+import { ZButton } from '../../../components/ui/z-button';
+import { ZEmptyState } from '../../../components/ui/z-empty-state';
+import { ZIconButton } from '../../../components/ui/z-icon-button';
+import { ZQueryError } from '../../../components/ui/z-query-error';
+import { ZScreen } from '../../../components/ui/z-screen';
+import { ZSkeleton } from '../../../components/ui/z-skeleton';
+import { ZSymbol } from '../../../components/ui/z-symbol';
+import { ZTabs } from '../../../components/ui/z-tabs';
+import { colors } from '../../../theme/colors';
 
 type VideoFilter = 'all' | 'toReview' | 'reviewed';
 
@@ -160,7 +159,6 @@ export default function VideosScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      <ZPageHeader title={t('videos.allMyVideos')} subtitle={t('videos.phase4.summary')} />
       {filterRow}
       {content}
       {canCreate && (

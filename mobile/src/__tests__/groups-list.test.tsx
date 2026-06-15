@@ -22,7 +22,7 @@ jest.mock('expo-router', () => ({
 }));
 
 import { initI18n } from '../i18n';
-import GroupsScreen from '../app/(tabs)/groups';
+import GroupsScreen from '../app/(tabs)/groups/index';
 
 beforeAll(() => initI18n('en'));
 

@@ -49,7 +49,7 @@ export default function TabsLayout() {
   return (
     <NativeTabs tintColor={accentTint}>
       {/* Home ─────────────────────────────────────────────────────────────── */}
-      <NativeTabs.Trigger name="index">
+      <NativeTabs.Trigger name="(home)">
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
         <NativeTabs.Trigger.Label>{t('common.nav.home')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>

@@ -34,7 +34,7 @@ jest.mock('expo-router', () => ({
 }));
 
 import { initI18n } from '../i18n';
-import VideosScreen from '../app/(tabs)/videos';
+import VideosScreen from '../app/(tabs)/videos/index';
 
 beforeAll(() => initI18n('en'));
 
@@ -105,10 +105,13 @@ test('data state lists assets', async () => {
   expect(screen.getByText('Kata 1')).toBeOnTheScreen();
 });
 
-test('renders the page header title via ZPageHeader', async () => {
+test('renders the filter tabs when data is present', async () => {
+  // The native stack header owns the page title ("All my videos"); the screen
+  // body renders filter tabs (All / To review / Reviewed) which are always
+  // present in the data state.
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
-  expect(screen.getByText('All my videos')).toBeOnTheScreen();
+  expect(screen.getByRole('tab', { name: 'All' })).toBeOnTheScreen();
 });
 
 test('upload FAB shows with assets:create permission', async () => {

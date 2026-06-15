@@ -2,27 +2,26 @@ import { useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import type { Booking } from '../../api/queries/coaching';
+import type { Booking } from '../../../api/queries/coaching';
 import {
   useMyBookingsQuery,
   useCancelBookingMutation,
   formatBookingDateTime,
-} from '../../api/queries/coaching';
-import { useAuth } from '../../auth/auth-store';
-import { BookingCard } from '../../components/booking-card';
-import { isJoinable } from '../../lib/connect-window';
-import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
-import { ZEmptyState } from '../../components/ui/z-empty-state';
-import { ZIconButton } from '../../components/ui/z-icon-button';
-import { ZPageHeader } from '../../components/ui/z-page-header';
-import { ZQueryError } from '../../components/ui/z-query-error';
-import { ZScreen } from '../../components/ui/z-screen';
-import { ZSkeleton } from '../../components/ui/z-skeleton';
-import { ZSymbol } from '../../components/ui/z-symbol';
-import { ZTabs } from '../../components/ui/z-tabs';
-import { ZTextarea } from '../../components/ui/z-textarea';
-import { showToast } from '../../components/ui/z-toast';
-import { colors } from '../../theme/colors';
+} from '../../../api/queries/coaching';
+import { useAuth } from '../../../auth/auth-store';
+import { BookingCard } from '../../../components/booking-card';
+import { isJoinable } from '../../../lib/connect-window';
+import { ZConfirmDialog } from '../../../components/ui/z-confirm-dialog';
+import { ZEmptyState } from '../../../components/ui/z-empty-state';
+import { ZIconButton } from '../../../components/ui/z-icon-button';
+import { ZQueryError } from '../../../components/ui/z-query-error';
+import { ZScreen } from '../../../components/ui/z-screen';
+import { ZSkeleton } from '../../../components/ui/z-skeleton';
+import { ZSymbol } from '../../../components/ui/z-symbol';
+import { ZTabs } from '../../../components/ui/z-tabs';
+import { ZTextarea } from '../../../components/ui/z-textarea';
+import { showToast } from '../../../components/ui/z-toast';
+import { colors } from '../../../theme/colors';
 
 type SessionTab = 'upcoming' | 'past' | 'cancelled';
 
@@ -229,24 +228,6 @@ export default function CoachingScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      <ZPageHeader
-        title={t('sessions.title')}
-        subtitle={t('sessions.summary')}
-        action={
-          canManageAvailability ? (
-            <ZIconButton
-              testID="coaching-manage-availability"
-              label={t('sessions.availability.manageTitle')}
-              variant="ghost"
-              size="md"
-              onPress={() => router.push('/availability' as never)}
-            >
-              <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={22} color={colors.text} />
-            </ZIconButton>
-          ) : undefined
-        }
-      />
-
       <View className="px-4">
         <ZTabs
           testID="coaching-tabs"
@@ -278,6 +259,19 @@ export default function CoachingScreen() {
           className="absolute bottom-6 right-6"
         >
           <ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={colors.onPrimary} />
+        </ZIconButton>
+      ) : null}
+
+      {canManageAvailability ? (
+        <ZIconButton
+          testID="coaching-manage-availability"
+          label={t('sessions.availability.manageTitle')}
+          variant="ghost"
+          size="md"
+          onPress={() => router.push('/availability' as never)}
+          className="absolute bottom-6 left-6"
+        >
+          <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={22} color={colors.text} />
         </ZIconButton>
       ) : null}
     </ZScreen>

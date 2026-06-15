@@ -26,7 +26,7 @@ jest.mock('../components/ui/z-toast', () => ({
 import { initI18n } from '../i18n';
 import { authStore } from '../auth/auth-store';
 import type { Me, UpdateMeRequest } from '../auth/auth-store';
-import ProfileScreen from '../app/(tabs)/profile';
+import ProfileScreen from '../app/(tabs)/profile/index';
 
 beforeAll(() => initI18n('en'));
 

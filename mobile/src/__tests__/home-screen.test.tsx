@@ -43,7 +43,7 @@ jest.mock('expo-router', () => ({
 }));
 
 import { initI18n } from '../i18n';
-import HomeScreen from '../app/(tabs)/index';
+import HomeScreen from '../app/(tabs)/(home)/index';
 
 beforeAll(() => initI18n('en'));
 
@@ -113,14 +113,16 @@ function Providers({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-test('renders the compact page header title', async () => {
+test('renders the latest videos section heading', async () => {
+  // The native stack header owns the page title ("Home"); the screen body
+  // renders a "Latest Videos" card heading which is always visible.
   await render(
     <Providers>
       <HomeScreen />
     </Providers>,
   );
 
-  expect(screen.getByText('Home')).toBeOnTheScreen();
+  expect(screen.getByText('Latest videos')).toBeOnTheScreen();
 });
 
 test('stat cards render live counts from the assets, groups, and bookings queries', async () => {

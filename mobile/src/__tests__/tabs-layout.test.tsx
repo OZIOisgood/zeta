@@ -91,7 +91,7 @@ function isHidden(testId: string): boolean {
 test('always renders Home, Videos, and Profile triggers (not hidden)', async () => {
   mockPermissions = [];
   await render(<TabsLayout />);
-  expect(isHidden('trigger-index')).toBe(false);
+  expect(isHidden('trigger-(home)')).toBe(false);
   expect(isHidden('trigger-videos')).toBe(false);
   expect(isHidden('trigger-profile')).toBe(false);
 });

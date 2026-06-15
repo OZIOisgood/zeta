@@ -1,18 +1,17 @@
 import { FlatList, RefreshControl, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useGroupsQuery } from '../../api/queries/groups';
-import { useAuth } from '../../auth/auth-store';
-import { GroupCard } from '../../components/group-card';
-import { ZButton } from '../../components/ui/z-button';
-import { ZEmptyState } from '../../components/ui/z-empty-state';
-import { ZIconButton } from '../../components/ui/z-icon-button';
-import { ZPageHeader } from '../../components/ui/z-page-header';
-import { ZQueryError } from '../../components/ui/z-query-error';
-import { ZScreen } from '../../components/ui/z-screen';
-import { ZSkeleton } from '../../components/ui/z-skeleton';
-import { ZSymbol } from '../../components/ui/z-symbol';
-import { colors } from '../../theme/colors';
+import { useGroupsQuery } from '../../../api/queries/groups';
+import { useAuth } from '../../../auth/auth-store';
+import { GroupCard } from '../../../components/group-card';
+import { ZButton } from '../../../components/ui/z-button';
+import { ZEmptyState } from '../../../components/ui/z-empty-state';
+import { ZIconButton } from '../../../components/ui/z-icon-button';
+import { ZQueryError } from '../../../components/ui/z-query-error';
+import { ZScreen } from '../../../components/ui/z-screen';
+import { ZSkeleton } from '../../../components/ui/z-skeleton';
+import { ZSymbol } from '../../../components/ui/z-symbol';
+import { colors } from '../../../theme/colors';
 
 function ListSkeleton() {
   return (
@@ -83,26 +82,21 @@ export default function GroupsScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* List/index header: compact title + summary subtitle. The FAB is the
-          screen's PRIMARY action for the user's role — Create for experts
-          (groups:create), Join for students (mutually exclusive, so no clash).
-          Experts can also join, so they keep a secondary "Join" header action;
-          students don't need it (the Join FAB covers them). */}
-      <ZPageHeader
-        title={t('groups.myGroups')}
-        subtitle={t('groups.phase4.summary')}
-        action={
-          canCreate ? (
-            <ZButton
-              testID="groups-join"
-              label={t('groups.invitationDialog.joinGroup')}
-              variant="secondary"
-              onPress={() => router.push('/invite')}
-              icon={<ZSymbol name="qr-code" label={t('common.actions.join')} size={16} color={colors.text} />}
-            />
-          ) : undefined
-        }
-      />
+      {/* The secondary Join action for experts (groups:create) moves to the
+          screen body since the native stack header owns the primary title.
+          Experts can also join, so a ZButton is provided near the top of
+          content; students rely on the Join FAB as their primary action. */}
+      {canCreate ? (
+        <View className="px-4 pb-2">
+          <ZButton
+            testID="groups-join"
+            label={t('groups.invitationDialog.joinGroup')}
+            variant="secondary"
+            onPress={() => router.push('/invite')}
+            icon={<ZSymbol name="qr-code" label={t('common.actions.join')} size={16} color={colors.text} />}
+          />
+        </View>
+      ) : null}
       {content}
       {canCreate ? (
         <ZIconButton
