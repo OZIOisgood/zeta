@@ -36,6 +36,8 @@ test('applySwitcher sets current label and option links for the page', () => {
   assert.equal($('[data-lang-menu] a').length, 5);
   assert.equal($('[data-lang-menu] a[hreflang="de"]').attr('href'), '/imprint.html');
   assert.equal($('[data-lang-menu] a[hreflang="es"]').attr('href'), '/es/imprint.html');
+  assert.match($('[data-lang-menu] a[hreflang="en"]').html(), /flags\/gb\.svg/); // English uses the GB flag
+  assert.match($('[data-lang-menu] a[hreflang="de"]').html(), /flags\/de\.svg/);
 });
 
 test('buildLandingPage sets lang and translates body for non-de', () => {

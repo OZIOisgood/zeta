@@ -31,16 +31,19 @@ export function rewriteLinks($, locale) {
   });
 }
 
+const flagImg = (flag) => `<img class="lp-lang-flag" src="/assets/flags/${flag}.svg" alt="" aria-hidden="true" width="18" height="13">`;
+
 export function applySwitcher($, locale, pageKey) {
   const cur = LOCALES.find((l) => l.code === locale);
   $('[data-lang-current]').text(cur.short);
+  $('[data-lang-flag]').html(flagImg(cur.flag));
   const menu = $('[data-lang-menu]');
   menu.empty();
   for (const l of LOCALES) {
     const active = l.code === locale;
     menu.append(
       `<a class="lp-lang-option" role="option" href="${localePath(l.code, pageKey)}" hreflang="${l.code}"${active ? ' aria-selected="true"' : ''}>` +
-        `<span class="lp-lang-short">${l.short}</span><span>${l.label}</span>` +
+        `${flagImg(l.flag)}<span class="lp-lang-short">${l.short}</span><span>${l.label}</span>` +
         `<span class="lp-lang-check"><i data-lucide="check"></i></span></a>`,
     );
   }

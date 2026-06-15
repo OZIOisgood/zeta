@@ -13,9 +13,9 @@ export const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://strido.net';
 export const LEGAL_SLUGS = ['imprint', 'privacy', 'contact', 'terms'];
 
 export const LOCALES = [
-  { code: 'de', label: 'Deutsch',    short: 'DE', dir: '' },
-  { code: 'en', label: 'English',    short: 'EN', dir: 'en' },
-  { code: 'fr', label: 'Français',   short: 'FR', dir: 'fr' },
-  { code: 'nl', label: 'Nederlands', short: 'NL', dir: 'nl' },
-  { code: 'es', label: 'Español',    short: 'ES', dir: 'es' },
+  { code: 'de', label: 'Deutsch',    short: 'DE', dir: '',   flag: 'de' },
+  { code: 'en', label: 'English',    short: 'EN', dir: 'en', flag: 'gb' },
+  { code: 'fr', label: 'Français',   short: 'FR', dir: 'fr', flag: 'fr' },
+  { code: 'nl', label: 'Nederlands', short: 'NL', dir: 'nl', flag: 'nl' },
+  { code: 'es', label: 'Español',    short: 'ES', dir: 'es', flag: 'es' },
 ];

@@ -345,6 +345,8 @@ body[data-bg-rhythm="ruhig"] .lp-section:has(+ .lp-section[data-bg="warm"]) {
 .lp-lang-btn .lp-lang-globe { width: 16px; height: 16px; color: var(--z-muted); display: inline-flex; }
 .lp-lang-btn .lp-lang-globe svg { width: 16px; height: 16px; }
 .lp-lang-code { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.lp-lang-flag-wrap { display: inline-flex; align-items: center; }
+.lp-lang-flag { width: 18px; height: 13px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.12); flex: none; display: block; }
 .lp-lang-caret { width: 14px; height: 14px; color: var(--z-muted); display: inline-flex; }
 .lp-lang-caret svg { width: 14px; height: 14px; }
 .lp-lang.open .lp-lang-caret { transform: rotate(180deg); }

@@ -8,6 +8,7 @@ test('locales: 5 entries, de is default with empty dir', () => {
   assert.equal(DEFAULT_LOCALE, 'de');
   assert.equal(LOCALES.find(l => l.code === 'de').dir, '');
   assert.equal(LOCALES.find(l => l.code === 'en').dir, 'en');
+  assert.equal(LOCALES.find(l => l.code === 'en').flag, 'gb');
 });
 
 test('legal slugs and origin', () => {
