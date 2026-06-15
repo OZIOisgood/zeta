@@ -63,7 +63,10 @@ design: `.agents/plans/20260615085244_landing_v2_integration_design.md`.
 
 - Replace hero/audience placeholders with real photos + a hero riding GIF.
 - Replace placeholder testimonials with real quotes.
-- Fill legal `{{PLACEHOLDERS}}` (GbR name, address, email, …) + final lawyer review.
+- Fill the 9 operator values in `web/landing/content/legal/values.json` (GbR name, both
+  names, address, email, authority, date) — substituted into the legal pages at build time;
+  unfilled ones stay visible as `{{KEY}}` and the build warns. Build the prod image with
+  `STRICT_PLACEHOLDERS=1` to fail if any remain. Plus final lawyer review.
 - Wire the contact form to a backend (currently markup only).
 - **Native-speaker review of the ES landing copy** (legal ES already reviewed).
 - Footer copyright year is static `2026` (so the tagline matches one dictionary key); update

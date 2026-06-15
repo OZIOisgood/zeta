@@ -5,6 +5,7 @@ import { LOCALES, LEGAL_SLUGS, SRC, DIST, LEGAL_DIR } from './lib/config.mjs';
 import { loadDictionary } from './lib/i18n.mjs';
 import { buildLandingPage, buildLegalPage } from './lib/pages.mjs';
 import { buildSitemap, buildRobots } from './lib/seo.mjs';
+import { loadValues, applyValues, findPlaceholders } from './lib/values.mjs';
 
 const md = new MarkdownIt({ html: false, linkify: true, typographer: true });
 const i18nDir = join(SRC, 'i18n');
@@ -32,6 +33,8 @@ rmSync(DIST, { recursive: true, force: true });
 
 const landingTpl = readFileSync(join(SRC, 'templates', 'landing.html'), 'utf8');
 const legalShell = readFileSync(join(SRC, 'templates', 'legal-shell.html'), 'utf8');
+const legalValues = loadValues(join(LEGAL_DIR, 'values.json'));
+const unfilledPlaceholders = new Set();
 
 for (const l of LOCALES) {
   const dict = loadDictionary(l.code, i18nDir);
@@ -40,12 +43,19 @@ for (const l of LOCALES) {
   write(join(l.dir, 'index.html'), buildLandingPage({ templateHtml: landingTpl, dict, locale: l.code, meta }));
 
   for (const slug of LEGAL_SLUGS) {
-    const mdText = readFileSync(join(LEGAL_DIR, l.code, `${slug}.md`), 'utf8');
+    const mdText = applyValues(readFileSync(join(LEGAL_DIR, l.code, `${slug}.md`), 'utf8'), legalValues);
+    findPlaceholders(mdText).forEach((p) => unfilledPlaceholders.add(p));
     const h1 = extractH1(mdText);
     const contentHtml = md.render(stripFirstH1(mdText));
     const description = descriptionFrom(stripFirstH1(mdText), `${h1} — Strido`);
     write(join(l.dir, `${slug}.html`), buildLegalPage({ shellHtml: legalShell, contentHtml, h1, locale: l.code, slug, description, dict }));
   }
+}
+
+if (unfilledPlaceholders.size) {
+  const msg = `Unfilled legal placeholders: ${[...unfilledPlaceholders].sort().join(', ')}`;
+  if (process.env.STRICT_PLACEHOLDERS === '1') throw new Error(`${msg} (STRICT_PLACEHOLDERS=1)`);
+  console.warn(`WARN: ${msg}\n      Fill web/landing/content/legal/values.json; build with STRICT_PLACEHOLDERS=1 to enforce.`);
 }
 
 cpSync(join(SRC, 'assets'), join(DIST, 'assets'), { recursive: true });
