@@ -1,12 +1,11 @@
 {
   "_comment": "Operator values for the legal pages. Empty string = the {{PLACEHOLDER}} stays visible on the page. Fill before go-live and build with STRICT_PLACEHOLDERS=1 to fail if any placeholder is still unfilled. These details are legally required to be public on the site.",
-  "GBR_BEZEICHNUNG": "",
-  "NAME_1": "",
-  "NAME_2": "",
-  "ANSCHRIFT": "",
-  "EMAIL": "",
-  "EMAIL_DSA": "",
+  "GBR_BEZEICHNUNG": "Strido",
+  "NAME_1": "Heinrich Mergel",
+  "NAME_2": "Pavlo Lobariev",
+  "ANSCHRIFT": "Erbacher Straße 3 | 65428 Rüsselsheim am Main | Germany",
+  "EMAIL": "support@strido.net",
+  "EMAIL_DSA": "support@strido.net",
   "DOMAIN": "strido.net",
-  "AUFSICHTSBEHOERDE": "",
-  "STAND_DATUM": ""
+  "AUFSICHTSBEHOERDE": "Der Hessische Beauftragte für Datenschutz und Informationsfreiheit, Postfach 31 63, 65021 Wiesbaden (datenschutz.hessen.de)"
 }
