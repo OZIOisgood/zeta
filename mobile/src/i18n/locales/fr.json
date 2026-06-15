@@ -722,5 +722,13 @@
       "coachingBookingCreated": "{{student}} a réservé une séance avec vous",
       "generic": "Vous avez une nouvelle notification"
     }
+  },
+  "auth": {
+    "login": {
+      "heading": "Connectez-vous pour continuer",
+      "subtitle": "Coaching vidéo numérique — connectez-vous pour consulter et enregistrer vos séances.",
+      "signIn": "Se connecter",
+      "failed": "Connexion échouée. Veuillez réessayer."
+    }
   }
 }

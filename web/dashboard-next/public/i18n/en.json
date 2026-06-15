@@ -721,5 +721,13 @@
       "coachingBookingCreated": "{{student}} booked a session with you",
       "generic": "You have a new notification"
     }
+  },
+  "auth": {
+    "login": {
+      "heading": "Sign in to continue",
+      "subtitle": "Digital video coaching — sign in to review and record sessions.",
+      "signIn": "Sign in",
+      "failed": "Sign-in failed. Please try again."
+    }
   }
 }

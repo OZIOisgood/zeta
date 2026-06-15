@@ -136,7 +136,6 @@ export default function UploadScreen() {
           pattern inside native sheet routes"). keyboardShouldPersistTaps is applied
           to the ScrollView below. */}
       <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-
           {/* Header card */}
           <ZCard className="mb-4">
             <Text className="text-2xl font-semibold text-z-text">{t('upload.title')}</Text>

@@ -298,7 +298,6 @@ export default function CoachingScreen() {
 
   return (
     <ZScreen edges={[]}>
-
       <View className="px-4">
         <ZTabs
           testID="coaching-tabs"

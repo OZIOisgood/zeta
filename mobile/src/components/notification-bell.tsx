@@ -1,14 +1,17 @@
 import { View, Text } from 'react-native';
-import { Bell } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { colors } from '../theme/colors';
-import { ZIconButton } from './ui/z-icon-button';
+import { Touchable } from './ui/touchable';
+import { ZSymbol } from './ui/z-symbol';
 
 /**
  * Shell bell + unread-count badge. The mobile counterpart of the web navbar bell
  * (web/dashboard-next/src/app/core/state/notifications.store badge computed).
  * Lives in a list/index screen header `action` slot (Home). Secondary navigation
  * action — not a FAB.
+ *
+ * Uses ZSymbol (SF Symbols on iOS / Material Symbols on Android) rather than
+ * lucide, per the Native-fidelity rules in AGENTS.md.
  */
 export function NotificationBell({
   unreadCount,
@@ -22,19 +25,20 @@ export function NotificationBell({
   const badge = unreadCount > 9 ? '9+' : String(unreadCount);
   return (
     <View>
-      <ZIconButton
+      <Touchable
         testID="notification-bell"
-        label={t('notifications.open')}
-        variant="secondary"
+        accessibilityLabel={t('notifications.open')}
         onPress={onPress}
+        haptic
       >
-        <Bell color={colors.text} size={18} />
-      </ZIconButton>
+        <ZSymbol name="bell" label={t('notifications.open')} size={22} color={colors.primary} />
+      </Touchable>
       {unreadCount > 0 ? (
         <View
           testID="notification-bell-badge"
           accessibilityLabel={t('notifications.unread')}
           className="absolute -right-1 -top-1 min-w-[18px] items-center justify-center rounded-full border border-z-surface bg-z-primary px-1"
+          pointerEvents="none"
         >
           {/* Badge foreground = the onPrimary token (white-on-color) from
               theme/colors.ts, not a raw `text-white` class. There is no

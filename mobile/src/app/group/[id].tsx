@@ -445,6 +445,7 @@ export default function GroupDetailScreen() {
   if (isPending) {
     return (
       <ZScreen edges={['bottom']} className="gap-4 p-4">
+        <Stack.Screen options={{ title: t('groups.myGroups') }} />
         <ZSkeleton testID="group-detail-skeleton" className="h-20 w-full" />
         <ZSkeleton className="h-5 w-3/5" />
         <ZSkeleton className="h-4 w-4/5" />
@@ -455,6 +456,7 @@ export default function GroupDetailScreen() {
   if (isError || !data) {
     return (
       <ZScreen edges={['bottom']} className="items-center justify-center px-8">
+        <Stack.Screen options={{ title: t('groups.myGroups') }} />
         <ZQueryError
           title={t('groups.phase4.detailFailed')}
           onRetry={() => void refetch()}

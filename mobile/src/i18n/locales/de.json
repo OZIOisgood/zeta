@@ -722,5 +722,13 @@
       "coachingBookingCreated": "{{student}} hat einen Termin mit dir gebucht",
       "generic": "Du hast eine neue Benachrichtigung"
     }
+  },
+  "auth": {
+    "login": {
+      "heading": "Anmelden und loslegen",
+      "subtitle": "Digitales Video-Coaching — melde dich an, um Aufnahmen zu überprüfen und aufzuzeichnen.",
+      "signIn": "Anmelden",
+      "failed": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
+    }
   }
 }

@@ -210,7 +210,6 @@ export default function GroupPreferencesScreen() {
           contentContainerStyle={{ paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-
           {/* Form summary */}
           <View className="px-4 pb-4">
             <Text className="mt-1 text-sm leading-6 text-z-muted">

@@ -144,7 +144,6 @@ export default function GroupsScreen() {
 
   return (
     <ZScreen edges={[]}>
-
       {content}
       {/* Android only: Material FABs for the role-dependent primary action.
           iOS: the same action is a native header-right button (set via

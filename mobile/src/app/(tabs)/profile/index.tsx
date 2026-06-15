@@ -141,7 +141,6 @@ function LoadingState() {
   const androidPaddingBottom = Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
   return (
     <ZScreen edges={[]}>
-
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
@@ -306,7 +305,6 @@ function PreferencesForm({ user }: { user: Me }) {
 
   return (
     <ZScreen edges={[]}>
-
       <ZKeyboardAvoidingView>
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"

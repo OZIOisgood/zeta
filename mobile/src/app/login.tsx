@@ -74,16 +74,15 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* Heading + description. No auth.login.* keys exist in the synced
-              dashboard source, so these stay as literals (see follow-up). */}
-          <Text className="mt-7 text-xl font-semibold text-z-text">Sign in to continue</Text>
+          {/* Heading + description. */}
+          <Text className="mt-7 text-xl font-semibold text-z-text">{t('auth.login.heading')}</Text>
           <Text className="mt-2 text-sm leading-6 text-z-muted">
-            Digital video coaching — sign in to review and record sessions.
+            {t('auth.login.subtitle')}
           </Text>
 
           <View className="mt-7">
             <ZButton
-              label="Sign in"
+              label={t('auth.login.signIn')}
               onPress={signIn}
               loading={busy}
               disabled={!request}
@@ -97,7 +96,7 @@ export default function LoginScreen() {
               accessibilityLiveRegion="assertive"
               className="mt-4 text-sm text-z-danger"
             >
-              Sign-in failed. Please try again.
+              {t('auth.login.failed')}
             </Text>
           ) : null}
         </ZCard>
