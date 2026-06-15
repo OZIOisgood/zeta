@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ZSymbol } from '../components/ui/z-symbol';
 import { useTranslation } from 'react-i18next';
@@ -117,16 +117,24 @@ export default function UploadScreen() {
   const selectedGroupName = groups?.find((group) => group.id === selectedGroupId)?.name ?? '';
 
   return (
-    <ZScreen>
+    <ZScreen edges={['bottom']}>
+      {/* Native sheet header with title + cancel affordance. */}
+      <Stack.Screen
+        options={{
+          title: t('upload.title'),
+          headerLeft: () => (
+            <ZButton
+              testID="upload-cancel"
+              label={t('common.actions.cancel')}
+              variant="ghost"
+              onPress={() => router.back()}
+            />
+          ),
+        }}
+      />
       <ZKeyboardAvoidingView>
         <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ padding: 16 }}>
-          {/* Header */}
-          <View className="mb-4 flex-row items-center gap-3">
-            <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-              <ZSymbol name="back" label={t('common.actions.back')} size={24} color={colors.muted} />
-            </ZIconButton>
-          </View>
-  
+
           {/* Header card */}
           <ZCard className="mb-4">
             <Text className="text-2xl font-semibold text-z-text">{t('upload.title')}</Text>

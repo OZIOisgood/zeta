@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { CoachingExpert, CoachingSlot, SessionType } from '../api/queries/coaching';
 import {
@@ -19,7 +19,6 @@ import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
 import { ZChip } from '../components/ui/z-chip';
 import { ZEmptyState } from '../components/ui/z-empty-state';
-import { ZIconButton } from '../components/ui/z-icon-button';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
@@ -210,19 +209,21 @@ export default function BookScreen() {
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <ZScreen>
-      {/* Header */}
-      <View className="flex-row items-center gap-2 px-4 pb-2 pt-4">
-        <ZIconButton
-          label={t('common.actions.back')}
-          onPress={() => router.back()}
-          variant="ghost"
-          size="sm"
-        >
-          <ZSymbol name="back" label={t('common.actions.back')} size={24} color={colors.text} />
-        </ZIconButton>
-        <Text className="text-lg font-semibold text-z-text">{t('sessions.bookLive')}</Text>
-      </View>
+    <ZScreen edges={['bottom']}>
+      {/* Native sheet header with title + cancel affordance. */}
+      <Stack.Screen
+        options={{
+          title: t('sessions.bookLive'),
+          headerLeft: () => (
+            <ZButton
+              testID="book-cancel"
+              label={t('common.actions.cancel')}
+              variant="ghost"
+              onPress={() => router.back()}
+            />
+          ),
+        }}
+      />
 
       {booked ? (
         // ── Success state ─────────────────────────────────────────────────────

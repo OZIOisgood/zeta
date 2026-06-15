@@ -167,6 +167,7 @@ export default function VideosScreen() {
         <FlatList
           data={filteredAssets}
           keyExtractor={(a) => a.id}
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{ padding: 16 }}
           ListHeaderComponent={<JobCards jobs={jobs} />}
           ItemSeparatorComponent={() => <View className="h-3" />}
@@ -180,7 +181,8 @@ export default function VideosScreen() {
   }
 
   return (
-    <ZScreen edges={['top']}>
+    <ZScreen edges={[]}>
+
       {filterRow}
       {content}
       {/* Android only: Material FAB for the primary create action.

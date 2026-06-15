@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { AccessibilityInfo, ScrollView, Text, View } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
 import {
@@ -103,22 +103,14 @@ export default function InviteScreen() {
   const isConfirmPhase = code !== '';
 
   return (
-    <ZScreen>
+    <ZScreen edges={['bottom']}>
+      <Stack.Screen options={{ title: t('home.firstSteps.joinGroup') }} />
       <ZKeyboardAvoidingView>
         <ScrollView
           className="flex-1 bg-z-bg"
           contentContainerStyle={{ padding: 16 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View className="mb-4 flex-row items-center gap-3">
-            <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-              <ZSymbol name="back" label={t('common.actions.back')} size={24} color={colors.muted} />
-            </ZIconButton>
-            <Text className="text-lg font-semibold text-z-text">
-              {t('home.firstSteps.joinGroup')}
-            </Text>
-          </View>
 
           {/* Capture phase */}
           {!isConfirmPhase && (

@@ -24,6 +24,7 @@ jest.mock('expo-image-picker', () => ({
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: mockBack }),
+  Stack: { Screen: () => null },
 }));
 
 // Mock groups query

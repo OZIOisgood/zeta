@@ -259,7 +259,7 @@ export default function ReportsScreen() {
   }
 
   return (
-    <ZScreen>
+    <ZScreen edges={['bottom']}>
       {/* Native header: title reflects expert vs student role. The subtitle
           (activity count for the period) is omitted from the native title since
           native-stack headers don't have a subtitle slot; it remains visible

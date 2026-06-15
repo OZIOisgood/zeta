@@ -62,7 +62,7 @@ export default function SelectFieldScreen() {
   }
 
   return (
-    <ZScreen>
+    <ZScreen edges={['bottom']}>
       {/* Native header with a custom back handler to clear the selectStore
           before popping. headerLeft overrides the default back chevron so the
           store-clear side effect fires even on an explicit tap (swipe-back also

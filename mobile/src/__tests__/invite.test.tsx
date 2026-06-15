@@ -25,6 +25,7 @@ const mockUseLocalSearchParams = jest.fn(() => ({}));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, back: mockBack }),
   useLocalSearchParams: () => mockUseLocalSearchParams(),
+  Stack: { Screen: () => null },
 }));
 
 // Invitation hook mocks

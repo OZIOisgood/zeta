@@ -493,7 +493,7 @@ export default function AvailabilityScreen() {
   // ── permission gate ────────────────────────────────────────────────────────
   if (!canManage) {
     return (
-      <ZScreen>
+      <ZScreen edges={['bottom']}>
         <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <View testID="availability-no-permission" className="p-4">
           <ZEmptyState
@@ -513,7 +513,7 @@ export default function AvailabilityScreen() {
 
   if (groupsQuery.isPending) {
     return (
-      <ZScreen>
+      <ZScreen edges={['bottom']}>
         <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <View testID="availability-groups-loading" className="gap-3 p-4">
           <ZSkeleton className="h-32 w-full rounded-lg" />
@@ -525,7 +525,7 @@ export default function AvailabilityScreen() {
 
   if (groupsQuery.isError) {
     return (
-      <ZScreen>
+      <ZScreen edges={['bottom']}>
         <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <View testID="availability-groups-error" className="p-4">
           <ZQueryError
@@ -539,7 +539,7 @@ export default function AvailabilityScreen() {
 
   if (groups.length === 0) {
     return (
-      <ZScreen>
+      <ZScreen edges={['bottom']}>
         <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <View testID="availability-no-groups" className="p-4">
           <ZEmptyState
@@ -556,7 +556,7 @@ export default function AvailabilityScreen() {
   // three section queries from staying in the disabled/pending limbo state.
   if (groupId === '') {
     return (
-      <ZScreen>
+      <ZScreen edges={['bottom']}>
         <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <ZKeyboardAvoidingView>
           <ZCard className="m-4 gap-1">
@@ -805,7 +805,7 @@ export default function AvailabilityScreen() {
   }
 
   return (
-    <ZScreen>
+    <ZScreen edges={['bottom']}>
       {/* Native header title is set once, here in the data-loaded render path. */}
       <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
       <ZKeyboardAvoidingView>

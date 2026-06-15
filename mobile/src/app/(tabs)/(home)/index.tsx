@@ -224,8 +224,12 @@ export default function HomeScreen() {
   }
 
   return (
-    <ZScreen edges={['top']}>
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 16 }}>
+    <ZScreen edges={[]}>
+      <ScrollView
+        className="flex-1"
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ padding: 16, gap: 16 }}
+      >
         {/* Stat cards: live counts that double as section navigation. */}
         <View className="flex-row gap-3">
           <StatCard

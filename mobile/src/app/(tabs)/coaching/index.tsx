@@ -249,6 +249,7 @@ export default function CoachingScreen() {
         data={visibleBookings}
         keyExtractor={(booking) => booking.id}
         renderItem={({ item }) => renderBooking(item)}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ padding: 16, flexGrow: 1 }}
         ListEmptyComponent={
           <View testID="coaching-empty" className="flex-1 justify-center">
@@ -267,7 +268,8 @@ export default function CoachingScreen() {
     : null;
 
   return (
-    <ZScreen edges={['top']}>
+    <ZScreen edges={[]}>
+
       <View className="px-4">
         <ZTabs
           testID="coaching-tabs"

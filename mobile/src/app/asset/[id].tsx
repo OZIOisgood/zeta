@@ -354,7 +354,7 @@ export default function AssetDetailScreen() {
 
   if (isPending) {
     return (
-      <ZScreen className="gap-4 p-4">
+      <ZScreen edges={['bottom']} className="gap-4 p-4">
         <ZSkeleton testID="asset-detail-skeleton" className="aspect-video w-full" />
         <ZSkeleton className="h-5 w-3/5" />
         <ZSkeleton className="h-4 w-4/5" />
@@ -364,7 +364,7 @@ export default function AssetDetailScreen() {
 
   if (isError || !data) {
     return (
-      <ZScreen className="items-center justify-center gap-4 px-8">
+      <ZScreen edges={['bottom']} className="items-center justify-center gap-4 px-8">
         <Text className="text-center text-z-muted">{t('videos.phase4.detailFailed')}</Text>
         <ZButton label={t('common.actions.retry')} variant="secondary" onPress={() => void refetch()} />
         <ZButton label={t('common.actions.back')} variant="ghost" onPress={() => router.back()} />

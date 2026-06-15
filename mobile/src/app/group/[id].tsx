@@ -443,7 +443,7 @@ export default function GroupDetailScreen() {
 
   if (isPending) {
     return (
-      <ZScreen className="gap-4 p-4">
+      <ZScreen edges={['bottom']} className="gap-4 p-4">
         <ZSkeleton testID="group-detail-skeleton" className="h-20 w-full" />
         <ZSkeleton className="h-5 w-3/5" />
         <ZSkeleton className="h-4 w-4/5" />
@@ -453,7 +453,7 @@ export default function GroupDetailScreen() {
 
   if (isError || !data) {
     return (
-      <ZScreen className="items-center justify-center px-8">
+      <ZScreen edges={['bottom']} className="items-center justify-center px-8">
         <ZQueryError
           title={t('groups.phase4.detailFailed')}
           onRetry={() => void refetch()}

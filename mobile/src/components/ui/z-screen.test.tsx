@@ -30,3 +30,14 @@ test('skips edges that are not requested', async () => {
   );
   expect(screen.getByTestId('screen')).toHaveStyle({ paddingTop: 59, paddingBottom: 0 });
 });
+
+test('applies no vertical insets when edges is empty (tab screens with native header + NativeTabs)', async () => {
+  await render(
+    <SafeAreaProvider initialMetrics={metrics}>
+      <ZScreen testID="screen" edges={[]}>
+        <Text>content</Text>
+      </ZScreen>
+    </SafeAreaProvider>,
+  );
+  expect(screen.getByTestId('screen')).toHaveStyle({ paddingTop: 0, paddingBottom: 0 });
+});

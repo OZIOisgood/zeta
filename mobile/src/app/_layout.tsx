@@ -54,10 +54,44 @@ export default function RootLayout() {
           <Stack.Screen name="reports" options={DETAIL_SCREEN_OPTIONS} />
           <Stack.Screen name="select/[field]" options={DETAIL_SCREEN_OPTIONS} />
           <Stack.Screen name="invite" options={DETAIL_SCREEN_OPTIONS} />
-          {/* Modal screens — presentation overrides headerShown:false from
-              screenOptions; the screen itself sets its own header/title. */}
-          <Stack.Screen name="upload" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="book" options={{ presentation: 'modal' }} />
+          {/* Modal screens — formSheet gives native grab-bar + detents on iOS
+              (UISheetPresentationController) and a bottom sheet on Android.
+              headerShown:true lets the screen set its own title + cancel
+              button via <Stack.Screen options={...}> inside the component.
+              upload: full height (media picker needs room); single detent '1.0'
+                so the sheet always expands — no half-sheet for a multi-step wizard
+                that embeds a video picker.
+              book: half-or-full fluid detents so the user can see the coaching
+                calendar below when the sheet is partially open (UX improvement
+                over a full-screen push). */}
+          <Stack.Screen
+            name="upload"
+            options={{
+              presentation: 'formSheet',
+              headerShown: true,
+              headerBackButtonDisplayMode: 'minimal' as const,
+              headerTintColor: colors.primary,
+              headerStyle: { backgroundColor: colors.bg },
+              headerTitleStyle: { color: colors.text },
+              sheetAllowedDetents: [1.0],
+              sheetGrabberVisible: true,
+              sheetCornerRadius: 16,
+            }}
+          />
+          <Stack.Screen
+            name="book"
+            options={{
+              presentation: 'formSheet',
+              headerShown: true,
+              headerBackButtonDisplayMode: 'minimal' as const,
+              headerTintColor: colors.primary,
+              headerStyle: { backgroundColor: colors.bg },
+              headerTitleStyle: { color: colors.text },
+              sheetAllowedDetents: [0.5, 1.0],
+              sheetGrabberVisible: true,
+              sheetCornerRadius: 16,
+            }}
+          />
           {/* Full-screen live call — keeps its own chrome, no nav header. */}
           <Stack.Screen name="call/[bookingId]" options={{ presentation: 'fullScreenModal', headerShown: false }} />
         </Stack.Protected>

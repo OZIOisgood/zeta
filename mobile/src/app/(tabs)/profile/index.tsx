@@ -133,8 +133,9 @@ function FieldSkeleton() {
 
 function LoadingState() {
   return (
-    <ZScreen edges={['top']}>
-      <ScrollView>
+    <ZScreen edges={[]}>
+
+      <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View className="gap-4 p-4">
           <ZCard className="gap-2">
             <ZSkeleton className="h-6 w-40" />
@@ -292,9 +293,10 @@ function PreferencesForm({ user }: { user: Me }) {
   ];
 
   return (
-    <ZScreen edges={['top']}>
+    <ZScreen edges={[]}>
+
       <ZKeyboardAvoidingView>
-        <ScrollView keyboardShouldPersistTaps="handled">
+        <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
           <View className="gap-4 p-4">
             <ZCard className="gap-2">
               <Text className="text-2xl font-semibold text-z-text">{t('preferences.title')}</Text>

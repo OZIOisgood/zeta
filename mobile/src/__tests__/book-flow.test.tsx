@@ -41,6 +41,7 @@ const mockBack = jest.fn();
 const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: mockBack, replace: mockReplace }),
+  Stack: { Screen: () => null },
 }));
 
 // ── i18n + component imports (after mocks) ────────────────────────────────────

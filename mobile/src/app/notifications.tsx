@@ -160,7 +160,7 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <ZScreen>
+    <ZScreen edges={['bottom']}>
       {/* Native header: title always set; headerRight shows "mark all read"
           only when there are unread items. The TouchableOpacity wrapper is
           kept minimal (native-tier: no ZIconButton which adds extra padding
