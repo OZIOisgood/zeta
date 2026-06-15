@@ -1,3 +1,4 @@
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -37,9 +38,17 @@ jest.mock('../api/queries/coaching', () => ({
   useMyAvailabilityQuery: (...args: unknown[]) => mockUseMyAvailabilityQuery(...args),
 }));
 
+const mockUseNotificationsQuery = jest.fn();
+jest.mock('../api/queries/notifications', () => ({
+  ...jest.requireActual('../api/queries/notifications'),
+  useNotificationsQuery: () => mockUseNotificationsQuery(),
+}));
+
+const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
+  useNavigation: () => ({ setOptions: mockSetOptions }),
 }));
 
 import { initI18n } from '../i18n';
@@ -101,10 +110,12 @@ let client: QueryClient;
 beforeEach(() => {
   mockPermissions = null;
   mockPush.mockClear();
+  mockSetOptions.mockClear();
   mockUseAssetsQuery.mockReturnValue(success([]));
   mockUseGroupsQuery.mockReturnValue(success([]));
   mockUseMyBookingsQuery.mockReturnValue(success([]));
   mockUseMyAvailabilityQuery.mockReturnValue(success([]));
+  mockUseNotificationsQuery.mockReturnValue({ data: undefined, isPending: false, isError: false });
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
 afterEach(() => client.clear());
@@ -330,4 +341,73 @@ test('availability query IS called with the groupId when user has coaching:avail
   );
 
   expect(mockUseMyAvailabilityQuery).toHaveBeenCalledWith('g1');
+});
+
+// ── Notification bell header action ──────────────────────────────────────────
+// The bell moves from an in-body View row into the native nav-bar header-right
+// (on both platforms) via navigation.setOptions. Tests verify that setOptions
+// is called with a headerRight function and that the rendered bell is
+// pressable and navigates to /notifications.
+
+test('notification bell is registered in the header-right via setOptions', async () => {
+  mockUseNotificationsQuery.mockReturnValue(
+    success({ items: [], unread_count: 3 }),
+  );
+
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+
+  // setOptions should have been called with a headerRight function.
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: expect.any(Function) }),
+  );
+});
+
+test('notification bell headerRight renders the bell and badge when there are unread notifications', async () => {
+  const user = userEvent.setup();
+  mockUseNotificationsQuery.mockReturnValue(
+    success({ items: [], unread_count: 5 }),
+  );
+
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+
+  // Render the headerRight component extracted from setOptions.
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  // The bell button is accessible.
+  expect(screen.getByTestId('notification-bell')).toBeOnTheScreen();
+  // Unread badge is visible.
+  expect(screen.getByTestId('notification-bell-badge')).toBeOnTheScreen();
+
+  // Pressing the bell navigates to /notifications.
+  await user.press(screen.getByTestId('notification-bell'));
+  expect(mockPush).toHaveBeenCalledWith('/notifications');
+});
+
+test('notification bell headerRight renders without badge when unread count is zero', async () => {
+  mockUseNotificationsQuery.mockReturnValue(
+    success({ items: [], unread_count: 0 }),
+  );
+
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  expect(screen.getByTestId('notification-bell')).toBeOnTheScreen();
+  expect(screen.queryByTestId('notification-bell-badge')).toBeNull();
 });

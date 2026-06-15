@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { FlatList, Platform, RefreshControl, Text, View } from 'react-native';
+import { useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../../api/queries/coaching';
 import {
@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../../../auth/auth-store';
 import { BookingCard } from '../../../components/booking-card';
 import { isJoinable } from '../../../lib/connect-window';
+import { Touchable } from '../../../components/ui/touchable';
 import { ZConfirmDialog } from '../../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
 import { ZIconButton } from '../../../components/ui/z-icon-button';
@@ -124,6 +125,7 @@ function CancelDialog({
 export default function CoachingScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const navigation = useNavigation();
   const { data, isPending, isError, refetch, isRefetching } = useMyBookingsQuery();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const currentUserId = useAuth((s) => s.user?.id ?? '');
@@ -134,6 +136,44 @@ export default function CoachingScreen() {
 
   const [activeTab, setActiveTab] = useState<SessionTab>('upcoming');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  // Header actions:
+  // - "Manage Availability" (calendar-cog) goes to headerRight on BOTH platforms,
+  //   gated by coaching:availability:manage.
+  // - "Book session" (+) goes to headerRight on iOS only; Android uses the FAB.
+  // Multiple headerRight items are composed in a flex row (HIG allows multiple
+  // bar button items on the trailing side; two icons is the safe limit).
+  useEffect(() => {
+    const hasActions = canManageAvailability || (Platform.OS === 'ios' && canBook);
+    navigation.setOptions({
+      headerRight: hasActions
+        ? () => (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {canManageAvailability ? (
+                <Touchable
+                  testID="coaching-availability-header-btn"
+                  accessibilityLabel={t('sessions.availability.manageTitle')}
+                  onPress={() => router.push('/availability' as never)}
+                  haptic
+                >
+                  <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={24} color={colors.primary} />
+                </Touchable>
+              ) : null}
+              {Platform.OS === 'ios' && canBook ? (
+                <Touchable
+                  testID="coaching-book-header-btn"
+                  accessibilityLabel={t('sessions.bookLive')}
+                  onPress={() => router.push('/book')}
+                  haptic
+                >
+                  <ZSymbol name="plus" label={t('common.actions.bookSession')} size={24} color={colors.primary} />
+                </Touchable>
+              ) : null}
+            </View>
+          )
+        : undefined,
+    });
+  }, [navigation, canManageAvailability, canBook, t, router]);
 
   const now = new Date();
   const nowMs = now.getTime();
@@ -248,7 +288,10 @@ export default function CoachingScreen() {
         />
       ) : null}
 
-      {canBook ? (
+      {/* Android only: Material FAB for the primary "book session" action.
+          iOS: the same action is a native header-right "+" button (set via
+          useEffect above). Availability is in the header on both platforms. */}
+      {Platform.OS === 'android' && canBook ? (
         <ZIconButton
           testID="coaching-book"
           label={t('sessions.bookLive')}
@@ -259,19 +302,6 @@ export default function CoachingScreen() {
           className="absolute bottom-6 right-6"
         >
           <ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={colors.onPrimary} />
-        </ZIconButton>
-      ) : null}
-
-      {canManageAvailability ? (
-        <ZIconButton
-          testID="coaching-manage-availability"
-          label={t('sessions.availability.manageTitle')}
-          variant="ghost"
-          size="md"
-          onPress={() => router.push('/availability' as never)}
-          className="absolute bottom-6 left-6"
-        >
-          <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={22} color={colors.text} />
         </ZIconButton>
       ) : null}
     </ZScreen>

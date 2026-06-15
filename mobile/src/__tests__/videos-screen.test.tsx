@@ -1,3 +1,4 @@
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -28,9 +29,11 @@ jest.mock('../api/queries/assets', () => ({
   useAssetsQuery: () => mockUseAssetsQuery(),
 }));
 
+const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
+  useNavigation: () => ({ setOptions: mockSetOptions }),
 }));
 
 import { initI18n } from '../i18n';
@@ -41,6 +44,8 @@ beforeAll(() => initI18n('en'));
 let client: QueryClient;
 beforeEach(() => {
   mockPermissions = null;
+  mockSetOptions.mockClear();
+  mockPush.mockClear();
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
 afterEach(() => client.clear());
@@ -114,18 +119,43 @@ test('renders the filter tabs when data is present', async () => {
   expect(screen.getByRole('tab', { name: 'All' })).toBeOnTheScreen();
 });
 
-test('upload FAB shows with assets:create permission', async () => {
+// ── Upload action (iOS: header-right; Android: FAB) ──────────────────────────
+// jest-expo runs with Platform.OS = 'ios', so the Android FAB is not rendered.
+// Instead, the primary action is registered in the native header via setOptions.
+
+test('upload action: setOptions called with headerRight when user has assets:create (iOS path)', async () => {
   mockPermissions = ['assets:create'];
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
-  expect(screen.getByLabelText('Upload Video')).toBeOnTheScreen();
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: expect.any(Function) }),
+  );
 });
 
-test('upload FAB hidden without permission', async () => {
+test('upload action: setOptions called with headerRight undefined when user lacks assets:create (iOS path)', async () => {
   mockPermissions = [];
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
-  expect(screen.queryByLabelText('Upload Video')).toBeNull();
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: undefined }),
+  );
+});
+
+test('upload action: headerRight button renders with accessible label and navigates to /upload (iOS path)', async () => {
+  const user = userEvent.setup();
+  mockPermissions = ['assets:create'];
+  mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
+  await render(<Providers><VideosScreen /></Providers>);
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  expect(screen.getByTestId('videos-create-header-btn')).toBeOnTheScreen();
+  expect(screen.getByLabelText('Upload Video')).toBeOnTheScreen();
+
+  await user.press(screen.getByLabelText('Upload Video'));
+  expect(mockPush).toHaveBeenCalledWith('/upload');
 });
 
 test('filter tabs render with counts derived from the assets query', async () => {

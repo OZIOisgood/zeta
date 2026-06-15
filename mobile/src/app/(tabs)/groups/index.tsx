@@ -1,10 +1,11 @@
-import { FlatList, RefreshControl, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { FlatList, Platform, RefreshControl, View } from 'react-native';
+import { useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../../../api/queries/groups';
 import { useAuth } from '../../../auth/auth-store';
 import { GroupCard } from '../../../components/group-card';
-import { ZButton } from '../../../components/ui/z-button';
+import { Touchable } from '../../../components/ui/touchable';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
 import { ZIconButton } from '../../../components/ui/z-icon-button';
 import { ZQueryError } from '../../../components/ui/z-query-error';
@@ -36,9 +37,41 @@ function ListSkeleton() {
 export default function GroupsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const navigation = useNavigation();
   const { data, isPending, isError, refetch, isRefetching } = useGroupsQuery();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const canCreate = permissions !== null && permissions.includes('groups:create');
+
+  // iOS: surface the role-dependent primary action in the native nav-bar header.
+  //   Creator (groups:create) → "+" to create a group.
+  //   Student (no groups:create) → QR-code icon to join a group.
+  // Android: the same action is surfaced as a Material FAB (rendered in JSX below).
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    navigation.setOptions({
+      headerRight: canCreate
+        ? () => (
+            <Touchable
+              testID="groups-create-header-btn"
+              accessibilityLabel={t('groups.create')}
+              onPress={() => router.push('/group/create')}
+              haptic
+            >
+              <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
+            </Touchable>
+          )
+        : () => (
+            <Touchable
+              testID="groups-join-header-btn"
+              accessibilityLabel={t('groups.invitationDialog.joinGroup')}
+              onPress={() => router.push('/invite')}
+              haptic
+            >
+              <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.primary} />
+            </Touchable>
+          ),
+    });
+  }, [navigation, canCreate, t, router]);
 
   let content: React.ReactNode;
 
@@ -82,47 +115,39 @@ export default function GroupsScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* The secondary Join action for experts (groups:create) moves to the
-          screen body since the native stack header owns the primary title.
-          Experts can also join, so a ZButton is provided near the top of
-          content; students rely on the Join FAB as their primary action. */}
-      {canCreate ? (
-        <View className="px-4 pb-2">
-          <ZButton
-            testID="groups-join"
-            label={t('groups.invitationDialog.joinGroup')}
-            variant="secondary"
-            onPress={() => router.push('/invite')}
-            icon={<ZSymbol name="qr-code" label={t('common.actions.join')} size={16} color={colors.text} />}
-          />
-        </View>
-      ) : null}
       {content}
-      {canCreate ? (
-        <ZIconButton
-          testID="groups-create-fab"
-          label={t('groups.create')}
-          variant="primary"
-          size="lg"
-          shape="circle"
-          onPress={() => router.push('/group/create')}
-          className="absolute bottom-6 right-6"
-        >
-          <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
-        </ZIconButton>
-      ) : (
-        <ZIconButton
-          testID="groups-join-fab"
-          label={t('groups.invitationDialog.joinGroup')}
-          variant="primary"
-          size="lg"
-          shape="circle"
-          onPress={() => router.push('/invite')}
-          className="absolute bottom-6 right-6"
-        >
-          <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.onPrimary} />
-        </ZIconButton>
-      )}
+      {/* Android only: Material FABs for the role-dependent primary action.
+          iOS: the same action is a native header-right button (set via
+          useEffect above per mobile/AGENTS.md SOTA-as-default).
+          Creator (groups:create) → "+" FAB to create a group.
+          Student → QR-code FAB to join a group. */}
+      {Platform.OS === 'android' ? (
+        canCreate ? (
+          <ZIconButton
+            testID="groups-create-fab"
+            label={t('groups.create')}
+            variant="primary"
+            size="lg"
+            shape="circle"
+            onPress={() => router.push('/group/create')}
+            className="absolute bottom-6 right-6"
+          >
+            <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
+          </ZIconButton>
+        ) : (
+          <ZIconButton
+            testID="groups-join-fab"
+            label={t('groups.invitationDialog.joinGroup')}
+            variant="primary"
+            size="lg"
+            shape="circle"
+            onPress={() => router.push('/invite')}
+            className="absolute bottom-6 right-6"
+          >
+            <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.onPrimary} />
+          </ZIconButton>
+        )
+      ) : null}
     </ZScreen>
   );
 }

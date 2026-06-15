@@ -1,7 +1,10 @@
 /**
- * Tests the create-group FAB on the groups list screen (groups:create permission gate).
+ * Tests the role-dependent primary action on the groups list screen.
+ * On iOS (default jest-expo platform), the action is a native header-right button.
+ * On Android, it is a Material FAB (not exercised in jest which runs on iOS).
  * Isolated from groups-list.test.tsx to avoid re-testing already-covered paths.
  */
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -20,9 +23,11 @@ jest.mock('../api/queries/groups', () => ({
   useGroupsQuery: () => mockUseGroupsQuery(),
 }));
 
+const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
+  useNavigation: () => ({ setOptions: mockSetOptions }),
 }));
 
 let mockPermissions: string[] | null = null;
@@ -42,6 +47,7 @@ beforeAll(() => initI18n('en'));
 let client: QueryClient;
 beforeEach(() => {
   mockPush.mockClear();
+  mockSetOptions.mockClear();
   mockPermissions = [];
   mockUseGroupsQuery.mockReturnValue({
     isPending: false,
@@ -58,30 +64,50 @@ function Providers({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-test('students get the Join FAB, not the Create FAB (no groups:create)', async () => {
+// ── iOS header-right (jest-expo default platform = 'ios') ─────────────────────
+// On iOS, the role-dependent primary action lives in the native nav-bar via
+// setOptions rather than a floating FAB. FABs render only on Android.
+
+test('students: setOptions called with a headerRight Join button (no groups:create) (iOS path)', async () => {
   mockPermissions = [];
   await render(<Providers><GroupsScreen /></Providers>);
-  expect(screen.queryByTestId('groups-create-fab')).toBeNull();
-  expect(screen.getByTestId('groups-join-fab')).toBeOnTheScreen();
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: expect.any(Function) }),
+  );
 });
 
-test('Join FAB press navigates to /invite', async () => {
+test('students: header-right Join button renders and navigates to /invite (iOS path)', async () => {
   mockPermissions = [];
   await render(<Providers><GroupsScreen /></Providers>);
-  fireEvent.press(screen.getByTestId('groups-join-fab'));
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  expect(screen.getByTestId('groups-join-header-btn')).toBeOnTheScreen();
+  expect(screen.queryByTestId('groups-create-header-btn')).toBeNull();
+  fireEvent.press(screen.getByLabelText('Join Group'));
   expect(mockPush).toHaveBeenCalledWith('/invite');
 });
 
-test('experts get the Create FAB, not the Join FAB (groups:create)', async () => {
+test('experts: setOptions called with a headerRight Create button (groups:create) (iOS path)', async () => {
   mockPermissions = ['groups:create'];
   await render(<Providers><GroupsScreen /></Providers>);
-  expect(screen.getByTestId('groups-create-fab')).toBeOnTheScreen();
-  expect(screen.queryByTestId('groups-join-fab')).toBeNull();
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: expect.any(Function) }),
+  );
 });
 
-test('Create FAB press navigates to /group/create', async () => {
+test('experts: header-right Create button renders and navigates to /group/create (iOS path)', async () => {
   mockPermissions = ['groups:create'];
   await render(<Providers><GroupsScreen /></Providers>);
-  fireEvent.press(screen.getByTestId('groups-create-fab'));
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  expect(screen.getByTestId('groups-create-header-btn')).toBeOnTheScreen();
+  expect(screen.queryByTestId('groups-join-header-btn')).toBeNull();
+  fireEvent.press(screen.getByLabelText('Create Group'));
   expect(mockPush).toHaveBeenCalledWith('/group/create');
 });

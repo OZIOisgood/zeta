@@ -16,9 +16,11 @@ jest.mock('../api/queries/groups', () => ({
   useGroupsQuery: () => mockUseGroupsQuery(),
 }));
 
+const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
+  useNavigation: () => ({ setOptions: mockSetOptions }),
 }));
 
 import { initI18n } from '../i18n';
@@ -29,6 +31,7 @@ beforeAll(() => initI18n('en'));
 let client: QueryClient;
 beforeEach(() => {
   mockPush.mockClear();
+  mockSetOptions.mockClear();
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
 afterEach(() => client.clear());
@@ -76,13 +79,12 @@ test('data state shows group name', async () => {
   expect(screen.getByText('Karate Club')).toBeOnTheScreen();
 });
 
-test('Join is the primary FAB for students and pushes /invite on press', async () => {
+test('Join is the primary action for students: registered in header-right via setOptions (iOS path)', async () => {
   mockUseGroupsQuery.mockReturnValue({ isPending: false, isError: false, data: [], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><GroupsScreen /></Providers>);
-  // Default render = no permissions (student); Join is the role's primary FAB,
-  // not a header button (experts get the Create FAB + a secondary header Join).
-  const joinFab = screen.getByTestId('groups-join-fab');
-  expect(joinFab).toBeOnTheScreen();
-  fireEvent.press(joinFab);
-  expect(mockPush).toHaveBeenCalledWith('/invite');
+  // Default render = no permissions (student); on iOS the Join action is a
+  // header-right button; on Android it renders as a FAB. jest runs on iOS.
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: expect.any(Function) }),
+  );
 });

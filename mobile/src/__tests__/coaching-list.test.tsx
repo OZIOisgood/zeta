@@ -1,3 +1,4 @@
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -37,9 +38,11 @@ jest.mock('../auth/auth-store', () => ({
     }),
 }));
 
+const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
+  useNavigation: () => ({ setOptions: mockSetOptions }),
 }));
 
 import { initI18n } from '../i18n';
@@ -51,6 +54,7 @@ beforeAll(() => initI18n('en'));
 let client: QueryClient;
 beforeEach(() => {
   mockPush.mockClear();
+  mockSetOptions.mockClear();
   mockMutateAsync.mockClear();
   mockShowToast.mockClear();
   mockPermissions = ['coaching:book'];
@@ -237,11 +241,11 @@ test('empty cancelled tab shows the cancelled empty copy', async () => {
   await waitFor(() => expect(screen.getByText('No cancelled sessions')).toBeOnTheScreen());
 });
 
-// ── Book FAB ──────────────────────────────────────────────────────────────────
-// Booking is the primary CREATE action, so it lives as a bottom-right FAB
-// (ZIconButton) found by its accessibilityLabel, not a header button.
+// ── Book action (iOS: header-right "+"; Android: FAB) ─────────────────────────
+// jest-expo runs with Platform.OS = 'ios', so the Android FAB is not rendered.
+// On iOS, the booking action is registered as a header-right button via setOptions.
 
-test('Book FAB shown with coaching:book permission, labelled by sessions.bookLive', async () => {
+test('Book action: setOptions called with headerRight containing book button when user has coaching:book (iOS path)', async () => {
   mockPermissions = ['coaching:book'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -251,11 +255,12 @@ test('Book FAB shown with coaching:book permission, labelled by sessions.bookLiv
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
-  expect(screen.getByTestId('coaching-book')).toBeOnTheScreen();
-  expect(screen.getByLabelText('Book Live Coaching')).toBeOnTheScreen();
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: expect.any(Function) }),
+  );
 });
 
-test('Book FAB NOT shown without coaching:book permission', async () => {
+test('Book action: headerRight not set when user lacks coaching:book and lacks coaching:availability:manage (iOS path)', async () => {
   mockPermissions = [];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -265,11 +270,12 @@ test('Book FAB NOT shown without coaching:book permission', async () => {
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
-  expect(screen.queryByTestId('coaching-book')).toBeNull();
-  expect(screen.queryByLabelText('Book Live Coaching')).toBeNull();
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: undefined }),
+  );
 });
 
-test('Book FAB navigates to /book', async () => {
+test('Book action: header-right book button is labelled sessions.bookLive and navigates to /book (iOS path)', async () => {
   mockPermissions = ['coaching:book'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -279,8 +285,54 @@ test('Book FAB navigates to /book', async () => {
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  expect(screen.getByTestId('coaching-book-header-btn')).toBeOnTheScreen();
+  expect(screen.getByLabelText('Book Live Coaching')).toBeOnTheScreen();
   fireEvent.press(screen.getByLabelText('Book Live Coaching'));
   expect(mockPush).toHaveBeenCalledWith('/book');
+});
+
+// ── Manage Availability header action (both platforms) ────────────────────────
+
+test('Availability action: setOptions called with headerRight when user has coaching:availability:manage', async () => {
+  mockPermissions = ['coaching:availability:manage'];
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: expect.any(Function) }),
+  );
+});
+
+test('Availability action: header button is labelled and navigates to /availability', async () => {
+  mockPermissions = ['coaching:availability:manage'];
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  expect(screen.getByTestId('coaching-availability-header-btn')).toBeOnTheScreen();
+  // sessions.availability.manageTitle = 'Availability'
+  expect(screen.getByLabelText('Availability')).toBeOnTheScreen();
+  fireEvent.press(screen.getByLabelText('Availability'));
+  expect(mockPush).toHaveBeenCalledWith('/availability');
 });
 
 // ── cancel flow ───────────────────────────────────────────────────────────────

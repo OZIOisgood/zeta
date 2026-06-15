@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../../api/queries/assets';
 import { useGroupsQuery } from '../../../api/queries/groups';
@@ -48,6 +48,7 @@ function RowSkeleton() {
 export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const navigation = useNavigation();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const has = (perm: string) => permissions !== null && permissions.includes(perm);
   const canCreate = has('assets:create');
@@ -57,6 +58,20 @@ export default function HomeScreen() {
   const bookings = useMyBookingsQuery();
   const notifications = useNotificationsQuery();
   const unreadCount = notifications.data?.unread_count ?? 0;
+
+  // Notification bell lives in the native header-right on both iOS and Android.
+  // It is a secondary navigation action — not a FAB. The bell mirrors the web
+  // navbar badge (unread_count > 9 → '9+'; see notification-bell.tsx for logic).
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <NotificationBell
+          unreadCount={unreadCount}
+          onPress={() => router.push('/notifications')}
+        />
+      ),
+    });
+  }, [navigation, unreadCount, router]);
 
   const videoList = useMemo(() => assets.data ?? [], [assets.data]);
   const groupList = useMemo(() => groups.data ?? [], [groups.data]);
@@ -210,15 +225,6 @@ export default function HomeScreen() {
 
   return (
     <ZScreen edges={['top']}>
-      {/* Notification bell sits in the scroll area header row since the native
-          stack header owns the title. It is a secondary action that does not
-          map to a standard header-right button in this iteration. */}
-      <View className="flex-row items-center justify-end px-4 pb-2">
-        <NotificationBell
-          unreadCount={unreadCount}
-          onPress={() => router.push('/notifications')}
-        />
-      </View>
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 16 }}>
         {/* Stat cards: live counts that double as section navigation. */}
         <View className="flex-row gap-3">

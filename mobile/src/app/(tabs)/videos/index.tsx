@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { FlatList, Platform, RefreshControl, View } from 'react-native';
+import { useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { Asset } from '../../../api/queries/assets';
 import { useAssetsQuery } from '../../../api/queries/assets';
@@ -17,6 +17,7 @@ import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZSymbol } from '../../../components/ui/z-symbol';
 import { ZTabs } from '../../../components/ui/z-tabs';
+import { Touchable } from '../../../components/ui/touchable';
 import { colors } from '../../../theme/colors';
 
 type VideoFilter = 'all' | 'toReview' | 'reviewed';
@@ -65,10 +66,31 @@ function JobCards({ jobs }: { jobs: UploadJob[] }) {
 export default function VideosScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const navigation = useNavigation();
   const { data, isPending, isError, refetch, isRefetching } = useAssetsQuery();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const canCreate = permissions !== null && permissions.includes('assets:create');
   const jobs = useUploads((s) => s.jobs);
+
+  // iOS: surface the primary "create video" action in the native nav-bar header.
+  // Android: the action is surfaced as a Material FAB (rendered below in JSX).
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    navigation.setOptions({
+      headerRight: canCreate
+        ? () => (
+            <Touchable
+              testID="videos-create-header-btn"
+              accessibilityLabel={t('upload.title')}
+              onPress={() => router.push('/upload')}
+              haptic
+            >
+              <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
+            </Touchable>
+          )
+        : undefined,
+    });
+  }, [navigation, canCreate, t, router]);
 
   const [activeFilter, setActiveFilter] = useState<VideoFilter>('all');
 
@@ -161,8 +183,12 @@ export default function VideosScreen() {
     <ZScreen edges={['top']}>
       {filterRow}
       {content}
-      {canCreate && (
+      {/* Android only: Material FAB for the primary create action.
+          iOS: the same action is surfaced via the native header-right button
+          set in the useEffect above (per mobile/AGENTS.md SOTA-as-default). */}
+      {Platform.OS === 'android' && canCreate && (
         <ZIconButton
+          testID="videos-create-fab"
           label={t('upload.title')}
           variant="primary"
           size="lg"
