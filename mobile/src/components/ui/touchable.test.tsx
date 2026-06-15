@@ -15,3 +15,18 @@ test('does not fire when disabled', async () => {
   fireEvent.press(getByText('Tap'));
   expect(onPress).not.toHaveBeenCalled();
 });
+
+test('sets accessibilityState.selected when selected=true', async () => {
+  const { getByRole } = await render(
+    <Touchable accessibilityLabel="Item" selected={true}><Text>Item</Text></Touchable>,
+  );
+  expect(getByRole('button', { selected: true })).toBeTruthy();
+});
+
+test('does not set accessibilityState.selected when selected is omitted', async () => {
+  const { getByRole } = await render(
+    <Touchable accessibilityLabel="Item"><Text>Item</Text></Touchable>,
+  );
+  // selected is omitted → the element should NOT be selected
+  expect(getByRole('button', { selected: false })).toBeTruthy();
+});

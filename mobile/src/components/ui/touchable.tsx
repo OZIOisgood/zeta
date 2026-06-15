@@ -27,6 +27,13 @@ export interface TouchableProps {
    */
   loading?: boolean;
   /**
+   * When true, accessibilityState.selected is set so TalkBack/VoiceOver
+   * announce the element as "selected". Omit (undefined) to leave the state
+   * unset — do not pass false unless you deliberately want to announce
+   * "not selected".
+   */
+  selected?: boolean;
+  /**
    * Fire a Light impact haptic on press. Set to false to suppress.
    * @default true
    */
@@ -52,6 +59,7 @@ export function Touchable({
   onPress,
   disabled = false,
   loading = false,
+  selected,
   haptic = true,
   className,
   style,
@@ -76,7 +84,11 @@ export function Touchable({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      accessibilityState={{
+          disabled: isDisabled,
+          busy: loading,
+          ...(selected !== undefined ? { selected } : {}),
+        }}
       disabled={isDisabled}
       onPress={handlePress}
       android_ripple={

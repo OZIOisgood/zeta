@@ -93,6 +93,7 @@ export default function SelectFieldScreen() {
           return (
             <Touchable
               accessibilityLabel={opt.label}
+              selected={isSelected}
               onPress={() => handleSelect(opt.value)}
             >
               <View className="flex-row items-center justify-between border-b border-z-border px-4 py-3">

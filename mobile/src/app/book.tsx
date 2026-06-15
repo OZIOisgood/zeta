@@ -367,6 +367,7 @@ export default function BookScreen() {
                           key={st.id}
                           testID={`book-type-${st.id}`}
                           accessibilityLabel={st.name}
+                          selected={isSelected}
                           onPress={() => handleSelectSessionType(st.id)}
                         >
                           <ZCard className={isSelected ? 'border-z-primary bg-z-primary-soft' : ''}>
