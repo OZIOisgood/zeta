@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/react-native';
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), push: jest.fn() }) }));
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+  Stack: { Screen: () => null },
+}));
 
 const mockUseReportEventsQuery = jest.fn();
 jest.mock('../api/queries/reports', () => {

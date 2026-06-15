@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
   useGroupQuery,
@@ -10,7 +10,6 @@ import {
 } from '../../../api/queries/groups';
 import { useAuth } from '../../../auth/auth-store';
 import { initialsFromName } from '../../../lib/avatar';
-import { ZBackHeader } from '../../../components/ui/z-back-header';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZQueryError } from '../../../components/ui/z-query-error';
@@ -181,8 +180,8 @@ export default function GroupPreferencesScreen() {
 
   if (isPending) {
     return (
-      <ZScreen edges={['top', 'bottom']} className="gap-4 p-4">
-        <ZBackHeader title={t('groups.preferences')} />
+      <ZScreen edges={['bottom']} className="gap-4 p-4">
+        <Stack.Screen options={{ title: t('groups.preferences') }} />
         <ZSkeleton testID="group-preferences-skeleton" className="h-20 w-full" />
         <ZSkeleton className="h-11 w-full" />
         <ZSkeleton className="h-20 w-full" />
@@ -192,8 +191,8 @@ export default function GroupPreferencesScreen() {
 
   if (isError || !data) {
     return (
-      <ZScreen edges={['top', 'bottom']} className="items-center justify-center px-8">
-        <ZBackHeader title={t('groups.preferences')} />
+      <ZScreen edges={['bottom']} className="items-center justify-center px-8">
+        <Stack.Screen options={{ title: t('groups.preferences') }} />
         <ZQueryError
           title={t('groups.phase4.detailFailed')}
           onRetry={() => void refetch()}
@@ -203,15 +202,14 @@ export default function GroupPreferencesScreen() {
   }
 
   return (
-    <ZScreen edges={['top', 'bottom']}>
+    <ZScreen edges={['bottom']}>
+      <Stack.Screen options={{ title: t('groups.preferences') }} />
       <ZKeyboardAvoidingView>
         <ScrollView
           className="flex-1 bg-z-bg"
           contentContainerStyle={{ paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Pinned back header */}
-          <ZBackHeader title={t('groups.preferences')} />
 
           {/* Form summary */}
           <View className="px-4 pb-4">

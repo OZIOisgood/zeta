@@ -80,6 +80,7 @@ const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'g1' }),
   useRouter: () => ({ back: mockBack, push: mockPush }),
+  Stack: { Screen: () => null },
 }));
 
 jest.mock('../components/ui/z-toast', () => ({

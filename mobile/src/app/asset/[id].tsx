@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useTranslation } from 'react-i18next';
 import { useAssetQuery, useFinalizeAssetMutation } from '../../api/queries/assets';
@@ -23,7 +23,6 @@ import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
 import { ZChip } from '../../components/ui/z-chip';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
-import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
@@ -381,6 +380,9 @@ export default function AssetDetailScreen() {
     // The video player stays edge-to-edge at the top; the content below it
     // never reaches the status bar, so only the bottom inset is needed.
     <ZScreen edges={['bottom']}>
+      {/* Dynamic title: set once asset data is available. Shows the asset title
+          in the native header (short, truncated by the OS). */}
+      <Stack.Screen options={{ title: data.title }} />
       <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="aspect-video w-full items-center justify-center bg-black">
           {active ? (
@@ -398,13 +400,6 @@ export default function AssetDetailScreen() {
         </View>
 
         <View className="gap-4 p-4">
-          {/* Back row — the prominent title lives in the metadata card below. */}
-          <View className="flex-row items-center">
-            <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-              <ZSymbol name="back" label={t('common.actions.back')} size={22} color={colors.text} />
-            </ZIconButton>
-          </View>
-
           {/* Metadata card: status, title, group, description. */}
           <ZCard className="gap-3">
             <ZBadge

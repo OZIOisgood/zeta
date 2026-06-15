@@ -1,8 +1,20 @@
+import React from 'react';
+import { View as MockView } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
-// ZBackHeader (WP-UI0) calls useRouter().back() for its default onBack, so the
-// mock must expose `back` as well as `push`.
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }));
+// Stack.Screen: render headerRight so testIDs on header actions are accessible
+// in the component tree (the real native stack renders them natively).
+// mock-prefixed (case-insensitive) satisfies jest's hoisting allow-list;
+// capitalised so JSX treats it as a React component (enables testID).
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  Stack: {
+    Screen: ({ options }: { options?: { headerRight?: () => React.ReactNode } }) => {
+      if (!options?.headerRight) return null;
+      return <MockView testID="__header-right__">{options.headerRight()}</MockView>;
+    },
+  },
+}));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 
 const mockUseNotifications = jest.fn();

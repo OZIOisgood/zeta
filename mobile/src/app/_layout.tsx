@@ -11,6 +11,21 @@ import { ZToastHost } from '../components/ui/z-toast';
 
 void initI18n();
 
+/** Shared options applied to every detail/form screen that gets a native header.
+ *  - headerBackButtonDisplayMode:'minimal' → iOS shows only the chevron, no
+ *    label (HIG recommendation for deeper stacks; avoids long dynamic titles
+ *    appearing in the back button of a subsequent push).
+ *  - headerTintColor: accent orange for the interactive back chevron/button.
+ *  - headerStyle / headerTitleStyle: neutral chrome so only interactive items
+ *    carry the accent — not the title itself. */
+const DETAIL_SCREEN_OPTIONS = {
+  headerShown: true,
+  headerBackButtonDisplayMode: 'minimal' as const,
+  headerTintColor: colors.primary,
+  headerStyle: { backgroundColor: colors.bg },
+  headerTitleStyle: { color: colors.text },
+} as const;
+
 export default function RootLayout() {
   const status = useAuth((s) => s.status);
 
@@ -27,13 +42,23 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={status === 'signedIn'}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="asset/[id]" />
-          <Stack.Screen name="group/[id]" />
+          {/* Detail / form screens — native header with back + swipe-back.
+              Dynamic titles (asset/[id], group/[id]) are set inside the screen
+              component via <Stack.Screen options={{ title }} /> once data loads. */}
+          <Stack.Screen name="asset/[id]" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="group/[id]" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="group/[id]/preferences" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="group/create" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="availability" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="notifications" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="reports" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="select/[field]" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="invite" options={DETAIL_SCREEN_OPTIONS} />
+          {/* Modal screens — presentation overrides headerShown:false from
+              screenOptions; the screen itself sets its own header/title. */}
           <Stack.Screen name="upload" options={{ presentation: 'modal' }} />
           <Stack.Screen name="book" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="invite" />
-          <Stack.Screen name="reports" />
-          <Stack.Screen name="select/[field]" />
+          {/* Full-screen live call — keeps its own chrome, no nav header. */}
           <Stack.Screen name="call/[bookingId]" options={{ presentation: 'fullScreenModal', headerShown: false }} />
         </Stack.Protected>
         <Stack.Protected guard={status !== 'signedIn'}>

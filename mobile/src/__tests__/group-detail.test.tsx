@@ -40,6 +40,7 @@ const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'g1' }),
   useRouter: () => ({ back: mockBack, push: mockPush }),
+  Stack: { Screen: () => null },
 }));
 
 import { initI18n } from '../i18n';

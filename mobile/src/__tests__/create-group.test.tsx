@@ -30,6 +30,7 @@ const mockReplace = jest.fn();
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, back: mockBack }),
+  Stack: { Screen: () => null },
 }));
 
 jest.mock('../components/ui/z-toast', () => ({

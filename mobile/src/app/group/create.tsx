@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useCreateGroupMutation } from '../../api/queries/groups';
 import { ZAvatarInput } from '../../components/ui/z-avatar-input';
-import { ZBackHeader } from '../../components/ui/z-back-header';
 import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
 import { ZFieldError } from '../../components/ui/z-field-error';
@@ -55,9 +54,8 @@ export default function CreateGroupScreen() {
   }
 
   return (
-    <ZScreen edges={['top', 'bottom']}>
-      {/* Pinned back header — outside ScrollView so it never scrolls away */}
-      <ZBackHeader title={t('groups.create')} />
+    <ZScreen edges={['bottom']}>
+      <Stack.Screen options={{ title: t('groups.create') }} />
       <ZKeyboardAvoidingView>
         <ScrollView
           className="flex-1 bg-z-bg"

@@ -8,7 +8,10 @@ jest.mock('expo-secure-store', () => ({
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), push: jest.fn() }) }));
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+  Stack: { Screen: () => null },
+}));
 
 const mockUseAuth = jest.fn();
 jest.mock('../auth/auth-store', () => ({

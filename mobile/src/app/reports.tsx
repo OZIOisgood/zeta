@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ZSymbol } from '../components/ui/z-symbol';
 import {
@@ -18,7 +19,6 @@ import {
 } from '../api/queries/reports';
 import { formatDate, formatMonthYear } from '../lib/datetime';
 import { StatCard } from '../components/stat-card';
-import { ZBackHeader } from '../components/ui/z-back-header';
 import { ZBadge } from '../components/ui/z-badge';
 import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
@@ -258,19 +258,14 @@ export default function ReportsScreen() {
     );
   }
 
-  // Only show the activity count subtitle once data is available — avoids
-  // "0 activities · …" flashing during pending/error states.
-  const headerSubtitle =
-    !isPending && !isError
-      ? t('reports.period.summary', { count: report.count, period: periodLabel })
-      : undefined;
-
   return (
     <ZScreen>
-      <ZBackHeader
-        testID="reports-header"
-        title={t(isExpert ? 'reports.expert.title' : 'reports.student.title')}
-        subtitle={headerSubtitle}
+      {/* Native header: title reflects expert vs student role. The subtitle
+          (activity count for the period) is omitted from the native title since
+          native-stack headers don't have a subtitle slot; it remains visible
+          inside the FlatList ListHeaderComponent as a ZBadge. */}
+      <Stack.Screen
+        options={{ title: t(isExpert ? 'reports.expert.title' : 'reports.student.title') }}
       />
       {body}
     </ZScreen>

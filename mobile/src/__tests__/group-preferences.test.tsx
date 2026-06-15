@@ -12,6 +12,7 @@ const mockRouterBack = jest.fn();
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'g1' }),
   useRouter: () => ({ replace: mockRouterReplace, back: mockRouterBack }),
+  Stack: { Screen: () => null },
 }));
 
 const mockUseGroupQuery = jest.fn();
@@ -155,11 +156,16 @@ test('cold-cache: form hydrates with real server values after pending resolves',
 });
 
 // ── fix (1): back affordance ───────────────────────────────────────────────────
+// Native header now provides the back button (no longer in-body). The test
+// verifies the screen renders its content correctly without an in-body back row.
 
-test('renders back button via ZBackHeader', async () => {
+test('renders preferences content without an in-body back button', async () => {
   await render(<GroupPreferencesScreen />);
-  // ZBackHeader renders a ZIconButton with accessibilityLabel 'Back'
-  expect(screen.getByRole('button', { name: /back/i })).toBeOnTheScreen();
+  // The save button (testID="group-save") is the primary interactive element
+  // and confirms the form renders correctly.
+  expect(screen.getByTestId('group-save')).toBeOnTheScreen();
+  // No in-body back button — back is provided by the native stack header.
+  expect(screen.queryByRole('button', { name: /^back$/i })).toBeNull();
 });
 
 // ── fix (2): leave-only branch ────────────────────────────────────────────────

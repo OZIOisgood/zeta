@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FlatList, ScrollView, Text, View } from 'react-native';
+import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type {
   CoachingAvailability,
@@ -24,7 +25,6 @@ import { useAuth } from '../auth/auth-store';
 import { formatDate } from '../lib/datetime';
 import { ScheduleDayRow } from '../components/schedule-day-row';
 import { SessionTypeRow } from '../components/session-type-row';
-import { ZBackHeader } from '../components/ui/z-back-header';
 import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
 import { ZConfirmDialog } from '../components/ui/z-confirm-dialog';
@@ -493,8 +493,8 @@ export default function AvailabilityScreen() {
   // ── permission gate ────────────────────────────────────────────────────────
   if (!canManage) {
     return (
-      <ZScreen edges={['top']}>
-        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+      <ZScreen>
+        <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <View testID="availability-no-permission" className="p-4">
           <ZEmptyState
             title={t('sessions.availability.noPermission')}
@@ -513,8 +513,8 @@ export default function AvailabilityScreen() {
 
   if (groupsQuery.isPending) {
     return (
-      <ZScreen edges={['top']}>
-        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+      <ZScreen>
+        <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <View testID="availability-groups-loading" className="gap-3 p-4">
           <ZSkeleton className="h-32 w-full rounded-lg" />
           <ZSkeleton className="h-32 w-full rounded-lg" />
@@ -525,8 +525,8 @@ export default function AvailabilityScreen() {
 
   if (groupsQuery.isError) {
     return (
-      <ZScreen edges={['top']}>
-        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+      <ZScreen>
+        <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <View testID="availability-groups-error" className="p-4">
           <ZQueryError
             title={t('groups.phase4.loadFailed')}
@@ -539,8 +539,8 @@ export default function AvailabilityScreen() {
 
   if (groups.length === 0) {
     return (
-      <ZScreen edges={['top']}>
-        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+      <ZScreen>
+        <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <View testID="availability-no-groups" className="p-4">
           <ZEmptyState
             title={t('sessions.availability.noGroups')}
@@ -556,8 +556,8 @@ export default function AvailabilityScreen() {
   // three section queries from staying in the disabled/pending limbo state.
   if (groupId === '') {
     return (
-      <ZScreen edges={['top']}>
-        <ZBackHeader title={t('sessions.availability.manageTitle')} />
+      <ZScreen>
+        <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <ZKeyboardAvoidingView>
           <ZCard className="m-4 gap-1">
             <Text className="text-2xl font-semibold text-z-text">
@@ -805,10 +805,9 @@ export default function AvailabilityScreen() {
   }
 
   return (
-    <ZScreen edges={['top']}>
-      {/* Shared back header (WP-UI0). Default onBack = router.back(); the back
-          ZIconButton + t('common.actions.back') a11y label are built in. */}
-      <ZBackHeader title={t('sessions.availability.manageTitle')} />
+    <ZScreen>
+      {/* Native header title is set once, here in the data-loaded render path. */}
+      <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
       <ZKeyboardAvoidingView>
         {/* form/wizard summary card */}
         <ZCard className="m-4 gap-1">

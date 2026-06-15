@@ -49,6 +49,7 @@ jest.mock('../../src/auth/auth-store', () => ({
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'a1' }),
   useRouter: () => ({ back: jest.fn() }),
+  Stack: { Screen: () => null },
 }));
 
 import { initI18n } from '../i18n';

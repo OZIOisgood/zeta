@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import { FlatList, ScrollView, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { FlatList, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -26,7 +26,6 @@ import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZFieldError } from '../../components/ui/z-field-error';
 import { ZFieldLabel } from '../../components/ui/z-field-label';
-import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZIconTile } from '../../components/ui/z-icon-tile';
 import { ZKeyboardAvoidingView } from '../../components/ui/z-keyboard-avoiding-view';
 import { ZQueryError } from '../../components/ui/z-query-error';
@@ -465,17 +464,40 @@ export default function GroupDetailScreen() {
 
   return (
     <ZScreen edges={['bottom']}>
+      {/* Dynamic native header: group name as title; settings in headerRight
+          when the user has the preferences:edit or membership:leave permission. */}
+      <Stack.Screen
+        options={{
+          title: data.name,
+          headerRight: canOpenPreferences
+            ? () => (
+                <TouchableOpacity
+                  testID="group-preferences-btn"
+                  accessibilityLabel={t('groups.preferences')}
+                  onPress={() => router.push(`/group/${id ?? ''}/preferences`)}
+                  style={{ marginRight: 4 }}
+                >
+                  <ZSymbol
+                    name="settings"
+                    label={t('groups.preferences')}
+                    size={22}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              )
+            : undefined,
+        }}
+      />
       <ZKeyboardAvoidingView>
         <ScrollView
           className="flex-1 bg-z-bg"
           contentContainerStyle={{ paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
+          {/* Group identity hero — avatar + name displayed prominently in the
+              body (the native header title is the concise fallback for the
+              OS-level chrome; the body hero gives the full group card feel). */}
           <View className="flex-row items-center gap-3 p-4">
-            <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-              <ZSymbol name="back" label={t('common.actions.back')} size={22} color={colors.text} />
-            </ZIconButton>
             <ZAvatar
               image={data.avatar ?? undefined}
               fallback={initialsFromName(data.name)}
@@ -487,15 +509,6 @@ export default function GroupDetailScreen() {
                 {data.name}
               </Text>
             </View>
-            {canOpenPreferences ? (
-              <ZIconButton
-                testID="group-preferences-btn"
-                label={t('groups.preferences')}
-                onPress={() => router.push(`/group/${id ?? ''}/preferences`)}
-              >
-                <ZSymbol name="settings" label={t('groups.preferences')} size={22} color={colors.text} />
-              </ZIconButton>
-            ) : null}
           </View>
 
           <View className="px-4 pb-4">

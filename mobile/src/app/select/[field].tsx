@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { selectStore } from '../../components/ui/z-combobox';
-import { ZBackHeader } from '../../components/ui/z-back-header';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZTextInput } from '../../components/ui/z-text-input';
 import { ZSymbol } from '../../components/ui/z-symbol';
@@ -57,13 +56,35 @@ export default function SelectFieldScreen() {
     [request, router],
   );
 
+  function handleBack() {
+    selectStore.getState().clear();
+    router.back();
+  }
+
   return (
-    <ZScreen edges={['top']}>
-      <ZBackHeader
-        title={title}
-        onBack={() => {
-          selectStore.getState().clear();
-          router.back();
+    <ZScreen>
+      {/* Native header with a custom back handler to clear the selectStore
+          before popping. headerLeft overrides the default back chevron so the
+          store-clear side effect fires even on an explicit tap (swipe-back also
+          triggers the standard navigator pop, which is acceptable — the store
+          is cleared on the next open anyway). */}
+      <Stack.Screen
+        options={{
+          title,
+          headerLeft: () => (
+            <TouchableOpacity
+              accessibilityLabel={t('common.actions.back')}
+              onPress={handleBack}
+              style={{ paddingLeft: 8 }}
+            >
+              <ZSymbol
+                name="back"
+                label={t('common.actions.back')}
+                size={22}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+          ),
         }}
       />
 

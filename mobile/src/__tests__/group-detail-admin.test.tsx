@@ -8,6 +8,8 @@
  *   4. Remove-member button visible for users with groups:user-list:delete
  *   5. Remove-member confirm dialog calls removeGroupMember mutation
  */
+import React from 'react';
+import { View as MockView } from 'react-native';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -45,9 +47,21 @@ jest.mock('../auth/auth-store', () => ({
 
 const mockBack = jest.fn();
 const mockPush = jest.fn();
+// Stack.Screen: render the headerRight so testIDs on header actions are
+// accessible in the component tree (the real native stack renders them natively,
+// so tests need the callback to execute here instead).
+// Stack.Screen: render headerRight so testIDs on header actions are accessible
+// in the component tree (the real native stack renders them natively).
+// Variable name must be mock-prefixed so jest's hoisting check allows it.
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'g1' }),
   useRouter: () => ({ back: mockBack, push: mockPush, replace: jest.fn() }),
+  Stack: {
+    Screen: ({ options }: { options?: { headerRight?: () => React.ReactNode } }) => {
+      if (!options?.headerRight) return null;
+      return <MockView testID="__header-right__">{options.headerRight()}</MockView>;
+    },
+  },
 }));
 
 import { initI18n } from '../i18n';

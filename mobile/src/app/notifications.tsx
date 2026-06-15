@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { RefreshControl, SectionList, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { RefreshControl, SectionList, Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { ZSymbol } from '../components/ui/z-symbol';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,8 +15,6 @@ import {
   useDeclineInvitationMutation,
 } from '../api/queries/invitations';
 import { NotificationRow } from '../components/notification-row';
-import { ZBackHeader } from '../components/ui/z-back-header';
-import { ZButton } from '../components/ui/z-button';
 import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
@@ -162,20 +160,32 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <ZScreen edges={['top']}>
-      <ZBackHeader
-        title={t('notifications.title')}
-        action={
-          unreadCount > 0 ? (
-            <ZButton
-              testID="notifications-mark-all"
-              label={t('notifications.markAllRead')}
-              variant="secondary"
-              onPress={() => markAll.mutate()}
-              icon={<ZSymbol name="check-all" label={t('notifications.markAllRead')} size={16} color={colors.text} />}
-            />
-          ) : undefined
-        }
+    <ZScreen>
+      {/* Native header: title always set; headerRight shows "mark all read"
+          only when there are unread items. The TouchableOpacity wrapper is
+          kept minimal (native-tier: no ZIconButton which adds extra padding
+          inappropriate in a nav-bar context). */}
+      <Stack.Screen
+        options={{
+          title: t('notifications.title'),
+          headerRight: unreadCount > 0
+            ? () => (
+                <TouchableOpacity
+                  testID="notifications-mark-all"
+                  accessibilityLabel={t('notifications.markAllRead')}
+                  onPress={() => markAll.mutate()}
+                  style={{ marginRight: 4 }}
+                >
+                  <ZSymbol
+                    name="check-all"
+                    label={t('notifications.markAllRead')}
+                    size={22}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              )
+            : undefined,
+        }}
       />
       {!isPending && !isError ? (
         <ZTabs
