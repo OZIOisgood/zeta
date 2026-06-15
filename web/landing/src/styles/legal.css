@@ -30,21 +30,6 @@
   color: var(--z-muted);
 }
 
-.legal-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin: 32px 0 8px;
-  padding: 16px 18px;
-  background: var(--z-surface-warm);
-  border: 1px solid var(--z-primary-soft);
-  border-radius: var(--z-radius-md);
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--z-text);
-}
-.legal-banner svg { width: 18px; height: 18px; color: var(--z-primary); flex: none; margin-top: 1px; }
-
 .legal-section { margin-top: 44px; }
 .legal-section > h2 {
   font-size: 21px;

@@ -117,7 +117,6 @@ export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, descr
   if (locale !== DEFAULT_LOCALE) translateDom($, dict);     // translate chrome only
   $('[data-legal-content]').html(contentHtml);              // inject already-localized content
   if (slug === 'contact') {
-    $('.legal-banner').remove();                            // not placeholder legal text here
     $('.legal-main').append(buildContactCard(dict, email)); // email card (outside .legal-body prose scope)
     $('.legal-main').append(buildContactForm(dict));        // demo form
   }
