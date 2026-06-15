@@ -1,0 +1,13 @@
+{
+  "name": "strido-landing",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-site.mjs",
+    "test": "node --test",
+    "extract-dict": "node scripts/extract-dict.mjs"
+  },
+  "dependencies": {
+    "cheerio": "1.0.0",
+    "markdown-it": "14.1.0"
+  }
+}
