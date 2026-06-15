@@ -34,9 +34,8 @@ In **allen** Dateien (alle Sprachen) ersetzen:
 | `{{ANSCHRIFT}}` | Ladungsfähige Anschrift (Straße + Hausnr., PLZ, Ort — kein Postfach) |
 | `{{EMAIL}}` | Haupt-Kontakt-E-Mail |
 | `{{EMAIL_DSA}}` | Behörden-Kontaktstelle (Art. 11 DSA); Standard = `{{EMAIL}}` |
-| `{{DOMAIN}}` | Domain ohne Protokoll, z. B. `strido.app` |
+| `{{DOMAIN}}` | Domain ohne Protokoll, z. B. `strido.net` |
 | `{{AUFSICHTSBEHOERDE}}` | Zuständige Datenschutz-Aufsichtsbehörde nach Bundesland des Sitzes (Name + ggf. Anschrift/URL) |
-| `{{STAND_DATUM}}` | Datum der Veröffentlichung, z. B. „14. Juni 2026" |
 
 > Vor Veröffentlichung prüfen, dass kein `{{` mehr in den Dateien steht.
 
@@ -67,7 +66,7 @@ Aus dem Code ermittelt: Hosting Google Cloud (`europe-west1`, EU), Auth WorkOS/A
 
 ## Noch offene Aufgaben (Mensch)
 
-- [ ] Platzhalter ausfüllen (Tabelle oben), Stand-Datum setzen.
+- [ ] Platzhalter ausfüllen (Tabelle oben).
 - [ ] **Finaler juristischer Review** vor Go-Live; Übersetzungen muttersprachlich prüfen lassen.
 - [ ] Ladungsfähige Anschrift festlegen (Wohn- vs. separate Adresse).
 - [ ] **Minderjährige:** Die Texte erlauben Minderjährige *mit Einwilligung der Erziehungsberechtigten*. Der Signup-Flow muss diese Einwilligung tatsächlich abfragen/dokumentieren (Entwicklungsaufgabe). Alternativ Altersgrenze 16/18 wählen und Texte anpassen.
