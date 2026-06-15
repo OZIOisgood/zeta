@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { FlatList, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, ScrollView, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -18,6 +18,7 @@ import { useCreateInvitationMutation } from '../../api/queries/invitations';
 import { useAuth } from '../../auth/auth-store';
 import { initialsFromName } from '../../lib/avatar';
 import { MemberRow } from '../../components/member-row';
+import { Touchable } from '../../components/ui/touchable';
 import { ZAvatar } from '../../components/ui/z-avatar';
 import { ZBadge } from '../../components/ui/z-badge';
 import { ZButton } from '../../components/ui/z-button';
@@ -471,11 +472,12 @@ export default function GroupDetailScreen() {
           title: data.name,
           headerRight: canOpenPreferences
             ? () => (
-                <TouchableOpacity
+                <Touchable
                   testID="group-preferences-btn"
                   accessibilityLabel={t('groups.preferences')}
                   onPress={() => router.push(`/group/${id ?? ''}/preferences`)}
                   style={{ marginRight: 4 }}
+                  haptic
                 >
                   <ZSymbol
                     name="settings"
@@ -483,7 +485,7 @@ export default function GroupDetailScreen() {
                     size={22}
                     color={colors.primary}
                   />
-                </TouchableOpacity>
+                </Touchable>
               )
             : undefined,
         }}

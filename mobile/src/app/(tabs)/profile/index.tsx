@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Touchable } from '../../../components/ui/touchable';
 import { ZAvatarInput } from '../../../components/ui/z-avatar-input';
@@ -22,6 +23,10 @@ import { showToast } from '../../../components/ui/z-toast';
 import { authStore, useAuth } from '../../../auth/auth-store';
 import type { Me, UpdateMeRequest } from '../../../auth/auth-store';
 import { colors } from '../../../theme/colors';
+
+// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
+// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
+const ANDROID_TAB_BAR_HEIGHT = 56;
 
 type PreferencesTab = 'personal-data' | 'email-preferences';
 type EmailPreferences = Me['email_preferences'];
@@ -132,10 +137,15 @@ function FieldSkeleton() {
 }
 
 function LoadingState() {
+  const insets = useSafeAreaInsets();
+  const androidPaddingBottom = Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
   return (
     <ZScreen edges={[]}>
 
-      <ScrollView contentInsetAdjustmentBehavior="automatic">
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
+      >
         <View className="gap-4 p-4">
           <ZCard className="gap-2">
             <ZSkeleton className="h-6 w-40" />
@@ -165,6 +175,8 @@ function LoadingState() {
 function PreferencesForm({ user }: { user: Me }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const androidPaddingBottom = Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
 
   const [activeTab, setActiveTab] = useState<PreferencesTab>('personal-data');
   const [firstName, setFirstName] = useState(user.first_name);
@@ -296,7 +308,11 @@ function PreferencesForm({ user }: { user: Me }) {
     <ZScreen edges={[]}>
 
       <ZKeyboardAvoidingView>
-        <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
+        >
           <View className="gap-4 p-4">
             <ZCard className="gap-2">
               <Text className="text-2xl font-semibold text-z-text">{t('preferences.title')}</Text>

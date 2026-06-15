@@ -27,7 +27,7 @@ jest.mock('../components/ui/z-toast', () => ({
   showToast: (...args: unknown[]) => mockShowToast(...args),
 }));
 
-let mockPermissions: string[] | null = ['coaching:book'];
+let mockPermissions: string[] | null = ['coaching:bookings:read', 'coaching:book'];
 let mockUserId = 's1';
 
 jest.mock('../auth/auth-store', () => ({
@@ -57,7 +57,7 @@ beforeEach(() => {
   mockSetOptions.mockClear();
   mockMutateAsync.mockClear();
   mockShowToast.mockClear();
-  mockPermissions = ['coaching:book'];
+  mockPermissions = ['coaching:bookings:read', 'coaching:book'];
   mockUserId = 's1';
   mockUseCancelBookingMutation.mockReturnValue({
     mutateAsync: mockMutateAsync,
@@ -246,7 +246,7 @@ test('empty cancelled tab shows the cancelled empty copy', async () => {
 // On iOS, the booking action is registered as a header-right button via setOptions.
 
 test('Book action: setOptions called with headerRight containing book button when user has coaching:book (iOS path)', async () => {
-  mockPermissions = ['coaching:book'];
+  mockPermissions = ['coaching:bookings:read', 'coaching:book'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -261,7 +261,7 @@ test('Book action: setOptions called with headerRight containing book button whe
 });
 
 test('Book action: headerRight not set when user lacks coaching:book and lacks coaching:availability:manage (iOS path)', async () => {
-  mockPermissions = [];
+  mockPermissions = ['coaching:bookings:read']; // has tab access but no book/availability action
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -276,7 +276,7 @@ test('Book action: headerRight not set when user lacks coaching:book and lacks c
 });
 
 test('Book action: header-right book button is labelled sessions.bookLive and navigates to /book (iOS path)', async () => {
-  mockPermissions = ['coaching:book'];
+  mockPermissions = ['coaching:bookings:read', 'coaching:book'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -299,7 +299,7 @@ test('Book action: header-right book button is labelled sessions.bookLive and na
 // ── Manage Availability header action (both platforms) ────────────────────────
 
 test('Availability action: setOptions called with headerRight when user has coaching:availability:manage', async () => {
-  mockPermissions = ['coaching:availability:manage'];
+  mockPermissions = ['coaching:bookings:read', 'coaching:availability:manage'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -314,7 +314,7 @@ test('Availability action: setOptions called with headerRight when user has coac
 });
 
 test('Availability action: header button is labelled and navigates to /availability', async () => {
-  mockPermissions = ['coaching:availability:manage'];
+  mockPermissions = ['coaching:bookings:read', 'coaching:availability:manage'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -502,7 +502,7 @@ const NOT_YET_JOINABLE_BOOKING: Booking = {
 };
 
 test('joinable booking with coaching:video:connect → Join button visible and navigates correctly', async () => {
-  mockPermissions = ['coaching:book', 'coaching:video:connect'];
+  mockPermissions = ['coaching:bookings:read', 'coaching:book', 'coaching:video:connect'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -518,7 +518,7 @@ test('joinable booking with coaching:video:connect → Join button visible and n
 });
 
 test('joinable booking WITHOUT coaching:video:connect → Join button absent', async () => {
-  mockPermissions = ['coaching:book']; // no coaching:video:connect
+  mockPermissions = ['coaching:bookings:read', 'coaching:book']; // no coaching:video:connect
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -533,7 +533,7 @@ test('joinable booking WITHOUT coaching:video:connect → Join button absent', a
 });
 
 test('booking outside join window → Join button absent even with permission', async () => {
-  mockPermissions = ['coaching:book', 'coaching:video:connect'];
+  mockPermissions = ['coaching:bookings:read', 'coaching:book', 'coaching:video:connect'];
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,

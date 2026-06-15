@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { RefreshControl, SectionList, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, SectionList, Text, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { ZSymbol } from '../components/ui/z-symbol';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import {
   useDeclineInvitationMutation,
 } from '../api/queries/invitations';
 import { NotificationRow } from '../components/notification-row';
+import { Touchable } from '../components/ui/touchable';
 import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
@@ -170,11 +171,12 @@ export default function NotificationsScreen() {
           title: t('notifications.title'),
           headerRight: unreadCount > 0
             ? () => (
-                <TouchableOpacity
+                <Touchable
                   testID="notifications-mark-all"
                   accessibilityLabel={t('notifications.markAllRead')}
                   onPress={() => markAll.mutate()}
                   style={{ marginRight: 4 }}
+                  haptic
                 >
                   <ZSymbol
                     name="check-all"
@@ -182,7 +184,7 @@ export default function NotificationsScreen() {
                     size={22}
                     color={colors.primary}
                   />
-                </TouchableOpacity>
+                </Touchable>
               )
             : undefined,
         }}

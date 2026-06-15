@@ -13,16 +13,13 @@ import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
 import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZFieldError } from '../components/ui/z-field-error';
-import { ZIconButton } from '../components/ui/z-icon-button';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
-import { ZSymbol } from '../components/ui/z-symbol';
 import { ZTextInput } from '../components/ui/z-text-input';
 import { showToast } from '../components/ui/z-toast';
 import { initialsFromName } from '../lib/avatar';
 import { parseInviteCode } from '../lib/invite-code';
-import { colors } from '../theme/colors';
 
 export default function InviteScreen() {
   const { t } = useTranslation();

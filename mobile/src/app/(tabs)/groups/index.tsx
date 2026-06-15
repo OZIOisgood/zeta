@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { FlatList, Platform, RefreshControl, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../../../api/queries/groups';
 import { useAuth } from '../../../auth/auth-store';
@@ -34,12 +35,18 @@ function ListSkeleton() {
   );
 }
 
+// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
+// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
+const ANDROID_TAB_BAR_HEIGHT = 56;
+
 export default function GroupsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useGroupsQuery();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
+  const canSeeGroups = permissions !== null && permissions.includes('groups:read');
   const canCreate = permissions !== null && permissions.includes('groups:create');
 
   // iOS: surface the role-dependent primary action in the native nav-bar header.
@@ -73,6 +80,24 @@ export default function GroupsScreen() {
     });
   }, [navigation, canCreate, t, router]);
 
+  // Defensive self-guard: if the user somehow navigates here without the tab
+  // permission (e.g. via a deep-link before permissions resolve), render a
+  // no-access state rather than firing a 403-ing query.
+  // Mirror: availability.tsx canManage gate pattern.
+  if (!canSeeGroups) {
+    return (
+      <ZScreen edges={[]}>
+        <View testID="groups-no-permission" className="flex-1 items-center justify-center p-4">
+          <ZEmptyState
+            title={t('groups.membersUnavailable')}
+            description={t('groups.membersUnavailableDescription')}
+            icon={<ZSymbol name="users" label={t('groups.membersUnavailable')} size={24} color={colors.primary} />}
+          />
+        </View>
+      </ZScreen>
+    );
+  }
+
   let content: React.ReactNode;
 
   if (isPending) {
@@ -104,7 +129,10 @@ export default function GroupsScreen() {
           data={data}
           keyExtractor={(g) => g.id}
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: 16 + (Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0),
+          }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
           renderItem={({ item }) => (
             <GroupCard group={item} onPress={() => router.push(`/group/${item.id}`)} />
@@ -124,31 +152,34 @@ export default function GroupsScreen() {
           Creator (groups:create) → "+" FAB to create a group.
           Student → QR-code FAB to join a group. */}
       {Platform.OS === 'android' ? (
-        canCreate ? (
-          <ZIconButton
-            testID="groups-create-fab"
-            label={t('groups.create')}
-            variant="primary"
-            size="lg"
-            shape="circle"
-            onPress={() => router.push('/group/create')}
-            className="absolute bottom-6 right-6"
-          >
-            <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
-          </ZIconButton>
-        ) : (
-          <ZIconButton
-            testID="groups-join-fab"
-            label={t('groups.invitationDialog.joinGroup')}
-            variant="primary"
-            size="lg"
-            shape="circle"
-            onPress={() => router.push('/invite')}
-            className="absolute bottom-6 right-6"
-          >
-            <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.onPrimary} />
-          </ZIconButton>
-        )
+        <View
+          className="absolute right-6"
+          style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
+        >
+          {canCreate ? (
+            <ZIconButton
+              testID="groups-create-fab"
+              label={t('groups.create')}
+              variant="primary"
+              size="lg"
+              shape="circle"
+              onPress={() => router.push('/group/create')}
+            >
+              <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
+            </ZIconButton>
+          ) : (
+            <ZIconButton
+              testID="groups-join-fab"
+              label={t('groups.invitationDialog.joinGroup')}
+              variant="primary"
+              size="lg"
+              shape="circle"
+              onPress={() => router.push('/invite')}
+            >
+              <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.onPrimary} />
+            </ZIconButton>
+          )}
+        </View>
       ) : null}
     </ZScreen>
   );

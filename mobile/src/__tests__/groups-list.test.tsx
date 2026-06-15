@@ -10,6 +10,15 @@ jest.mock('expo-secure-store', () => ({
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
+// groups:read is required for the tab permission self-guard to pass.
+// canCreate = false (student) unless explicitly set per-test below.
+let mockPermissions: string[] = ['groups:read'];
+jest.mock('../auth/auth-store', () => ({
+  ...jest.requireActual('../auth/auth-store'),
+  useAuth: (selector: (s: { user: { permissions: string[] } | null }) => unknown) =>
+    selector({ user: { permissions: mockPermissions } }),
+}));
+
 const mockUseGroupsQuery = jest.fn();
 jest.mock('../api/queries/groups', () => ({
   ...jest.requireActual('../api/queries/groups'),
@@ -32,6 +41,7 @@ let client: QueryClient;
 beforeEach(() => {
   mockPush.mockClear();
   mockSetOptions.mockClear();
+  mockPermissions = ['groups:read']; // student (no groups:create) with tab access
   client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
 });
 afterEach(() => client.clear());

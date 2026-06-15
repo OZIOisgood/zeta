@@ -19,7 +19,6 @@ import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
 import { ZChip } from '../components/ui/z-chip';
 import { ZEmptyState } from '../components/ui/z-empty-state';
-import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
@@ -249,12 +248,14 @@ export default function BookScreen() {
           </View>
         </ScrollView>
       ) : (
-        <ZKeyboardAvoidingView>
-          <ScrollView
-            className="flex-1"
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ padding: 16, gap: 24 }}
-          >
+        // Note: no ZKeyboardAvoidingView here — this is a formSheet route and the
+        // native sheet owns keyboard avoidance (AGENTS.md: "Do not apply the KAV
+        // pattern inside native sheet routes"). keyboardShouldPersistTaps is kept.
+        <ScrollView
+          className="flex-1"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ padding: 16, gap: 24 }}
+        >
             {/* Progress stepper */}
             <View className="gap-3">
               <ZStepper steps={stepperSteps} testID="book-stepper" />
@@ -374,7 +375,7 @@ export default function BookScreen() {
                           <ZCard className={isSelected ? 'border-z-primary bg-z-primary-soft' : ''}>
                             <View className="flex-row items-start justify-between gap-2">
                               <Text className="flex-1 font-semibold text-z-text">{st.name}</Text>
-                              <ZBadge label={`${st.duration_minutes} min`} />
+                              <ZBadge label={t('common.labels.minutesShort', { count: st.duration_minutes })} />
                             </View>
                             <Text className="mt-2 text-sm leading-6 text-z-muted">
                               {st.description}
@@ -501,7 +502,6 @@ export default function BookScreen() {
             {/* Bottom spacer */}
             <View className="h-8" />
           </ScrollView>
-        </ZKeyboardAvoidingView>
       )}
     </ZScreen>
   );

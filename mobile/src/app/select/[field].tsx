@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { selectStore } from '../../components/ui/z-combobox';
@@ -72,10 +72,11 @@ export default function SelectFieldScreen() {
         options={{
           title,
           headerLeft: () => (
-            <TouchableOpacity
+            <Touchable
               accessibilityLabel={t('common.actions.back')}
               onPress={handleBack}
               style={{ paddingLeft: 8 }}
+              haptic
             >
               <ZSymbol
                 name="back"
@@ -83,7 +84,7 @@ export default function SelectFieldScreen() {
                 size={22}
                 color={colors.primary}
               />
-            </TouchableOpacity>
+            </Touchable>
           ),
         }}
       />

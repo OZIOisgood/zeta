@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Platform, RefreshControl, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { Asset } from '../../../api/queries/assets';
 import { useAssetsQuery } from '../../../api/queries/assets';
@@ -63,14 +64,25 @@ function JobCards({ jobs }: { jobs: UploadJob[] }) {
   );
 }
 
+// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
+// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
+const ANDROID_TAB_BAR_HEIGHT = 56;
+
 export default function VideosScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useAssetsQuery();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const canCreate = permissions !== null && permissions.includes('assets:create');
   const jobs = useUploads((s) => s.jobs);
+
+  // Bottom padding for Android lists: clears the opaque NativeTabs NavigationBar
+  // (height constant) plus the system gesture/home-indicator inset.
+  // iOS uses contentInsetAdjustmentBehavior='automatic' which auto-insets for UITabBar.
+  const androidListPaddingBottom =
+    Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
 
   // iOS: surface the primary "create video" action in the native nav-bar header.
   // Android: the action is surfaced as a Material FAB (rendered below in JSX).
@@ -168,7 +180,7 @@ export default function VideosScreen() {
           data={filteredAssets}
           keyExtractor={(a) => a.id}
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 16 + androidListPaddingBottom }}
           ListHeaderComponent={<JobCards jobs={jobs} />}
           ItemSeparatorComponent={() => <View className="h-3" />}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
@@ -189,17 +201,21 @@ export default function VideosScreen() {
           iOS: the same action is surfaced via the native header-right button
           set in the useEffect above (per mobile/AGENTS.md SOTA-as-default). */}
       {Platform.OS === 'android' && canCreate && (
-        <ZIconButton
-          testID="videos-create-fab"
-          label={t('upload.title')}
-          variant="primary"
-          size="lg"
-          shape="circle"
-          onPress={() => router.push('/upload')}
-          className="absolute bottom-6 right-6"
+        <View
+          className="absolute right-6"
+          style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
         >
-          <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
-        </ZIconButton>
+          <ZIconButton
+            testID="videos-create-fab"
+            label={t('upload.title')}
+            variant="primary"
+            size="lg"
+            shape="circle"
+            onPress={() => router.push('/upload')}
+          >
+            <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
+          </ZIconButton>
+        </View>
       )}
     </ZScreen>
   );

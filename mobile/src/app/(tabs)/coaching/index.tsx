@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Platform, RefreshControl, Text, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../../api/queries/coaching';
 import {
@@ -122,13 +123,19 @@ function CancelDialog({
   );
 }
 
+// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
+// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
+const ANDROID_TAB_BAR_HEIGHT = 56;
+
 export default function CoachingScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useMyBookingsQuery();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const currentUserId = useAuth((s) => s.user?.id ?? '');
+  const canSeeCoaching = permissions !== null && permissions.includes('coaching:bookings:read');
   const canBook = permissions !== null && permissions.includes('coaching:book');
   const canConnect = permissions !== null && permissions.includes('coaching:video:connect');
   const canManageAvailability =
@@ -174,6 +181,24 @@ export default function CoachingScreen() {
         : undefined,
     });
   }, [navigation, canManageAvailability, canBook, t, router]);
+
+  // Defensive self-guard: if the user somehow navigates here without the tab
+  // permission (e.g. via a deep-link or stat-card tap before permissions resolve),
+  // render a no-access state rather than firing a 403-ing query.
+  // Mirror: availability.tsx canManage gate pattern.
+  if (!canSeeCoaching) {
+    return (
+      <ZScreen edges={[]}>
+        <View testID="coaching-no-permission" className="flex-1 items-center justify-center p-4">
+          <ZEmptyState
+            title={t('sessions.availability.noPermission')}
+            description={t('sessions.availability.noPermissionDescription')}
+            icon={<ZSymbol name="calendar" label={t('sessions.availability.noPermission')} size={24} color={colors.primary} />}
+          />
+        </View>
+      </ZScreen>
+    );
+  }
 
   const now = new Date();
   const nowMs = now.getTime();
@@ -250,7 +275,11 @@ export default function CoachingScreen() {
         keyExtractor={(booking) => booking.id}
         renderItem={({ item }) => renderBooking(item)}
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 16 + (Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0),
+          flexGrow: 1,
+        }}
         ListEmptyComponent={
           <View testID="coaching-empty" className="flex-1 justify-center">
             {emptyState}
@@ -294,17 +323,21 @@ export default function CoachingScreen() {
           iOS: the same action is a native header-right "+" button (set via
           useEffect above). Availability is in the header on both platforms. */}
       {Platform.OS === 'android' && canBook ? (
-        <ZIconButton
-          testID="coaching-book"
-          label={t('sessions.bookLive')}
-          variant="primary"
-          size="lg"
-          shape="circle"
-          onPress={() => router.push('/book')}
-          className="absolute bottom-6 right-6"
+        <View
+          className="absolute right-6"
+          style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
         >
-          <ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={colors.onPrimary} />
-        </ZIconButton>
+          <ZIconButton
+            testID="coaching-book"
+            label={t('sessions.bookLive')}
+            variant="primary"
+            size="lg"
+            shape="circle"
+            onPress={() => router.push('/book')}
+          >
+            <ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={colors.onPrimary} />
+          </ZIconButton>
+        </View>
       ) : null}
     </ZScreen>
   );

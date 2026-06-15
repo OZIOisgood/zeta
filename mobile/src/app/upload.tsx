@@ -13,7 +13,6 @@ import { ZCard } from '../components/ui/z-card';
 import { ZFieldError } from '../components/ui/z-field-error';
 import { ZFieldLabel } from '../components/ui/z-field-label';
 import { ZIconButton } from '../components/ui/z-icon-button';
-import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSelect } from '../components/ui/z-select';
 import { ZSkeleton } from '../components/ui/z-skeleton';
@@ -132,8 +131,11 @@ export default function UploadScreen() {
           ),
         }}
       />
-      <ZKeyboardAvoidingView>
-        <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ padding: 16 }}>
+      {/* Note: no ZKeyboardAvoidingView here — this is a formSheet route and the
+          native sheet owns keyboard avoidance (AGENTS.md: "Do not apply the KAV
+          pattern inside native sheet routes"). keyboardShouldPersistTaps is applied
+          to the ScrollView below. */}
+      <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
 
           {/* Header card */}
           <ZCard className="mb-4">
@@ -307,7 +309,6 @@ export default function UploadScreen() {
             </ZCard>
           )}
         </ScrollView>
-      </ZKeyboardAvoidingView>
     </ZScreen>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../../api/queries/assets';
 import { useGroupsQuery } from '../../../api/queries/groups';
@@ -24,6 +25,10 @@ import { colors } from '../../../theme/colors';
 // recent videos in the preview; the full list lives in the Videos tab behind
 // "View all".
 const LATEST_VIDEOS_LIMIT = 4;
+
+// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
+// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
+const ANDROID_TAB_BAR_HEIGHT = 56;
 
 type HomeStep = {
   completed: boolean;
@@ -49,6 +54,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const has = (perm: string) => permissions !== null && permissions.includes(perm);
   const canCreate = has('assets:create');
@@ -228,9 +234,15 @@ export default function HomeScreen() {
       <ScrollView
         className="flex-1"
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ padding: 16, gap: 16 }}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 16 + (Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0),
+          gap: 16,
+        }}
       >
-        {/* Stat cards: live counts that double as section navigation. */}
+        {/* Stat cards: live counts that double as section navigation.
+            Each card is gated by the SAME permission that hides the
+            corresponding tab (mirror of (tabs)/_layout.tsx hidden logic). */}
         <View className="flex-row gap-3">
           <StatCard
             testID="stat-card-videos"
@@ -239,20 +251,24 @@ export default function HomeScreen() {
             icon={<ZSymbol name="video" label={t('videos.title')} size={18} color={colors.primary} />}
             onPress={() => router.push('/videos')}
           />
-          <StatCard
-            testID="stat-card-groups"
-            label={t('groups.myGroups')}
-            count={groupList.length}
-            icon={<ZSymbol name="users" label={t('groups.myGroups')} size={18} color={colors.primary} />}
-            onPress={() => router.push('/groups')}
-          />
-          <StatCard
-            testID="stat-card-sessions"
-            label={t('home.upcomingCoachingSessions')}
-            count={upcomingCount}
-            icon={<ZSymbol name="calendar-days" label={t('home.upcomingCoachingSessions')} size={18} color={colors.primary} />}
-            onPress={() => router.push('/coaching')}
-          />
+          {has('groups:read') ? (
+            <StatCard
+              testID="stat-card-groups"
+              label={t('groups.myGroups')}
+              count={groupList.length}
+              icon={<ZSymbol name="users" label={t('groups.myGroups')} size={18} color={colors.primary} />}
+              onPress={() => router.push('/groups')}
+            />
+          ) : null}
+          {has('coaching:bookings:read') ? (
+            <StatCard
+              testID="stat-card-sessions"
+              label={t('home.upcomingCoachingSessions')}
+              count={upcomingCount}
+              icon={<ZSymbol name="calendar-days" label={t('home.upcomingCoachingSessions')} size={18} color={colors.primary} />}
+              onPress={() => router.push('/coaching')}
+            />
+          ) : null}
         </View>
 
         {/* Latest videos preview, bounded to the four most recent. */}

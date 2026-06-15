@@ -137,6 +137,8 @@ test('renders the latest videos section heading', async () => {
 });
 
 test('stat cards render live counts from the assets, groups, and bookings queries', async () => {
+  // Both groups:read and coaching:bookings:read are required for the gated stat cards.
+  mockPermissions = ['groups:read', 'coaching:bookings:read'];
   mockUseAssetsQuery.mockReturnValue(
     success([asset('a1', 'pending', 'Kata 1'), asset('a2', 'completed', 'Kata 2')]),
   );
@@ -156,6 +158,8 @@ test('stat cards render live counts from the assets, groups, and bookings querie
 });
 
 test('cancelled and past bookings are excluded from the upcoming sessions count', async () => {
+  // coaching:bookings:read required for the sessions stat card to render.
+  mockPermissions = ['coaching:bookings:read'];
   const cancelled = { ...futureBooking('b1'), status: 'cancelled' as const };
   const past = {
     id: 'b2',
@@ -176,6 +180,8 @@ test('cancelled and past bookings are excluded from the upcoming sessions count'
 });
 
 test('tapping a stat card navigates to its tab', async () => {
+  // All three gated cards require their respective permissions.
+  mockPermissions = ['groups:read', 'coaching:bookings:read'];
   const user = userEvent.setup();
   await render(
     <Providers>

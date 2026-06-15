@@ -62,6 +62,14 @@ module.exports = defineConfig([
           message: 'No raw Modal in screens — use the formSheet route / ZDialogPanel.',
         },
         {
+          selector: "ImportDeclaration[source.value='react-native'] ImportSpecifier[imported.name='TouchableOpacity']",
+          message: 'No raw TouchableOpacity in screens — use Touchable / a z-* primitive.',
+        },
+        {
+          selector: "ImportDeclaration[source.value='react-native'] ImportSpecifier[imported.name='TouchableHighlight']",
+          message: 'No raw TouchableHighlight in screens — use Touchable / a z-* primitive.',
+        },
+        {
           selector: "Literal[value=/^#(?:[0-9a-fA-F]{3,8})$/]",
           message: 'No raw hex — use role tokens (theme/roles.ts) or NativeWind z-* classes.',
         },

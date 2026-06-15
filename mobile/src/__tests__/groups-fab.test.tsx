@@ -48,7 +48,7 @@ let client: QueryClient;
 beforeEach(() => {
   mockPush.mockClear();
   mockSetOptions.mockClear();
-  mockPermissions = [];
+  mockPermissions = ['groups:read']; // groups:read required for tab permission guard
   mockUseGroupsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -69,7 +69,7 @@ function Providers({ children }: { children: ReactNode }) {
 // setOptions rather than a floating FAB. FABs render only on Android.
 
 test('students: setOptions called with a headerRight Join button (no groups:create) (iOS path)', async () => {
-  mockPermissions = [];
+  mockPermissions = ['groups:read']; // student: tab access but no create permission
   await render(<Providers><GroupsScreen /></Providers>);
   expect(mockSetOptions).toHaveBeenCalledWith(
     expect.objectContaining({ headerRight: expect.any(Function) }),
@@ -77,7 +77,7 @@ test('students: setOptions called with a headerRight Join button (no groups:crea
 });
 
 test('students: header-right Join button renders and navigates to /invite (iOS path)', async () => {
-  mockPermissions = [];
+  mockPermissions = ['groups:read']; // student: tab access but no create permission
   await render(<Providers><GroupsScreen /></Providers>);
 
   const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
@@ -91,7 +91,7 @@ test('students: header-right Join button renders and navigates to /invite (iOS p
 });
 
 test('experts: setOptions called with a headerRight Create button (groups:create) (iOS path)', async () => {
-  mockPermissions = ['groups:create'];
+  mockPermissions = ['groups:read', 'groups:create']; // expert: tab access + create permission
   await render(<Providers><GroupsScreen /></Providers>);
   expect(mockSetOptions).toHaveBeenCalledWith(
     expect.objectContaining({ headerRight: expect.any(Function) }),
@@ -99,7 +99,7 @@ test('experts: setOptions called with a headerRight Create button (groups:create
 });
 
 test('experts: header-right Create button renders and navigates to /group/create (iOS path)', async () => {
-  mockPermissions = ['groups:create'];
+  mockPermissions = ['groups:read', 'groups:create']; // expert: tab access + create permission
   await render(<Providers><GroupsScreen /></Providers>);
 
   const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
