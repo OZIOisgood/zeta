@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as cheerio from 'cheerio';
-import { localePath, absoluteUrl, headLinks, rewriteLinks, applySwitcher, buildLandingPage } from './pages.mjs';
+import { localePath, absoluteUrl, headLinks, rewriteLinks, applySwitcher, buildLandingPage, rewriteLegalLinks } from './pages.mjs';
 
 test('localePath: de at root, others prefixed; index vs slug', () => {
   assert.equal(localePath('de', 'index'), '/');
@@ -38,6 +38,15 @@ test('applySwitcher sets current label and option links for the page', () => {
   assert.equal($('[data-lang-menu] a[hreflang="es"]').attr('href'), '/es/imprint.html');
   assert.match($('[data-lang-menu] a[hreflang="en"]').html(), /flags\/gb\.svg/); // English uses the GB flag
   assert.match($('[data-lang-menu] a[hreflang="de"]').html(), /flags\/de\.svg/);
+});
+
+test('rewriteLegalLinks maps localized legal slugs (and contact-form URLs) to canonical .html', () => {
+  const $ = cheerio.load('<article data-legal-content><a href="/privacidad">p</a><a href="https://strido.net/contacto">c</a><a href="/aviso-legal">i</a><a href="/datenschutz">d</a></article>');
+  rewriteLegalLinks($);
+  assert.equal($('a').eq(0).attr('href'), '/privacy.html');
+  assert.equal($('a').eq(1).attr('href'), '/contact.html');
+  assert.equal($('a').eq(2).attr('href'), '/imprint.html');
+  assert.equal($('a').eq(3).attr('href'), '/privacy.html');
 });
 
 test('buildLandingPage sets lang and translates body for non-de', () => {

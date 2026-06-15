@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { LOCALES, DEFAULT_LOCALE, SITE_ORIGIN } from './config.mjs';
+import { LOCALES, DEFAULT_LOCALE, SITE_ORIGIN, LEGAL_SLUG_ALIASES } from './config.mjs';
 import { translateDom } from './i18n.mjs';
 
 const dirOf = (locale) => LOCALES.find((l) => l.code === locale).dir;
@@ -66,11 +66,25 @@ export function buildLandingPage({ templateHtml, dict, locale, meta }) {
   return $.html();
 }
 
+// Inside rendered legal content, map localized slug links (and absolute contact-form URLs)
+// to our canonical /{slug}.html; rewriteLinks() then adds the locale prefix.
+export function rewriteLegalLinks($) {
+  $('[data-legal-content] a[href]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const m = href.match(/\/([a-z-]+)(?:[/?#].*)?$/i);
+    const seg = m && m[1].toLowerCase();
+    if (seg && Object.prototype.hasOwnProperty.call(LEGAL_SLUG_ALIASES, seg)) {
+      $(el).attr('href', `/${LEGAL_SLUG_ALIASES[seg]}.html`);
+    }
+  });
+}
+
 export function buildLegalPage({ shellHtml, contentHtml, h1, locale, slug, description, dict }) {
   const $ = cheerio.load(shellHtml, { decodeEntities: false });
   if (locale !== DEFAULT_LOCALE) translateDom($, dict);     // translate chrome only
   $('[data-legal-content]').html(contentHtml);              // inject already-localized content
   if (h1) $('[data-legal-title]').text(h1);                 // localized page title from markdown H1
+  rewriteLegalLinks($);                                     // localized legal slugs → /canonical.html
   rewriteLinks($, locale);
   applySwitcher($, locale, slug);
   applyHead($, { locale, pageKey: slug, title: `${h1} — Strido`, description });
