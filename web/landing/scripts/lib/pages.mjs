@@ -39,9 +39,9 @@ export function applySwitcher($, locale, pageKey) {
   for (const l of LOCALES) {
     const active = l.code === locale;
     menu.append(
-      `<a class="lp-lang-opt${active ? ' is-active' : ''}" href="${localePath(l.code, pageKey)}" hreflang="${l.code}"${active ? ' aria-current="true"' : ''}>` +
-        `<span class="lp-lang-opt-short">${l.short}</span><span class="lp-lang-opt-label">${l.label}</span>` +
-        `${active ? '<i data-lucide="check"></i>' : ''}</a>`,
+      `<a class="lp-lang-option" role="option" href="${localePath(l.code, pageKey)}" hreflang="${l.code}"${active ? ' aria-selected="true"' : ''}>` +
+        `<span class="lp-lang-short">${l.short}</span><span>${l.label}</span>` +
+        `<span class="lp-lang-check"><i data-lucide="check"></i></span></a>`,
     );
   }
 }
