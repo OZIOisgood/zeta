@@ -1,14 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Clapperboard,
-  UserRound,
-  Users,
-  Video,
-} from 'lucide-react-native';
+import { ZSymbol } from '../components/ui/z-symbol';
 import {
   buildReport,
   canStepForward,
@@ -152,7 +145,7 @@ export default function ReportsScreen() {
                   label={t('reports.period.prev')}
                   onPress={() => setCursor((c) => stepCursor(gran, c, -1))}
                 >
-                  <ChevronLeft color={colors.muted} size={20} />
+                  <ZSymbol name="chevron-left" label={t('reports.period.prev')} size={20} color={colors.muted} />
                 </ZIconButton>
                 <Text className="text-sm font-semibold text-z-text">{periodLabel}</Text>
                 <ZIconButton
@@ -160,7 +153,7 @@ export default function ReportsScreen() {
                   disabled={!forwardEnabled}
                   onPress={() => setCursor((c) => stepCursor(gran, c, 1))}
                 >
-                  <ChevronRight color={forwardEnabled ? colors.muted : colors.border} size={20} />
+                  <ZSymbol name="chevron-right" label={t('reports.period.next')} size={20} color={forwardEnabled ? colors.muted : colors.border} />
                 </ZIconButton>
               </View>
               {!atCurrent ? (
@@ -180,7 +173,7 @@ export default function ReportsScreen() {
                 testID="reports-stat-videos"
                 label={t('reports.stats.videos')}
                 count={report.totals.videoCount}
-                icon={<Clapperboard color={colors.primary} size={20} />}
+                icon={<ZSymbol name="film" label={t('reports.stats.videos')} size={20} color={colors.primary} />}
                 footer={
                   <ZBadge tone="neutral" label={fmtDuration(report.totals.videoSec, t)} />
                 }
@@ -190,7 +183,7 @@ export default function ReportsScreen() {
                 testID="reports-stat-live"
                 label={t('reports.stats.live')}
                 count={report.totals.liveCount}
-                icon={<Video color={colors.success} size={20} />}
+                icon={<ZSymbol name="video" label={t('reports.stats.live')} size={20} color={colors.success} />}
                 footer={
                   <ZBadge tone="success" label={fmtDuration(report.totals.liveSec, t)} />
                 }
@@ -202,9 +195,9 @@ export default function ReportsScreen() {
                 count={report.leafCount}
                 icon={
                   isExpert ? (
-                    <Users color={colors.primary} size={20} />
+                    <ZSymbol name="users" label={t('reports.stats.students')} size={20} color={colors.primary} />
                   ) : (
-                    <UserRound color={colors.primary} size={20} />
+                    <ZSymbol name="person" label={t('reports.stats.experts')} size={20} color={colors.primary} />
                   )
                 }
                 footer={
@@ -244,9 +237,9 @@ export default function ReportsScreen() {
               tone={item.kind === 'video' ? 'neutral' : 'success'}
               icon={
                 item.kind === 'video' ? (
-                  <Clapperboard color={colors.primary} size={18} />
+                  <ZSymbol name="film" label={t('reports.event.videoUploaded')} size={18} color={colors.primary} />
                 ) : (
-                  <Video color={colors.success} size={18} />
+                  <ZSymbol name="video" label={t('reports.event.liveCoaching')} size={18} color={colors.success} />
                 )
               }
             />

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { RefreshControl, SectionList, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell, CheckCheck } from 'lucide-react-native';
+import { ZSymbol } from '../components/ui/z-symbol';
 import { useTranslation } from 'react-i18next';
 import {
   useNotificationsQuery,
@@ -135,7 +135,7 @@ export default function NotificationsScreen() {
         <ZEmptyState
           title={emptyTitle}
           description={emptyDescription}
-          icon={<Bell color={colors.primary} size={24} />}
+          icon={<ZSymbol name="bell" label={t('notifications.title')} size={24} color={colors.primary} />}
         />
       </View>
     );
@@ -172,7 +172,7 @@ export default function NotificationsScreen() {
               label={t('notifications.markAllRead')}
               variant="secondary"
               onPress={() => markAll.mutate()}
-              icon={<CheckCheck color={colors.text} size={16} />}
+              icon={<ZSymbol name="check-all" label={t('notifications.markAllRead')} size={16} color={colors.text} />}
             />
           ) : undefined
         }

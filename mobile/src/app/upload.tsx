@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { ArrowLeft, Check, FileVideo, X } from 'lucide-react-native';
+import { ZSymbol } from '../components/ui/z-symbol';
 import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../api/queries/groups';
 import { api } from '../auth/auth-store';
@@ -123,7 +123,7 @@ export default function UploadScreen() {
           {/* Header */}
           <View className="mb-4 flex-row items-center gap-3">
             <ZIconButton label={t('common.actions.back')} onPress={() => router.back()}>
-              <ArrowLeft color={colors.muted} size={24} />
+              <ZSymbol name="back" label={t('common.actions.back')} size={24} color={colors.muted} />
             </ZIconButton>
           </View>
   
@@ -163,7 +163,7 @@ export default function UploadScreen() {
                       key={`${file.localUri}-${index}`}
                       className="flex-row items-center rounded-lg border border-z-border bg-z-surface px-3 py-2"
                     >
-                      <FileVideo color={colors.primary} size={18} />
+                      <ZSymbol name="file-video" label={file.filename} size={18} color={colors.primary} />
                       <Text className="ml-2 flex-1 text-sm font-semibold text-z-text" numberOfLines={1}>
                         {file.filename}
                       </Text>
@@ -173,7 +173,7 @@ export default function UploadScreen() {
                         onPress={() => handleRemovePicked(index)}
                         className="ml-2"
                       >
-                        <X color={colors.muted} size={16} />
+                        <ZSymbol name="close" label={t('common.actions.remove')} size={16} color={colors.muted} />
                       </ZIconButton>
                     </View>
                   ))}
@@ -256,7 +256,7 @@ export default function UploadScreen() {
             <ZCard>
               <View className="flex-row items-center gap-3">
                 <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-                  <Check color={colors.primary} size={20} />
+                  <ZSymbol name="check" label={t('upload.readyTitle')} size={20} color={colors.primary} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-base font-semibold text-z-text">{t('upload.readyTitle')}</Text>
