@@ -26,7 +26,7 @@ import { colors } from '../../theme/colors';
  *
  * i18n: uses existing keys from the synced dashboard JSONs:
  *   - common.search — fallback search placeholder
- *   - common.actions.back — back button (via ZBackHeader)
+ *   - common.actions.back — back button (via native Stack.Screen headerLeft)
  *   - Caller-supplied searchPlaceholder / title from the store request.
  */
 export default function SelectFieldScreen() {
