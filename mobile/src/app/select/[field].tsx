@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { selectStore } from '../../components/ui/z-combobox.shared';
+import { selectStore } from '../../components/ui/z-combobox';
 import { ZBackHeader } from '../../components/ui/z-back-header';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZTextInput } from '../../components/ui/z-text-input';
@@ -85,7 +85,7 @@ export default function SelectFieldScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         ListEmptyComponent={
           <View testID="select-empty" className="items-center px-4 py-12">
-            <Text className="text-sm text-z-muted">{searchPlaceholder}</Text>
+            <Text className="text-sm text-z-muted">{t('common.noResults')}</Text>
           </View>
         }
         renderItem={({ item: opt }) => {

@@ -6,6 +6,8 @@ import { ZTextInput } from './z-text-input';
 import type { ZComboboxProps } from './z-combobox.types';
 
 export type { ZComboboxOption, ZComboboxProps } from './z-combobox.types';
+export { selectStore, openSelect, useSelectRequest } from './z-combobox.shared';
+export type { SelectRequest } from './z-combobox.shared';
 
 /**
  * Searchable single-choice select — NativeWind fallback (web / Storybook / jest).

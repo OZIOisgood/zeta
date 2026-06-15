@@ -1,10 +1,11 @@
 /**
  * ZCombobox — Android implementation (Tier: Custom-RN).
  *
- * Renders a native-styled trigger that navigates to the pushed /select/[field]
- * search screen instead of opening an inline Modal. The search screen renders
- * a FlatList with a search field — the Android idiom for picking from a long
- * or searchable list (Material 3: "Search bar + list" pattern).
+ * Custom-RN: no @expo/ui / OS-widget equivalent for a searchable combobox.
+ * Renders a NativeWind-styled trigger that navigates to the pushed
+ * /select/[field] search screen instead of opening an inline Modal. The search
+ * screen renders a FlatList with a search field — the Android idiom for picking
+ * from a long or searchable list (Material 3: "Search bar + list" pattern).
  *
  * The shared selectStore holds the options array + onSelect callback so they
  * can be passed across the navigation boundary without route-param serialisation.
@@ -24,6 +25,8 @@ import { ZSymbol } from './z-symbol';
 import type { ZComboboxProps } from './z-combobox.types';
 
 export type { ZComboboxOption, ZComboboxProps } from './z-combobox.types';
+export { selectStore, openSelect, useSelectRequest } from './z-combobox.shared';
+export type { SelectRequest } from './z-combobox.shared';
 
 /**
  * Android ZCombobox trigger.

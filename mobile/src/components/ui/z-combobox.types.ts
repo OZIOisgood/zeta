@@ -1,10 +1,15 @@
 /**
- * ZCombobox — shared public API types (Tier: Custom-RN/Infra)
+ * ZCombobox — shared public API types (Tier: Custom-RN)
  *
- * These types are shared across all platform variants:
+ * ZCombobox is a Custom-RN primitive: no @expo/ui / OS-widget equivalent.
+ * The trigger is a hand-styled Pressable + NativeWind; on native it navigates
+ * to the pushed /select/[field] search screen (HIG "Search interfaces" /
+ * Material 3 "Search bar + list") instead of opening an inline Modal.
+ *
+ * Platform variants:
  *   - z-combobox.tsx          — NativeWind fallback (web / Storybook / jest)
- *   - z-combobox.ios.tsx      — Native trigger → pushed /select/[field] screen
- *   - z-combobox.android.tsx  — Native trigger → pushed /select/[field] screen
+ *   - z-combobox.ios.tsx      — Custom-RN trigger → pushed /select/[field] screen
+ *   - z-combobox.android.tsx  — Custom-RN trigger → pushed /select/[field] screen
  *
  * The bare .tsx fallback is the contract doc and test surface; the native
  * variants (.ios/.android) must implement the same props without deviation.

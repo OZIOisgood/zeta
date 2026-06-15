@@ -3,6 +3,7 @@
  *
  * Platform variants:
  *   - z-card.tsx          — NativeWind fallback (web / Storybook / jest)
+ *   - z-card.ios.tsx      — role-token-styled RN View (inset-grouped feel)
  *   - z-card.android.tsx  — @expo/ui/jetpack-compose Card (Material 3 surface)
  *
  * iOS note: SwiftUI `Section` only works inside a List/Form, so iOS uses a
