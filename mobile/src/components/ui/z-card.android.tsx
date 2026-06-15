@@ -10,8 +10,11 @@
  *   - elevation → 1dp (Material 3 level-1, matches "tonal surface" feel)
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
- * `className` is accepted but has no effect on native (preserved in API for
- * parity with the bare fallback used by Storybook / web). Padding is applied
+ * `className` is forwarded to an outer NativeWind View so that consumer layout
+ * classes (gap-*, flex-row, margins, selected-card highlights) are applied on
+ * real device builds. Without this wrapper the @expo/ui Host does not honor
+ * NativeWind classes, breaking layout-via-className consumers silently
+ * (CI is green because jest uses the bare .tsx fallback). Padding is applied
  * via a wrapping RN View so that the content respects the p-4 contract even
  * inside the Compose card (which handles its own surface clipping).
  *
@@ -26,13 +29,14 @@ import type { ZCardProps } from './z-card.types';
 
 export type { ZCardProps } from './z-card.types';
 
-export function ZCard({ children, testID }: ZCardProps) {
+export function ZCard({ children, className, testID }: ZCardProps) {
   const { color } = useRoleColors();
 
   return (
-    // Wrap in an RN View to carry testID; Android Host's PrimitiveBaseProps
-    // does not include a testID field (unlike iOS Host).
-    <View testID={testID}>
+    // Outer NativeWind View carries className (layout extensions from consumer)
+    // and testID. Android Host's PrimitiveBaseProps does not include a testID
+    // field (unlike iOS Host), so testID lives on this wrapper View.
+    <View className={className} testID={testID}>
       <Host matchContents={{ horizontal: true }}>
         <Card
           colors={{ containerColor: color('surface') }}

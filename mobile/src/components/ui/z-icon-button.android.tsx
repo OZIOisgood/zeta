@@ -51,10 +51,18 @@ export function ZIconButton({
   size = 'md',
   shape = 'rounded',
   disabled = false,
+  className,
   testID,
 }: ZIconButtonProps) {
   const { color } = useRoleColors();
   const modifiers = testID ? [testIDModifier(testID)] : [];
+
+  // Outer NativeWind View carries className so that consumer layout classes
+  // (e.g. "absolute bottom-6 right-6" for FAB positioning) are applied on
+  // real device builds. The @expo/ui Host does not honor NativeWind classes
+  // reliably, so this wrapper is required. matchContents makes each Host size
+  // to the Compose intrinsic size; the outer View is layout-transparent except
+  // for the forwarded className.
 
   // FAB path: Material 3 FloatingActionButton (lg) or SmallFloatingActionButton (md).
   // FloatingActionButton does not expose an `enabled` prop in @expo/ui — disable
@@ -63,17 +71,19 @@ export function ZIconButton({
     const FABComponent = size === 'lg' ? FloatingActionButton : SmallFloatingActionButton;
 
     return (
-      <Host matchContents>
-        <FABComponent
-          onClick={disabled ? undefined : onPress}
-          containerColor={color('accent')}
-          modifiers={modifiers}
-        >
-          <FABComponent.Icon>
-            <View accessibilityLabel={label}>{children}</View>
-          </FABComponent.Icon>
-        </FABComponent>
-      </Host>
+      <View className={className}>
+        <Host matchContents>
+          <FABComponent
+            onClick={disabled ? undefined : onPress}
+            containerColor={color('accent')}
+            modifiers={modifiers}
+          >
+            <FABComponent.Icon>
+              <View accessibilityLabel={label}>{children}</View>
+            </FABComponent.Icon>
+          </FABComponent>
+        </Host>
+      </View>
     );
   }
 
@@ -84,57 +94,63 @@ export function ZIconButton({
 
   if (variant === 'secondary') {
     return (
-      <Host matchContents>
-        <OutlinedIconButton
-          onClick={onPress}
-          enabled={!disabled}
-          colors={{
-            contentColor: color('accent'),
-            disabledContainerColor: 'transparent',
-            disabledContentColor: color('onSurfaceVariant'),
-          }}
-          modifiers={modifiers}
-        >
-          {iconContent}
-        </OutlinedIconButton>
-      </Host>
+      <View className={className}>
+        <Host matchContents>
+          <OutlinedIconButton
+            onClick={onPress}
+            enabled={!disabled}
+            colors={{
+              contentColor: color('accent'),
+              disabledContainerColor: 'transparent',
+              disabledContentColor: color('onSurfaceVariant'),
+            }}
+            modifiers={modifiers}
+          >
+            {iconContent}
+          </OutlinedIconButton>
+        </Host>
+      </View>
     );
   }
 
   if (variant === 'primary') {
     return (
-      <Host matchContents>
-        <FilledIconButton
-          onClick={onPress}
-          enabled={!disabled}
-          colors={{
-            containerColor: color('accent'),
-            contentColor: color('onAccent'),
-            disabledContainerColor: color('surfaceVariant'),
-            disabledContentColor: color('onSurfaceVariant'),
-          }}
-          modifiers={modifiers}
-        >
-          {iconContent}
-        </FilledIconButton>
-      </Host>
+      <View className={className}>
+        <Host matchContents>
+          <FilledIconButton
+            onClick={onPress}
+            enabled={!disabled}
+            colors={{
+              containerColor: color('accent'),
+              contentColor: color('onAccent'),
+              disabledContainerColor: color('surfaceVariant'),
+              disabledContentColor: color('onSurfaceVariant'),
+            }}
+            modifiers={modifiers}
+          >
+            {iconContent}
+          </FilledIconButton>
+        </Host>
+      </View>
     );
   }
 
   // ghost (default)
   return (
-    <Host matchContents>
-      <IconButton
-        onClick={onPress}
-        enabled={!disabled}
-        colors={{
-          contentColor: color('onSurface'),
-          disabledContentColor: color('onSurfaceVariant'),
-        }}
-        modifiers={modifiers}
-      >
-        {iconContent}
-      </IconButton>
-    </Host>
+    <View className={className}>
+      <Host matchContents>
+        <IconButton
+          onClick={onPress}
+          enabled={!disabled}
+          colors={{
+            contentColor: color('onSurface'),
+            disabledContentColor: color('onSurfaceVariant'),
+          }}
+          modifiers={modifiers}
+        >
+          {iconContent}
+        </IconButton>
+      </Host>
+    </View>
   );
 }

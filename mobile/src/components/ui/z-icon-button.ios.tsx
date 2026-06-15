@@ -63,6 +63,7 @@ export function ZIconButton({
   variant = 'ghost',
   size = 'md',
   disabled: isDisabled = false,
+  className,
   testID,
 }: ZIconButtonProps) {
   const { color } = useRoleColors();
@@ -79,11 +80,19 @@ export function ZIconButton({
     ...(tintModifier ? [tintModifier] : []),
   ];
 
+  // Outer NativeWind View carries className so that consumer layout classes
+  // (e.g. "absolute bottom-6 right-6" for FAB positioning) are applied on
+  // real device builds. The @expo/ui Host does not honor NativeWind classes
+  // reliably, so the wrapper View is required. matchContents makes the Host
+  // size to the SwiftUI intrinsic size; the outer View is layout-transparent
+  // except for the forwarded className.
   return (
-    <Host matchContents>
-      <Button onPress={onPress} modifiers={modifiers}>
-        <View>{children}</View>
-      </Button>
-    </Host>
+    <View className={className}>
+      <Host matchContents>
+        <Button onPress={onPress} modifiers={modifiers}>
+          <View>{children}</View>
+        </Button>
+      </Host>
+    </View>
   );
 }
