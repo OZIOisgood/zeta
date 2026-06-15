@@ -26,3 +26,9 @@ test('translates whitelisted attributes', () => {
   translateDom($, { 'Kommentar hinzufügen…': 'Add a comment…' });
   assert.equal($('input').attr('placeholder'), 'Add a comment…');
 });
+
+test('matches dictionary keys regardless of curly vs straight quotes', () => {
+  const $ = cheerio.load('<p>Status „Geprüft“</p>');
+  translateDom($, { 'Status "Geprüft"': 'Status "Checked"' });
+  assert.match($('p').text(), /Checked/);
+});
