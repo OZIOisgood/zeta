@@ -1,5 +1,5 @@
 /**
- * ZSymbol — adaptive icon primitive (Tier: Custom RN / Native plumbing)
+ * ZSymbol — adaptive icon primitive (Tier: Native)
  *
  * Maps a logical icon name to native iconography:
  *   - iOS  → SF Symbols via expo-symbols `SymbolView`

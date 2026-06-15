@@ -9,7 +9,9 @@ export const TIERS: Record<string, Tier> = {
   'z-checkbox': 'native',
   'z-tabs': 'native',
   'z-card': 'native',
-  'z-badge': 'native',
+  // ZBadge: semantic status pill — no OS widget equivalent on either platform.
+  // Single shared NativeWind implementation (no .ios/.android split needed).
+  'z-badge': 'custom-no-native',
   'z-chip': 'native',
   'z-dialog-panel': 'native',
   'z-confirm-dialog': 'native',
@@ -17,9 +19,10 @@ export const TIERS: Record<string, Tier> = {
   'z-empty-state': 'native',
   'z-query-error': 'native',
   'z-combobox': 'custom-no-native',
-  'z-page-header': 'native',
-  'z-back-header': 'native',
-  'z-danger-zone-card': 'native',
+  // ZDangerZoneCard: composition primitive — composes native sub-primitives
+  // (ZCard, ZButton, ZConfirmDialog, ZIconTile) but has no platform files of
+  // its own. Classified as COMPOSITION_EXCEPTION in primitive-contract.test.ts.
+  'z-danger-zone-card': 'custom-no-native',
   'z-stepper': 'custom-no-native',
   'z-icon-tile': 'custom-no-native',
   'z-skeleton': 'custom-no-native',

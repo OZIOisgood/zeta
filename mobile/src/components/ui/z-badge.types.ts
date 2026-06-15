@@ -1,5 +1,5 @@
 /**
- * ZBadge — shared public API types (Tier: Custom RN — shared implementation)
+ * ZBadge — shared public API types (Tier: custom-no-native)
  *
  * ZBadge is a SEMANTIC STATUS PILL (success / warning / danger / primary / neutral).
  * Neither iOS nor Android has a native widget that maps to a "status pill" in

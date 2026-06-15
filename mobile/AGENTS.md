@@ -18,15 +18,17 @@ Every `z-*` primitive belongs to exactly one tier. Declare it at the top of the 
 
 **Native** — `@expo/ui` + native navigation, for every primitive that has an OS widget counterpart:
 - Inputs: `ZTextInput`/`ZTextarea` → TextField; `ZSelect` → Picker(menu)/ExposedDropdownMenu; `ZCheckbox` → Toggle (iOS)/Checkbox (Android); `ZTabs` (in-page) → Segmented.
-- Containers: `ZCard` + `ZDangerZoneCard` → Section (iOS, inset-grouped)/Card (Android).
+- Containers: `ZCard` → Section (iOS, inset-grouped)/Card (Android).
 - Overlays: `ZDialogPanel` → formSheet; `ZConfirmDialog` → Alert (plain confirms) / formSheet (with input); `ZToast` → Snackbar (Android)/native HUD (iOS).
 - States: `ZEmptyState`/`ZQueryError` → `ContentUnavailableView` (iOS), styled column (Android).
-- Buttons: `ZButton`, `ZIconButton`, FAB (Android-only; iOS uses a nav-bar "+"), `ZBadge`, `ZChip`.
-- Navigation: native-stack headers (not `ZPageHeader`); bottom tabs → NativeTabs.
+- Buttons/interactive: `ZButton`, `ZIconButton`, FAB (Android-only; iOS uses a nav-bar "+"), `ZChip`.
+- Icon primitive: `ZSymbol` → SF Symbols (iOS) / Material Symbols (Android) via expo-symbols.
+- Navigation: native-stack headers (no custom header primitive); bottom tabs → NativeTabs.
 
 **Custom RN (NativeWind)** — two valid reasons:
 - (a) **Brand-led canvas** (deliberately custom appearance): `login`/auth screens (logo/wordmark + native button), per-instance marquee empty states.
-- (b) **No native equivalent**: `ZStepper`, `ZIconTile`, `ZSkeleton`, `ZVideoPreview`, `ZAvatar`/`ZAvatarInput`. All must still use native iconography (SF Symbols/Material Symbols), system fonts, and role tokens.
+- (b) **No native equivalent**: `ZBadge` (semantic status pill — no OS widget maps to success/warning/danger pill), `ZStepper`, `ZIconTile`, `ZSkeleton`, `ZVideoPreview`, `ZAvatar`/`ZAvatarInput`, `ZCombobox` (search-nav pattern). All must still use native iconography (SF Symbols/Material Symbols), system fonts, and role tokens.
+- (c) **Composition**: `ZDangerZoneCard` composes native sub-primitives (`ZCard` + `ZButton` + `ZConfirmDialog` + `ZIconTile`) but has no platform split of its own — the native behavior comes from its children.
 
 **Infra/plumbing** — `ZScreen`, `ZKeyboardAvoidingView`, `ZFieldLabel`/`ZFieldError`.
 
