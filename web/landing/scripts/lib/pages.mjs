@@ -49,8 +49,8 @@ export function applySwitcher($, locale, pageKey) {
 export function applyHead($, { locale, pageKey, title, description }) {
   $('html').attr('lang', locale);
   $('title').text(title);
-  if ($('meta[name="description"]').length) $('meta[name="description"]').attr('content', description);
-  else $('head').append(`<meta name="description" content="${description}">`);
+  if (!$('meta[name="description"]').length) $('head').append('<meta name="description" content="">');
+  $('meta[name="description"]').attr('content', description);
   $('head').append('\n' + headLinks(locale, pageKey));
 }
 

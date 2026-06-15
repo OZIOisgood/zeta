@@ -24,8 +24,9 @@ design: `.agents/plans/20260615085244_landing_v2_integration_design.md`.
   `web/landing/content/legal/` (single source of truth, inside the Docker build context).
 - **Self-hosted everything** (no CDN): vendored Inter `@font-face` + lucide locally (the
   handoff's Google-Fonts `@import` was stripped — important for a GDPR-facing EU site).
-- **Multi-stage Dockerfile** runs the generator at image build; `deploy-landing.yml` and
-  `nginx.conf` unchanged (build context stays `web/landing`).
+- **Multi-stage Dockerfile** runs the generator at image build; `deploy-landing.yml`
+  unchanged; `nginx.conf` extended to also emit the security headers on static-asset
+  responses (build context stays `web/landing`).
 
 ## Files touched
 
@@ -53,6 +54,10 @@ design: `.agents/plans/20260615085244_landing_v2_integration_design.md`.
   has no horizontal overflow (scrollWidth == clientWidth); **0 console errors**.
 - Screenshots captured (EN full landing, switcher open, EN imprint, EN mobile) — see
   `/home/heinrich/landing-v2-screenshots/` for PR attachment.
+- **Final adversarial code review** (whole branch): APPROVE WITH NITS; the two important
+  findings (security headers missing on static-asset responses; a latent unsafe
+  meta-description fallback) were fixed and re-verified (headers present on `/assets/*`,
+  15/15 tests still pass).
 
 ## Follow-ups (go-live human tasks — not code)
 
