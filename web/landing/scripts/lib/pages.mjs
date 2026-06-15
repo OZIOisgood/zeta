@@ -84,16 +84,18 @@ export function rewriteLegalLinks($) {
 export function buildContactForm(dict) {
   const t = (k) => dict[k] || k;
   const attr = (k) => t(k).replace(/"/g, '&quot;');
+  const consent = t('Ich habe die {link} gelesen und verstanden.')
+    .replace('{link}', `<a href="/datenschutz">${t('Datenschutzerklärung')}</a>`);
   return (
     '<form class="contact-form" onsubmit="return false;">' +
     `<h2>${t('Nachricht senden')}</h2>` +
-    `<p>${t('Fragen, Feedback oder Interesse an einer Zusammenarbeit? Schreib uns direkt.')}</p>` +
     `<div class="contact-field"><label for="cf-name">${t('Name')}</label>` +
     `<input id="cf-name" type="text" placeholder="${attr('Dein Name')}" autocomplete="name"></div>` +
     `<div class="contact-field"><label for="cf-email">${t('E-Mail')}</label>` +
     `<input id="cf-email" type="email" placeholder="${attr('du@beispiel.de')}" autocomplete="email"></div>` +
     `<div class="contact-field"><label for="cf-msg">${t('Nachricht')}</label>` +
     `<textarea id="cf-msg" placeholder="${attr('Wie können wir helfen?')}"></textarea></div>` +
+    `<label class="contact-consent"><input type="checkbox" required> <span>${consent}</span></label>` +
     `<button class="lp-btn lp-btn-primary" type="submit">${t('Nachricht senden')}</button>` +
     `<p class="contact-form-note">${t('Demo-Formular — wird noch nicht versendet.')}</p>` +
     '</form>'

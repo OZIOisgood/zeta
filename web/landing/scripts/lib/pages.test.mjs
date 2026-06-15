@@ -49,12 +49,14 @@ test('rewriteLegalLinks maps localized legal slugs (and contact-form URLs) to ca
   assert.equal($('a').eq(3).attr('href'), '/privacy.html');
 });
 
-test('buildContactForm renders a non-wired form with translated strings', () => {
+test('buildContactForm renders a non-wired form with consent checkbox', () => {
   const out = buildContactForm({ 'Nachricht senden': 'Send message', 'Dein Name': 'Your name', 'Name': 'Name' });
   assert.match(out, /<form class="contact-form" onsubmit="return false;">/);
   assert.match(out, />Send message</);
   assert.match(out, /placeholder="Your name"/);
   assert.match(out, /<textarea/);
+  assert.match(out, /type="checkbox"/);
+  assert.match(out, /href="\/datenschutz"/); // privacy link (rewritten to /privacy.html at build)
 });
 
 test('buildLandingPage sets lang and translates body for non-de', () => {

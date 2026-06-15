@@ -21,7 +21,7 @@
   "Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit. Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.": "De Europese Commissie biedt een platform voor onlinegeschillenbeslechting (ODR). Wij zijn niet verplicht en niet bereid om deel te nemen aan een geschillenbeslechtingsprocedure voor een consumentengeschillencommissie.",
   "Haftung für Inhalte und Links": "Aansprakelijkheid voor inhoud en links",
   "Die Inhalte dieser Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen. Für Inhalte externer Links sind ausschließlich deren Betreiber verantwortlich.": "De inhoud van deze pagina’s is met de grootste zorg samengesteld. Wij kunnen echter niet instaan voor de juistheid, volledigheid en actualiteit van de inhoud. Voor de inhoud van externe links zijn uitsluitend de beheerders ervan verantwoordelijk.",
-  "Datenschutzerklärung": "Privacyverklaring",
+  "Datenschutzerklärung": "Privacybeleid",
   "Stand: Juni 2026": "Bijgewerkt: juni 2026",
   "Platzhalter-Inhalt. Diese Datenschutzerklärung ist ein Muster und ersetzt keine Rechtsberatung — bitte vor Veröffentlichung anwaltlich prüfen und an die tatsächliche Datenverarbeitung anpassen.": "Tijdelijke inhoud. Deze privacyverklaring is een sjabloon en vormt geen juridisch advies — laat deze vóór publicatie door een jurist controleren en pas hem aan op de werkelijke gegevensverwerking.",
   "1. Verantwortlicher": "1. Verwerkingsverantwoordelijke",
@@ -63,5 +63,6 @@
   "du@beispiel.de": "jij@voorbeeld.nl",
   "Wie können wir helfen?": "Hoe kunnen we helpen?",
   "Kontakt": "Contact",
-  "Nutzungsbedingungen": "Gebruiksvoorwaarden"
+  "Nutzungsbedingungen": "Gebruiksvoorwaarden",
+  "Ich habe die {link} gelesen und verstanden.": "Ik heb het {link} gelezen en begrepen."
 }

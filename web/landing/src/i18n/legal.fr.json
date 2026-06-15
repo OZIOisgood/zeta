@@ -24,7 +24,7 @@
   "Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit. Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.": "La Commission européenne met à disposition une plateforme de règlement en ligne des litiges (RLL). Nous ne sommes ni tenus ni disposés à participer à une procédure de règlement des litiges devant un organe de conciliation des consommateurs.",
   "Haftung für Inhalte und Links": "Responsabilité des contenus et des liens",
   "Die Inhalte dieser Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen. Für Inhalte externer Links sind ausschließlich deren Betreiber verantwortlich.": "Les contenus de ces pages ont été élaborés avec le plus grand soin. Nous ne pouvons toutefois garantir leur exactitude, leur exhaustivité ni leur actualité. Les exploitants des sites externes liés sont seuls responsables de leur contenu.",
-  "Datenschutzerklärung": "Politique de confidentialité",
+  "Datenschutzerklärung": "politique de confidentialité",
   "Stand: Juni 2026": "Dernière mise à jour : juin 2026",
   "Platzhalter-Inhalt. Diese Datenschutzerklärung ist ein Muster und ersetzt keine Rechtsberatung — bitte vor Veröffentlichung anwaltlich prüfen und an die tatsächliche Datenverarbeitung anpassen.": "Contenu provisoire. Cette politique de confidentialité est un modèle et ne constitue pas un conseil juridique — faites-la vérifier par un avocat avant publication et adaptez-la au traitement réel des données.",
   "1. Verantwortlicher": "1. Responsable du traitement",
@@ -66,5 +66,6 @@
   "du@beispiel.de": "toi@exemple.fr",
   "Wie können wir helfen?": "Comment pouvons-nous aider ?",
   "Kontakt": "Contact",
-  "Nutzungsbedingungen": "Conditions d'utilisation"
+  "Nutzungsbedingungen": "Conditions d'utilisation",
+  "Ich habe die {link} gelesen und verstanden.": "J’ai lu et compris la {link}."
 }
