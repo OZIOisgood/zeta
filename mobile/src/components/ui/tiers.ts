@@ -3,6 +3,7 @@ export type Tier = 'native' | 'custom-canvas' | 'custom-no-native' | 'infra';
 export const TIERS: Record<string, Tier> = {
   'z-button': 'native',
   'z-icon-button': 'native',
+  'z-fab': 'native',
   'z-select': 'native',
   'z-text-input': 'native',
   'z-textarea': 'native',
