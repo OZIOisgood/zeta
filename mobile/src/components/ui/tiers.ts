@@ -9,6 +9,7 @@ export const TIERS: Record<string, Tier> = {
   'z-checkbox': 'native',
   'z-tabs': 'native',
   'z-card': 'native',
+  'z-progress': 'native',
   // ZBadge: semantic status pill — no OS widget equivalent on either platform.
   // Single shared NativeWind implementation (no .ios/.android split needed).
   'z-badge': 'custom-no-native',
