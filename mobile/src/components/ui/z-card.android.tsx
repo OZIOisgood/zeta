@@ -5,9 +5,10 @@
  * role-token colors:
  *   - `containerColor` → `surface`
  *   - borderless (Material handoff filled-tonal direction) — the Material 3
- *     elevated/filled Card relies on elevation + container tone for separation
- *     rather than an outline
- *   - elevation → 1dp (Material 3 level-1, matches "tonal surface" feel)
+ *     filled Card relies on container tone for separation rather than an outline
+ *   - elevation → 0dp (flat, no drop shadow): the handoff card is flat, so
+ *     separation comes from the container tone sitting on the page background
+ *     rather than from a cast shadow
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
  * `className` is forwarded to an outer NativeWind View so that consumer layout
@@ -40,7 +41,7 @@ export function ZCard({ children, className, testID }: ZCardProps) {
       <Host matchContents={{ horizontal: true }}>
         <Card
           colors={{ containerColor: color('surface') }}
-          elevation={1}
+          elevation={0}
         >
           {/* p-4 equivalent (16dp) applied via RN View so content respects the contract */}
           <View style={{ padding: 16 }}>{children}</View>

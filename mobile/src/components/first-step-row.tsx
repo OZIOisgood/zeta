@@ -6,7 +6,9 @@ import { ZSymbol } from './ui/z-symbol';
 /**
  * One onboarding checklist row. Mobile counterpart of the web home page
  * first-steps item (pages/home/home-page.component.ts): a tappable row with a
- * completion glyph, a label, and a muted description. Completed rows are dimmed.
+ * completion glyph, a label, and a muted description. Completed rows are NOT
+ * dimmed — done shows a vivid filled accent `check-circle`; a todo shows an
+ * outline `circle` plus a trailing chevron.
  *
  * Material-handoff look (design_handoff_home_videos/material-home.jsx StepItem):
  * borderless divider rows — the parent list draws hairline dividers between
@@ -33,7 +35,7 @@ export function FirstStepRow({
       selected={completed}
       onPress={onPress}
       haptic
-      className={`flex-row items-start gap-3 py-3${completed ? ' opacity-60' : ''}`}
+      className="flex-row items-start gap-3 py-3"
     >
       <View className="mt-0.5">
         {completed ? (

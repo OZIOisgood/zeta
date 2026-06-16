@@ -1,9 +1,9 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
-import { DynamicColorIOS, Platform } from 'react-native';
+import { DynamicColorIOS, Platform, useColorScheme } from 'react-native';
 
 import { useAuth } from '../../auth/auth-store';
-import { accentColor } from '../../theme/native';
+import { accentColor, roleColor } from '../../theme/native';
 
 /**
  * Bottom tab bar layout using expo-router NativeTabs.
@@ -26,17 +26,42 @@ import { accentColor } from '../../theme/native';
  * when permissions resolve; the trigger simply does not appear in the bar.
  */
 
-// ── Accent tint ────────────────────────────────────────────────────────────────
-// DynamicColorIOS is only available on iOS; on Android we use the light hex
-// (the M3 bar handles theming). In jest (defaultPlatform: 'ios') DynamicColorIOS
-// is the ios variant that returns a colour object — it does not throw.
-const accentTint =
-  Platform.OS === 'ios'
-    ? DynamicColorIOS({ light: accentColor('light'), dark: accentColor('dark') })
-    : accentColor('light');
-
 export default function TabsLayout() {
   const { t } = useTranslation();
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+
+  // Tab-bar appearance.
+  //  • iOS: only the active tint is set — the native UITabBar keeps its system
+  //    translucency/greys. DynamicColorIOS resolves light/dark at OS render time.
+  //  • Android: the M3 NavigationBar's own dynamic defaults are cool greys
+  //    (surfaceContainer bar, secondaryContainer pill, onSurfaceVariant icons)
+  //    that clash with the warm brand theme — and gray-pill-on-gray-bar makes the
+  //    selection barely readable. Every slot is overridden with a scheme-aware warm
+  //    role token. selectedIconColor/selectedLabelStyle are REQUIRED so the warm
+  //    inactive iconColor/labelStyle don't bleed into the selected item
+  //    (appearance.android.js resolves selected → iconColor → tintColor).
+  //    Active = AA-safe deep accent (onAccentContainer #c2410c, 5.18:1 on the white
+  //    bar; 3.9:1 icon on the soft-orange pill); inactive = warm muted onSurfaceVariant.
+  //    labelVisibilityMode='labeled' forces every tab to always show its label
+  //    (M3 default 'selected'/'auto' hides inactive labels, which raises the active
+  //    icon above the others); the handoff shows all labels aligned.
+  const iosProps =
+    Platform.OS === 'ios'
+      ? { tintColor: DynamicColorIOS({ light: roleColor('onAccentContainer', 'light'), dark: accentColor('dark') }) }
+      : {};
+  const androidProps =
+    Platform.OS === 'android'
+      ? {
+          labelVisibilityMode: 'labeled' as const,
+          backgroundColor: roleColor('surface', scheme),
+          indicatorColor: roleColor('accentContainer', scheme),
+          rippleColor: roleColor('accent', scheme),
+          iconColor: roleColor('onSurfaceVariant', scheme),
+          selectedIconColor: roleColor('onAccentContainer', scheme),
+          labelStyle: { color: roleColor('onSurfaceVariant', scheme) },
+          selectedLabelStyle: { color: roleColor('onAccentContainer', scheme) },
+        }
+      : {};
 
   // Mirror the web shell nav gating (shell.component.ts):
   //   Groups       → groups:read
@@ -47,7 +72,7 @@ export default function TabsLayout() {
   const canSeeCoaching = has('coaching:bookings:read');
 
   return (
-    <NativeTabs tintColor={accentTint}>
+    <NativeTabs {...iosProps} {...androidProps}>
       {/* Home ─────────────────────────────────────────────────────────────── */}
       <NativeTabs.Trigger name="(home)">
         <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
