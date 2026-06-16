@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react-native
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
 import { initI18n } from '../i18n';
-import { BookingCard } from './booking-card';
+import { BookingCard, bookingCounterpart } from './booking-card';
 import type { Booking } from '../api/queries/coaching';
 
 beforeAll(() => initI18n('en'));
@@ -304,6 +304,15 @@ test('cancellation reason line absent when not cancelled even if reason present'
     />,
   );
   expect(screen.queryByTestId('booking-cancellation-reason')).toBeNull();
+});
+
+test('bookingCounterpart returns the expert for the student viewer', () => {
+  const b = { student_id: 'me', expert_id: 'x', expert_name: 'Coach Lee', student_name: 'Me' } as never;
+  expect(bookingCounterpart(b, 'me')).toEqual({ name: 'Coach Lee', role: 'expert' });
+});
+test('bookingCounterpart returns the student for the expert viewer', () => {
+  const b = { student_id: 's', expert_id: 'me', expert_name: 'Me', student_name: 'Sam' } as never;
+  expect(bookingCounterpart(b, 'me')).toEqual({ name: 'Sam', role: 'student' });
 });
 
 test('session type name falls back to "Session" when missing', async () => {

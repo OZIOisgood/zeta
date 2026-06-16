@@ -8,6 +8,11 @@ test('renders with an accessibility label', async () => {
   expect(getByLabelText('Home')).toBeTruthy();
 });
 
+test('play maps to a lucide Play fallback', async () => {
+  const { getByTestId } = await render(<ZSymbol name="play" label="Play" testID="play-sym" />);
+  expect(getByTestId('play-sym')).toBeOnTheScreen();
+});
+
 const ALL_NAMES = Object.keys(SYMBOL_MAP) as ZSymbolName[];
 
 test.each(ALL_NAMES)('ZSymbol "%s" renders without throwing and has a SYMBOL_MAP entry', async (name) => {

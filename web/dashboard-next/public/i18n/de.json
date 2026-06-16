@@ -15,6 +15,7 @@
       "createInvitation": "Einladung erstellen",
       "decline": "Ablehnen",
       "delete": "Löschen",
+      "details": "Details",
       "done": "Fertig",
       "downloadQr": "QR herunterladen",
       "edit": "Bearbeiten",
@@ -192,6 +193,15 @@
     "loadFailed": "Bericht konnte nicht geladen werden"
   },
   "home": {
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend"
+    },
+    "nextSession": {
+      "title": "Nächste Session",
+      "titleWith": "{{type}} mit {{name}}"
+    },
     "latestVideos": "Neueste Videos",
     "upcomingCoachingSessions": "Bevorstehende Termine",
     "emptyCoaching": {
@@ -261,6 +271,8 @@
   "videos": {
     "filtersLabel": "Videos filtern",
     "title": "Videos",
+    "videoCount_one": "{{count}} Video",
+    "videoCount_other": "{{count}} Videos",
     "all": "Alle",
     "allMyVideos": "Alle meine Videos",
     "noVideosYet": "Noch keine Videos",

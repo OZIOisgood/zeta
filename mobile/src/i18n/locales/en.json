@@ -15,6 +15,7 @@
       "createInvitation": "Create Invitation",
       "decline": "Decline",
       "delete": "Delete",
+      "details": "Details",
       "done": "Done",
       "downloadQr": "Download QR",
       "edit": "Edit",
@@ -192,6 +193,15 @@
     "loadFailed": "Could not load your report"
   },
   "home": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "nextSession": {
+      "title": "Next session",
+      "titleWith": "{{type}} with {{name}}"
+    },
     "latestVideos": "Latest videos",
     "upcomingCoachingSessions": "Upcoming Sessions",
     "emptyCoaching": {
@@ -261,6 +271,8 @@
   "videos": {
     "filtersLabel": "Filter videos",
     "title": "Videos",
+    "videoCount_one": "{{count}} video",
+    "videoCount_other": "{{count}} videos",
     "all": "All",
     "allMyVideos": "All my videos",
     "noVideosYet": "No videos yet",

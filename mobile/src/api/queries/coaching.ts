@@ -40,6 +40,25 @@ export function formatBookingDateTime(iso: string): string {
   return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/**
+ * Locale-aware relative time ("in 2 days", "in 3 hours") via Intl.RelativeTimeFormat.
+ * `now` is injectable for deterministic tests. Falls back to the absolute date
+ * string if RelativeTimeFormat is unavailable on the runtime.
+ */
+export function formatRelativeTime(iso: string, locale: string, now: Date = new Date()): string {
+  const diffMs = new Date(iso).getTime() - now.getTime();
+  try {
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    const minutes = Math.round(diffMs / 60_000);
+    if (Math.abs(minutes) < 60) return rtf.format(minutes, 'minute');
+    const hours = Math.round(minutes / 60);
+    if (Math.abs(hours) < 24) return rtf.format(hours, 'hour');
+    return rtf.format(Math.round(hours / 24), 'day');
+  } catch {
+    return formatBookingDateTime(iso);
+  }
+}
+
 export function useMyBookingsQuery(client: Fetcher = api) {
   return useQuery({
     queryKey: ['bookings'],

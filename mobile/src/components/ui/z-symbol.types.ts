@@ -51,6 +51,7 @@ import type {
   Pencil,
   Phone,
   PhoneOff,
+  Play,
   Plus,
   QrCode,
   Reply,
@@ -116,6 +117,7 @@ export type ZSymbolName =
   | 'save'
   // Media / call
   | 'clock'
+  | 'play'
   | 'file-video'
   | 'film'
   | 'mic'
@@ -190,6 +192,7 @@ export type LucideIcon =
   | typeof Pencil
   | typeof Phone
   | typeof PhoneOff
+  | typeof Play
   | typeof Plus
   | typeof QrCode
   | typeof Reply

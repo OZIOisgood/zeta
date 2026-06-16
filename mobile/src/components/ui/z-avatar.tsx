@@ -7,12 +7,14 @@ import { avatarSrc } from '../../lib/avatar';
  * Shows the image when present, otherwise the fallback initials.
  */
 export type ZAvatarShape = 'rounded' | 'circle';
+export type ZAvatarTone = 'default' | 'accent';
 
 export function ZAvatar({
   image,
   fallback = '',
   size = 36,
   shape = 'rounded',
+  tone = 'default',
   alt,
   testID,
 }: {
@@ -20,23 +22,31 @@ export function ZAvatar({
   fallback?: string;
   size?: number;
   shape?: ZAvatarShape;
+  tone?: ZAvatarTone;
   alt?: string;
   testID?: string;
 }) {
+  const isAccent = tone === 'accent';
   return (
     <View
       testID={testID}
       accessible
       accessibilityLabel={alt}
-      className={`items-center justify-center overflow-hidden bg-z-surface-warm ${
-        shape === 'circle' ? 'rounded-full' : 'rounded-md'
-      }`}
+      className={`items-center justify-center overflow-hidden ${
+        isAccent ? 'bg-accent-container' : 'bg-z-surface-warm'
+      } ${shape === 'circle' ? 'rounded-full' : 'rounded-md'}`}
       style={{ width: size, height: size }}
     >
       {image ? (
         <Image source={{ uri: avatarSrc(image) }} style={{ width: size, height: size }} />
       ) : (
-        <Text className="text-sm font-semibold text-z-primary">{fallback}</Text>
+        <Text
+          className={`text-base font-extrabold ${
+            isAccent ? 'text-on-accent-container' : 'text-z-primary'
+          }`}
+        >
+          {fallback}
+        </Text>
       )}
     </View>
   );

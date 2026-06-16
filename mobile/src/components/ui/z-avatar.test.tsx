@@ -22,3 +22,9 @@ test('renders with the circle shape', async () => {
   expect(screen.getByTestId('avatar')).toBeOnTheScreen();
   expect(screen.getByText('HM')).toBeOnTheScreen();
 });
+
+test('accent tone uses accent-container background and on-accent-container text', async () => {
+  await render(<ZAvatar fallback="HM" tone="accent" testID="av" />);
+  expect(screen.getByTestId('av').props.className).toContain('bg-accent-container');
+  expect(screen.getByText('HM').props.className).toContain('text-on-accent-container');
+});

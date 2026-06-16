@@ -17,6 +17,7 @@ import {
   useCancelBookingMutation,
   BookingError,
   formatBookingDateTime,
+  formatRelativeTime,
   useMyAvailabilityQuery,
   useBlockedSlotsQuery,
   useCreateSessionTypeMutation,
@@ -295,6 +296,17 @@ test('formatBookingDateTime renders a medium date + short time', () => {
   // Proves both dateStyle and timeStyle rendered, without pinning locale ordering.
   expect(out).toMatch(/2026/);
   expect(out).toMatch(/\d{1,2}[:.]\d{2}/);
+});
+
+// ── formatRelativeTime ────────────────────────────────────────────────────────
+
+test('formatRelativeTime renders a future day distance', () => {
+  const now = new Date('2026-06-15T09:00:00.000Z');
+  expect(formatRelativeTime('2026-06-17T09:00:00.000Z', 'en', now)).toMatch(/2 days|in 2 days/i);
+});
+test('formatRelativeTime renders an hour distance under a day', () => {
+  const now = new Date('2026-06-15T09:00:00.000Z');
+  expect(formatRelativeTime('2026-06-15T12:00:00.000Z', 'en', now)).toMatch(/3 hours|in 3 hours/i);
 });
 
 // ── availability + blocked-slot fixtures ─────────────────────────────────────

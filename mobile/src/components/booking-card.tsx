@@ -66,6 +66,23 @@ function resolveRecordingBadge(status: string | undefined): {
   }
 }
 
+/**
+ * Resolve the counterpart shown on a booking card: the student sees the expert;
+ * the expert sees the student. Returns the display name (falling back to the id
+ * when the name is absent) and the counterpart's role, which the card uses to
+ * pick the role label (otherPartyRole on web).
+ */
+export function bookingCounterpart(
+  booking: Booking,
+  currentUserId: string,
+): { name: string; role: 'expert' | 'student' } {
+  const isStudent = booking.student_id === currentUserId;
+  return {
+    name: isStudent ? (booking.expert_name ?? booking.expert_id) : (booking.student_name ?? booking.student_id),
+    role: isStudent ? 'expert' : 'student',
+  };
+}
+
 export type BookingCardProps = {
   booking: Booking;
   currentUserId: string;
@@ -98,16 +115,9 @@ export function BookingCard({
     done: t('common.status.done'),
   });
 
-  // Counterpart name — student sees expert; expert sees student
-  const counterpart =
-    booking.student_id === currentUserId
-      ? (booking.expert_name ?? booking.expert_id)
-      : (booking.student_name ?? booking.student_id);
-
-  // Counterpart role label, prefixed to the name like web (otherPartyRole):
-  // when the current user is the student, the counterpart is the expert.
-  const counterpartRole =
-    booking.student_id === currentUserId ? 'expert' : 'student';
+  // Counterpart name + role — student sees expert; expert sees student.
+  // Role label is prefixed to the name like web (otherPartyRole).
+  const { name: counterpart, role: counterpartRole } = bookingCounterpart(booking, currentUserId);
   const counterpartLabel = t(
     counterpartRole === 'expert' ? 'common.labels.expert' : 'common.labels.student',
   );

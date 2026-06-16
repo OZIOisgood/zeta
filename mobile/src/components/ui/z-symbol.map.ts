@@ -49,6 +49,7 @@ import {
   Pencil,
   Phone,
   PhoneOff,
+  Play,
   Plus,
   QrCode,
   Reply,
@@ -287,6 +288,12 @@ export const SYMBOL_MAP: Record<ZSymbolName, ZSymbolEntry> = {
     sf: 'clock',
     android: 'access_time',
     lucide: Clock,
+  },
+  play: {
+    // Play: video playback affordance on a thumbnail overlay.
+    sf: 'play.fill',
+    android: 'play_arrow',
+    lucide: Play,
   },
   'file-video': {
     // FileVideo: upload a video file.

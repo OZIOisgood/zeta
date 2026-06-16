@@ -15,6 +15,7 @@
       "createInvitation": "Créer une invitation",
       "decline": "Refuser",
       "delete": "Supprimer",
+      "details": "Détails",
       "done": "Terminé",
       "downloadQr": "Télécharger le QR",
       "edit": "Modifier",
@@ -192,6 +193,15 @@
     "loadFailed": "Impossible de charger votre rapport"
   },
   "home": {
+    "greeting": {
+      "morning": "Bonjour",
+      "afternoon": "Bon après-midi",
+      "evening": "Bonsoir"
+    },
+    "nextSession": {
+      "title": "Prochaine séance",
+      "titleWith": "{{type}} avec {{name}}"
+    },
     "latestVideos": "Dernières vidéos",
     "upcomingCoachingSessions": "Prochaines séances",
     "emptyCoaching": {
@@ -261,6 +271,8 @@
   "videos": {
     "filtersLabel": "Filtrer les vidéos",
     "title": "Vidéos",
+    "videoCount_one": "{{count}} vidéo",
+    "videoCount_other": "{{count}} vidéos",
     "all": "Toutes",
     "allMyVideos": "Toutes mes vidéos",
     "noVideosYet": "Aucune vidéo pour le moment",
