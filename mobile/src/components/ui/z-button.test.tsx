@@ -26,3 +26,11 @@ test('loading button shows a spinner, is busy, and does not fire onPress', async
   await user.press(screen.getByRole('button', { name: 'Save' }));
   expect(onPress).not.toHaveBeenCalled();
 });
+
+test('tonal variant renders the secondary-container fill, on-secondary-container text, and pill radius', async () => {
+  await render(<ZButton label="Save" variant="tonal" testID="tonal" />);
+  const button = screen.getByTestId('tonal');
+  expect(button.props.className).toContain('bg-secondary-container');
+  expect(button.props.className).toContain('rounded-full');
+  expect(screen.getByText('Save').props.className).toContain('text-on-secondary-container');
+});

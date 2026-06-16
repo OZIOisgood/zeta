@@ -3,7 +3,8 @@
  *
  * Variant → Compose component:
  *   primary → Button (filled, accent)   secondary → OutlinedButton
- *   ghost   → TextButton                danger    → Button (filled, danger)
+ *   tonal   → Button (filled tonal,     ghost     → TextButton
+ *             secondaryContainer)       danger    → Button (filled, danger)
  *   link    → TextButton (accent text)
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
@@ -55,14 +56,17 @@ export function ZButton({
 
   // Foreground (label / icon / spinner) color per variant.
   // - primary/danger: onAccent (white) on the filled background
+  // - tonal:          onSecondaryContainer on the secondary-container fill
   // - secondary/link: AA-safe deep accent (onAccentContainer) on the light surface
   // - ghost:          onSurface
   const fg =
     variant === 'primary' || variant === 'danger'
       ? color('onAccent')
-      : variant === 'secondary' || variant === 'link'
-        ? color('onAccentContainer')
-        : color('onSurface');
+      : variant === 'tonal'
+        ? color('onSecondaryContainer')
+        : variant === 'secondary' || variant === 'link'
+          ? color('onAccentContainer')
+          : color('onSurface');
 
   const hasLeading = loading || icon != null;
 
@@ -99,6 +103,25 @@ export function ZButton({
         >
           {content}
         </OutlinedButton>
+      </Host>
+    );
+  } else if (variant === 'tonal') {
+    // Material-3 filled tonal button: secondary-container fill, lower-emphasis.
+    composed = (
+      <Host matchContents>
+        <Button
+          onClick={onPress}
+          enabled={!isInteractionDisabled}
+          colors={{
+            containerColor: color('secondaryContainer'),
+            contentColor: color('onSecondaryContainer'),
+            disabledContainerColor: color('surfaceVariant'),
+            disabledContentColor: color('onSurfaceVariant'),
+          }}
+          modifiers={modifiers}
+        >
+          {content}
+        </Button>
       </Host>
     );
   } else if (variant === 'ghost' || variant === 'link') {

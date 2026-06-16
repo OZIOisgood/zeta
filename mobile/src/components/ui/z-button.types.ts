@@ -13,7 +13,7 @@
 import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-export type ZButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link';
+export type ZButtonVariant = 'primary' | 'tonal' | 'secondary' | 'ghost' | 'danger' | 'link';
 
 export type ZButtonProps = {
   /** User-visible label text; also the accessibilityLabel. */
@@ -23,6 +23,9 @@ export type ZButtonProps = {
   /**
    * Visual style variant.
    * - `primary`   — brand-accent filled; main call-to-action.
+   * - `tonal`     — secondary-container fill (Material-3 tonal button); the
+   *                 recommended lower-emphasis action — softer than `primary`
+   *                 but more prominent than `secondary`/`ghost`.
    * - `secondary` — outlined / bordered; secondary action.
    * - `ghost`     — no chrome; tertiary / in-context action.
    * - `danger`    — destructive action (red).

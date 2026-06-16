@@ -5,6 +5,7 @@
  * content (`matchContents`). Variant → SwiftUI buttonStyle + role mapping:
  *
  *   primary   → buttonStyle('borderedProminent') + tint(accent)
+ *   tonal     → buttonStyle('bordered') + tint(secondaryContainer)
  *   secondary → buttonStyle('bordered') + tint(outline)
  *   ghost     → buttonStyle('borderless')
  *   danger    → buttonStyle('bordered') + role='destructive'
@@ -45,6 +46,9 @@ type SwiftUIButtonRole = 'default' | 'cancel' | 'destructive';
 /** Maps ZButtonVariant to SwiftUI buttonStyle string. */
 const STYLE_MAP: Record<ZButtonVariant, SwiftUIButtonStyle> = {
   primary: 'borderedProminent',
+  // Tonal uses the tinted `bordered` fill style; the secondary-container tint
+  // (below) gives it the soft "on" fill that reads as a lower-emphasis action.
+  tonal: 'bordered',
   secondary: 'bordered',
   ghost: 'borderless',
   danger: 'bordered',
@@ -54,6 +58,7 @@ const STYLE_MAP: Record<ZButtonVariant, SwiftUIButtonStyle> = {
 /** Maps ZButtonVariant to SwiftUI ButtonRole (only destructive is non-default). */
 const ROLE_MAP: Record<ZButtonVariant, SwiftUIButtonRole> = {
   primary: 'default',
+  tonal: 'default',
   secondary: 'default',
   ghost: 'default',
   danger: 'destructive',
@@ -77,17 +82,21 @@ export function ZButton({
   // Build the tint modifier. The `danger` variant relies on SwiftUI's built-in
   // destructive role color (system red); we don't override it with a tint.
   // For `ghost` no tint is set — the system foreground color applies.
-  // primary: tint = the filled background (bright accent). link: tint colors the
-  // plain text label sitting on a light surface, so use the AA-safe deep accent
-  // (onAccentContainer #c2410c, 5.18:1) instead of the bright accent (3.56:1).
+  // primary: tint = the filled background (bright accent). tonal: tint the
+  // tinted `bordered` fill with secondaryContainer so it reads as the soft "on"
+  // fill (Material-3 tonal). link: tint colors the plain text label sitting on a
+  // light surface, so use the AA-safe deep accent (onAccentContainer #c2410c,
+  // 5.18:1) instead of the bright accent (3.56:1).
   const tintModifier =
     variant === 'primary'
       ? tint(color('accentStrong'))
-      : variant === 'link'
-        ? tint(color('onAccentContainer'))
-        : variant === 'secondary'
-          ? tint(color('outline'))
-          : undefined;
+      : variant === 'tonal'
+        ? tint(color('secondaryContainer'))
+        : variant === 'link'
+          ? tint(color('onAccentContainer'))
+          : variant === 'secondary'
+            ? tint(color('outline'))
+            : undefined;
 
   const modifiers = [
     buttonStyle(STYLE_MAP[variant]),

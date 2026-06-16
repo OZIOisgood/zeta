@@ -24,6 +24,8 @@ export type { ZButtonVariant, ZButtonProps } from './z-button.types';
 
 const containerClasses: Record<ZButtonVariant, string> = {
   primary: 'bg-z-primary-strong active:opacity-90',
+  // Material-3 tonal button: secondary-container fill, lower-emphasis. Dims on press.
+  tonal: 'bg-secondary-container active:opacity-90',
   secondary: 'bg-z-surface border border-z-border active:bg-z-surface-warm',
   ghost: 'bg-transparent active:bg-z-surface-muted',
   danger: 'bg-z-danger active:opacity-90',
@@ -34,6 +36,7 @@ const containerClasses: Record<ZButtonVariant, string> = {
 
 const labelClasses: Record<ZButtonVariant, string> = {
   primary: 'text-white',
+  tonal: 'text-on-secondary-container',
   secondary: 'text-z-text',
   ghost: 'text-z-muted',
   danger: 'text-white',
@@ -45,6 +48,9 @@ const labelClasses: Record<ZButtonVariant, string> = {
 /** Spinner color matching each variant's label color. */
 const spinnerColor: Record<ZButtonVariant, string> = {
   primary: colors.onPrimary,
+  // Role tokens (onSecondaryContainer) don't flow into the flat `colors` map;
+  // use the light-mode onSecondaryContainer hex to match the tonal label color.
+  tonal: '#5a3214',
   secondary: colors.text,
   ghost: colors.text,
   danger: colors.onPrimary,
@@ -66,7 +72,9 @@ export function ZButton({
   const isLink = variant === 'link';
   // The link variant drops the button chrome (padding/rounding) and uses the
   // web link's 14px size; all other variants keep the standard button sizing.
-  const chromeClasses = isLink ? '' : 'rounded-lg px-4 py-3';
+  // Non-link chrome uses a pill radius (rounded-full) to match the native M3/HIG
+  // pill shape of the .ios/.android variants.
+  const chromeClasses = isLink ? '' : 'rounded-full px-4 py-3';
   // All variants use the web's 14px label size; only the link variant changes chrome.
   const labelSizeClasses = 'text-sm';
   return (
