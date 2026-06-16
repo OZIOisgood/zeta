@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { FlatList, ScrollView, Text, View } from 'react-native';
+import { FlatList, Platform, ScrollView, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type {
   CoachingAvailability,
@@ -44,6 +45,7 @@ import { ZTabs } from '../components/ui/z-tabs';
 import { ZTextInput } from '../components/ui/z-text-input';
 import { ZTextarea } from '../components/ui/z-textarea';
 import { showToast } from '../components/ui/z-toast';
+import { Touchable } from '../components/ui/touchable';
 import { colors } from '../theme/colors';
 
 type Section = 'session-types' | 'schedule' | 'blocked';
@@ -434,6 +436,8 @@ function BlockedSheet({
 
 export default function AvailabilityScreen() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const listPaddingBottom = Platform.OS === 'android' ? 96 : 24;
   const permissions = useAuth((s) => (s as { user?: { permissions?: string[] } }).user?.permissions ?? null);
   const canManage = permissions !== null && permissions.includes('coaching:availability:manage');
 
@@ -584,21 +588,9 @@ export default function AvailabilityScreen() {
   }
 
   const tabs = [
-    {
-      id: 'session-types',
-      label: t('sessions.availability.sessionTypes'),
-      count: (typesQuery.data ?? []).length,
-    },
-    {
-      id: 'schedule',
-      label: t('sessions.availability.weeklySchedule'),
-      count: (availabilityQuery.data ?? []).length,
-    },
-    {
-      id: 'blocked',
-      label: t('sessions.availability.blockedDates'),
-      count: (blockedQuery.data ?? []).length,
-    },
+    { id: 'session-types', label: t('sessions.availability.sessionTypesShort') },
+    { id: 'schedule', label: t('sessions.availability.weeklyScheduleShort') },
+    { id: 'blocked', label: t('sessions.availability.blockedDatesShort') },
   ];
 
   // ── section content ────────────────────────────────────────────────────────
@@ -627,22 +619,18 @@ export default function AvailabilityScreen() {
         className="flex-1"
         data={typesQuery.data ?? []}
         keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, gap: 12, flexGrow: 1 }}
-        ListHeaderComponent={
-          <View className="mb-2">
-            <ZButton
-              label={t('sessions.availability.addSessionType')}
-              icon={<ZSymbol name="plus" label={t('sessions.availability.addSessionType')} size={18} color={colors.onPrimary} />}
-              onPress={() => setTypeSheet({ editing: null })}
-            />
-          </View>
-        }
+        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom, gap: 12, flexGrow: 1 }}
         ListEmptyComponent={
           <View testID="availability-empty-session-types">
             <ZEmptyState
               title={t('sessions.availability.noSessionTypes')}
               description={t('sessions.availability.noSessionTypesDescription')}
-            />
+            >
+              <ZButton
+                label={t('sessions.availability.addSessionType')}
+                onPress={() => setTypeSheet({ editing: null })}
+              />
+            </ZEmptyState>
           </View>
         }
         renderItem={({ item }) => (
@@ -683,22 +671,18 @@ export default function AvailabilityScreen() {
         className="flex-1"
         data={availabilityQuery.data ?? []}
         keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, gap: 12, flexGrow: 1 }}
-        ListHeaderComponent={
-          <View className="mb-2">
-            <ZButton
-              label={t('sessions.availability.addAvailability')}
-              icon={<ZSymbol name="plus" label={t('sessions.availability.addAvailability')} size={18} color={colors.onPrimary} />}
-              onPress={() => setAvailSheet({ editing: null })}
-            />
-          </View>
-        }
+        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom, gap: 12, flexGrow: 1 }}
         ListEmptyComponent={
           <View testID="availability-empty-schedule">
             <ZEmptyState
               title={t('sessions.availability.noAvailability')}
               description={t('sessions.availability.noAvailabilityDescription')}
-            />
+            >
+              <ZButton
+                label={t('sessions.availability.addAvailability')}
+                onPress={() => setAvailSheet({ editing: null })}
+              />
+            </ZEmptyState>
           </View>
         }
         renderItem={({ item }) => (
@@ -739,22 +723,18 @@ export default function AvailabilityScreen() {
         className="flex-1"
         data={blockedQuery.data ?? []}
         keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, gap: 12, flexGrow: 1 }}
-        ListHeaderComponent={
-          <View className="mb-2">
-            <ZButton
-              label={t('sessions.availability.addBlockTime')}
-              icon={<ZSymbol name="plus" label={t('sessions.availability.addBlockTime')} size={18} color={colors.onPrimary} />}
-              onPress={() => setBlockedSheet(true)}
-            />
-          </View>
-        }
+        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom, gap: 12, flexGrow: 1 }}
         ListEmptyComponent={
           <View testID="availability-empty-blocked">
             <ZEmptyState
               title={t('sessions.availability.noBlockedDates')}
               description={t('sessions.availability.noBlockedDatesDescription')}
-            />
+            >
+              <ZButton
+                label={t('sessions.availability.addBlockTime')}
+                onPress={() => setBlockedSheet(true)}
+              />
+            </ZEmptyState>
           </View>
         }
         renderItem={({ item }: { item: CoachingBlockedSlot }) => (
@@ -804,10 +784,43 @@ export default function AvailabilityScreen() {
     sectionContent = renderBlocked();
   }
 
+  // Active-section create action — surfaced as the iOS nav-bar "+" (header-right)
+  // and the Android Material FAB. Both call the same handler/label.
+  function handleAdd() {
+    if (section === 'session-types') setTypeSheet({ editing: null });
+    else if (section === 'schedule') setAvailSheet({ editing: null });
+    else setBlockedSheet(true);
+  }
+  const addLabel =
+    section === 'session-types'
+      ? t('sessions.availability.addSessionType')
+      : section === 'schedule'
+        ? t('sessions.availability.addAvailability')
+        : t('sessions.availability.addBlockTime');
+
   return (
     <ZScreen edges={['bottom']}>
-      {/* Native header title is set once, here in the data-loaded render path. */}
-      <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
+      {/* Native header title is set once, here in the data-loaded render path.
+          iOS surfaces the active section's create action as a nav-bar "+";
+          Android uses the Material FAB rendered below. */}
+      <Stack.Screen
+        options={{
+          title: t('sessions.availability.manageTitle'),
+          headerRight:
+            Platform.OS === 'ios'
+              ? () => (
+                  <Touchable
+                    testID="availability-create-header-btn"
+                    accessibilityLabel={addLabel}
+                    onPress={handleAdd}
+                    haptic
+                  >
+                    <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
+                  </Touchable>
+                )
+              : undefined,
+        }}
+      />
       <ZKeyboardAvoidingView>
         {/* form/wizard summary card */}
         <ZCard className="m-4 gap-1">
@@ -847,6 +860,23 @@ export default function AvailabilityScreen() {
 
         {sectionContent}
       </ZKeyboardAvoidingView>
+
+      {/* Android: Material FAB for the active section's create action.
+          iOS surfaces the same action via the native header-right "+" set above. */}
+      {Platform.OS === 'android' ? (
+        <View className="absolute right-6" style={{ bottom: insets.bottom + 16 }}>
+          <ZIconButton
+            testID="availability-create-fab"
+            label={addLabel}
+            variant="primary"
+            size="lg"
+            shape="circle"
+            onPress={handleAdd}
+          >
+            <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
+          </ZIconButton>
+        </View>
+      ) : null}
 
       {/* Session-type add/edit sheet */}
       {typeSheet !== null ? (
