@@ -68,3 +68,14 @@ test('exposes the review count as an accessible comment count', async () => {
   await render(<AssetCard asset={ASSET} onPress={jest.fn()} />);
   expect(screen.getByLabelText('Comments: 3')).toBeOnTheScreen();
 });
+
+test('renders a ZSymbol play overlay for a playable asset', async () => {
+  await render(<AssetCard asset={{ id: '1', title: 'Kata', status: 'pending', review_count: 2 } as never} onPress={() => {}} />);
+  expect(screen.getByTestId('asset-play-overlay')).toBeOnTheScreen();
+});
+
+test('uses an upload glyph (no play overlay) while waiting_upload', async () => {
+  await render(<AssetCard asset={{ id: '1', title: 'Kata', status: 'waiting_upload', review_count: 0 } as never} onPress={() => {}} />);
+  expect(screen.queryByTestId('asset-play-overlay')).toBeNull();
+  expect(screen.getByTestId('asset-upload-overlay')).toBeOnTheScreen();
+});
