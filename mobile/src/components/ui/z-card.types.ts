@@ -17,9 +17,32 @@ export type ZCardProps = {
   /** Card content. */
   children: ReactNode;
   /**
+   * Tonal tier of the card fill (Material You — the tint carries elevation):
+   *   - 'surface'   (default) warm neutral tonal surface — the standard card.
+   *   - 'accent'    accentContainer fill — call-to-action / featured surface.
+   *   - 'secondary' secondaryContainer fill — secondary emphasis surface.
+   * @default 'surface'
+   */
+  tone?: 'surface' | 'accent' | 'secondary';
+  /**
+   * Hero card: a larger corner radius (28dp instead of 20dp) for prominent,
+   * full-width feature cards. Does not change the fill — combine with `tone`.
+   * @default false
+   */
+  hero?: boolean;
+  /**
+   * Surface treatment:
+   *   - 'filled'   (default) the tonal-surface look — borderless, the fill tint
+   *                provides separation from the canvas (Material You direction).
+   *   - 'outlined' legacy look: white fill + a warm hairline `outline` border.
+   *   - 'elevated' legacy look: a soft drop shadow instead of a tonal fill.
+   * @default 'filled'
+   */
+  variant?: 'filled' | 'outlined' | 'elevated';
+  /**
    * Optional extra NativeWind classes (bare/.tsx fallback only).
    * The class string is concatenated naively after the base classes,
-   * preserving the existing behavior exactly.
+   * preserving the existing behavior exactly (consumer layout classes win).
    */
   className?: string;
   /** Test identifier forwarded to the root element. */

@@ -2,13 +2,17 @@
  * ZCard — Android implementation (Jetpack Compose via @expo/ui/jetpack-compose).
  *
  * Renders a native Compose `Card` (Material 3 filled card surface) with
- * role-token colors:
- *   - `containerColor` → `surface`
- *   - borderless (Material handoff filled-tonal direction) — the Material 3
- *     filled Card relies on container tone for separation rather than an outline
- *   - elevation → 0dp (flat, no drop shadow): the handoff card is flat, so
- *     separation comes from the container tone sitting on the page background
- *     rather than from a cast shadow
+ * role-token colors. Material You direction — the container tone carries
+ * elevation, so the default filled card is borderless and flat:
+ *
+ *   - tone='surface'   (default) → containerColor = `surface`
+ *   - tone='accent'              → containerColor = `accentContainer`
+ *   - tone='secondary'           → containerColor = `secondaryContainer`
+ *   - variant='outlined' (legacy)→ surface fill + 1dp `outline` border overlay
+ *   - variant='elevated' (legacy)→ ~2dp elevation (soft drop shadow)
+ *
+ * Shape: 20dp corner radius by default, 28dp when `hero` — applied via the
+ * `clip` modifier (Shapes.RoundedCorner) since CardProps has no shape arg.
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
  * `className` is forwarded to an outer NativeWind View so that consumer layout
@@ -24,14 +28,34 @@
  */
 
 import { Card, Host } from '@expo/ui/jetpack-compose';
+import { Shapes, clip } from '@expo/ui/jetpack-compose/modifiers';
 import { View } from 'react-native';
 import { useRoleColors } from '../../theme/native';
 import type { ZCardProps } from './z-card.types';
 
 export type { ZCardProps } from './z-card.types';
 
-export function ZCard({ children, className, testID }: ZCardProps) {
+export function ZCard({
+  children,
+  className,
+  testID,
+  tone = 'surface',
+  hero = false,
+  variant = 'filled',
+}: ZCardProps) {
   const { color } = useRoleColors();
+
+  // Container fill: outlined/elevated keep the surface fill; otherwise the
+  // tonal fill is selected from `tone`.
+  const containerColor =
+    variant === 'filled' && tone === 'accent'
+      ? color('accentContainer')
+      : variant === 'filled' && tone === 'secondary'
+        ? color('secondaryContainer')
+        : color('surface');
+
+  // 20dp default radius, 28dp for prominent hero cards.
+  const radius = hero ? 28 : 20;
 
   return (
     // Outer NativeWind View carries className (layout extensions from consumer)
@@ -40,8 +64,15 @@ export function ZCard({ children, className, testID }: ZCardProps) {
     <View className={className} testID={testID}>
       <Host matchContents={{ horizontal: true }}>
         <Card
-          colors={{ containerColor: color('surface') }}
-          elevation={0}
+          colors={{ containerColor }}
+          // Filled/outlined cards are flat (tone carries elevation); the legacy
+          // elevated variant gets a soft ~2dp Material drop shadow.
+          elevation={variant === 'elevated' ? 2 : 0}
+          // Legacy outlined: 1dp warm hairline border on the surface fill.
+          border={
+            variant === 'outlined' ? { width: 1, color: color('outline') } : undefined
+          }
+          modifiers={[clip(Shapes.RoundedCorner(radius))]}
         >
           {/* p-4 equivalent (16dp) applied via RN View so content respects the contract */}
           <View style={{ padding: 16 }}>{children}</View>
