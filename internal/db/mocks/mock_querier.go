@@ -161,6 +161,20 @@ func (mr *MockQuerierMockRecorder) CreateAsset(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAsset", reflect.TypeOf((*MockQuerier)(nil).CreateAsset), ctx, arg)
 }
 
+// CreateAuditEvent mocks base method.
+func (m *MockQuerier) CreateAuditEvent(ctx context.Context, arg db.CreateAuditEventParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAuditEvent", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateAuditEvent indicates an expected call of CreateAuditEvent.
+func (mr *MockQuerierMockRecorder) CreateAuditEvent(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAuditEvent", reflect.TypeOf((*MockQuerier)(nil).CreateAuditEvent), ctx, arg)
+}
+
 // CreateAvailability mocks base method.
 func (m *MockQuerier) CreateAvailability(ctx context.Context, arg db.CreateAvailabilityParams) (db.CoachingAvailability, error) {
 	m.ctrl.T.Helper()

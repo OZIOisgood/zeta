@@ -272,6 +272,7 @@ graph TD
     Web -->|Video Call| Agora
     Scheduler[GCP Cloud Scheduler] -->|POST /internal/coaching/reminders| API
     Scheduler -->|POST /internal/coaching/recordings/cleanup/process| API
+    Scheduler -->|POST /internal/audit/maintenance| API
 ```
 
 ### Video Call Sequence
@@ -604,6 +605,17 @@ erDiagram
         timestamp created_at
     }
 
+    audit_events {
+        uuid id PK
+        timestamptz occurred_at
+        string actor_id "WorkOS User ID or system"
+        string actor_type "user, system"
+        string action "e.g. asset.created, group.member.removed"
+        string resource_type "asset, group, user, etc."
+        uuid resource_id
+        jsonb metadata "optional extra context incl. opt-in client IP"
+    }
+
     groups ||--o{ coaching_session_types : has
     users ||--o{ coaching_session_types : creates
     users ||--o{ coaching_availability : sets
@@ -615,4 +627,7 @@ erDiagram
     assets ||--o{ coaching_recording_imports : "created by"
     videos ||--o{ coaching_recording_imports : "created by"
     coaching_bookings ||--o{ coaching_booking_reminders : has
+    users ||--o{ audit_events : "actor in"
 ```
+
+> **`audit_events`** is an append-only, monthly-partitioned table. UPDATE and DELETE are blocked by a database trigger. Expired partitions (older than `AUDIT_RETENTION_DAYS`, default 3 years) are dropped by the daily maintenance job (`POST /internal/audit/maintenance`). Domain wiring — recording which mutations emit events — is rolled out incrementally.

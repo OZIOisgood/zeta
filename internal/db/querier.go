@@ -19,6 +19,7 @@ type Querier interface {
 	CountUnreadNotifications(ctx context.Context, recipientID string) (int64, error)
 	CountVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (int64, error)
 	CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error)
+	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) error
 	// === Availability ===
 	CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (CoachingAvailability, error)
 	// === Blocked Slots ===

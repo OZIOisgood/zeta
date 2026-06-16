@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"time"
@@ -41,6 +42,20 @@ func (rw *ResponseWriter) Unwrap() http.ResponseWriter {
 	return rw.ResponseWriter
 }
 
+type requestIDKey struct{}
+
+// WithRequestID stores the request id in ctx so downstream middlewares (e.g.
+// audit) reuse the SAME id instead of generating their own.
+func WithRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDKey{}, id)
+}
+
+// RequestIDFromContext returns the request id set by Middleware ("" if absent).
+func RequestIDFromContext(ctx context.Context) string {
+	id, _ := ctx.Value(requestIDKey{}).(string)
+	return id
+}
+
 // Middleware returns an HTTP middleware that logs structured request information.
 // It extracts or generates a request ID, attaches a scoped logger to context,
 // captures response metadata, and logs a final HTTP request event.
@@ -54,7 +69,8 @@ func Middleware(baseLogger *slog.Logger) func(http.Handler) http.Handler {
 			}
 
 			// Create scoped logger with request context
-			ctx := With(r.Context(), baseLogger,
+			ctx := WithRequestID(r.Context(), requestID)
+			ctx = With(ctx, baseLogger,
 				slog.String("request_id", requestID),
 				slog.String("method", r.Method),
 				slog.String("path", r.URL.Path),
