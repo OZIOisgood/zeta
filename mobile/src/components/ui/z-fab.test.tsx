@@ -10,7 +10,31 @@ test('renders an extended fab with label and fires onPress', async () => {
   expect(onPress).toHaveBeenCalled();
 });
 
-test('hides the label when not extended', async () => {
+test('hides the label when not extended (icon-only FAB)', async () => {
   await render(<ZFab label="Upload" icon={<Text>+</Text>} onPress={() => {}} extended={false} testID="fab" />);
   expect(screen.queryByText('Upload')).toBeNull();
+});
+
+test('primary tone (default) fills with accent + on-accent content', async () => {
+  await render(<ZFab label="Upload" icon={<Text>+</Text>} onPress={() => {}} testID="fab" />);
+  const surface = screen.getByTestId('fab');
+  expect(surface.props.className).toContain('bg-accent');
+  expect(surface.props.className).not.toContain('bg-accent-container');
+  const label = screen.getByText('Upload');
+  expect(label.props.className).toContain('text-on-accent');
+  expect(label.props.className).not.toContain('text-on-accent-container');
+});
+
+test('tonal tone fills with accent-container + on-accent-container content', async () => {
+  await render(<ZFab label="Upload" icon={<Text>+</Text>} onPress={() => {}} tone="tonal" testID="fab" />);
+  const surface = screen.getByTestId('fab');
+  expect(surface.props.className).toContain('bg-accent-container');
+  const label = screen.getByText('Upload');
+  expect(label.props.className).toContain('text-on-accent-container');
+});
+
+test('extended fab uses a fully rounded (rounded-full) pill', async () => {
+  await render(<ZFab label="Upload" icon={<Text>+</Text>} onPress={() => {}} testID="fab" />);
+  const surface = screen.getByTestId('fab');
+  expect(surface.props.className).toContain('rounded-full');
 });

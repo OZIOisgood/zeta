@@ -4,7 +4,18 @@ import type { ZFabProps } from './z-fab.types';
 
 export type { ZFabProps } from './z-fab.types';
 
-export function ZFab({ label, icon, onPress, extended = true, className, style, testID }: ZFabProps) {
+export function ZFab({
+  label,
+  icon,
+  onPress,
+  extended = true,
+  tone = 'primary',
+  className,
+  style,
+  testID,
+}: ZFabProps) {
+  const surfaceTone = tone === 'primary' ? 'bg-accent' : 'bg-accent-container';
+  const labelTone = tone === 'primary' ? 'text-on-accent' : 'text-on-accent-container';
   return (
     <View className={className} style={style}>
       <Touchable
@@ -12,10 +23,10 @@ export function ZFab({ label, icon, onPress, extended = true, className, style, 
         accessibilityLabel={label}
         onPress={onPress}
         haptic
-        className="h-14 flex-row items-center gap-2 self-start rounded-2xl bg-accent px-5 active:opacity-90"
+        className={`h-14 flex-row items-center gap-2 self-start rounded-full ${surfaceTone} px-5 active:opacity-90`}
       >
         {icon}
-        {extended ? <Text className="text-base font-bold text-on-accent">{label}</Text> : null}
+        {extended ? <Text className={`text-base font-bold ${labelTone}`}>{label}</Text> : null}
       </Touchable>
     </View>
   );

@@ -19,6 +19,13 @@ export type ZFabProps = {
   onPress: () => void;
   /** Show the label (extended). When false, an icon-only round FAB. @default true */
   extended?: boolean;
+  /**
+   * Emphasis / fill of the FAB.
+   *   - `primary` — accent fill (high-emphasis, default).
+   *   - `tonal`   — accent-container fill (lower-emphasis).
+   * @default 'primary'
+   */
+  tone?: 'primary' | 'tonal';
   /** NativeWind classes for positioning (e.g. "absolute right-6"). */
   className?: string;
   /** Style for the outer wrapper (e.g. dynamic bottom inset). */
