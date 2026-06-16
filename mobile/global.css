@@ -4,31 +4,32 @@
 
 /* BEGIN GENERATED TOKENS (scripts/sync-tokens.mjs — do not edit by hand) */
 :root {
-  --z-bg: #fff8ed;
-  --z-surface: #ffffff;
-  --z-surface-warm: #fff1dc;
-  --z-surface-muted: #f7e4c7;
-  --z-text: #26180f;
-  --z-muted: #735f4d;
-  --z-primary: #ea580c;
-  --z-primary-strong: #c2410c;
-  --z-primary-soft: #fed7aa;
+  --z-bg: #fff8f4;
+  --z-surface: #fdf1ea;
+  --z-surface-warm: #faece2;
+  --z-surface-muted: #f5e6db;
+  --z-text: #221a15;
+  --z-muted: #54443b;
+  --z-primary: #bd4309;
+  --z-primary-strong: #bd4309;
+  --z-primary-soft: #ffdbc8;
   --z-accent: #f59e0b;
-  --z-border: #ead2b8;
+  --z-border: #d8c3b6;
   --z-success: #15803d;
-  --z-success-soft: #dcfce7;
+  --z-success-soft: #c7f1d2;
   --z-warning: #b45309;
   --z-warning-soft: #fef3c7;
   --z-danger: #be123c;
   --z-danger-soft: #ffe4e6;
-  --role-accent: #ea580c;
+  --role-accent: #bd4309;
   --role-on-accent: #ffffff;
-  --role-accent-container: #fed7aa;
-  --role-on-accent-container: #c2410c;
+  --role-accent-container: #ffdbc8;
+  --role-on-accent-container: #3a1400;
+  --role-accent-strong: #bd4309;
   --role-success: #15803d;
   --role-on-success: #ffffff;
-  --role-success-container: #dcfce7;
-  --role-on-success-container: #15803d;
+  --role-success-container: #c7f1d2;
+  --role-on-success-container: #05351a;
   --role-warning: #b45309;
   --role-on-warning: #ffffff;
   --role-warning-container: #fef3c7;
@@ -37,23 +38,24 @@
   --role-on-danger: #ffffff;
   --role-danger-container: #ffe4e6;
   --role-on-danger-container: #be123c;
-  --role-background: #fff8ed;
-  --role-surface: #ffffff;
-  --role-surface-variant: #fff1dc;
-  --role-on-surface: #26180f;
-  --role-on-surface-variant: #735f4d;
-  --role-outline: #ead2b8;
+  --role-background: #fff8f4;
+  --role-surface: #fdf1ea;
+  --role-surface-variant: #faece2;
+  --role-on-surface: #221a15;
+  --role-on-surface-variant: #54443b;
+  --role-outline: #d8c3b6;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --role-accent: #fb923c;
+    --role-accent: #ffb68f;
     --role-on-accent: #ffffff;
-    --role-accent-container: #7c2d0a;
-    --role-on-accent-container: #fed7aa;
-    --role-success: #4ade80;
+    --role-accent-container: #7c3500;
+    --role-on-accent-container: #ffdbc8;
+    --role-accent-strong: #bd4309;
+    --role-success: #7fd99a;
     --role-on-success: #052e16;
-    --role-success-container: #14532d;
-    --role-on-success-container: #86efac;
+    --role-success-container: #1f4a30;
+    --role-on-success-container: #c7f1d2;
     --role-warning: #fbbf24;
     --role-on-warning: #451a03;
     --role-warning-container: #3b1500;
@@ -62,12 +64,12 @@
     --role-on-danger: #4c0519;
     --role-danger-container: #500724;
     --role-on-danger-container: #fda4af;
-    --role-background: #1a0f08;
-    --role-surface: #231409;
-    --role-surface-variant: #2e1b0e;
-    --role-on-surface: #f5e6d3;
-    --role-on-surface-variant: #a8917c;
-    --role-outline: #4a3020;
+    --role-background: #18120d;
+    --role-surface: #1f160f;
+    --role-surface-variant: #261c14;
+    --role-on-surface: #f2dfd2;
+    --role-on-surface-variant: #d8c3b6;
+    --role-outline: #54443b;
   }
 }
 /* END GENERATED TOKENS */

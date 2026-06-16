@@ -4,21 +4,23 @@
  *
  * Zeta design tokens as raw values, for the places NativeWind classes cannot
  * reach: icon `color` props, navigator options, placeholderTextColor.
+ * Mobile uses the Material-3 tonal "ember orange" palette, which diverges from
+ * the flat web token values; see scripts/sync-tokens.mjs.
  */
 export const colors = {
-  bg: '#fff8ed',
-  surface: '#ffffff',
-  surfaceWarm: '#fff1dc',
-  surfaceMuted: '#f7e4c7',
-  text: '#26180f',
-  muted: '#735f4d',
-  primary: '#ea580c',
-  primaryStrong: '#c2410c',
-  primarySoft: '#fed7aa',
+  bg: '#fff8f4',
+  surface: '#fdf1ea',
+  surfaceWarm: '#faece2',
+  surfaceMuted: '#f5e6db',
+  text: '#221a15',
+  muted: '#54443b',
+  primary: '#bd4309',
+  primaryStrong: '#bd4309',
+  primarySoft: '#ffdbc8',
   accent: '#f59e0b',
-  border: '#ead2b8',
+  border: '#d8c3b6',
   success: '#15803d',
-  successSoft: '#dcfce7',
+  successSoft: '#c7f1d2',
   warning: '#b45309',
   warningSoft: '#fef3c7',
   danger: '#be123c',

@@ -38,6 +38,28 @@ const tokens = extractTokens(readFileSync(sourcePath, 'utf8'));
 // Build a lookup map for easy role derivation.
 const t = Object.fromEntries(tokens.map(([name, value]) => [camelCase(name), value]));
 
+// ── Mobile Material-3 tonal palette (design-handoff "ember orange") ──────────
+// Mobile diverges from the flat web tokens to the Material-You tonal scheme
+// (darker tonal primary + warm-tinted surfaces). Web styles.scss is untouched.
+// Values from handoffs/design_handoff_home_videos/design-references/material-themes.js
+// (orange-light). Override the raw web token values for mobile so both the
+// --z-* CSS vars (global.css) and colors.ts carry the Material values.
+const MOBILE_LIGHT = {
+  bg: '#fff8f4',
+  surface: '#fdf1ea',
+  surfaceWarm: '#faece2',
+  surfaceMuted: '#f5e6db',
+  text: '#221a15',
+  muted: '#54443b',
+  border: '#d8c3b6',
+  primary: '#bd4309',
+  primaryStrong: '#bd4309',
+  primarySoft: '#ffdbc8',
+  success: '#15803d',
+  successSoft: '#c7f1d2',
+};
+const tokensM = tokens.map(([name, value]) => [name, MOBILE_LIGHT[camelCase(name)] ?? value]);
+
 // ─── Role maps ───────────────────────────────────────────────────────────────
 //
 // LIGHT roles are derived 1-to-1 from the flat web tokens. The mapping is
@@ -62,17 +84,16 @@ const t = Object.fromEntries(tokens.map(([name, value]) => [camelCase(name), val
 //   contrast-check sweep in a later task.
 
 const LIGHT_ROLES = {
-  // Brand accent (maps to z-primary)
-  accent: t.primary,
+  accent: '#bd4309',
   onAccent: '#ffffff',
-  accentContainer: t.primarySoft,
-  onAccentContainer: t.primaryStrong,
+  accentContainer: '#ffdbc8',
+  onAccentContainer: '#3a1400',
+  accentStrong: '#bd4309',
 
-  // Status — base colors
-  success: t.success,
+  success: '#15803d',
   onSuccess: '#ffffff',
-  successContainer: t.successSoft,
-  onSuccessContainer: t.success,
+  successContainer: '#c7f1d2',
+  onSuccessContainer: '#05351a',
 
   warning: t.warning,
   onWarning: '#ffffff',
@@ -84,31 +105,27 @@ const LIGHT_ROLES = {
   dangerContainer: t.dangerSoft,
   onDangerContainer: t.danger,
 
-  // Surfaces
-  background: t.bg,
-  surface: t.surface,
-  surfaceVariant: t.surfaceWarm,
+  background: '#fff8f4',
+  surface: '#fdf1ea',
+  surfaceVariant: '#faece2',
 
-  // Text hierarchy
-  onSurface: t.text,
-  onSurfaceVariant: t.muted,
+  onSurface: '#221a15',
+  onSurfaceVariant: '#54443b',
 
-  // Border / divider
-  outline: t.border,
+  outline: '#d8c3b6',
 };
 
 const DARK_ROLES = {
-  // Brand accent — lightened to orange-400 for dark-surface contrast
-  accent: '#fb923c',
+  accent: '#ffb68f',
   onAccent: '#ffffff',
-  accentContainer: '#7c2d0a',
-  onAccentContainer: '#fed7aa',
+  accentContainer: '#7c3500',
+  onAccentContainer: '#ffdbc8',
+  accentStrong: '#bd4309',
 
-  // Status — one step lighter on their respective scales for dark-bg contrast
-  success: '#4ade80',
+  success: '#7fd99a',
   onSuccess: '#052e16',
-  successContainer: '#14532d',
-  onSuccessContainer: '#86efac',
+  successContainer: '#1f4a30',
+  onSuccessContainer: '#c7f1d2',
 
   warning: '#fbbf24',
   onWarning: '#451a03',
@@ -120,17 +137,14 @@ const DARK_ROLES = {
   dangerContainer: '#500724',
   onDangerContainer: '#fda4af',
 
-  // Surfaces — warm-neutral near-black; preserve brand warmth in dark mode
-  background: '#1a0f08',
-  surface: '#231409',
-  surfaceVariant: '#2e1b0e',
+  background: '#18120d',
+  surface: '#1f160f',
+  surfaceVariant: '#261c14',
 
-  // Text hierarchy — warm-white / warm-gray on dark surfaces
-  onSurface: '#f5e6d3',
-  onSurfaceVariant: '#a8917c',
+  onSurface: '#f2dfd2',
+  onSurfaceVariant: '#d8c3b6',
 
-  // Border / divider — subtle warm line visible on dark backgrounds
-  outline: '#4a3020',
+  outline: '#54443b',
 };
 
 // ─── global.css: replace the marker-delimited token block ────────────────────
@@ -155,7 +169,7 @@ const darkRoleLines = Object.entries(DARK_ROLES).map(
 const cssBlock = [
   BEGIN,
   ':root {',
-  ...tokens.map(([name, value]) => `  --z-${name}: ${value};`),
+  ...tokensM.map(([name, value]) => `  --z-${name}: ${value};`),
   ...lightRoleLines,
   '}',
   '@media (prefers-color-scheme: dark) {',
@@ -169,7 +183,7 @@ writeFileSync(cssPath, css.slice(0, begin) + cssBlock + css.slice(end + END.leng
 console.log(`synced ${tokens.length} tokens + ${Object.keys(LIGHT_ROLES).length} role vars into global.css`);
 
 // ─── src/theme/colors.ts: fully generated ────────────────────────────────────
-const colorLines = tokens.map(([name, value]) => `  ${camelCase(name)}: '${value}',`);
+const colorLines = tokensM.map(([name, value]) => `  ${camelCase(name)}: '${value}',`);
 for (const [key, { value, comment }] of Object.entries(MOBILE_EXTRAS)) {
   colorLines.push(`  /** ${comment} */`, `  ${key}: '${value}',`);
 }
@@ -181,6 +195,8 @@ writeFileSync(
  *
  * Zeta design tokens as raw values, for the places NativeWind classes cannot
  * reach: icon \`color\` props, navigator options, placeholderTextColor.
+ * Mobile uses the Material-3 tonal "ember orange" palette, which diverges from
+ * the flat web token values; see scripts/sync-tokens.mjs.
  */
 export const colors = {
 ${colorLines.join('\n')}
@@ -201,10 +217,11 @@ writeFileSync(
  * GENERATED by scripts/sync-tokens.mjs from web/dashboard-next/src/styles.scss
  * — do not edit by hand; run \`pnpm run sync:tokens\`.
  *
- * Semantic role tokens for light and dark mode.
- * Light roles are derived from the flat web design tokens.
- * Dark roles use warm-neutral dark surfaces to preserve brand warmth;
- * see the derivation rationale in scripts/sync-tokens.mjs.
+ * Semantic role tokens for light and dark mode — Mobile Material-3 tonal
+ * palette ("ember orange"). Mobile diverges from the flat web tokens to the
+ * Material-You tonal scheme (darker tonal primary + warm-tinted surfaces);
+ * web styles.scss is untouched. Dark roles use Material orange-dark surfaces;
+ * see the values and rationale in scripts/sync-tokens.mjs.
  *
  * Usage:
  *   - NativeWind: bg-accent / text-on-surface / bg-surface-variant etc.
