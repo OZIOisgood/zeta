@@ -66,7 +66,7 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
             className="flex-row items-center gap-1"
           >
             <ZSymbol name="message" label={t('videos.comments')} size={14} color={colors.muted} />
-            <Text className="text-xs font-semibold text-z-muted">{asset.review_count}</Text>
+            <Text className="text-xs font-bold text-z-muted">{asset.review_count}</Text>
           </View>
         </View>
       </View>

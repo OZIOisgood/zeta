@@ -73,3 +73,34 @@
   }
 }
 /* END GENERATED TOKENS */
+
+/* ── Brand font (Nunito Sans) ──────────────────────────────────────────────
+ * RN/Android cannot synthesize the right cut from a single family + numeric
+ * fontWeight, so each weight utility must resolve to its own real face name.
+ * The faces are loaded at runtime in src/app/_layout.tsx via useFonts().
+ *
+ * NativeWind v4 compiles class selectors (but drops a universal `*` selector),
+ * so we override the weight utilities here: each `.font-*` already carries its
+ * font-weight from the preset; we add the matching font-family. The face name
+ * wins over the global default because className styles are merged after the
+ * Text default style set in _layout.tsx.
+ *
+ * Default (no weight class → 400) is handled by Text.defaultProps in
+ * _layout.tsx, since the universal selector is unsupported here. */
+@layer base {
+  .font-normal {
+    font-family: 'NunitoSans_400Regular';
+  }
+  .font-medium {
+    font-family: 'NunitoSans_500Medium';
+  }
+  .font-semibold {
+    font-family: 'NunitoSans_600SemiBold';
+  }
+  .font-bold {
+    font-family: 'NunitoSans_700Bold';
+  }
+  .font-extrabold {
+    font-family: 'NunitoSans_800ExtraBold';
+  }
+}

@@ -1,8 +1,16 @@
 import '../../global.css';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
+import {
+  useFonts,
+  NunitoSans_400Regular,
+  NunitoSans_500Medium,
+  NunitoSans_600SemiBold,
+  NunitoSans_700Bold,
+  NunitoSans_800ExtraBold,
+} from '@expo-google-fonts/nunito-sans';
 import { initI18n } from '../i18n';
 import { authStore, useAuth } from '../auth/auth-store';
 import { queryClient } from '../api/query-client';
@@ -10,6 +18,25 @@ import { colors } from '../theme/colors';
 import { ZToastHost } from '../components/ui/z-toast';
 
 void initI18n();
+
+// App-wide text default → Nunito Sans Regular (400). NativeWind v4 drops the
+// universal `*` selector, so the no-weight default can't live in global.css;
+// the weight utilities (.font-medium/.font-semibold/.font-bold/.font-extrabold)
+// still override font-family per weight via global.css, and those className
+// styles are merged AFTER this default, so they win. This is the standard RN
+// pattern for an app-wide font default and reaches every <Text>, including
+// those rendered inside z-* primitives. Guarded so it only sets fontFamily
+// without clobbering any existing default style.
+const TextWithDefaults = Text as unknown as {
+  defaultProps?: { style?: unknown };
+};
+TextWithDefaults.defaultProps = {
+  ...TextWithDefaults.defaultProps,
+  style: [
+    { fontFamily: 'NunitoSans_400Regular' },
+    TextWithDefaults.defaultProps?.style,
+  ],
+};
 
 /** Shared options applied to every detail/form screen that gets a native header.
  *  - headerBackButtonDisplayMode:'minimal' → iOS shows only the chevron, no
@@ -29,12 +56,28 @@ const DETAIL_SCREEN_OPTIONS = {
 export default function RootLayout() {
   const status = useAuth((s) => s.status);
 
+  // Brand font (Nunito Sans). The real per-weight faces are required because
+  // RN — notably Android — will NOT synthesize the correct cut from a single
+  // family + fontWeight; each weight needs its own face name. The weight
+  // utilities (font-normal/medium/semibold/bold/extrabold) are mapped to these
+  // faces in global.css. Loaded at runtime via JS-imported faces + useFonts —
+  // no native rebuild needed.
+  const [fontsLoaded] = useFonts({
+    NunitoSans_400Regular,
+    NunitoSans_500Medium,
+    NunitoSans_600SemiBold,
+    NunitoSans_700Bold,
+    NunitoSans_800ExtraBold,
+  });
+
   useEffect(() => {
     void authStore.getState().restore();
   }, []);
 
+  // Keep the splash spinner up until both the brand font and the persisted
+  // session are ready, so text never flashes in the system font first.
   const content =
-    status === 'loading' ? (
+    !fontsLoaded || status === 'loading' ? (
       <View className="flex-1 items-center justify-center bg-z-bg">
         <ActivityIndicator size="large" color={colors.primary} />
       </View>

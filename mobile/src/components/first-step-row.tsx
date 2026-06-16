@@ -55,8 +55,8 @@ export function FirstStepRow({
         )}
       </View>
       <View className="min-w-0 flex-1 gap-1">
-        <Text className="text-sm font-semibold text-z-text">{label}</Text>
-        <Text className="text-xs leading-5 text-z-muted">{description}</Text>
+        <Text className="text-[14.5px] font-bold text-z-text">{label}</Text>
+        <Text className="text-[13px] leading-5 text-z-muted">{description}</Text>
       </View>
       {!completed ? (
         <View className="mt-0.5">

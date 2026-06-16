@@ -43,9 +43,9 @@ export function ZBadge({ label, tone = 'neutral', testID }: ZBadgeProps) {
   return (
     <View
       testID={testID}
-      className={`self-start rounded-md border px-2 py-1 ${containerClasses[tone]}`}
+      className={`self-start rounded-full border px-2 py-1 ${containerClasses[tone]}`}
     >
-      <Text className={`text-xs font-semibold ${labelClasses[tone]}`}>{label}</Text>
+      <Text className={`text-[11.5px] font-bold ${labelClasses[tone]}`}>{label}</Text>
     </View>
   );
 }

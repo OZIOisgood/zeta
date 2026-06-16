@@ -89,7 +89,7 @@ export function NextSessionCard({
       </Text>
       <View className="mt-1.5 flex-row items-center gap-1.5">
         <ZSymbol name="clock" label={t('common.status.upcoming')} size={15} color={roleColor('onAccentContainer')} />
-        <Text className="text-[13.5px] text-on-accent-container opacity-90">
+        <Text className="text-[13.5px] font-semibold text-on-accent-container opacity-90">
           {formatBookingDateTime(booking.scheduled_at)} · {booking.duration_minutes} min
         </Text>
       </View>
