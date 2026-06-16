@@ -44,6 +44,7 @@
   --role-on-surface: #221a15;
   --role-on-surface-variant: #54443b;
   --role-outline: #d8c3b6;
+  --role-outline-strong: #897668;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -70,6 +71,7 @@
     --role-on-surface: #f2dfd2;
     --role-on-surface-variant: #d8c3b6;
     --role-outline: #54443b;
+    --role-outline-strong: #a18d80;
   }
 }
 /* END GENERATED TOKENS */

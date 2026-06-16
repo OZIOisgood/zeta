@@ -113,6 +113,7 @@ const LIGHT_ROLES = {
   onSurfaceVariant: '#54443b',
 
   outline: '#d8c3b6',
+  outlineStrong: '#897668',
 };
 
 const DARK_ROLES = {
@@ -145,6 +146,7 @@ const DARK_ROLES = {
   onSurfaceVariant: '#d8c3b6',
 
   outline: '#54443b',
+  outlineStrong: '#a18d80',
 };
 
 // ─── global.css: replace the marker-delimited token block ────────────────────

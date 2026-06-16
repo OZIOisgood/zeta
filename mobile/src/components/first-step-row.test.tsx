@@ -32,20 +32,22 @@ test('renders by testID', async () => {
   expect(screen.getByTestId('first-step-row')).toBeOnTheScreen();
 });
 
-test('shows the empty circle glyph and a chevron when incomplete', async () => {
+test('shows the empty outline ring and a chevron when incomplete', async () => {
   await render(
     <FirstStepRow label="Step" description="desc" completed={false} onPress={jest.fn()} />,
   );
   expect(screen.getByTestId('first-step-row-circle')).toBeOnTheScreen();
   expect(screen.getByTestId('first-step-row-chevron')).toBeOnTheScreen();
   expect(screen.queryByTestId('first-step-row-check')).toBeNull();
+  expect(screen.queryByTestId('first-step-row-check-glyph')).toBeNull();
 });
 
-test('shows the check glyph and no chevron when completed', async () => {
+test('shows the filled check circle (with an inner check glyph) and no chevron when completed', async () => {
   await render(
     <FirstStepRow label="Step" description="desc" completed onPress={jest.fn()} />,
   );
   expect(screen.getByTestId('first-step-row-check')).toBeOnTheScreen();
+  expect(screen.getByTestId('first-step-row-check-glyph')).toBeOnTheScreen();
   expect(screen.queryByTestId('first-step-row-circle')).toBeNull();
   expect(screen.queryByTestId('first-step-row-chevron')).toBeNull();
 });

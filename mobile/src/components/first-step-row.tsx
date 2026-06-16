@@ -1,19 +1,13 @@
 import { Text, View } from 'react-native';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { Touchable } from './ui/touchable';
 import { ZSymbol } from './ui/z-symbol';
 
 /**
- * One onboarding checklist row. Mobile counterpart of the web home page
- * first-steps item (pages/home/home-page.component.ts): a tappable row with a
- * completion glyph, a label, and a muted description. Completed rows are NOT
- * dimmed — done shows a vivid filled accent `check-circle`; a todo shows an
- * outline `circle` plus a trailing chevron.
- *
- * Material-handoff look (design_handoff_home_videos/material-home.jsx StepItem):
- * borderless divider rows — the parent list draws hairline dividers between
- * rows, so the row itself has no border/box. Uses Touchable + ZSymbol (SF
- * Symbols on iOS / Material Symbols on Android) per the Native-fidelity rules.
+ * One onboarding checklist row (Material handoff StepItem look): a borderless
+ * divider row (the parent list draws hairline dividers). The status indicator is
+ * a 24px circle — done: filled accent + a 14px white check (native ZSymbol);
+ * todo: a 2px outline-strong ring. Completed rows are NOT dimmed.
  */
 export function FirstStepRow({
   label,
@@ -28,6 +22,7 @@ export function FirstStepRow({
   onPress: () => void;
   testID?: string;
 }) {
+  const { color } = useRoleColors();
   return (
     <Touchable
       testID={testID}
@@ -39,20 +34,24 @@ export function FirstStepRow({
     >
       <View className="mt-0.5">
         {completed ? (
-          <ZSymbol
+          <View
             testID="first-step-row-check"
-            name="check-circle"
-            label=""
-            size={22}
-            color={colors.primary}
-          />
+            className="h-6 w-6 items-center justify-center rounded-full"
+            style={{ backgroundColor: color('accentStrong') }}
+          >
+            <ZSymbol
+              testID="first-step-row-check-glyph"
+              name="check"
+              label=""
+              size={14}
+              color={color('onAccent')}
+            />
+          </View>
         ) : (
-          <ZSymbol
+          <View
             testID="first-step-row-circle"
-            name="circle"
-            label=""
-            size={22}
-            color={colors.muted}
+            className="h-6 w-6 rounded-full"
+            style={{ borderWidth: 2, borderColor: color('outlineStrong') }}
           />
         )}
       </View>
@@ -67,7 +66,7 @@ export function FirstStepRow({
             name="chevron-right"
             label=""
             size={18}
-            color={colors.muted}
+            color={color('onSurfaceVariant')}
           />
         </View>
       ) : null}

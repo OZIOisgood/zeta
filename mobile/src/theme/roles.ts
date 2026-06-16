@@ -37,6 +37,7 @@ export const roles = {
     onSurface: '#221a15',
     onSurfaceVariant: '#54443b',
     outline: '#d8c3b6',
+    outlineStrong: '#897668',
   },
   dark: {
     accent: '#ffb68f',
@@ -62,5 +63,6 @@ export const roles = {
     onSurface: '#f2dfd2',
     onSurfaceVariant: '#d8c3b6',
     outline: '#54443b',
+    outlineStrong: '#a18d80',
   },
 } as const;
