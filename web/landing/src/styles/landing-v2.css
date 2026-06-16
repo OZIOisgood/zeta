@@ -473,6 +473,7 @@ body[data-rahmen="distinkt"] .lp-mock-call { border-color: rgba(255, 255, 255, 0
 }
 @media (prefers-reduced-motion: reduce) {
   .lp-marquee-track { animation: none; flex-wrap: wrap; width: auto; }
+  .lp-marquee-track [aria-hidden="true"] { display: none !important; }   /* drop the seamless-loop duplicates in the static fallback */
 }
 
 /* ---- Booking section ---- */
