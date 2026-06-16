@@ -31,6 +31,13 @@
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
  * No hardcoded hex values.
  *
+ * Focus treatment (handoff UI kit): the M3 accent focus indicator is inherent
+ * to Compose `OutlinedTextField` — on focus the outline thickens to 2dp and
+ * recolors to `focusedIndicatorColor` (accent). Compose reserves the focused
+ * stroke width in the field's layout, so the border does NOT reflow / shift the
+ * surrounding content when focus changes (no-layout-shift, matching the bare
+ * `.tsx` inset-ring contract). No code change is needed for this.
+ *
  * Controlled-value sync strategy (Android / Compose):
  *   Compose OutlinedTextField is driven by `value` (ObservableState<string>).
  *   When the user types, `onValueChange` fires and we call `onChangeText` so RN

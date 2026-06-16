@@ -2,6 +2,20 @@ import { TextInput } from 'react-native';
 import { colors } from '../../theme/colors';
 import type { ZTextInputProps } from './z-text-input.types';
 
+/**
+ * Material-3 outlined field geometry (handoff UI kit):
+ *   - min-h-14   → 56dp min height (M3 outlined text-field height).
+ *   - rounded-xl → 12dp corner radius (M3 field radius).
+ *   - bg-surface → surface fill behind the outline so the outlined look reads
+ *                  on the warm background.
+ *   - border-outline (default) / border-role-danger (invalid) → role tokens.
+ * Accent focus is rendered with an inset ring so the border width never grows
+ * (`focus:border-accent` swaps color only; `ring-inset` keeps it inside the box
+ * → no layout shift). On native (iOS/Android) focus is handled by the OS widget;
+ * this ring is the NativeWind web/jest contract only.
+ */
+
+
 export type { ZTextInputProps } from './z-text-input.types';
 
 /**
@@ -42,9 +56,9 @@ export function ZTextInput({
       autoCorrect={autoCorrect}
       returnKeyType={returnKeyType}
       onSubmitEditing={onSubmitEditing}
-      className={`min-h-11 w-full rounded-md border px-3 py-2 text-sm ${
-        disabled ? 'bg-z-surface-warm text-z-muted' : 'bg-z-surface text-z-text'
-      } ${invalid ? 'border-z-danger' : 'border-z-border'}`}
+      className={`min-h-14 w-full rounded-xl border px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-inset focus:ring-accent ${
+        disabled ? 'bg-surface-variant text-on-surface-variant' : 'bg-surface text-on-surface'
+      } ${invalid ? 'border-role-danger' : 'border-outline'}`}
     />
   );
 }

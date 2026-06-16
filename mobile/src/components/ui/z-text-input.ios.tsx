@@ -5,11 +5,19 @@
  * full width. The field is controlled via an ObservableState that bridges the
  * RN value prop into the SwiftUI layer.
  *
+ * Visual style (handoff UI kit): a HIG **filled** field — a gray rounded rect
+ * with NO border (the default `automatic` TextFieldStyle is plain/borderless on
+ * iOS). The gray comes from the `surfaceVariant` role token (the warm-palette
+ * analog of systemGray6 — never raw systemGray6/hex), painted as a
+ * roundedRectangle(cornerRadius 10) background after symmetric padding, with
+ * 17pt body text. Invalid swaps the fill to `dangerContainer` and the cursor
+ * tint to `danger`.
+ *
  * Public API ↔ SwiftUI mapping:
  *   value / onChangeText    → text (ObservableState) / onTextChange; a useEffect
  *                             keeps the observable in sync when value changes externally
  *   placeholder             → TextField placeholder prop (shown when field is empty)
- *   invalid                 → tint(danger) on the field
+ *   invalid                 → dangerContainer fill + tint(danger) cursor on the field
  *   disabled                → disabled() modifier
  *   autoCapitalize          → textInputAutocapitalization() modifier
  *   autoCorrect             → autocorrectionDisabled() modifier
@@ -38,9 +46,13 @@ import {
   accessibilityIdentifier,
   accessibilityLabel,
   autocorrectionDisabled,
+  background,
   disabled,
+  font,
   frame,
   onSubmit,
+  padding,
+  shapes,
   submitLabel,
   textInputAutocapitalization,
   tint,
@@ -143,8 +155,18 @@ export function ZTextInput({
   const mappedSubmitLabel = toSubmitLabel(returnKeyType);
   const mappedAutocapitalization = toAutocapitalization(autoCapitalize);
 
+  // Filled-field fill color: neutral surfaceVariant normally, dangerContainer
+  // when invalid. Both are role tokens — never raw systemGray6/hex.
+  const fillColor = invalid ? color('dangerContainer') : color('surfaceVariant');
+
   const modifiers = [
     frame({ maxWidth: Infinity }),
+    // HIG filled look: 17pt body text, symmetric inset, gray rounded-rect fill,
+    // no border (plain TextFieldStyle). Order: font → padding → background so
+    // the fill wraps the padded text box with a 10pt continuous-corner radius.
+    font({ size: 17 }),
+    padding({ horizontal: 14, vertical: 12 }),
+    background(fillColor, shapes.roundedRectangle({ cornerRadius: 10 })),
     disabled(isDisabled),
     invalid ? tint(color('danger')) : tint(color('accent')),
     ...(a11yLabel ? [accessibilityLabel(a11yLabel)] : []),

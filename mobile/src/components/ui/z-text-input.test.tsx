@@ -20,3 +20,10 @@ test('disabled input is not editable', async () => {
   );
   expect(screen.getByLabelText('Title')).toBeDisabled();
 });
+
+test('bare field uses M3 outlined geometry (56dp height, 12dp radius)', async () => {
+  await render(<ZTextInput accessibilityLabel="Title" value="" onChangeText={jest.fn()} />);
+  const className = screen.getByLabelText('Title').props.className as string;
+  expect(className).toContain('min-h-14');
+  expect(className).toContain('rounded-xl');
+});
