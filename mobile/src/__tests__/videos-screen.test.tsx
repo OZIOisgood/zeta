@@ -158,21 +158,33 @@ test('upload action: headerRight button renders with accessible label and naviga
   expect(mockPush).toHaveBeenCalledWith('/upload');
 });
 
-test('filter tabs render with counts derived from the assets query', async () => {
-  // 2 pending + 1 completed => all 3, to review 2, reviewed 1 (all distinct).
+test('filter tabs render as plain labels without counts', async () => {
+  // 2 pending + 1 completed. The segmented filter shows plain labels (no "(N)").
   mockUseAssetsQuery.mockReturnValue({
     isPending: false, isError: false, data: [PENDING_ASSET, PENDING_ASSET_2, COMPLETED_ASSET], refetch: jest.fn(), isRefetching: false,
   });
   await render(<Providers><VideosScreen /></Providers>);
 
-  // All / To review / Reviewed each render as a tab.
+  // All / To review / Reviewed each render as a tab with a plain label.
   expect(screen.getByRole('tab', { name: 'All' })).toBeOnTheScreen();
   expect(screen.getByRole('tab', { name: 'To review' })).toBeOnTheScreen();
   expect(screen.getByRole('tab', { name: 'Reviewed' })).toBeOnTheScreen();
-  // Count badges: 3 total, 2 to review, 1 reviewed.
-  expect(screen.getByText('3')).toBeOnTheScreen();
-  expect(screen.getByText('2')).toBeOnTheScreen();
-  expect(screen.getByText('1')).toBeOnTheScreen();
+  // No per-segment count badges anymore.
+  expect(screen.queryByText('3')).toBeNull();
+  expect(screen.queryByText('2')).toBeNull();
+  expect(screen.queryByText('1')).toBeNull();
+});
+
+test('data state shows the total-count overline above the list', async () => {
+  // The overline uses the TOTAL asset count (3), independent of the active filter.
+  mockUseAssetsQuery.mockReturnValue({
+    isPending: false, isError: false, data: [PENDING_ASSET, PENDING_ASSET_2, COMPLETED_ASSET], refetch: jest.fn(), isRefetching: false,
+  });
+  await render(<Providers><VideosScreen /></Providers>);
+
+  const overline = screen.getByTestId('videos-count-overline');
+  expect(overline).toBeOnTheScreen();
+  expect(overline).toHaveTextContent('3 videos');
 });
 
 test('selecting a filter narrows the visible list', async () => {

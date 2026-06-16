@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Platform, RefreshControl, View } from 'react-native';
+import { FlatList, Platform, RefreshControl, Text, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { AssetCard } from '../../../components/asset-card';
 import { UploadProgressCard } from '../../../components/upload-progress-card';
 import { ZButton } from '../../../components/ui/z-button';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
-import { ZIconButton } from '../../../components/ui/z-icon-button';
+import { ZFab } from '../../../components/ui/z-fab';
 import { ZQueryError } from '../../../components/ui/z-query-error';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
@@ -107,14 +107,12 @@ export default function VideosScreen() {
   const [activeFilter, setActiveFilter] = useState<VideoFilter>('all');
 
   const assets = useMemo(() => data ?? [], [data]);
-  const reviewedCount = useMemo(() => assets.filter((a) => a.status === 'completed').length, [assets]);
-  const toReviewCount = assets.length - reviewedCount;
   const filteredAssets = useMemo(() => filterAssets(assets, activeFilter), [assets, activeFilter]);
 
   const filterTabs = [
-    { id: 'all', label: t('videos.all'), count: assets.length },
-    { id: 'toReview', label: t('videos.reviewStatus.toReview'), count: toReviewCount },
-    { id: 'reviewed', label: t('videos.reviewStatus.reviewed'), count: reviewedCount },
+    { id: 'all', label: t('videos.all') },
+    { id: 'toReview', label: t('videos.reviewStatus.toReview') },
+    { id: 'reviewed', label: t('videos.reviewStatus.reviewed') },
   ];
 
   const filterRow =
@@ -181,7 +179,17 @@ export default function VideosScreen() {
           keyExtractor={(a) => a.id}
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{ padding: 16, paddingBottom: 16 + androidListPaddingBottom }}
-          ListHeaderComponent={<JobCards jobs={jobs} />}
+          ListHeaderComponent={
+            <>
+              <JobCards jobs={jobs} />
+              <Text
+                testID="videos-count-overline"
+                className="pb-2 text-[12.5px] font-bold uppercase tracking-wider text-z-muted"
+              >
+                {t('videos.videoCount', { count: assets.length })}
+              </Text>
+            </>
+          }
           ItemSeparatorComponent={() => <View className="h-3" />}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
           renderItem={({ item }) => (
@@ -201,21 +209,14 @@ export default function VideosScreen() {
           iOS: the same action is surfaced via the native header-right button
           set in the useEffect above (per mobile/AGENTS.md SOTA-as-default). */}
       {Platform.OS === 'android' && canCreate && (
-        <View
+        <ZFab
+          testID="videos-create-fab"
+          label={t('common.actions.uploadVideo')}
+          icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />}
+          onPress={() => router.push('/upload')}
           className="absolute right-6"
           style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
-        >
-          <ZIconButton
-            testID="videos-create-fab"
-            label={t('upload.title')}
-            variant="primary"
-            size="lg"
-            shape="circle"
-            onPress={() => router.push('/upload')}
-          >
-            <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
-          </ZIconButton>
-        </View>
+        />
       )}
     </ZScreen>
   );
