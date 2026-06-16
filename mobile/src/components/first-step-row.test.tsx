@@ -19,20 +19,43 @@ test('renders the label and description', async () => {
   ).toBeOnTheScreen();
 });
 
-test('reports an unchecked state when incomplete', async () => {
+test('renders by testID', async () => {
+  await render(
+    <FirstStepRow
+      testID="first-step-row"
+      label="Step"
+      description="desc"
+      completed={false}
+      onPress={jest.fn()}
+    />,
+  );
+  expect(screen.getByTestId('first-step-row')).toBeOnTheScreen();
+});
+
+test('shows the empty circle glyph and a chevron when incomplete', async () => {
   await render(
     <FirstStepRow label="Step" description="desc" completed={false} onPress={jest.fn()} />,
   );
-  const row = screen.getByRole('button', { name: 'Step' });
-  expect(row.props.accessibilityState).toMatchObject({ checked: false });
+  expect(screen.getByTestId('first-step-row-circle')).toBeOnTheScreen();
+  expect(screen.getByTestId('first-step-row-chevron')).toBeOnTheScreen();
+  expect(screen.queryByTestId('first-step-row-check')).toBeNull();
 });
 
-test('reports a checked state when completed', async () => {
+test('shows the check glyph and no chevron when completed', async () => {
+  await render(
+    <FirstStepRow label="Step" description="desc" completed onPress={jest.fn()} />,
+  );
+  expect(screen.getByTestId('first-step-row-check')).toBeOnTheScreen();
+  expect(screen.queryByTestId('first-step-row-circle')).toBeNull();
+  expect(screen.queryByTestId('first-step-row-chevron')).toBeNull();
+});
+
+test('reports a selected state when completed', async () => {
   await render(
     <FirstStepRow label="Step" description="desc" completed onPress={jest.fn()} />,
   );
   const row = screen.getByRole('button', { name: 'Step' });
-  expect(row.props.accessibilityState).toMatchObject({ checked: true });
+  expect(row.props.accessibilityState).toMatchObject({ selected: true });
 });
 
 test('fires onPress when pressed', async () => {

@@ -1,11 +1,17 @@
-import { Pressable, Text, View } from 'react-native';
-import { CheckCircle2, Circle } from 'lucide-react-native';
+import { Text, View } from 'react-native';
 import { colors } from '../theme/colors';
+import { Touchable } from './ui/touchable';
+import { ZSymbol } from './ui/z-symbol';
 
 /**
  * One onboarding checklist row. Mobile counterpart of the web home page
  * first-steps item (pages/home/home-page.component.ts): a tappable row with a
  * completion glyph, a label, and a muted description. Completed rows are dimmed.
+ *
+ * Material-handoff look (design_handoff_home_videos/material-home.jsx StepItem):
+ * borderless divider rows — the parent list draws hairline dividers between
+ * rows, so the row itself has no border/box. Uses Touchable + ZSymbol (SF
+ * Symbols on iOS / Material Symbols on Android) per the Native-fidelity rules.
  */
 export function FirstStepRow({
   label,
@@ -21,25 +27,48 @@ export function FirstStepRow({
   testID?: string;
 }) {
   return (
-    <Pressable
+    <Touchable
       testID={testID}
-      accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ checked: completed }}
+      selected={completed}
       onPress={onPress}
-      className={`flex-row items-start gap-3 rounded-md border border-z-border bg-z-surface p-3 active:bg-z-surface-warm${completed ? ' opacity-60' : ''}`}
+      haptic
+      className={`flex-row items-start gap-3 py-3${completed ? ' opacity-60' : ''}`}
     >
       <View className="mt-0.5">
         {completed ? (
-          <CheckCircle2 color={colors.primary} size={18} />
+          <ZSymbol
+            testID="first-step-row-check"
+            name="check-circle"
+            label=""
+            size={22}
+            color={colors.primary}
+          />
         ) : (
-          <Circle color={colors.muted} size={18} />
+          <ZSymbol
+            testID="first-step-row-circle"
+            name="circle"
+            label=""
+            size={22}
+            color={colors.muted}
+          />
         )}
       </View>
       <View className="min-w-0 flex-1 gap-1">
         <Text className="text-sm font-semibold text-z-text">{label}</Text>
         <Text className="text-xs leading-5 text-z-muted">{description}</Text>
       </View>
-    </Pressable>
+      {!completed ? (
+        <View className="mt-0.5">
+          <ZSymbol
+            testID="first-step-row-chevron"
+            name="chevron-right"
+            label=""
+            size={18}
+            color={colors.muted}
+          />
+        </View>
+      ) : null}
+    </Touchable>
   );
 }

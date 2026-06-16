@@ -285,16 +285,18 @@ export default function HomeScreen() {
               value={steps.length ? completedCount / steps.length : 0}
               className="mt-3"
             />
-            <View className="mt-4 gap-3">
-              {steps.map((step) => (
-                <FirstStepRow
-                  key={step.labelKey}
-                  testID={step.testID}
-                  label={t(step.labelKey)}
-                  description={t(step.descriptionKey)}
-                  completed={step.completed}
-                  onPress={step.onPress}
-                />
+            <View className="mt-2">
+              {steps.map((step, i) => (
+                <View key={step.labelKey}>
+                  {i > 0 ? <View className="h-px bg-z-border" /> : null}
+                  <FirstStepRow
+                    testID={step.testID}
+                    label={t(step.labelKey)}
+                    description={t(step.descriptionKey)}
+                    completed={step.completed}
+                    onPress={step.onPress}
+                  />
+                </View>
               ))}
             </View>
           </ZCard>

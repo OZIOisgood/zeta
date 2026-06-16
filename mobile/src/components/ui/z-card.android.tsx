@@ -4,9 +4,9 @@
  * Renders a native Compose `Card` (Material 3 filled card surface) with
  * role-token colors:
  *   - `containerColor` → `surface`
- *   - border → 1dp `outline` (OutlinedCard would be more idiomatic for a
- *     bordered appearance, but the filled Card with explicit border matches
- *     the design token intention of a subtle separator)
+ *   - borderless (Material handoff filled-tonal direction) — the Material 3
+ *     elevated/filled Card relies on elevation + container tone for separation
+ *     rather than an outline
  *   - elevation → 1dp (Material 3 level-1, matches "tonal surface" feel)
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
@@ -41,7 +41,6 @@ export function ZCard({ children, className, testID }: ZCardProps) {
         <Card
           colors={{ containerColor: color('surface') }}
           elevation={1}
-          border={{ width: 1, color: color('outline') }}
         >
           {/* p-4 equivalent (16dp) applied via RN View so content respects the contract */}
           <View style={{ padding: 16 }}>{children}</View>

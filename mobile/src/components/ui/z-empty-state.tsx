@@ -21,7 +21,7 @@ export function ZEmptyState({
   children,
 }: ZEmptyStateProps) {
   return (
-    <View className="items-center rounded-lg border border-dashed border-z-border bg-z-surface px-5 py-8">
+    <View className="items-center rounded-2xl bg-z-surface px-5 py-8">
       <View className="h-12 w-12 items-center justify-center rounded-lg bg-z-surface-warm">
         {icon}
       </View>

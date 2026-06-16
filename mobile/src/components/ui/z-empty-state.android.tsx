@@ -6,7 +6,9 @@
  * an illustrated column layout, which maps well to the existing NativeWind
  * design. This variant preserves the visual structure but uses role tokens
  * from theme/native.ts instead of NativeWind classes for color resolution,
- * keeping it consistent with the Native tier contract.
+ * keeping it consistent with the Native tier contract. Per the Material handoff
+ * (filled-tonal direction) the container is borderless — the warm screen
+ * background gives the `surface` fill enough separation without an outline.
  *
  * The `icon` ReactNode is rendered as-is (lucide icon, ZSymbol, etc.) or
  * replaced by the default Inbox icon. `iconSystemImage` is unused on Android.
@@ -36,10 +38,7 @@ export function ZEmptyState({
     <View
       style={{
         alignItems: 'center',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderStyle: 'dashed',
-        borderColor: color('outline'),
+        borderRadius: 16,
         backgroundColor: color('surface'),
         paddingHorizontal: 20,
         paddingVertical: 32,

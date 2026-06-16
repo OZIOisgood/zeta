@@ -10,8 +10,10 @@ import { ZSymbol } from './ui/z-symbol';
  * Lives in a list/index screen header `action` slot (Home). Secondary navigation
  * action — not a FAB.
  *
- * Uses ZSymbol (SF Symbols on iOS / Material Symbols on Android) rather than
- * lucide, per the Native-fidelity rules in AGENTS.md.
+ * Material-handoff look (design_handoff_home_videos/material-home.jsx TopBar):
+ * the bell sits in a 44px tonal `surface-warm` circle with a neutral (onSurface)
+ * glyph and an edge-aligned primary badge. Uses ZSymbol (SF Symbols on iOS /
+ * Material Symbols on Android) rather than lucide, per the Native-fidelity rules.
  */
 export function NotificationBell({
   unreadCount,
@@ -24,20 +26,19 @@ export function NotificationBell({
   // Mirror the web badge computed: > 9 → '9+', otherwise the exact count string.
   const badge = unreadCount > 9 ? '9+' : String(unreadCount);
   return (
-    <View>
-      <Touchable
-        testID="notification-bell"
-        accessibilityLabel={t('notifications.open')}
-        onPress={onPress}
-        haptic
-      >
-        <ZSymbol name="bell" label={t('notifications.open')} size={22} color={colors.primary} />
-      </Touchable>
+    <Touchable
+      testID="notification-bell"
+      accessibilityLabel={t('notifications.open')}
+      onPress={onPress}
+      haptic
+      className="h-11 w-11 items-center justify-center rounded-full bg-z-surface-warm"
+    >
+      <ZSymbol name="bell" label={t('notifications.open')} size={22} color={colors.text} />
       {unreadCount > 0 ? (
         <View
           testID="notification-bell-badge"
           accessibilityLabel={t('notifications.unread')}
-          className="absolute -right-1 -top-1 min-w-[18px] items-center justify-center rounded-full border border-z-surface bg-z-primary px-1"
+          className="absolute right-1 top-1 min-w-[18px] items-center justify-center rounded-full border border-z-surface bg-z-primary px-1"
           pointerEvents="none"
         >
           {/* Badge foreground = the onPrimary token (white-on-color) from
@@ -50,6 +51,6 @@ export function NotificationBell({
           </Text>
         </View>
       ) : null}
-    </View>
+    </Touchable>
   );
 }
