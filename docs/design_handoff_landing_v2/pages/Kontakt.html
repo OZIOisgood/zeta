@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kontakt — Strido</title>
+<link rel="icon" href="../assets/zeta-horse-mark-orange-128.png" />
+<link rel="stylesheet" href="../colors_and_type.css" />
+<link rel="stylesheet" href="../landing/landing.css" />
+<link rel="stylesheet" href="legal.css" />
+<script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<header class="lp-header">
+  <div class="lp-container lp-header-inner">
+    <a class="lp-logo" href="../Strido Landingpage v2.html" aria-label="Strido">
+      <img class="lp-logo-word" src="../landing/strido-wordmark.svg" alt="Strido" />
+    </a>
+    <div class="lp-header-actions">
+      <div class="lp-lang" data-i18n-skip>
+        <button class="lp-lang-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Sprache wählen / Choose language">
+          <span class="lp-lang-globe"><i data-lucide="globe"></i></span>
+          <span class="lp-lang-code">DE</span>
+          <span class="lp-lang-caret"><i data-lucide="chevron-down"></i></span>
+        </button>
+        <div class="lp-lang-menu" role="listbox">
+          <button class="lp-lang-option" type="button" role="option" data-lang="de"><span class="lp-lang-short">DE</span><span>Deutsch</span><span class="lp-lang-check"><i data-lucide="check"></i></span></button>
+          <button class="lp-lang-option" type="button" role="option" data-lang="en"><span class="lp-lang-short">EN</span><span>English</span><span class="lp-lang-check"><i data-lucide="check"></i></span></button>
+          <button class="lp-lang-option" type="button" role="option" data-lang="fr"><span class="lp-lang-short">FR</span><span>Français</span><span class="lp-lang-check"><i data-lucide="check"></i></span></button>
+          <button class="lp-lang-option" type="button" role="option" data-lang="nl"><span class="lp-lang-short">NL</span><span>Nederlands</span><span class="lp-lang-check"><i data-lucide="check"></i></span></button>
+        </div>
+      </div>
+      <a class="lp-btn lp-btn-secondary lp-btn-sm legal-back" href="../Strido Landingpage v2.html"><i data-lucide="arrow-left"></i><span class="legal-back-label">Zurück zur Startseite</span></a>
+    </div>
+  </div>
+</header>
+
+<main class="legal-main">
+  <div class="legal-eyebrow">Kontakt</div>
+  <h1 class="legal-title">Schreib uns</h1>
+  <p class="legal-updated">Wir melden uns in der Regel innerhalb von ein bis zwei Werktagen.</p>
+
+  <div class="legal-banner">
+    <i data-lucide="info"></i>
+    <span>Platzhalter-Seite. Die Kontaktdaten sind Beispiele und das Formular ist noch nicht angebunden — bitte vor Veröffentlichung ersetzen bzw. mit einem Backend verbinden.</span>
+  </div>
+
+  <div class="contact-grid">
+    <div class="contact-channels">
+      <div class="contact-channel">
+        <span class="legal-li-icon"><i data-lucide="mail"></i></span>
+        <div>
+          <h3>E-Mail</h3>
+          <p><a href="mailto:hallo@strido.example">hallo@strido.example</a></p>
+        </div>
+      </div>
+      <div class="contact-channel">
+        <span class="legal-li-icon"><i data-lucide="life-buoy"></i></span>
+        <div>
+          <h3>Support für Trainer &amp; Reiter</h3>
+          <p><a href="mailto:support@strido.example">support@strido.example</a></p>
+        </div>
+      </div>
+      <div class="contact-channel">
+        <span class="legal-li-icon"><i data-lucide="phone"></i></span>
+        <div>
+          <h3>Telefon</h3>
+          <p>+49 (0) 000 0000000<br />Mo–Fr, 9–17 Uhr</p>
+        </div>
+      </div>
+      <div class="contact-channel">
+        <span class="legal-li-icon"><i data-lucide="map-pin"></i></span>
+        <div>
+          <h3>Adresse</h3>
+          <p>Strido GmbH<br />Musterstraße 1, 12345 Musterstadt</p>
+        </div>
+      </div>
+    </div>
+
+    <form class="contact-form" onsubmit="return false;">
+      <h2>Nachricht senden</h2>
+      <p>Fragen, Feedback oder Interesse an einer Zusammenarbeit? Schreib uns direkt.</p>
+      <div class="contact-field">
+        <label for="cf-name">Name</label>
+        <input id="cf-name" type="text" placeholder="Dein Name" autocomplete="name" />
+      </div>
+      <div class="contact-field">
+        <label for="cf-email">E-Mail</label>
+        <input id="cf-email" type="email" placeholder="du@beispiel.de" autocomplete="email" />
+      </div>
+      <div class="contact-field">
+        <label for="cf-msg">Nachricht</label>
+        <textarea id="cf-msg" placeholder="Wie können wir helfen?"></textarea>
+      </div>
+      <button class="lp-btn lp-btn-primary" type="submit">Nachricht senden</button>
+      <p class="contact-form-note">Demo-Formular — wird noch nicht versendet.</p>
+    </form>
+  </div>
+</main>
+
+<footer class="lp-footer">
+  <div class="lp-container lp-footer-inner">
+    <a class="lp-logo" href="../Strido Landingpage v2.html" aria-label="Strido">
+      <img class="lp-logo-word" src="../landing/strido-wordmark.svg" alt="Strido" />
+    </a>
+    <span class="lp-footer-tag">Video-Coaching für den Reitsport. © 2026 Strido</span>
+    <nav class="lp-footer-links">
+      <a href="Impressum.html">Impressum</a>
+      <a href="Datenschutz.html">Datenschutz</a>
+      <a href="Kontakt.html">Kontakt</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  if (window.lucide) { window.lucide.createIcons(); }
+</script>
+
+<script src="legal-i18n.js"></script>
+
+</body>
+</html>
