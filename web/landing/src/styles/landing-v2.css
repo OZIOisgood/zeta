@@ -455,7 +455,10 @@ body[data-rahmen="distinkt"] .lp-roadmap-card { border-style: solid; }
 body[data-rahmen="distinkt"] .lp-mock-call { border-color: rgba(255, 255, 255, 0.32); }
 
 /* ---- Sports marquee (SOTA presentation of the long sport list) ---- */
+.lp-marquee-wrap { display: flex; align-items: center; gap: 8px; }
 .lp-marquee {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
@@ -471,9 +474,31 @@ body[data-rahmen="distinkt"] .lp-mock-call { border-color: rgba(255, 255, 255, 0
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+/* prev/next buttons — shown only in the reduced-motion (manual-scroll) fallback, via JS when scrollable */
+.lp-marquee-nav {
+  display: none;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--z-radius-full);
+  background: var(--z-surface);
+  border: 1px solid var(--z-border);
+  box-shadow: var(--z-shadow-sm);
+  color: var(--z-text);
+  cursor: pointer;
+}
+.lp-marquee-nav:hover { background: var(--z-surface-warm); }
+.lp-marquee-nav:focus-visible { outline: 2px solid var(--z-primary); outline-offset: 2px; }
+.lp-marquee-nav:disabled { opacity: 0.35; cursor: default; }
+.lp-marquee-nav svg { width: 18px; height: 18px; }
 @media (prefers-reduced-motion: reduce) {
-  .lp-marquee-track { animation: none; flex-wrap: wrap; width: auto; }
-  .lp-marquee-track [aria-hidden="true"] { display: none !important; }   /* drop the seamless-loop duplicates in the static fallback */
+  .lp-marquee { overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; }
+  .lp-marquee::-webkit-scrollbar { display: none; }
+  .lp-marquee-track { animation: none; }                                 /* one row, scrolled on demand */
+  .lp-marquee-track [aria-hidden="true"] { display: none !important; }   /* manual scroll needs no loop-duplicates */
+  .lp-marquee-nav { display: inline-flex; }
 }
 
 /* ---- Booking section ---- */
