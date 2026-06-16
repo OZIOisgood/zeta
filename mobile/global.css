@@ -26,6 +26,8 @@
   --role-accent-container: #ffdbc8;
   --role-on-accent-container: #3a1400;
   --role-accent-strong: #bd4309;
+  --role-secondary-container: #ffdcc4;
+  --role-on-secondary-container: #5a3214;
   --role-success: #15803d;
   --role-on-success: #ffffff;
   --role-success-container: #c7f1d2;
@@ -53,6 +55,8 @@
     --role-accent-container: #7c3500;
     --role-on-accent-container: #ffdbc8;
     --role-accent-strong: #bd4309;
+    --role-secondary-container: #5d4030;
+    --role-on-secondary-container: #ffdcc4;
     --role-success: #7fd99a;
     --role-on-success: #052e16;
     --role-success-container: #1f4a30;

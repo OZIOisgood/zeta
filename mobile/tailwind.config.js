@@ -29,6 +29,8 @@ module.exports = {
         'on-accent': 'var(--role-on-accent)',
         'accent-container': 'var(--role-accent-container)',
         'on-accent-container': 'var(--role-on-accent-container)',
+        'secondary-container': 'var(--role-secondary-container)',
+        'on-secondary-container': 'var(--role-on-secondary-container)',
         // Status
         'role-success': 'var(--role-success)',
         'on-success': 'var(--role-on-success)',

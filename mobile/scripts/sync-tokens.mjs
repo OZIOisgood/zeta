@@ -89,6 +89,8 @@ const LIGHT_ROLES = {
   accentContainer: '#ffdbc8',
   onAccentContainer: '#3a1400',
   accentStrong: '#bd4309',
+  secondaryContainer: '#ffdcc4',
+  onSecondaryContainer: '#5a3214',
 
   success: '#15803d',
   onSuccess: '#ffffff',
@@ -122,6 +124,8 @@ const DARK_ROLES = {
   accentContainer: '#7c3500',
   onAccentContainer: '#ffdbc8',
   accentStrong: '#bd4309',
+  secondaryContainer: '#5d4030',
+  onSecondaryContainer: '#ffdcc4',
 
   success: '#7fd99a',
   onSuccess: '#052e16',
