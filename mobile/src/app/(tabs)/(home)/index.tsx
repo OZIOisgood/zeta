@@ -21,6 +21,7 @@ import { ZQueryError } from '../../../components/ui/z-query-error';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZSymbol } from '../../../components/ui/z-symbol';
+import { isJoinable } from '../../../lib/connect-window';
 import { colors } from '../../../theme/colors';
 
 const LATEST_VIDEOS_LIMIT = 4;
@@ -67,6 +68,7 @@ export default function HomeScreen() {
   const has = (perm: string) => permissions !== null && permissions.includes(perm);
   const canCreate = has('assets:create');
   const canBook = has('coaching:book');
+  const canConnect = has('coaching:video:connect');
 
   const assets = useAssetsQuery();
   const groups = useGroupsQuery();
@@ -88,6 +90,11 @@ export default function HomeScreen() {
     .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
   const upcomingCount = upcoming.length;
   const nextBooking = upcoming[0] ?? null;
+
+  // Gate the hero Join button on the same contract as the coaching screen:
+  // the user can connect AND the session is inside its join window. Read the
+  // clock in the render body (not a memo) to keep the deps lint happy.
+  const canJoinNext = !!nextBooking && canConnect && isJoinable(nextBooking, new Date());
 
   const latestVideos = useMemo(() => videoList.slice(0, LATEST_VIDEOS_LIMIT), [videoList]);
 
@@ -241,7 +248,8 @@ export default function HomeScreen() {
             booking={nextBooking}
             currentUserId={user?.id ?? ''}
             canBook={canBook}
-            onJoin={() => (nextBooking ? router.push(`/coaching`) : undefined)}
+            canJoin={canJoinNext}
+            onJoin={() => nextBooking && router.push(`/call/${nextBooking.id}?groupId=${nextBooking.group_id}`)}
             onDetails={() => router.push('/coaching')}
             onBook={() => router.push('/book')}
           />

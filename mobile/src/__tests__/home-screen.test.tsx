@@ -147,7 +147,9 @@ test('renders the latest videos section heading', async () => {
   expect(screen.getByText('Latest videos')).toBeOnTheScreen();
 });
 
-test('renders the next-session hero for an upcoming booking', async () => {
+test('renders the next-session hero for an upcoming booking but no Join outside the window', async () => {
+  // 2 days out => not in the join window => the hero renders without a dead
+  // Join button (only Details).
   mockUser = { id: 'me', first_name: 'A', last_name: 'B', permissions: ['coaching:book'] };
   mockUseMyBookingsQuery.mockReturnValue(success([{
     id: 'b1', student_id: 'me', expert_id: 'x', expert_name: 'Coach Lee', student_name: 'Me',
@@ -161,6 +163,30 @@ test('renders the next-session hero for an upcoming booking', async () => {
   );
   expect(screen.getByTestId('next-session-card')).toBeOnTheScreen();
   expect(screen.getByText(/Coach Lee/)).toBeOnTheScreen();
+  expect(screen.queryByTestId('next-session-join')).toBeNull();
+});
+
+test('hero Join is shown inside the window and routes to the call', async () => {
+  // Within the join window (5 min out) AND the connect permission present =>
+  // the Join button renders and routes to the actual call.
+  const user = userEvent.setup();
+  mockUser = {
+    id: 'me', first_name: 'A', last_name: 'B',
+    permissions: ['coaching:book', 'coaching:video:connect'],
+  };
+  mockUseMyBookingsQuery.mockReturnValue(success([{
+    id: 'b1', student_id: 'me', expert_id: 'x', expert_name: 'Coach Lee', student_name: 'Me',
+    session_type_name: 'Video Review', status: 'pending', duration_minutes: 30, group_id: 'g1',
+    scheduled_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+  }]));
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+  expect(screen.getByTestId('next-session-join')).toBeOnTheScreen();
+  await user.press(screen.getByTestId('next-session-join'));
+  expect(mockPush).toHaveBeenCalledWith('/call/b1?groupId=g1');
 });
 
 test('hero shows a book prompt when there is no booking and the user can book', async () => {

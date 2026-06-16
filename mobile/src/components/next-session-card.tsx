@@ -14,6 +14,7 @@ export type NextSessionCardProps = {
   booking: Booking | null;
   currentUserId: string;
   canBook: boolean;
+  canJoin: boolean;
   onJoin: () => void;
   onDetails: () => void;
   onBook: () => void;
@@ -36,6 +37,7 @@ export function NextSessionCard({
   booking,
   currentUserId,
   canBook,
+  canJoin,
   onJoin,
   onDetails,
   onBook,
@@ -93,13 +95,15 @@ export function NextSessionCard({
       </View>
 
       <View className="mt-4 flex-row items-center gap-2">
-        <ZButton
-          testID="next-session-join"
-          label={t('common.actions.join')}
-          variant="primary"
-          icon={<ZSymbol name="video" label={t('common.actions.join')} size={18} color={colors.onPrimary} />}
-          onPress={onJoin}
-        />
+        {canJoin ? (
+          <ZButton
+            testID="next-session-join"
+            label={t('common.actions.join')}
+            variant="primary"
+            icon={<ZSymbol name="video" label={t('common.actions.join')} size={18} color={colors.onPrimary} />}
+            onPress={onJoin}
+          />
+        ) : null}
         <ZButton
           testID="next-session-details"
           label={t('common.actions.details')}
