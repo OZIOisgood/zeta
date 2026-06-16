@@ -45,7 +45,7 @@ export function formatBookingDateTime(iso: string): string {
  * `now` is injectable for deterministic tests. Falls back to the absolute date
  * string if RelativeTimeFormat is unavailable on the runtime.
  */
-export function formatRelativeTime(iso: string, locale: string, now: Date = new Date()): string {
+export function formatRelativeFuture(iso: string, locale: string, now: Date = new Date()): string {
   const diffMs = new Date(iso).getTime() - now.getTime();
   try {
     const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });

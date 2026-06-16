@@ -40,13 +40,7 @@ export function ZAvatar({
       {image ? (
         <Image source={{ uri: avatarSrc(image) }} style={{ width: size, height: size }} />
       ) : (
-        <Text
-          className={`text-base font-extrabold ${
-            isAccent ? 'text-on-accent-container' : 'text-z-primary'
-          }`}
-        >
-          {fallback}
-        </Text>
+        <Text className={isAccent ? 'text-base font-extrabold text-on-accent-container' : 'text-sm font-semibold text-z-primary'}>{fallback}</Text>
       )}
     </View>
   );
