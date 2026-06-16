@@ -9,11 +9,10 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(async () => undefined),
 }));
 
-let mockPermissions: string[] | null = null;
+let mockUser: { id: string; first_name: string; last_name: string; avatar?: string; permissions: string[] } | null = null;
 jest.mock('../../src/auth/auth-store', () => ({
   ...jest.requireActual('../../src/auth/auth-store'),
-  useAuth: (selector: (s: { user: { permissions: string[] } | null }) => unknown) =>
-    selector({ user: mockPermissions !== null ? { permissions: mockPermissions } : null }),
+  useAuth: (selector: (s: { user: typeof mockUser }) => unknown) => selector({ user: mockUser }),
 }));
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
@@ -74,16 +73,6 @@ function group(id: string, name: string) {
   };
 }
 
-// A booking starting in the future counts as upcoming.
-function futureBooking(id: string) {
-  return {
-    id,
-    group_id: 'g1',
-    status: 'pending',
-    scheduled_at: new Date(Date.now() + 86_400_000).toISOString(),
-  };
-}
-
 function success<T>(data: T) {
   return {
     data,
@@ -108,7 +97,7 @@ function pending() {
 
 let client: QueryClient;
 beforeEach(() => {
-  mockPermissions = null;
+  mockUser = { id: 'u1', first_name: 'Heinrich', last_name: 'M', permissions: [] };
   mockPush.mockClear();
   mockSetOptions.mockClear();
   mockUseAssetsQuery.mockReturnValue(success([]));
@@ -124,6 +113,28 @@ function Providers({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
+test('renders the greeting and first name', async () => {
+  mockUser = { id: 'u1', first_name: 'Heinrich', last_name: 'M', permissions: [] };
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+  expect(screen.getByText('Heinrich')).toBeOnTheScreen();
+  expect(
+    screen.queryByText('Good morning') || screen.queryByText('Good afternoon') || screen.queryByText('Good evening'),
+  ).not.toBeNull();
+});
+
+test('hides the native header in favor of the in-content greeting', async () => {
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+  expect(mockSetOptions).toHaveBeenCalledWith(expect.objectContaining({ headerShown: false }));
+});
+
 test('renders the latest videos section heading', async () => {
   // The native stack header owns the page title ("Home"); the screen body
   // renders a "Latest Videos" card heading which is always visible.
@@ -136,67 +147,31 @@ test('renders the latest videos section heading', async () => {
   expect(screen.getByText('Latest videos')).toBeOnTheScreen();
 });
 
-test('stat cards render live counts from the assets, groups, and bookings queries', async () => {
-  // Both groups:read and coaching:bookings:read are required for the gated stat cards.
-  mockPermissions = ['groups:read', 'coaching:bookings:read'];
-  mockUseAssetsQuery.mockReturnValue(
-    success([asset('a1', 'pending', 'Kata 1'), asset('a2', 'completed', 'Kata 2')]),
-  );
-  mockUseGroupsQuery.mockReturnValue(success([group('g1', 'Karate Club')]));
-  mockUseMyBookingsQuery.mockReturnValue(success([futureBooking('b1'), futureBooking('b2')]));
-
+test('renders the next-session hero for an upcoming booking', async () => {
+  mockUser = { id: 'me', first_name: 'A', last_name: 'B', permissions: ['coaching:book'] };
+  mockUseMyBookingsQuery.mockReturnValue(success([{
+    id: 'b1', student_id: 'me', expert_id: 'x', expert_name: 'Coach Lee', student_name: 'Me',
+    session_type_name: 'Video Review', status: 'pending', duration_minutes: 30,
+    scheduled_at: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+  }]));
   await render(
     <Providers>
       <HomeScreen />
     </Providers>,
   );
-
-  // Two videos, one group, two upcoming sessions.
-  expect(screen.getByLabelText('Videos: 2')).toBeOnTheScreen();
-  expect(screen.getByLabelText('My Groups: 1')).toBeOnTheScreen();
-  expect(screen.getByLabelText('Upcoming Sessions: 2')).toBeOnTheScreen();
+  expect(screen.getByTestId('next-session-card')).toBeOnTheScreen();
+  expect(screen.getByText(/Coach Lee/)).toBeOnTheScreen();
 });
 
-test('cancelled and past bookings are excluded from the upcoming sessions count', async () => {
-  // coaching:bookings:read required for the sessions stat card to render.
-  mockPermissions = ['coaching:bookings:read'];
-  const cancelled = { ...futureBooking('b1'), status: 'cancelled' as const };
-  const past = {
-    id: 'b2',
-    group_id: 'g1',
-    status: 'done' as const,
-    scheduled_at: new Date(Date.now() - 86_400_000).toISOString(),
-  };
-  mockUseMyBookingsQuery.mockReturnValue(success([cancelled, past, futureBooking('b3')]));
-
+test('hero shows a book prompt when there is no booking and the user can book', async () => {
+  mockUser = { id: 'me', first_name: 'A', last_name: 'B', permissions: ['coaching:book'] };
+  mockUseMyBookingsQuery.mockReturnValue(success([]));
   await render(
     <Providers>
       <HomeScreen />
     </Providers>,
   );
-
-  // Only the single future, non-cancelled booking counts.
-  expect(screen.getByLabelText('Upcoming Sessions: 1')).toBeOnTheScreen();
-});
-
-test('tapping a stat card navigates to its tab', async () => {
-  // All three gated cards require their respective permissions.
-  mockPermissions = ['groups:read', 'coaching:bookings:read'];
-  const user = userEvent.setup();
-  await render(
-    <Providers>
-      <HomeScreen />
-    </Providers>,
-  );
-
-  await user.press(screen.getByTestId('stat-card-videos'));
-  expect(mockPush).toHaveBeenCalledWith('/videos');
-
-  await user.press(screen.getByTestId('stat-card-groups'));
-  expect(mockPush).toHaveBeenCalledWith('/groups');
-
-  await user.press(screen.getByTestId('stat-card-sessions'));
-  expect(mockPush).toHaveBeenCalledWith('/coaching');
+  expect(screen.getByTestId('next-session-book')).toBeOnTheScreen();
 });
 
 test('latest videos preview is bounded to four and View all navigates to the Videos tab', async () => {
@@ -236,7 +211,7 @@ test('latest videos shows an empty state when there are no videos', async () => 
 
 test('latest videos empty state shows an upload CTA when the user can create assets', async () => {
   const user = userEvent.setup();
-  mockPermissions = ['assets:create'];
+  mockUser = { ...mockUser!, permissions: ['assets:create'] };
   mockUseAssetsQuery.mockReturnValue(success([]));
 
   await render(
@@ -261,9 +236,30 @@ test('latest videos shows skeletons (not text) while loading', async () => {
   expect(screen.queryByText(/loading/i)).toBeNull();
 });
 
+test('first-steps card shows a progress bar', async () => {
+  mockUser = { id: 'u1', first_name: 'A', last_name: 'B', permissions: ['assets:create'] };
+  mockUseAssetsQuery.mockReturnValue(success([]));
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+  expect(screen.getByTestId('first-steps-progress')).toBeOnTheScreen();
+});
+
+test('does not render the removed stat cards', async () => {
+  mockUser = { id: 'u1', first_name: 'A', last_name: 'B', permissions: ['groups:read', 'coaching:bookings:read'] };
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+  expect(screen.queryByTestId('stat-card-videos')).toBeNull();
+});
+
 test('first steps shows when a permitted step is incomplete', async () => {
   // assets:create with no videos => the "upload your first video" step is incomplete.
-  mockPermissions = ['assets:create'];
+  mockUser = { ...mockUser!, permissions: ['assets:create'] };
   mockUseAssetsQuery.mockReturnValue(success([]));
   mockUseGroupsQuery.mockReturnValue(success([]));
 
@@ -280,7 +276,7 @@ test('first steps shows when a permitted step is incomplete', async () => {
 });
 
 test('first steps hides when the user has no relevant permissions', async () => {
-  mockPermissions = [];
+  mockUser = { ...mockUser!, permissions: [] };
   await render(
     <Providers>
       <HomeScreen />
@@ -292,7 +288,7 @@ test('first steps hides when the user has no relevant permissions', async () => 
 test('first steps hides when every permitted step is already complete', async () => {
   // assets:create with an existing video => the only step is complete, so the
   // onboarding card is suppressed (mirrors the web showFirstSteps).
-  mockPermissions = ['assets:create'];
+  mockUser = { ...mockUser!, permissions: ['assets:create'] };
   mockUseAssetsQuery.mockReturnValue(success([asset('a1', 'pending', 'Kata 1')]));
   mockUseGroupsQuery.mockReturnValue(success([]));
 
@@ -306,7 +302,7 @@ test('first steps hides when every permitted step is already complete', async ()
 
 test('tapping an incomplete first step navigates to its mobile route', async () => {
   const user = userEvent.setup();
-  mockPermissions = ['assets:create'];
+  mockUser = { ...mockUser!, permissions: ['assets:create'] };
   mockUseAssetsQuery.mockReturnValue(success([]));
 
   await render(
@@ -322,7 +318,7 @@ test('tapping an incomplete first step navigates to its mobile route', async () 
 // ── fix (6): availability query gated on coaching:availability:manage ─────────
 
 test('availability query is NOT called when user lacks coaching:availability:manage', async () => {
-  mockPermissions = ['assets:create']; // has assets:create but NOT coaching:availability:manage
+  mockUser = { ...mockUser!, permissions: ['assets:create'] }; // has assets:create but NOT coaching:availability:manage
   mockUseGroupsQuery.mockReturnValue(success([group('g1', 'Dojo')]));
 
   await render(
@@ -337,7 +333,7 @@ test('availability query is NOT called when user lacks coaching:availability:man
 });
 
 test('availability query IS called with the groupId when user has coaching:availability:manage', async () => {
-  mockPermissions = ['coaching:availability:manage'];
+  mockUser = { ...mockUser!, permissions: ['coaching:availability:manage'] };
   mockUseGroupsQuery.mockReturnValue(success([group('g1', 'Dojo')]));
 
   await render(
@@ -347,73 +343,4 @@ test('availability query IS called with the groupId when user has coaching:avail
   );
 
   expect(mockUseMyAvailabilityQuery).toHaveBeenCalledWith('g1');
-});
-
-// ── Notification bell header action ──────────────────────────────────────────
-// The bell moves from an in-body View row into the native nav-bar header-right
-// (on both platforms) via navigation.setOptions. Tests verify that setOptions
-// is called with a headerRight function and that the rendered bell is
-// pressable and navigates to /notifications.
-
-test('notification bell is registered in the header-right via setOptions', async () => {
-  mockUseNotificationsQuery.mockReturnValue(
-    success({ items: [], unread_count: 3 }),
-  );
-
-  await render(
-    <Providers>
-      <HomeScreen />
-    </Providers>,
-  );
-
-  // setOptions should have been called with a headerRight function.
-  expect(mockSetOptions).toHaveBeenCalledWith(
-    expect.objectContaining({ headerRight: expect.any(Function) }),
-  );
-});
-
-test('notification bell headerRight renders the bell and badge when there are unread notifications', async () => {
-  const user = userEvent.setup();
-  mockUseNotificationsQuery.mockReturnValue(
-    success({ items: [], unread_count: 5 }),
-  );
-
-  await render(
-    <Providers>
-      <HomeScreen />
-    </Providers>,
-  );
-
-  // Render the headerRight component extracted from setOptions.
-  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
-  const HeaderRight = lastCall.headerRight as React.ComponentType;
-  await render(<HeaderRight />);
-
-  // The bell button is accessible.
-  expect(screen.getByTestId('notification-bell')).toBeOnTheScreen();
-  // Unread badge is visible.
-  expect(screen.getByTestId('notification-bell-badge')).toBeOnTheScreen();
-
-  // Pressing the bell navigates to /notifications.
-  await user.press(screen.getByTestId('notification-bell'));
-  expect(mockPush).toHaveBeenCalledWith('/notifications');
-});
-
-test('notification bell headerRight renders without badge when unread count is zero', async () => {
-  mockUseNotificationsQuery.mockReturnValue(
-    success({ items: [], unread_count: 0 }),
-  );
-
-  await render(
-    <Providers>
-      <HomeScreen />
-    </Providers>,
-  );
-
-  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
-  const HeaderRight = lastCall.headerRight as React.ComponentType;
-  await render(<HeaderRight />);
-
-  expect(screen.getByTestId('notification-bell')).toBeOnTheScreen();
-  expect(screen.queryByTestId('notification-bell-badge')).toBeNull();
 });
