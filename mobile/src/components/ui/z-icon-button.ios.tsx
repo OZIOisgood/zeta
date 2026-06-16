@@ -72,7 +72,7 @@ export function ZIconButton({
   const { color } = useRoleColors();
 
   const tintModifier =
-    variant === 'primary' ? tint(color('accent')) : variant === 'secondary' ? tint(color('outline')) : undefined;
+    variant === 'primary' ? tint(color('accentStrong')) : variant === 'secondary' ? tint(color('outline')) : undefined;
 
   // When shape='circle', apply a circular clip and matching border shape so
   // the button renders round (HIG: "icon button" vs rectangular button).

@@ -40,7 +40,10 @@ export function ZTabs({ tabs, activeId, onChange, testID }: ZTabsProps) {
               onClick={() => onChange(tab.id)}
               colors={{
                 activeContainerColor: color('accentContainer'),
-                activeContentColor: color('onAccentContainer'),
+                // Dark label for AA: onAccentContainer (#c2410c) is only 3.82:1 on
+                // accentContainer; onSurface is ~11:1. Selection still reads via the
+                // container fill + accent border + check icon.
+                activeContentColor: color('onSurface'),
                 activeBorderColor: color('accent'),
                 inactiveContainerColor: color('surface'),
                 inactiveContentColor: color('onSurface'),

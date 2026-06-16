@@ -45,12 +45,15 @@ export function ZChip({
           containerColor: color('surface'),
           labelColor: color('onSurface'),
           selectedContainerColor: color('accentContainer'),
-          selectedLabelColor: color('onAccentContainer'),
+          // Dark label on the peach container (onAccentContainer #c2410c is only
+          // 3.82:1 on accentContainer; onSurface is ~11:1). Selection is signalled
+          // by the container fill + accent border, not by tinting the label.
+          selectedLabelColor: color('onSurface'),
         }}
         modifiers={modifiers}
       >
         <FilterChip.Label>
-          <Text color={selected ? color('onAccentContainer') : color('onSurface')}>{label}</Text>
+          <Text color={color('onSurface')}>{label}</Text>
         </FilterChip.Label>
       </FilterChip>
     </Host>

@@ -10,16 +10,20 @@
  *
  * DO NOT add @expo/ui imports here — this file must work in the web/Storybook
  * environment where native modules are unavailable.
+ *
+ * Layout: the Pressable is wrapped in a <View> that forwards `className`/`style`
+ * and uses `alignItems:'flex-start'` so the button stays content-width (matching
+ * the native variants); the parent's alignment positions the wrapper.
  */
 
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
 import type { ZButtonProps, ZButtonVariant } from './z-button.types';
 
 export type { ZButtonVariant, ZButtonProps } from './z-button.types';
 
 const containerClasses: Record<ZButtonVariant, string> = {
-  primary: 'bg-z-primary active:bg-z-primary-strong',
+  primary: 'bg-z-primary-strong active:opacity-90',
   secondary: 'bg-z-surface border border-z-border active:bg-z-surface-warm',
   ghost: 'bg-transparent active:bg-z-surface-muted',
   danger: 'bg-z-danger active:opacity-90',
@@ -33,7 +37,9 @@ const labelClasses: Record<ZButtonVariant, string> = {
   secondary: 'text-z-text',
   ghost: 'text-z-muted',
   danger: 'text-white',
-  link: 'text-z-primary',
+  // AA-safe deep accent for the inline link text (z-primary #ea580c is 3.56:1 on
+  // white; z-primary-strong #c2410c is 5.18:1).
+  link: 'text-z-primary-strong',
 };
 
 /** Spinner color matching each variant's label color. */
@@ -52,6 +58,8 @@ export function ZButton({
   disabled = false,
   loading = false,
   icon,
+  className,
+  style,
   testID,
 }: ZButtonProps) {
   const isDisabled = disabled || loading;
@@ -62,25 +70,31 @@ export function ZButton({
   // All variants use the web's 14px label size; only the link variant changes chrome.
   const labelSizeClasses = 'text-sm';
   return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
-      disabled={isDisabled}
-      onPress={onPress}
-      className={`flex-row items-center justify-center gap-2 ${chromeClasses} ${containerClasses[variant]} ${isDisabled ? 'opacity-50' : ''}`}
-    >
-      {loading ? (
-        <ActivityIndicator
-          testID={testID ? `${testID}-spinner` : 'z-button-spinner'}
-          size="small"
-          color={spinnerColor[variant]}
-        />
-      ) : icon ? (
-        <View>{icon}</View>
-      ) : null}
-      <Text className={`${labelSizeClasses} font-semibold ${labelClasses[variant]}`}>{label}</Text>
-    </Pressable>
+    <View className={className} style={[styles.wrap, style]}>
+      <Pressable
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: isDisabled, busy: loading }}
+        disabled={isDisabled}
+        onPress={onPress}
+        className={`flex-row items-center justify-center gap-2 ${chromeClasses} ${containerClasses[variant]} ${isDisabled ? 'opacity-50' : ''}`}
+      >
+        {loading ? (
+          <ActivityIndicator
+            testID={testID ? `${testID}-spinner` : 'z-button-spinner'}
+            size="small"
+            color={spinnerColor[variant]}
+          />
+        ) : icon ? (
+          <View>{icon}</View>
+        ) : null}
+        <Text className={`${labelSizeClasses} font-semibold ${labelClasses[variant]}`}>{label}</Text>
+      </Pressable>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: { alignItems: 'flex-start' },
+});

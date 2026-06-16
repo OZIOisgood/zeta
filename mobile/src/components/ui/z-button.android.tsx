@@ -1,28 +1,20 @@
 /**
  * ZButton — Android implementation (Jetpack Compose via @expo/ui/jetpack-compose).
  *
- * Renders a native Compose Button inside a Host wrapper that auto-sizes to
- * content (`matchContents`). Variant → Compose button component mapping:
- *
- *   primary   → Button (filled)       — Material 3 filled button, `containerColor`=accent
- *   secondary → OutlinedButton        — Material 3 outlined button, `contentColor`=accent
- *   ghost     → TextButton            — Material 3 text button, `contentColor`=onSurface
- *   danger    → Button (filled)       — filled button, `containerColor`=danger
- *   link      → TextButton            — text button, `contentColor`=accent (inline link)
+ * Variant → Compose component:
+ *   primary → Button (filled, accent)   secondary → OutlinedButton
+ *   ghost   → TextButton                danger    → Button (filled, danger)
+ *   link    → TextButton (accent text)
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
- * No hardcoded hex values.
+ * Accent-on-light foreground (secondary/link labels) uses the AA-safe deep accent
+ * `onAccentContainer` (#c2410c, 5.18:1 on white); the bright accent (#ea580c,
+ * 3.56:1) only clears AA for large graphics, not label text.
  *
- * Notes:
- *   - Compose Button `children` accepts any Compose content; we use Row + Text
- *     for the label, and optionally prepend a LoadingIndicator or an RN icon
- *     wrapper inside the Row.
- *   - The `onClick` prop is the Compose equivalent of `onPress`.
- *   - `enabled` (not `disabled`) controls interactivity in Compose.
- *   - `testID` is forwarded via the `testID` modifier.
- *   - Ripple effect is native — no custom press state needed.
- *   - Host `matchContents` sizes the Compose view to its intrinsic size;
- *     the caller controls width by wrapping in a RN View with `alignSelf`.
+ * Layout: the Compose Host is wrapped in a NativeWind <View> that forwards
+ * `className`/`style` and uses `alignItems:'flex-start'` so the button stays
+ * content-width (HIG/M3 default) and never overflows its column; the parent's own
+ * alignment still positions the wrapper.
  *
  * @expo/ui version: ~56.0.17
  * Material 3 reference: https://m3.material.io/components/buttons/overview
@@ -38,7 +30,7 @@ import {
   TextButton,
 } from '@expo/ui/jetpack-compose';
 import { testID as testIDModifier } from '@expo/ui/jetpack-compose/modifiers';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useRoleColors } from '../../theme/native';
 import type { ZButtonProps } from './z-button.types';
@@ -52,6 +44,8 @@ export function ZButton({
   disabled: isDisabled = false,
   loading = false,
   icon,
+  className,
+  style,
   testID,
 }: ZButtonProps) {
   const { color } = useRoleColors();
@@ -59,56 +53,45 @@ export function ZButton({
 
   const modifiers = testID ? [testIDModifier(testID)] : [];
 
-  // Build the children content (Row with optional leading icon/spinner + label).
+  // Foreground (label / icon / spinner) color per variant.
+  // - primary/danger: onAccent (white) on the filled background
+  // - secondary/link: AA-safe deep accent (onAccentContainer) on the light surface
+  // - ghost:          onSurface
+  const fg =
+    variant === 'primary' || variant === 'danger'
+      ? color('onAccent')
+      : variant === 'secondary' || variant === 'link'
+        ? color('onAccentContainer')
+        : color('onSurface');
+
   const hasLeading = loading || icon != null;
 
   const content = hasLeading ? (
     <Row verticalAlignment="center" horizontalArrangement="center" modifiers={[]}>
       {loading ? (
-        <LoadingIndicator color={variant === 'primary' || variant === 'danger' ? color('onAccent') : color('accent')} />
+        <LoadingIndicator color={fg} />
       ) : icon != null ? (
-        // RN icon nodes are not natively composable inside Compose trees; wrap
-        // them in a View so RN renders them adjacent to the Compose Text. This
-        // approach works because @expo/ui Compose Host slots accept RN children.
         <View>{icon}</View>
       ) : null}
-      <Text
-        color={
-          variant === 'primary' || variant === 'danger'
-            ? color('onAccent')
-            : variant === 'secondary' || variant === 'link'
-              ? color('accent')
-              : color('onSurface')
-        }
-        style={{ fontWeight: '600' }}
-      >
+      <Text color={fg} style={{ fontWeight: '600' }}>
         {label}
       </Text>
     </Row>
   ) : (
-    <Text
-      color={
-        variant === 'primary' || variant === 'danger'
-          ? color('onAccent')
-          : variant === 'secondary' || variant === 'link'
-            ? color('accent')
-            : color('onSurface')
-      }
-      style={{ fontWeight: '600' }}
-    >
+    <Text color={fg} style={{ fontWeight: '600' }}>
       {label}
     </Text>
   );
 
-  // Select the Compose button component family based on variant.
+  let composed;
   if (variant === 'secondary') {
-    return (
+    composed = (
       <Host matchContents>
         <OutlinedButton
           onClick={onPress}
           enabled={!isInteractionDisabled}
           colors={{
-            contentColor: color('accent'),
+            contentColor: fg,
             disabledContentColor: color('onSurfaceVariant'),
             disabledContainerColor: 'transparent',
           }}
@@ -118,16 +101,14 @@ export function ZButton({
         </OutlinedButton>
       </Host>
     );
-  }
-
-  if (variant === 'ghost' || variant === 'link') {
-    return (
+  } else if (variant === 'ghost' || variant === 'link') {
+    composed = (
       <Host matchContents>
         <TextButton
           onClick={onPress}
           enabled={!isInteractionDisabled}
           colors={{
-            contentColor: variant === 'link' ? color('accent') : color('onSurface'),
+            contentColor: fg,
             disabledContentColor: color('onSurfaceVariant'),
           }}
           modifiers={modifiers}
@@ -136,24 +117,34 @@ export function ZButton({
         </TextButton>
       </Host>
     );
+  } else {
+    // primary and danger: filled Button
+    composed = (
+      <Host matchContents>
+        <Button
+          onClick={onPress}
+          enabled={!isInteractionDisabled}
+          colors={{
+            containerColor: variant === 'danger' ? color('danger') : color('accentStrong'),
+            contentColor: color('onAccent'),
+            disabledContainerColor: color('surfaceVariant'),
+            disabledContentColor: color('onSurfaceVariant'),
+          }}
+          modifiers={modifiers}
+        >
+          {content}
+        </Button>
+      </Host>
+    );
   }
 
-  // primary and danger: filled Button
   return (
-    <Host matchContents>
-      <Button
-        onClick={onPress}
-        enabled={!isInteractionDisabled}
-        colors={{
-          containerColor: variant === 'danger' ? color('danger') : color('accent'),
-          contentColor: color('onAccent'),
-          disabledContainerColor: color('surfaceVariant'),
-          disabledContentColor: color('onSurfaceVariant'),
-        }}
-        modifiers={modifiers}
-      >
-        {content}
-      </Button>
-    </Host>
+    <View className={className} style={[styles.wrap, style]}>
+      {composed}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: { alignItems: 'flex-start' },
+});

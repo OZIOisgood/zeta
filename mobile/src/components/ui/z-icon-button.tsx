@@ -18,7 +18,7 @@ import type { ZIconButtonProps, ZIconButtonVariant, ZIconButtonSize } from './z-
 export type { ZIconButtonVariant, ZIconButtonSize, ZIconButtonShape, ZIconButtonProps } from './z-icon-button.types';
 
 const containerClasses: Record<ZIconButtonVariant, string> = {
-  primary: 'border border-z-primary bg-z-primary active:bg-z-primary-strong',
+  primary: 'border border-z-primary-strong bg-z-primary-strong active:opacity-90',
   secondary: 'border border-z-border bg-z-surface active:bg-z-surface-warm',
   ghost: 'bg-transparent active:bg-z-surface-warm',
 };

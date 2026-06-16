@@ -11,6 +11,7 @@
  */
 
 import type { ReactNode } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 
 export type ZButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link';
 
@@ -35,6 +36,10 @@ export type ZButtonProps = {
   loading?: boolean;
   /** Optional leading icon node (lucide icon or ZSymbol). */
   icon?: ReactNode;
+  /** NativeWind classes for the outer wrapper (margins, alignment, positioning). */
+  className?: string;
+  /** Style for the outer wrapper. */
+  style?: StyleProp<ViewStyle>;
   /** Test identifier forwarded to the native element. */
   testID?: string;
 };

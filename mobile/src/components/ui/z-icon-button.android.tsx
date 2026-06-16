@@ -76,7 +76,7 @@ export function ZIconButton({
         <Host matchContents>
           <FABComponent
             onClick={disabled ? undefined : onPress}
-            containerColor={disabled ? color('surfaceVariant') : color('accent')}
+            containerColor={disabled ? color('surfaceVariant') : color('accentStrong')}
             modifiers={modifiers}
           >
             <FABComponent.Icon>
@@ -122,7 +122,7 @@ export function ZIconButton({
             onClick={onPress}
             enabled={!disabled}
             colors={{
-              containerColor: color('accent'),
+              containerColor: color('accentStrong'),
               contentColor: color('onAccent'),
               disabledContainerColor: color('surfaceVariant'),
               disabledContentColor: color('onSurfaceVariant'),
