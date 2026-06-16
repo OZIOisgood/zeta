@@ -3,9 +3,9 @@
   "GBR_BEZEICHNUNG": "Strido",
   "NAME_1": "Heinrich Mergel",
   "NAME_2": "Pavlo Lobariev",
-  "ANSCHRIFT": "Erbacher Straße 3 | 65428 Rüsselsheim am Main | Germany",
+  "ANSCHRIFT": "Erbacher Straße 3 | 65428 Rüsselsheim am Main",
   "EMAIL": "support@strido.net",
-  "EMAIL_DSA": "support@strido.net",
+  "EMAIL_DSA": "dsa@strido.net",
   "DOMAIN": "strido.net",
   "AUFSICHTSBEHOERDE": "Der Hessische Beauftragte für Datenschutz und Informationsfreiheit, Postfach 31 63, 65021 Wiesbaden (datenschutz.hessen.de)"
 }
