@@ -101,6 +101,31 @@
     "preferences": "Einstellungen",
     "search": "Suchen"
   },
+  "feedback": {
+    "button": "Feedback",
+    "open": "Feedback-Formular öffnen",
+    "dialog": {
+      "title": "Feedback senden",
+      "description": "Sag uns, was gut funktioniert hat, was holprig war oder was du erwartet hast."
+    },
+    "rating": {
+      "label": "Wie war deine Erfahrung?",
+      "option": "{{rating}} von 5"
+    },
+    "message": {
+      "label": "Feedback",
+      "placeholder": "Schreib eine kurze Notiz..."
+    },
+    "actions": {
+      "send": "Feedback senden"
+    },
+    "toast": {
+      "successTitle": "Feedback gesendet",
+      "successMessage": "Danke. Wir schauen es uns an.",
+      "errorTitle": "Feedback konnte nicht gesendet werden",
+      "errorMessage": "Bitte versuche es erneut."
+    }
+  },
   "reports": {
     "expert": { "title": "Experten-Bericht" },
     "student": { "title": "Schüler-Bericht" },

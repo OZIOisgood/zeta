@@ -16,6 +16,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/coaching"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
+	"github.com/OZIOisgood/zeta/internal/feedback"
 	"github.com/OZIOisgood/zeta/internal/groups"
 	"github.com/OZIOisgood/zeta/internal/invitations"
 	"github.com/OZIOisgood/zeta/internal/llm"
@@ -92,6 +93,16 @@ func (s *Server) routes(ctx context.Context) {
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	reportsHandler := reports.NewHandler(queries, s.Logger)
+	var discordPoster feedback.DiscordPoster
+	if discordToken := os.Getenv("DISCORD_BOT_TOKEN"); strings.TrimSpace(discordToken) != "" {
+		discordPoster = feedback.NewDiscordClient(discordToken)
+	}
+	feedbackHandler := feedback.NewHandler(
+		queries,
+		discordPoster,
+		s.Logger,
+		feedback.HandlerConfig{DiscordChannelID: os.Getenv("DISCORD_FEEDBACK_FORUM_CHANNEL_ID")},
+	)
 
 	// In-app notifications: a per-instance hub fed by a Postgres LISTEN/NOTIFY
 	// listener (started below) delivers events to connected SSE clients.
@@ -194,6 +205,7 @@ func (s *Server) routes(ctx context.Context) {
 			r.Post("/invitations/decline", invitationsHandler.DeclineInvitation)
 		})
 		r.Route("/notifications", notificationsHandler.RegisterRoutes)
+		r.Route("/feedback", feedbackHandler.RegisterRoutes)
 		reportsHandler.RegisterRoutes(r)
 		coachingHandler.RegisterRoutes(r)
 	})

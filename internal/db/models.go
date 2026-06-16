@@ -432,6 +432,23 @@ type CoachingSessionType struct {
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
+type FeedbackSubmission struct {
+	ID               pgtype.UUID        `json:"id"`
+	UserID           string             `json:"user_id"`
+	UserDisplayName  string             `json:"user_display_name"`
+	Rating           int32              `json:"rating"`
+	Message          string             `json:"message"`
+	PageUrl          string             `json:"page_url"`
+	UserAgent        string             `json:"user_agent"`
+	DiscordStatus    string             `json:"discord_status"`
+	DiscordChannelID string             `json:"discord_channel_id"`
+	DiscordThreadID  string             `json:"discord_thread_id"`
+	DiscordMessageID string             `json:"discord_message_id"`
+	DiscordError     string             `json:"discord_error"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Group struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`

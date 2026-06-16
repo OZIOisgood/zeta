@@ -282,6 +282,78 @@
         </div>
       </section>
 
+      <ng-template #feedbackDialog let-close="close">
+        <z-action-dialog
+          [title]="'feedback.dialog.title' | transloco"
+          [description]="'feedback.dialog.description' | transloco"
+          [close]="close"
+          tone="info"
+          [showToneIcon]="false"
+          maxWidthClass="max-w-lg"
+          [confirmLabel]="'feedback.actions.send' | transloco"
+          [cancelLabel]="'common.actions.cancel' | transloco"
+          [confirmDisabled]="feedbackSubmitDisabled()"
+          [cancelDisabled]="feedbackSubmitting()"
+          [confirmCloses]="false"
+          (confirmed)="submitFeedback(close)"
+        >
+          <div class="mt-5 space-y-5">
+            <fieldset>
+              <legend class="text-sm font-semibold text-[var(--z-text)]">
+                {{ 'feedback.rating.label' | transloco }}
+              </legend>
+              <div class="mt-2 flex items-center gap-1">
+                @for (rating of ratingOptions; track rating) {
+                  <button
+                    type="button"
+                    class="grid size-10 place-items-center rounded-md text-stone-300 transition hover:bg-amber-50 hover:text-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                    [ngClass]="rating <= (feedbackRating() ?? 0) ? 'text-amber-500' : ''"
+                    [disabled]="feedbackSubmitting()"
+                    [attr.aria-label]="'feedback.rating.option' | transloco: { rating }"
+                    [attr.aria-pressed]="feedbackRating() === rating"
+                    [title]="'feedback.rating.option' | transloco: { rating }"
+                    (click)="setFeedbackRating(rating)"
+                  >
+                    <svg
+                      lucideStar
+                      class="size-6"
+                      [ngClass]="rating <= (feedbackRating() ?? 0) ? 'fill-amber-400' : ''"
+                      aria-hidden="true"
+                    ></svg>
+                  </button>
+                }
+              </div>
+            </fieldset>
+
+            <label class="block">
+              <span class="text-sm font-semibold text-[var(--z-text)]">
+                {{ 'feedback.message.label' | transloco }}
+              </span>
+              <z-textarea
+                class="mt-2"
+                [ngModel]="feedbackMessage()"
+                (ngModelChange)="feedbackMessage.set($event)"
+                [placeholder]="'feedback.message.placeholder' | transloco"
+                [disabled]="feedbackSubmitting()"
+                [rows]="5"
+              />
+            </label>
+          </div>
+
+          <svg z-dialog-confirm-icon lucideSend class="size-4" aria-hidden="true"></svg>
+        </z-action-dialog>
+      </ng-template>
+
+      <z-button
+        class="fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-4 z-40 shadow-lg shadow-orange-950/10 sm:bottom-20"
+        variant="secondary"
+        [ariaLabel]="'feedback.open' | transloco"
+        (pressed)="openFeedback(feedbackDialog)"
+      >
+        <svg lucideMessageSquareText class="size-4" aria-hidden="true"></svg>
+        <span>{{ 'feedback.button' | transloco }}</span>
+      </z-button>
+
       @if (shell.isToastVisible()) {
         <div
           class="fixed bottom-4 right-4 z-50 w-[min(24rem,calc(100vw-2rem))]"

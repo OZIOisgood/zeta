@@ -19,6 +19,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle and automatic import into the review flow.
 - **Templated Email Notifications**: Transactional emails use embedded Go HTML templates, a shared Zeta layout, and CSS inlining before delivery through Resend.
 - **Notification Preferences**: Users can control all email notifications or individual email categories from their Preferences page.
+- **Feedback Inbox**: Authenticated dashboard users can submit rated feedback that is stored in Postgres and mirrored into the environment-specific Discord forum.
 
 ## How to start
 
@@ -70,6 +71,11 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
    - `CANCELLATION_NOTICE` — minimum notice to cancel (default: `1h`)
    - `CONNECT_WINDOW` — how early participants can join a call (default: `15m`)
+
+8. **Discord Feedback Inbox**:
+   - Create a Discord bot token and store it in `DISCORD_BOT_TOKEN`.
+   - Set `DISCORD_FEEDBACK_FORUM_CHANNEL_ID` to the target forum channel.
+   - `DISCORD_APPLICATION_ID` and `DISCORD_PUBLIC_KEY` are public bot metadata reserved for future Discord interactions.
 
 ### Custom Domains
 
@@ -215,6 +221,14 @@ sequenceDiagram
         A-->>A: Skip email
     end
 ```
+
+### Feedback Inbox Flow
+
+1. A signed-in user opens the global Feedback button in the dashboard shell.
+2. The user selects a 1–5 rating and enters a short message.
+3. The dashboard posts the feedback to `POST /feedback` with the current page URL.
+4. The API stores the submission in `feedback_submissions` with the authenticated user's display name and internal user ID.
+5. The API creates a new post in the configured Discord forum channel. If Discord delivery fails, the database row records the failure while the user's feedback remains saved.
 
 ### API Examples
 

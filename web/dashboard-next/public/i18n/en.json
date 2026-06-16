@@ -101,6 +101,31 @@
     "preferences": "Preferences",
     "search": "Search"
   },
+  "feedback": {
+    "button": "Feedback",
+    "open": "Open feedback form",
+    "dialog": {
+      "title": "Share feedback",
+      "description": "Tell us what worked, what felt rough, or what you expected."
+    },
+    "rating": {
+      "label": "How was your experience?",
+      "option": "{{rating}} out of 5"
+    },
+    "message": {
+      "label": "Feedback",
+      "placeholder": "Write a short note..."
+    },
+    "actions": {
+      "send": "Send feedback"
+    },
+    "toast": {
+      "successTitle": "Feedback sent",
+      "successMessage": "Thanks. We will take a look.",
+      "errorTitle": "Could not send feedback",
+      "errorMessage": "Please try again."
+    }
+  },
   "reports": {
     "expert": { "title": "Expert report" },
     "student": { "title": "Student report" },

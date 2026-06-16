@@ -92,6 +92,8 @@ Examples:
 | `zeta-dev-workos-api-key` | `WORKOS_API_KEY` | Manual secure provisioning |
 | `zeta-prod-resend-api-key` | `RESEND_API_KEY` | Manual secure provisioning |
 | `zeta-dev-scheduler-secret` | `SCHEDULER_SECRET` and scheduler header | Manual secret; consumed by deploy and Terraform workflow |
+| `zeta-dev-discord-bot-token` | `DISCORD_BOT_TOKEN` | Manual secret for feedback forum posting |
+| `zeta-prod-discord-bot-token` | `DISCORD_BOT_TOKEN` | Manual secret for feedback forum posting |
 
 Check for a secret without reading its payload:
 
@@ -107,6 +109,17 @@ printf '%s' "$WORKOS_API_KEY" | gcloud secrets versions add zeta-dev-workos-api-
 ```
 
 Do not put public URLs, sender email addresses, flags, or limits in Secret Manager merely for consistency. Do not access secret payloads for routine inventory.
+
+Discord feedback forum IDs, application ID, and public key are plain runtime
+configuration in deploy workflows. Only the bot token belongs in Secret Manager:
+
+```bash
+printf '%s' "$DISCORD_BOT_TOKEN" | gcloud secrets versions add zeta-dev-discord-bot-token \
+  --data-file=- --project="$PROJECT_ID"
+
+printf '%s' "$DISCORD_BOT_TOKEN" | gcloud secrets versions add zeta-prod-discord-bot-token \
+  --data-file=- --project="$PROJECT_ID"
+```
 
 ## Terraform Ownership
 

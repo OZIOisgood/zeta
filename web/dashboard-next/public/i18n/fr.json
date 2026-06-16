@@ -101,6 +101,31 @@
     "preferences": "Préférences",
     "search": "Rechercher"
   },
+  "feedback": {
+    "button": "Feedback",
+    "open": "Ouvrir le formulaire de feedback",
+    "dialog": {
+      "title": "Envoyer un feedback",
+      "description": "Dis-nous ce qui a bien fonctionné, ce qui était difficile ou ce que tu attendais."
+    },
+    "rating": {
+      "label": "Comment s'est passée ton expérience ?",
+      "option": "{{rating}} sur 5"
+    },
+    "message": {
+      "label": "Feedback",
+      "placeholder": "Écris une courte note..."
+    },
+    "actions": {
+      "send": "Envoyer le feedback"
+    },
+    "toast": {
+      "successTitle": "Feedback envoyé",
+      "successMessage": "Merci. Nous allons y jeter un œil.",
+      "errorTitle": "Impossible d'envoyer le feedback",
+      "errorMessage": "Réessaie, s'il te plaît."
+    }
+  },
   "reports": {
     "expert": { "title": "Rapport expert" },
     "student": { "title": "Rapport élève" },
