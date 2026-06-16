@@ -312,10 +312,10 @@ export function ZFab({ label, icon, onPress, extended = true, className, style, 
         accessibilityLabel={label}
         onPress={onPress}
         haptic
-        className="h-14 flex-row items-center gap-2 self-start rounded-2xl bg-accent-container px-5 active:opacity-90"
+        className="h-14 flex-row items-center gap-2 self-start rounded-2xl bg-accent px-5 active:opacity-90"
       >
         {icon}
-        {extended ? <Text className="text-base font-bold text-on-accent-container">{label}</Text> : null}
+        {extended ? <Text className="text-base font-bold text-on-accent">{label}</Text> : null}
       </Touchable>
     </View>
   );
@@ -360,9 +360,9 @@ export type { ZFabProps } from './z-fab.types';
 
 /**
  * Android: Material 3 ExtendedFloatingActionButton (icon + label) or round
- * FloatingActionButton when `extended={false}`. accent-container fill /
- * on-accent-container content matches the handoff prototype. Outer NativeWind
- * View forwards `className`/`style` for positioning.
+ * FloatingActionButton when `extended={false}`. Filled-accent (accentStrong fill
+ * + white onAccent content) — same treatment as the current round FAB, just with
+ * a label. Outer NativeWind View forwards `className`/`style` for positioning.
  */
 export function ZFab({ label, icon, onPress, extended = true, className, style, testID }: ZFabProps) {
   const { color } = useRoleColors();
@@ -372,7 +372,7 @@ export function ZFab({ label, icon, onPress, extended = true, className, style, 
     return (
       <View className={className} style={style}>
         <Host matchContents>
-          <FloatingActionButton onClick={onPress} containerColor={color('accentContainer')} modifiers={modifiers}>
+          <FloatingActionButton onClick={onPress} containerColor={color('accentStrong')} modifiers={modifiers}>
             <FloatingActionButton.Icon>
               <View accessibilityLabel={label}>{icon}</View>
             </FloatingActionButton.Icon>
@@ -388,14 +388,14 @@ export function ZFab({ label, icon, onPress, extended = true, className, style, 
         <ExtendedFloatingActionButton
           expanded
           onClick={onPress}
-          containerColor={color('accentContainer')}
+          containerColor={color('accentStrong')}
           modifiers={modifiers}
         >
           <ExtendedFloatingActionButton.Icon>
             <View accessibilityLabel={label}>{icon}</View>
           </ExtendedFloatingActionButton.Icon>
           <ExtendedFloatingActionButton.Text>
-            <Text color={color('onAccentContainer')}>{label}</Text>
+            <Text color={color('onAccent')}>{label}</Text>
           </ExtendedFloatingActionButton.Text>
         </ExtendedFloatingActionButton>
       </Host>
@@ -990,9 +990,10 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../api/queries/coaching';
-import { formatBookingDateTime, formatRelativeTime } from '../api/queries/coaching';
+import { formatBookingDateTime, formatRelativeFuture } from '../api/queries/coaching';
 import { bookingCounterpart } from './booking-card';
 import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { ZBadge } from './ui/z-badge';
 import { ZButton } from './ui/z-button';
 import { ZSymbol } from './ui/z-symbol';
@@ -1030,6 +1031,9 @@ export function NextSessionCard({
   onBook,
 }: NextSessionCardProps) {
   const { t, i18n } = useTranslation();
+  // On-accent-container icon tint adapts light/dark (#c2410c ↔ #fed7aa); the
+  // static `colors` table has no dark variant, so use the role adapter here.
+  const { color: roleColor } = useRoleColors();
 
   // Empty: prompt to book (if allowed), else render nothing.
   if (!booking) {
@@ -1057,13 +1061,13 @@ export function NextSessionCard({
 
   const { name: counterpart } = bookingCounterpart(booking, currentUserId);
   const sessionTypeName = booking.session_type_name ?? t('sessions.sessionFallback');
-  const relative = formatRelativeTime(booking.scheduled_at, i18n.language);
+  const relative = formatRelativeFuture(booking.scheduled_at, i18n.language);
 
   return (
     <HeroSurface testID="next-session-card">
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-1.5">
-          <ZSymbol name="calendar" label={t('home.nextSession.title')} size={14} color={colors.accentStrong} />
+          <ZSymbol name="calendar" label={t('home.nextSession.title')} size={14} color={roleColor('onAccentContainer')} />
           <Text className="text-[11px] font-extrabold uppercase tracking-wider text-on-accent-container">
             {t('home.nextSession.title')}
           </Text>
@@ -1077,7 +1081,7 @@ export function NextSessionCard({
         {t('home.nextSession.titleWith', { type: sessionTypeName, name: counterpart })}
       </Text>
       <View className="mt-1.5 flex-row items-center gap-1.5">
-        <ZSymbol name="clock" label={t('common.status.upcoming')} size={15} color={colors.accentStrong} />
+        <ZSymbol name="clock" label={t('common.status.upcoming')} size={15} color={roleColor('onAccentContainer')} />
         <Text className="text-[13.5px] text-on-accent-container opacity-90">
           {formatBookingDateTime(booking.scheduled_at)} · {booking.duration_minutes} min
         </Text>
@@ -1103,7 +1107,7 @@ export function NextSessionCard({
 }
 ```
 
-> `colors.accentStrong` exists in `theme/colors` (mirrors `roles.accentStrong`); if absent, use `colors.primary`. Verify with `rg "accentStrong" mobile/src/theme/colors.ts` and adjust the icon color accordingly.
+> Icon tint inside the hero uses `roleColor('onAccentContainer')` (theme/native adapter) so it flips correctly in dark mode — the static `colors` table (theme/colors.ts) has **no** `accentStrong`/`onAccentContainer` keys and no dark variant. Button icons sit on filled primary buttons, so they use `colors.onPrimary` (white, theme-independent).
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -1596,7 +1600,7 @@ Replace the Android FAB block at the bottom of the screen:
         <ZFab
           testID="videos-create-fab"
           label={t('common.actions.uploadVideo')}
-          icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onAccentContainer} />}
+          icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />}
           onPress={() => router.push('/upload')}
           className="absolute right-6"
           style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
@@ -1604,10 +1608,10 @@ Replace the Android FAB block at the bottom of the screen:
       )}
 ```
 
-> Verify `colors.onAccentContainer` exists in `theme/colors.ts` (mirrors
-> `roles.onAccentContainer`); if absent, add it there so the FAB icon tint
-> matches the label. The iOS create action (nav-bar "+") is unchanged — `ZFab`
-> renders null on iOS.
+> The FAB is filled-accent (accentStrong bg, white content) — same treatment as
+> the current round FAB — so the white icon (`colors.onPrimary`) is correct in
+> both themes. The iOS create action (nav-bar "+") is unchanged — `ZFab` renders
+> null on iOS.
 
 - [ ] **Step 4: Typecheck + run videos-related tests**
 
