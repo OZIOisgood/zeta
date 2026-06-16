@@ -7,11 +7,13 @@
  *   - z-chip.android.tsx — Material 3 FilterChip via @expo/ui/jetpack-compose
  *
  * Native mapping:
- *   iOS:     buttonStyle('bordered') — tinted when selected (accent tint)
+ *   iOS:     buttonStyle('bordered') — tinted when selected (accent tint).
  *            The HIG "tag" / "filter chip" concept is a bordered capsule
- *            button that toggles tint on selection.
- *   Android: FilterChip — Material 3 filter chip with built-in selected state,
- *            accent-colored selectedContainerColor.
+ *            button that toggles tint on selection. iOS NEVER shows a leading
+ *            check — selection is expressed by the capsule tint alone.
+ *   Android: FilterChip — Material 3 filter chip with built-in selected state.
+ *            Selected renders the warm secondary-container fill + a leading
+ *            check (Material You "on" state).
  */
 
 export type ZChipProps = {
@@ -23,6 +25,12 @@ export type ZChipProps = {
   onPress?: () => void;
   /** When true, the chip is non-interactive. */
   disabled?: boolean;
+  /**
+   * Controls the leading check rendered in the selected MATERIAL state
+   * (bare fallback + Android FilterChip). Defaults to `true`.
+   * iOS ignores this — the iOS capsule never shows a check.
+   */
+  showCheck?: boolean;
   /** Test identifier forwarded to the native element. */
   testID?: string;
 };

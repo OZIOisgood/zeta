@@ -9,8 +9,12 @@
  * SwiftUI mapping:
  *   - buttonStyle('bordered') — capsule-shaped bordered button (HIG filter chip)
  *   - controlSize('regular')
+ *   - font({ size: 15, weight: 'semibold' }) — chip label type (15pt / weight 600)
  *   - tint(accent) when selected; tint(outline) when unselected
  *   - disabled() modifier when disabled
+ *
+ * iOS NEVER shows a leading check — selection is expressed by the capsule tint
+ * alone (the shared `showCheck` prop is intentionally ignored here).
  *
  * HIG reference: https://developer.apple.com/design/human-interface-guidelines/buttons
  *
@@ -24,6 +28,7 @@ import {
   buttonStyle,
   controlSize,
   disabled,
+  font,
   tint,
 } from '@expo/ui/swift-ui/modifiers';
 
@@ -44,6 +49,8 @@ export function ZChip({
   const modifiers = [
     buttonStyle('bordered'),
     controlSize('regular'),
+    // Chip label type: 15pt / weight 600 (semibold).
+    font({ size: 15, weight: 'semibold' }),
     // Selected → accent tint (fills border + text in accent color).
     // Unselected → outline tint (neutral bordered appearance).
     tint(selected ? color('accent') : color('outline')),

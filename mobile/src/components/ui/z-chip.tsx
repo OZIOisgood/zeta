@@ -12,10 +12,14 @@
  * environment where native modules are unavailable.
  *
  * Selectable pill for single-choice option rows (group picker, video parts).
- * No web counterpart yet; the visual language follows Zeta tokens.
+ * No web counterpart yet; the visual language follows Zeta tokens. Selected
+ * adopts the Material You "on" state: warm secondary-container fill + a leading
+ * check (Material You handoff).
  */
 
 import { Pressable, Text } from 'react-native';
+
+import { ZSymbol } from './z-symbol';
 import type { ZChipProps } from './z-chip.types';
 
 export type { ZChipProps } from './z-chip.types';
@@ -25,8 +29,10 @@ export function ZChip({
   selected = false,
   onPress,
   disabled = false,
+  showCheck = true,
   testID,
 }: ZChipProps) {
+  const showLeadingCheck = selected && showCheck;
   return (
     <Pressable
       testID={testID}
@@ -35,11 +41,25 @@ export function ZChip({
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onPress}
-      className={`rounded-full border px-3 py-1.5 ${
-        selected ? 'border-accent bg-accent-container' : 'border-outline bg-surface'
+      className={`flex-row items-center gap-1.5 rounded-xl border px-3 py-1.5 ${
+        selected
+          ? 'border-secondary-container bg-secondary-container'
+          : 'border-outline bg-surface'
       } ${disabled ? 'opacity-50' : ''}`}
     >
-      <Text className={`text-sm font-medium ${selected ? 'text-on-accent-container' : 'text-on-surface'}`}>
+      {showLeadingCheck ? (
+        <ZSymbol
+          name="check"
+          label=""
+          size={18}
+          testID={testID ? `${testID}-check` : undefined}
+        />
+      ) : null}
+      <Text
+        className={`text-sm ${
+          selected ? 'font-bold text-on-secondary-container' : 'font-medium text-on-surface'
+        }`}
+      >
         {label}
       </Text>
     </Pressable>
