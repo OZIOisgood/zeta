@@ -1,0 +1,225 @@
+<!-- @dsCard group="Mobile App" viewport="393x800" name="Strido app — click-through" subtitle="Material You ↔ iOS (Plattform-Tweak) · Login → Home, Videos, Sessions, live call" -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Strido — Mobile UI Kit (Material You)</title>
+<link rel="stylesheet" href="../../styles.css" />
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(120% 90% at 50% 0%, #fff1dc 0%, #f3e3cb 55%, #e9d6ba 100%);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 24px; box-sizing: border-box;
+    font-family: var(--font-sans);
+  }
+  .phone {
+    width: 393px; height: 800px; position: relative; flex-shrink: 0;
+    background: var(--role-background); border-radius: 44px;
+    box-shadow: 0 0 0 2px #2a2320, 0 0 0 12px #3a3330, 0 40px 80px -24px rgba(38,24,15,.5);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .hole { position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    width: 11px; height: 11px; background: #000; border-radius: 999px; z-index: 60; opacity: .85; }
+  .statusbar { height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px 0 24px; font-size: 14px; font-weight: 700; color: var(--role-on-surface); }
+  .statusbar .right { display: flex; align-items: center; gap: 7px; }
+  .statusbar svg { width: 16px; height: 16px; }
+  .root { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .m-scroll::-webkit-scrollbar { width: 0; }
+  .m-scroll > * { flex-shrink: 0; }
+  .fab { position: absolute; right: 16px; bottom: 92px; z-index: 30; }
+
+  /* iOS chrome — Dynamic Island + home indicator (toggled by data-platform). */
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 86px; height: 26px; background: #000; border-radius: 999px; z-index: 60; display: none; }
+  .home-indicator { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px; border-radius: 999px; background: var(--role-on-surface); opacity: .32; z-index: 60; display: none; }
+  .phone[data-platform="ios"] .hole { display: none; }
+  .phone[data-platform="ios"] .island { display: block; }
+  .phone[data-platform="ios"] .home-indicator { display: block; }
+
+  /* Manual theme override (driven by the Tweaks panel). These win over
+     :root and the prefers-color-scheme media query in colors.css. */
+  .phone[data-theme="light"] {
+    --role-accent:#bd4309; --role-on-accent:#fff; --role-accent-container:#ffdbc8; --role-on-accent-container:#3a1400; --role-accent-strong:#bd4309;
+    --role-secondary-container:#ffdcc4; --role-on-secondary-container:#5a3214;
+    --role-success:#15803d; --role-on-success:#fff; --role-success-container:#c7f1d2; --role-on-success-container:#05351a;
+    --role-warning:#b45309; --role-on-warning:#fff; --role-warning-container:#fef3c7; --role-on-warning-container:#b45309;
+    --role-danger:#be123c; --role-on-danger:#fff; --role-danger-container:#ffe4e6; --role-on-danger-container:#be123c;
+    --role-background:#fff8f4; --role-surface:#fffaf6; --role-surface-variant:#faece2; --role-on-surface:#221a15; --role-on-surface-variant:#54443b; --role-outline:#d8c3b6;
+    --role-surface-1:#fdf1ea; --role-surface-2:#faece2; --role-surface-3:#f5e6db; --role-surface-4:#efe0d4;
+  }
+  .phone[data-theme="dark"] {
+    --role-accent:#ffb68f; --role-on-accent:#522300; --role-accent-container:#7c3500; --role-on-accent-container:#ffdbc8; --role-accent-strong:#ffb68f;
+    --role-secondary-container:#5d4030; --role-on-secondary-container:#ffdcc4;
+    --role-success:#7fd99a; --role-on-success:#052e16; --role-success-container:#1f4a30; --role-on-success-container:#c7f1d2;
+    --role-warning:#fbbf24; --role-on-warning:#451a03; --role-warning-container:#3b1500; --role-on-warning-container:#fde68a;
+    --role-danger:#fb7185; --role-on-danger:#4c0519; --role-danger-container:#500724; --role-on-danger-container:#fda4af;
+    --role-background:#18120d; --role-surface:#18120d; --role-surface-variant:#261c14; --role-on-surface:#f2dfd2; --role-on-surface-variant:#d8c3b6; --role-outline:#54443b;
+    --role-surface-1:#1f160f; --role-surface-2:#261c14; --role-surface-3:#31271d; --role-surface-4:#3c3026;
+  }
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="hole"></div>
+    <div class="island"></div>
+    <div id="root" class="root"></div>
+    <div class="home-indicator"></div>
+  </div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="../../_ds_bundle.js"></script>
+  <script src="data.js"></script>
+  <script type="text/babel" src="screens.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens2.jsx" data-presets="react"></script>
+  <script type="text/babel" src="screens3.jsx" data-presets="react"></script>
+  <script type="text/babel" src="tweaks-panel.jsx" data-presets="react"></script>
+  <script type="text/babel" data-presets="react">
+    const S = window.StridoScreens;
+    const { Icon } = S;
+    const D = window.StridoData;
+    const { NavigationBar, Fab } = window.StridoDesignSystem_dc14ef;
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "theme": "Hell",
+      "platform": "iOS"
+    }/*EDITMODE-END*/;
+
+    const TABS = [
+      { id: 'home', label: 'Home', icon: 'house' },
+      { id: 'videos', label: 'Videos', icon: 'video' },
+      { id: 'sessions', label: 'Sessions', icon: 'calendar-clock' },
+      { id: 'groups', label: 'Gruppen', icon: 'users' },
+      { id: 'profile', label: 'Profil', icon: 'user-round' },
+    ];
+
+    function StatusBar() {
+      return (
+        <div className="statusbar">
+          <span>9:41</span>
+          <span className="right">
+            <Icon n="signal" size={15} color="var(--role-on-surface)" sw={2.4} />
+            <Icon n="wifi" size={15} color="var(--role-on-surface)" sw={2.4} />
+            <Icon n="battery-full" size={18} color="var(--role-on-surface)" sw={2} />
+          </span>
+        </div>
+      );
+    }
+
+    function App() {
+      const [tw, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      const plat = tw.platform === 'iOS' ? 'ios' : 'material';
+      S.setPlatform(plat);
+      const [signedIn, setSignedIn] = React.useState(false);
+      const [tab, setTab] = React.useState('home');
+      const [stack, setStack] = React.useState([]);
+
+      React.useEffect(() => {
+        const ph = document.querySelector('.phone');
+        if (ph) ph.setAttribute('data-theme', tw.theme === 'Dunkel' ? 'dark' : 'light');
+      }, [tw.theme]);
+
+      React.useEffect(() => {
+        const ph = document.querySelector('.phone');
+        if (ph) ph.setAttribute('data-platform', plat);
+      }, [plat]);
+
+      function go(action) {
+        if (action.signOut) { setSignedIn(false); setStack([]); setTab('home'); return; }
+        if (action.tab) { setStack([]); setTab(action.tab); return; }
+        if (action.push) { setStack((s) => [...s, action.push]); return; }
+      }
+      const back = () => setStack((s) => s.slice(0, -1));
+      const top = stack[stack.length - 1];
+
+      React.useEffect(() => { S.setNav(go); }, []);
+
+      React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+      let body;
+      if (!signedIn) {
+        body = (<><StatusBar /><S.Login onSignIn={() => setSignedIn(true)} /></>);
+      } else if (top && top.screen === 'call') {
+        body = (<><StatusBar /><S.Call id={top.id} onLeave={back} /></>);
+      } else if (top && top.screen === 'asset') {
+        body = (<><StatusBar /><S.AssetDetail id={top.id} onBack={back} /></>);
+      } else if (top && top.screen === 'notifications') {
+        body = (<><StatusBar /><S.Notifications onBack={back} /></>);
+      } else if (top && top.screen === 'upload') {
+        body = (<><StatusBar /><S.Upload onBack={back} /></>);
+      } else if (top && top.screen === 'book') {
+        body = (<><StatusBar /><S.BookSession onBack={back} /></>);
+      } else if (top && top.screen === 'group') {
+        body = (<><StatusBar /><S.GroupDetail id={top.id} onBack={back} /></>);
+      } else if (top && top.screen === 'groupPrefs') {
+        body = (<><StatusBar /><S.GroupPreferences id={top.id} onBack={back} /></>);
+      } else if (top && top.screen === 'createGroup') {
+        body = (<><StatusBar /><S.CreateGroup onBack={back} /></>);
+      } else if (top && top.screen === 'invite') {
+        body = (<><StatusBar /><S.Invite onBack={back} /></>);
+      } else if (top && top.screen === 'reports') {
+        body = (<><StatusBar /><S.Reports onBack={back} /></>);
+      } else if (top && top.screen === 'availability') {
+        body = (<><StatusBar /><S.Availability onBack={back} /></>);
+      } else if (top && top.screen === 'preferences') {
+        body = (<><StatusBar /><S.Preferences onBack={back} /></>);
+      } else {
+        const Screen = { home: S.Home, videos: S.Videos, sessions: S.Sessions, groups: S.Groups, profile: S.Profile }[tab];
+        const isExpert = D.user.roleType === 'expert';
+        const fab = tab === 'videos'
+          ? { icon: 'upload', label: 'Hochladen', action: { push: { screen: 'upload' } } }
+          : tab === 'sessions'
+          ? { icon: 'calendar-plus', label: 'Buchen', action: { push: { screen: 'book' } } }
+          : tab === 'groups'
+          ? (isExpert
+              ? { icon: 'plus', label: 'Gruppe erstellen', action: { push: { screen: 'createGroup' } } }
+              : { icon: 'qr-code', label: 'Beitreten', action: { push: { screen: 'invite' } } })
+          : null;
+        const primaryAction = fab ? { icon: fab.icon, label: fab.label, onPress: () => go(fab.action) } : null;
+        body = (
+          <>
+            <StatusBar />
+            <Screen go={go} onSignOut={() => go({ signOut: true })} primaryAction={primaryAction} />
+            {fab && plat === 'material' ? (
+              <div className="fab">
+                <Fab extended icon={<Icon n={fab.icon} size={20} color="currentColor" />} label={fab.label} onClick={() => go(fab.action)} />
+              </div>
+            ) : null}
+            <NavigationBar
+              platform={plat}
+              safeArea={plat === 'ios'}
+              activeId={tab}
+              onChange={(id) => go({ tab: id })}
+              items={TABS.map((tb) => ({
+                id: tb.id,
+                label: tb.label,
+                icon: ({ color }) => <Icon n={tb.icon} size={plat === 'ios' ? 25 : 24} color={color} sw={2} />,
+              }))}
+            />
+          </>
+        );
+      }
+
+      return (
+        <>
+          {body}
+          <TweaksPanel>
+            <TweakSection label="Darstellung" />
+            <TweakRadio label="Plattform" value={tw.platform} options={['Material', 'iOS']} onChange={(v) => setTweak('platform', v)} />
+            <TweakRadio label="Theme" value={tw.theme} options={['Hell', 'Dunkel']} onChange={(v) => setTweak('theme', v)} />
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    setTimeout(() => window.lucide && window.lucide.createIcons(), 120);
+    setTimeout(() => window.lucide && window.lucide.createIcons(), 400);
+  </script>
+</body>
+</html>
