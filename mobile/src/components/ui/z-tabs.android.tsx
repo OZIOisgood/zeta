@@ -2,8 +2,9 @@
  * ZTabs — Android implementation (Jetpack Compose via @expo/ui/jetpack-compose).
  *
  * Renders a Material 3 `SingleChoiceSegmentedButtonRow` where each tab is a
- * `SegmentedButton`. The selected button uses `accent` as its active container
- * and border color; unselected buttons use `surface`/`outline` tokens.
+ * `SegmentedButton`. The selected button uses the warm `secondaryContainer` fill
+ * (matching the Chip / nav-pill selection language) with an `accent` border;
+ * unselected buttons use `surface`/`outline` tokens.
  *
  * Count-badge: `SingleChoiceSegmentedButtonRow` has no badge slot. When `count`
  * is defined the label is formatted as "Label (N)" so the count remains visible.
@@ -39,11 +40,11 @@ export function ZTabs({ tabs, activeId, onChange, testID }: ZTabsProps) {
               selected={selected}
               onClick={() => onChange(tab.id)}
               colors={{
-                activeContainerColor: color('accentContainer'),
-                // Dark label for AA: onAccentContainer (#c2410c) is only 3.82:1 on
-                // accentContainer; onSurface is ~11:1. Selection still reads via the
-                // container fill + accent border + check icon.
-                activeContentColor: color('onSurface'),
+                // Warm secondary-container "on" state — matches the Chip / nav-pill
+                // selection language. onSecondaryContainer is AA-contrast on
+                // secondaryContainer; selection also reads via the accent border + check icon.
+                activeContainerColor: color('secondaryContainer'),
+                activeContentColor: color('onSecondaryContainer'),
                 activeBorderColor: color('accent'),
                 inactiveContainerColor: color('surface'),
                 inactiveContentColor: color('onSurface'),
@@ -51,7 +52,8 @@ export function ZTabs({ tabs, activeId, onChange, testID }: ZTabsProps) {
               }}
             >
               <SegmentedButton.Label>
-                <Text>{label}</Text>
+                {/* M3 medium (600) — segment labels use the medium weight. */}
+                <Text style={{ fontWeight: '600' }}>{label}</Text>
               </SegmentedButton.Label>
             </SegmentedButton>
           );
