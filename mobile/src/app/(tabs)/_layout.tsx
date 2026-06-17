@@ -61,8 +61,8 @@ export default function TabsLayout() {
           rippleColor: roleColor('accent', scheme),
           iconColor: roleColor('onSurfaceVariant', scheme),
           selectedIconColor: roleColor('onSecondaryContainer', scheme),
-          labelStyle: { color: roleColor('onSurfaceVariant', scheme) },
-          selectedLabelStyle: { color: roleColor('onSecondaryContainer', scheme) },
+          labelStyle: { color: roleColor('onSurfaceVariant', scheme), fontFamily: 'NunitoSans_500Medium' },
+          selectedLabelStyle: { color: roleColor('onSecondaryContainer', scheme), fontFamily: 'NunitoSans_500Medium' },
         }
       : {};
 

@@ -72,7 +72,7 @@ const DETAIL_SCREEN_OPTIONS = {
   headerBackButtonDisplayMode: 'minimal' as const,
   headerTintColor: colors.primary,
   headerStyle: { backgroundColor: colors.bg },
-  headerTitleStyle: { color: colors.text },
+  headerTitleStyle: { color: colors.text, fontFamily: 'NunitoSans_600SemiBold' },
 } as const;
 
 export default function RootLayout() {
@@ -140,7 +140,7 @@ export default function RootLayout() {
               headerBackButtonDisplayMode: 'minimal' as const,
               headerTintColor: colors.primary,
               headerStyle: { backgroundColor: colors.bg },
-              headerTitleStyle: { color: colors.text },
+              headerTitleStyle: { color: colors.text, fontFamily: 'NunitoSans_600SemiBold' },
               sheetAllowedDetents: [1.0],
               sheetGrabberVisible: true,
               sheetCornerRadius: 16,
@@ -154,7 +154,7 @@ export default function RootLayout() {
               headerBackButtonDisplayMode: 'minimal' as const,
               headerTintColor: colors.primary,
               headerStyle: { backgroundColor: colors.bg },
-              headerTitleStyle: { color: colors.text },
+              headerTitleStyle: { color: colors.text, fontFamily: 'NunitoSans_600SemiBold' },
               sheetAllowedDetents: [0.5, 1.0],
               sheetGrabberVisible: true,
               sheetCornerRadius: 16,
