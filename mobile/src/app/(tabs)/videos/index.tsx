@@ -109,7 +109,7 @@ export default function VideosScreen() {
               onPress={() => router.push('/upload')}
               haptic
             >
-              <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
+              <ZSymbol name="upload" label={t('common.actions.uploadVideo')} size={24} color={colors.primary} />
             </Touchable>
           ) : null}
           <NotificationBell unreadCount={unreadCount} onPress={() => router.push('/notifications')} />
@@ -231,7 +231,7 @@ export default function VideosScreen() {
           // content as a compact pill at the bottom-right (never full-width — the
           // content-hug lives in z-fab.android.tsx).
           label={t('common.actions.uploadVideo')}
-          icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />}
+          icon={<ZSymbol name="upload" label={t('common.actions.uploadVideo')} size={24} color={colors.onPrimary} />}
           onPress={() => router.push('/upload')}
           className="absolute right-6"
           style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}

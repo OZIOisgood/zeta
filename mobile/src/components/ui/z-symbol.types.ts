@@ -67,6 +67,7 @@ import type {
   SwitchCamera,
   Trash2,
   TriangleAlert,
+  Upload,
   UserRound,
   Users,
   Video,
@@ -103,6 +104,7 @@ export type ZSymbolName =
   | 'info'
   | 'cloud-off'
   | 'cloud-upload'
+  | 'upload'
   | 'inbox'
   // Actions / verbs
   | 'plus'
@@ -210,6 +212,7 @@ export type LucideIcon =
   | typeof SwitchCamera
   | typeof Trash2
   | typeof TriangleAlert
+  | typeof Upload
   | typeof UserRound
   | typeof Users
   | typeof Video

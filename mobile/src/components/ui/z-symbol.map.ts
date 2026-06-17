@@ -65,6 +65,7 @@ import {
   SwitchCamera,
   Trash2,
   TriangleAlert,
+  Upload,
   UserRound,
   Users,
   Video,
@@ -210,6 +211,14 @@ export const SYMBOL_MAP: Record<ZSymbolName, ZSymbolEntry> = {
     sf: 'arrow.up.doc',
     android: 'cloud_upload',
     lucide: CloudUpload,
+  },
+  upload: {
+    // Upload: the primary upload ACTION (Videos FAB / create) — the handoff's
+    // tray up-arrow (Lucide `upload` / Material `upload` / SF square.and.arrow.up),
+    // distinct from the cloud-upload drop-zone glyph used on the picker.
+    sf: 'square.and.arrow.up',
+    android: 'upload',
+    lucide: Upload,
   },
   inbox: {
     // Inbox: empty/no-content state.
