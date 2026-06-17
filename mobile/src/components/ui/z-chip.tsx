@@ -61,7 +61,7 @@ export function ZChip({
         />
       ) : null}
       <Text
-        className={`text-sm ${
+        className={`text-[13.5px] ${
           selected ? 'font-bold text-on-secondary-container' : 'font-medium text-on-surface'
         }`}
       >

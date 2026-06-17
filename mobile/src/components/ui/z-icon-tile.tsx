@@ -5,7 +5,7 @@ export type ZIconTileTone = 'neutral' | 'primary' | 'success' | 'warning' | 'dan
 export type ZIconTileSize = 'sm' | 'md';
 
 /**
- * Rounded tone-mapped glyph tile. The recurring `h-10 w-10 rounded-md` icon
+ * Rounded tone-mapped glyph tile. The recurring `h-10 w-10 rounded-xl` icon
  * block that list rows, the danger-zone card, and section headers re-inline.
  * Background is a `z-*-soft` token surface per tone (never the saturated base
  * token, which would hide the glyph); the caller passes an already-coloured
@@ -48,7 +48,7 @@ export function ZIconTile({
   return (
     <View
       testID={testID}
-      className={`items-center justify-center rounded-md ${sizeClasses[size]} ${toneSurface[tone]}`}
+      className={`items-center justify-center rounded-xl ${sizeClasses[size]} ${toneSurface[tone]}`}
     >
       {icon}
     </View>

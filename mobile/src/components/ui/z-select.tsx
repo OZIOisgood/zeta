@@ -40,11 +40,11 @@ export function ZSelect({
         accessibilityState={{ disabled, expanded: open }}
         disabled={disabled}
         onPress={() => setOpen(true)}
-        className={`min-h-11 w-full flex-row items-center justify-between rounded-md border px-3 py-2 ${
-          disabled ? 'bg-z-surface-warm' : 'bg-z-surface'
-        } ${invalid ? 'border-z-danger' : 'border-z-border'}`}
+        className={`min-h-14 w-full flex-row items-center justify-between rounded-xl border px-3 py-2 ${
+          disabled ? 'bg-z-surface-warm' : 'bg-surface'
+        } ${invalid ? 'border-role-danger' : 'border-outline'}`}
       >
-        <Text className={selectedLabel ? 'text-z-text' : 'text-z-muted'}>
+        <Text className={selectedLabel ? 'text-on-surface' : 'text-on-surface-variant'}>
           {selectedLabel ?? placeholder}
         </Text>
         <ChevronDown color={colors.muted} size={18} />
@@ -63,7 +63,7 @@ export function ZSelect({
         >
           <Pressable
             onPress={() => {}}
-            className="m-4 rounded-lg border border-z-border bg-z-surface"
+            className="m-4 rounded-xl border border-outline bg-surface"
           >
             {options.map((option) => {
               const isSelected = option.value === value;
@@ -77,11 +77,11 @@ export function ZSelect({
                     onValueChange(option.value);
                     setOpen(false);
                   }}
-                  className="border-b border-z-border px-4 py-3 last:border-b-0"
+                  className="border-b border-outline px-4 py-3 last:border-b-0"
                 >
                   <Text
                     className={
-                      isSelected ? 'font-semibold text-z-primary-strong' : 'text-z-text'
+                      isSelected ? 'font-semibold text-z-primary-strong' : 'text-on-surface'
                     }
                   >
                     {option.label}

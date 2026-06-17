@@ -23,10 +23,10 @@ export function ZFab({
         accessibilityLabel={label}
         onPress={onPress}
         haptic
-        className={`h-14 flex-row items-center gap-2 self-start rounded-full ${surfaceTone} px-5 active:opacity-90`}
+        className={`h-14 flex-row items-center gap-2 self-start rounded-[16px] ${surfaceTone} px-5 active:opacity-90`}
       >
         {icon}
-        {extended ? <Text className={`text-base font-bold ${labelTone}`}>{label}</Text> : null}
+        {extended ? <Text className={`text-base font-semibold ${labelTone}`}>{label}</Text> : null}
       </Touchable>
     </View>
   );

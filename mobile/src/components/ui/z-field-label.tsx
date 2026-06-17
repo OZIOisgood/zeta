@@ -12,7 +12,7 @@ export function ZFieldLabel({
   required?: boolean;
 }) {
   return (
-    <Text className="mb-1 text-sm font-semibold text-z-text">
+    <Text className="mb-1.5 text-[13px] font-bold text-z-text">
       {label}
       {required ? <Text className="text-z-primary"> *</Text> : null}
     </Text>

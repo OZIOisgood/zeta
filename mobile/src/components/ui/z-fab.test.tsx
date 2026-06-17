@@ -33,8 +33,9 @@ test('tonal tone fills with accent-container + on-accent-container content', asy
   expect(label.props.className).toContain('text-on-accent-container');
 });
 
-test('extended fab uses a fully rounded (rounded-full) pill', async () => {
+test('extended fab uses the M3 16dp rounded-square corner (not a full pill)', async () => {
   await render(<ZFab label="Upload" icon={<Text>+</Text>} onPress={() => {}} testID="fab" />);
   const surface = screen.getByTestId('fab');
-  expect(surface.props.className).toContain('rounded-full');
+  expect(surface.props.className).toContain('rounded-[16px]');
+  expect(surface.props.className).not.toContain('rounded-full');
 });
