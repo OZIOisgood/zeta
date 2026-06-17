@@ -375,10 +375,12 @@ test('Availability action: header button is labelled and navigates to /availabil
 
 // ── cancel flow ───────────────────────────────────────────────────────────────
 
-test('cancel flow: pressing cancel navigates to the cancel formSheet route', async () => {
-  // Cancellation now opens a native formSheet route (cancel/[bookingId]) instead
-  // of an inline dialog — the reason/mutation/toast flow is covered by
-  // cancel-session.test.tsx. Here we only assert the navigation contract.
+test('cancel flow: activating the swipe action navigates to the cancel formSheet route', async () => {
+  // Cancellation is now a swipe-to-reveal action on the booking card that opens
+  // a native formSheet route (cancel/[bookingId]) — no inline dialog, no footer
+  // button. The bare ZSwipeable fallback (jest/web) exposes the revealed action
+  // as a pressable with testID `<testID>-action`. The reason/mutation/toast flow
+  // is covered by cancel-session.test.tsx; here we assert only the nav contract.
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -388,10 +390,10 @@ test('cancel flow: pressing cancel navigates to the cancel formSheet route', asy
   });
   await render(<Providers><CoachingScreen /></Providers>);
 
-  const cancelBtn = await screen.findByTestId('booking-cancel');
-  expect(cancelBtn).toBeOnTheScreen();
+  const cancelAction = await screen.findByTestId('booking-cancel-swipe-action');
+  expect(cancelAction).toBeOnTheScreen();
 
-  fireEvent.press(cancelBtn);
+  fireEvent.press(cancelAction);
   expect(mockPush).toHaveBeenCalledWith(
     `/cancel/${UPCOMING_BOOKING.id}?groupId=${UPCOMING_BOOKING.group_id}`,
   );

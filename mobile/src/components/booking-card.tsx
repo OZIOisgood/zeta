@@ -5,7 +5,7 @@ import { formatBookingDateTime } from '../api/queries/coaching';
 import { ZBadge, type ZBadgeTone } from './ui/z-badge';
 import { ZButton } from './ui/z-button';
 import { ZCard } from './ui/z-card';
-import { ZIconButton } from './ui/z-icon-button';
+import { ZSwipeable } from './ui/z-swipeable';
 import { ZSymbol } from './ui/z-symbol';
 import { colors } from '../theme/colors';
 
@@ -131,8 +131,8 @@ export function BookingCard({
   // Open-recording button gated on a ready recording with a processed asset.
   const recordingReady = booking.recording?.status === 'ready' && !!booking.recording?.asset_id;
 
-  return (
-    <ZCard tone="surface" className="mb-3">
+  const card = (
+    <ZCard tone="surface">
       {/* Row 1: session type name + status + recording badges */}
       <View className="flex-row flex-wrap items-center gap-2">
         <Text className="flex-shrink text-base font-extrabold text-z-text" numberOfLines={1}>
@@ -182,8 +182,9 @@ export function BookingCard({
         </Text>
       ) : null}
 
-      {/* Footer row: join + recording + cancel */}
-      {(onJoin || recordingReady || canCancel) ? (
+      {/* Footer row: join + recording. Cancel is no longer a button here —
+          it's a swipe action on the whole card (see the ZSwipeable wrap below). */}
+      {(onJoin || recordingReady) ? (
         <View className="mt-3 flex-row items-center gap-2">
           {onJoin ? (
             <ZButton
@@ -203,18 +204,30 @@ export function BookingCard({
               onPress={() => onOpenRecording(booking.recording!.asset_id!)}
             />
           ) : null}
-          {canCancel ? (
-            <ZIconButton
-              testID="booking-cancel"
-              label={t('sessions.cancel.title')}
-              variant="ghost"
-              onPress={onCancel}
-            >
-              <ZSymbol name="ban" label={t('sessions.cancel.title')} size={18} color={colors.danger} />
-            </ZIconButton>
-          ) : null}
         </View>
       ) : null}
     </ZCard>
+  );
+
+  // Upcoming bookings are cancelable via a right-to-left swipe that reveals a
+  // danger "Cancel" action (replacing the old footer ban-icon button); the
+  // action opens the cancel formSheet (cancel/[bookingId]). Past/cancelled
+  // bookings render the card plainly. The mb-3 row spacing lives on the wrapper
+  // so the revealed swipe action fills the card height, not the inter-card gap.
+  return (
+    <View className="mb-3">
+      {canCancel ? (
+        <ZSwipeable
+          testID="booking-cancel-swipe"
+          actionLabel={t('sessions.cancel.title')}
+          actionIcon={<ZSymbol name="ban" label="" size={20} color={colors.onPrimary} />}
+          onAction={onCancel}
+        >
+          {card}
+        </ZSwipeable>
+      ) : (
+        card
+      )}
+    </View>
   );
 }

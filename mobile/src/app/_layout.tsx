@@ -2,6 +2,7 @@ import '../../global.css';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
   useFonts,
@@ -186,9 +187,14 @@ export default function RootLayout() {
     );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {content}
-      <ZToastHost />
-    </QueryClientProvider>
+    // GestureHandlerRootView must wrap the whole app for react-native-gesture-handler
+    // (the swipe-to-cancel ZSwipeable on the Sessions list); without it the
+    // gesture is silently dead on Android.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        {content}
+        <ZToastHost />
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

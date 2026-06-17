@@ -25,6 +25,11 @@ export const TIERS: Record<string, Tier> = {
   // Single shared NativeWind implementation (no .ios/.android split needed).
   'z-badge': 'custom-no-native',
   'z-chip': 'native',
+  // ZSwipeable: swipe-to-reveal trailing action (RNGH ReanimatedSwipeable). Not
+  // an @expo/ui widget, but a native-gesture primitive with the full platform
+  // split (.ios/.android → .shared) plus an RNGH-free bare fallback, so it
+  // follows the 'native' structural contract (both platform files required).
+  'z-swipeable': 'native',
   'z-dialog-panel': 'native',
   'z-confirm-dialog': 'native',
   'z-toast': 'native',

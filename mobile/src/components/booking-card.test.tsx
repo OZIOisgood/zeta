@@ -110,7 +110,7 @@ test('cancel affordance shown when canCancel=true and fires onCancel', async () 
       onOpenRecording={jest.fn()}
     />,
   );
-  const cancelBtn = screen.getByTestId('booking-cancel');
+  const cancelBtn = screen.getByTestId('booking-cancel-swipe-action');
   expect(cancelBtn).toBeOnTheScreen();
   fireEvent.press(cancelBtn);
   expect(onCancel).toHaveBeenCalledTimes(1);
@@ -126,7 +126,7 @@ test('cancel affordance NOT shown when canCancel=false', async () => {
       onOpenRecording={jest.fn()}
     />,
   );
-  expect(screen.queryByTestId('booking-cancel')).toBeNull();
+  expect(screen.queryByTestId('booking-cancel-swipe-action')).toBeNull();
 });
 
 test('recording affordance shown when recording.asset_id present and fires onOpenRecording', async () => {
@@ -265,7 +265,7 @@ test('cancelled booking shows booking-status-cancelled chip and no cancel afford
     />,
   );
   expect(screen.getByTestId('booking-status-cancelled')).toBeOnTheScreen();
-  expect(screen.queryByTestId('booking-cancel')).toBeNull();
+  expect(screen.queryByTestId('booking-cancel-swipe-action')).toBeNull();
 });
 
 test('cancelled booking with a reason renders the cancellation reason line', async () => {

@@ -19,3 +19,12 @@ jest.mock('@expo-google-fonts/nunito-sans', () => ({
   NunitoSans_700Bold: 'NunitoSans_700Bold',
   NunitoSans_800ExtraBold: 'NunitoSans_800ExtraBold',
 }));
+
+// react-native-gesture-handler is native-only. The only RNGH symbol the app
+// loads outside the ZSwipeable primitive (which jest maps to its RNGH-free bare
+// fallback) is GestureHandlerRootView at the app root — stub it to a passthrough
+// View so root-layout.test can import app/_layout without the native module.
+jest.mock('react-native-gesture-handler', () => {
+  const { View } = require('react-native');
+  return { GestureHandlerRootView: View };
+});
