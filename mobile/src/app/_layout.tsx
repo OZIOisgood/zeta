@@ -1,6 +1,6 @@
 import '../../global.css';
 import { useEffect } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -19,24 +19,46 @@ import { ZToastHost } from '../components/ui/z-toast';
 
 void initI18n();
 
-// App-wide text default → Nunito Sans Regular (400). NativeWind v4 drops the
-// universal `*` selector, so the no-weight default can't live in global.css;
-// the weight utilities (.font-medium/.font-semibold/.font-bold/.font-extrabold)
-// still override font-family per weight via global.css, and those className
-// styles are merged AFTER this default, so they win. This is the standard RN
-// pattern for an app-wide font default and reaches every <Text>, including
-// those rendered inside z-* primitives. Guarded so it only sets fontFamily
-// without clobbering any existing default style.
-const TextWithDefaults = Text as unknown as {
-  defaultProps?: { style?: unknown };
+// App-wide brand font (Nunito Sans). We patch Text.render — NOT
+// Text.defaultProps (React 19 no longer honors defaultProps on function
+// components) and NOT a CSS `@layer` rule (NativeWind v4 compiles the weight
+// utilities to `fontWeight` only on native, never the font-family). Without
+// this, every native <Text> silently falls back to the system font (Roboto) on
+// device while jest — which renders the bare web fallback — stays green. Android
+// cannot synthesize a weighted cut from one family, so each rendered weight is
+// mapped to its own loaded face name. An explicit `fontFamily` already present
+// on the style is respected (e.g. native primitives that set their own face).
+const WEIGHT_FACE: Record<string, string> = {
+  '100': 'NunitoSans_400Regular',
+  '200': 'NunitoSans_400Regular',
+  '300': 'NunitoSans_400Regular',
+  '400': 'NunitoSans_400Regular',
+  normal: 'NunitoSans_400Regular',
+  '500': 'NunitoSans_500Medium',
+  '600': 'NunitoSans_600SemiBold',
+  '700': 'NunitoSans_700Bold',
+  bold: 'NunitoSans_700Bold',
+  '800': 'NunitoSans_800ExtraBold',
+  '900': 'NunitoSans_800ExtraBold',
 };
-TextWithDefaults.defaultProps = {
-  ...TextWithDefaults.defaultProps,
-  style: [
-    { fontFamily: 'NunitoSans_400Regular' },
-    TextWithDefaults.defaultProps?.style,
-  ],
+type PatchableTextProps = { style?: StyleProp<TextStyle> };
+const PatchableText = Text as unknown as {
+  render?: (props: PatchableTextProps, ref: unknown) => unknown;
+  __zetaFontPatched?: boolean;
 };
+if (typeof PatchableText.render === 'function' && !PatchableText.__zetaFontPatched) {
+  const baseRender = PatchableText.render;
+  PatchableText.render = function (props: PatchableTextProps, ref: unknown) {
+    const flat = StyleSheet.flatten(props?.style);
+    if (!flat?.fontFamily) {
+      const weight = String(flat?.fontWeight ?? '400');
+      const face = WEIGHT_FACE[weight] ?? 'NunitoSans_400Regular';
+      props = { ...props, style: [{ fontFamily: face }, props?.style] };
+    }
+    return baseRender.call(this, props, ref);
+  };
+  PatchableText.__zetaFontPatched = true;
+}
 
 /** Shared options applied to every detail/form screen that gets a native header.
  *  - headerBackButtonDisplayMode:'minimal' → iOS shows only the chevron, no
