@@ -82,11 +82,12 @@ export function ZButton({
   // Build the tint modifier. The `danger` variant relies on SwiftUI's built-in
   // destructive role color (system red); we don't override it with a tint.
   // For `ghost` no tint is set — the system foreground color applies.
-  // primary: tint = the filled background (bright accent). tonal: tint the
-  // tinted `bordered` fill with secondaryContainer so it reads as the soft "on"
-  // fill (Material-3 tonal). link: tint colors the plain text label sitting on a
-  // light surface, so use the AA-safe deep accent (onAccentContainer #c2410c,
-  // 5.18:1) instead of the bright accent (3.56:1).
+  // primary: tint = the filled background (accentStrong — note accent ≠
+  // accentStrong in dark mode). tonal: tint the tinted `bordered` fill with
+  // secondaryContainer so it reads as the soft "on" fill (Material-3 tonal).
+  // link: tint colors the plain text label sitting on a light surface, so use
+  // the AA-safe deep accent (onAccentContainer #c2410c, 5.18:1) instead of the
+  // bright accent (3.56:1).
   const tintModifier =
     variant === 'primary'
       ? tint(color('accentStrong'))

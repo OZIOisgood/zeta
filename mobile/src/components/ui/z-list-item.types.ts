@@ -74,6 +74,13 @@ export type ZListItemProps = {
   /** Optional secondary line below the title. */
   subtitle?: string;
   /**
+   * Max lines the subtitle may wrap to before truncating. Defaults to 3. Pass 1
+   * for fixed-height rows (e.g. a card with a fixed-size thumbnail) so a long
+   * subtitle can't grow the row and desync it from the leading node's height.
+   * @default 3
+   */
+  subtitleNumberOfLines?: number;
+  /**
    * Trailing node — a chevron, badge, switch, or other affordance. Passed in by
    * the consumer; ZListItem renders it right-aligned.
    */

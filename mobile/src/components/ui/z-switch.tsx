@@ -32,7 +32,7 @@ export function ZSwitch({
   const { color } = useRoleColors();
 
   return (
-    <View className={className}>
+    <View className={className} style={style}>
       <Switch
         testID={testID}
         accessibilityLabel={accessibilityLabel}
@@ -43,7 +43,6 @@ export function ZSwitch({
         trackColor={{ true: color('accent'), false: color('outline') }}
         thumbColor={color('onAccent')}
         ios_backgroundColor={color('outline')}
-        style={style}
       />
     </View>
   );

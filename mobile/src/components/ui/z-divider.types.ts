@@ -34,11 +34,6 @@ export type ZDividerProps = {
    */
   inset?: boolean;
   /**
-   * Force a platform stroke style regardless of the running OS. Mainly useful
-   * for stories/previews; native files default to their own platform.
-   */
-  platform?: 'material' | 'ios';
-  /**
    * Consumer layout classes (margins, alignment). Forwarded onto the wrapper so
    * consumer layout wins. Required by the native className-forwarding contract.
    */

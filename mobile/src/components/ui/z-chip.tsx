@@ -19,6 +19,7 @@
 
 import { Pressable, Text } from 'react-native';
 
+import { useRoleColors } from '../../theme/native';
 import { ZSymbol } from './z-symbol';
 import type { ZChipProps } from './z-chip.types';
 
@@ -32,6 +33,7 @@ export function ZChip({
   showCheck = true,
   testID,
 }: ZChipProps) {
+  const { color } = useRoleColors();
   const showLeadingCheck = selected && showCheck;
   return (
     <Pressable
@@ -52,6 +54,9 @@ export function ZChip({
           name="check"
           label=""
           size={18}
+          // Match the selected label color so the check reads as part of the
+          // "on" state rather than falling back to ZSymbol's default onSurface.
+          color={color('onSecondaryContainer')}
           testID={testID ? `${testID}-check` : undefined}
         />
       ) : null}

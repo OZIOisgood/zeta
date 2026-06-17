@@ -17,6 +17,18 @@ test('does not render a subtitle node when omitted', async () => {
   expect(screen.queryByText('Manage alerts')).not.toBeOnTheScreen();
 });
 
+test('subtitle defaults to 3 lines', async () => {
+  await render(<ZListItem title="Notifications" subtitle="Manage alerts" />);
+  expect(screen.getByText('Manage alerts').props.numberOfLines).toBe(3);
+});
+
+test('subtitle respects a passed subtitleNumberOfLines', async () => {
+  await render(
+    <ZListItem title="Notifications" subtitle="Manage alerts" subtitleNumberOfLines={1} />,
+  );
+  expect(screen.getByText('Manage alerts').props.numberOfLines).toBe(1);
+});
+
 test('renders leading and trailing nodes', async () => {
   await render(
     <ZListItem

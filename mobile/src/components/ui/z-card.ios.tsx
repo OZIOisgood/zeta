@@ -41,7 +41,7 @@ export function ZCard({
   hero = false,
   variant = 'filled',
 }: ZCardProps) {
-  const { color } = useRoleColors();
+  const { color, scheme } = useRoleColors();
 
   // Fill: outlined/elevated keep the surface fill; otherwise the tonal fill is
   // selected from `tone`.
@@ -60,9 +60,12 @@ export function ZCard({
     ...(variant === 'outlined'
       ? { borderWidth: 1, borderColor: color('outline') }
       : { borderWidth: 0 }),
-    ...(variant === 'elevated'
+    ...(variant === 'elevated' && scheme === 'light'
       ? {
-          // Subtle shadow approximating a Material/HIG elevated card.
+          // Subtle shadow approximating a Material/HIG elevated card. Only in
+          // light mode: shadowColor is the near-white `onSurface` token in dark
+          // mode, which would cast a light halo instead of a shadow. In dark
+          // mode the tonal `surface` fill alone carries the elevation.
           shadowColor: color('onSurface'),
           shadowOpacity: 0.12,
           shadowRadius: 8,

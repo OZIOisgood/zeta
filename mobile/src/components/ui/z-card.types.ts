@@ -34,7 +34,10 @@ export type ZCardProps = {
    * Surface treatment:
    *   - 'filled'   (default) the tonal-surface look — borderless, the fill tint
    *                provides separation from the canvas (Material You direction).
-   *   - 'outlined' legacy look: white fill + a warm hairline `outline` border.
+   *   - 'outlined' legacy look: a warm hairline `outline` border. NOTE the fill
+   *                diverges by platform: the bare/web fallback fills `bg-white`,
+   *                while the native files fill the `surface` role token (there is
+   *                no `white` role token — surface is the inset-grouped "white").
    *   - 'elevated' legacy look: a soft drop shadow instead of a tonal fill.
    * @default 'filled'
    */

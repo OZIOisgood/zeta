@@ -4,11 +4,12 @@ import { ZListItem } from './ui/z-list-item';
 import { ZSymbol } from './ui/z-symbol';
 
 /**
- * One onboarding checklist row (Material handoff StepItem look), composed on
- * ZListItem. The status indicator is the custom leading node — a 24px circle:
- * done = filled accent + a 14px white check (native ZSymbol); todo = a 2px
- * outline-strong ring. The trailing chevron shows only while incomplete, and the
- * completed state drives ZListItem's `selected` (tonal) without dimming.
+ * One onboarding checklist row (Material handoff StepItem look) rendered as a
+ * ZListItem tile — a rounded row that fills with the tonal secondary-container
+ * (via ZListItem's `selected`) once the step is completed, without dimming. The
+ * status indicator is the custom leading node — a 24px circle: done = filled
+ * accent + a 14px white check (native ZSymbol); todo = a 2px outline-strong
+ * ring. The trailing chevron shows only while incomplete.
  */
 export function FirstStepRow({
   label,

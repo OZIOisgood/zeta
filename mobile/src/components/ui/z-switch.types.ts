@@ -36,7 +36,7 @@ export type ZSwitchProps = {
   accessibilityLabel: string;
   /** Additional NativeWind class(es) applied to the wrapping element. */
   className?: string;
-  /** Inline style applied to the switch. */
+  /** Inline style applied to the wrapping element (consistent with z-card). */
   style?: StyleProp<ViewStyle>;
   /** Test identifier forwarded to the native element. */
   testID?: string;

@@ -35,6 +35,7 @@ export function ZListItem({
   title,
   titleAccessory,
   subtitle,
+  subtitleNumberOfLines = 3,
   trailing,
   onPress,
   selected = false,
@@ -64,7 +65,10 @@ export function ZListItem({
           {titleAccessory ? <View className="shrink-0">{titleAccessory}</View> : null}
         </View>
         {subtitle ? (
-          <Text numberOfLines={3} className="mt-0.5 text-[15px] text-on-surface-variant">
+          <Text
+            numberOfLines={subtitleNumberOfLines}
+            className="mt-0.5 text-[15px] text-on-surface-variant"
+          >
             {subtitle}
           </Text>
         ) : null}

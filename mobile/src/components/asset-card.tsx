@@ -65,6 +65,7 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
       leading={thumbnail}
       title={asset.title}
       subtitle={secondaryLine || undefined}
+      subtitleNumberOfLines={1}
       trailing={trailing}
     />
   );
