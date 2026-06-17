@@ -24,6 +24,7 @@ import { ZBadge } from '../../components/ui/z-badge';
 import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
 import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
+import { ZDivider } from '../../components/ui/z-divider';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZFieldError } from '../../components/ui/z-field-error';
 import { ZFieldLabel } from '../../components/ui/z-field-label';
@@ -56,7 +57,7 @@ function MembersSkeleton() {
 }
 
 function MemberDivider() {
-  return <View className="h-px bg-z-border" />;
+  return <ZDivider />;
 }
 
 function MemberSection({

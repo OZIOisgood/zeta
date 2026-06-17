@@ -15,6 +15,7 @@ import { NotificationBell } from '../../../components/notification-bell';
 import { ZAvatar } from '../../../components/ui/z-avatar';
 import { ZButton } from '../../../components/ui/z-button';
 import { ZCard } from '../../../components/ui/z-card';
+import { ZDivider } from '../../../components/ui/z-divider';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
 import { ZProgress } from '../../../components/ui/z-progress';
 import { ZQueryError } from '../../../components/ui/z-query-error';
@@ -288,7 +289,7 @@ export default function HomeScreen() {
             <View className="mt-2">
               {steps.map((step, i) => (
                 <View key={step.labelKey}>
-                  {i > 0 ? <View className="h-px bg-z-border" /> : null}
+                  {i > 0 ? <ZDivider /> : null}
                   <FirstStepRow
                     testID={step.testID}
                     label={t(step.labelKey)}
