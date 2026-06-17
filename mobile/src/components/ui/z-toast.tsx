@@ -11,13 +11,13 @@ export { toastStore, ToastCard };
 export type { ZToastTone, ZToast } from './z-toast.shared';
 
 /**
- * Renders active toasts as a safe-area-aware overlay pinned to the top.
- * Mount once at the app root. Mobile counterpart of the web `z-toast`
- * (web/dashboard-next/src/app/shared/ui/toast/).
+ * Renders active toasts as a safe-area-aware overlay pinned to the top, each as
+ * the dark inverse-surface `ToastCard` pill. Mount once at the app root. Mobile
+ * counterpart of the web `z-toast` (web/dashboard-next/src/app/shared/ui/toast/).
  *
- * This bare implementation is the NativeWind fallback used by
- * web/Storybook/jest. Native HUDs (Material 3 Snackbar / burnt) live in the
- * `.android.tsx` / `.ios.tsx` siblings.
+ * This bare implementation is the NativeWind fallback used by web/Storybook/jest.
+ * The native hosts (Material 3 Snackbar on Android; a light top banner on iOS)
+ * live in the `.android.tsx` / `.ios.tsx` siblings.
  */
 export function ZToastHost() {
   const insets = useSafeAreaInsets();

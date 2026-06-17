@@ -1,10 +1,10 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { act, render, screen, userEvent } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
 import { initI18n } from '../../i18n';
-import { ZToastHost, showToast, toastStore } from './z-toast';
+import { ToastCard, ZToastHost, showToast, toastStore } from './z-toast';
 
 beforeAll(() => initI18n('en'));
 
@@ -56,14 +56,44 @@ test('show returns distinct ids for each toast', async () => {
   expect(screen.getByText('Two')).toBeOnTheScreen();
 });
 
-test('pressing dismiss removes the toast', async () => {
-  const user = userEvent.setup();
+test('a store dismiss removes the toast and renders no dismiss button', async () => {
   await renderHost();
+  let id = 0;
   await act(async () => {
-    showToast('Saved', 'Your changes are live');
+    id = showToast('Saved', 'Your changes are live');
   });
-  await user.press(screen.getByRole('button', { name: 'Dismiss' }));
+  expect(screen.getByText('Saved')).toBeOnTheScreen();
+  // The M3 snackbar pill has no dismiss "X" — auto-dismiss / store dismiss only.
+  expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
+  await act(async () => {
+    toastStore.getState().dismiss(id);
+  });
   expect(screen.queryByText('Saved')).toBeNull();
+});
+
+test('ToastCard renders the dark inverse pill and no dismiss control', async () => {
+  const onDismiss = jest.fn();
+  await render(
+    <SafeAreaProvider initialMetrics={metrics}>
+      <ToastCard toast={{ id: 1, title: 'Saved', tone: 'info' }} onDismiss={onDismiss} />
+    </SafeAreaProvider>,
+  );
+  const card = screen.getByTestId('toast-1');
+  expect(card.props.className).toContain('bg-on-surface');
+  expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
+});
+
+test('ToastCard renders an optional action label', async () => {
+  const onPress = jest.fn();
+  await render(
+    <SafeAreaProvider initialMetrics={metrics}>
+      <ToastCard
+        toast={{ id: 2, title: 'Removed', tone: 'success', action: { label: 'Undo', onPress } }}
+        onDismiss={jest.fn()}
+      />
+    </SafeAreaProvider>,
+  );
+  expect(screen.getByText('Undo')).toBeOnTheScreen();
 });
 
 test('the toast auto-dismisses after the timeout', async () => {

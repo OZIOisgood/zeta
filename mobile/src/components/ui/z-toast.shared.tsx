@@ -14,19 +14,28 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { Check, CircleAlert, Info, X } from 'lucide-react-native';
 import { createStore } from 'zustand/vanilla';
-import { colors } from '../../theme/colors';
-import { ZIconButton } from './z-icon-button';
 
 export type ZToastTone = 'success' | 'error' | 'info';
+
+/** Optional accent action shown on the right of a toast (e.g. "Undo"). */
+export type ZToastAction = {
+  label: string;
+  onPress: () => void;
+};
 
 export type ZToast = {
   id: number;
   title: string;
   message?: string;
   tone: ZToastTone;
+  /**
+   * Optional accent action label. Additive and forward-compatible — existing
+   * `showToast(title, message, tone)` callers never set it. On Android it maps
+   * to the M3 Snackbar action; on iOS / the fallback it renders as a tinted
+   * label inside the banner/pill.
+   */
+  action?: ZToastAction;
 };
 
 /** How long a toast stays on screen before it auto-dismisses. */
@@ -66,36 +75,25 @@ export function useToasts(): ZToast[] {
   return toasts;
 }
 
-const containerClasses: Record<ZToastTone, string> = {
-  success: 'border-green-200 bg-z-surface',
-  error: 'border-rose-200 bg-z-surface',
-  info: 'border-z-border bg-z-surface',
+/**
+ * Tone → leading status-dot color. The pill body is the M3 inverse surface
+ * (`bg-on-surface` / `text-surface`); the dot carries the only semantic tint,
+ * so the dark pill reads as success / error / neutral at a glance.
+ */
+const dotClasses: Record<ZToastTone, string> = {
+  success: 'bg-role-success',
+  error: 'bg-role-danger',
+  info: 'bg-surface-variant',
 };
 
-const iconClasses: Record<ZToastTone, string> = {
-  success: 'bg-green-50',
-  error: 'bg-rose-50',
-  info: 'bg-z-surface-warm',
-};
-
-const iconColors: Record<ZToastTone, string> = {
-  success: colors.success,
-  error: colors.danger,
-  info: colors.primary,
-};
-
-const ToastIcon = {
-  success: Check,
-  error: CircleAlert,
-  info: Info,
-} as const;
-
-/** Presentational toast card (web counterpart: the standalone `z-toast`). Exported
- *  so stories/tests can render a toast without driving the auto-dismissing store. */
+/**
+ * Presentational toast pill — the M3 dark inverse-surface snackbar (web
+ * counterpart: the standalone `z-toast`). Single line, no dismiss control
+ * (auto-dismiss only), intrinsic width (the host positions it). Exported so
+ * stories/tests can render a toast without driving the auto-dismissing store.
+ */
 export function ToastCard({ toast, onDismiss }: { toast: ZToast; onDismiss: (id: number) => void }) {
-  const { t } = useTranslation();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const Icon = ToastIcon[toast.tone];
 
   useEffect(() => {
     timeout.current = setTimeout(() => onDismiss(toast.id), AUTO_DISMISS_MS);
@@ -108,22 +106,24 @@ export function ToastCard({ toast, onDismiss }: { toast: ZToast; onDismiss: (id:
     <View
       testID={`toast-${toast.id}`}
       accessibilityRole="alert"
-      className={`flex-row items-start gap-3 rounded-lg border p-4 ${containerClasses[toast.tone]}`}
+      className="w-auto max-w-full self-center flex-row items-center gap-3 rounded bg-on-surface px-4 py-3"
     >
-      <View
-        className={`h-8 w-8 items-center justify-center rounded-md ${iconClasses[toast.tone]}`}
-      >
-        <Icon color={iconColors[toast.tone]} size={20} />
-      </View>
+      <View className={`h-2.5 w-2.5 rounded-full ${dotClasses[toast.tone]}`} />
       <View className="min-w-0 flex-1">
-        <Text className="text-sm font-semibold text-z-text">{toast.title}</Text>
-        {toast.message ? (
-          <Text className="mt-1 text-sm leading-5 text-z-muted">{toast.message}</Text>
-        ) : null}
+        <Text className="text-sm text-surface" numberOfLines={1}>
+          <Text className="font-semibold text-surface">{toast.title}</Text>
+          {toast.message ? <Text className="text-surface">{`  ${toast.message}`}</Text> : null}
+        </Text>
       </View>
-      <ZIconButton label={t('common.dismiss')} size="sm" onPress={() => onDismiss(toast.id)}>
-        <X color={colors.muted} size={16} />
-      </ZIconButton>
+      {toast.action ? (
+        <Text
+          accessibilityRole="button"
+          className="text-sm font-semibold text-accent"
+          onPress={toast.action.onPress}
+        >
+          {toast.action.label}
+        </Text>
+      ) : null}
     </View>
   );
 }

@@ -5,13 +5,22 @@ import { ToastCard, type ZToast } from './z-toast';
 // The live ZToastHost is store-driven and auto-dismisses after 3s, so it cannot be
 // shown statically in a catalog. Mirroring the web `z-toast` story, we render the
 // presentational ToastCard directly with a no-op dismiss so every tone stays put.
+// ToastCard is now the M3 dark inverse-surface pill (single line, leading tone
+// dot, no dismiss "X").
 const noop = () => {};
 
-const toast = (id: number, tone: ZToast['tone'], title: string, message?: string): ZToast => ({
+const toast = (
+  id: number,
+  tone: ZToast['tone'],
+  title: string,
+  message?: string,
+  action?: ZToast['action'],
+): ZToast => ({
   id,
   tone,
   title,
   message,
+  action,
 });
 
 const meta = {
@@ -38,18 +47,23 @@ export const Matrix: Story = {
         onDismiss={noop}
       />
       <ToastCard
-        toast={toast(3, 'info', 'Session starting soon', 'Your coaching call begins in 5 minutes.')}
+        toast={toast(3, 'info', 'Session starting soon', 'Your call begins in 5 minutes.')}
         onDismiss={noop}
       />
       {/* title only (no message) */}
       <ToastCard toast={toast(4, 'success', 'Invite sent')} onDismiss={noop} />
-      {/* long-text overflow (wrapping title + message) */}
+      {/* optional accent action label */}
+      <ToastCard
+        toast={toast(5, 'success', 'Member removed', undefined, { label: 'Undo', onPress: noop })}
+        onDismiss={noop}
+      />
+      {/* single-line truncation (title + message clipped to one line) */}
       <ToastCard
         toast={toast(
-          5,
+          6,
           'info',
-          'Reminder about your upcoming coaching session with a very long title that should wrap',
-          'This is an intentionally long toast message used to verify that wrapping and overflow behave correctly across the multi-line layout without pushing the dismiss control off screen.',
+          'Reminder about your upcoming coaching session',
+          'This long message is clipped to a single line in the compact pill.',
         )}
         onDismiss={noop}
       />
