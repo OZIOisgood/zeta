@@ -1,15 +1,18 @@
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useRoleColors } from '../theme/native';
-import { ZListItem } from './ui/z-list-item';
+import { Touchable } from './ui/touchable';
 import { ZSymbol } from './ui/z-symbol';
 
 /**
- * One onboarding checklist row (Material handoff StepItem look) rendered as a
- * ZListItem tile — a rounded row that fills with the tonal secondary-container
- * (via ZListItem's `selected`) once the step is completed, without dimming. The
- * status indicator is the custom leading node — a 24px circle: done = filled
- * accent + a 14px white check (native ZSymbol); todo = a 2px outline-strong
- * ring. The trailing chevron shows only while incomplete.
+ * One onboarding checklist row (handoff StepRow look) rendered as a PLAIN
+ * pressable row — leading 24px status circle · (title + description) column ·
+ * trailing chevron — NOT a ZListItem tile. There is no rounded surface and no
+ * tonal/accent fill on the completed row; the hairline separation between rows
+ * comes from the `<ZDivider/>` the StepsCard renders between them.
+ *
+ * Status indicator: done = filled accent circle + a 14px white check (native
+ * ZSymbol); todo = a 2px outline ring. The title mutes once completed; the
+ * trailing chevron shows only while incomplete.
  */
 export function FirstStepRow({
   label,
@@ -25,7 +28,7 @@ export function FirstStepRow({
   testID?: string;
 }) {
   const { color } = useRoleColors();
-  const leading = completed ? (
+  const statusCircle = completed ? (
     <View
       testID="first-step-row-check"
       className="h-6 w-6 items-center justify-center rounded-full"
@@ -48,15 +51,27 @@ export function FirstStepRow({
   );
 
   return (
-    <ZListItem
+    <Touchable
       testID={testID}
-      leading={leading}
-      title={label}
-      subtitle={description}
       onPress={onPress}
+      accessibilityLabel={label}
       selected={completed}
-      trailing={
-        !completed ? (
+      className="flex-row items-start gap-3 py-3"
+    >
+      <View className="mt-px shrink-0">{statusCircle}</View>
+      <View className="min-w-0 flex-1">
+        <Text
+          numberOfLines={1}
+          className={`text-[15px] font-bold ${completed ? 'text-z-muted' : 'text-z-text'}`}
+        >
+          {label}
+        </Text>
+        <Text numberOfLines={2} className="mt-0.5 text-[13px] text-z-muted">
+          {description}
+        </Text>
+      </View>
+      {!completed ? (
+        <View className="mt-px shrink-0">
           <ZSymbol
             testID="first-step-row-chevron"
             name="chevron-right"
@@ -64,8 +79,8 @@ export function FirstStepRow({
             size={18}
             color={color('onSurfaceVariant')}
           />
-        ) : undefined
-      }
-    />
+        </View>
+      ) : null}
+    </Touchable>
   );
 }
