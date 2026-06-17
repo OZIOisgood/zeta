@@ -10,9 +10,8 @@ import { ZListItem } from './ui/z-list-item';
  * session-type <article> (pages/manage-availability, @case('session-types')):
  * name + duration badge + description, with edit/delete icon-buttons.
  *
- * Each row is its own tonal tile (the screen's FlatList renders them with a gap),
- * so ZListItem's own `bg-surface` rounded tile preserves the separate-card
- * grouping — no enclosing ZCard needed.
+ * The screen groups these rows inside a single ZCard with hairline ZDividers
+ * (the inset-grouped pattern), matching the Material handoff (screens3.jsx).
  */
 export function SessionTypeRow({
   sessionType,

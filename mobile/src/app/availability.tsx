@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FlatList, Platform, ScrollView, Text, View } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +30,7 @@ import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
 import { ZConfirmDialog } from '../components/ui/z-confirm-dialog';
 import { ZDialogPanel } from '../components/ui/z-dialog-panel';
+import { ZDivider } from '../components/ui/z-divider';
 import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZFieldError } from '../components/ui/z-field-error';
 import { ZFieldLabel } from '../components/ui/z-field-label';
@@ -615,36 +616,47 @@ export default function AvailabilityScreen() {
         </View>
       );
     }
+    const data = typesQuery.data ?? [];
+    if (data.length === 0) {
+      return (
+        <View testID="availability-empty-session-types" className="p-4">
+          <ZEmptyState
+            title={t('sessions.availability.noSessionTypes')}
+            description={t('sessions.availability.noSessionTypesDescription')}
+          >
+            <ZButton
+              label={t('sessions.availability.addSessionType')}
+              onPress={() => setTypeSheet({ editing: null })}
+            />
+          </ZEmptyState>
+        </View>
+      );
+    }
+    // Grouped inset-list: one ZCard holds the rows, a hairline ZDivider sits
+    // between consecutive rows (not before the first / after the last). These
+    // admin lists are short, so a mapped ScrollView is fine.
     return (
-      <FlatList
+      <ScrollView
         className="flex-1"
-        data={typesQuery.data ?? []}
-        keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom, gap: 12, flexGrow: 1 }}
-        ListEmptyComponent={
-          <View testID="availability-empty-session-types">
-            <ZEmptyState
-              title={t('sessions.availability.noSessionTypes')}
-              description={t('sessions.availability.noSessionTypesDescription')}
-            >
-              <ZButton
-                label={t('sessions.availability.addSessionType')}
-                onPress={() => setTypeSheet({ editing: null })}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom }}
+      >
+        <ZCard tone="surface">
+          {data.map((item, index) => (
+            <View key={item.id}>
+              {index > 0 ? <ZDivider inset /> : null}
+              <SessionTypeRow
+                sessionType={item}
+                durationLabel={t('common.labels.minutesShort', { count: item.duration_minutes })}
+                editLabel={t('common.actions.edit')}
+                deleteLabel={t('common.actions.delete')}
+                onEdit={() => setTypeSheet({ editing: item })}
+                onDelete={() => setDeleteTarget({ kind: 'type', id: item.id })}
               />
-            </ZEmptyState>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <SessionTypeRow
-            sessionType={item}
-            durationLabel={t('common.labels.minutesShort', { count: item.duration_minutes })}
-            editLabel={t('common.actions.edit')}
-            deleteLabel={t('common.actions.delete')}
-            onEdit={() => setTypeSheet({ editing: item })}
-            onDelete={() => setDeleteTarget({ kind: 'type', id: item.id })}
-          />
-        )}
-      />
+            </View>
+          ))}
+        </ZCard>
+      </ScrollView>
     );
   }
 
@@ -667,36 +679,45 @@ export default function AvailabilityScreen() {
         </View>
       );
     }
+    const data = availabilityQuery.data ?? [];
+    if (data.length === 0) {
+      return (
+        <View testID="availability-empty-schedule" className="p-4">
+          <ZEmptyState
+            title={t('sessions.availability.noAvailability')}
+            description={t('sessions.availability.noAvailabilityDescription')}
+          >
+            <ZButton
+              label={t('sessions.availability.addAvailability')}
+              onPress={() => setAvailSheet({ editing: null })}
+            />
+          </ZEmptyState>
+        </View>
+      );
+    }
+    // Grouped inset-list: one ZCard, hairline ZDivider between consecutive rows.
     return (
-      <FlatList
+      <ScrollView
         className="flex-1"
-        data={availabilityQuery.data ?? []}
-        keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom, gap: 12, flexGrow: 1 }}
-        ListEmptyComponent={
-          <View testID="availability-empty-schedule">
-            <ZEmptyState
-              title={t('sessions.availability.noAvailability')}
-              description={t('sessions.availability.noAvailabilityDescription')}
-            >
-              <ZButton
-                label={t('sessions.availability.addAvailability')}
-                onPress={() => setAvailSheet({ editing: null })}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom }}
+      >
+        <ZCard tone="surface">
+          {data.map((item, index) => (
+            <View key={item.id}>
+              {index > 0 ? <ZDivider inset /> : null}
+              <ScheduleDayRow
+                availability={item}
+                dayName={t(`weekdays.${item.day_of_week}`)}
+                editLabel={t('common.actions.edit')}
+                deleteLabel={t('common.actions.delete')}
+                onEdit={() => setAvailSheet({ editing: item })}
+                onDelete={() => setDeleteTarget({ kind: 'avail', id: item.id })}
               />
-            </ZEmptyState>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <ScheduleDayRow
-            availability={item}
-            dayName={t(`weekdays.${item.day_of_week}`)}
-            editLabel={t('common.actions.edit')}
-            deleteLabel={t('common.actions.delete')}
-            onEdit={() => setAvailSheet({ editing: item })}
-            onDelete={() => setDeleteTarget({ kind: 'avail', id: item.id })}
-          />
-        )}
-      />
+            </View>
+          ))}
+        </ZCard>
+      </ScrollView>
     );
   }
 
@@ -719,59 +740,68 @@ export default function AvailabilityScreen() {
         </View>
       );
     }
-    return (
-      <FlatList
-        className="flex-1"
-        data={blockedQuery.data ?? []}
-        keyExtractor={(it) => it.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom, gap: 12, flexGrow: 1 }}
-        ListEmptyComponent={
-          <View testID="availability-empty-blocked">
-            <ZEmptyState
-              title={t('sessions.availability.noBlockedDates')}
-              description={t('sessions.availability.noBlockedDatesDescription')}
-            >
-              <ZButton
-                label={t('sessions.availability.addBlockTime')}
-                onPress={() => setBlockedSheet(true)}
-              />
-            </ZEmptyState>
-          </View>
-        }
-        renderItem={({ item }: { item: CoachingBlockedSlot }) => {
-          // Time-range vs full-day on the first subtitle line; the optional
-          // reason follows on a second line (ZListItem subtitle allows 3 lines).
-          const timeline =
-            item.start_time && item.end_time
-              ? `${item.start_time} – ${item.end_time}`
-              : t('common.labels.fullDay');
-          const subtitle = item.reason ? `${timeline}\n${item.reason}` : timeline;
-          return (
-            <ZListItem
-              // Non-interactive: the row surfaces its own delete control.
-              leading={
-                <ZIconTile
-                  icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={colors.text} />}
-                  tone="neutral"
-                  size="sm"
-                />
-              }
-              title={formatDate(item.blocked_date)}
-              subtitle={subtitle}
-              trailing={
-                <ZIconButton
-                  label={t('common.actions.delete')}
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
-                >
-                  <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={colors.danger} />
-                </ZIconButton>
-              }
+    const data = blockedQuery.data ?? [];
+    if (data.length === 0) {
+      return (
+        <View testID="availability-empty-blocked" className="p-4">
+          <ZEmptyState
+            title={t('sessions.availability.noBlockedDates')}
+            description={t('sessions.availability.noBlockedDatesDescription')}
+          >
+            <ZButton
+              label={t('sessions.availability.addBlockTime')}
+              onPress={() => setBlockedSheet(true)}
             />
-          );
-        }}
-      />
+          </ZEmptyState>
+        </View>
+      );
+    }
+    // Grouped inset-list: one ZCard, hairline ZDivider between consecutive rows.
+    return (
+      <ScrollView
+        className="flex-1"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom }}
+      >
+        <ZCard tone="surface">
+          {data.map((item: CoachingBlockedSlot, index) => {
+            // Time-range vs full-day on the first subtitle line; the optional
+            // reason follows on a second line (ZListItem subtitle allows 3 lines).
+            const timeline =
+              item.start_time && item.end_time
+                ? `${item.start_time} – ${item.end_time}`
+                : t('common.labels.fullDay');
+            const subtitle = item.reason ? `${timeline}\n${item.reason}` : timeline;
+            return (
+              <View key={item.id}>
+                {index > 0 ? <ZDivider inset /> : null}
+                <ZListItem
+                  // Non-interactive: the row surfaces its own delete control.
+                  leading={
+                    <ZIconTile
+                      icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={colors.text} />}
+                      tone="neutral"
+                      size="sm"
+                    />
+                  }
+                  title={formatDate(item.blocked_date)}
+                  subtitle={subtitle}
+                  trailing={
+                    <ZIconButton
+                      label={t('common.actions.delete')}
+                      variant="secondary"
+                      size="sm"
+                      onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
+                    >
+                      <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={colors.danger} />
+                    </ZIconButton>
+                  }
+                />
+              </View>
+            );
+          })}
+        </ZCard>
+      </ScrollView>
     );
   }
 

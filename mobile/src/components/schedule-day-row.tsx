@@ -2,16 +2,18 @@ import { Pencil, Trash2 } from 'lucide-react-native';
 import type { CoachingAvailability } from '../api/queries/coaching';
 import { colors } from '../theme/colors';
 import { ZIconButton } from './ui/z-icon-button';
+import { ZIconTile } from './ui/z-icon-tile';
 import { ZListItem } from './ui/z-list-item';
+import { ZSymbol } from './ui/z-symbol';
 
 /**
  * One weekly-schedule row. Mobile counterpart of the web manage-availability
- * schedule <article> (pages/manage-availability, @case('schedule')): weekday
- * name + "start – end", with edit/delete icon-buttons.
+ * schedule <article> (pages/manage-availability, @case('schedule')): a leading
+ * calendar IconTile + weekday name + "start – end", with edit/delete
+ * icon-buttons.
  *
- * Each row is its own tonal tile (the screen's FlatList renders them with a gap),
- * so ZListItem's own `bg-surface` rounded tile preserves the separate-card
- * grouping — no enclosing ZCard needed.
+ * The screen groups these rows inside a single ZCard with hairline ZDividers
+ * (the inset-grouped pattern), matching the Material handoff (screens3.jsx).
  */
 export function ScheduleDayRow({
   availability,
@@ -34,6 +36,13 @@ export function ScheduleDayRow({
     <ZListItem
       // Non-interactive: the row surfaces its own edit/delete controls.
       testID={testID}
+      leading={
+        <ZIconTile
+          tone="neutral"
+          size="sm"
+          icon={<ZSymbol name="calendar" label={dayName} size={18} color={colors.primaryStrong} />}
+        />
+      }
       title={dayName}
       subtitle={`${availability.start_time} – ${availability.end_time}`}
       trailing={
