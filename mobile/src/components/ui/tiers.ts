@@ -35,12 +35,17 @@ export const TIERS: Record<string, Tier> = {
   // its own. Classified as COMPOSITION_EXCEPTION in primitive-contract.test.ts.
   'z-danger-zone-card': 'custom-no-native',
   'z-stepper': 'custom-no-native',
-  // ZListItem: a pressable list ROW — a composition (Touchable + leading/title/
-  // subtitle/trailing), not a single OS widget. @expo/ui exposes only container
-  // List/Section (iOS) and a slot-only ListItem without onPress (Android),
-  // neither of which wraps arbitrary RN leading/trailing nodes. Single shared
-  // NativeWind file with Platform.OS-branched styling — same single-file
-  // rationale as ZSwitch; no .ios/.android split, no moduleNameMapper block.
+  // ZListItem: a list ROW — a composition (leading/title/subtitle/trailing,
+  // optionally pressable via Touchable), not a single OS widget. @expo/ui
+  // exposes only container List/Section (iOS) and a slot-only ListItem without
+  // onPress (Android), neither of which wraps arbitrary RN leading/trailing
+  // nodes → Custom-RN. It IS platform-split: the bare `.tsx` is the
+  // Material/Android contract surface, and a `.ios.tsx` carries the distinct HIG
+  // grouped inset-cell look. No `.android.tsx` — Metro falls back to the bare
+  // `.tsx` on Android, so a separate Android file would just duplicate it. The
+  // package.json moduleNameMapper block forces jest/web to resolve the bare
+  // `.tsx` (the test/contract surface), avoiding jest-expo's default
+  // Platform.OS='ios'. Full rationale in z-list-item.types.ts.
   'z-list-item': 'custom-no-native',
   'z-icon-tile': 'custom-no-native',
   'z-skeleton': 'custom-no-native',

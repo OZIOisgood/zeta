@@ -65,6 +65,12 @@ export type ZListItemProps = {
   leading?: ReactNode;
   /** Primary row label. */
   title: string;
+  /**
+   * Optional node rendered inline, right after the title text on the title
+   * line (e.g. a ZBadge for "30 min"). The title truncates to make room; the
+   * accessory keeps its size.
+   */
+  titleAccessory?: ReactNode;
   /** Optional secondary line below the title. */
   subtitle?: string;
   /**
@@ -74,8 +80,10 @@ export type ZListItemProps = {
   trailing?: ReactNode;
   /**
    * Press handler. Optional: some rows are non-interactive containers that
-   * surface their own trailing controls (e.g. a Switch). When omitted the row
-   * renders without firing a press.
+   * surface their own trailing controls (e.g. a Switch, ZButton, or ZIconButton).
+   * When omitted the row renders as a plain `<View>` — NOT a pressable — so it
+   * carries no button role, haptic, press feedback, or accessibility label; only
+   * the inner controls are focusable.
    */
   onPress?: () => void;
   /**

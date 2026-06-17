@@ -5,6 +5,7 @@ import { LucideUsers } from 'lucide-react-native';
 import { colors } from '../../theme/colors';
 import { ZAvatar } from './z-avatar';
 import { ZBadge } from './z-badge';
+import { ZIconButton } from './z-icon-button';
 import { ZIconTile } from './z-icon-tile';
 import { ZSwitch } from './z-switch';
 import { ZSymbol } from './z-symbol';
@@ -73,8 +74,25 @@ export const Matrix: Story = {
         trailing={<ZBadge label="Admin" tone="primary" />}
         onPress={() => {}}
       />
-      {/* Switch trailing — non-interactive row (its own control) */}
+      {/* Switch trailing — non-interactive row (its own control, no button role) */}
       <SwitchRow />
+      {/* Title accessory (a badge inline on the title line) + 3-line subtitle,
+          non-interactive container that surfaces its own trailing controls */}
+      <ZListItem
+        title="Discovery call"
+        titleAccessory={<ZBadge label="30 min" tone="neutral" />}
+        subtitle="A short introductory session to align on goals, expectations, and the coaching cadence before booking a full engagement."
+        trailing={
+          <>
+            <ZIconButton label="Edit" onPress={() => {}}>
+              <ZSymbol name="edit" label="" size={18} color={colors.muted} />
+            </ZIconButton>
+            <ZIconButton label="Delete" onPress={() => {}}>
+              <ZSymbol name="trash" label="" size={18} color={colors.muted} />
+            </ZIconButton>
+          </>
+        }
+      />
       {/* Selected (tonal fill on Material) */}
       <ZListItem
         title="Selected row"

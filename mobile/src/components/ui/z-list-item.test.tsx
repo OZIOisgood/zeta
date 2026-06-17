@@ -36,6 +36,34 @@ test('fires onPress when pressed', async () => {
   expect(onPress).toHaveBeenCalledTimes(1);
 });
 
+test('exposes the button role when onPress is provided', async () => {
+  await render(<ZListItem title="Account" onPress={() => {}} />);
+  expect(screen.getByRole('button')).toBeOnTheScreen();
+});
+
+test('a row WITHOUT onPress does not expose the button role', async () => {
+  await render(<ZListItem title="Account" testID="row" />);
+  expect(screen.queryByRole('button')).toBeNull();
+});
+
+test('a row WITHOUT onPress does not fire anything on press', async () => {
+  // A non-interactive container holds its own controls; pressing the row body
+  // itself must be a no-op (it is a plain View, not a Pressable).
+  await render(<ZListItem title="Account" testID="row" />);
+  const row = screen.getByTestId('row');
+  // The plain View has no onPress handler — pressing it does nothing and throws
+  // nothing.
+  expect(() => fireEvent.press(row)).not.toThrow();
+  expect(row.props.onPress).toBeUndefined();
+});
+
+test('a non-interactive row still reflects selected/disabled accessibility state', async () => {
+  await render(<ZListItem title="Account" selected disabled testID="row" />);
+  const row = screen.getByTestId('row');
+  expect(row.props.accessibilityState?.selected).toBe(true);
+  expect(row.props.accessibilityState?.disabled).toBe(true);
+});
+
 test('does not fire onPress when disabled', async () => {
   const onPress = jest.fn();
   await render(<ZListItem title="Account" onPress={onPress} disabled testID="row" />);
@@ -76,4 +104,27 @@ test('forwards className to the row container', async () => {
 test('forwards testID', async () => {
   await render(<ZListItem title="Account" testID="settings-row" />);
   expect(screen.getByTestId('settings-row')).toBeOnTheScreen();
+});
+
+test('renders the titleAccessory node on the title line', async () => {
+  await render(
+    <ZListItem title="Discovery call" titleAccessory={<Text>30 min</Text>} testID="row" />,
+  );
+  expect(screen.getByText('30 min')).toBeOnTheScreen();
+});
+
+test('trailing can hold and render multiple nodes', async () => {
+  await render(
+    <ZListItem
+      title="Account"
+      trailing={
+        <>
+          <View testID="trail-edit" />
+          <View testID="trail-delete" />
+        </>
+      }
+    />,
+  );
+  expect(screen.getByTestId('trail-edit')).toBeOnTheScreen();
+  expect(screen.getByTestId('trail-delete')).toBeOnTheScreen();
 });

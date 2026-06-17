@@ -9,6 +9,10 @@
  *   - system pressed-dim from Touchable (iOS pressed-opacity); no ripple, no
  *     secondary-container fill.
  *
+ * When `onPress` is omitted the row renders as a plain `<View>` (no Touchable):
+ * non-interactive containers that surface their own controls must not pose as a
+ * button. Only the pressable path carries the accessibilityLabel.
+ *
  * Self-import ban: this file does NOT import `./z-list-item` (Metro would
  * resolve that back to this very file → infinite re-export). It composes
  * `Touchable` and the shared `.types.ts` directly.
@@ -29,6 +33,7 @@ export type { ZListItemProps } from './z-list-item.types';
 export function ZListItem({
   leading,
   title,
+  titleAccessory,
   subtitle,
   trailing,
   onPress,
@@ -46,6 +51,50 @@ export function ZListItem({
     .filter(Boolean)
     .join(' ');
 
+  // Shared inner content — identical for the pressable and the plain-container
+  // paths so the two branches stay in visual lock-step.
+  const content = (
+    <>
+      {leading ? <View className="shrink-0">{leading}</View> : null}
+      <View className="min-w-0 flex-1">
+        <View className="flex-row items-center gap-2">
+          <Text numberOfLines={1} className="min-w-0 flex-1 text-[17px] text-on-surface">
+            {title}
+          </Text>
+          {titleAccessory ? <View className="shrink-0">{titleAccessory}</View> : null}
+        </View>
+        {subtitle ? (
+          <Text numberOfLines={3} className="mt-0.5 text-[15px] text-on-surface-variant">
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {trailing ? (
+        <View className="shrink-0 flex-row items-center gap-2">{trailing}</View>
+      ) : null}
+    </>
+  );
+
+  // Non-interactive rows (no onPress) render as a plain container: they hold
+  // their OWN controls (a switch, button, or icon-button) and must NOT expose a
+  // button role, haptic, or system pressed-dim. Only the pressable path carries
+  // the accessibilityLabel.
+  if (!onPress) {
+    return (
+      <View
+        testID={testID}
+        className={containerClasses}
+        style={style}
+        accessibilityState={{
+          ...(disabled ? { disabled: true } : {}),
+          ...(selected ? { selected: true } : {}),
+        }}
+      >
+        {content}
+      </View>
+    );
+  }
+
   return (
     <Touchable
       testID={testID}
@@ -56,18 +105,7 @@ export function ZListItem({
       className={containerClasses}
       style={style}
     >
-      {leading ? <View className="shrink-0">{leading}</View> : null}
-      <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="text-[17px] text-on-surface">
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text numberOfLines={2} className="mt-0.5 text-[15px] text-on-surface-variant">
-            {subtitle}
-          </Text>
-        ) : null}
-      </View>
-      {trailing ? <View className="shrink-0">{trailing}</View> : null}
+      {content}
     </Touchable>
   );
 }
