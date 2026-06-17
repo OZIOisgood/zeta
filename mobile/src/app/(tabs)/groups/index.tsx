@@ -4,8 +4,10 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../../../api/queries/groups';
+import { useNotificationsQuery } from '../../../api/queries/notifications';
 import { useAuth } from '../../../auth/auth-store';
 import { GroupCard } from '../../../components/group-card';
+import { NotificationBell } from '../../../components/notification-bell';
 import { Touchable } from '../../../components/ui/touchable';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
 import { ZIconButton } from '../../../components/ui/z-icon-button';
@@ -45,40 +47,51 @@ export default function GroupsScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useGroupsQuery();
+  const notifications = useNotificationsQuery();
+  const unreadCount = notifications.data?.unread_count ?? 0;
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const canSeeGroups = permissions !== null && permissions.includes('groups:read');
   const canCreate = permissions !== null && permissions.includes('groups:create');
 
-  // iOS: surface the role-dependent primary action in the native nav-bar header.
-  //   Creator (groups:create) → "+" to create a group.
-  //   Student (no groups:create) → QR-code icon to join a group.
-  // Android: the same action is surfaced as a Material FAB (rendered in JSX below).
+  // Header-right actions (mirror the handoff TopBar):
+  //  - The notification bell is present on EVERY tab screen, both platforms, so
+  //    headerRight is unconditional.
+  //  - iOS additionally surfaces the role-dependent primary action before the
+  //    bell (iOS has no FAB):
+  //      Creator (groups:create) → "+" to create a group.
+  //      Student (no groups:create) → QR-code icon to join a group.
+  //    Android surfaces that same action via the Material FAB (rendered in JSX
+  //    below), so on Android only the bell sits in the header.
   useEffect(() => {
-    if (Platform.OS !== 'ios') return;
     navigation.setOptions({
-      headerRight: canCreate
-        ? () => (
-            <Touchable
-              testID="groups-create-header-btn"
-              accessibilityLabel={t('groups.create')}
-              onPress={() => router.push('/group/create')}
-              haptic
-            >
-              <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
-            </Touchable>
-          )
-        : () => (
-            <Touchable
-              testID="groups-join-header-btn"
-              accessibilityLabel={t('groups.invitationDialog.joinGroup')}
-              onPress={() => router.push('/invite')}
-              haptic
-            >
-              <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.primary} />
-            </Touchable>
-          ),
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {Platform.OS === 'ios' ? (
+            canCreate ? (
+              <Touchable
+                testID="groups-create-header-btn"
+                accessibilityLabel={t('groups.create')}
+                onPress={() => router.push('/group/create')}
+                haptic
+              >
+                <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
+              </Touchable>
+            ) : (
+              <Touchable
+                testID="groups-join-header-btn"
+                accessibilityLabel={t('groups.invitationDialog.joinGroup')}
+                onPress={() => router.push('/invite')}
+                haptic
+              >
+                <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.primary} />
+              </Touchable>
+            )
+          ) : null}
+          <NotificationBell unreadCount={unreadCount} onPress={() => router.push('/notifications')} />
+        </View>
+      ),
     });
-  }, [navigation, canCreate, t, router]);
+  }, [navigation, canCreate, unreadCount, t, router]);
 
   // Defensive self-guard: if the user somehow navigates here without the tab
   // permission (e.g. via a deep-link before permissions resolve), render a

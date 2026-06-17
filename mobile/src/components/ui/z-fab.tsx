@@ -16,6 +16,11 @@ export function ZFab({
 }: ZFabProps) {
   const surfaceTone = tone === 'primary' ? 'bg-accent' : 'bg-accent-container';
   const labelTone = tone === 'primary' ? 'text-on-accent' : 'text-on-accent-container';
+  // Extended → 56dp-tall pill that hugs its content (icon + label) with side
+  // padding. Collapsed → 56dp square (no horizontal padding) with the centered
+  // glyph, matching the M3 medium FAB. Both `self-start` so the FAB hugs its
+  // content and never stretches to its parent's width.
+  const shapeTone = extended ? 'flex-row items-center gap-2 px-5' : 'w-14 justify-center';
   return (
     <View className={className} style={style}>
       <Touchable
@@ -23,7 +28,7 @@ export function ZFab({
         accessibilityLabel={label}
         onPress={onPress}
         haptic
-        className={`h-14 flex-row items-center gap-2 self-start rounded-[16px] ${surfaceTone} px-5 active:opacity-90`}
+        className={`h-14 items-center self-start rounded-[16px] ${surfaceTone} ${shapeTone} active:opacity-90`}
       >
         {icon}
         {extended ? <Text className={`text-base font-semibold ${labelTone}`}>{label}</Text> : null}

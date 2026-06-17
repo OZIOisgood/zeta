@@ -27,6 +27,14 @@ jest.mock('../components/ui/z-toast', () => ({
   showToast: (...args: unknown[]) => mockShowToast(...args),
 }));
 
+// The notification bell (header-right on every tab screen) reads the unread
+// count from this query; default to zero unread so the badge stays hidden.
+const mockUseNotificationsQuery = jest.fn(() => ({ data: { unread_count: 0 } }));
+jest.mock('../api/queries/notifications', () => ({
+  ...jest.requireActual('../api/queries/notifications'),
+  useNotificationsQuery: () => mockUseNotificationsQuery(),
+}));
+
 let mockPermissions: string[] | null = ['coaching:bookings:read', 'coaching:book'];
 let mockUserId = 's1';
 
@@ -260,7 +268,7 @@ test('Book action: setOptions called with headerRight containing book button whe
   );
 });
 
-test('Book action: headerRight not set when user lacks coaching:book and lacks coaching:availability:manage (iOS path)', async () => {
+test('Book action: headerRight still set (bell only) when user lacks coaching:book and coaching:availability:manage (iOS path)', async () => {
   mockPermissions = ['coaching:bookings:read']; // has tab access but no book/availability action
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
@@ -270,9 +278,39 @@ test('Book action: headerRight not set when user lacks coaching:book and lacks c
     isRefetching: false,
   });
   await render(<Providers><CoachingScreen /></Providers>);
+  // The notification bell makes headerRight unconditional on every tab screen.
   expect(mockSetOptions).toHaveBeenCalledWith(
-    expect.objectContaining({ headerRight: undefined }),
+    expect.objectContaining({ headerRight: expect.any(Function) }),
   );
+
+  // Only the bell renders — no book "+" and no availability action.
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+  expect(screen.getByTestId('notification-bell')).toBeOnTheScreen();
+  expect(screen.queryByTestId('coaching-book-header-btn')).toBeNull();
+  expect(screen.queryByTestId('coaching-availability-header-btn')).toBeNull();
+});
+
+test('header-right notification bell renders on the sessions screen and navigates to /notifications', async () => {
+  mockPermissions = ['coaching:bookings:read'];
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  const bell = screen.getByTestId('notification-bell');
+  expect(bell).toBeOnTheScreen();
+  fireEvent.press(bell);
+  expect(mockPush).toHaveBeenCalledWith('/notifications');
 });
 
 test('Book action: header-right book button is labelled sessions.bookLive and navigates to /book (iOS path)', async () => {

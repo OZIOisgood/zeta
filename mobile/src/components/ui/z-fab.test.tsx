@@ -15,6 +15,21 @@ test('hides the label when not extended (icon-only FAB)', async () => {
   expect(screen.queryByText('Upload')).toBeNull();
 });
 
+test('icon-only FAB is a compact ~56dp square (not a full-width / pill stretch)', async () => {
+  // The collapsed create FAB must hug its content: a fixed 56dp square with the
+  // centered "+" glyph — never a horizontally padded pill or a full-width bar.
+  await render(<ZFab label="Upload" icon={<Text>+</Text>} onPress={() => {}} extended={false} testID="fab" />);
+  const surface = screen.getByTestId('fab');
+  expect(surface.props.className).toContain('h-14');
+  expect(surface.props.className).toContain('w-14');
+  expect(surface.props.className).toContain('justify-center');
+  // No horizontal padding on the icon-only variant — that padding is what makes
+  // an extended FAB wide; the square must not carry it.
+  expect(surface.props.className).not.toContain('px-5');
+  // It must still hug content (self-start), never stretch to fill its parent.
+  expect(surface.props.className).toContain('self-start');
+});
+
 test('primary tone (default) fills with accent + on-accent content', async () => {
   await render(<ZFab label="Upload" icon={<Text>+</Text>} onPress={() => {}} testID="fab" />);
   const surface = screen.getByTestId('fab');

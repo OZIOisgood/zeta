@@ -9,8 +9,10 @@ import {
   useCancelBookingMutation,
   formatBookingDateTime,
 } from '../../../api/queries/coaching';
+import { useNotificationsQuery } from '../../../api/queries/notifications';
 import { useAuth } from '../../../auth/auth-store';
 import { BookingCard } from '../../../components/booking-card';
+import { NotificationBell } from '../../../components/notification-bell';
 import { isJoinable } from '../../../lib/connect-window';
 import { Touchable } from '../../../components/ui/touchable';
 import { ZConfirmDialog } from '../../../components/ui/z-confirm-dialog';
@@ -133,6 +135,8 @@ export default function CoachingScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useMyBookingsQuery();
+  const notifications = useNotificationsQuery();
+  const unreadCount = notifications.data?.unread_count ?? 0;
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const currentUserId = useAuth((s) => s.user?.id ?? '');
   const canSeeCoaching = permissions !== null && permissions.includes('coaching:bookings:read');
@@ -144,43 +148,44 @@ export default function CoachingScreen() {
   const [activeTab, setActiveTab] = useState<SessionTab>('upcoming');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  // Header actions:
-  // - "Manage Availability" (calendar-cog) goes to headerRight on BOTH platforms,
+  // Header actions (mirror the handoff TopBar):
+  // - The notification bell is present on EVERY tab screen, both platforms, so
+  //   headerRight is unconditional.
+  // - "Manage Availability" (calendar-cog) precedes the bell on BOTH platforms,
   //   gated by coaching:availability:manage.
-  // - "Book session" (+) goes to headerRight on iOS only; Android uses the FAB.
+  // - "Book session" (+) precedes the bell on iOS only; Android uses the FAB.
   // Multiple headerRight items are composed in a flex row (HIG allows multiple
-  // bar button items on the trailing side; two icons is the safe limit).
+  // bar button items on the trailing side; availability + book + bell stays
+  // within a sane trailing-cluster width).
   useEffect(() => {
-    const hasActions = canManageAvailability || (Platform.OS === 'ios' && canBook);
     navigation.setOptions({
-      headerRight: hasActions
-        ? () => (
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {canManageAvailability ? (
-                <Touchable
-                  testID="coaching-availability-header-btn"
-                  accessibilityLabel={t('sessions.availability.manageTitle')}
-                  onPress={() => router.push('/availability' as never)}
-                  haptic
-                >
-                  <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={24} color={colors.primary} />
-                </Touchable>
-              ) : null}
-              {Platform.OS === 'ios' && canBook ? (
-                <Touchable
-                  testID="coaching-book-header-btn"
-                  accessibilityLabel={t('sessions.bookLive')}
-                  onPress={() => router.push('/book')}
-                  haptic
-                >
-                  <ZSymbol name="plus" label={t('common.actions.bookSession')} size={24} color={colors.primary} />
-                </Touchable>
-              ) : null}
-            </View>
-          )
-        : undefined,
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {canManageAvailability ? (
+            <Touchable
+              testID="coaching-availability-header-btn"
+              accessibilityLabel={t('sessions.availability.manageTitle')}
+              onPress={() => router.push('/availability' as never)}
+              haptic
+            >
+              <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={24} color={colors.primary} />
+            </Touchable>
+          ) : null}
+          {Platform.OS === 'ios' && canBook ? (
+            <Touchable
+              testID="coaching-book-header-btn"
+              accessibilityLabel={t('sessions.bookLive')}
+              onPress={() => router.push('/book')}
+              haptic
+            >
+              <ZSymbol name="plus" label={t('common.actions.bookSession')} size={24} color={colors.primary} />
+            </Touchable>
+          ) : null}
+          <NotificationBell unreadCount={unreadCount} onPress={() => router.push('/notifications')} />
+        </View>
+      ),
     });
-  }, [navigation, canManageAvailability, canBook, t, router]);
+  }, [navigation, canManageAvailability, canBook, unreadCount, t, router]);
 
   // Defensive self-guard: if the user somehow navigates here without the tab
   // permission (e.g. via a deep-link or stat-card tap before permissions resolve),

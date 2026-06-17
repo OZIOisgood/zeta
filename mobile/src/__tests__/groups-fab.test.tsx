@@ -23,6 +23,14 @@ jest.mock('../api/queries/groups', () => ({
   useGroupsQuery: () => mockUseGroupsQuery(),
 }));
 
+// The notification bell (header-right on every tab screen) reads the unread
+// count from this query; default to zero unread so the badge stays hidden.
+const mockUseNotificationsQuery = jest.fn(() => ({ data: { unread_count: 0 } }));
+jest.mock('../api/queries/notifications', () => ({
+  ...jest.requireActual('../api/queries/notifications'),
+  useNotificationsQuery: () => mockUseNotificationsQuery(),
+}));
+
 const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -86,8 +94,24 @@ test('students: header-right Join button renders and navigates to /invite (iOS p
 
   expect(screen.getByTestId('groups-join-header-btn')).toBeOnTheScreen();
   expect(screen.queryByTestId('groups-create-header-btn')).toBeNull();
+  // The notification bell sits alongside the role action on every tab screen.
+  expect(screen.getByTestId('notification-bell')).toBeOnTheScreen();
   fireEvent.press(screen.getByLabelText('Join Group'));
   expect(mockPush).toHaveBeenCalledWith('/invite');
+});
+
+test('header-right notification bell renders and navigates to /notifications (iOS path)', async () => {
+  mockPermissions = ['groups:read'];
+  await render(<Providers><GroupsScreen /></Providers>);
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  const bell = screen.getByTestId('notification-bell');
+  expect(bell).toBeOnTheScreen();
+  fireEvent.press(bell);
+  expect(mockPush).toHaveBeenCalledWith('/notifications');
 });
 
 test('experts: setOptions called with a headerRight Create button (groups:create) (iOS path)', async () => {

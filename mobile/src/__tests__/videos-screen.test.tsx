@@ -29,6 +29,14 @@ jest.mock('../api/queries/assets', () => ({
   useAssetsQuery: () => mockUseAssetsQuery(),
 }));
 
+// The notification bell (header-right on every tab screen) reads the unread
+// count from this query; default to zero unread so the badge stays hidden.
+const mockUseNotificationsQuery = jest.fn(() => ({ data: { unread_count: 0 } }));
+jest.mock('../api/queries/notifications', () => ({
+  ...jest.requireActual('../api/queries/notifications'),
+  useNotificationsQuery: () => mockUseNotificationsQuery(),
+}));
+
 const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
@@ -119,11 +127,14 @@ test('renders the filter tabs when data is present', async () => {
   expect(screen.getByRole('tab', { name: 'All' })).toBeOnTheScreen();
 });
 
-// ── Upload action (iOS: header-right; Android: FAB) ──────────────────────────
+// ── Header-right actions (iOS: create "+" + bell; Android: bell only) ─────────
 // jest-expo runs with Platform.OS = 'ios', so the Android FAB is not rendered.
-// Instead, the primary action is registered in the native header via setOptions.
+// The header-right always carries the notification bell (every tab screen, both
+// platforms); on iOS it additionally carries the create "+" when the user can
+// create. The headerRight is therefore ALWAYS a function (the bell is present
+// regardless of assets:create).
 
-test('upload action: setOptions called with headerRight when user has assets:create (iOS path)', async () => {
+test('upload action: setOptions always called with a headerRight function (bell present) when user has assets:create (iOS path)', async () => {
   mockPermissions = ['assets:create'];
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
@@ -132,16 +143,23 @@ test('upload action: setOptions called with headerRight when user has assets:cre
   );
 });
 
-test('upload action: setOptions called with headerRight undefined when user lacks assets:create (iOS path)', async () => {
+test('header-right is still a function (bell only) when user lacks assets:create (iOS path)', async () => {
   mockPermissions = [];
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
   await render(<Providers><VideosScreen /></Providers>);
   expect(mockSetOptions).toHaveBeenCalledWith(
-    expect.objectContaining({ headerRight: undefined }),
+    expect.objectContaining({ headerRight: expect.any(Function) }),
   );
+
+  // The bell renders; the create "+" does not (no assets:create).
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+  expect(screen.getByTestId('notification-bell')).toBeOnTheScreen();
+  expect(screen.queryByTestId('videos-create-header-btn')).toBeNull();
 });
 
-test('upload action: headerRight button renders with accessible label and navigates to /upload (iOS path)', async () => {
+test('upload action: headerRight create button renders with accessible label and navigates to /upload (iOS path)', async () => {
   const user = userEvent.setup();
   mockPermissions = ['assets:create'];
   mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
@@ -156,6 +174,22 @@ test('upload action: headerRight button renders with accessible label and naviga
 
   await user.press(screen.getByLabelText('Upload Video'));
   expect(mockPush).toHaveBeenCalledWith('/upload');
+});
+
+test('header-right notification bell renders on every tab screen and navigates to /notifications', async () => {
+  const user = userEvent.setup();
+  mockPermissions = ['assets:create'];
+  mockUseAssetsQuery.mockReturnValue({ isPending: false, isError: false, data: [PENDING_ASSET], refetch: jest.fn(), isRefetching: false });
+  await render(<Providers><VideosScreen /></Providers>);
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  const bell = screen.getByTestId('notification-bell');
+  expect(bell).toBeOnTheScreen();
+  await user.press(bell);
+  expect(mockPush).toHaveBeenCalledWith('/notifications');
 });
 
 test('filter tabs render as plain labels without counts', async () => {

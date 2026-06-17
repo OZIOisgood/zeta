@@ -17,6 +17,9 @@ export default function VideosTabLayout() {
         options={{
           title: t('videos.allMyVideos'),
           headerLargeTitle: true,
+          // No bottom hairline under the large-title header (handoff TopBar has
+          // none); the list scrolls under a flat, dividerless nav bar.
+          headerShadowVisible: false,
         }}
       />
     </Stack>

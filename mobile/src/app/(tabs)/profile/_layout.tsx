@@ -17,6 +17,9 @@ export default function ProfileTabLayout() {
         options={{
           title: t('preferences.title'),
           headerLargeTitle: true,
+          // No bottom hairline under the large-title header (handoff TopBar has
+          // none); the list scrolls under a flat, dividerless nav bar.
+          headerShadowVisible: false,
         }}
       />
     </Stack>

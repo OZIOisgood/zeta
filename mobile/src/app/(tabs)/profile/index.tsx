@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, ScrollView, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useNotificationsQuery } from '../../../api/queries/notifications';
+import { NotificationBell } from '../../../components/notification-bell';
 import { ZAvatar } from '../../../components/ui/z-avatar';
 import { ZButton } from '../../../components/ui/z-button';
 import { ZCard } from '../../../components/ui/z-card';
@@ -74,10 +76,25 @@ function LoadingState() {
 function ProfileOverview({ user }: { user: Me }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const androidPaddingBottom = Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
 
+  const notifications = useNotificationsQuery();
+  const unreadCount = notifications.data?.unread_count ?? 0;
+
   const [pendingMaster, setPendingMaster] = useState(false);
+
+  // Header-right notification bell — present on EVERY tab screen, both platforms
+  // (mirrors the handoff TopBar). Profile has no other header action, so the bell
+  // is the sole trailing item. Reactive to the unread count.
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <NotificationBell unreadCount={unreadCount} onPress={() => router.push('/notifications')} />
+      ),
+    });
+  }, [navigation, unreadCount, router]);
 
   const can = (permission: string) => user.permissions.includes(permission);
   const roleLabel = KNOWN_ROLES.includes(user.role) ? t(`groups.roles.${user.role}`) : '';

@@ -5,10 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { Asset } from '../../../api/queries/assets';
 import { useAssetsQuery } from '../../../api/queries/assets';
+import { useNotificationsQuery } from '../../../api/queries/notifications';
 import { useAuth } from '../../../auth/auth-store';
 import { uploadStore, useUploads } from '../../../upload/upload-store';
 import type { UploadJob } from '../../../upload/upload-store';
 import { AssetCard } from '../../../components/asset-card';
+import { NotificationBell } from '../../../components/notification-bell';
 import { UploadProgressCard } from '../../../components/upload-progress-card';
 import { ZButton } from '../../../components/ui/z-button';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
@@ -74,6 +76,8 @@ export default function VideosScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useAssetsQuery();
+  const notifications = useNotificationsQuery();
+  const unreadCount = notifications.data?.unread_count ?? 0;
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const canCreate = permissions !== null && permissions.includes('assets:create');
   const jobs = useUploads((s) => s.jobs);
@@ -84,13 +88,17 @@ export default function VideosScreen() {
   const androidListPaddingBottom =
     Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
 
-  // iOS: surface the primary "create video" action in the native nav-bar header.
-  // Android: the action is surfaced as a Material FAB (rendered below in JSX).
+  // Header-right actions (mirror the handoff TopBar):
+  //  - The notification bell is present on EVERY tab screen, both platforms.
+  //  - iOS additionally surfaces the primary "create video" "+" here (iOS has no
+  //    FAB); Android surfaces create via the Material FAB rendered below in JSX.
+  // headerRight is therefore always set (the bell is unconditional); on iOS it
+  // composes the create "+" before the bell in a trailing flex row.
   useEffect(() => {
-    if (Platform.OS !== 'ios') return;
     navigation.setOptions({
-      headerRight: canCreate
-        ? () => (
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {Platform.OS === 'ios' && canCreate ? (
             <Touchable
               testID="videos-create-header-btn"
               accessibilityLabel={t('upload.title')}
@@ -99,10 +107,12 @@ export default function VideosScreen() {
             >
               <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
             </Touchable>
-          )
-        : undefined,
+          ) : null}
+          <NotificationBell unreadCount={unreadCount} onPress={() => router.push('/notifications')} />
+        </View>
+      ),
     });
-  }, [navigation, canCreate, t, router]);
+  }, [navigation, canCreate, unreadCount, t, router]);
 
   const [activeFilter, setActiveFilter] = useState<VideoFilter>('all');
 
@@ -211,6 +221,10 @@ export default function VideosScreen() {
       {Platform.OS === 'android' && canCreate && (
         <ZFab
           testID="videos-create-fab"
+          // Compact icon-only "+" FAB (handoff): the collapsed M3 medium FAB,
+          // ~56dp square, hugging its content at the bottom-right — never the
+          // extended/full-width pill.
+          extended={false}
           label={t('common.actions.uploadVideo')}
           icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />}
           onPress={() => router.push('/upload')}

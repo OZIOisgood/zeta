@@ -1,3 +1,4 @@
+import React from 'react';
 import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 // ── native module mocks (before importing the screen) ─────────────────────────
@@ -10,11 +11,22 @@ jest.mock('expo-secure-store', () => ({
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
-// expo-router: capture push so navigation from the grouped rows can be asserted.
+// expo-router: capture push so navigation from the grouped rows can be asserted,
+// and setOptions so the header-right notification bell wiring can be asserted.
 const mockPush = jest.fn();
+const mockSetOptions = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn() }),
+  useNavigation: () => ({ setOptions: mockSetOptions }),
   Stack: { Screen: () => null },
+}));
+
+// The notification bell (header-right on every tab screen) reads the unread
+// count from this query; default to zero unread so the badge stays hidden.
+const mockUseNotificationsQuery = jest.fn(() => ({ data: { unread_count: 0 } }));
+jest.mock('../api/queries/notifications', () => ({
+  ...jest.requireActual('../api/queries/notifications'),
+  useNotificationsQuery: () => mockUseNotificationsQuery(),
 }));
 
 // Spy on the imperative toast API; the host is mounted at the app root, not here.
@@ -192,6 +204,25 @@ test('the master email switch reflects the user state and persists when toggled'
       'success',
     ),
   );
+});
+
+test('wires the notification bell into the header-right and navigates to /notifications', async () => {
+  authStore.setState({ status: 'signedIn', user: makeUser() });
+  await render(<ProfileScreen />);
+
+  // headerRight is registered via setOptions with a render function (the bell).
+  expect(mockSetOptions).toHaveBeenCalledWith(
+    expect.objectContaining({ headerRight: expect.any(Function) }),
+  );
+
+  const lastCall = mockSetOptions.mock.calls[mockSetOptions.mock.calls.length - 1][0];
+  const HeaderRight = lastCall.headerRight as React.ComponentType;
+  await render(<HeaderRight />);
+
+  const bell = screen.getByTestId('notification-bell');
+  expect(bell).toBeOnTheScreen();
+  fireEvent.press(bell);
+  expect(mockPush).toHaveBeenCalledWith('/notifications');
 });
 
 test('signs out via the auth store', async () => {
