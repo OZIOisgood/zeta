@@ -3,7 +3,12 @@ export type Tier = 'native' | 'custom-canvas' | 'custom-no-native' | 'infra';
 export const TIERS: Record<string, Tier> = {
   'z-button': 'native',
   'z-icon-button': 'native',
-  'z-fab': 'native',
+  // ZFab: Custom-RN, not @expo/ui. The @expo/ui ExtendedFloatingActionButton's
+  // Compose Host re-reported full width on a tab-switch re-layout (the FAB grew
+  // to the screen edge) — unfixable from RN. The NativeWind pill (z-fab.tsx) hugs
+  // content deterministically via Yoga; z-fab.ios.tsx renders null (iOS uses a
+  // nav-bar "+"). Same shape as z-list-item (Custom-RN, .tsx + .ios.tsx).
+  'z-fab': 'custom-no-native',
   'z-select': 'native',
   'z-text-input': 'native',
   'z-textarea': 'native',

@@ -1,12 +1,20 @@
 /**
- * ZFab — shared public API types (Tier: Native)
+ * ZFab — shared public API types (Tier: Custom-RN)
  *
- * Material 3 Floating Action Button — ANDROID ONLY. iOS surfaces the same action
- * via a nav-bar "+", so the iOS variant renders null (and screens guard with
- * Platform.OS === 'android' anyway).
- *   - z-fab.tsx          — NativeWind pill fallback (web / Storybook / jest)
- *   - z-fab.ios.tsx      — renders null
- *   - z-fab.android.tsx  — ExtendedFloatingActionButton (or round FAB when not extended)
+ * Material 3-style Floating Action Button — ANDROID ONLY. iOS surfaces the same
+ * action via a nav-bar "+", so the iOS variant renders null (and screens guard
+ * with Platform.OS === 'android' anyway).
+ *
+ * NativeWind, NOT @expo/ui. The @expo/ui ExtendedFloatingActionButton lived in a
+ * Compose `Host`, and on a tab-switch re-layout (e.g. Videos↔Sessions) the Host
+ * re-reported its width as the full available width — the FAB's left edge jumped
+ * to x=0 and it spanned the screen. That is a Host measurement defect no RN-side
+ * alignSelf/matchContents can override (the Host TELLS RN it is full-width). The
+ * NativeWind pill hugs its content deterministically via Yoga, keeps the native
+ * Android ripple (Touchable) + a 6dp M3 elevation, so it can never stretch. (Same
+ * Custom-RN-with-a-platform-file shape as ZListItem.)
+ *   - z-fab.tsx      — NativeWind pill (web / Storybook / jest / Android)
+ *   - z-fab.ios.tsx  — renders null
  */
 import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';

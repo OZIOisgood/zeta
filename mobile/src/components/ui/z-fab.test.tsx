@@ -1,6 +1,4 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { Text } from 'react-native';
 import { ZFab } from './z-fab';
 
@@ -57,31 +55,17 @@ test('extended fab uses the M3 16dp rounded-square corner (not a full pill)', as
   expect(surface.props.className).not.toContain('rounded-full');
 });
 
-// ── Android native content-hug (source-level scan) ────────────────────────────
-// jest cannot render the Jetpack Compose ExtendedFloatingActionButton, so the
-// content-hug fix in z-fab.android.tsx (the extended FAB must NEVER stretch to
-// the wrapper's full width) is verified by scanning the source. The root cause
-// was a default `alignItems: 'stretch'` on the outer wrapper <View> stretching
-// the flexible-width native Host; the canonical fix is an INNER content-hug
-// view with `alignSelf: 'flex-end'` that overrides the parent's cross-axis
-// stretch so the Host sizes to its Compose content and pins bottom-right.
-describe('z-fab.android content-hug (source scan)', () => {
-  const androidSrc = readFileSync(path.join(__dirname, 'z-fab.android.tsx'), 'utf-8');
-
-  it('wraps the Host in an alignSelf:flex-end content-hug view', () => {
-    expect(androidSrc).toMatch(/alignSelf:\s*['"]flex-end['"]/);
-  });
-
-  it('does NOT keep the ineffective outer alignSelf:flex-start guard', () => {
-    // alignSelf on the absolutely-positioned outer wrapper is ignored, so the
-    // earlier `alignSelf: 'flex-start'` guard never hugged content — it must go.
-    expect(androidSrc).not.toMatch(/alignSelf:\s*['"]flex-start['"]/);
-  });
-
-  it('still forwards className + style on the outer positioning View', () => {
-    // The native-classname-forwarding contract: consumer positioning classes
-    // ("absolute right-6") + dynamic bottom inset must reach an outer View.
-    expect(androidSrc).toMatch(/className=\{className\}/);
-    expect(androidSrc).toMatch(/style=\{style\}/);
-  });
+test('extended fab hugs its content (self-start) — never stretches full-width', async () => {
+  // Regression guard for the full-width-stretch bug: on a tab-switch re-layout
+  // the FAB grew to the screen edge (left edge jumped to x=0). Root cause was the
+  // @expo/ui Compose `Host` re-reporting full width — so the FAB is now this
+  // NativeWind pill, which Yoga sizes deterministically. `self-start` keeps it
+  // content-width regardless of re-layouts, so it can never stretch. (The
+  // consumer anchors it bottom-right via `absolute right-6` on the outer View.)
+  await render(<ZFab label="Upload video" icon={<Text>+</Text>} onPress={() => {}} testID="fab" />);
+  const surface = screen.getByTestId('fab');
+  expect(surface.props.className).toContain('self-start');
+  // Extended → a horizontally-padded pill (px-5), but width still hugs content.
+  expect(surface.props.className).toContain('px-5');
+  expect(surface.props.className).not.toContain('w-full');
 });
