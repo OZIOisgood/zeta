@@ -363,8 +363,17 @@
         </z-action-dialog>
       </ng-template>
 
+      <z-icon-button
+        class="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-20 shadow-lg shadow-orange-950/10 sm:hidden"
+        variant="secondary"
+        [label]="'feedback.open' | transloco"
+        (pressed)="openFeedback(feedbackDialog)"
+      >
+        <svg lucideMessageSquareText class="size-5" aria-hidden="true"></svg>
+      </z-icon-button>
+
       <z-button
-        class="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 shadow-lg shadow-orange-950/10 sm:bottom-6 sm:right-6"
+        class="fixed bottom-6 right-6 z-40 hidden shadow-lg shadow-orange-950/10 sm:inline-flex"
         variant="secondary"
         [ariaLabel]="'feedback.open' | transloco"
         (pressed)="openFeedback(feedbackDialog)"
