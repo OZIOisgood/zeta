@@ -27,10 +27,9 @@ import { formatDate } from '../lib/datetime';
 import { ScheduleDayRow } from '../components/schedule-day-row';
 import { SessionTypeRow } from '../components/session-type-row';
 import { ZButton } from '../components/ui/z-button';
-import { ZCard } from '../components/ui/z-card';
+import { ZGroupedList } from '../components/ui/z-grouped-list';
 import { ZConfirmDialog } from '../components/ui/z-confirm-dialog';
 import { ZDialogPanel } from '../components/ui/z-dialog-panel';
-import { ZDivider } from '../components/ui/z-divider';
 import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZFieldError } from '../components/ui/z-field-error';
 import { ZFieldLabel } from '../components/ui/z-field-label';
@@ -565,14 +564,8 @@ export default function AvailabilityScreen() {
       <ZScreen edges={['bottom']}>
         <Stack.Screen options={{ title: t('sessions.availability.manageTitle') }} />
         <ZKeyboardAvoidingView>
-          <ZCard className="m-4 gap-1">
-            <Text className="text-2xl font-semibold text-z-text">
-              {t('sessions.availability.title')}
-            </Text>
-            <Text className="text-sm leading-6 text-z-muted">
-              {t('sessions.availability.summary')}
-            </Text>
-          </ZCard>
+          {/* No intro card — the native header (title set above) carries the
+              title, matching the handoff (the intro card was removed). */}
           <View testID="availability-group-prompt" className="mx-4 gap-1">
             <ZFieldLabel label={t('common.fields.group')} />
             <ZSelect
@@ -632,31 +625,26 @@ export default function AvailabilityScreen() {
         </View>
       );
     }
-    // Grouped inset-list: one ZCard holds the rows, a hairline ZDivider sits
-    // between consecutive rows (not before the first / after the last). These
-    // admin lists are short, so a mapped ScrollView is fine.
+    // Grouped inset-list (virtualized FlatList): one surface card, hairline
+    // dividers between consecutive rows.
     return (
-      <ScrollView
-        className="flex-1"
+      <ZGroupedList
+        scroll
+        data={data}
+        keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom }}
-      >
-        <ZCard tone="surface">
-          {data.map((item, index) => (
-            <View key={item.id}>
-              {index > 0 ? <ZDivider inset /> : null}
-              <SessionTypeRow
-                sessionType={item}
-                durationLabel={t('common.labels.minutesShort', { count: item.duration_minutes })}
-                editLabel={t('common.actions.edit')}
-                deleteLabel={t('common.actions.delete')}
-                onEdit={() => setTypeSheet({ editing: item })}
-                onDelete={() => setDeleteTarget({ kind: 'type', id: item.id })}
-              />
-            </View>
-          ))}
-        </ZCard>
-      </ScrollView>
+        contentContainerStyle={{ paddingBottom: listPaddingBottom }}
+        renderItem={(item) => (
+          <SessionTypeRow
+            sessionType={item}
+            durationLabel={t('common.labels.minutesShort', { count: item.duration_minutes })}
+            editLabel={t('common.actions.edit')}
+            deleteLabel={t('common.actions.delete')}
+            onEdit={() => setTypeSheet({ editing: item })}
+            onDelete={() => setDeleteTarget({ kind: 'type', id: item.id })}
+          />
+        )}
+      />
     );
   }
 
@@ -695,29 +683,26 @@ export default function AvailabilityScreen() {
         </View>
       );
     }
-    // Grouped inset-list: one ZCard, hairline ZDivider between consecutive rows.
+    // Grouped inset-list (virtualized FlatList): one surface card, hairline
+    // dividers between consecutive rows.
     return (
-      <ScrollView
-        className="flex-1"
+      <ZGroupedList
+        scroll
+        data={data}
+        keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom }}
-      >
-        <ZCard tone="surface">
-          {data.map((item, index) => (
-            <View key={item.id}>
-              {index > 0 ? <ZDivider inset /> : null}
-              <ScheduleDayRow
-                availability={item}
-                dayName={t(`weekdays.${item.day_of_week}`)}
-                editLabel={t('common.actions.edit')}
-                deleteLabel={t('common.actions.delete')}
-                onEdit={() => setAvailSheet({ editing: item })}
-                onDelete={() => setDeleteTarget({ kind: 'avail', id: item.id })}
-              />
-            </View>
-          ))}
-        </ZCard>
-      </ScrollView>
+        contentContainerStyle={{ paddingBottom: listPaddingBottom }}
+        renderItem={(item) => (
+          <ScheduleDayRow
+            availability={item}
+            dayName={t(`weekdays.${item.day_of_week}`)}
+            editLabel={t('common.actions.edit')}
+            deleteLabel={t('common.actions.delete')}
+            onEdit={() => setAvailSheet({ editing: item })}
+            onDelete={() => setDeleteTarget({ kind: 'avail', id: item.id })}
+          />
+        )}
+      />
     );
   }
 
@@ -756,52 +741,49 @@ export default function AvailabilityScreen() {
         </View>
       );
     }
-    // Grouped inset-list: one ZCard, hairline ZDivider between consecutive rows.
+    // Grouped inset-list (virtualized FlatList): one surface card, hairline
+    // dividers between consecutive rows.
     return (
-      <ScrollView
-        className="flex-1"
+      <ZGroupedList
+        scroll
+        data={data as CoachingBlockedSlot[]}
+        keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, paddingBottom: listPaddingBottom }}
-      >
-        <ZCard tone="surface">
-          {data.map((item: CoachingBlockedSlot, index) => {
-            // Time-range vs full-day on the first subtitle line; the optional
-            // reason follows on a second line (ZListItem subtitle allows 3 lines).
-            const timeline =
-              item.start_time && item.end_time
-                ? `${item.start_time} – ${item.end_time}`
-                : t('common.labels.fullDay');
-            const subtitle = item.reason ? `${timeline}\n${item.reason}` : timeline;
-            return (
-              <View key={item.id}>
-                {index > 0 ? <ZDivider inset /> : null}
-                <ZListItem
-                  // Non-interactive: the row surfaces its own delete control.
-                  leading={
-                    <ZIconTile
-                      icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={colors.text} />}
-                      tone="neutral"
-                      size="sm"
-                    />
-                  }
-                  title={formatDate(item.blocked_date)}
-                  subtitle={subtitle}
-                  trailing={
-                    <ZIconButton
-                      label={t('common.actions.delete')}
-                      variant="secondary"
-                      size="sm"
-                      onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
-                    >
-                      <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={colors.danger} />
-                    </ZIconButton>
-                  }
+        contentContainerStyle={{ paddingBottom: listPaddingBottom }}
+        renderItem={(item) => {
+          // Time-range vs full-day on the first subtitle line; the optional
+          // reason follows on a second line (ZListItem subtitle allows 3 lines).
+          const timeline =
+            item.start_time && item.end_time
+              ? `${item.start_time} – ${item.end_time}`
+              : t('common.labels.fullDay');
+          const subtitle = item.reason ? `${timeline}\n${item.reason}` : timeline;
+          return (
+            <ZListItem
+              // Non-interactive: the row surfaces its own delete control.
+              leading={
+                <ZIconTile
+                  icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={colors.text} />}
+                  tone="neutral"
+                  size="sm"
                 />
-              </View>
-            );
-          })}
-        </ZCard>
-      </ScrollView>
+              }
+              title={formatDate(item.blocked_date)}
+              subtitle={subtitle}
+              trailing={
+                <ZIconButton
+                  label={t('common.actions.delete')}
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
+                >
+                  <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={colors.danger} />
+                </ZIconButton>
+              }
+            />
+          );
+        }}
+      />
     );
   }
 
@@ -852,16 +834,9 @@ export default function AvailabilityScreen() {
         }}
       />
       <ZKeyboardAvoidingView>
-        {/* form/wizard summary card */}
-        <ZCard className="m-4 gap-1">
-          <Text className="text-2xl font-semibold text-z-text">
-            {t('sessions.availability.title')}
-          </Text>
-          <Text className="text-sm leading-6 text-z-muted">
-            {t('sessions.availability.summary')}
-          </Text>
-        </ZCard>
-
+        {/* No in-content title/summary card — the native large-title header
+            (title set above) carries the screen title, matching the handoff
+            (the prototype removed the intro card; sections are a grouped list). */}
         {/* For multi-group experts, a group-change selector is shown once a
             group has been selected (the first selection goes through the early-
             return group-prompt above; this lets them switch after). */}

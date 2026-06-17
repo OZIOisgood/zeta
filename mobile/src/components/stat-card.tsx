@@ -45,7 +45,7 @@ export function StatCard({
 
   if (!interactive) {
     return (
-      <View testID={testID} className="flex-1 rounded-[16px] border border-z-border bg-z-surface p-4">
+      <View testID={testID} className="flex-1 rounded-[16px] bg-z-surface p-4">
         {inner}
       </View>
     );
@@ -57,7 +57,7 @@ export function StatCard({
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${count}`}
       onPress={onPress}
-      className="flex-1 rounded-[16px] border border-z-border bg-z-surface p-4 active:bg-z-surface-warm"
+      className="flex-1 rounded-[16px] bg-z-surface p-4 active:bg-z-surface-warm"
     >
       {inner}
     </Pressable>

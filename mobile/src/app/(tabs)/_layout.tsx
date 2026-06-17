@@ -50,7 +50,7 @@ export default function TabsLayout() {
   //    icon above the others); the handoff shows all labels aligned.
   const iosProps =
     Platform.OS === 'ios'
-      ? { tintColor: DynamicColorIOS({ light: roleColor('onAccentContainer', 'light'), dark: accentColor('dark') }) }
+      ? { tintColor: DynamicColorIOS({ light: accentColor('light'), dark: accentColor('dark') }) }
       : {};
   const androidProps =
     Platform.OS === 'android'

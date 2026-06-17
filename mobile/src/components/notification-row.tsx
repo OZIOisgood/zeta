@@ -149,7 +149,7 @@ export function NotificationRow({
   // affordance (an earlier change set both to the same fill).
   return (
     <View
-      className={`overflow-hidden rounded-[16px] border border-z-border p-3 ${
+      className={`overflow-hidden rounded-[16px] p-3 ${
         unread ? 'bg-surface' : 'bg-transparent'
       }`}
     >

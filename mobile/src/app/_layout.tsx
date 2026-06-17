@@ -62,7 +62,7 @@ export default function RootLayout() {
   // utilities (font-normal/medium/semibold/bold/extrabold) are mapped to these
   // faces in global.css. Loaded at runtime via JS-imported faces + useFonts —
   // no native rebuild needed.
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     NunitoSans_400Regular,
     NunitoSans_500Medium,
     NunitoSans_600SemiBold,
@@ -75,9 +75,11 @@ export default function RootLayout() {
   }, []);
 
   // Keep the splash spinner up until both the brand font and the persisted
-  // session are ready, so text never flashes in the system font first.
+  // session are ready, so text never flashes in the system font first. If the
+  // font fails to load (fontError), proceed anyway with the system fallback —
+  // never hang the splash forever on a font error.
   const content =
-    !fontsLoaded || status === 'loading' ? (
+    (!fontsLoaded && !fontError) || status === 'loading' ? (
       <View className="flex-1 items-center justify-center bg-z-bg">
         <ActivityIndicator size="large" color={colors.primary} />
       </View>

@@ -19,7 +19,7 @@ export function GroupCard({ group, onPress }: { group: Group; onPress: () => voi
           image={group.avatar ?? undefined}
           fallback={initialsFromName(group.name)}
           alt={group.name}
-          size={48}
+          size={44}
           testID={group.avatar ? undefined : 'group-avatar-fallback'}
         />
       }

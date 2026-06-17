@@ -1,33 +1,42 @@
 import { render, screen } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { ZDivider } from './z-divider';
 
-test('horizontal default renders a thin full-width outline rule', async () => {
+function flatLineStyle(testID = 'divider') {
+  return StyleSheet.flatten(screen.getByTestId(testID).props.style) as Record<string, unknown>;
+}
+
+test('horizontal default stretches to fill width (no width:100% → no inset overflow)', async () => {
   await render(<ZDivider testID="divider" />);
-  const cls = screen.getByTestId('divider').props.className as string;
-  expect(cls).toContain('h-px');
-  expect(cls).toContain('w-full');
-  expect(cls).toContain('bg-outline');
+  const s = flatLineStyle();
+  expect(s.alignSelf).toBe('stretch');
+  expect(s.width).toBeUndefined();
+  expect(Number(s.height)).toBeGreaterThan(0);
+  expect(typeof s.backgroundColor).toBe('string');
+  expect(s.marginStart).toBeUndefined();
 });
 
 test('vertical renders a thin full-height outline rule', async () => {
   await render(<ZDivider vertical testID="divider" />);
-  const cls = screen.getByTestId('divider').props.className as string;
-  expect(cls).toContain('w-px');
-  expect(cls).toContain('h-full');
-  expect(cls).toContain('bg-outline');
+  const s = flatLineStyle();
+  expect(Number(s.width)).toBeGreaterThan(0);
+  expect(s.height).toBe('100%');
 });
 
-test('horizontal inset adds a 16dp horizontal margin (mx-4)', async () => {
+test('inset (boolean) applies the 16dp leading inset as a margin, not via width', async () => {
   await render(<ZDivider inset testID="divider" />);
-  expect(screen.getByTestId('divider').props.className).toContain('mx-4');
+  const s = flatLineStyle();
+  expect(s.marginStart).toBe(16);
+  expect(s.alignSelf).toBe('stretch');
+  expect(s.width).toBeUndefined();
 });
 
-test('vertical inset adds a 16dp vertical margin (my-4)', async () => {
-  await render(<ZDivider vertical inset testID="divider" />);
-  expect(screen.getByTestId('divider').props.className).toContain('my-4');
+test('inset (number) is used verbatim for leading-aligned grouped separators', async () => {
+  await render(<ZDivider inset={58} testID="divider" />);
+  expect(flatLineStyle().marginStart).toBe(58);
 });
 
-test('forwards consumer className onto the wrapper', async () => {
+test('forwards consumer className onto the line node', async () => {
   await render(<ZDivider className="my-8" testID="divider" />);
   expect(screen.getByTestId('divider').props.className).toContain('my-8');
 });

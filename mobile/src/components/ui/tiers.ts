@@ -15,9 +15,10 @@ export const TIERS: Record<string, Tier> = {
   'z-switch': 'custom-no-native',
   'z-tabs': 'native',
   'z-card': 'native',
-  // ZDivider: a thin separator line — no OS-widget equivalent. Custom-RN with a
-  // platform split only for differing stroke widths (1dp Android / 0.5pt iOS)
-  // and the iOS table-separator inset; both files use the `outline` role token.
+  // ZDivider: a thin separator line — no OS-widget equivalent. Single shared
+  // NativeWind file (same pattern as ZBadge / ZSwitch); branches on Platform.OS
+  // only for the stroke weight (1dp Android / 0.5pt iOS). Uses the `outline`
+  // role token; supports a boolean or numeric `inset`.
   'z-divider': 'custom-no-native',
   'z-progress': 'native',
   // ZBadge: semantic status pill — no OS widget equivalent on either platform.
@@ -47,6 +48,11 @@ export const TIERS: Record<string, Tier> = {
   // `.tsx` (the test/contract surface), avoiding jest-expo's default
   // Platform.OS='ios'. Full rationale in z-list-item.types.ts.
   'z-list-item': 'custom-no-native',
+  // ZGroupedList: the inset-grouped "card + rows + hairline dividers" idiom as a
+  // single primitive (embed = ZCard+map for forms; scroll = virtualized FlatList
+  // for standalone lists). Composition of ZCard + ZDivider; no OS widget → a
+  // single Custom-RN file.
+  'z-grouped-list': 'custom-no-native',
   'z-icon-tile': 'custom-no-native',
   'z-skeleton': 'custom-no-native',
   'z-video-preview': 'custom-no-native',

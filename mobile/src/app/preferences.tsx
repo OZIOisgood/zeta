@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { ZBadge } from '../components/ui/z-badge';
 import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
 import { ZDivider } from '../components/ui/z-divider';
+import { ZIconTile } from '../components/ui/z-icon-tile';
 import { ZListItem } from '../components/ui/z-list-item';
 import { ZSwitch } from '../components/ui/z-switch';
 import { ZCombobox, type ZComboboxOption } from '../components/ui/z-combobox';
@@ -21,6 +22,37 @@ import { showToast } from '../components/ui/z-toast';
 import { authStore, useAuth } from '../auth/auth-store';
 import type { Me, UpdateMeRequest } from '../auth/auth-store';
 import { colors } from '../theme/colors';
+
+/**
+ * Section header for a settings card: a neutral icon tile + title + summary with
+ * an optional trailing badge. One helper instead of the two hand-rolled copies
+ * that re-inlined the icon tile (at the wrong radius) and a manual hairline.
+ */
+function CardSectionHeader({
+  icon,
+  title,
+  summary,
+  badge,
+}: {
+  icon: ComponentProps<typeof ZSymbol>['name'];
+  title: string;
+  summary: string;
+  badge?: ReactNode;
+}) {
+  return (
+    <View className="flex-row items-start gap-3">
+      <ZIconTile
+        tone="neutral"
+        icon={<ZSymbol name={icon} label={title} size={20} color={colors.primary} />}
+      />
+      <View className="flex-1">
+        <Text className="text-base font-semibold text-on-surface">{title}</Text>
+        <Text className="mt-1 text-sm leading-5 text-on-surface-variant">{summary}</Text>
+      </View>
+      {badge}
+    </View>
+  );
+}
 
 type EmailPreferences = Me['email_preferences'];
 type Language = Me['language'];
@@ -300,22 +332,17 @@ function PreferencesForm({ user }: { user: Me }) {
         >
           <View className="gap-4 p-4">
             <ZCard className="gap-4">
-              <View className="flex-row items-start gap-3 border-b border-z-border pb-4">
-                <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-                  <ZSymbol name="person" label={t('preferences.personalData')} size={20} color={colors.primary} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-z-text">
-                    {t('preferences.personalData')}
-                  </Text>
-                  <Text className="mt-1 text-sm leading-5 text-z-muted">
-                    {t('preferences.personalSummary')}
-                  </Text>
-                </View>
-                {KNOWN_ROLES.includes(user.role) ? (
-                  <ZBadge tone="neutral" label={t(`groups.roles.${user.role}`)} />
-                ) : null}
-              </View>
+              <CardSectionHeader
+                icon="person"
+                title={t('preferences.personalData')}
+                summary={t('preferences.personalSummary')}
+                badge={
+                  KNOWN_ROLES.includes(user.role) ? (
+                    <ZBadge tone="neutral" label={t(`groups.roles.${user.role}`)} />
+                  ) : null
+                }
+              />
+              <ZDivider />
 
               <ZAvatarInput
                 value={avatar ?? undefined}
@@ -388,19 +415,12 @@ function PreferencesForm({ user }: { user: Me }) {
             </ZCard>
 
             <ZCard className="gap-4">
-              <View className="flex-row items-start gap-3 border-b border-z-border pb-4">
-                <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-                  <ZSymbol name="bell" label={t('preferences.emailPreferences')} size={20} color={colors.primary} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-z-text">
-                    {t('preferences.emailPreferences')}
-                  </Text>
-                  <Text className="mt-1 text-sm leading-5 text-z-muted">
-                    {t('preferences.emailSummary')}
-                  </Text>
-                </View>
-              </View>
+              <CardSectionHeader
+                icon="bell"
+                title={t('preferences.emailPreferences')}
+                summary={t('preferences.emailSummary')}
+              />
+              <ZDivider />
 
               {/* Master toggle — plain row (no tonal fill). */}
               <ZListItem

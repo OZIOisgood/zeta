@@ -58,7 +58,10 @@ function MembersSkeleton() {
 }
 
 function MemberDivider() {
-  return <ZDivider />;
+  // Leading-aligned separator: starts under the title, past the 44dp avatar
+  // (12 row pad + 44 avatar + 12 gap = 68dp). Matches the M3 inset-list look
+  // (was full-bleed).
+  return <ZDivider inset={68} />;
 }
 
 function MemberSection({

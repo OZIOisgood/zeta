@@ -46,7 +46,7 @@ export function FirstStepRow({
     <View
       testID="first-step-row-circle"
       className="h-6 w-6 rounded-full"
-      style={{ borderWidth: 2, borderColor: color('outline') }}
+      style={{ borderWidth: 2, borderColor: color('outlineStrong') }}
     />
   );
 

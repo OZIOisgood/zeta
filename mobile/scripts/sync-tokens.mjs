@@ -60,6 +60,37 @@ const MOBILE_LIGHT = {
 };
 const tokensM = tokens.map(([name, value]) => [name, MOBILE_LIGHT[camelCase(name)] ?? value]);
 
+// Dark values for the legacy flat --z-* tokens. Without these the --z-* vars are
+// emitted only in :root (light) and DO NOT adapt to dark mode — so any screen
+// still using a legacy class (text-z-text / bg-z-surface / border-z-border …)
+// renders its light value on a dark canvas (near-black text on a dark card).
+// These mirror the role dark values 1:1 (e.g. --z-surface == --role-surface in
+// both schemes), so legacy and role classes stay visually identical until the
+// remaining screens are migrated off the legacy vocabulary.
+const MOBILE_DARK = {
+  bg: '#18120d',
+  surface: '#1f160f',
+  surfaceWarm: '#261c14',
+  surfaceMuted: '#31271d',
+  text: '#f2dfd2',
+  muted: '#d8c3b6',
+  border: '#54443b',
+  primary: '#ffb68f',
+  primaryStrong: '#ffb68f',
+  primarySoft: '#7c3500',
+  accent: '#fbbf24',
+  success: '#7fd99a',
+  successSoft: '#1f4a30',
+  warning: '#fbbf24',
+  warningSoft: '#3b1500',
+  danger: '#fb7185',
+  dangerSoft: '#500724',
+};
+const tokensDark = tokens.map(([name, value]) => [
+  name,
+  MOBILE_DARK[camelCase(name)] ?? MOBILE_LIGHT[camelCase(name)] ?? value,
+]);
+
 // ─── Role maps ───────────────────────────────────────────────────────────────
 //
 // LIGHT roles are derived 1-to-1 from the flat web tokens. The mapping is
@@ -71,17 +102,17 @@ const tokensM = tokens.map(([name, value]) => [name, MOBILE_LIGHT[camelCase(name
 //   outline      → border/divider
 //
 // DARK derivation rationale:
-//   The Zeta brand is warm orange on a light cream canvas. In dark mode we
-//   invert the luminance — warm-neutral near-black surfaces (#1a0f08 bg,
-//   #231409 surface, #2e1b0e surfaceVariant) preserve the brand warmth without
-//   eye strain. The accent is lightened to orange-400 (#fb923c) so it reads
-//   at sufficient contrast against dark surfaces (approx 4.6:1 against #231409).
-//   Status colors are lightened one step along their respective scales to keep
-//   ≥4.5:1 on dark surfaces. onSurface text is warm-white (#f5e6d3) and
-//   onSurfaceVariant is warm-gray (#a8917c), both readable against the dark
-//   background. Container tones are dark-tinted versions of the light soft
-//   tones. This is a sensible first pass; it can be refined via a full
-//   contrast-check sweep in a later task.
+//   The Zeta brand is warm orange on a light cream canvas. Dark mode mirrors the
+//   handoff Material orange-dark scheme (material-themes.js -> orange-dark): warm
+//   near-black surfaces (#18120d bg/surface, #1f160f s1 ... #3c3026 s4) preserve
+//   the brand warmth without eye strain. Per Material You the primary FLIPS in
+//   dark: accent is the lightened tone (#ffb68f, M3 --m-primary) and on-accent is
+//   the deep brown (#522300, --m-on-primary) -- white-on-accent would fail
+//   contrast against the light dark-mode accent. accent and accentStrong share
+//   #ffb68f in dark (both fill high-emphasis primary surfaces: buttons, FAB,
+//   icon-buttons). Status colors are lightened one step to keep >=4.5:1 on dark
+//   surfaces; onSurface is warm-white (#f2dfd2); container tones are the handoff
+//   dark-tinted tones.
 
 const LIGHT_ROLES = {
   accent: '#bd4309',
@@ -124,10 +155,10 @@ const LIGHT_ROLES = {
 
 const DARK_ROLES = {
   accent: '#ffb68f',
-  onAccent: '#ffffff',
+  onAccent: '#522300',
   accentContainer: '#7c3500',
   onAccentContainer: '#ffdbc8',
-  accentStrong: '#bd4309',
+  accentStrong: '#ffb68f',
   secondaryContainer: '#5d4030',
   onSecondaryContainer: '#ffdcc4',
 
@@ -189,6 +220,7 @@ const cssBlock = [
   '}',
   '@media (prefers-color-scheme: dark) {',
   '  :root {',
+  ...tokensDark.map(([name, value]) => `    --z-${name}: ${value};`),
   ...darkRoleLines.map((l) => '  ' + l),
   '  }',
   '}',

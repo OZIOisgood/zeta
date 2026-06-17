@@ -61,10 +61,12 @@ beforeEach(() => {
 
 // ── rendering ─────────────────────────────────────────────────────────────────
 
-test('renders the create group form header', async () => {
+test('renders the create group form (title lives in the native header, not an in-body card)', async () => {
   const { Providers } = setup();
   await render(<Providers><CreateGroupScreen /></Providers>);
-  expect(screen.getByText('Create a new group')).toBeOnTheScreen();
+  // The in-body intro/title card was removed to match the handoff — the screen
+  // title is the native large-title header now. The avatar is the first element.
+  expect(screen.getByTestId('create-group-avatar')).toBeOnTheScreen();
 });
 
 test('renders name input, avatar input, description textarea', async () => {

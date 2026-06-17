@@ -182,7 +182,7 @@ function ProfileOverview({ user }: { user: Me }) {
           <ZCard tone="surface">
             {visibleRows.map((row, index) => (
               <View key={row.key}>
-                {index > 0 ? <ZDivider inset /> : null}
+                {index > 0 ? <ZDivider inset={64} /> : null}
                 <ZListItem
                   leading={
                     <ZIconTile
@@ -196,7 +196,7 @@ function ProfileOverview({ user }: { user: Me }) {
                 />
               </View>
             ))}
-            <ZDivider inset />
+            <ZDivider inset={64} />
             <ZListItem
               leading={
                 <ZIconTile

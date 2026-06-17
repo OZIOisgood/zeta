@@ -11,6 +11,7 @@ import {
 import { ZAvatar } from '../components/ui/z-avatar';
 import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
+import { ZDivider } from '../components/ui/z-divider';
 import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZFieldError } from '../components/ui/z-field-error';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
@@ -139,11 +140,11 @@ export default function InviteScreen() {
                 </ZCard>
               )}
 
-              {/* Divider */}
+              {/* "or enter manually" labeled divider — ZDivider rules flank the label */}
               <View className="my-4 flex-row items-center gap-3">
-                <View className="h-px flex-1 bg-z-border" />
+                <ZDivider className="flex-1" />
                 <Text className="text-sm text-z-muted">{t('groups.invite.manualDivider')}</Text>
-                <View className="h-px flex-1 bg-z-border" />
+                <ZDivider className="flex-1" />
               </View>
 
               {/* Manual entry */}

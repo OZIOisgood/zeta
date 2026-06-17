@@ -47,10 +47,10 @@ export const roles = {
   },
   dark: {
     accent: '#ffb68f',
-    onAccent: '#ffffff',
+    onAccent: '#522300',
     accentContainer: '#7c3500',
     onAccentContainer: '#ffdbc8',
-    accentStrong: '#bd4309',
+    accentStrong: '#ffb68f',
     secondaryContainer: '#5d4030',
     onSecondaryContainer: '#ffdcc4',
     success: '#7fd99a',

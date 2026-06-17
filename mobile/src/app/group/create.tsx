@@ -63,13 +63,8 @@ export default function CreateGroupScreen() {
           keyboardShouldPersistTaps="handled"
         >
 
-          {/* Header card — mirrors the web form card */}
-          <ZCard className="mb-4 mt-2">
-            <Text className="text-2xl font-semibold text-z-text">{t('groups.createNew')}</Text>
-            <Text className="mt-2 text-sm leading-6 text-z-muted">
-              {t('groups.createFirstDescription')}
-            </Text>
-          </ZCard>
+          {/* No in-content header card — the native header (title set above)
+              carries the title; the avatar is the first element (handoff). */}
 
           {/* Avatar — standalone, centered above the form card (handoff). */}
           <View className="mb-4 items-center">

@@ -60,7 +60,10 @@ export function ZEmptyState({
         style={{
           marginTop: 16,
           fontSize: 16,
-          fontWeight: '600',
+          // An explicit `style` suppresses the Text.defaultProps Nunito default
+          // (React only fills undefined props), and Android can't synthesize the
+          // SemiBold cut from a numeric weight — so name the loaded face directly.
+          fontFamily: 'NunitoSans_600SemiBold',
           color: color('onSurface'),
           textAlign: 'center',
         }}
@@ -72,6 +75,7 @@ export function ZEmptyState({
           marginTop: 8,
           fontSize: 14,
           lineHeight: 24,
+          fontFamily: 'NunitoSans_400Regular',
           color: color('onSurfaceVariant'),
           textAlign: 'center',
         }}

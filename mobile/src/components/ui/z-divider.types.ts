@@ -1,41 +1,36 @@
 /**
- * ZDivider — shared public API types (Tier: Custom RN)
+ * ZDivider — shared public API types (Tier: custom-no-native)
  *
- * ZDivider is a Custom-RN primitive: a thin separator line. There is no OS
- * widget counterpart for a standalone divider, so it is rendered as a thin
- * role-token-styled View. A platform split IS warranted because the stroke
- * width and default inset differ per platform (handoff spec):
- *   - Material (Android) → 1dp `outline` stroke, full bleed.
- *   - iOS                → 0.5pt (hairline) `outline` stroke; the inset variant
- *                          uses the 16pt horizontal table-separator inset.
+ * ZDivider is a single-file Custom-RN primitive: a thin separator line. There is
+ * no OS-widget counterpart, so (like ZBadge / ZSwitch) it is ONE cross-platform
+ * file — `z-divider.tsx` — that branches on `Platform.OS` only for the stroke
+ * weight (1dp Android / 0.5pt iOS hairline). No platform split, no jest mapper.
  *
- * Platform files:
- *   - z-divider.tsx         — bare NativeWind fallback (web / Storybook / jest)
- *   - z-divider.ios.tsx     — 0.5pt hairline line via useRoleColors()
- *   - z-divider.android.tsx — 1dp line via useRoleColors()
- *
- * Colors come exclusively from the `outline` role token (bg-outline class in
- * the fallback / color('outline') in the native files). Never raw hex.
+ * Colors come exclusively from the `outline` role token (color('outline')).
+ * Never raw hex.
  */
 
 import type { StyleProp, ViewStyle } from 'react-native';
 
 export type ZDividerProps = {
   /**
-   * Orientation. Horizontal (default) renders a 1px/hairline rule spanning the
-   * full width; vertical renders a 1px/hairline rule spanning the full height.
+   * Orientation. Horizontal (default) renders a hairline rule that stretches to
+   * the parent width; vertical renders a hairline rule spanning the full height.
    * @default false
    */
   vertical?: boolean;
   /**
-   * Table-separator inset. Horizontal → 16dp left/right margin (mx-4);
-   * vertical → 16dp top/bottom margin (my-4).
+   * Table-separator inset along the cross axis.
+   *   - `true`   → the default 16dp inset (M3 / HIG table separator).
+   *   - a number → that exact inset in dp, e.g. to align the separator under the
+   *     title past a leading avatar/icon-tile in an inset-grouped list.
+   *   - `false`  → full-bleed (no inset).
+   * Applied as a margin on a stretched line, so it never overflows the parent.
    * @default false
    */
-  inset?: boolean;
+  inset?: boolean | number;
   /**
-   * Consumer layout classes (margins, alignment). Forwarded onto the wrapper so
-   * consumer layout wins. Required by the native className-forwarding contract.
+   * Consumer layout classes (margins, alignment). Applied to the line node.
    */
   className?: string;
   /** Extra inline style merged onto the line View. */

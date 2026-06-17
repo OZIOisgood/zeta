@@ -287,9 +287,9 @@ export default function HomeScreen() {
               className="mt-3"
             />
             <View className="mt-2">
-              {steps.map((step, i) => (
+              {steps.map((step, index) => (
                 <View key={step.labelKey}>
-                  {i > 0 ? <ZDivider /> : null}
+                  {index > 0 ? <ZDivider /> : null}
                   <FirstStepRow
                     testID={step.testID}
                     label={t(step.labelKey)}
