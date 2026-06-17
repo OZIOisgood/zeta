@@ -43,6 +43,10 @@
   --role-background: #fff8f4;
   --role-surface: #fdf1ea;
   --role-surface-variant: #faece2;
+  --role-surface-1: #fdf1ea;
+  --role-surface-2: #faece2;
+  --role-surface-3: #f5e6db;
+  --role-surface-4: #efe0d4;
   --role-on-surface: #221a15;
   --role-on-surface-variant: #54443b;
   --role-outline: #d8c3b6;
@@ -72,6 +76,10 @@
     --role-background: #18120d;
     --role-surface: #1f160f;
     --role-surface-variant: #261c14;
+    --role-surface-1: #1f160f;
+    --role-surface-2: #261c14;
+    --role-surface-3: #31271d;
+    --role-surface-4: #3c3026;
     --role-on-surface: #f2dfd2;
     --role-on-surface-variant: #d8c3b6;
     --role-outline: #54443b;

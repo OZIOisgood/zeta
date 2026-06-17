@@ -110,6 +110,10 @@ const LIGHT_ROLES = {
   background: '#fff8f4',
   surface: '#fdf1ea',
   surfaceVariant: '#faece2',
+  surface1: '#fdf1ea',
+  surface2: '#faece2',
+  surface3: '#f5e6db',
+  surface4: '#efe0d4',
 
   onSurface: '#221a15',
   onSurfaceVariant: '#54443b',
@@ -145,6 +149,10 @@ const DARK_ROLES = {
   background: '#18120d',
   surface: '#1f160f',
   surfaceVariant: '#261c14',
+  surface1: '#1f160f',
+  surface2: '#261c14',
+  surface3: '#31271d',
+  surface4: '#3c3026',
 
   onSurface: '#f2dfd2',
   onSurfaceVariant: '#d8c3b6',
@@ -164,7 +172,8 @@ if (begin === -1 || end === -1 || end < begin) {
 }
 
 // Build the role CSS vars for light (:root) and dark (prefers-color-scheme).
-const kebab = (key) => key.replace(/([A-Z])/g, (c) => `-${c.toLowerCase()}`);
+const kebab = (key) =>
+  key.replace(/([A-Z])/g, (c) => `-${c.toLowerCase()}`).replace(/([a-z])(\d)/g, '$1-$2');
 const lightRoleLines = Object.entries(LIGHT_ROLES).map(
   ([role, value]) => `  --role-${kebab(role)}: ${value};`,
 );

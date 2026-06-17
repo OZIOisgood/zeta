@@ -48,6 +48,10 @@ module.exports = {
         'background': 'var(--role-background)',
         'surface': 'var(--role-surface)',
         'surface-variant': 'var(--role-surface-variant)',
+        'surface-1': 'var(--role-surface-1)',
+        'surface-2': 'var(--role-surface-2)',
+        'surface-3': 'var(--role-surface-3)',
+        'surface-4': 'var(--role-surface-4)',
         // Text hierarchy: text-on-surface / text-on-surface-variant
         'on-surface': 'var(--role-on-surface)',
         'on-surface-variant': 'var(--role-on-surface-variant)',
