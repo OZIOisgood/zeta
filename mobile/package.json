@@ -175,7 +175,11 @@
       "^(\\./|(\\.\\./)+)(.*/)?(z-combobox)$": "<rootDir>/src/components/ui/z-combobox.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-combobox)\\.ios$": "<rootDir>/src/components/ui/z-combobox.tsx",
       "^(\\./|(\\.\\./)+)(.*/)?(z-combobox)\\.android$": "<rootDir>/src/components/ui/z-combobox.tsx",
-      ".*/components/ui/z-combobox(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-combobox.tsx"
+      ".*/components/ui/z-combobox(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-combobox.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-list-item)$": "<rootDir>/src/components/ui/z-list-item.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-list-item)\\.ios$": "<rootDir>/src/components/ui/z-list-item.tsx",
+      "^(\\./|(\\.\\./)+)(.*/)?(z-list-item)\\.android$": "<rootDir>/src/components/ui/z-list-item.tsx",
+      ".*/components/ui/z-list-item(\\.ios|\\.android)?$": "<rootDir>/src/components/ui/z-list-item.tsx"
     }
   },
   "private": true,

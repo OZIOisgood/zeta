@@ -35,6 +35,13 @@ export const TIERS: Record<string, Tier> = {
   // its own. Classified as COMPOSITION_EXCEPTION in primitive-contract.test.ts.
   'z-danger-zone-card': 'custom-no-native',
   'z-stepper': 'custom-no-native',
+  // ZListItem: a pressable list ROW — a composition (Touchable + leading/title/
+  // subtitle/trailing), not a single OS widget. @expo/ui exposes only container
+  // List/Section (iOS) and a slot-only ListItem without onPress (Android),
+  // neither of which wraps arbitrary RN leading/trailing nodes. Single shared
+  // NativeWind file with Platform.OS-branched styling — same single-file
+  // rationale as ZSwitch; no .ios/.android split, no moduleNameMapper block.
+  'z-list-item': 'custom-no-native',
   'z-icon-tile': 'custom-no-native',
   'z-skeleton': 'custom-no-native',
   'z-video-preview': 'custom-no-native',
