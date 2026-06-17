@@ -49,13 +49,15 @@ function LoadingState() {
         contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
       >
         <View className="gap-4 p-4">
-          <ZCard tone="accent" hero className="flex-row items-center gap-3">
+          {/* Hero skeleton — a View (not ZCard) to match the loaded hero, which
+              must avoid the ZCard Compose flex-1 collapse (see ProfileOverview). */}
+          <View className="flex-row items-center gap-3.5 rounded-[28px] bg-accent-container p-4">
             <ZSkeleton className="h-14 w-14 rounded-full" />
             <View className="flex-1 gap-2">
               <ZSkeleton className="h-5 w-40" />
               <ZSkeleton className="h-4 w-28" />
             </View>
-          </ZCard>
+          </View>
           <ZCard tone="surface" className="gap-3">
             <ZSkeleton className="h-12 w-full" />
             <ZSkeleton className="h-12 w-full" />
@@ -158,8 +160,12 @@ function ProfileOverview({ user }: { user: Me }) {
         contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
       >
         <View className="gap-4 p-4">
-          {/* Hero — accent feature card with avatar + name + role/identity. */}
-          <ZCard tone="accent" hero className="flex-row items-center gap-3">
+          {/* Hero — accent feature surface with avatar + name + role/identity.
+              A NativeWind View, NOT ZCard: the @expo/ui Compose Card collapses a
+              flex-1 child to 0 width, dropping the name/email next to the avatar
+              (next-session-card + asset-card avoid ZCard for the same reason).
+              bg-accent-container + 28dp radius + p-4 match the ZCard accent-hero. */}
+          <View className="flex-row items-center gap-3.5 rounded-[28px] bg-accent-container p-4">
             <ZAvatar
               image={user.avatar || undefined}
               fallback={initials(user)}
@@ -169,20 +175,20 @@ function ProfileOverview({ user }: { user: Me }) {
               tone="accent"
             />
             <View className="min-w-0 flex-1">
-              <Text numberOfLines={1} className="text-lg font-extrabold text-on-accent-container">
+              <Text numberOfLines={1} className="text-lg font-extrabold tracking-[-0.01em] text-on-accent-container">
                 {fullName(user)}
               </Text>
               <Text numberOfLines={1} className="mt-0.5 text-[13px] font-semibold text-on-accent-container opacity-90">
                 {roleLabel || user.email}
               </Text>
             </View>
-          </ZCard>
+          </View>
 
           {/* Grouped rows: one surface card, hairline dividers between rows. */}
           <ZCard tone="surface">
             {visibleRows.map((row, index) => (
               <View key={row.key}>
-                {index > 0 ? <ZDivider inset={64} /> : null}
+                {index > 0 ? <ZDivider inset={58} /> : null}
                 <ZListItem
                   leading={
                     <ZIconTile
@@ -191,12 +197,12 @@ function ProfileOverview({ user }: { user: Me }) {
                     />
                   }
                   title={row.label}
-                  trailing={<ZSymbol name="chevron-right" label={row.label} size={20} color={colors.muted} />}
+                  trailing={<ZSymbol name="chevron-right" label={row.label} size={18} color={colors.muted} />}
                   onPress={() => router.push(row.route as never)}
                 />
               </View>
             ))}
-            <ZDivider inset={64} />
+            <ZDivider inset={58} />
             <ZListItem
               leading={
                 <ZIconTile
