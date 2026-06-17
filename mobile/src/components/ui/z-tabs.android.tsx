@@ -4,7 +4,8 @@
  * Renders a Material 3 `SingleChoiceSegmentedButtonRow` where each tab is a
  * `SegmentedButton`. The selected button uses the warm `secondaryContainer` fill
  * (matching the Chip / nav-pill selection language) with an `accent` border;
- * unselected buttons use `surface`/`outline` tokens.
+ * unselected buttons match the screen `background` (per the handoff: the inactive
+ * fields are the same color as the page), defined only by their `outline`.
  *
  * Count-badge: `SingleChoiceSegmentedButtonRow` has no badge slot. When `count`
  * is defined the label is formatted as "Label (N)" so the count remains visible.
@@ -46,7 +47,13 @@ export function ZTabs({ tabs, activeId, onChange, testID }: ZTabsProps) {
                 activeContainerColor: color('secondaryContainer'),
                 activeContentColor: color('onSecondaryContainer'),
                 activeBorderColor: color('accent'),
-                inactiveContainerColor: color('surfaceVariant'),
+                // Unselected segments match the SCREEN BACKGROUND, not a darker
+                // surface: the handoff shows the inactive fields as the same color
+                // as the page, defined only by their outline. `surface`/`surfaceVariant`
+                // both render visibly DARKER than `background` (#fff8f4) on this screen
+                // (which read as wrong); M3's own default inactive container is
+                // transparent, and `background` is the token-equivalent here.
+                inactiveContainerColor: color('background'),
                 inactiveContentColor: color('onSurface'),
                 inactiveBorderColor: color('outline'),
               }}
