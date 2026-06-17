@@ -21,6 +21,7 @@ import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZSymbol } from '../../../components/ui/z-symbol';
 import { ZTabs } from '../../../components/ui/z-tabs';
 import { Touchable } from '../../../components/ui/touchable';
+import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { colors } from '../../../theme/colors';
 
 type VideoFilter = 'all' | 'toReview' | 'reviewed';
@@ -81,6 +82,9 @@ export default function VideosScreen() {
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const canCreate = permissions !== null && permissions.includes('assets:create');
   const jobs = useUploads((s) => s.jobs);
+  // M3 scroll-edge: flat header at rest, elevated once the list scrolls under it
+  // (Android only; iOS large-title header owns its native hairline).
+  const onHeaderScroll = useHeaderScrollEdge();
 
   // Bottom padding for Android lists: clears the opaque NativeTabs NavigationBar
   // (height constant) plus the system gesture/home-indicator inset.
@@ -187,6 +191,8 @@ export default function VideosScreen() {
         <FlatList
           data={filteredAssets}
           keyExtractor={(a) => a.id}
+          onScroll={onHeaderScroll}
+          scrollEventThrottle={16}
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{ padding: 16, paddingBottom: 16 + androidListPaddingBottom }}
           ListHeaderComponent={

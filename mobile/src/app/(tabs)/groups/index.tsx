@@ -8,6 +8,7 @@ import { useNotificationsQuery } from '../../../api/queries/notifications';
 import { useAuth } from '../../../auth/auth-store';
 import { GroupCard } from '../../../components/group-card';
 import { NotificationBell } from '../../../components/notification-bell';
+import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { Touchable } from '../../../components/ui/touchable';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
 import { ZIconButton } from '../../../components/ui/z-icon-button';
@@ -52,6 +53,9 @@ export default function GroupsScreen() {
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const canSeeGroups = permissions !== null && permissions.includes('groups:read');
   const canCreate = permissions !== null && permissions.includes('groups:create');
+  // M3 scroll-edge: flat header at rest, elevated once the list scrolls under it
+  // (Android only; iOS large-title header owns its native hairline).
+  const onHeaderScroll = useHeaderScrollEdge();
 
   // Header-right actions (mirror the handoff TopBar):
   //  - The notification bell is present on EVERY tab screen, both platforms, so
@@ -141,6 +145,8 @@ export default function GroupsScreen() {
         <FlatList
           data={data}
           keyExtractor={(g) => g.id}
+          onScroll={onHeaderScroll}
+          scrollEventThrottle={16}
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{
             padding: 16,

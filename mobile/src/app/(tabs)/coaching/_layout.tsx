@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
@@ -17,9 +18,12 @@ export default function CoachingTabLayout() {
         options={{
           title: t('sessions.title'),
           headerLargeTitle: true,
-          // No bottom hairline under the large-title header (handoff TopBar has
-          // none); the list scrolls under a flat, dividerless nav bar.
-          headerShadowVisible: false,
+          // Material-3 scroll-edge top app bar: flat at rest, elevated only once
+          // content scrolls under the bar. Android starts flat-at-rest (no
+          // first-frame shadow flash) and useHeaderScrollEdge toggles this on
+          // scroll. iOS gets `undefined` here so its native large-title header
+          // keeps its own scroll-edge hairline (forcing it flat fights the OS).
+          headerShadowVisible: Platform.select({ android: false }),
         }}
       />
     </Stack>

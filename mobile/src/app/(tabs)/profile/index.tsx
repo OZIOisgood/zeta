@@ -18,6 +18,7 @@ import { ZSymbol } from '../../../components/ui/z-symbol';
 import { showToast } from '../../../components/ui/z-toast';
 import { authStore, useAuth } from '../../../auth/auth-store';
 import type { Me } from '../../../auth/auth-store';
+import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { colors } from '../../../theme/colors';
 
 // Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
@@ -82,6 +83,9 @@ function ProfileOverview({ user }: { user: Me }) {
 
   const notifications = useNotificationsQuery();
   const unreadCount = notifications.data?.unread_count ?? 0;
+  // M3 scroll-edge: flat header at rest, elevated once content scrolls under it
+  // (Android only; iOS large-title header owns its native hairline).
+  const onHeaderScroll = useHeaderScrollEdge();
 
   const [pendingMaster, setPendingMaster] = useState(false);
 
@@ -148,6 +152,8 @@ function ProfileOverview({ user }: { user: Me }) {
   return (
     <ZScreen edges={[]}>
       <ScrollView
+        onScroll={onHeaderScroll}
+        scrollEventThrottle={16}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
       >

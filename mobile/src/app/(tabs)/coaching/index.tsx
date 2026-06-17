@@ -14,6 +14,7 @@ import { useAuth } from '../../../auth/auth-store';
 import { BookingCard } from '../../../components/booking-card';
 import { NotificationBell } from '../../../components/notification-bell';
 import { isJoinable } from '../../../lib/connect-window';
+import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { Touchable } from '../../../components/ui/touchable';
 import { ZConfirmDialog } from '../../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
@@ -147,6 +148,9 @@ export default function CoachingScreen() {
 
   const [activeTab, setActiveTab] = useState<SessionTab>('upcoming');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  // M3 scroll-edge: flat header at rest, elevated once the list scrolls under it
+  // (Android only; iOS large-title header owns its native hairline).
+  const onHeaderScroll = useHeaderScrollEdge();
 
   // Header actions (mirror the handoff TopBar):
   // - The notification bell is present on EVERY tab screen, both platforms, so
@@ -279,6 +283,8 @@ export default function CoachingScreen() {
         data={visibleBookings}
         keyExtractor={(booking) => booking.id}
         renderItem={({ item }) => renderBooking(item)}
+        onScroll={onHeaderScroll}
+        scrollEventThrottle={16}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           padding: 16,
