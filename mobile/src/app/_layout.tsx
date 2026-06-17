@@ -160,6 +160,22 @@ export default function RootLayout() {
               sheetCornerRadius: 16,
             }}
           />
+          {/* Cancel-session confirm — native formSheet (replaces the broken
+              ZConfirmDialog-with-children / Compose ModalBottomSheet path). */}
+          <Stack.Screen
+            name="cancel/[bookingId]"
+            options={{
+              presentation: 'formSheet',
+              headerShown: true,
+              headerBackButtonDisplayMode: 'minimal' as const,
+              headerTintColor: colors.primary,
+              headerStyle: { backgroundColor: colors.bg },
+              headerTitleStyle: { color: colors.text, fontFamily: 'NunitoSans_600SemiBold' },
+              sheetAllowedDetents: [0.5, 1.0],
+              sheetGrabberVisible: true,
+              sheetCornerRadius: 16,
+            }}
+          />
           {/* Full-screen live call — keeps its own chrome, no nav header. */}
           <Stack.Screen name="call/[bookingId]" options={{ presentation: 'fullScreenModal', headerShown: false }} />
         </Stack.Protected>

@@ -375,8 +375,10 @@ test('Availability action: header button is labelled and navigates to /availabil
 
 // ── cancel flow ───────────────────────────────────────────────────────────────
 
-test('cancel flow: press booking-cancel → dialog → confirm → mutateAsync called with bookingId + reason, toast shown', async () => {
-  mockMutateAsync.mockResolvedValueOnce(undefined);
+test('cancel flow: pressing cancel navigates to the cancel formSheet route', async () => {
+  // Cancellation now opens a native formSheet route (cancel/[bookingId]) instead
+  // of an inline dialog — the reason/mutation/toast flow is covered by
+  // cancel-session.test.tsx. Here we only assert the navigation contract.
   mockUseMyBookingsQuery.mockReturnValue({
     isPending: false,
     isError: false,
@@ -386,112 +388,13 @@ test('cancel flow: press booking-cancel → dialog → confirm → mutateAsync c
   });
   await render(<Providers><CoachingScreen /></Providers>);
 
-  // Cancel affordance visible (upcoming pending booking)
   const cancelBtn = await screen.findByTestId('booking-cancel');
   expect(cancelBtn).toBeOnTheScreen();
 
-  // Step 1: press cancel → dialog appears
   fireEvent.press(cancelBtn);
-  await waitFor(() => expect(screen.getByTestId('booking-cancel-dialog')).toBeOnTheScreen());
-
-  // Descriptive context line surfaced (counterpart + formatted time)
-  expect(screen.getByText(/This will cancel the session with Coach Ana/)).toBeOnTheScreen();
-
-  // Step 2: type a reason — wait for the controlled value to flush so the
-  // confirm handler closes over the latest reason before we press confirm.
-  fireEvent.changeText(screen.getByTestId('booking-cancel-reason'), 'Schedule conflict');
-  await waitFor(() =>
-    expect(screen.getByTestId('booking-cancel-reason').props.value).toBe('Schedule conflict'),
+  expect(mockPush).toHaveBeenCalledWith(
+    `/cancel/${UPCOMING_BOOKING.id}?groupId=${UPCOMING_BOOKING.group_id}`,
   );
-
-  // Step 3: confirm → mutateAsync called with the bookingId AND the reason.
-  // The card's own cancel affordance is hidden while the dialog is open, so the
-  // "Cancel Session" button role uniquely resolves to the dialog's confirm.
-  fireEvent.press(screen.getByRole('button', { name: /cancel session/i }));
-  await waitFor(() =>
-    expect(mockMutateAsync).toHaveBeenCalledWith({
-      bookingId: UPCOMING_BOOKING.id,
-      reason: 'Schedule conflict',
-    }),
-  );
-
-  // Success toast surfaced
-  await waitFor(() => expect(mockShowToast).toHaveBeenCalledTimes(1));
-  expect(mockShowToast).toHaveBeenCalledWith('Success', undefined, 'success');
-
-  // Dialog dismisses on success (lets the floated mutation promise fully settle)
-  await waitFor(() => expect(screen.queryByTestId('booking-cancel-dialog')).toBeNull());
-});
-
-test('cancel flow: confirming without a reason passes reason undefined', async () => {
-  mockMutateAsync.mockResolvedValueOnce(undefined);
-  mockUseMyBookingsQuery.mockReturnValue({
-    isPending: false,
-    isError: false,
-    data: [UPCOMING_BOOKING],
-    refetch: jest.fn(),
-    isRefetching: false,
-  });
-  await render(<Providers><CoachingScreen /></Providers>);
-
-  fireEvent.press(await screen.findByTestId('booking-cancel'));
-  await waitFor(() => expect(screen.getByTestId('booking-cancel-dialog')).toBeOnTheScreen());
-
-  fireEvent.press(screen.getByRole('button', { name: /cancel session/i }));
-  await waitFor(() =>
-    expect(mockMutateAsync).toHaveBeenCalledWith({
-      bookingId: UPCOMING_BOOKING.id,
-      reason: undefined,
-    }),
-  );
-  // Wait for the dialog to dismiss so the floated mutation promise fully settles.
-  await waitFor(() => expect(screen.queryByTestId('booking-cancel-dialog')).toBeNull());
-});
-
-test('cancel flow: mutateAsync rejects → sessions.cancel.failed text appears, no toast', async () => {
-  mockMutateAsync.mockRejectedValueOnce(new Error('network'));
-  mockUseMyBookingsQuery.mockReturnValue({
-    isPending: false,
-    isError: false,
-    data: [UPCOMING_BOOKING],
-    refetch: jest.fn(),
-    isRefetching: false,
-  });
-  await render(<Providers><CoachingScreen /></Providers>);
-
-  fireEvent.press(await screen.findByTestId('booking-cancel'));
-  await waitFor(() => expect(screen.getByTestId('booking-cancel-dialog')).toBeOnTheScreen());
-
-  fireEvent.press(screen.getByRole('button', { name: /cancel session/i }));
-  await waitFor(() => expect(screen.getByText('Failed to cancel booking.')).toBeOnTheScreen());
-  expect(mockShowToast).not.toHaveBeenCalled();
-});
-
-test('cancel flow: pressing keep dismisses the dialog and cancel affordance reappears', async () => {
-  mockUseMyBookingsQuery.mockReturnValue({
-    isPending: false,
-    isError: false,
-    data: [UPCOMING_BOOKING],
-    refetch: jest.fn(),
-    isRefetching: false,
-  });
-  await render(<Providers><CoachingScreen /></Providers>);
-
-  // Cancel button visible initially
-  expect(await screen.findByTestId('booking-cancel')).toBeOnTheScreen();
-
-  // Press cancel → dialog appears
-  fireEvent.press(screen.getByTestId('booking-cancel'));
-  await waitFor(() => expect(screen.getByTestId('booking-cancel-dialog')).toBeOnTheScreen());
-  // The original cancel affordance is hidden while the dialog is open
-  expect(screen.queryByTestId('booking-cancel')).toBeNull();
-
-  // Press "Keep Session" → dialog closes
-  fireEvent.press(screen.getByRole('button', { name: /keep session/i }));
-
-  // Dialog gone, cancel affordance reappears
-  await waitFor(() => expect(screen.queryByTestId('booking-cancel-dialog')).toBeNull());
-  expect(screen.getByTestId('booking-cancel')).toBeOnTheScreen();
 });
 
 // ── recording press ───────────────────────────────────────────────────────────

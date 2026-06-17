@@ -4,11 +4,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../../api/queries/coaching';
-import {
-  useMyBookingsQuery,
-  useCancelBookingMutation,
-  formatBookingDateTime,
-} from '../../../api/queries/coaching';
+import { useMyBookingsQuery } from '../../../api/queries/coaching';
 import { useNotificationsQuery } from '../../../api/queries/notifications';
 import { useAuth } from '../../../auth/auth-store';
 import { BookingCard } from '../../../components/booking-card';
@@ -16,7 +12,6 @@ import { NotificationBell } from '../../../components/notification-bell';
 import { isJoinable } from '../../../lib/connect-window';
 import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { Touchable } from '../../../components/ui/touchable';
-import { ZConfirmDialog } from '../../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
 import { ZFab } from '../../../components/ui/z-fab';
 import { ZQueryError } from '../../../components/ui/z-query-error';
@@ -24,8 +19,6 @@ import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZSymbol } from '../../../components/ui/z-symbol';
 import { ZTabs } from '../../../components/ui/z-tabs';
-import { ZTextarea } from '../../../components/ui/z-textarea';
-import { showToast } from '../../../components/ui/z-toast';
 import { colors } from '../../../theme/colors';
 
 type SessionTab = 'upcoming' | 'past' | 'cancelled';
@@ -53,79 +46,6 @@ function ListSkeleton() {
   );
 }
 
-/**
- * CancelDialog owns the useCancelBookingMutation hook for a single booking.
- * React rules forbid calling hooks in loops, so the cancellation flow gets its
- * own component instance — mounted only while a booking is selected — that holds
- * the mutation for that booking's group. Composes ZConfirmDialog (danger tone)
- * with a ZTextarea slot so the student can attach an optional reason, which is
- * passed through to the mutation.
- */
-function CancelDialog({
-  booking,
-  currentUserId,
-  onDone,
-  onAbort,
-}: {
-  booking: Booking;
-  currentUserId: string;
-  onDone: () => void;
-  onAbort: () => void;
-}) {
-  const { t } = useTranslation();
-  const { mutateAsync, isPending } = useCancelBookingMutation(booking.group_id);
-  const [reason, setReason] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  // Counterpart + formatted time for the descriptive context line, mirroring
-  // web cancelDescription(): the student sees the expert, the expert the student.
-  const otherParty =
-    booking.student_id === currentUserId
-      ? (booking.expert_name ?? booking.expert_id)
-      : (booking.student_name ?? booking.student_id);
-  const scheduledAt = formatBookingDateTime(booking.scheduled_at);
-
-  async function handleConfirm() {
-    setError(null);
-    const trimmed = reason.trim();
-    try {
-      await mutateAsync({ bookingId: booking.id, reason: trimmed === '' ? undefined : trimmed });
-      showToast(t('toast.successTitle'), undefined, 'success');
-      onDone();
-    } catch {
-      setError(t('sessions.cancel.failed'));
-    }
-  }
-
-  return (
-    <ZConfirmDialog
-      visible
-      tone="danger"
-      testID="booking-cancel-dialog"
-      title={t('sessions.cancel.title')}
-      description={t('sessions.cancel.descriptionText', { otherParty, scheduledAt })}
-      confirmLabel={t('sessions.cancel.title')}
-      cancelLabel={t('sessions.cancel.keep')}
-      confirmDisabled={isPending}
-      onConfirm={() => void handleConfirm()}
-      onCancel={onAbort}
-    >
-      <View className="mt-4">
-        <ZTextarea
-          testID="booking-cancel-reason"
-          value={reason}
-          onChangeText={setReason}
-          accessibilityLabel={t('sessions.cancel.title')}
-          placeholder={t('sessions.cancel.placeholder')}
-          rows={3}
-          disabled={isPending}
-        />
-        {error ? <Text className="mt-2 text-sm text-z-danger">{error}</Text> : null}
-      </View>
-    </ZConfirmDialog>
-  );
-}
-
 // Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
 // iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
 const ANDROID_TAB_BAR_HEIGHT = 56;
@@ -147,7 +67,6 @@ export default function CoachingScreen() {
     permissions !== null && permissions.includes('coaching:availability:manage');
 
   const [activeTab, setActiveTab] = useState<SessionTab>('upcoming');
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
   // M3 scroll-edge: flat header at rest, elevated once the list scrolls under it
   // (Android only; iOS large-title header owns its native hairline).
   const onHeaderScroll = useHeaderScrollEdge();
@@ -249,8 +168,8 @@ export default function CoachingScreen() {
       <BookingCard
         booking={booking}
         currentUserId={currentUserId}
-        canCancel={cancellable && cancellingId !== booking.id}
-        onCancel={() => setCancellingId(booking.id)}
+        canCancel={cancellable}
+        onCancel={() => router.push(`/cancel/${booking.id}?groupId=${booking.group_id}`)}
         onOpenRecording={(assetId) => router.push(`/asset/${assetId}`)}
         onJoin={
           canConnect && isJoinable(booking, now)
@@ -303,10 +222,6 @@ export default function CoachingScreen() {
     );
   }
 
-  const cancellingBooking = cancellingId
-    ? (upcoming.find((b) => b.id === cancellingId) ?? null)
-    : null;
-
   return (
     <ZScreen edges={[]}>
       <View className="px-4">
@@ -319,15 +234,6 @@ export default function CoachingScreen() {
       </View>
 
       {content}
-
-      {cancellingBooking ? (
-        <CancelDialog
-          booking={cancellingBooking}
-          currentUserId={currentUserId}
-          onDone={() => setCancellingId(null)}
-          onAbort={() => setCancellingId(null)}
-        />
-      ) : null}
 
       {/* Android only: extended Material FAB for the primary "book session"
           action (icon + "Book session" label, hugging its content bottom-right).
