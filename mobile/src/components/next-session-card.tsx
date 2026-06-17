@@ -77,7 +77,7 @@ export function NextSessionCard({
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-1.5">
           <ZSymbol name="calendar" label={t('home.nextSession.title')} size={14} color={roleColor('onAccentContainer')} />
-          <Text className="text-[11px] font-extrabold uppercase tracking-wider text-on-accent-container">
+          <Text className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-on-accent-container">
             {t('home.nextSession.title')}
           </Text>
         </View>
