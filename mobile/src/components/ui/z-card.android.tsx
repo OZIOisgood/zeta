@@ -62,7 +62,10 @@ export function ZCard({
     // and testID. Android Host's PrimitiveBaseProps does not include a testID
     // field (unlike iOS Host), so testID lives on this wrapper View.
     <View className={className} testID={testID}>
-      <Host matchContents={{ horizontal: true }}>
+      {/* Both dimensions: horizontal-only collapses the card to 0 height in a
+          height-auto/centered parent (Compose Host sizes the unmatched axis to
+          the parent, which is unconstrained here) → invisible card. */}
+      <Host matchContents={{ horizontal: true, vertical: true }}>
         <Card
           colors={{ containerColor }}
           // Filled/outlined cards are flat (tone carries elevation); the legacy
