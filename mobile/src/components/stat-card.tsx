@@ -33,19 +33,19 @@ export function StatCard({
   const inner = (
     <>
       <View className="min-h-10 flex-row items-start justify-between gap-2">
-        <Text numberOfLines={2} className="flex-1 text-sm font-medium leading-5 text-z-muted">
+        <Text numberOfLines={2} className="flex-1 text-xs font-bold leading-5 text-z-muted">
           {label}
         </Text>
         {icon}
       </View>
-      <Text className="mt-4 text-3xl font-semibold text-z-text">{count}</Text>
+      <Text className="mt-2 text-[26px] font-extrabold text-z-text">{count}</Text>
       {footer ? <View className="mt-2">{footer}</View> : null}
     </>
   );
 
   if (!interactive) {
     return (
-      <View testID={testID} className="flex-1 rounded-lg border border-z-border bg-z-surface p-4">
+      <View testID={testID} className="flex-1 rounded-[16px] border border-z-border bg-z-surface p-4">
         {inner}
       </View>
     );
@@ -57,7 +57,7 @@ export function StatCard({
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${count}`}
       onPress={onPress}
-      className="flex-1 rounded-lg border border-z-border bg-z-surface p-4 active:bg-z-surface-warm"
+      className="flex-1 rounded-[16px] border border-z-border bg-z-surface p-4 active:bg-z-surface-warm"
     >
       {inner}
     </Pressable>

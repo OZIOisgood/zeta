@@ -9,9 +9,10 @@ export function GroupCard({ group, onPress }: { group: Group; onPress: () => voi
   return (
     <ZListItem
       // Interactive: pressing the row navigates to the group detail screen.
-      // mb-3 preserves the inter-card spacing the list relies on (no FlatList
-      // separator), now carried on the tonal ZListItem tile.
-      className="mb-3"
+      // mb-1.5 (6dp) carries the inter-card spacing the list relies on (no
+      // FlatList separator) on the tonal ZListItem tile, matching the handoff's
+      // tighter ~6dp inter-card gap.
+      className="mb-1.5"
       onPress={onPress}
       leading={
         <ZAvatar

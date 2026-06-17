@@ -37,6 +37,7 @@ import { showToast } from '../../components/ui/z-toast';
 import { ZTextInput } from '../../components/ui/z-text-input';
 import { ZSymbol } from '../../components/ui/z-symbol';
 import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 /** Web invite base URL: produce the same link the web app generates so a QR
  *  scanned by a system camera opens the web invitation page. Falls back to
@@ -98,7 +99,7 @@ function MemberSection({
         <ZIconTile tone="neutral" icon={<ZSymbol name={iconName} label={title} size={20} color={colors.primary} />} />
         <View className="flex-1">
           <View className="flex-row flex-wrap items-center gap-2">
-            <Text className="text-base font-semibold text-z-text">{title}</Text>
+            <Text className="text-base font-extrabold text-z-text">{title}</Text>
             <ZBadge label={String(count)} tone="neutral" />
           </View>
           <Text className="mt-1 text-sm leading-6 text-z-muted">{description}</Text>
@@ -171,6 +172,10 @@ function MemberSection({
  */
 function InviteSection({ groupId }: { groupId: string }) {
   const { t } = useTranslation();
+  // Role-token color for content sitting on a secondary-container fill, used by
+  // the tonal copy-link / download-qr buttons' leading icons so they match the
+  // on-secondary-container label color (Material-3 tonal button contract).
+  const { color } = useRoleColors();
 
   const [email, setEmail] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
@@ -248,7 +253,7 @@ function InviteSection({ groupId }: { groupId: string }) {
       <View className="flex-row items-start gap-3">
         <ZIconTile tone="neutral" icon={<ZSymbol name="qr-code" label={t('groups.inviteDialog.title')} size={20} color={colors.primary} />} />
         <View className="flex-1">
-          <Text className="text-base font-semibold text-z-text">
+          <Text className="text-base font-extrabold text-z-text">
             {t('groups.inviteDialog.title')}
           </Text>
           <Text className="mt-1 text-sm leading-6 text-z-muted">
@@ -309,8 +314,10 @@ function InviteSection({ groupId }: { groupId: string }) {
         <View className="mt-4 gap-4">
           {/* QR + link panel */}
           <View className="gap-4 rounded-lg border border-z-border bg-z-bg p-4">
-            {/* QR code */}
-            <View className="items-center justify-center rounded-md border border-dashed border-z-border bg-z-surface p-3">
+            {/* QR code — centered on a solid surface tile with handoff's 12dp
+                rounding. The QR itself stays at 160px so it remains scannable
+                (the handoff's 76px is a prototype placeholder, not adopted). */}
+            <View className="items-center justify-center rounded-[12px] border border-z-border bg-z-surface p-4">
               {qrError ? (
                 <View className="items-center p-3">
                   <ZSymbol name="qr-code" label={t('groups.inviteDialog.qrUnavailable')} size={32} color={colors.muted} />
@@ -352,7 +359,7 @@ function InviteSection({ groupId }: { groupId: string }) {
               testID="group-invite-copy-btn"
               label={t('common.actions.copyLink')}
               variant="tonal"
-              icon={<ZSymbol name="copy" label={t('common.actions.copyLink')} size={16} color={colors.text} />}
+              icon={<ZSymbol name="copy" label={t('common.actions.copyLink')} size={16} color={color('onSecondaryContainer')} />}
               onPress={() => void handleCopyLink()}
             />
             {!qrError && (
@@ -360,7 +367,7 @@ function InviteSection({ groupId }: { groupId: string }) {
                 testID="group-invite-share-qr-btn"
                 label={t('common.actions.downloadQr')}
                 variant="tonal"
-                icon={<ZSymbol name="share" label={t('common.actions.downloadQr')} size={16} color={colors.text} />}
+                icon={<ZSymbol name="share" label={t('common.actions.downloadQr')} size={16} color={color('onSecondaryContainer')} />}
                 onPress={() => void handleShareQr()}
               />
             )}
@@ -510,7 +517,7 @@ export default function GroupDetailScreen() {
               size={56}
             />
             <View className="flex-1">
-              <Text className="text-2xl font-semibold text-z-text" numberOfLines={2}>
+              <Text className="text-xl font-extrabold tracking-tight text-z-text" numberOfLines={2}>
                 {data.name}
               </Text>
             </View>
