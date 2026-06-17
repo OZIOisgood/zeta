@@ -149,7 +149,7 @@ export default function NotificationsScreen() {
           <RefreshControl refreshing={isRefetching ?? false} onRefresh={() => void refetch()} />
         }
         renderSectionHeader={({ section }) => (
-          <Text className="pb-1 pt-2 text-xs font-semibold uppercase text-z-muted">
+          <Text className="pb-1 pt-2 text-xs font-extrabold uppercase tracking-[0.06em] text-z-muted">
             {t(section.titleKey)}
           </Text>
         )}
