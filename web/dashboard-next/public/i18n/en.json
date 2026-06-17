@@ -73,6 +73,13 @@
       "user": "User",
       "yourLocalTime": "your local time"
     },
+    "legal": {
+      "contact": "Contact",
+      "imprint": "Imprint",
+      "menu": "Legal",
+      "privacy": "Privacy",
+      "terms": "Terms of Use"
+    },
     "nav": {
       "groups": "Groups",
       "home": "Home",

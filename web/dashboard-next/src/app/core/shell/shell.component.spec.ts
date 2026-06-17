@@ -43,6 +43,13 @@ const translocoLangs = {
       preferences: 'Preferences',
       search: 'Search',
       actions: { cancel: 'Cancel', signOut: 'Sign out' },
+      legal: {
+        contact: 'Contact',
+        imprint: 'Imprint',
+        menu: 'Legal',
+        privacy: 'Privacy',
+        terms: 'Terms of Use',
+      },
       nav: { groups: 'Groups', home: 'Home', sessions: 'Sessions', videos: 'Videos' },
     },
     feedback: {
@@ -144,6 +151,36 @@ describe('ShellComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('aside[aria-label="Primary navigation"]')).toBeTruthy();
     expect(el.querySelector('img[alt="Strido"]')).toBeTruthy();
+  });
+
+  it('prepares localized legal links for the sidebar menu', async () => {
+    const fixture = TestBed.createComponent(ShellComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const legalButton = Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.includes('Legal'),
+    );
+    const links = (
+      fixture.componentInstance as unknown as {
+        legalLinks: () => { label: string; href: string }[];
+      }
+    ).legalLinks();
+
+    expect(legalButton).toBeTruthy();
+    expect(links.map((link) => link.label)).toEqual([
+      'Imprint',
+      'Privacy',
+      'Terms of Use',
+      'Contact',
+    ]);
+    expect(links.map((link) => link.href)).toEqual([
+      'https://strido.net/en/imprint.html',
+      'https://strido.net/en/privacy.html',
+      'https://strido.net/en/terms.html',
+      'https://strido.net/en/contact.html',
+    ]);
   });
 
   it('should open mobile navigation from the header control', async () => {

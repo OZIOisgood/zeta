@@ -1,7 +1,7 @@
 <main class="min-h-dvh bg-[var(--z-bg)] text-[var(--z-text)]">
   <div class="flex min-h-dvh w-full">
     <aside
-      class="hidden w-64 shrink-0 border-r border-[var(--z-border)] bg-white/70 px-4 py-5 lg:sticky lg:top-0 lg:block lg:h-screen lg:overflow-y-auto"
+      class="hidden w-64 shrink-0 flex-col border-r border-[var(--z-border)] bg-white/70 px-4 py-5 lg:sticky lg:top-0 lg:flex lg:h-screen"
       aria-label="Primary navigation"
     >
       <a class="flex items-center" routerLink="/" aria-label="Strido dashboard home">
@@ -14,7 +14,7 @@
         />
       </a>
 
-      <nav class="mt-8 space-y-1">
+      <nav class="mt-8 flex-1 space-y-1 overflow-y-auto pb-4">
         @for (item of navigation(); track item.id) {
           <a
             class="flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
@@ -49,6 +49,15 @@
           </a>
         }
       </nav>
+
+      <div class="border-t border-[var(--z-border)] pt-3">
+        <z-dropdown-menu
+          [label]="'common.legal.menu' | transloco"
+          [items]="legalLinks()"
+          triggerClass="text-[var(--z-muted)]"
+          (click)="shell.closeNotifications(); shell.closeUserMenu()"
+        />
+      </div>
     </aside>
 
     <div class="flex min-w-0 flex-1 flex-col">
@@ -236,7 +245,7 @@
               </z-icon-button>
             </div>
 
-            <nav class="mt-6 space-y-1">
+            <nav class="mt-6 flex-1 space-y-1 overflow-y-auto pb-4">
               @for (item of navigation(); track item.id) {
                 <a
                   class="flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition"
@@ -272,6 +281,16 @@
                 </a>
               }
             </nav>
+
+            <div class="border-t border-[var(--z-border)] pt-3">
+              <z-dropdown-menu
+                [label]="'common.legal.menu' | transloco"
+                [items]="legalLinks()"
+                triggerClass="text-[var(--z-muted)]"
+                (click)="shell.closeNotifications(); shell.closeUserMenu()"
+                (itemSelected)="shell.closeNavigation()"
+              />
+            </div>
           </aside>
         </div>
       }

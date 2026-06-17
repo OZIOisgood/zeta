@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService, translateSignal } from '@jsverse/transloco';
 import {
   LucideBell,
   LucideCalendarDays,
@@ -47,6 +47,10 @@ import { SessionStore } from '../../features/session/session.store';
 import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZActionDialogComponent } from '../../shared/ui/dialog/z-action-dialog.component';
+import {
+  ZDropdownMenuComponent,
+  ZDropdownMenuItem,
+} from '../../shared/ui/dropdown-menu/z-dropdown-menu.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
@@ -85,6 +89,7 @@ import { AppShellStore } from '../state/app-shell.store';
     LucideUsers,
     LucideVideo,
     LucideX,
+    ZDropdownMenuComponent,
   ],
   templateUrl: './shell.html',
 })
@@ -142,6 +147,41 @@ export class ShellComponent implements OnDestroy {
   protected readonly feedbackMessage = signal('');
   protected readonly feedbackSubmitting = signal(false);
   protected readonly ratingOptions = [1, 2, 3, 4, 5];
+  private readonly legalImprintLabel = translateSignal('common.legal.imprint');
+  private readonly legalPrivacyLabel = translateSignal('common.legal.privacy');
+  private readonly legalTermsLabel = translateSignal('common.legal.terms');
+  private readonly legalContactLabel = translateSignal('common.legal.contact');
+  protected readonly legalLinks = computed<ZDropdownMenuItem[]>(() => {
+    const language = this.localization.currentLanguage();
+    const prefix = language === 'de' ? '' : `/${language}`;
+
+    return [
+      {
+        id: 'imprint',
+        label: this.legalImprintLabel(),
+        href: `https://strido.net${prefix}/imprint.html`,
+        icon: 'file-text',
+      },
+      {
+        id: 'privacy',
+        label: this.legalPrivacyLabel(),
+        href: `https://strido.net${prefix}/privacy.html`,
+        icon: 'shield',
+      },
+      {
+        id: 'terms',
+        label: this.legalTermsLabel(),
+        href: `https://strido.net${prefix}/terms.html`,
+        icon: 'file-text',
+      },
+      {
+        id: 'contact',
+        label: this.legalContactLabel(),
+        href: `https://strido.net${prefix}/contact.html`,
+        icon: 'mail',
+      },
+    ];
+  });
   protected readonly feedbackSubmitDisabled = computed(
     () =>
       this.feedbackSubmitting() ||
