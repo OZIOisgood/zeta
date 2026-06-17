@@ -34,14 +34,16 @@ export default function TabsLayout() {
   //  • iOS: only the active tint is set — the native UITabBar keeps its system
   //    translucency/greys. DynamicColorIOS resolves light/dark at OS render time.
   //  • Android: the M3 NavigationBar's own dynamic defaults are cool greys
-  //    (surfaceContainer bar, secondaryContainer pill, onSurfaceVariant icons)
-  //    that clash with the warm brand theme — and gray-pill-on-gray-bar makes the
-  //    selection barely readable. Every slot is overridden with a scheme-aware warm
-  //    role token. selectedIconColor/selectedLabelStyle are REQUIRED so the warm
-  //    inactive iconColor/labelStyle don't bleed into the selected item
+  //    (surfaceContainer bar, gray pill, onSurfaceVariant icons) that clash with the
+  //    warm brand theme — and gray-pill-on-gray-bar makes the selection barely
+  //    readable. Every slot is overridden with a scheme-aware warm role token.
+  //    selectedIconColor/selectedLabelStyle are REQUIRED so the warm inactive
+  //    iconColor/labelStyle don't bleed into the selected item
   //    (appearance.android.js resolves selected → iconColor → tintColor).
-  //    Active = AA-safe deep accent (onAccentContainer #c2410c, 5.18:1 on the white
-  //    bar; 3.9:1 icon on the soft-orange pill); inactive = warm muted onSurfaceVariant.
+  //    The active pill uses secondaryContainer — the same warm tonal fill as the
+  //    Chip / SegmentedButton / tonal-button selection language. Selected icon/label
+  //    = onAccentContainer (deep accent) on that pill; inactive = warm muted
+  //    onSurfaceVariant.
   //    labelVisibilityMode='labeled' forces every tab to always show its label
   //    (M3 default 'selected'/'auto' hides inactive labels, which raises the active
   //    icon above the others); the handoff shows all labels aligned.
@@ -54,7 +56,7 @@ export default function TabsLayout() {
       ? {
           labelVisibilityMode: 'labeled' as const,
           backgroundColor: roleColor('surface', scheme),
-          indicatorColor: roleColor('accentContainer', scheme),
+          indicatorColor: roleColor('secondaryContainer', scheme),
           rippleColor: roleColor('accent', scheme),
           iconColor: roleColor('onSurfaceVariant', scheme),
           selectedIconColor: roleColor('onAccentContainer', scheme),
