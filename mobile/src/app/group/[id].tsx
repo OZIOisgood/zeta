@@ -116,7 +116,7 @@ function MemberSection({
             <ZButton
               testID={`members-retry-${kind}`}
               label={t('common.actions.retry')}
-              variant="secondary"
+              variant="tonal"
               onPress={onRetry}
             />
           </ZEmptyState>
@@ -350,7 +350,7 @@ function InviteSection({ groupId }: { groupId: string }) {
             <ZButton
               testID="group-invite-copy-btn"
               label={t('common.actions.copyLink')}
-              variant="secondary"
+              variant="tonal"
               icon={<ZSymbol name="copy" label={t('common.actions.copyLink')} size={16} color={colors.text} />}
               onPress={() => void handleCopyLink()}
             />
@@ -358,7 +358,7 @@ function InviteSection({ groupId }: { groupId: string }) {
               <ZButton
                 testID="group-invite-share-qr-btn"
                 label={t('common.actions.downloadQr')}
-                variant="secondary"
+                variant="tonal"
                 icon={<ZSymbol name="share" label={t('common.actions.downloadQr')} size={16} color={colors.text} />}
                 onPress={() => void handleShareQr()}
               />

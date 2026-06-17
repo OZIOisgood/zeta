@@ -133,7 +133,7 @@ export default function InviteScreen() {
                   </Text>
                   <ZButton
                     label={t('groups.invite.grantCamera')}
-                    variant="secondary"
+                    variant="tonal"
                     onPress={() => void requestPermission()}
                   />
                 </ZCard>
@@ -202,7 +202,7 @@ export default function InviteScreen() {
                   <ZButton
                     testID="invite-reset"
                     label={t('common.actions.retry')}
-                    variant="secondary"
+                    variant="tonal"
                     onPress={handleReset}
                   />
                 </ZEmptyState>

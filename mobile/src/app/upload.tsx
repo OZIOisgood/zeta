@@ -160,7 +160,7 @@ export default function UploadScreen() {
               <ZButton
                 testID="upload-pick"
                 label={t('upload.selectVideo')}
-                variant="secondary"
+                variant="tonal"
                 onPress={() => void handlePickVideos()}
               />
               <Text className="mt-2 text-xs text-z-muted">{t('upload.multiPartHint')}</Text>

@@ -189,7 +189,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
       {isError && (
         <View className="items-start gap-2">
           <Text className="text-sm text-z-muted">{t('videos.phase4.commentsFailed')}</Text>
-          <ZButton label={t('common.actions.retry')} variant="secondary" onPress={() => void refetch()} />
+          <ZButton label={t('common.actions.retry')} variant="tonal" onPress={() => void refetch()} />
         </View>
       )}
 
@@ -368,7 +368,7 @@ export default function AssetDetailScreen() {
       <ZScreen edges={['bottom']} className="items-center justify-center gap-4 px-8">
         <Stack.Screen options={{ title: t('videos.title') }} />
         <Text className="text-center text-z-muted">{t('videos.phase4.detailFailed')}</Text>
-        <ZButton label={t('common.actions.retry')} variant="secondary" onPress={() => void refetch()} />
+        <ZButton label={t('common.actions.retry')} variant="tonal" onPress={() => void refetch()} />
         <ZButton label={t('common.actions.back')} variant="ghost" onPress={() => router.back()} />
       </ZScreen>
     );

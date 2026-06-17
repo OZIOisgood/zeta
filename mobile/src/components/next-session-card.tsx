@@ -107,7 +107,7 @@ export function NextSessionCard({
         <ZButton
           testID="next-session-details"
           label={t('common.actions.details')}
-          variant="secondary"
+          variant="tonal"
           onPress={onDetails}
         />
       </View>

@@ -128,7 +128,7 @@ export function ReviewItem({
               {onEnhance ? (
                 <ZButton
                   label={enhancing ? t('videos.enhancing') : t('videos.enhanceText')}
-                  variant="secondary"
+                  variant="tonal"
                   testID="review-edit-enhance"
                   loading={enhancing}
                   disabled={!draft.trim() || savingEdit}
