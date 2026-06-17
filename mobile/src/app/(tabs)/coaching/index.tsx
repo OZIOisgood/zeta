@@ -224,7 +224,9 @@ export default function CoachingScreen() {
 
   return (
     <ZScreen edges={[]}>
-      <View className="px-4">
+      {/* pt-3 gives the segmented breathing room below the large-title header
+          (matches the UI kit; the native header provides no bottom inset). */}
+      <View className="px-4 pt-3">
         <ZTabs
           testID="coaching-tabs"
           tabs={tabs}

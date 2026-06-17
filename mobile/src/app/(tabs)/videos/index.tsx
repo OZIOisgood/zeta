@@ -134,7 +134,10 @@ export default function VideosScreen() {
   // states, the sibling FAB's Compose Host re-measured to full width (footgun #6) —
   // a Videos-only bug; Sessions renders its segmented unconditionally and is fine.
   const filterRow = (
-    <View className="px-4">
+    // pt-3 gives the segmented breathing room below the large-title header
+    // (matches the UI kit's header→content gap; the native header provides no
+    // bottom inset of its own).
+    <View className="px-4 pt-3">
       <ZTabs
         testID="videos-filter-tabs"
         tabs={filterTabs}
