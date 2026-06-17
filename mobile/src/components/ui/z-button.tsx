@@ -97,7 +97,7 @@ export function ZButton({
         ) : icon ? (
           <View>{icon}</View>
         ) : null}
-        <Text className={`${labelSizeClasses} font-semibold ${labelClasses[variant]}`}>{label}</Text>
+        <Text className={`${labelSizeClasses} ${isLink ? 'font-bold' : 'font-semibold'} ${labelClasses[variant]}`}>{label}</Text>
       </Pressable>
     </View>
   );

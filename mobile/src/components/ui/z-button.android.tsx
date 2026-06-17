@@ -88,12 +88,12 @@ export function ZButton({
       ) : icon != null ? (
         <View>{icon}</View>
       ) : null}
-      <Text color={fg} style={{ fontWeight: '600', fontFamily: BRAND_LABEL_FACE }}>
+      <Text color={fg} style={{ fontWeight: variant === 'link' ? '700' : '600', fontFamily: variant === 'link' ? 'NunitoSans_700Bold' : BRAND_LABEL_FACE }}>
         {label}
       </Text>
     </Row>
   ) : (
-    <Text color={fg} style={{ fontWeight: '600', fontFamily: BRAND_LABEL_FACE }}>
+    <Text color={fg} style={{ fontWeight: variant === 'link' ? '700' : '600', fontFamily: variant === 'link' ? 'NunitoSans_700Bold' : BRAND_LABEL_FACE }}>
       {label}
     </Text>
   );
