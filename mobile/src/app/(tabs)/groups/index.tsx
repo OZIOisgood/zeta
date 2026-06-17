@@ -11,7 +11,7 @@ import { NotificationBell } from '../../../components/notification-bell';
 import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { Touchable } from '../../../components/ui/touchable';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
-import { ZIconButton } from '../../../components/ui/z-icon-button';
+import { ZFab } from '../../../components/ui/z-fab';
 import { ZQueryError } from '../../../components/ui/z-query-error';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
@@ -164,40 +164,32 @@ export default function GroupsScreen() {
   return (
     <ZScreen edges={[]}>
       {content}
-      {/* Android only: Material FABs for the role-dependent primary action.
-          iOS: the same action is a native header-right button (set via
-          useEffect above per mobile/AGENTS.md SOTA-as-default).
-          Creator (groups:create) → "+" FAB to create a group.
-          Student → QR-code FAB to join a group. */}
+      {/* Android only: extended Material FAB for the role-dependent primary
+          action (icon + label, hugging its content bottom-right; mutually
+          exclusive per user). iOS: the same action is a native header-right
+          button (set via useEffect above per mobile/AGENTS.md SOTA-as-default).
+          Creator (groups:create) → "Create Group" FAB.
+          Student → "Join Group" QR FAB. */}
       {Platform.OS === 'android' ? (
-        <View
-          className="absolute right-6"
-          style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
-        >
-          {canCreate ? (
-            <ZIconButton
-              testID="groups-create-fab"
-              label={t('groups.create')}
-              variant="primary"
-              size="lg"
-              shape="circle"
-              onPress={() => router.push('/group/create')}
-            >
-              <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
-            </ZIconButton>
-          ) : (
-            <ZIconButton
-              testID="groups-join-fab"
-              label={t('groups.invitationDialog.joinGroup')}
-              variant="primary"
-              size="lg"
-              shape="circle"
-              onPress={() => router.push('/invite')}
-            >
-              <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.onPrimary} />
-            </ZIconButton>
-          )}
-        </View>
+        canCreate ? (
+          <ZFab
+            testID="groups-create-fab"
+            label={t('groups.create')}
+            icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />}
+            onPress={() => router.push('/group/create')}
+            className="absolute right-6"
+            style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
+          />
+        ) : (
+          <ZFab
+            testID="groups-join-fab"
+            label={t('groups.invitationDialog.joinGroup')}
+            icon={<ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.onPrimary} />}
+            onPress={() => router.push('/invite')}
+            className="absolute right-6"
+            style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
+          />
+        )
       ) : null}
     </ZScreen>
   );

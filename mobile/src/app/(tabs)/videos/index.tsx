@@ -227,10 +227,9 @@ export default function VideosScreen() {
       {Platform.OS === 'android' && canCreate && (
         <ZFab
           testID="videos-create-fab"
-          // Compact icon-only "+" FAB (handoff): the collapsed M3 medium FAB,
-          // ~56dp square, hugging its content at the bottom-right — never the
-          // extended/full-width pill.
-          extended={false}
+          // Extended M3 FAB (handoff): icon + "Upload video" label, hugging its
+          // content as a compact pill at the bottom-right (never full-width — the
+          // content-hug lives in z-fab.android.tsx).
           label={t('common.actions.uploadVideo')}
           icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />}
           onPress={() => router.push('/upload')}

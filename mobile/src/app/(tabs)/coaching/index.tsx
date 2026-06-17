@@ -18,7 +18,7 @@ import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { Touchable } from '../../../components/ui/touchable';
 import { ZConfirmDialog } from '../../../components/ui/z-confirm-dialog';
 import { ZEmptyState } from '../../../components/ui/z-empty-state';
-import { ZIconButton } from '../../../components/ui/z-icon-button';
+import { ZFab } from '../../../components/ui/z-fab';
 import { ZQueryError } from '../../../components/ui/z-query-error';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
@@ -329,25 +329,19 @@ export default function CoachingScreen() {
         />
       ) : null}
 
-      {/* Android only: Material FAB for the primary "book session" action.
+      {/* Android only: extended Material FAB for the primary "book session"
+          action (icon + "Book session" label, hugging its content bottom-right).
           iOS: the same action is a native header-right "+" button (set via
           useEffect above). Availability is in the header on both platforms. */}
       {Platform.OS === 'android' && canBook ? (
-        <View
+        <ZFab
+          testID="coaching-book"
+          label={t('common.actions.bookSession')}
+          icon={<ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={colors.onPrimary} />}
+          onPress={() => router.push('/book')}
           className="absolute right-6"
           style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
-        >
-          <ZIconButton
-            testID="coaching-book"
-            label={t('sessions.bookLive')}
-            variant="primary"
-            size="lg"
-            shape="circle"
-            onPress={() => router.push('/book')}
-          >
-            <ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={colors.onPrimary} />
-          </ZIconButton>
-        </View>
+        />
       ) : null}
     </ZScreen>
   );

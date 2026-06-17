@@ -25,19 +25,32 @@ export type { ZFabProps } from './z-fab.types';
  * the underlying Jetpack Compose M3 FloatingActionButton defaults, which already
  * apply the 16dp rounded-square shape and the standard resting elevation.
  *
- * Content-hugging (the FAB must NEVER stretch full-width): the `Host` must
- * shrink to the Compose content. We pass the explicit object form
- * `matchContents={{ horizontal: true, vertical: true }}`. Per the installed
- * @expo/ui types (`HostProps.matchContents?: boolean | { vertical?; horizontal? }`,
- * node_modules/@expo/ui/src/jetpack-compose/Host/index.tsx) the boolean `true`
- * and `{ horizontal: true, vertical: true }` are equivalent — both forward
- * `matchContentsHorizontal=true`/`matchContentsVertical=true` to the native
- * `HostView`, which then applies `WRAP_CONTENT` on both axes and measures the
- * Compose child with `MeasureSpec.UNSPECIFIED` (intrinsic size). We use the
- * object form for explicit intent. The outer wrapper additionally pins
- * `alignSelf: 'flex-start'` so the positioned container hugs the Host instead of
- * filling the parent row — a belt-and-braces guard against any residual
- * full-bleed measurement.
+ * CONTENT-HUG (the FAB must NEVER stretch full-width)
+ * ---------------------------------------------------
+ * Root cause of the earlier full-width-stretch bug: the outer
+ * `<View className={className} style={style}>` (which forwards the consumer's
+ * positioning) defaults to `alignItems: 'stretch'` like every RN View. The
+ * native `Host` of an EXTENDED FAB has a flexible (content-driven) width, so the
+ * parent's cross-axis stretch blew it out to the wrapper's full width. (The
+ * collapsed/icon-only FAB never showed it because it is intrinsically square.)
+ * `matchContents` only controls how the Host reports its OWN measured size back
+ * to RN — it does not stop a stretching parent from overriding that width.
+ *
+ * Fix (canonical RN content-hug): wrap the `<Host>` in an INNER
+ * `<View style={{ alignSelf: 'flex-end' }}>`. `alignSelf` overrides the parent's
+ * `alignItems: 'stretch'` on the cross axis, so the inner view (and the Host it
+ * contains) shrinks to the Compose content and pins to the right edge — a
+ * compact bottom-right pill instead of a full-width bar. The outer View keeps
+ * forwarding `className`/`style` for positioning (the native-classname-forwarding
+ * contract). Both the extended and icon-only paths use the same inner hug so
+ * neither can stretch. `matchContents={{ horizontal: true, vertical: true }}`
+ * (equivalent to the boolean `true` per HostProps, node_modules/@expo/ui/src/
+ * jetpack-compose/Host/index.tsx — both forward matchContentsHorizontal/Vertical
+ * to the native HostView) keeps the Host's reported size equal to its content.
+ *
+ * Note: the previous start-aligned `alignSelf` guard on the OUTER (absolutely
+ * positioned) wrapper was a no-op — `alignSelf` is ignored on an absolutely
+ * positioned view — and has been removed.
  */
 export function ZFab({
   label,
@@ -56,35 +69,39 @@ export function ZFab({
 
   if (!extended) {
     return (
-      <View className={className} style={[{ alignSelf: 'flex-start' }, style]}>
-        <Host matchContents={{ horizontal: true, vertical: true }}>
-          <FloatingActionButton onClick={onPress} containerColor={containerColor} modifiers={modifiers}>
-            <FloatingActionButton.Icon>
-              <View accessibilityLabel={label}>{icon}</View>
-            </FloatingActionButton.Icon>
-          </FloatingActionButton>
-        </Host>
+      <View className={className} style={style}>
+        <View style={{ alignSelf: 'flex-end' }}>
+          <Host matchContents={{ horizontal: true, vertical: true }}>
+            <FloatingActionButton onClick={onPress} containerColor={containerColor} modifiers={modifiers}>
+              <FloatingActionButton.Icon>
+                <View accessibilityLabel={label}>{icon}</View>
+              </FloatingActionButton.Icon>
+            </FloatingActionButton>
+          </Host>
+        </View>
       </View>
     );
   }
 
   return (
-    <View className={className} style={[{ alignSelf: 'flex-start' }, style]}>
-      <Host matchContents={{ horizontal: true, vertical: true }}>
-        <ExtendedFloatingActionButton
-          expanded
-          onClick={onPress}
-          containerColor={containerColor}
-          modifiers={modifiers}
-        >
-          <ExtendedFloatingActionButton.Icon>
-            <View accessibilityLabel={label}>{icon}</View>
-          </ExtendedFloatingActionButton.Icon>
-          <ExtendedFloatingActionButton.Text>
-            <Text color={contentColor}>{label}</Text>
-          </ExtendedFloatingActionButton.Text>
-        </ExtendedFloatingActionButton>
-      </Host>
+    <View className={className} style={style}>
+      <View style={{ alignSelf: 'flex-end' }}>
+        <Host matchContents={{ horizontal: true, vertical: true }}>
+          <ExtendedFloatingActionButton
+            expanded
+            onClick={onPress}
+            containerColor={containerColor}
+            modifiers={modifiers}
+          >
+            <ExtendedFloatingActionButton.Icon>
+              <View accessibilityLabel={label}>{icon}</View>
+            </ExtendedFloatingActionButton.Icon>
+            <ExtendedFloatingActionButton.Text>
+              <Text color={contentColor}>{label}</Text>
+            </ExtendedFloatingActionButton.Text>
+          </ExtendedFloatingActionButton>
+        </Host>
+      </View>
     </View>
   );
 }
