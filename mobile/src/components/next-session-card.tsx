@@ -6,7 +6,7 @@ import { formatBookingDateTime, formatRelativeFuture } from '../api/queries/coac
 import { bookingCounterpart } from './booking-card';
 import { colors } from '../theme/colors';
 import { useRoleColors } from '../theme/native';
-import { ZBadge } from './ui/z-badge';
+import { Touchable } from './ui/touchable';
 import { ZButton } from './ui/z-button';
 import { ZSymbol } from './ui/z-symbol';
 
@@ -81,7 +81,9 @@ export function NextSessionCard({
             {t('home.nextSession.title')}
           </Text>
         </View>
-        <ZBadge testID="next-session-when" label={relative} tone="neutral" />
+        <View testID="next-session-when" className="rounded-full bg-surface px-2.5 py-1">
+          <Text className="text-xs font-bold text-on-surface">{relative}</Text>
+        </View>
       </View>
 
       <Text numberOfLines={2} className="mt-3 text-[19px] font-extrabold text-on-accent-container">
@@ -104,12 +106,17 @@ export function NextSessionCard({
             onPress={onJoin}
           />
         ) : null}
-        <ZButton
+        <Touchable
           testID="next-session-details"
-          label={t('common.actions.details')}
-          variant="secondary"
           onPress={onDetails}
-        />
+          haptic
+          accessibilityLabel={t('common.actions.details')}
+          className="h-10 flex-row items-center justify-center rounded-full border border-on-accent-container px-5"
+        >
+          <Text className="text-[15px] font-semibold text-on-accent-container">
+            {t('common.actions.details')}
+          </Text>
+        </Touchable>
       </View>
     </HeroSurface>
   );

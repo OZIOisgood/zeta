@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { makeRedirectUri, ResponseType, useAuthRequest } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { ZButton } from '../components/ui/z-button';
-import { ZCard } from '../components/ui/z-card';
 import { ZScreen } from '../components/ui/z-screen';
 import { completeLogin, stashCodeVerifier, workosClientId, workosDiscovery } from '../auth/login';
 import { authStore } from '../auth/auth-store';
@@ -61,7 +60,7 @@ export default function LoginScreen() {
   return (
     <ZScreen className="items-center justify-center px-6">
       <View className="w-full max-w-sm">
-        <ZCard className="p-8">
+        <View className="rounded-[20px] bg-surface p-8">
           {/* Brand mark — text only; the web card pairs this with a logo image
               asset that does not yet exist in mobile assets (see follow-up). */}
           <View className="flex-row items-center gap-3">
@@ -99,7 +98,7 @@ export default function LoginScreen() {
               {t('auth.login.failed')}
             </Text>
           ) : null}
-        </ZCard>
+        </View>
       </View>
     </ZScreen>
   );

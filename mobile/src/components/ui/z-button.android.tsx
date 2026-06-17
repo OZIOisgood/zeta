@@ -57,7 +57,10 @@ export function ZButton({
   // Foreground (label / icon / spinner) color per variant.
   // - primary/danger: onAccent (white) on the filled background
   // - tonal:          onSecondaryContainer on the secondary-container fill
-  // - secondary/link: AA-safe deep accent (onAccentContainer) on the light surface
+  // - secondary/link: accent (the brand orange) on the light surface — matches
+  //   the handoff link/outline text; `accent` adapts (deep orange light, warm
+  //   orange dark) so it reads in both modes (onAccentContainer is the dark
+  //   on-container text color, wrong as link text on a surface).
   // - ghost:          onSurface
   const fg =
     variant === 'primary' || variant === 'danger'
@@ -65,7 +68,7 @@ export function ZButton({
       : variant === 'tonal'
         ? color('onSecondaryContainer')
         : variant === 'secondary' || variant === 'link'
-          ? color('onAccentContainer')
+          ? color('accent')
           : color('onSurface');
 
   const hasLeading = loading || icon != null;
