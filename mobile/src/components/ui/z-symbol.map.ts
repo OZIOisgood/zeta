@@ -15,6 +15,7 @@
 
 import {
   ArrowLeft,
+  Award,
   BarChart3,
   Ban,
   Bell,
@@ -219,6 +220,14 @@ export const SYMBOL_MAP: Record<ZSymbolName, ZSymbolEntry> = {
     sf: 'square.and.arrow.up',
     android: 'upload',
     lucide: Upload,
+  },
+  award: {
+    // Award: "Experten" (experts/trainers) member section — the handoff's medal
+    // (Lucide Award / Material workspace_premium rosette / SF rosette), distinct
+    // from shield-check (verified/security).
+    sf: 'rosette',
+    android: 'workspace_premium',
+    lucide: Award,
   },
   inbox: {
     // Inbox: empty/no-content state.

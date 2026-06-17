@@ -17,6 +17,7 @@
 
 import type {
   ArrowLeft,
+  Award,
   BarChart3,
   Ban,
   Bell,
@@ -141,6 +142,7 @@ export type ZSymbolName =
   | 'logout'
   | 'settings'
   | 'shield-check'
+  | 'award'
   | 'sparkles';
 
 export interface ZSymbolProps {
@@ -162,6 +164,7 @@ export interface ZSymbolProps {
 /** Lucide component type alias for the icon map. */
 export type LucideIcon =
   | typeof ArrowLeft
+  | typeof Award
   | typeof BarChart3
   | typeof Ban
   | typeof Bell

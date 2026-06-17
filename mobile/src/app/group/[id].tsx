@@ -91,7 +91,7 @@ function MemberSection({
 }) {
   const { t } = useTranslation();
   const count = members?.length ?? 0;
-  const iconName = kind === 'experts' ? 'shield-check' : 'users';
+  const iconName = kind === 'experts' ? 'award' : 'users';
   const emptyTitle = kind === 'experts' ? t('groups.noExperts') : t('groups.noStudents');
   const emptyDescription =
     kind === 'experts' ? t('groups.noExpertsDescription') : t('groups.inviteStudents');
