@@ -10,6 +10,10 @@ export const TIERS: Record<string, Tier> = {
   'z-checkbox': 'native',
   'z-tabs': 'native',
   'z-card': 'native',
+  // ZDivider: a thin separator line — no OS-widget equivalent. Custom-RN with a
+  // platform split only for differing stroke widths (1dp Android / 0.5pt iOS)
+  // and the iOS table-separator inset; both files use the `outline` role token.
+  'z-divider': 'custom-no-native',
   'z-progress': 'native',
   // ZBadge: semantic status pill — no OS widget equivalent on either platform.
   // Single shared NativeWind implementation (no .ios/.android split needed).
