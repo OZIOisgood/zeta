@@ -1,101 +1,29 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Platform, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Touchable } from '../../../components/ui/touchable';
-import { ZAvatarInput } from '../../../components/ui/z-avatar-input';
-import { ZBadge } from '../../../components/ui/z-badge';
+import { ZAvatar } from '../../../components/ui/z-avatar';
 import { ZButton } from '../../../components/ui/z-button';
 import { ZCard } from '../../../components/ui/z-card';
 import { ZDivider } from '../../../components/ui/z-divider';
 import { ZIconTile } from '../../../components/ui/z-icon-tile';
 import { ZListItem } from '../../../components/ui/z-list-item';
-import { ZSwitch } from '../../../components/ui/z-switch';
-import { ZCombobox, type ZComboboxOption } from '../../../components/ui/z-combobox';
-import { ZFieldError } from '../../../components/ui/z-field-error';
-import { ZFieldLabel } from '../../../components/ui/z-field-label';
-import { ZKeyboardAvoidingView } from '../../../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
+import { ZSwitch } from '../../../components/ui/z-switch';
 import { ZSymbol } from '../../../components/ui/z-symbol';
-import { ZTabs, type ZTab } from '../../../components/ui/z-tabs';
-import { ZTextInput } from '../../../components/ui/z-text-input';
 import { showToast } from '../../../components/ui/z-toast';
 import { authStore, useAuth } from '../../../auth/auth-store';
-import type { Me, UpdateMeRequest } from '../../../auth/auth-store';
+import type { Me } from '../../../auth/auth-store';
 import { colors } from '../../../theme/colors';
 
 // Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
 // iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
 const ANDROID_TAB_BAR_HEIGHT = 56;
 
-type PreferencesTab = 'personal-data' | 'email-preferences';
-type EmailPreferences = Me['email_preferences'];
-type Language = Me['language'];
-
-const LANGUAGES: readonly Language[] = ['en', 'de', 'fr'] as const;
-
-/**
- * Minimal IANA timezone list shipped for environments where
- * `Intl.supportedValuesOf('timeZone')` is unavailable (older Hermes builds).
- * The web ships no static list — it relies on the runtime value — so when the
- * runtime exposes the full set we use it, falling back to this representative
- * subset only when it does not.
- */
-const FALLBACK_TIMEZONES: readonly string[] = [
-  'UTC',
-  'Europe/London',
-  'Europe/Berlin',
-  'Europe/Paris',
-  'Europe/Madrid',
-  'Europe/Rome',
-  'Europe/Amsterdam',
-  'Europe/Zurich',
-  'Europe/Vienna',
-  'Europe/Lisbon',
-  'Europe/Moscow',
-  'America/New_York',
-  'America/Chicago',
-  'America/Denver',
-  'America/Los_Angeles',
-  'America/Sao_Paulo',
-  'America/Toronto',
-  'Asia/Dubai',
-  'Asia/Kolkata',
-  'Asia/Shanghai',
-  'Asia/Tokyo',
-  'Asia/Singapore',
-  'Australia/Sydney',
-  'Pacific/Auckland',
-] as const;
-
-function supportedTimezones(): readonly string[] {
-  const supportedValuesOf = (Intl as { supportedValuesOf?: (key: string) => string[] })
-    .supportedValuesOf;
-  if (typeof supportedValuesOf === 'function') {
-    try {
-      const values = supportedValuesOf('timeZone');
-      if (values.length > 0) return values;
-    } catch {
-      // Fall through to the static list.
-    }
-  }
-  return FALLBACK_TIMEZONES;
-}
-
-/** Mirror of the web `timezoneLabel`: append the short UTC offset when resolvable. */
-function timezoneLabel(timezone: string): string {
-  try {
-    const offset =
-      new Intl.DateTimeFormat('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' })
-        .formatToParts(new Date())
-        .find((part) => part.type === 'timeZoneName')?.value ?? '';
-    return offset ? `${timezone} (${offset})` : timezone;
-  } catch {
-    return timezone;
-  }
-}
+/** Roles with a localized label under `groups.roles.*`; others render no subtitle role. */
+const KNOWN_ROLES: readonly string[] = ['admin', 'expert', 'student'] as const;
 
 function initials(user: Me): string {
   const first = user.first_name.trim()[0] ?? '';
@@ -103,39 +31,9 @@ function initials(user: Me): string {
   return `${first}${last}`.toUpperCase() || user.email[0]?.toUpperCase() || '';
 }
 
-/** Roles with a localized label under `groups.roles.*`; others render no badge. */
-const KNOWN_ROLES: readonly string[] = ['admin', 'expert', 'student'] as const;
-
-/**
- * Stable, comparable string of the editable values, mirroring the web
- * `normalizeFormValue` (trim name fields, treat empty avatar as null). Two
- * snapshots are dirty-equal iff their strings differ.
- */
-function normalizeSnapshot(
-  firstName: string,
-  lastName: string,
-  language: Language,
-  timezone: string,
-  avatar: string | null,
-  emailPreferences: EmailPreferences,
-): string {
-  return JSON.stringify({
-    first_name: firstName.trim(),
-    last_name: lastName.trim(),
-    language,
-    timezone,
-    avatar: avatar || null,
-    email_preferences: emailPreferences,
-  });
-}
-
-function FieldSkeleton() {
-  return (
-    <View className="gap-2">
-      <ZSkeleton className="h-4 w-24" />
-      <ZSkeleton className="h-11 w-full" />
-    </View>
-  );
+function fullName(user: Me): string {
+  const name = `${user.first_name} ${user.last_name}`.trim();
+  return name || user.email;
 }
 
 function LoadingState() {
@@ -148,19 +46,17 @@ function LoadingState() {
         contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
       >
         <View className="gap-4 p-4">
-          <ZCard className="gap-2">
-            <ZSkeleton className="h-6 w-40" />
-            <ZSkeleton className="h-4 w-full" />
-          </ZCard>
-          <ZCard className="gap-4">
-            <View className="flex-row items-center gap-3">
-              <ZSkeleton className="h-[72px] w-[72px] rounded-md" />
-              <ZSkeleton className="h-10 w-28" />
+          <ZCard tone="accent" hero className="flex-row items-center gap-3">
+            <ZSkeleton className="h-14 w-14 rounded-full" />
+            <View className="flex-1 gap-2">
+              <ZSkeleton className="h-5 w-40" />
+              <ZSkeleton className="h-4 w-28" />
             </View>
-            <FieldSkeleton />
-            <FieldSkeleton />
-            <FieldSkeleton />
-            <FieldSkeleton />
+          </ZCard>
+          <ZCard tone="surface" className="gap-3">
+            <ZSkeleton className="h-12 w-full" />
+            <ZSkeleton className="h-12 w-full" />
+            <ZSkeleton className="h-12 w-full" />
           </ZCard>
         </View>
       </ScrollView>
@@ -169,344 +65,142 @@ function LoadingState() {
 }
 
 /**
- * Editable preferences form. Local edit state is initialized from `user`; the
- * parent remounts this via `key={user.id}` whenever the account changes, so no
- * effect-based syncing is needed.
+ * Grouped-list profile overview (handoff). Local edit state lives on the pushed
+ * Preferences screen; this screen only navigates and exposes the email-master
+ * quick toggle. The master `notifications_enabled` switch reads from and writes
+ * back to the auth store — the single source of truth shared with Preferences —
+ * so toggling here persists immediately and the pushed form reads a fresh value.
  */
-function PreferencesForm({ user }: { user: Me }) {
+function ProfileOverview({ user }: { user: Me }) {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const androidPaddingBottom = Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
 
-  const [activeTab, setActiveTab] = useState<PreferencesTab>('personal-data');
-  const [firstName, setFirstName] = useState(user.first_name);
-  const [lastName, setLastName] = useState(user.last_name);
-  const [language, setLanguage] = useState<Language>(
-    LANGUAGES.includes(user.language) ? user.language : 'en',
-  );
-  const [timezone, setTimezone] = useState(user.timezone);
-  const [avatar, setAvatar] = useState<string | null>(user.avatar || null);
-  const [avatarDirty, setAvatarDirty] = useState(false);
-  const [emailPreferences, setEmailPreferences] = useState<EmailPreferences>({
-    ...user.email_preferences,
-  });
-  const [saving, setSaving] = useState(false);
-  const [saveFailed, setSaveFailed] = useState(false);
+  const [pendingMaster, setPendingMaster] = useState(false);
 
-  const languageOptions = useMemo<ZComboboxOption[]>(
-    () => LANGUAGES.map((value) => ({ value, label: t(`preferences.languages.${value}`) })),
-    [t],
-  );
-  const timezoneOptions = useMemo<ZComboboxOption[]>(
-    () => supportedTimezones().map((value) => ({ value, label: timezoneLabel(value) })),
-    [],
-  );
-
-  const tabs: ZTab[] = [
-    { id: 'personal-data', label: t('preferences.personalData') },
-    { id: 'email-preferences', label: t('preferences.emailPreferences') },
-  ];
-
-  const firstNameInvalid = firstName.trim().length === 0;
-  const lastNameInvalid = lastName.trim().length === 0;
-  const timezoneInvalid = timezone.trim().length === 0;
-  const formInvalid = firstNameInvalid || lastNameInvalid || timezoneInvalid;
-
-  // Snapshot of the editable values as initialized from `user`; the parent
-  // remounts via `key={user.id}` on account change, so this never goes stale.
-  // Mirrors the web `initialFormValue`/`hasFormChanges` dirty gating.
-  const initial = useMemo(
-    () =>
-      normalizeSnapshot(
-        user.first_name,
-        user.last_name,
-        LANGUAGES.includes(user.language) ? user.language : 'en',
-        user.timezone,
-        user.avatar || null,
-        { ...user.email_preferences },
-      ),
-    [user],
-  );
-  const current = normalizeSnapshot(
-    firstName,
-    lastName,
-    language,
-    timezone,
-    avatar,
-    emailPreferences,
-  );
-  const isDirty = current !== initial;
-  const saveDisabled = formInvalid || !isDirty || saving;
-
-  const notificationsEnabled = emailPreferences.notifications_enabled;
   const can = (permission: string) => user.permissions.includes(permission);
+  const roleLabel = KNOWN_ROLES.includes(user.role) ? t(`groups.roles.${user.role}`) : '';
 
-  function setEmailPreference(key: keyof EmailPreferences, value: boolean) {
-    setEmailPreferences((previous) => ({ ...previous, [key]: value }));
-  }
-
-  async function handleSave() {
-    if (saveDisabled) return;
-    setSaving(true);
-    setSaveFailed(false);
-
-    const body: UpdateMeRequest = {
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      language,
-      timezone,
-      email_preferences: emailPreferences,
-      ...(avatarDirty ? { avatar: avatar ?? '' } : {}),
-    };
-
-    const updated = await authStore.getState().updateCurrentUser(body);
-    setSaving(false);
-
+  // Master email toggle — fire-and-forget mutation against the shared auth
+  // store. Optimistic feedback via toast; the store update keeps Profile and
+  // the pushed Preferences form consistent.
+  async function toggleNotifications(value: boolean) {
+    setPendingMaster(true);
+    const updated = await authStore.getState().updateCurrentUser({
+      first_name: user.first_name,
+      last_name: user.last_name,
+      language: user.language,
+      timezone: user.timezone,
+      email_preferences: { ...user.email_preferences, notifications_enabled: value },
+    });
+    setPendingMaster(false);
     if (!updated) {
-      setSaveFailed(true);
+      showToast(t('toast.errorTitle'), t('preferences.saveFailed'), 'error');
       return;
     }
-    setAvatarDirty(false);
     showToast(t('toast.successTitle'), t('preferences.saveSuccess'), 'success');
   }
 
-  const emailRows: { key: keyof EmailPreferences; label: string; show: boolean }[] = [
+  // Navigation rows — each gated by the permission that fronts its destination.
+  const rows: { key: string; icon: 'person' | 'bar-chart' | 'calendar-cog'; label: string; route: string; show: boolean }[] = [
     {
-      key: 'asset_uploads_enabled',
-      label: t('preferences.email.newVideos'),
-      show: can('groups:create'),
-    },
-    {
-      key: 'asset_reviews_enabled',
-      label: t('preferences.email.reviewedVideos'),
-      show: can('assets:create'),
-    },
-    {
-      key: 'invitation_updates_enabled',
-      label: t('preferences.email.invitationActivity'),
-      show: can('groups:invites:create'),
-    },
-    // Group membership updates are always available (matches the web component).
-    {
-      key: 'group_membership_updates_enabled',
-      label: t('preferences.email.groupMembership'),
+      key: 'personal-data',
+      icon: 'person',
+      label: t('preferences.personalData'),
+      route: '/preferences',
       show: true,
     },
     {
-      key: 'coaching_booking_updates_enabled',
-      label: t('preferences.email.coachingBookings'),
-      show: can('coaching:bookings:read'),
+      key: 'reports',
+      icon: 'bar-chart',
+      label: t('reports.openReport'),
+      route: '/reports',
+      show: can('reports:read'),
     },
     {
-      key: 'coaching_reminders_enabled',
-      label: t('preferences.email.coachingReminders'),
-      show: can('coaching:bookings:read'),
+      key: 'availability',
+      icon: 'calendar-cog',
+      label: t('sessions.availability.manageTitle'),
+      route: '/availability',
+      show: can('coaching:availability:manage'),
     },
   ];
-  const visibleEmailRows = emailRows.filter((row) => row.show);
+  const visibleRows = rows.filter((row) => row.show);
 
   return (
     <ZScreen edges={[]}>
-      <ZKeyboardAvoidingView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
-        >
-          <View className="gap-4 p-4">
-            <ZCard className="gap-2">
-              <Text className="text-2xl font-semibold text-z-text">{t('preferences.title')}</Text>
-              <Text className="text-sm leading-5 text-z-muted">{t('preferences.summary')}</Text>
-              {KNOWN_ROLES.includes(user.role) ? (
-                <ZBadge tone="neutral" label={t(`groups.roles.${user.role}`)} />
-              ) : null}
-            </ZCard>
-
-            <ZTabs
-              tabs={tabs}
-              activeId={activeTab}
-              onChange={(id) => setActiveTab(id as PreferencesTab)}
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
+      >
+        <View className="gap-4 p-4">
+          {/* Hero — accent feature card with avatar + name + role/identity. */}
+          <ZCard tone="accent" hero className="flex-row items-center gap-3">
+            <ZAvatar
+              image={user.avatar || undefined}
+              fallback={initials(user)}
+              alt={t('common.aria.avatarPreview')}
+              size={56}
+              shape="circle"
+              tone="accent"
             />
+            <View className="min-w-0 flex-1">
+              <Text numberOfLines={1} className="text-lg font-extrabold text-on-accent-container">
+                {fullName(user)}
+              </Text>
+              <Text numberOfLines={1} className="mt-0.5 text-[13px] font-semibold text-on-accent-container opacity-90">
+                {roleLabel || user.email}
+              </Text>
+            </View>
+          </ZCard>
 
-            {activeTab === 'personal-data' ? (
-              <ZCard className="gap-4">
-                <View className="flex-row items-start gap-3 border-b border-z-border pb-4">
-                  <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-                    <ZSymbol name="person" label={t('preferences.personalData')} size={20} color={colors.primary} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-base font-semibold text-z-text">
-                      {t('preferences.personalData')}
-                    </Text>
-                    <Text className="mt-1 text-sm leading-5 text-z-muted">
-                      {t('preferences.personalSummary')}
-                    </Text>
-                  </View>
-                </View>
-
-                <ZAvatarInput
-                  value={avatar ?? undefined}
-                  fallback={initials(user)}
-                  alt={t('common.aria.avatarPreview')}
-                  label={t('common.fields.avatar')}
-                  onChange={(base64) => {
-                    setAvatar(base64);
-                    setAvatarDirty(true);
-                  }}
-                />
-
-                <View className="gap-2">
-                  <ZFieldLabel label={t('preferences.firstName')} required />
-                  <ZTextInput
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    accessibilityLabel={t('preferences.firstName')}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                    invalid={firstNameInvalid}
-                  />
-                  {firstNameInvalid ? (
-                    <ZFieldError message={t('preferences.firstNameRequired')} />
-                  ) : null}
-                </View>
-
-                <View className="gap-2">
-                  <ZFieldLabel label={t('preferences.lastName')} required />
-                  <ZTextInput
-                    value={lastName}
-                    onChangeText={setLastName}
-                    accessibilityLabel={t('preferences.lastName')}
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                    invalid={lastNameInvalid}
-                  />
-                  {lastNameInvalid ? (
-                    <ZFieldError message={t('preferences.lastNameRequired')} />
-                  ) : null}
-                </View>
-
-                <View className="gap-2">
-                  <ZFieldLabel label={t('common.fields.language')} required />
-                  <ZCombobox
-                    value={language}
-                    options={languageOptions}
-                    placeholder={t('preferences.selectLanguage')}
-                    searchPlaceholder={t('preferences.searchLanguages')}
-                    accessibilityLabel={t('common.fields.language')}
-                    onValueChange={(value) => setLanguage(value as Language)}
-                  />
-                </View>
-
-                <View className="gap-2">
-                  <ZFieldLabel label={t('common.fields.timezone')} required />
-                  <ZCombobox
-                    value={timezone || undefined}
-                    options={timezoneOptions}
-                    placeholder={t('preferences.selectTimezone')}
-                    searchPlaceholder={t('preferences.searchTimezones')}
-                    accessibilityLabel={t('common.fields.timezone')}
-                    invalid={timezoneInvalid}
-                    onValueChange={setTimezone}
-                  />
-                  {timezoneInvalid ? (
-                    <ZFieldError message={t('preferences.timezoneRequired')} />
-                  ) : null}
-                </View>
-              </ZCard>
-            ) : (
-              <ZCard className="gap-4">
-                <View className="flex-row items-start gap-3 border-b border-z-border pb-4">
-                  <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-                    <ZSymbol name="bell" label={t('preferences.emailPreferences')} size={20} color={colors.primary} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-base font-semibold text-z-text">
-                      {t('preferences.emailPreferences')}
-                    </Text>
-                    <Text className="mt-1 text-sm leading-5 text-z-muted">
-                      {t('preferences.emailSummary')}
-                    </Text>
-                  </View>
-                </View>
-
+          {/* Grouped rows: one surface card, hairline dividers between rows. */}
+          <ZCard tone="surface">
+            {visibleRows.map((row, index) => (
+              <View key={row.key}>
+                {index > 0 ? <ZDivider inset /> : null}
                 <ZListItem
-                  className="bg-secondary-container"
-                  title={t('preferences.email.all')}
-                  subtitle={t('preferences.email.allDescription')}
-                  trailing={
-                    <ZSwitch
-                      checked={notificationsEnabled}
-                      accessibilityLabel={t('preferences.email.all')}
-                      onChange={(value) => setEmailPreference('notifications_enabled', value)}
+                  leading={
+                    <ZIconTile
+                      tone="neutral"
+                      icon={<ZSymbol name={row.icon} label={row.label} size={20} color={colors.primary} />}
                     />
                   }
+                  title={row.label}
+                  trailing={<ZSymbol name="chevron-right" label={row.label} size={20} color={colors.muted} />}
+                  onPress={() => router.push(row.route as never)}
                 />
-
-                <View className={notificationsEnabled ? '' : 'opacity-60'}>
-                  {visibleEmailRows.map((row, index) => (
-                    <View key={row.key}>
-                      {index > 0 ? <ZDivider inset /> : null}
-                      <ZListItem
-                        title={row.label}
-                        trailing={
-                          <ZSwitch
-                            checked={emailPreferences[row.key]}
-                            accessibilityLabel={row.label}
-                            disabled={!notificationsEnabled}
-                            onChange={(value) => setEmailPreference(row.key, value)}
-                          />
-                        }
-                      />
-                    </View>
-                  ))}
-                </View>
-              </ZCard>
-            )}
-
-            {saveFailed ? (
-              <Text
-                accessibilityRole="alert"
-                className="text-sm font-medium text-z-danger"
-              >
-                {t('preferences.saveFailed')}
-              </Text>
-            ) : null}
-
-            <ZButton
-              label={saving ? t('preferences.saving') : t('common.actions.save')}
-              loading={saving}
-              disabled={saveDisabled}
-              icon={<ZSymbol name="save" label={t('common.actions.save')} size={16} color={colors.onPrimary} />}
-              onPress={() => void handleSave()}
+              </View>
+            ))}
+            <ZDivider inset />
+            <ZListItem
+              leading={
+                <ZIconTile
+                  tone="neutral"
+                  icon={<ZSymbol name="mail" label={t('preferences.emailPreferences')} size={20} color={colors.primary} />}
+                />
+              }
+              title={t('preferences.emailPreferences')}
+              trailing={
+                <ZSwitch
+                  checked={user.email_preferences.notifications_enabled}
+                  disabled={pendingMaster}
+                  accessibilityLabel={t('preferences.emailPreferences')}
+                  onChange={(value) => void toggleNotifications(value)}
+                />
+              }
             />
+          </ZCard>
 
-            {can('reports:read') ? (
-              <Touchable
-                testID="profile-reports-entry"
-                accessibilityLabel={t('reports.openReport')}
-                onPress={() => router.push('/reports' as never)}
-              >
-                <ZCard className="flex-row items-center gap-3">
-                  <ZIconTile tone="neutral" icon={<ZSymbol name="bar-chart" label={t('reports.openReport')} size={20} color={colors.primary} />} />
-                  <View className="min-w-0 flex-1">
-                    <Text className="text-base font-semibold text-z-text">{t('reports.openReport')}</Text>
-                    <Text className="mt-1 text-sm text-z-muted">{t('reports.entry.subtitle')}</Text>
-                  </View>
-                  <ZSymbol name="chevron-right" label={t('reports.openReport')} size={20} color={colors.muted} />
-                </ZCard>
-              </Touchable>
-            ) : null}
-
-            <ZButton
-              label={t('common.actions.signOut')}
-              variant="secondary"
-              icon={<ZSymbol name="logout" label={t('common.actions.signOut')} size={16} color={colors.text} />}
-              onPress={() => void authStore.getState().signOut()}
-            />
-          </View>
-        </ScrollView>
-      </ZKeyboardAvoidingView>
+          <ZButton
+            label={t('common.actions.signOut')}
+            variant="secondary"
+            icon={<ZSymbol name="logout" label={t('common.actions.signOut')} size={16} color={colors.text} />}
+            onPress={() => void authStore.getState().signOut()}
+          />
+        </View>
+      </ScrollView>
     </ZScreen>
   );
 }
@@ -516,5 +210,5 @@ export default function ProfileScreen() {
 
   if (!user) return <LoadingState />;
 
-  return <PreferencesForm key={user.id} user={user} />;
+  return <ProfileOverview key={user.id} user={user} />;
 }

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 // ── native module mocks (before importing the screen) ─────────────────────────
 
@@ -10,9 +10,11 @@ jest.mock('expo-secure-store', () => ({
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
-const mockLaunch = jest.fn();
-jest.mock('expo-image-picker', () => ({
-  launchImageLibraryAsync: (...args: unknown[]) => mockLaunch(...args),
+// expo-router: capture push so navigation from the grouped rows can be asserted.
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush, back: jest.fn() }),
+  Stack: { Screen: () => null },
 }));
 
 // Spy on the imperative toast API; the host is mounted at the app root, not here.
@@ -35,6 +37,8 @@ const ALL_PERMISSIONS = [
   'assets:create',
   'groups:invites:create',
   'coaching:bookings:read',
+  'reports:read',
+  'coaching:availability:manage',
 ];
 
 function makeUser(overrides: Partial<Me> = {}): Me {
@@ -82,47 +86,105 @@ test('renders a skeleton placeholder (no chrome, no loading text) while the user
   authStore.setState({ status: 'loading', user: null });
   await render(<ProfileScreen />);
 
-  // No header copy, no save/sign-out chrome, and no visible loading text.
-  expect(screen.queryByText('Preferences')).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
+  // No header copy, no sign-out chrome, and no visible loading text.
+  expect(screen.queryByRole('button', { name: 'Sign out' })).toBeNull();
   expect(screen.queryByText(/loading/i)).toBeNull();
 });
 
-test('renders the editable personal-data fields for the signed-in user', async () => {
+test('renders the hero header with the user name', async () => {
   authStore.setState({ status: 'signedIn', user: makeUser() });
   await render(<ProfileScreen />);
 
-  expect(screen.getByText('Preferences')).toBeOnTheScreen();
-  // Role renders as a localized badge label, not the raw enum.
-  expect(screen.getByText('Student')).toBeOnTheScreen();
-  expect(screen.getByDisplayValue('Heinrich')).toBeOnTheScreen();
-  expect(screen.getByDisplayValue('Mergel')).toBeOnTheScreen();
-  expect(screen.getByRole('button', { name: 'Save' })).toBeOnTheScreen();
+  expect(screen.getByText('Heinrich Mergel')).toBeOnTheScreen();
+});
+
+test('renders the grouped navigation rows and the sign-out button', async () => {
+  authStore.setState({ status: 'signedIn', user: makeUser() });
+  await render(<ProfileScreen />);
+
+  // Persönliche Daten (push to Preferences) — pressable row → button role.
+  expect(screen.getByRole('button', { name: 'Personal data' })).toBeOnTheScreen();
+  // Berichte (gated by reports:read).
+  expect(screen.getByRole('button', { name: 'Open report' })).toBeOnTheScreen();
+  // Verfügbarkeit verwalten (gated by coaching:availability:manage).
+  expect(screen.getByRole('button', { name: 'Availability' })).toBeOnTheScreen();
+  // E-Mail-Benachrichtigungen master switch.
+  expect(screen.getByRole('switch', { name: 'Email preferences' })).toBeOnTheScreen();
+  // Sign out.
   expect(screen.getByRole('button', { name: 'Sign out' })).toBeOnTheScreen();
 });
 
-test('saves successfully: calls the mutation and shows a success toast', async () => {
+test('pressing "Personal data" pushes the Preferences screen', async () => {
   const user = userEvent.setup();
-  const updated = makeUser({ first_name: 'Heidi' });
+  authStore.setState({ status: 'signedIn', user: makeUser() });
+  await render(<ProfileScreen />);
+
+  await user.press(screen.getByRole('button', { name: 'Personal data' }));
+  expect(mockPush).toHaveBeenCalledWith('/preferences');
+});
+
+test('pressing "Open report" pushes the reports screen', async () => {
+  const user = userEvent.setup();
+  authStore.setState({ status: 'signedIn', user: makeUser() });
+  await render(<ProfileScreen />);
+
+  await user.press(screen.getByRole('button', { name: 'Open report' }));
+  expect(mockPush).toHaveBeenCalledWith('/reports');
+});
+
+test('pressing "Availability" pushes the availability screen', async () => {
+  const user = userEvent.setup();
+  authStore.setState({ status: 'signedIn', user: makeUser() });
+  await render(<ProfileScreen />);
+
+  await user.press(screen.getByRole('button', { name: 'Availability' }));
+  expect(mockPush).toHaveBeenCalledWith('/availability');
+});
+
+test('hides the reports row without the reports:read permission', async () => {
+  authStore.setState({
+    status: 'signedIn',
+    user: makeUser({ permissions: ['coaching:availability:manage'] }),
+  });
+  await render(<ProfileScreen />);
+
+  expect(screen.queryByRole('button', { name: 'Open report' })).toBeNull();
+  // Availability stays (its permission is present).
+  expect(screen.getByRole('button', { name: 'Availability' })).toBeOnTheScreen();
+});
+
+test('hides the availability row without the coaching:availability:manage permission', async () => {
+  authStore.setState({ status: 'signedIn', user: makeUser({ permissions: ['reports:read'] }) });
+  await render(<ProfileScreen />);
+
+  expect(screen.queryByRole('button', { name: 'Availability' })).toBeNull();
+  // Reports stays (its permission is present).
+  expect(screen.getByRole('button', { name: 'Open report' })).toBeOnTheScreen();
+});
+
+test('the master email switch reflects the user state and persists when toggled', async () => {
+  const updated = makeUser({
+    email_preferences: { ...makeUser().email_preferences, notifications_enabled: false },
+  });
   const updateSpy = jest.fn(async (_body: UpdateMeRequest): Promise<Me | null> => updated);
   authStore.setState({ status: 'signedIn', user: makeUser(), updateCurrentUser: updateSpy });
 
   await render(<ProfileScreen />);
 
-  const firstName = screen.getByDisplayValue('Heinrich');
-  await user.clear(firstName);
-  await user.type(firstName, 'Heidi');
+  const master = screen.getByRole('switch', { name: 'Email preferences' });
+  expect(master.props.accessibilityState?.checked).toBe(true);
 
-  await user.press(screen.getByRole('button', { name: 'Save' }));
+  // Toggling the master switch persists immediately (fire-and-forget mutation).
+  // Wrapped in act so the trailing state updates after the awaited mutation
+  // settle inside React's act scope.
+  await act(async () => {
+    fireEvent(master, 'valueChange', false);
+  });
 
   await waitFor(() => expect(updateSpy).toHaveBeenCalledTimes(1));
   expect(updateSpy.mock.calls[0][0]).toMatchObject({
-    first_name: 'Heidi',
-    last_name: 'Mergel',
-    language: 'en',
-    timezone: 'Europe/Berlin',
+    email_preferences: expect.objectContaining({ notifications_enabled: false }),
   });
-  // Success toast is raised via the imperative API.
   await waitFor(() =>
     expect(mockShowToast).toHaveBeenCalledWith(
       'Success',
@@ -130,43 +192,6 @@ test('saves successfully: calls the mutation and shows a success toast', async (
       'success',
     ),
   );
-});
-
-test('disables Save while the form is pristine and enables it once a field changes', async () => {
-  const user = userEvent.setup();
-  const updateSpy = jest.fn(async (_body: UpdateMeRequest): Promise<Me | null> => makeUser());
-  authStore.setState({ status: 'signedIn', user: makeUser(), updateCurrentUser: updateSpy });
-
-  await render(<ProfileScreen />);
-
-  // Pristine: Save is disabled and pressing it is a no-op.
-  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
-  await user.press(screen.getByRole('button', { name: 'Save' }));
-  expect(updateSpy).not.toHaveBeenCalled();
-
-  // Editing a field makes the form dirty and enables Save.
-  const firstName = screen.getByDisplayValue('Heinrich');
-  await user.type(firstName, 'a');
-  expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
-});
-
-test('shows an alert message when the mutation fails', async () => {
-  const user = userEvent.setup();
-  const updateSpy = jest.fn(async (_body: UpdateMeRequest): Promise<Me | null> => null);
-  authStore.setState({ status: 'signedIn', user: makeUser(), updateCurrentUser: updateSpy });
-
-  await render(<ProfileScreen />);
-  // Dirty the form so Save is enabled, then submit.
-  await user.type(screen.getByDisplayValue('Heinrich'), 'a');
-  await user.press(screen.getByRole('button', { name: 'Save' }));
-
-  await waitFor(() => expect(updateSpy).toHaveBeenCalledTimes(1));
-  // The failure surfaces as an alert-role save-error message.
-  await waitFor(() =>
-    expect(screen.getByText('Failed to update preferences')).toBeOnTheScreen(),
-  );
-  // Button stays available (not busy) after a failure.
-  expect(screen.getByRole('button', { name: 'Save' })).toBeOnTheScreen();
 });
 
 test('signs out via the auth store', async () => {
@@ -178,57 +203,4 @@ test('signs out via the auth store', async () => {
   await user.press(screen.getByRole('button', { name: 'Sign out' }));
 
   expect(signOut).toHaveBeenCalledTimes(1);
-});
-
-test('hides permission-gated email rows when the user lacks the permission', async () => {
-  const user = userEvent.setup();
-  authStore.setState({ status: 'signedIn', user: makeUser({ permissions: [] }) });
-
-  await render(<ProfileScreen />);
-  // Switch to the email-preferences tab.
-  await user.press(screen.getByRole('tab', { name: 'Email preferences' }));
-
-  // Always-available row is present (now a settings ZSwitch, role "switch").
-  expect(screen.getByRole('switch', { name: 'Group membership updates' })).toBeOnTheScreen();
-  // Gated rows are absent without permissions.
-  expect(screen.queryByRole('switch', { name: 'New videos uploaded to groups you own' })).toBeNull();
-  expect(screen.queryByRole('switch', { name: 'Reviewed videos' })).toBeNull();
-  expect(screen.queryByRole('switch', { name: 'Invitation activity' })).toBeNull();
-  expect(screen.queryByRole('switch', { name: 'Coaching bookings and cancellations' })).toBeNull();
-});
-
-test('shows permission-gated email rows when the user holds the permissions', async () => {
-  const user = userEvent.setup();
-  authStore.setState({ status: 'signedIn', user: makeUser() });
-
-  await render(<ProfileScreen />);
-  await user.press(screen.getByRole('tab', { name: 'Email preferences' }));
-
-  expect(screen.getByRole('switch', { name: 'New videos uploaded to groups you own' })).toBeOnTheScreen();
-  expect(screen.getByRole('switch', { name: 'Reviewed videos' })).toBeOnTheScreen();
-  expect(screen.getByRole('switch', { name: 'Invitation activity' })).toBeOnTheScreen();
-  expect(screen.getByRole('switch', { name: 'Coaching bookings and cancellations' })).toBeOnTheScreen();
-  expect(screen.getByRole('switch', { name: 'Coaching reminders' })).toBeOnTheScreen();
-});
-
-test('toggling an email-preference switch flips it and dirties the form', async () => {
-  const user = userEvent.setup();
-  authStore.setState({ status: 'signedIn', user: makeUser() });
-
-  await render(<ProfileScreen />);
-  await user.press(screen.getByRole('tab', { name: 'Email preferences' }));
-
-  // The "Reviewed videos" preference starts on; the form is pristine so Save
-  // is disabled. RN core Switch responds to a "valueChange" event (not a
-  // press), so we drive it the canonical RNTL way for a switch.
-  const reviewed = screen.getByRole('switch', { name: 'Reviewed videos' });
-  expect(reviewed.props.accessibilityState?.checked).toBe(true);
-  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
-
-  fireEvent(reviewed, 'valueChange', false);
-
-  // Flipping the preference updates form state, which dirties the form and
-  // enables Save — the observable proof the preference still flips via the
-  // switch (the same assertion semantics the checkbox row carried).
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled());
 });

@@ -93,6 +93,7 @@ export default function RootLayout() {
           <Stack.Screen name="group/[id]/preferences" options={DETAIL_SCREEN_OPTIONS} />
           <Stack.Screen name="group/create" options={DETAIL_SCREEN_OPTIONS} />
           <Stack.Screen name="availability" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="preferences" options={DETAIL_SCREEN_OPTIONS} />
           <Stack.Screen name="notifications" options={DETAIL_SCREEN_OPTIONS} />
           <Stack.Screen name="reports" options={DETAIL_SCREEN_OPTIONS} />
           <Stack.Screen name="select/[field]" options={DETAIL_SCREEN_OPTIONS} />
