@@ -71,8 +71,23 @@ export default function CreateGroupScreen() {
             </Text>
           </ZCard>
 
+          {/* Avatar — standalone, centered above the form card (handoff). */}
+          <View className="mb-4 items-center">
+            <ZAvatarInput
+              testID="create-group-avatar"
+              value={avatar ?? undefined}
+              onChange={(b64) => setAvatar(b64)}
+              label={t('avatar.selectImage')}
+              helperText={t('avatar.requirement')}
+              disabled={isPending}
+            />
+            {touched && avatarMissing && (
+              <ZFieldError message={t('groups.avatarRequired')} />
+            )}
+          </View>
+
           {/* Form card */}
-          <ZCard className="gap-5">
+          <ZCard className="gap-4">
             {/* Name */}
             <View>
               <ZFieldLabel label={t('groups.groupName')} required />
@@ -86,22 +101,6 @@ export default function CreateGroupScreen() {
               />
               {touched && nameEmpty && (
                 <ZFieldError message={t('groups.groupNameRequired')} />
-              )}
-            </View>
-
-            {/* Avatar */}
-            <View>
-              <ZFieldLabel label={t('common.fields.avatar')} required />
-              <ZAvatarInput
-                testID="create-group-avatar"
-                value={avatar ?? undefined}
-                onChange={(b64) => setAvatar(b64)}
-                label={t('avatar.selectImage')}
-                helperText={t('avatar.requirement')}
-                disabled={isPending}
-              />
-              {touched && avatarMissing && (
-                <ZFieldError message={t('groups.avatarRequired')} />
               )}
             </View>
 
@@ -127,23 +126,17 @@ export default function CreateGroupScreen() {
                 <Text className="text-sm text-z-danger">{errorBanner}</Text>
               </View>
             )}
-
-            {/* Actions */}
-            <View className="flex-row justify-end gap-2">
-              <ZButton
-                label={t('common.actions.cancel')}
-                variant="secondary"
-                disabled={isPending}
-                onPress={() => router.back()}
-              />
-              <ZButton
-                testID="create-group-submit"
-                label={isPending ? t('groups.creating') : t('common.actions.create')}
-                disabled={isPending}
-                onPress={() => void handleSubmit()}
-              />
-            </View>
           </ZCard>
+
+          {/* Single full-width submit (cancel is the native header back). */}
+          <View className="mt-4">
+            <ZButton
+              testID="create-group-submit"
+              label={isPending ? t('groups.creating') : t('common.actions.create')}
+              disabled={isPending}
+              onPress={() => void handleSubmit()}
+            />
+          </View>
         </ScrollView>
       </ZKeyboardAvoidingView>
     </ZScreen>

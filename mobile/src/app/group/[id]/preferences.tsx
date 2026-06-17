@@ -220,7 +220,7 @@ export default function GroupPreferencesScreen() {
           {canEdit ? (
             <View className="px-4">
               <ZCard>
-                <View className="gap-5">
+                <View className="gap-4">
                   <View className="gap-2">
                     <ZFieldLabel label={t('groups.groupName')} />
                     <ZTextInput
@@ -278,6 +278,9 @@ export default function GroupPreferencesScreen() {
           {/* Danger zone — owner-only delete via the shared ZDangerZoneCard (WP-UI0). */}
           {canDelete ? (
             <View className="px-4 pt-6">
+              <Text className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-wide text-role-danger">
+                {t('groups.dangerZone')}
+              </Text>
               <ZDangerZoneCard
                 testID="group-delete"
                 title={t('groups.deleteThisGroup')}
@@ -293,6 +296,9 @@ export default function GroupPreferencesScreen() {
           ) : canLeave ? (
             // Non-owner with leave permission — mirrors the web "leave group" danger surface.
             <View className="px-4 pt-6">
+              <Text className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-wide text-role-danger">
+                {t('groups.dangerZone')}
+              </Text>
               <ZButton
                 testID="preferences-leave-btn"
                 label={t('groups.leave.action')}

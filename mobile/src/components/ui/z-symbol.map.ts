@@ -34,6 +34,7 @@ import {
   CircleAlert,
   Clock,
   CloudOff,
+  CloudUpload,
   Copy,
   Film,
   FileVideo,
@@ -203,6 +204,12 @@ export const SYMBOL_MAP: Record<ZSymbolName, ZSymbolEntry> = {
     sf: 'xmark.icloud',
     android: 'cloud_off',
     lucide: CloudOff,
+  },
+  'cloud-upload': {
+    // CloudUpload: file upload target / drop zone (upload screen picker).
+    sf: 'arrow.up.doc',
+    android: 'cloud_upload',
+    lucide: CloudUpload,
   },
   inbox: {
     // Inbox: empty/no-content state.

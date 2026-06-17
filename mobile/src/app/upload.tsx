@@ -19,7 +19,9 @@ import { ZSkeleton } from '../components/ui/z-skeleton';
 import { ZStepper, type ZStepState } from '../components/ui/z-stepper';
 import { ZTextInput } from '../components/ui/z-text-input';
 import { ZTextarea } from '../components/ui/z-textarea';
+import { Touchable } from '../components/ui/touchable';
 import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 
 type UploadStep = 'files' | 'details' | 'review';
 
@@ -28,6 +30,7 @@ const STEP_ORDER: UploadStep[] = ['files', 'details', 'review'];
 export default function UploadScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { color } = useRoleColors();
   const { data: groups, isPending, isError, refetch } = useGroupsQuery();
 
   const [activeStep, setActiveStep] = useState<UploadStep>('files');
@@ -157,13 +160,25 @@ export default function UploadScreen() {
           {/* Step: files */}
           {activeStep === 'files' && (
             <ZCard>
-              <ZButton
+              {/* Dashed-border upload target (handoff): a tappable drop-zone column
+                  rather than a solid button. */}
+              <Touchable
                 testID="upload-pick"
-                label={t('upload.selectVideo')}
-                variant="tonal"
+                accessibilityLabel={t('upload.selectVideo')}
                 onPress={() => void handlePickVideos()}
-              />
-              <Text className="mt-2 text-xs text-z-muted">{t('upload.multiPartHint')}</Text>
+                className="items-center justify-center gap-2 rounded-[16px] border border-dashed border-outline px-4 py-7"
+              >
+                <ZSymbol
+                  name="cloud-upload"
+                  label={t('upload.selectVideo')}
+                  size={30}
+                  color={colors.muted}
+                />
+                <Text className="text-sm font-bold text-z-text">{t('upload.selectVideo')}</Text>
+                <Text className="text-center text-z-muted" style={{ fontSize: 12.5 }}>
+                  {t('upload.multiPartHint')}
+                </Text>
+              </Touchable>
   
               {picked.length > 0 && (
                 <View className="mt-3 gap-2">
@@ -202,7 +217,7 @@ export default function UploadScreen() {
           {/* Step: details */}
           {activeStep === 'details' && (
             <ZCard>
-              <View className="mb-3">
+              <View className="mb-4">
                 <ZFieldLabel label={t('common.fields.title')} required />
                 <ZTextInput
                   accessibilityLabel={t('common.fields.title')}
@@ -214,7 +229,7 @@ export default function UploadScreen() {
                 {touched && titleEmpty && <ZFieldError message={t('upload.titleRequired')} />}
               </View>
   
-              <View className="mb-3">
+              <View className="mb-4">
                 <ZFieldLabel label={t('common.fields.description')} />
                 <ZTextarea
                   accessibilityLabel={t('common.fields.description')}
@@ -225,7 +240,7 @@ export default function UploadScreen() {
                 />
               </View>
   
-              <View className="mb-3">
+              <View className="mb-4">
                 <ZFieldLabel label={t('common.fields.group')} required />
                 {isPending && <ZSkeleton className="h-11 w-full rounded-md" />}
                 {isError && (
@@ -264,16 +279,21 @@ export default function UploadScreen() {
           {activeStep === 'review' && (
             <ZCard>
               <View className="flex-row items-center gap-3">
-                <View className="h-10 w-10 items-center justify-center rounded-md bg-z-surface-warm">
-                  <ZSymbol name="check" label={t('upload.readyTitle')} size={20} color={colors.primary} />
+                <View className="h-10 w-10 items-center justify-center rounded-[12px] bg-accent-container">
+                  <ZSymbol
+                    name="check"
+                    label={t('upload.readyTitle')}
+                    size={20}
+                    color={color('onAccentContainer')}
+                  />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-base font-semibold text-z-text">{t('upload.readyTitle')}</Text>
+                  <Text className="text-base font-bold text-z-text">{t('upload.readyTitle')}</Text>
                   <Text className="mt-1 text-sm text-z-muted">{t('upload.readySummary')}</Text>
                 </View>
               </View>
   
-              <View className="mt-4 gap-2 rounded-md border border-z-border p-3">
+              <View className="mt-4 gap-2 rounded-[12px] border border-z-border p-3">
                 <Text className="text-sm text-z-text">
                   <Text className="font-semibold">{t('common.fields.title')}: </Text>
                   {title}

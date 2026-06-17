@@ -36,6 +36,7 @@ import type {
   CircleAlert,
   Clock,
   CloudOff,
+  CloudUpload,
   Copy,
   Film,
   FileVideo,
@@ -101,6 +102,7 @@ export type ZSymbolName =
   | 'warning'
   | 'info'
   | 'cloud-off'
+  | 'cloud-upload'
   | 'inbox'
   // Actions / verbs
   | 'plus'
@@ -177,6 +179,7 @@ export type LucideIcon =
   | typeof CircleAlert
   | typeof Clock
   | typeof CloudOff
+  | typeof CloudUpload
   | typeof Copy
   | typeof Film
   | typeof FileVideo

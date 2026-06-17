@@ -117,7 +117,7 @@ export default function InviteScreen() {
                 <View
                   accessible
                   accessibilityLabel={`${t('common.labels.camera')}. ${t('groups.invite.cameraHint')}`}
-                  className="mb-4 overflow-hidden rounded-xl"
+                  className="mb-4 overflow-hidden rounded-[20px]"
                   style={{ height: 280 }}
                 >
                   <CameraView
@@ -238,7 +238,7 @@ export default function InviteScreen() {
                   )}
 
                   {info.already_member ? (
-                    <>
+                    <View className="gap-3">
                       <Text className="text-center text-sm text-z-muted">
                         {t('groups.invitationDialog.alreadyMember', { group: info.group_name })}
                       </Text>
@@ -247,9 +247,9 @@ export default function InviteScreen() {
                         label={t('groups.invite.openGroup')}
                         onPress={() => router.replace(`/group/${info.group_id}`)}
                       />
-                    </>
+                    </View>
                   ) : (
-                    <>
+                    <View className="gap-3">
                       <ZButton
                         testID="invite-accept"
                         label={t('groups.invitationDialog.joinGroup')}
@@ -263,7 +263,7 @@ export default function InviteScreen() {
                         disabled={acceptMutation.isPending || declineMutation.isPending}
                         onPress={() => void handleDecline()}
                       />
-                    </>
+                    </View>
                   )}
                 </View>
               )}
