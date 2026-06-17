@@ -20,6 +20,11 @@ Every `<Text>` rendered the Android **system font (Roboto), not Nunito Sans**, o
 ## Second font gap — @expo/ui Compose text (`a06a6ce`, surfaced by user review)
 The `Text.render` patch only reaches React Native `<Text>`. **@expo/ui Jetpack-Compose `<Text>`** — every button label, segmented control, text input, picker, checkbox, chip and dialog — does NOT inherit it, so those still rendered in Roboto on device (the RN-text fix was real but not "app-wide" as first claimed). Compose `Text` honors `style.fontFamily`: proven on device by a `monospace` probe (rendered monospace) and a pixel-diff showing the Nunito name shifts glyphs off the Roboto default; the "Leave group" button + segmented labels now match the real Nunito face. Named the loaded face on each Compose `<Text>` (labels 600, body/placeholder 400, dialog title 700, selected chip 700). **iOS** (@expo/ui SwiftUI, SF-Pro default) needs the same treatment + verification — deferred to the iOS pass.
 
+## Third font gap — native nav chrome (`3c68cab`)
+Native-navigation chrome also does not inherit the JS font: stack **header titles** (`headerTitleStyle`) and **tab-bar labels** (NativeTabs `labelStyle`) rendered Roboto. Added the loaded face — detail headers `NunitoSans_600SemiBold`; the four native list-screen titles `700`/large-`800`; tab labels `NunitoSans_500Medium`. Device-verified: the large title "All my videos" flips Roboto→Nunito (before/after crop). iOS deferred.
+
+So the brand font is delivered across **three** distinct render paths on Android — RN `<Text>` (Text.render patch), `@expo/ui` Compose text (per-`<Text>` fontFamily), and native nav chrome (header/tab style fontFamily). None of these is visible to jest.
+
 ## Footgun fixed (`4a9828a`)
 `z-card.android` used `matchContents={{ horizontal: true }}` (width only) → the Compose Host collapses to 0 height in a height-auto/centered parent (the failure that blanked the login). Fixed to both axes, matching `z-fab.android`. Verified: Profile/Preferences grouped cards render at full height on device.
 
@@ -41,6 +46,8 @@ Home, Profile, Videos, Sessions, Groups, AssetDetail (Mux player + native header
 | `4a9828a` | z-card both-axes footgun + 2 drift guards |
 | `1cf3e59` | This report + prior task records |
 | `a06a6ce` | Nunito on @expo/ui Compose text (buttons/tabs/inputs/dialog/chip) + compose-font guard — device-verified |
+| `6b23704` | Report update — Compose-text section |
+| `3c68cab` | Nunito on native nav chrome (header titles + tab labels) — device-verified |
 
 Green gate: lint 0 errors, typecheck clean, **107 suites / 780 tests**.
 
