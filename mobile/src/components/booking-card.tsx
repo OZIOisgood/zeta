@@ -159,7 +159,10 @@ export function BookingCard({
 
       {/* Row 3: date/time + duration (leading clock glyph) */}
       <View className="mt-1 flex-row items-center gap-1.5">
-        <ZSymbol name="clock" label={t('common.status.upcoming')} size={14} color={colors.muted} />
+        {/* Decorative: the clock renders for done/cancelled bookings too, so a
+            status label ('upcoming') would mis-announce. The adjacent date/time
+            text conveys the info, so the glyph is not announced (label=""). */}
+        <ZSymbol name="clock" label="" size={14} color={colors.muted} />
         <Text className="text-sm text-z-muted">
           {dateText} · {booking.duration_minutes} min
         </Text>

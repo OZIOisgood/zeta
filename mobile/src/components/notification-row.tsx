@@ -143,11 +143,14 @@ export function NotificationRow({
   }
 
   // The whole card carries the unread tonal surface; the message row (ZListItem)
-  // stays transparent so the container fill shows through.
+  // stays transparent so the container fill shows through. Unread reads as a
+  // filled warm surface-1 tile; read drops the fill entirely (bg-transparent) so
+  // it sits as a plain row on the page background — restoring the unread vs read
+  // affordance (an earlier change set both to the same fill).
   return (
     <View
       className={`overflow-hidden rounded-[16px] border border-z-border p-3 ${
-        unread ? 'bg-surface' : 'bg-z-surface'
+        unread ? 'bg-surface' : 'bg-transparent'
       }`}
     >
       <ZListItem
