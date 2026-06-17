@@ -22,7 +22,7 @@ const meta: Meta<ZDropdownMenuComponent> = {
   title: 'UI/Dropdown Menu',
   component: ZDropdownMenuComponent,
   args: {
-    label: 'Legal',
+    label: 'Help',
     items: legalItems,
     placement: 'bottom-start',
     triggerIcon: 'help',

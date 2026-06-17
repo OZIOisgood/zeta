@@ -46,7 +46,7 @@ const translocoLangs = {
       legal: {
         contact: 'Contact',
         imprint: 'Imprint',
-        menu: 'Legal',
+        menu: 'Help',
         privacy: 'Privacy',
         terms: 'Terms of Use',
       },
@@ -160,7 +160,7 @@ describe('ShellComponent', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     const legalButton = Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find(
-      (button) => button.textContent?.includes('Legal'),
+      (button) => button.textContent?.includes('Help'),
     );
     const links = (
       fixture.componentInstance as unknown as {
