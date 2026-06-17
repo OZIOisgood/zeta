@@ -13,6 +13,9 @@
 
 export type ZAvatarShape = 'rounded' | 'circle';
 
+/** Color treatment: neutral warm surface (default) or accent-container fill. */
+export type ZAvatarTone = 'default' | 'accent';
+
 export type ZAvatarProps = {
   /** URI or relative path for the avatar image. */
   image?: string;
@@ -22,6 +25,8 @@ export type ZAvatarProps = {
   size?: number;
   /** Shape of the avatar container. Defaults to 'rounded'. */
   shape?: ZAvatarShape;
+  /** Color treatment. Defaults to 'default'. */
+  tone?: ZAvatarTone;
   /** Accessibility label for screen readers. */
   alt?: string;
   testID?: string;

@@ -1,14 +1,14 @@
 import { Image, Text, View } from 'react-native';
 import { avatarSrc } from '../../lib/avatar';
+import type { ZAvatarProps } from './z-avatar.types';
+
+export type { ZAvatarProps, ZAvatarShape, ZAvatarTone } from './z-avatar.types';
 
 /**
  * Group/user avatar. Mobile counterpart of the web `z-avatar`
  * wrapper (web/dashboard-next/src/app/shared/ui/avatar/).
  * Shows the image when present, otherwise the fallback initials.
  */
-export type ZAvatarShape = 'rounded' | 'circle';
-export type ZAvatarTone = 'default' | 'accent';
-
 export function ZAvatar({
   image,
   fallback = '',
@@ -17,15 +17,7 @@ export function ZAvatar({
   tone = 'default',
   alt,
   testID,
-}: {
-  image?: string;
-  fallback?: string;
-  size?: number;
-  shape?: ZAvatarShape;
-  tone?: ZAvatarTone;
-  alt?: string;
-  testID?: string;
-}) {
+}: ZAvatarProps) {
   const isAccent = tone === 'accent';
   return (
     <View

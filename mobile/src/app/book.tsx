@@ -372,7 +372,7 @@ export default function BookScreen() {
                           selected={isSelected}
                           onPress={() => handleSelectSessionType(st.id)}
                         >
-                          <ZCard className={isSelected ? 'border-z-primary bg-z-primary-soft' : ''}>
+                          <ZCard tone={isSelected ? 'accent' : 'surface'}>
                             <View className="flex-row items-start justify-between gap-2">
                               <Text className="flex-1 font-semibold text-z-text">{st.name}</Text>
                               <ZBadge label={t('common.labels.minutesShort', { count: st.duration_minutes })} />
