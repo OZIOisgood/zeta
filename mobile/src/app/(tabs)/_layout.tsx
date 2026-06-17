@@ -41,9 +41,10 @@ export default function TabsLayout() {
   //    iconColor/labelStyle don't bleed into the selected item
   //    (appearance.android.js resolves selected → iconColor → tintColor).
   //    The active pill uses secondaryContainer — the same warm tonal fill as the
-  //    Chip / SegmentedButton / tonal-button selection language. Selected icon/label
-  //    = onAccentContainer (deep accent) on that pill; inactive = warm muted
-  //    onSurfaceVariant.
+  //    Chip / SegmentedButton / tonal-button selection language. Selected icon
+  //    = onSecondaryContainer on the secondaryContainer pill; selected label
+  //    = onSecondaryContainer (the label sits on the bar surface, not the pill);
+  //    inactive = warm muted onSurfaceVariant.
   //    labelVisibilityMode='labeled' forces every tab to always show its label
   //    (M3 default 'selected'/'auto' hides inactive labels, which raises the active
   //    icon above the others); the handoff shows all labels aligned.
@@ -59,9 +60,9 @@ export default function TabsLayout() {
           indicatorColor: roleColor('secondaryContainer', scheme),
           rippleColor: roleColor('accent', scheme),
           iconColor: roleColor('onSurfaceVariant', scheme),
-          selectedIconColor: roleColor('onAccentContainer', scheme),
+          selectedIconColor: roleColor('onSecondaryContainer', scheme),
           labelStyle: { color: roleColor('onSurfaceVariant', scheme) },
-          selectedLabelStyle: { color: roleColor('onAccentContainer', scheme) },
+          selectedLabelStyle: { color: roleColor('onSecondaryContainer', scheme) },
         }
       : {};
 
