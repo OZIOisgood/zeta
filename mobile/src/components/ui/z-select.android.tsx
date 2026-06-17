@@ -112,12 +112,12 @@ export function ZSelect({
         >
           {placeholder ? (
             <OutlinedTextField.Label>
-              <Text>{placeholder}</Text>
+              <Text style={{ fontFamily: 'NunitoSans_400Regular' }}>{placeholder}</Text>
             </OutlinedTextField.Label>
           ) : null}
           {accessibilityLabel ? (
             <OutlinedTextField.Placeholder>
-              <Text color={color('onSurfaceVariant')}>{accessibilityLabel}</Text>
+              <Text color={color('onSurfaceVariant')} style={{ fontFamily: 'NunitoSans_400Regular' }}>{accessibilityLabel}</Text>
             </OutlinedTextField.Placeholder>
           ) : null}
         </OutlinedTextField>
@@ -136,7 +136,7 @@ export function ZSelect({
               }}
             >
               <DropdownMenuItem.Text>
-                <Text color={color('onSurface')}>{option.label}</Text>
+                <Text color={color('onSurface')} style={{ fontFamily: 'NunitoSans_400Regular' }}>{option.label}</Text>
               </DropdownMenuItem.Text>
             </DropdownMenuItem>
           ))}

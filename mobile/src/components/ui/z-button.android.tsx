@@ -38,6 +38,14 @@ import type { ZButtonProps } from './z-button.types';
 
 export type { ZButtonVariant, ZButtonProps } from './z-button.types';
 
+// @expo/ui Compose <Text> does NOT inherit the JS-loaded brand font, and the
+// app-wide Text.render patch in _layout.tsx only reaches React Native <Text> —
+// not Compose. So name the loaded face explicitly here, or the label renders in
+// the system font (Roboto) on device. Interactive labels are 600 (M3 medium)
+// per the handoff; Android needs the real weighted face (it cannot synthesize
+// the cut from a numeric weight).
+const BRAND_LABEL_FACE = 'NunitoSans_600SemiBold';
+
 export function ZButton({
   label,
   onPress,
@@ -80,12 +88,12 @@ export function ZButton({
       ) : icon != null ? (
         <View>{icon}</View>
       ) : null}
-      <Text color={fg} style={{ fontWeight: '600' }}>
+      <Text color={fg} style={{ fontWeight: '600', fontFamily: BRAND_LABEL_FACE }}>
         {label}
       </Text>
     </Row>
   ) : (
-    <Text color={fg} style={{ fontWeight: '600' }}>
+    <Text color={fg} style={{ fontWeight: '600', fontFamily: BRAND_LABEL_FACE }}>
       {label}
     </Text>
   );

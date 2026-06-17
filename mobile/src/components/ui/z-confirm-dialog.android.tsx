@@ -127,11 +127,11 @@ export function ZConfirmDialog({
     <Host>
       <AlertDialog onDismissRequest={onCancel}>
         <AlertDialog.Title>
-          <Text>{title}</Text>
+          <Text style={{ fontFamily: 'NunitoSans_700Bold' }}>{title}</Text>
         </AlertDialog.Title>
         {description ? (
           <AlertDialog.Text>
-            <Text>{description}</Text>
+            <Text style={{ fontFamily: 'NunitoSans_400Regular' }}>{description}</Text>
           </AlertDialog.Text>
         ) : null}
         <AlertDialog.ConfirmButton>
@@ -143,7 +143,7 @@ export function ZConfirmDialog({
               disabledContentColor: color('onSurfaceVariant'),
             }}
           >
-            <Text>{confirmLabel}</Text>
+            <Text style={{ fontFamily: 'NunitoSans_600SemiBold' }}>{confirmLabel}</Text>
           </TextButton>
         </AlertDialog.ConfirmButton>
         {!confirmOnly && cancelLabel ? (
@@ -154,7 +154,7 @@ export function ZConfirmDialog({
                 contentColor: color('accent'),
               }}
             >
-              <Text>{cancelLabel}</Text>
+              <Text style={{ fontFamily: 'NunitoSans_600SemiBold' }}>{cancelLabel}</Text>
             </TextButton>
           </AlertDialog.DismissButton>
         ) : null}

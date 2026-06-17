@@ -63,7 +63,7 @@ export function ZCheckbox({
       {label ? (
         <Row verticalAlignment="center">
           {checkbox}
-          <Text color={isDisabled ? color('onSurfaceVariant') : color('onSurface')}>{label}</Text>
+          <Text color={isDisabled ? color('onSurfaceVariant') : color('onSurface')} style={{ fontFamily: 'NunitoSans_400Regular' }}>{label}</Text>
         </Row>
       ) : (
         checkbox

@@ -104,7 +104,7 @@ export function ZTextarea({
       >
         {placeholder ? (
           <OutlinedTextField.Label>
-            <Text>{placeholder}</Text>
+            <Text style={{ fontFamily: 'NunitoSans_400Regular' }}>{placeholder}</Text>
           </OutlinedTextField.Label>
         ) : null}
       </OutlinedTextField>

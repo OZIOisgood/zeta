@@ -52,8 +52,10 @@ export function ZTabs({ tabs, activeId, onChange, testID }: ZTabsProps) {
               }}
             >
               <SegmentedButton.Label>
-                {/* M3 medium (600) — segment labels use the medium weight. */}
-                <Text style={{ fontWeight: '600' }}>{label}</Text>
+                {/* M3 medium (600) — segment labels use the medium weight.
+                    Compose <Text> needs the loaded face named explicitly (the
+                    RN Text.render brand-font patch does not reach Compose). */}
+                <Text style={{ fontWeight: '600', fontFamily: 'NunitoSans_600SemiBold' }}>{label}</Text>
               </SegmentedButton.Label>
             </SegmentedButton>
           );

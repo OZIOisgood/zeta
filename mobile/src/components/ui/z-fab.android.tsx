@@ -97,7 +97,7 @@ export function ZFab({
               <View accessibilityLabel={label}>{icon}</View>
             </ExtendedFloatingActionButton.Icon>
             <ExtendedFloatingActionButton.Text>
-              <Text color={contentColor}>{label}</Text>
+              <Text color={contentColor} style={{ fontFamily: 'NunitoSans_600SemiBold' }}>{label}</Text>
             </ExtendedFloatingActionButton.Text>
           </ExtendedFloatingActionButton>
         </Host>

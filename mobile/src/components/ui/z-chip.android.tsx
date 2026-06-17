@@ -71,7 +71,10 @@ export function ZChip({
         <FilterChip.Label>
           <Text
             color={selected ? color('onSecondaryContainer') : color('onSurface')}
-            style={{ fontWeight: selected ? '700' : '500' }}
+            style={{
+              fontWeight: selected ? '700' : '500',
+              fontFamily: selected ? 'NunitoSans_700Bold' : 'NunitoSans_500Medium',
+            }}
           >
             {label}
           </Text>
