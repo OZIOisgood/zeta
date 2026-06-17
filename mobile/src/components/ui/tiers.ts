@@ -8,6 +8,11 @@ export const TIERS: Record<string, Tier> = {
   'z-text-input': 'native',
   'z-textarea': 'native',
   'z-checkbox': 'native',
+  // ZSwitch: wraps RN core `Switch` — already the platform-native control
+  // (UISwitch / M3 Switch), a single cross-platform component that resolves
+  // natively WITHOUT a platform split. Single shared NativeWind file (same
+  // pattern as ZBadge); no .ios/.android variant needed.
+  'z-switch': 'custom-no-native',
   'z-tabs': 'native',
   'z-card': 'native',
   // ZDivider: a thin separator line — no OS-widget equivalent. Custom-RN with a
