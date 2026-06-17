@@ -1,6 +1,7 @@
-import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+
+import { TAB_SCREEN_OPTIONS } from '../../../lib/tab-screen-options';
 
 /**
  * Per-tab Stack for the Coaching / Sessions tab.
@@ -13,23 +14,7 @@ export default function CoachingTabLayout() {
   const { t } = useTranslation();
   return (
     <Stack>
-      <Stack.Screen
-        name="index"
-        options={{
-          title: t('sessions.title'),
-          headerLargeTitle: true,
-          // Brand font on the native title (native header chrome does not inherit
-          // the JS-loaded font; the _layout.tsx Text patch only reaches RN <Text>).
-          headerTitleStyle: { fontFamily: 'NunitoSans_700Bold' },
-          headerLargeTitleStyle: { fontFamily: 'NunitoSans_800ExtraBold' },
-          // Material-3 scroll-edge top app bar: flat at rest, elevated only once
-          // content scrolls under the bar. Android starts flat-at-rest (no
-          // first-frame shadow flash) and useHeaderScrollEdge toggles this on
-          // scroll. iOS gets `undefined` here so its native large-title header
-          // keeps its own scroll-edge hairline (forcing it flat fights the OS).
-          headerShadowVisible: Platform.select({ android: false }),
-        }}
-      />
+      <Stack.Screen name="index" options={{ ...TAB_SCREEN_OPTIONS, title: t('sessions.title') }} />
     </Stack>
   );
 }
