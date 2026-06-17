@@ -1,4 +1,4 @@
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 // ── native module mocks (before importing the screen) ─────────────────────────
 
@@ -188,13 +188,13 @@ test('hides permission-gated email rows when the user lacks the permission', asy
   // Switch to the email-preferences tab.
   await user.press(screen.getByRole('tab', { name: 'Email preferences' }));
 
-  // Always-available row is present.
-  expect(screen.getByRole('checkbox', { name: 'Group membership updates' })).toBeOnTheScreen();
+  // Always-available row is present (now a settings ZSwitch, role "switch").
+  expect(screen.getByRole('switch', { name: 'Group membership updates' })).toBeOnTheScreen();
   // Gated rows are absent without permissions.
-  expect(screen.queryByRole('checkbox', { name: 'New videos uploaded to groups you own' })).toBeNull();
-  expect(screen.queryByRole('checkbox', { name: 'Reviewed videos' })).toBeNull();
-  expect(screen.queryByRole('checkbox', { name: 'Invitation activity' })).toBeNull();
-  expect(screen.queryByRole('checkbox', { name: 'Coaching bookings and cancellations' })).toBeNull();
+  expect(screen.queryByRole('switch', { name: 'New videos uploaded to groups you own' })).toBeNull();
+  expect(screen.queryByRole('switch', { name: 'Reviewed videos' })).toBeNull();
+  expect(screen.queryByRole('switch', { name: 'Invitation activity' })).toBeNull();
+  expect(screen.queryByRole('switch', { name: 'Coaching bookings and cancellations' })).toBeNull();
 });
 
 test('shows permission-gated email rows when the user holds the permissions', async () => {
@@ -204,9 +204,31 @@ test('shows permission-gated email rows when the user holds the permissions', as
   await render(<ProfileScreen />);
   await user.press(screen.getByRole('tab', { name: 'Email preferences' }));
 
-  expect(screen.getByRole('checkbox', { name: 'New videos uploaded to groups you own' })).toBeOnTheScreen();
-  expect(screen.getByRole('checkbox', { name: 'Reviewed videos' })).toBeOnTheScreen();
-  expect(screen.getByRole('checkbox', { name: 'Invitation activity' })).toBeOnTheScreen();
-  expect(screen.getByRole('checkbox', { name: 'Coaching bookings and cancellations' })).toBeOnTheScreen();
-  expect(screen.getByRole('checkbox', { name: 'Coaching reminders' })).toBeOnTheScreen();
+  expect(screen.getByRole('switch', { name: 'New videos uploaded to groups you own' })).toBeOnTheScreen();
+  expect(screen.getByRole('switch', { name: 'Reviewed videos' })).toBeOnTheScreen();
+  expect(screen.getByRole('switch', { name: 'Invitation activity' })).toBeOnTheScreen();
+  expect(screen.getByRole('switch', { name: 'Coaching bookings and cancellations' })).toBeOnTheScreen();
+  expect(screen.getByRole('switch', { name: 'Coaching reminders' })).toBeOnTheScreen();
+});
+
+test('toggling an email-preference switch flips it and dirties the form', async () => {
+  const user = userEvent.setup();
+  authStore.setState({ status: 'signedIn', user: makeUser() });
+
+  await render(<ProfileScreen />);
+  await user.press(screen.getByRole('tab', { name: 'Email preferences' }));
+
+  // The "Reviewed videos" preference starts on; the form is pristine so Save
+  // is disabled. RN core Switch responds to a "valueChange" event (not a
+  // press), so we drive it the canonical RNTL way for a switch.
+  const reviewed = screen.getByRole('switch', { name: 'Reviewed videos' });
+  expect(reviewed.props.accessibilityState?.checked).toBe(true);
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+
+  fireEvent(reviewed, 'valueChange', false);
+
+  // Flipping the preference updates form state, which dirties the form and
+  // enables Save — the observable proof the preference still flips via the
+  // switch (the same assertion semantics the checkbox row carried).
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled());
 });

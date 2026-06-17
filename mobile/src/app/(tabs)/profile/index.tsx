@@ -8,8 +8,10 @@ import { ZAvatarInput } from '../../../components/ui/z-avatar-input';
 import { ZBadge } from '../../../components/ui/z-badge';
 import { ZButton } from '../../../components/ui/z-button';
 import { ZCard } from '../../../components/ui/z-card';
+import { ZDivider } from '../../../components/ui/z-divider';
 import { ZIconTile } from '../../../components/ui/z-icon-tile';
-import { ZCheckbox } from '../../../components/ui/z-checkbox';
+import { ZListItem } from '../../../components/ui/z-list-item';
+import { ZSwitch } from '../../../components/ui/z-switch';
 import { ZCombobox, type ZComboboxOption } from '../../../components/ui/z-combobox';
 import { ZFieldError } from '../../../components/ui/z-field-error';
 import { ZFieldLabel } from '../../../components/ui/z-field-label';
@@ -302,6 +304,7 @@ function PreferencesForm({ user }: { user: Me }) {
       show: can('coaching:bookings:read'),
     },
   ];
+  const visibleEmailRows = emailRows.filter((row) => row.show);
 
   return (
     <ZScreen edges={[]}>
@@ -427,37 +430,36 @@ function PreferencesForm({ user }: { user: Me }) {
                   </View>
                 </View>
 
-                <View className="gap-2 rounded-md border border-z-border bg-z-surface-warm p-4">
-                  <ZCheckbox
-                    value={notificationsEnabled}
-                    label={t('preferences.email.all')}
-                    labelClassName="font-semibold"
-                    onValueChange={(value) => setEmailPreference('notifications_enabled', value)}
-                  />
-                  <Text className="text-xs leading-5 text-z-muted">
-                    {t('preferences.email.allDescription')}
-                  </Text>
-                </View>
+                <ZListItem
+                  className="bg-secondary-container"
+                  title={t('preferences.email.all')}
+                  subtitle={t('preferences.email.allDescription')}
+                  trailing={
+                    <ZSwitch
+                      checked={notificationsEnabled}
+                      accessibilityLabel={t('preferences.email.all')}
+                      onChange={(value) => setEmailPreference('notifications_enabled', value)}
+                    />
+                  }
+                />
 
-                <View className="gap-3">
-                  {emailRows
-                    .filter((row) => row.show)
-                    .map((row) => (
-                      <View
-                        key={row.key}
-                        className={`rounded-md border border-z-border bg-z-surface p-4 ${
-                          notificationsEnabled ? '' : 'opacity-60'
-                        }`}
-                      >
-                        <ZCheckbox
-                          value={emailPreferences[row.key]}
-                          label={row.label}
-                          labelClassName="font-semibold"
-                          disabled={!notificationsEnabled}
-                          onValueChange={(value) => setEmailPreference(row.key, value)}
-                        />
-                      </View>
-                    ))}
+                <View className={notificationsEnabled ? '' : 'opacity-60'}>
+                  {visibleEmailRows.map((row, index) => (
+                    <View key={row.key}>
+                      {index > 0 ? <ZDivider inset /> : null}
+                      <ZListItem
+                        title={row.label}
+                        trailing={
+                          <ZSwitch
+                            checked={emailPreferences[row.key]}
+                            accessibilityLabel={row.label}
+                            disabled={!notificationsEnabled}
+                            onChange={(value) => setEmailPreference(row.key, value)}
+                          />
+                        }
+                      />
+                    </View>
+                  ))}
                 </View>
               </ZCard>
             )}
