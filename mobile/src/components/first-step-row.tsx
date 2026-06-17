@@ -1,13 +1,14 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useRoleColors } from '../theme/native';
-import { Touchable } from './ui/touchable';
+import { ZListItem } from './ui/z-list-item';
 import { ZSymbol } from './ui/z-symbol';
 
 /**
- * One onboarding checklist row (Material handoff StepItem look): a borderless
- * divider row (the parent list draws hairline dividers). The status indicator is
- * a 24px circle — done: filled accent + a 14px white check (native ZSymbol);
- * todo: a 2px outline-strong ring. Completed rows are NOT dimmed.
+ * One onboarding checklist row (Material handoff StepItem look), composed on
+ * ZListItem. The status indicator is the custom leading node — a 24px circle:
+ * done = filled accent + a 14px white check (native ZSymbol); todo = a 2px
+ * outline-strong ring. The trailing chevron shows only while incomplete, and the
+ * completed state drives ZListItem's `selected` (tonal) without dimming.
  */
 export function FirstStepRow({
   label,
@@ -23,44 +24,38 @@ export function FirstStepRow({
   testID?: string;
 }) {
   const { color } = useRoleColors();
-  return (
-    <Touchable
-      testID={testID}
-      accessibilityLabel={label}
-      selected={completed}
-      onPress={onPress}
-      haptic
-      className="flex-row items-start gap-3 py-3"
+  const leading = completed ? (
+    <View
+      testID="first-step-row-check"
+      className="h-6 w-6 items-center justify-center rounded-full"
+      style={{ backgroundColor: color('accentStrong') }}
     >
-      <View className="mt-0.5">
-        {completed ? (
-          <View
-            testID="first-step-row-check"
-            className="h-6 w-6 items-center justify-center rounded-full"
-            style={{ backgroundColor: color('accentStrong') }}
-          >
-            <ZSymbol
-              testID="first-step-row-check-glyph"
-              name="check"
-              label=""
-              size={14}
-              color={color('onAccent')}
-            />
-          </View>
-        ) : (
-          <View
-            testID="first-step-row-circle"
-            className="h-6 w-6 rounded-full"
-            style={{ borderWidth: 2, borderColor: color('outlineStrong') }}
-          />
-        )}
-      </View>
-      <View className="min-w-0 flex-1 gap-1">
-        <Text className="text-[14.5px] font-bold text-z-text">{label}</Text>
-        <Text className="text-[13px] leading-5 text-z-muted">{description}</Text>
-      </View>
-      {!completed ? (
-        <View className="mt-0.5">
+      <ZSymbol
+        testID="first-step-row-check-glyph"
+        name="check"
+        label=""
+        size={14}
+        color={color('onAccent')}
+      />
+    </View>
+  ) : (
+    <View
+      testID="first-step-row-circle"
+      className="h-6 w-6 rounded-full"
+      style={{ borderWidth: 2, borderColor: color('outlineStrong') }}
+    />
+  );
+
+  return (
+    <ZListItem
+      testID={testID}
+      leading={leading}
+      title={label}
+      subtitle={description}
+      onPress={onPress}
+      selected={completed}
+      trailing={
+        !completed ? (
           <ZSymbol
             testID="first-step-row-chevron"
             name="chevron-right"
@@ -68,8 +63,8 @@ export function FirstStepRow({
             size={18}
             color={color('onSurfaceVariant')}
           />
-        </View>
-      ) : null}
-    </Touchable>
+        ) : undefined
+      }
+    />
   );
 }

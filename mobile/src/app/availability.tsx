@@ -35,6 +35,7 @@ import { ZFieldError } from '../components/ui/z-field-error';
 import { ZFieldLabel } from '../components/ui/z-field-label';
 import { ZIconButton } from '../components/ui/z-icon-button';
 import { ZIconTile } from '../components/ui/z-icon-tile';
+import { ZListItem } from '../components/ui/z-list-item';
 import { ZSymbol } from '../components/ui/z-symbol';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZQueryError } from '../components/ui/z-query-error';
@@ -737,40 +738,39 @@ export default function AvailabilityScreen() {
             </ZEmptyState>
           </View>
         }
-        renderItem={({ item }: { item: CoachingBlockedSlot }) => (
-          <ZCard>
-            <View className="flex-row items-start gap-3">
-              <ZIconTile
-                icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={colors.text} />}
-                tone="neutral"
-                size="sm"
-              />
-              <View className="min-w-0 flex-1">
-                <Text className="font-semibold text-z-text">{formatDate(item.blocked_date)}</Text>
-                {item.start_time && item.end_time ? (
-                  <Text className="mt-1 text-sm text-z-muted">
-                    {`${item.start_time} – ${item.end_time}`}
-                  </Text>
-                ) : (
-                  <Text className="mt-1 text-sm text-z-muted">
-                    {t('common.labels.fullDay')}
-                  </Text>
-                )}
-                {item.reason ? (
-                  <Text className="mt-1 text-sm text-z-muted">{item.reason}</Text>
-                ) : null}
-              </View>
-              <ZIconButton
-                label={t('common.actions.delete')}
-                variant="secondary"
-                size="sm"
-                onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
-              >
-                <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={colors.danger} />
-              </ZIconButton>
-            </View>
-          </ZCard>
-        )}
+        renderItem={({ item }: { item: CoachingBlockedSlot }) => {
+          // Time-range vs full-day on the first subtitle line; the optional
+          // reason follows on a second line (ZListItem subtitle allows 3 lines).
+          const timeline =
+            item.start_time && item.end_time
+              ? `${item.start_time} – ${item.end_time}`
+              : t('common.labels.fullDay');
+          const subtitle = item.reason ? `${timeline}\n${item.reason}` : timeline;
+          return (
+            <ZListItem
+              // Non-interactive: the row surfaces its own delete control.
+              leading={
+                <ZIconTile
+                  icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={colors.text} />}
+                  tone="neutral"
+                  size="sm"
+                />
+              }
+              title={formatDate(item.blocked_date)}
+              subtitle={subtitle}
+              trailing={
+                <ZIconButton
+                  label={t('common.actions.delete')}
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
+                >
+                  <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={colors.danger} />
+                </ZIconButton>
+              }
+            />
+          );
+        }}
       />
     );
   }

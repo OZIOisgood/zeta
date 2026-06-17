@@ -1,10 +1,10 @@
-import { Text, View } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { GroupUser } from '../api/queries/groups';
 import { ZAvatar } from './ui/z-avatar';
 import { ZBadge } from './ui/z-badge';
 import { ZIconButton } from './ui/z-icon-button';
+import { ZListItem } from './ui/z-list-item';
 import { colors } from '../theme/colors';
 
 function initials(member: GroupUser): string {
@@ -32,33 +32,35 @@ export function MemberRow({
   const roleKey = ROLE_KEYS[member.role];
   const roleLabel = roleKey ? t(roleKey) : member.role;
   return (
-    <View className="flex-row items-center gap-3 py-2">
-      <ZAvatar
-        image={member.avatar}
-        fallback={initials(member)}
-        size={44}
-        shape="circle"
-        alt={fullName}
-        testID={member.avatar ? undefined : 'member-initials'}
-      />
-      <View className="flex-1">
-        <View className="flex-row flex-wrap items-center gap-2">
-          <Text className="text-sm font-semibold text-z-text">{fullName}</Text>
-          <ZBadge label={roleLabel} tone="primary" />
-        </View>
-        <Text className="text-sm text-z-muted">{member.email}</Text>
-      </View>
-      {onRemove ? (
-        <ZIconButton
-          testID="member-remove"
-          label={t('groups.users.removeUser')}
-          variant="ghost"
-          size="sm"
-          onPress={onRemove}
-        >
-          <Trash2 color={colors.danger} size={18} />
-        </ZIconButton>
-      ) : null}
-    </View>
+    <ZListItem
+      // Non-interactive: the row surfaces its own remove control, so it must not
+      // pose as a button — omit onPress.
+      leading={
+        <ZAvatar
+          image={member.avatar}
+          fallback={initials(member)}
+          size={44}
+          shape="circle"
+          alt={fullName}
+          testID={member.avatar ? undefined : 'member-initials'}
+        />
+      }
+      title={fullName}
+      titleAccessory={<ZBadge label={roleLabel} tone="primary" />}
+      subtitle={member.email}
+      trailing={
+        onRemove ? (
+          <ZIconButton
+            testID="member-remove"
+            label={t('groups.users.removeUser')}
+            variant="ghost"
+            size="sm"
+            onPress={onRemove}
+          >
+            <Trash2 color={colors.danger} size={18} />
+          </ZIconButton>
+        ) : undefined
+      }
+    />
   );
 }
