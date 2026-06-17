@@ -46,7 +46,7 @@ export function ZTabs({ tabs, activeId, onChange, testID }: ZTabsProps) {
                 activeContainerColor: color('secondaryContainer'),
                 activeContentColor: color('onSecondaryContainer'),
                 activeBorderColor: color('accent'),
-                inactiveContainerColor: color('surface'),
+                inactiveContainerColor: color('surfaceVariant'),
                 inactiveContentColor: color('onSurface'),
                 inactiveBorderColor: color('outline'),
               }}
