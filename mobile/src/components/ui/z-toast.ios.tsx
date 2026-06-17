@@ -13,7 +13,8 @@
  *   - a leading tone-colored status dot (success / danger / neutral);
  *   - title (on-surface) + optional message (on-surface-variant), single line;
  *   - optional accent action label;
- *   - sits within the top safe-area inset; auto-dismisses via the shared store.
+ *   - sits within the top safe-area inset; auto-dismisses via its own timer,
+ *     then removes itself from the shared store.
  *
  * The store, showToast, useToasts, ToastCard, and all callers are untouched —
  * only this host file is platform-specific.
@@ -62,6 +63,8 @@ function IosToastBanner({ toast, onDismiss }: { toast: ZToast; onDismiss: (id: n
   const [progress] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
+    let alive = true;
+
     Animated.timing(progress, {
       toValue: 1,
       duration: ANIM_MS,
@@ -75,10 +78,16 @@ function IosToastBanner({ toast, onDismiss }: { toast: ZToast; onDismiss: (id: n
         duration: ANIM_MS,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
-      }).start(() => onDismiss(toast.id));
+      }).start(() => {
+        if (alive) onDismiss(toast.id);
+      });
     }, AUTO_DISMISS_MS);
 
-    return () => clearTimeout(timer);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      progress.stopAnimation();
+    };
   }, [toast.id, progress, onDismiss]);
 
   const animatedStyle = {

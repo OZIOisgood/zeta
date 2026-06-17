@@ -95,9 +95,12 @@ export function ZToastHost() {
           })
           .then((result) => {
             if (result === 'actionPerformed') action?.onPress();
+            // Drop the id once resolved so the Set doesn't grow per toast over a session.
+            firedIds.current.delete(id);
             dismiss(id);
           })
           .catch(() => {
+            firedIds.current.delete(id);
             dismiss(id);
           });
       }

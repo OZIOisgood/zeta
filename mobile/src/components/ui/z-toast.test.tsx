@@ -1,5 +1,5 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { act, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
@@ -94,6 +94,8 @@ test('ToastCard renders an optional action label', async () => {
     </SafeAreaProvider>,
   );
   expect(screen.getByText('Undo')).toBeOnTheScreen();
+  fireEvent.press(screen.getByText('Undo'));
+  expect(onPress).toHaveBeenCalledTimes(1);
 });
 
 test('the toast auto-dismisses after the timeout', async () => {
