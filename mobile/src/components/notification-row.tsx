@@ -146,8 +146,8 @@ export function NotificationRow({
   // stays transparent so the container fill shows through.
   return (
     <View
-      className={`overflow-hidden rounded-lg border border-z-border p-1 ${
-        unread ? 'bg-z-surface-warm' : 'bg-z-surface'
+      className={`overflow-hidden rounded-[16px] border border-z-border p-3 ${
+        unread ? 'bg-surface' : 'bg-z-surface'
       }`}
     >
       <ZListItem
@@ -157,7 +157,7 @@ export function NotificationRow({
         leading={
           <ZIconTile
             tone={ICON_TONE[view.icon]}
-            size="sm"
+            size="md"
             icon={<TypeGlyph icon={view.icon} />}
           />
         }

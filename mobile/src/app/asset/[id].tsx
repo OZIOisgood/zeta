@@ -235,16 +235,17 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
               })()}
             {!collapsed.has(review.id) &&
               (repliesByParent.get(review.id) ?? []).map((reply) => (
-                <ReviewItem
-                  key={reply.id}
-                  review={reply}
-                  onSeek={seekTo}
-                  isReply
-                  onEdit={canEdit ? handleEdit : undefined}
-                  onDelete={canDelete ? (r) => setPendingDelete(r) : undefined}
-                  onEnhance={canEdit ? handleEnhance : undefined}
-                  deleting={deleting && pendingDelete?.id === reply.id}
-                />
+                <View key={reply.id} className="ps-3">
+                  <ReviewItem
+                    review={reply}
+                    onSeek={seekTo}
+                    isReply
+                    onEdit={canEdit ? handleEdit : undefined}
+                    onDelete={canDelete ? (r) => setPendingDelete(r) : undefined}
+                    onEnhance={canEdit ? handleEnhance : undefined}
+                    deleting={deleting && pendingDelete?.id === reply.id}
+                  />
+                </View>
               ))}
           </View>
         ))}

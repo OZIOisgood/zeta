@@ -25,7 +25,7 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
   const uploading = asset.status === 'waiting_upload';
 
   const thumbnail = (
-    <View className="relative h-[70px] w-[104px] overflow-hidden rounded-2xl">
+    <View className="relative h-[66px] w-[100px] overflow-hidden rounded-[14px]">
       <ZVideoPreview thumbnail={asset.thumbnail} alt={asset.title} />
       <View className="absolute inset-0 items-center justify-center">
         {uploading ? (

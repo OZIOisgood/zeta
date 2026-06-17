@@ -96,7 +96,7 @@ export function ReviewItem({
   }
 
   return (
-    <View className="flex-row items-start gap-2">
+    <View className="flex-row items-start gap-3">
       <ZAvatar
         image={review.author?.avatar}
         fallback={initialsFromName(authorName)}
@@ -165,6 +165,7 @@ export function ReviewItem({
             {review.timestamp_seconds !== undefined && review.timestamp_seconds !== null && (
               <ZChip
                 label={formatTimestamp(review.timestamp_seconds)}
+                showCheck={false}
                 onPress={onSeek ? () => onSeek(review.timestamp_seconds!) : undefined}
               />
             )}

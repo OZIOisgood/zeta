@@ -1,5 +1,4 @@
 import { Text, View } from 'react-native';
-import { Ban, Phone, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../api/queries/coaching';
 import { formatBookingDateTime } from '../api/queries/coaching';
@@ -7,6 +6,7 @@ import { ZBadge, type ZBadgeTone } from './ui/z-badge';
 import { ZButton } from './ui/z-button';
 import { ZCard } from './ui/z-card';
 import { ZIconButton } from './ui/z-icon-button';
+import { ZSymbol } from './ui/z-symbol';
 import { colors } from '../theme/colors';
 
 /**
@@ -132,10 +132,10 @@ export function BookingCard({
   const recordingReady = booking.recording?.status === 'ready' && !!booking.recording?.asset_id;
 
   return (
-    <ZCard className="mb-3">
+    <ZCard tone="surface" className="mb-3">
       {/* Row 1: session type name + status + recording badges */}
       <View className="flex-row flex-wrap items-center gap-2">
-        <Text className="flex-shrink text-base font-semibold text-z-text" numberOfLines={1}>
+        <Text className="flex-shrink text-base font-extrabold text-z-text" numberOfLines={1}>
           {sessionTypeName}
         </Text>
         <ZBadge
@@ -157,10 +157,13 @@ export function BookingCard({
         {counterpartLabel}: {counterpart}
       </Text>
 
-      {/* Row 3: date/time + duration */}
-      <Text className="mt-1 text-sm text-z-muted">
-        {dateText} · {booking.duration_minutes} min
-      </Text>
+      {/* Row 3: date/time + duration (leading clock glyph) */}
+      <View className="mt-1 flex-row items-center gap-1.5">
+        <ZSymbol name="clock" label={t('common.status.upcoming')} size={14} color={colors.muted} />
+        <Text className="text-sm text-z-muted">
+          {dateText} · {booking.duration_minutes} min
+        </Text>
+      </View>
 
       {/* Optional notes */}
       {booking.notes ? (
@@ -184,7 +187,7 @@ export function BookingCard({
               testID="booking-join"
               label={t('common.actions.join')}
               variant="primary"
-              icon={<Phone color={colors.onPrimary} size={16} />}
+              icon={<ZSymbol name="phone" label={t('common.actions.join')} size={16} color={colors.onPrimary} />}
               onPress={onJoin}
             />
           ) : null}
@@ -192,8 +195,8 @@ export function BookingCard({
             <ZButton
               testID="booking-recording"
               label={t('common.status.recordingReady')}
-              variant="ghost"
-              icon={<Video color={colors.text} size={16} />}
+              variant="tonal"
+              icon={<ZSymbol name="video" label={t('common.status.recordingReady')} size={16} color={colors.text} />}
               onPress={() => onOpenRecording(booking.recording!.asset_id!)}
             />
           ) : null}
@@ -204,7 +207,7 @@ export function BookingCard({
               variant="ghost"
               onPress={onCancel}
             >
-              <Ban color={colors.danger} size={18} />
+              <ZSymbol name="ban" label={t('sessions.cancel.title')} size={18} color={colors.danger} />
             </ZIconButton>
           ) : null}
         </View>

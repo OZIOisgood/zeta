@@ -29,7 +29,7 @@ export function FirstStepRow({
     <View
       testID="first-step-row-check"
       className="h-6 w-6 items-center justify-center rounded-full"
-      style={{ backgroundColor: color('accentStrong') }}
+      style={{ backgroundColor: color('accent') }}
     >
       <ZSymbol
         testID="first-step-row-check-glyph"
@@ -43,7 +43,7 @@ export function FirstStepRow({
     <View
       testID="first-step-row-circle"
       className="h-6 w-6 rounded-full"
-      style={{ borderWidth: 2, borderColor: color('outlineStrong') }}
+      style={{ borderWidth: 2, borderColor: color('outline') }}
     />
   );
 
