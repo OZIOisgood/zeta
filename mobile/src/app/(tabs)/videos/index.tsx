@@ -129,17 +129,20 @@ export default function VideosScreen() {
     { id: 'reviewed', label: t('videos.reviewStatus.reviewed') },
   ];
 
-  const filterRow =
-    !isPending && !isError ? (
-      <View className="px-4">
-        <ZTabs
-          testID="videos-filter-tabs"
-          tabs={filterTabs}
-          activeId={activeFilter}
-          onChange={(id) => setActiveFilter(id as VideoFilter)}
-        />
-      </View>
-    ) : null;
+  // Render the segmented filter unconditionally (even during pending/error) so its
+  // @expo/ui Host never mounts/unmounts. When it toggled null↔element across load
+  // states, the sibling FAB's Compose Host re-measured to full width (footgun #6) —
+  // a Videos-only bug; Sessions renders its segmented unconditionally and is fine.
+  const filterRow = (
+    <View className="px-4">
+      <ZTabs
+        testID="videos-filter-tabs"
+        tabs={filterTabs}
+        activeId={activeFilter}
+        onChange={(id) => setActiveFilter(id as VideoFilter)}
+      />
+    </View>
+  );
 
   let content: React.ReactNode;
 
