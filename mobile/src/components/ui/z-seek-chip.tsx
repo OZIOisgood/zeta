@@ -35,6 +35,13 @@ export function ZSeekChip({ label, onPress, accessibilityLabel, testID }: ZSeekC
       testID={testID}
       accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
+      // The pill is only 24px tall (h-6) to read as a quiet inline chip; hitSlop
+      // lifts the effective touch target toward the ~44pt HIG / 48dp Material
+      // minimum without growing the visual height.
+      pressableProps={{ hitSlop: { top: 10, bottom: 10, left: 4, right: 4 } }}
+      // Optical alignment, matched to the handoff: asymmetric padding (tighter on
+      // the leading play glyph, looser after the timecode) and a 11px glyph that
+      // sits on the 12.5px tabular-nums label baseline.
       className="h-6 flex-row items-center gap-1 rounded-full bg-accent-container pl-[7px] pr-[9px]"
     >
       <ZSymbol name="play" label="" size={11} color={color('onAccentContainer')} />
