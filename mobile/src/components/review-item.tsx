@@ -5,6 +5,7 @@ import type { Review } from '../api/queries/reviews';
 import { initialsFromName } from '../lib/avatar';
 import { formatRelativeTime } from '../lib/datetime';
 import { colors } from '../theme/colors';
+import { Touchable } from './ui/touchable';
 import { ZAvatar } from './ui/z-avatar';
 import { ZButton } from './ui/z-button';
 import { ZIconButton } from './ui/z-icon-button';
@@ -98,12 +99,13 @@ export function ReviewItem({
   }
 
   return (
-    <View className="flex-row items-start gap-3">
+    <View className="flex-row items-start gap-2.5">
       <ZAvatar
         image={review.author?.avatar}
         fallback={initialsFromName(authorName)}
         alt={authorName}
         size={isReply ? 28 : 36}
+        shape="circle"
       />
 
       <View className="min-w-0 flex-1">
@@ -111,7 +113,7 @@ export function ReviewItem({
         <View className="flex-row flex-wrap items-center gap-x-2 gap-y-1">
           <Text
             testID="review-author"
-            className="flex-shrink text-sm font-semibold text-z-text"
+            className="flex-shrink text-sm font-bold text-z-text"
             numberOfLines={1}
           >
             {authorName}
@@ -172,24 +174,25 @@ export function ReviewItem({
             </View>
           </View>
         ) : (
-          <Text className="mt-1 text-sm leading-6 text-z-text">{review.content}</Text>
+          <Text className="mt-0.5 text-sm leading-[22px] text-z-text">{review.content}</Text>
         )}
 
         {!isEditing && (
-          <View className="mt-1 flex-row flex-wrap items-center gap-2">
+          <View className="mt-2 flex-row flex-wrap items-center gap-3">
             <Text className="text-xs text-z-muted">
               {formatRelativeTime(review.created_at, t)}
             </Text>
 
             {showReplyButton && (
-              <ZIconButton
-                label={t('videos.reply')}
-                size="sm"
+              <Touchable
                 testID="review-reply"
+                accessibilityLabel={t('videos.reply')}
                 onPress={() => onReply!(review)}
+                className="flex-row items-center gap-1"
               >
                 <ZSymbol name="reply" label="" size={14} color={colors.muted} />
-              </ZIconButton>
+                <Text className="text-xs font-bold text-z-muted">{t('videos.reply')}</Text>
+              </Touchable>
             )}
 
             {onEdit && (
