@@ -112,16 +112,6 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
   const { mutateAsync: enhanceText } = useEnhanceReviewTextMutation();
   const [pendingDelete, setPendingDelete] = useState<Review | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
-
-  function toggleThread(rootId: string) {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(rootId)) next.delete(rootId);
-      else next.add(rootId);
-      return next;
-    });
-  }
 
   async function handleEnhance(text: string): Promise<string | null> {
     try {
@@ -196,7 +186,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
 
   return (
     <ZCard className="gap-4">
-      <View className="mb-1 flex-row items-center gap-2">
+      <View className="mb-3 flex-row items-center gap-2">
         <ZSymbol name="message" label={t('videos.comments')} size={20} color={colors.primary} />
         <Text className="text-[19px] font-extrabold text-z-text">{t('videos.comments')}</Text>
         <ZBadge label={String(topLevel.length)} />
@@ -231,40 +221,20 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
               onEnhance={canEdit ? handleEnhance : undefined}
               deleting={deleting && pendingDelete?.id === review.id}
             />
-            {(repliesByParent.get(review.id) ?? []).length > 0 &&
-              (() => {
-                const replyCount = (repliesByParent.get(review.id) ?? []).length;
-                const isCollapsed = collapsed.has(review.id);
-                return (
-                  <ZButton
-                    label={`${replyCount} ${t('videos.reply', { count: replyCount })}`}
-                    variant="ghost"
-                    testID={`thread-collapse-${review.id}`}
-                    icon={
-                      isCollapsed ? (
-                        <ZSymbol name="chevron-right" label={t('videos.reply', { count: replyCount })} size={14} color={colors.muted} />
-                      ) : (
-                        <ZSymbol name="chevron-down" label={t('videos.reply', { count: replyCount })} size={14} color={colors.muted} />
-                      )
-                    }
-                    onPress={() => toggleThread(review.id)}
-                  />
-                );
-              })()}
-            {!collapsed.has(review.id) &&
-              (repliesByParent.get(review.id) ?? []).map((reply) => (
-                <View key={reply.id} className="ps-[22px]">
-                  <ReviewItem
-                    review={reply}
-                    onSeek={seekTo}
-                    isReply
-                    onEdit={canEdit ? handleEdit : undefined}
-                    onDelete={canDelete ? (r) => setPendingDelete(r) : undefined}
-                    onEnhance={canEdit ? handleEnhance : undefined}
-                    deleting={deleting && pendingDelete?.id === reply.id}
-                  />
-                </View>
-              ))}
+            {/* Replies render inline (matches the handoff — no collapse control). */}
+            {(repliesByParent.get(review.id) ?? []).map((reply) => (
+              <View key={reply.id} className="ps-[22px]">
+                <ReviewItem
+                  review={reply}
+                  onSeek={seekTo}
+                  isReply
+                  onEdit={canEdit ? handleEdit : undefined}
+                  onDelete={canDelete ? (r) => setPendingDelete(r) : undefined}
+                  onEnhance={canEdit ? handleEnhance : undefined}
+                  deleting={deleting && pendingDelete?.id === reply.id}
+                />
+              </View>
+            ))}
           </View>
         ))}
 
