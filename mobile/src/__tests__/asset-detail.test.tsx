@@ -230,14 +230,21 @@ test('description show-more toggle appears on overflow and toggles expand/collap
   mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
   await render(<Providers><AssetDetailScreen /></Providers>);
 
-  const description = screen.getByTestId('asset-description');
+  // Overflow is detected on the hidden, unclamped "ghost" measurer — the
+  // visible Text no longer carries onTextLayout (Android clamps lines.length
+  // to numberOfLines, so measuring the clamped Text is unreliable there).
+  // The measurer is hidden from accessibility, so opt into hidden elements.
+  const measure = screen.getByTestId('desc-measure', { includeHiddenElements: true });
   // jest/RNTL does not run real layout — simulate overflow (>2 lines) via a
   // synthetic textLayout event so the toggle logic becomes testable.
   await act(async () => {
-    fireEvent(description, 'textLayout', {
+    fireEvent(measure, 'textLayout', {
       nativeEvent: { lines: [{}, {}, {}] },
     });
   });
+
+  // The visible description is still rendered.
+  expect(screen.getByTestId('asset-description')).toBeOnTheScreen();
 
   // Toggle appears once overflow is detected.
   const toggle = screen.getByTestId('asset-description-toggle');
@@ -252,18 +259,37 @@ test('description show-more toggle appears on overflow and toggles expand/collap
   expect(within(toggle).getByText('Show more')).toBeOnTheScreen();
 });
 
-test('description show-more toggle is absent when text fits in 2 lines', async () => {
+test('description still renders (toggle absent) when text fits in 2 lines', async () => {
   mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
   await render(<Providers><AssetDetailScreen /></Providers>);
 
-  const description = screen.getByTestId('asset-description');
+  const measure = screen.getByTestId('desc-measure', { includeHiddenElements: true });
   await act(async () => {
-    fireEvent(description, 'textLayout', {
+    fireEvent(measure, 'textLayout', {
       nativeEvent: { lines: [{}, {}] },
     });
   });
 
+  // No overflow → no toggle, but the description text is still shown.
   expect(screen.queryByTestId('asset-description-toggle')).toBeNull();
+  expect(screen.getByTestId('asset-description')).toBeOnTheScreen();
+  expect(screen.getByText('Front stance drill')).toBeOnTheScreen();
+});
+
+test('no description renders neither the text, the toggle, nor the measurer', async () => {
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, description: '' },
+    refetch: jest.fn(),
+  });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.queryByText('Front stance drill')).toBeNull();
+  expect(screen.queryByTestId('asset-description')).toBeNull();
+  expect(screen.queryByTestId('asset-description-toggle')).toBeNull();
+  // includeHiddenElements so we assert true absence, not merely a11y-hidden.
+  expect(screen.queryByTestId('desc-measure', { includeHiddenElements: true })).toBeNull();
 });
 
 test('loading state renders a skeleton', async () => {

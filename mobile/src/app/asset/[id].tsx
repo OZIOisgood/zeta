@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -35,6 +35,24 @@ type AssetVideo = components['schemas']['AssetVideo'];
 
 function streamUrl(playbackId: string) {
   return `https://stream.mux.com/${playbackId}.m3u8`;
+}
+
+// ── Description clamp/show-more state ──────────────────────────────────────────
+// Both flags live in one reducer so the reset effect dispatches a single action
+// (satisfying react-hooks/set-state-in-effect, which flags multiple synchronous
+// setState setters inside one effect — same pattern as group preferences).
+type DescState = { expanded: boolean; overflows: boolean };
+type DescAction = { type: 'reset' } | { type: 'toggle' } | { type: 'setOverflows'; value: boolean };
+
+function descReducer(state: DescState, action: DescAction): DescState {
+  switch (action.type) {
+    case 'reset':
+      return { expanded: false, overflows: false };
+    case 'toggle':
+      return { ...state, expanded: !state.expanded };
+    case 'setOverflows':
+      return state.overflows === action.value ? state : { ...state, overflows: action.value };
+  }
 }
 
 // ── Player ───────────────────────────────────────────────────────────────────
@@ -302,8 +320,15 @@ export default function AssetDetailScreen() {
   const [finalizing, setFinalizing] = useState(false);
 
   // Description clamp/show-more state for the meta card.
-  const [descExpanded, setDescExpanded] = useState(false);
-  const [descOverflows, setDescOverflows] = useState(false);
+  const [desc, dispatchDesc] = useReducer(descReducer, { expanded: false, overflows: false });
+  const descExpanded = desc.expanded;
+  const descOverflows = desc.overflows;
+
+  // Reset the description UI when the asset (or its description) changes, so a
+  // stale "expanded"/"overflows" state can't leak across a route reuse/refetch.
+  useEffect(() => {
+    dispatchDesc({ type: 'reset' });
+  }, [id, data?.description]);
 
   async function confirmFinalize() {
     if (finalizing) return;
@@ -423,24 +448,49 @@ export default function AssetDetailScreen() {
                 <Text className="flex-1 text-sm font-semibold text-z-text" numberOfLines={1}>
                   {group.name}
                 </Text>
-                <ZBadge label={statusLabel} tone={statusTone} />
+                {/* Wrap so the row's items-center wins: ZBadge has a baked-in
+                    self-start that would otherwise top-align it next to the
+                    taller avatar/name. */}
+                <View>
+                  <ZBadge label={statusLabel} tone={statusTone} />
+                </View>
               </Touchable>
             ) : (
               <View className="flex-row items-center justify-end">
                 <ZBadge label={statusLabel} tone={statusTone} />
               </View>
             )}
+            {/* Mobile intentionally renders nothing when there is no description
+                (native density). The web dashboard instead shows the
+                `videos.phase4.noDescription` placeholder — a deliberate
+                divergence, not a missing case. */}
             {data.description ? (
               <View className="gap-1">
                 <Text
                   testID="asset-description"
                   className="text-sm text-z-muted"
                   numberOfLines={descExpanded ? undefined : 2}
-                  onTextLayout={(e) => {
-                    if (!descOverflows && e.nativeEvent.lines.length > 2) {
-                      setDescOverflows(true);
-                    }
-                  }}
+                >
+                  {data.description}
+                </Text>
+                {/* Hidden, unclamped "ghost" measurer. We CANNOT measure overflow
+                    on the visible (clamped) Text: `onTextLayout.lines` is
+                    platform-divergent when numberOfLines is set — iOS reports the
+                    full pre-clamp line count, but Android caps it at numberOfLines
+                    (≤2), so the toggle would never appear on Android. This twin
+                    spans the same content width with NO clamp, so lines.length is
+                    the TRUE line count on both platforms. Keep its text styling
+                    (text-sm / line-height) identical to the visible Text. */}
+                <Text
+                  testID="desc-measure"
+                  aria-hidden
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={{ position: 'absolute', left: 0, right: 0, opacity: 0 }}
+                  className="text-sm"
+                  onTextLayout={(e) =>
+                    dispatchDesc({ type: 'setOverflows', value: e.nativeEvent.lines.length > 2 })
+                  }
                 >
                   {data.description}
                 </Text>
@@ -448,7 +498,7 @@ export default function AssetDetailScreen() {
                   <Touchable
                     testID="asset-description-toggle"
                     accessibilityLabel={descExpanded ? t('videos.showLess') : t('videos.showMore')}
-                    onPress={() => setDescExpanded((v) => !v)}
+                    onPress={() => dispatchDesc({ type: 'toggle' })}
                     className="self-start"
                   >
                     <Text className="text-[13px] font-bold text-z-primary">
