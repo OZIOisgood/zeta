@@ -196,9 +196,9 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
 
   return (
     <ZCard className="gap-4">
-      <View className="flex-row items-center gap-2">
-        <ZSymbol name="message" label={t('videos.comments')} size={18} color={colors.primary} />
-        <Text className="text-[17px] font-extrabold text-z-text">{t('videos.comments')}</Text>
+      <View className="mb-1 flex-row items-center gap-2">
+        <ZSymbol name="message" label={t('videos.comments')} size={20} color={colors.primary} />
+        <Text className="text-[19px] font-extrabold text-z-text">{t('videos.comments')}</Text>
         <ZBadge label={String(topLevel.length)} />
       </View>
 
@@ -455,7 +455,7 @@ export default function AssetDetailScreen() {
                 className="flex-row items-center gap-2"
               >
                 <ZAvatar image={group.avatar} fallback={initialsFromName(group.name)} size={24} shape="circle" alt={group.name} />
-                <Text className="flex-1 text-[15px] font-bold text-z-text" numberOfLines={1}>
+                <Text className="flex-1 text-base font-bold text-z-text" numberOfLines={1}>
                   {group.name}
                 </Text>
                 {/* Wrap so the row's items-center wins: ZBadge has a baked-in

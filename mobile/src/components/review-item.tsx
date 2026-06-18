@@ -113,7 +113,7 @@ export function ReviewItem({
         <View className="flex-row flex-wrap items-center gap-x-2 gap-y-1">
           <Text
             testID="review-author"
-            className="flex-shrink text-[15px] font-bold text-z-text"
+            className="flex-shrink text-base font-bold text-z-text"
             numberOfLines={1}
           >
             {authorName}
