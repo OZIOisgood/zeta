@@ -102,7 +102,7 @@ export function ReviewComposer({
       : t('videos.atTime', { time: '0:00' });
 
   return (
-    <View className="gap-2">
+    <View className="gap-2.5">
       {/* Reply banner */}
       {replyingTo && (
         <View className="flex-row items-center gap-2 rounded-md bg-z-surface-warm px-3 py-2">
@@ -122,29 +122,27 @@ export function ReviewComposer({
         </View>
       )}
 
-      {/* Timestamp toggle chip (only when not in reply mode) */}
-      {canAttachTimestamp && (
-        <ZChip
-          label={timestampLabel}
-          selected={includeTimestamp}
-          onPress={handleToggleTimestamp}
-          testID="review-at-time"
-        />
-      )}
-
-      {/* Input row */}
-      <View className="flex-row items-end gap-2">
-        <View className="flex-1">
-          <ZTextarea
-            testID="review-input"
-            accessibilityLabel={t('videos.addCommentPlaceholder')}
-            placeholder={t('videos.addCommentPlaceholder')}
-            value={content}
-            onChangeText={setContent}
-            rows={2}
-            disabled={busy}
+      {/* Input (full width), then a control row matching the handoff:
+          [timestamp chip] · spacer · [enhance] [send]. */}
+      <ZTextarea
+        testID="review-input"
+        accessibilityLabel={t('videos.addCommentPlaceholder')}
+        placeholder={t('videos.addCommentPlaceholder')}
+        value={content}
+        onChangeText={setContent}
+        rows={2}
+        disabled={busy}
+      />
+      <View className="flex-row items-center gap-2">
+        {canAttachTimestamp ? (
+          <ZChip
+            label={timestampLabel}
+            selected={includeTimestamp}
+            onPress={handleToggleTimestamp}
+            testID="review-at-time"
           />
-        </View>
+        ) : null}
+        <View className="flex-1" />
         {onEnhance && !isReplyMode ? (
           <ZIconButton
             label={enhancing ? t('videos.enhancing') : t('videos.enhanceText')}
