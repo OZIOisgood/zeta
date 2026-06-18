@@ -14,6 +14,19 @@ const REVIEW = {
   created_at: '2026-06-12T10:00:00Z',
 };
 
+test('the seek pill carries the localized "jump to" accessibility label and seeks on press', async () => {
+  const onSeek = jest.fn();
+  await render(
+    <ReviewItem review={{ ...REVIEW, timestamp_seconds: 12 } as never} onSeek={onSeek} />,
+  );
+  // en.json: "seekTo": "Jump to {{time}}"
+  const pill = screen.getByLabelText('Jump to 0:12');
+  expect(pill).toBeOnTheScreen();
+  expect(screen.getByTestId('review-seek')).toBeOnTheScreen();
+  fireEvent.press(pill);
+  expect(onSeek).toHaveBeenCalledWith(12);
+});
+
 test('shows edit + delete actions only when handlers are provided', async () => {
   await render(<ReviewItem review={REVIEW as never} />);
   expect(screen.queryByTestId('review-edit')).toBeNull();

@@ -8,8 +8,8 @@ import { formatRelativeTime } from '../lib/datetime';
 import { colors } from '../theme/colors';
 import { ZAvatar } from './ui/z-avatar';
 import { ZButton } from './ui/z-button';
-import { ZChip } from './ui/z-chip';
 import { ZIconButton } from './ui/z-icon-button';
+import { ZSeekChip } from './ui/z-seek-chip';
 import { ZTextarea } from './ui/z-textarea';
 
 /**
@@ -50,6 +50,8 @@ export function ReviewItem({
   const { t } = useTranslation();
   const authorName = review.author?.name ?? t('videos.unknownAuthor');
   const showReplyButton = Boolean(onReply) && !isReply;
+  const hasTimestamp =
+    review.timestamp_seconds !== undefined && review.timestamp_seconds !== null;
 
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(review.content);
@@ -105,13 +107,26 @@ export function ReviewItem({
       />
 
       <View className="min-w-0 flex-1">
-        <Text
-          testID="review-author"
-          className="text-sm font-semibold text-z-text"
-          numberOfLines={1}
-        >
-          {authorName}
-        </Text>
+        {/* Author name + video-timecode seek pill on one line ("Coach Petra  ▶ 0:12"). */}
+        <View className="flex-row flex-wrap items-center gap-x-2 gap-y-1">
+          <Text
+            testID="review-author"
+            className="flex-shrink text-sm font-semibold text-z-text"
+            numberOfLines={1}
+          >
+            {authorName}
+          </Text>
+          {hasTimestamp && (
+            <ZSeekChip
+              label={formatTimestamp(review.timestamp_seconds!)}
+              onPress={onSeek ? () => onSeek(review.timestamp_seconds!) : undefined}
+              accessibilityLabel={t('videos.seekTo', {
+                time: formatTimestamp(review.timestamp_seconds!),
+              })}
+              testID="review-seek"
+            />
+          )}
+        </View>
 
         {isEditing ? (
           <View className="mt-2 gap-2" testID="review-edit-form">
@@ -162,15 +177,9 @@ export function ReviewItem({
 
         {!isEditing && (
           <View className="mt-1 flex-row flex-wrap items-center gap-2">
-            {review.timestamp_seconds !== undefined && review.timestamp_seconds !== null && (
-              <ZChip
-                label={formatTimestamp(review.timestamp_seconds)}
-                showCheck={false}
-                onPress={onSeek ? () => onSeek(review.timestamp_seconds!) : undefined}
-              />
-            )}
-
-            <Text className="text-xs text-z-muted">{formatRelativeTime(review.created_at, t)}</Text>
+            <Text className="text-xs text-z-muted">
+              {formatRelativeTime(review.created_at, t)}
+            </Text>
 
             {showReplyButton && (
               <ZIconButton

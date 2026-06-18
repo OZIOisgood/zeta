@@ -310,6 +310,7 @@
     "cancelReply": "Cancel reply",
     "send": "Send",
     "atTime": "at {{time}}",
+    "seekTo": "Jump to {{time}}",
     "partsProcessing_one": "{{count}} more part still processing.",
     "partsProcessing_other": "{{count}} more parts still processing.",
     "leaveComment": "Leave a comment to share feedback on this video.",

@@ -324,6 +324,7 @@
     "cancelReply": "Antwort abbrechen",
     "send": "Senden",
     "atTime": "bei {{time}}",
+    "seekTo": "Zu {{time}} springen",
     "partsProcessing_one": "{{count}} weiterer Teil wird noch verarbeitet.",
     "partsProcessing_other": "{{count}} weitere Teile werden noch verarbeitet.",
     "leaveComment": "Hinterlasse einen Kommentar, um Feedback zu diesem Video zu geben.",

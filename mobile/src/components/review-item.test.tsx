@@ -7,19 +7,21 @@ const REVIEW: Review = {
   author: { name: 'Coach Carter' }, created_at: '2026-06-12T10:00:00Z',
 };
 
-test('renders author, content and a seekable timestamp chip', async () => {
+test('renders author, content and a seekable timestamp pill', async () => {
   const onSeek = jest.fn();
   const user = userEvent.setup();
   await render(<ReviewItem review={REVIEW} onSeek={onSeek} />);
   expect(screen.getByText('Coach Carter')).toBeOnTheScreen();
   expect(screen.getByText('Nice stance')).toBeOnTheScreen();
+  expect(screen.getByTestId('review-seek')).toBeOnTheScreen();
   await user.press(screen.getByText('1:15'));
   expect(onSeek).toHaveBeenCalledWith(75);
 });
 
-test('untimed review renders no timestamp chip', async () => {
+test('untimed review renders no timestamp pill', async () => {
   await render(<ReviewItem review={{ ...REVIEW, timestamp_seconds: undefined }} onSeek={jest.fn()} />);
   expect(screen.queryByText('1:15')).toBeNull();
+  expect(screen.queryByTestId('review-seek')).toBeNull();
 });
 
 test('reply affordance fires for top-level items and is absent on replies', async () => {

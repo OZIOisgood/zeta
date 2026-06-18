@@ -29,6 +29,11 @@ export const TIERS: Record<string, Tier> = {
   // ZBadge: semantic status pill — no OS widget equivalent on either platform.
   // Single shared NativeWind implementation (no .ios/.android split needed).
   'z-badge': 'custom-no-native',
+  // ZSeekChip: accent navigational timecode pill (▶ 0:12) — the "seek to this
+  // moment" affordance on a review row, deliberately NOT a filter chip. No OS
+  // widget maps to it (M3 chips / iOS bordered button carry selection/filter
+  // semantics). Single shared NativeWind file (same pattern as ZBadge).
+  'z-seek-chip': 'custom-no-native',
   'z-chip': 'native',
   // ZSwipeable: swipe-to-reveal trailing action (RNGH ReanimatedSwipeable). Not
   // an @expo/ui widget, but a native-gesture primitive with the full platform
