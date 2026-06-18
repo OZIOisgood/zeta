@@ -167,10 +167,20 @@ function TriggerSheet({ parts, activeId, onChange }: ZVideoPartRailProps) {
   const { color } = useRoleColors();
   const [open, setOpen] = useState(false);
 
-  const activeIndex = useMemo(() => {
-    const idx = parts.findIndex((p) => p.id === activeId);
-    return idx >= 0 ? idx : 0;
-  }, [parts, activeId]);
+  const activeIndex = useMemo(
+    () => parts.findIndex((p) => p.id === activeId),
+    [parts, activeId],
+  );
+  // No part is active yet (e.g. every clip is still processing → the screen has
+  // no playable `active`): show a neutral count rather than implying "Part 1 of
+  // N" is selected, mirroring the pill row, which highlights nothing here.
+  const hasActive = activeIndex >= 0;
+  const triggerLabel = hasActive
+    ? t('videos.partOfCount', { n: activeIndex + 1, count: parts.length })
+    : String(parts.length);
+  const triggerA11yLabel = hasActive
+    ? triggerLabel
+    : `${parts.length} ${t('videos.partsLabel')}`;
 
   function select(id: string) {
     onChange(id);
@@ -182,10 +192,7 @@ function TriggerSheet({ parts, activeId, onChange }: ZVideoPartRailProps) {
       <Text className="text-xs font-bold text-z-muted">{t('videos.partsLabel')}</Text>
       <Touchable
         testID="part-rail-trigger"
-        accessibilityLabel={t('videos.partOfCount', {
-          n: activeIndex + 1,
-          count: parts.length,
-        })}
+        accessibilityLabel={triggerA11yLabel}
         onPress={() => setOpen(true)}
         className="h-8 flex-row items-center gap-1.5 rounded-full border border-outline pl-3 pr-1.5"
       >
@@ -193,14 +200,10 @@ function TriggerSheet({ parts, activeId, onChange }: ZVideoPartRailProps) {
           className="text-[13px] font-semibold text-z-text"
           style={{ fontVariant: ['tabular-nums'] }}
         >
-          {t('videos.partOfCount', { n: activeIndex + 1, count: parts.length })}
+          {triggerLabel}
         </Text>
-        <ZSymbol
-          name="chevron-down"
-          label={t('videos.partsLabel')}
-          size={16}
-          color={color('onSurfaceVariant')}
-        />
+        {/* Decorative: the trigger Touchable already carries the a11y label. */}
+        <ZSymbol name="chevron-down" label="" size={16} color={color('onSurfaceVariant')} />
       </Touchable>
 
       <ZDialogPanel
