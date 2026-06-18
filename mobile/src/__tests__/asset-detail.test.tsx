@@ -298,18 +298,62 @@ test('loading state renders a skeleton', async () => {
   expect(screen.getByTestId('asset-detail-skeleton')).toBeOnTheScreen();
 });
 
-// ── i18n fix: partsProcessing pluralization ───────────────────────────────────
+// ── WP3: video-parts rail replaces the standalone parts card ──────────────────
 
-test('processing-parts banner renders via i18n plural key (testID present)', async () => {
+test('the standalone parts card is gone (no "Video parts" header, no processing banner)', async () => {
   mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
   await render(<Providers><AssetDetailScreen /></Providers>);
-  // DETAIL has 2 videos, one processing (playback_id === '')
-  // Must render the testID for the processing banner
-  expect(screen.getByTestId('processing-parts-banner')).toBeOnTheScreen();
-  // English plural: "1 more part still processing."
-  expect(screen.getByText('1 more part still processing.')).toBeOnTheScreen();
-  // Must NOT render the old hardcoded hand-rolled plural string pattern
-  expect(screen.queryByText(/more parts still processing\./)).toBeNull();
+  // The old card header and processing banner no longer exist — the rail owns
+  // the parts UI now.
+  expect(screen.queryByText('Video parts')).toBeNull();
+  expect(screen.queryByTestId('processing-parts-banner')).toBeNull();
+});
+
+test('the rail renders a pill per part when the asset has 2+ video parts', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  // DETAIL has 2 videos → subtle pill row under the player.
+  expect(screen.getByText('Parts')).toBeOnTheScreen();
+  expect(screen.getByTestId('part-pill-v1')).toBeOnTheScreen();
+  expect(screen.getByTestId('part-pill-v2')).toBeOnTheScreen();
+});
+
+test('tapping a ready part pill switches the active part (player + thread remount on the new id)', async () => {
+  // Both clips ready so we can switch from v1 → v2; reviews query is keyed on
+  // the active video id, so a switch refetches against the new id.
+  const bothReady = {
+    ...DETAIL,
+    videos: [
+      { id: 'v1', playback_id: 'pb1', status: 'ready', review_count: 2 },
+      { id: 'v2', playback_id: 'pb2', status: 'ready', review_count: 1 },
+    ],
+  };
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: bothReady, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // Initially the reviews query is asked for the first playable clip (v1).
+  expect(mockUseReviewsQuery).toHaveBeenCalledWith('v1');
+  mockUseReviewsQuery.mockClear();
+
+  // Switch to part 2.
+  await act(async () => { fireEvent.press(screen.getByTestId('part-pill-v2')); });
+
+  // After the switch the reviews thread is queried for v2 (the new active id),
+  // proving the player source + comment thread followed the selection.
+  expect(mockUseReviewsQuery).toHaveBeenCalledWith('v2');
+});
+
+test('a single video part renders no rail (progressive disclosure)', async () => {
+  const oneClip = {
+    ...DETAIL,
+    videos: [{ id: 'v1', playback_id: 'pb1', status: 'ready', review_count: 2 }],
+  };
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: oneClip, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  expect(screen.queryByText('Parts')).toBeNull();
+  expect(screen.queryByTestId('part-pill-v1')).toBeNull();
 });
 
 // ── Fix 1: handleEdit re-throws on failure so inline form stays open ──────────

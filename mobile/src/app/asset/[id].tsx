@@ -21,13 +21,13 @@ import { ZAvatar } from '../../components/ui/z-avatar';
 import { ZBadge } from '../../components/ui/z-badge';
 import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
-import { ZChip } from '../../components/ui/z-chip';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { showToast } from '../../components/ui/z-toast';
 import { ZSymbol } from '../../components/ui/z-symbol';
+import { ZVideoPartRail } from '../../components/ui/z-video-part-rail';
 import { Touchable } from '../../components/ui/touchable';
 import { colors } from '../../theme/colors';
 
@@ -405,7 +405,6 @@ export default function AssetDetailScreen() {
   }
 
   const videos = data.videos ?? [];
-  const processingParts = videos.length - playable.length;
   const group = data.group;
   const statusLabel =
     data.status === 'completed' ? t('common.status.reviewed') : t('common.status.inReview');
@@ -433,6 +432,17 @@ export default function AssetDetailScreen() {
             </View>
           )}
         </View>
+
+        {/* Video-parts rail — a clip switcher flush under the player (episode
+            picker). Renders nothing for a single clip; a subtle pill row for
+            2–5 clips; a "Part X of N" trigger + bottom sheet for many. Switching
+            drives `active`, so the player source AND the per-part comment thread
+            remount on change (both keyed on `active.id`). */}
+        <ZVideoPartRail
+          parts={videos.map((v) => ({ id: v.id, ready: v.playback_id !== '' }))}
+          activeId={active?.id ?? null}
+          onChange={setActiveId}
+        />
 
         <View className="gap-4 p-4">
           {/* Metadata card: identity row (group + status) and description.
@@ -517,44 +527,6 @@ export default function AssetDetailScreen() {
               />
             ) : null}
           </ZCard>
-
-          {/* Video-parts card. */}
-          {videos.length > 0 ? (
-            <ZCard className="gap-3">
-              <View className="flex-row items-center gap-2">
-                <Text className="text-sm font-semibold text-z-text">
-                  {t('videos.phase4.videoParts')}
-                </Text>
-                <ZBadge label={String(videos.length)} />
-              </View>
-              <View className="gap-2">
-                {videos.map((v, i) => {
-                  const isPlayable = v.playback_id !== '';
-                  return (
-                    <View key={v.id} className="flex-row items-center justify-between gap-3">
-                      <ZChip
-                        label={t('videos.phase4.videoPart', { count: i + 1 })}
-                        selected={isPlayable && v.id === active?.id}
-                        disabled={!isPlayable}
-                        onPress={isPlayable ? () => setActiveId(v.id) : undefined}
-                      />
-                      <View className="flex-1 flex-row items-center justify-end gap-2">
-                        <Text className="text-xs text-z-muted" numberOfLines={1}>
-                          {v.status}
-                        </Text>
-                        <ZBadge label={String(v.review_count)} />
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-              {processingParts > 0 ? (
-                <Text testID="processing-parts-banner" className="text-sm text-z-muted">
-                  {t('videos.partsProcessing', { count: processingParts })}
-                </Text>
-              ) : null}
-            </ZCard>
-          ) : null}
 
           {/* Comments card. */}
           {active ? (

@@ -69,6 +69,13 @@ export const TIERS: Record<string, Tier> = {
   // single Custom-RN file.
   'z-grouped-list': 'custom-no-native',
   'z-icon-tile': 'custom-no-native',
+  // ZVideoPartRail: COMPOSITION — a clip switcher attached to the player
+  // (episode-picker). The 2–5 pill row and the >5 trigger are Custom-RN
+  // NativeWind controls (no OS widget maps to a flush episode picker under a
+  // video player); the overflow sheet composes the native ZDialogPanel
+  // primitive, so the rail needs no platform split of its own. Same shape as
+  // ZDangerZoneCard (composition over native sub-primitives) → custom-no-native.
+  'z-video-part-rail': 'custom-no-native',
   'z-skeleton': 'custom-no-native',
   'z-video-preview': 'custom-no-native',
   'z-avatar': 'custom-no-native',
