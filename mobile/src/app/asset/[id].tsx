@@ -198,7 +198,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
     <ZCard className="gap-4">
       <View className="flex-row items-center gap-2">
         <ZSymbol name="message" label={t('videos.comments')} size={18} color={colors.primary} />
-        <Text className="text-base font-extrabold text-z-text">{t('videos.comments')}</Text>
+        <Text className="text-[17px] font-extrabold text-z-text">{t('videos.comments')}</Text>
         <ZBadge label={String(topLevel.length)} />
       </View>
 
@@ -455,7 +455,7 @@ export default function AssetDetailScreen() {
                 className="flex-row items-center gap-2"
               >
                 <ZAvatar image={group.avatar} fallback={initialsFromName(group.name)} size={24} shape="circle" alt={group.name} />
-                <Text className="flex-1 text-sm font-bold text-z-text" numberOfLines={1}>
+                <Text className="flex-1 text-[15px] font-bold text-z-text" numberOfLines={1}>
                   {group.name}
                 </Text>
                 {/* Wrap so the row's items-center wins: ZBadge has a baked-in
@@ -478,7 +478,7 @@ export default function AssetDetailScreen() {
               <View className="gap-1">
                 <Text
                   testID="asset-description"
-                  className="text-sm leading-[21px] text-z-muted"
+                  className="text-[15px] leading-[22px] text-z-muted"
                   numberOfLines={descExpanded ? undefined : 2}
                 >
                   {data.description}
@@ -497,7 +497,7 @@ export default function AssetDetailScreen() {
                   accessibilityElementsHidden
                   importantForAccessibility="no-hide-descendants"
                   style={{ position: 'absolute', left: 0, right: 0, opacity: 0 }}
-                  className="text-sm leading-[21px]"
+                  className="text-[15px] leading-[22px]"
                   onTextLayout={(e) =>
                     dispatchDesc({ type: 'setOverflows', value: e.nativeEvent.lines.length > 2 })
                   }
