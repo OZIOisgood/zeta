@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Pencil, Reply, Sparkles, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { Review } from '../api/queries/reviews';
 import { initialsFromName } from '../lib/avatar';
@@ -10,6 +9,7 @@ import { ZAvatar } from './ui/z-avatar';
 import { ZButton } from './ui/z-button';
 import { ZIconButton } from './ui/z-icon-button';
 import { ZSeekChip } from './ui/z-seek-chip';
+import { ZSymbol } from './ui/z-symbol';
 import { ZTextarea } from './ui/z-textarea';
 
 /**
@@ -147,7 +147,7 @@ export function ReviewItem({
                   testID="review-edit-enhance"
                   loading={enhancing}
                   disabled={!draft.trim() || savingEdit}
-                  icon={<Sparkles color={colors.text} size={16} />}
+                  icon={<ZSymbol name="sparkles" label="" size={16} color={colors.text} />}
                   onPress={() => void handleEnhance()}
                 />
               ) : (
@@ -188,7 +188,7 @@ export function ReviewItem({
                 testID="review-reply"
                 onPress={() => onReply!(review)}
               >
-                <Reply color={colors.muted} size={14} />
+                <ZSymbol name="reply" label="" size={14} color={colors.muted} />
               </ZIconButton>
             )}
 
@@ -200,7 +200,7 @@ export function ReviewItem({
                 disabled={deleting}
                 onPress={startEdit}
               >
-                <Pencil color={colors.muted} size={14} />
+                <ZSymbol name="edit" label="" size={14} color={colors.muted} />
               </ZIconButton>
             )}
 
@@ -212,7 +212,7 @@ export function ReviewItem({
                 disabled={deleting}
                 onPress={() => onDelete(review)}
               >
-                <Trash2 color={colors.danger} size={14} />
+                <ZSymbol name="trash" label="" size={14} color={colors.danger} />
               </ZIconButton>
             )}
           </View>
