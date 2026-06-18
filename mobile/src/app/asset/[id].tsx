@@ -301,6 +301,10 @@ export default function AssetDetailScreen() {
   const [unreviewedOpen, setUnreviewedOpen] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
 
+  // Description clamp/show-more state for the meta card.
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [descOverflows, setDescOverflows] = useState(false);
+
   async function confirmFinalize() {
     if (finalizing) return;
     setFinalizing(true);
@@ -378,6 +382,9 @@ export default function AssetDetailScreen() {
   const videos = data.videos ?? [];
   const processingParts = videos.length - playable.length;
   const group = data.group;
+  const statusLabel =
+    data.status === 'completed' ? t('common.status.reviewed') : t('common.status.inReview');
+  const statusTone = data.status === 'completed' ? 'success' : 'primary';
 
   return (
     // The video player stays edge-to-edge at the top; the content below it
@@ -403,34 +410,54 @@ export default function AssetDetailScreen() {
         </View>
 
         <View className="gap-4 p-4">
-          {/* Metadata card: status, title, group, description. */}
-          <ZCard className="gap-3">
-            <ZBadge
-              label={
-                data.status === 'completed'
-                  ? t('common.status.reviewed')
-                  : t('common.status.inReview')
-              }
-              tone={data.status === 'completed' ? 'success' : 'primary'}
-            />
-            <Text className="text-xl font-semibold text-z-text" numberOfLines={2}>
-              {data.title}
-            </Text>
+          {/* Metadata card: identity row (group + status) and description.
+              The asset title is carried by the native header (Stack.Screen). */}
+          <ZCard className="gap-2.5">
             {group ? (
               <Touchable
                 onPress={() => router.push(`/group/${group.id}`)}
                 accessibilityLabel={group.name}
                 className="flex-row items-center gap-2"
               >
-                <ZAvatar image={group.avatar} fallback={initialsFromName(group.name)} size={36} alt={group.name} />
-                <Text className="flex-1 text-sm font-semibold text-z-primary" numberOfLines={1}>
+                <ZAvatar image={group.avatar} fallback={initialsFromName(group.name)} size={24} shape="circle" alt={group.name} />
+                <Text className="flex-1 text-sm font-semibold text-z-text" numberOfLines={1}>
                   {group.name}
                 </Text>
+                <ZBadge label={statusLabel} tone={statusTone} />
               </Touchable>
+            ) : (
+              <View className="flex-row items-center justify-end">
+                <ZBadge label={statusLabel} tone={statusTone} />
+              </View>
+            )}
+            {data.description ? (
+              <View className="gap-1">
+                <Text
+                  testID="asset-description"
+                  className="text-sm text-z-muted"
+                  numberOfLines={descExpanded ? undefined : 2}
+                  onTextLayout={(e) => {
+                    if (!descOverflows && e.nativeEvent.lines.length > 2) {
+                      setDescOverflows(true);
+                    }
+                  }}
+                >
+                  {data.description}
+                </Text>
+                {descOverflows ? (
+                  <Touchable
+                    testID="asset-description-toggle"
+                    accessibilityLabel={descExpanded ? t('videos.showLess') : t('videos.showMore')}
+                    onPress={() => setDescExpanded((v) => !v)}
+                    className="self-start"
+                  >
+                    <Text className="text-[13px] font-bold text-z-primary">
+                      {descExpanded ? t('videos.showLess') : t('videos.showMore')}
+                    </Text>
+                  </Touchable>
+                ) : null}
+              </View>
             ) : null}
-            <Text className="text-sm text-z-muted">
-              {data.description ? data.description : t('videos.phase4.noDescription')}
-            </Text>
             {canFinalize ? (
               <ZButton
                 label={t('videos.markReviewed')}

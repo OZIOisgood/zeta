@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { act, render, screen, fireEvent, waitFor, within } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 jest.mock('expo-secure-store', () => ({
@@ -48,7 +48,7 @@ jest.mock('../../src/auth/auth-store', () => ({
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'a1' }),
-  useRouter: () => ({ back: jest.fn() }),
+  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
   Stack: { Screen: () => null },
 }));
 
@@ -80,6 +80,7 @@ function Providers({ children }: { children: ReactNode }) {
 const DETAIL = {
   id: 'a1', title: 'Kata 1', description: 'Front stance drill', owner_id: 'u1',
   status: 'pending' as const, review_count: 0, playback_id: 'pb1',
+  group: { id: 'g1', name: 'Dojo Alpha', avatar: undefined },
   videos: [
     { id: 'v1', playback_id: 'pb1', status: 'ready', review_count: 2 },
     { id: 'v2', playback_id: '', status: 'preparing', review_count: 0 },
@@ -183,11 +184,86 @@ test('composer hidden when asset is completed even with reviews:create', async (
 
 // ── Existing tests (keep passing) ─────────────────────────────────────────────
 
-test('shows title, description and part info', async () => {
+test('shows description and group in the meta card; in-card title is gone (header carries it)', async () => {
   mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
   await render(<Providers><AssetDetailScreen /></Providers>);
-  expect(screen.getByText('Kata 1')).toBeOnTheScreen();
+  // The asset title is carried by the native header (Stack.Screen), not an
+  // in-card heading — so 'Kata 1' is NOT rendered as in-card body text.
+  expect(screen.queryByText('Kata 1')).toBeNull();
   expect(screen.getByText('Front stance drill')).toBeOnTheScreen();
+  expect(screen.getByText('Dojo Alpha')).toBeOnTheScreen();
+});
+
+// ── WP2: meta-card density ────────────────────────────────────────────────────
+
+test('status badge renders within the identity row', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  // DETAIL.status === 'pending' → "In review" badge
+  expect(screen.getByText('In review')).toBeOnTheScreen();
+});
+
+test('status badge still renders when the asset has no group', async () => {
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, group: undefined },
+    refetch: jest.fn(),
+  });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  expect(screen.getByText('In review')).toBeOnTheScreen();
+  expect(screen.queryByText('Dojo Alpha')).toBeNull();
+});
+
+test('empty description renders nothing (no noDescription fallback)', async () => {
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, description: '' },
+    refetch: jest.fn(),
+  });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  expect(screen.queryByText('No description was added for this video.')).toBeNull();
+});
+
+test('description show-more toggle appears on overflow and toggles expand/collapse', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  const description = screen.getByTestId('asset-description');
+  // jest/RNTL does not run real layout — simulate overflow (>2 lines) via a
+  // synthetic textLayout event so the toggle logic becomes testable.
+  await act(async () => {
+    fireEvent(description, 'textLayout', {
+      nativeEvent: { lines: [{}, {}, {}] },
+    });
+  });
+
+  // Toggle appears once overflow is detected.
+  const toggle = screen.getByTestId('asset-description-toggle');
+  expect(within(toggle).getByText('Show more')).toBeOnTheScreen();
+
+  // Expand
+  await act(async () => { fireEvent.press(toggle); });
+  expect(within(toggle).getByText('Show less')).toBeOnTheScreen();
+
+  // Collapse
+  await act(async () => { fireEvent.press(toggle); });
+  expect(within(toggle).getByText('Show more')).toBeOnTheScreen();
+});
+
+test('description show-more toggle is absent when text fits in 2 lines', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  const description = screen.getByTestId('asset-description');
+  await act(async () => {
+    fireEvent(description, 'textLayout', {
+      nativeEvent: { lines: [{}, {}] },
+    });
+  });
+
+  expect(screen.queryByTestId('asset-description-toggle')).toBeNull();
 });
 
 test('loading state renders a skeleton', async () => {
