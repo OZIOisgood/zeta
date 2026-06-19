@@ -13,12 +13,18 @@ import {
 import { queryClient } from '../api/query-client';
 import { useGroupsQuery } from '../api/queries/groups';
 import type { Group } from '../api/queries/groups';
-import { Touchable } from '../components/ui/touchable';
+import { avatarSrc, initialsFromName } from '../lib/avatar';
+import { ZAvatar } from '../components/ui/z-avatar';
 import { ZBadge } from '../components/ui/z-badge';
+import { ZBookingBar } from '../components/ui/z-booking-bar';
 import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
-import { ZChip } from '../components/ui/z-chip';
+import { ZDateRail } from '../components/ui/z-date-rail';
+import type { ZDateRailDay } from '../components/ui/z-date-rail';
+import { ZDivider } from '../components/ui/z-divider';
 import { ZEmptyState } from '../components/ui/z-empty-state';
+import { ZIconTile } from '../components/ui/z-icon-tile';
+import { ZListItem } from '../components/ui/z-list-item';
 import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
@@ -26,160 +32,179 @@ import { ZStepper } from '../components/ui/z-stepper';
 import type { ZStep } from '../components/ui/z-stepper';
 import { ZSymbol } from '../components/ui/z-symbol';
 import { ZTextarea } from '../components/ui/z-textarea';
+import { ZTimeGrid } from '../components/ui/z-time-grid';
+import type { ZTimeGridSlot } from '../components/ui/z-time-grid';
 import { showToast } from '../components/ui/z-toast';
 import { colors } from '../theme/colors';
 
+type StageId = 'group' | 'expert' | 'type' | 'time' | 'confirm';
+
 /**
- * Guided coaching booking flow.
+ * Stepped coaching booking flow (UI-kit handoff "Session buchen").
  *
- * Layout decision: **all sections expanded** (no collapsing). Each section
- * becomes visible once the prerequisite above it is satisfied, while the
- * <ZStepper> at the top reflects progress through the web 5-step flow
- * (select group / expert / session type / time / confirm) derived from the
- * current selection state.
+ * One decision per step: [Group → only if >1] Expert → Type → Time → Confirm.
+ * A navigable ZStepper tracks progress and allows jumping back to reached steps;
+ * a persistent ZBookingBar carries the single CTA (Next → Book). Group is
+ * auto-selected (and the step skipped) when exactly one group exists.
  *
- * Auto-select: when exactly one group is available, it is selected in the
- * render phase (derived state) rather than via useEffect to avoid the
- * extra render cycle.
+ * Schema reality (no price/icon on SessionType; no rating on CoachingExpert):
+ * the summary headline is the session DURATION, type rows use one generic glyph,
+ * and expert rows show avatar + name only.
  */
 export default function BookScreen() {
   const { t } = useTranslation();
   const router = useRouter();
 
-  // ── selection state ────────────────────────────────────────────────────────
+  // ── selection + flow state ──────────────────────────────────────────────────
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [expertId, setExpertId] = useState('');
   const [sessionTypeId, setSessionTypeId] = useState('');
+  const [dayKey, setDayKey] = useState('');
   const [slot, setSlot] = useState<CoachingSlot | null>(null);
   const [notes, setNotes] = useState('');
+  const [step, setStep] = useState(0);
+  const [reached, setReached] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [booked, setBooked] = useState(false);
 
-  // ── queries ────────────────────────────────────────────────────────────────
+  // ── queries ───────────────────────────────────────────────────────────────
   const groupsQuery = useGroupsQuery();
-
-  // Auto-select single group: derive in render — no useEffect needed.
   const groups: Group[] = groupsQuery.data ?? [];
   const groupId = groups.length === 1 ? groups[0].id : selectedGroupId;
+  const hasGroupStage = groups.length > 1;
 
   const expertsQuery = useCoachingExpertsQuery(groupId);
   const sessionTypesQuery = useSessionTypesQuery(groupId);
   const slotsQuery = useSlotsQuery(groupId, expertId, sessionTypeId);
   const { mutateAsync, isPending: isSubmitting } = useCreateBookingMutation(groupId);
 
-  // ── derived data ───────────────────────────────────────────────────────────
+  // ── derived data ─────────────────────────────────────────────────────────
   const experts: CoachingExpert[] = expertsQuery.data ?? [];
-
-  // Session types filtered to the selected expert (expert_id scoping)
-  // Session types are an expert's offering (coaching_session_types.expert_id),
-  // so we scope them to the selected expert. The web booking flow currently
-  // shows all active types in the group — candidate web bug, tracked as follow-up.
   const allSessionTypes: SessionType[] = sessionTypesQuery.data ?? [];
   const sessionTypes = expertId
     ? allSessionTypes.filter((st) => st.expert_id === expertId)
     : [];
-
   const slots: CoachingSlot[] = slotsQuery.data ?? [];
 
-  // Group slots by day using toDateString as key
+  const selectedExpert = experts.find((e) => e.expert_id === expertId) ?? null;
+  const selectedSessionType = sessionTypes.find((st) => st.id === sessionTypeId) ?? null;
+
+  // ── stages ─────────────────────────────────────────────────────────────────
+  const stages: StageId[] = hasGroupStage
+    ? ['group', 'expert', 'type', 'time', 'confirm']
+    : ['expert', 'type', 'time', 'confirm'];
+  const stageId = stages[Math.min(step, stages.length - 1)];
+  const stageIndex = (id: StageId) => stages.indexOf(id);
+
+  // ── slots → days / grid ──────────────────────────────────────────────────
   const slotsByDay = slots.reduce<Map<string, CoachingSlot[]>>((acc, s) => {
     const key = new Date(s.starts_at).toDateString();
     acc.set(key, [...(acc.get(key) ?? []), s]);
     return acc;
   }, new Map());
 
-  const selectedExpert = experts.find((e) => e.expert_id === expertId) ?? null;
-  const selectedSessionType = sessionTypes.find((st) => st.id === sessionTypeId) ?? null;
+  const todayKey = new Date().toDateString();
+  const railDays: ZDateRailDay[] = Array.from(slotsByDay.keys()).map((key) => {
+    const d = new Date(key);
+    return {
+      key,
+      label: key === todayKey ? t('common.labels.today') : d.toLocaleDateString([], { weekday: 'short' }),
+      day: String(d.getDate()),
+      month: d.toLocaleDateString([], { month: 'short' }),
+      isToday: key === todayKey,
+    };
+  });
 
-  // ── stepper (web 5-step flow, derived from selection state) ─────────────────
-  const activeStep = slot
-    ? 4
-    : sessionTypeId
-      ? 3
-      : expertId
-        ? 2
-        : groupId
-          ? 1
-          : 0;
-
-  const stepLabels = [
-    t('sessions.book.selectGroup'),
-    t('sessions.book.selectExpert'),
-    t('sessions.book.sessionType'),
-    t('sessions.book.selectTime'),
-    t('common.actions.confirm'),
-  ];
-  const stepperSteps: ZStep[] = stepLabels.map((label, index) => ({
-    label,
-    state: index < activeStep ? 'completed' : index === activeStep ? 'active' : 'upcoming',
+  const daySlots = slotsByDay.get(dayKey) ?? [];
+  const gridSlots: ZTimeGridSlot[] = daySlots.map((s) => ({
+    startsAt: s.starts_at,
+    label: formatTime(s.starts_at),
   }));
 
-  const stepDescriptions = [
-    t('sessions.book.selectGroupDescription'),
-    t('sessions.book.selectExpertDescription'),
-    t('sessions.book.sessionTypeDescription'),
-    t('sessions.book.selectSlotDescription'),
-    t('sessions.book.confirmDescription'),
-  ];
-
-  // ── helpers ──────────────────────────────────────────────────────────────
-  function formatDay(isoString: string): string {
-    return new Date(isoString).toLocaleDateString([], {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
+  // ── helpers ─────────────────────────────────────────────────────────────
+  function formatDay(iso: string): string {
+    return new Date(iso).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
   }
-
-  function formatTime(isoString: string): string {
-    return new Date(isoString).toLocaleTimeString([], { timeStyle: 'short' });
+  function formatTime(iso: string): string {
+    return new Date(iso).toLocaleTimeString([], { timeStyle: 'short' });
   }
-
   function formatRange(s: CoachingSlot): string {
     return `${formatTime(s.starts_at)} – ${formatTime(s.ends_at)}`;
   }
 
-  // ── handlers ──────────────────────────────────────────────────────────────
+  // ── stepper ─────────────────────────────────────────────────────────────
+  const stepLabels: Record<StageId, string> = {
+    group: t('sessions.book.selectGroup'),
+    expert: t('sessions.book.selectExpert'),
+    type: t('sessions.book.sessionType'),
+    time: t('sessions.book.selectTime'),
+    confirm: t('common.actions.confirm'),
+  };
+  const stepperSteps: ZStep[] = stages.map((id, index) => ({
+    label: stepLabels[id],
+    state: index < step ? 'completed' : index === step ? 'active' : 'upcoming',
+  }));
+
+  function goStep(n: number) {
+    const clamped = Math.max(0, Math.min(n, stages.length - 1));
+    setStep(clamped);
+    setReached((r) => Math.max(r, clamped));
+  }
+  function onStepPress(index: number) {
+    if (index <= reached) setStep(index);
+  }
+
+  // ── selection handlers (reset cascade + clamp reached) ───────────────────
   function handleSelectGroup(id: string) {
     if (id === selectedGroupId) return;
     setSelectedGroupId(id);
     setExpertId('');
     setSessionTypeId('');
+    setDayKey('');
     setSlot(null);
     setNotes('');
     setSubmitError(null);
+    setReached(stageIndex('group'));
   }
-
   function handleSelectExpert(id: string) {
-    if (id === expertId) {
-      setExpertId('');
-      setSessionTypeId('');
-      setSlot(null);
-      setNotes('');
-      setSubmitError(null);
-      return;
-    }
-    setExpertId(id);
+    setExpertId(id === expertId ? '' : id);
     setSessionTypeId('');
+    setDayKey('');
     setSlot(null);
     setNotes('');
     setSubmitError(null);
+    setReached(stageIndex('expert'));
   }
-
-  function handleSelectSessionType(id: string) {
-    if (id === sessionTypeId) {
-      setSessionTypeId('');
-      setSlot(null);
-      setNotes('');
-      return;
-    }
-    setSessionTypeId(id);
+  function handleSelectType(id: string) {
+    setSessionTypeId(id === sessionTypeId ? '' : id);
+    setDayKey('');
     setSlot(null);
-    setNotes('');
+    setSubmitError(null);
+    setReached(stageIndex('type'));
+  }
+  function handleSelectDay(key: string) {
+    setDayKey(key);
+    setSlot(null);
+  }
+  function handleSelectSlot(startsAt: string) {
+    setSlot(daySlots.find((s) => s.starts_at === startsAt) ?? null);
   }
 
-  function handleSelectSlot(s: CoachingSlot) {
-    setSlot(s);
+  // ── CTA gating ────────────────────────────────────────────────────────────
+  const stageReady: Record<StageId, boolean> = {
+    group: groupId !== '',
+    expert: expertId !== '',
+    type: sessionTypeId !== '',
+    time: slot !== null,
+    confirm: true,
+  };
+  const isConfirm = stageId === 'confirm';
+  const canAdvance = stageReady[stageId];
+  const ctaLabel = isConfirm ? t('sessions.book.bookSession') : t('common.actions.next');
+
+  function handleCta() {
+    if (isConfirm) void handleSubmit();
+    else goStep(step + 1);
   }
 
   async function handleSubmit() {
@@ -206,10 +231,209 @@ export default function BookScreen() {
     }
   }
 
+  // ── booking-bar summary ─────────────────────────────────────────────────
+  const headline = selectedSessionType
+    ? t('common.labels.minutesShort', { count: selectedSessionType.duration_minutes })
+    : undefined;
+  const context = [
+    selectedSessionType?.name,
+    selectedExpert ? `${selectedExpert.first_name} ${selectedExpert.last_name}`.trim() : null,
+    slot ? formatTime(slot.starts_at) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const hint = headline ? undefined : stepLabels[stageId];
+
+  // ── stage body ────────────────────────────────────────────────────────────
+  function renderStage() {
+    switch (stageId) {
+      case 'group':
+        return (
+          <View className="gap-2">
+            <Text className="text-base font-semibold text-z-text">{t('sessions.book.selectGroup')}</Text>
+            {groups.map((g) => (
+              <ZListItem
+                key={g.id}
+                testID={`book-group-${g.id}`}
+                title={g.name}
+                selected={groupId === g.id}
+                onPress={() => handleSelectGroup(g.id)}
+              />
+            ))}
+          </View>
+        );
+      case 'expert':
+        return (
+          <View className="gap-2">
+            <Text className="text-base font-semibold text-z-text">{t('sessions.book.selectExpert')}</Text>
+            {expertsQuery.isPending ? (
+              <View className="gap-2">
+                <ZSkeleton className="h-16 w-full rounded-2xl" />
+                <ZSkeleton className="h-16 w-full rounded-2xl" />
+              </View>
+            ) : expertsQuery.isError ? (
+              <ZQueryError
+                title={t('sessions.book.loadExpertsFailed')}
+                onRetry={() => void expertsQuery.refetch()}
+                testID="book-experts-retry"
+              />
+            ) : experts.length === 0 ? (
+              <ZEmptyState title={t('sessions.book.noExperts')} description={t('sessions.book.noExpertsDescription')} />
+            ) : (
+              experts.map((e) => {
+                const name = `${e.first_name} ${e.last_name}`.trim();
+                return (
+                  <ZListItem
+                    key={e.expert_id}
+                    testID={`book-expert-${e.expert_id}`}
+                    leading={
+                      <ZAvatar
+                        size={44}
+                        shape="circle"
+                        image={e.avatar ? avatarSrc(e.avatar) : undefined}
+                        fallback={initialsFromName(name)}
+                        alt={name}
+                      />
+                    }
+                    title={name}
+                    selected={expertId === e.expert_id}
+                    onPress={() => handleSelectExpert(e.expert_id)}
+                  />
+                );
+              })
+            )}
+          </View>
+        );
+      case 'type':
+        return (
+          <View className="gap-2">
+            <Text className="text-base font-semibold text-z-text">{t('sessions.book.sessionType')}</Text>
+            {sessionTypesQuery.isPending ? (
+              <View className="gap-2">
+                <ZSkeleton className="h-20 w-full rounded-2xl" />
+                <ZSkeleton className="h-20 w-full rounded-2xl" />
+              </View>
+            ) : sessionTypesQuery.isError ? (
+              <ZQueryError
+                title={t('sessions.book.loadSessionTypesFailed')}
+                onRetry={() => void sessionTypesQuery.refetch()}
+                testID="book-types-retry"
+              />
+            ) : sessionTypes.length === 0 ? (
+              <ZEmptyState
+                title={t('sessions.book.noSessionTypes')}
+                description={t('sessions.book.noSessionTypesDescription')}
+              />
+            ) : (
+              sessionTypes.map((st) => (
+                <ZListItem
+                  key={st.id}
+                  testID={`book-type-${st.id}`}
+                  leading={
+                    <ZIconTile
+                      tone={sessionTypeId === st.id ? 'primary' : 'neutral'}
+                      icon={<ZSymbol name="video" label={st.name} size={20} color={colors.primary} />}
+                    />
+                  }
+                  title={st.name}
+                  titleAccessory={<ZBadge label={t('common.labels.minutesShort', { count: st.duration_minutes })} />}
+                  subtitle={st.description}
+                  selected={sessionTypeId === st.id}
+                  onPress={() => handleSelectType(st.id)}
+                />
+              ))
+            )}
+          </View>
+        );
+      case 'time':
+        return (
+          <View className="gap-3">
+            <Text className="text-base font-semibold text-z-text">{t('sessions.book.selectTime')}</Text>
+            {slotsQuery.isPending ? (
+              <View className="gap-3">
+                <ZSkeleton className="h-16 w-full rounded-2xl" />
+                <ZSkeleton className="h-24 w-full rounded-2xl" />
+              </View>
+            ) : slotsQuery.isError ? (
+              <ZQueryError
+                title={t('sessions.book.loadSlotsFailed')}
+                onRetry={() => void slotsQuery.refetch()}
+                testID="book-slots-retry"
+              />
+            ) : slots.length === 0 ? (
+              <ZEmptyState title={t('sessions.book.noTimes')} description={t('sessions.book.noTimesDescription')} />
+            ) : (
+              <>
+                <ZDateRail days={railDays} selectedKey={dayKey} onSelect={handleSelectDay} testID="book-daterail" />
+                {dayKey === '' ? (
+                  <Text className="text-sm text-z-muted">{t('sessions.book.selectDate')}</Text>
+                ) : (
+                  <ZTimeGrid
+                    slots={gridSlots}
+                    selectedStartsAt={slot?.starts_at ?? ''}
+                    onSelect={handleSelectSlot}
+                    hint={
+                      selectedSessionType
+                        ? t('common.labels.minutesShort', { count: selectedSessionType.duration_minutes })
+                        : undefined
+                    }
+                    testID="book-time"
+                  />
+                )}
+              </>
+            )}
+          </View>
+        );
+      case 'confirm':
+        return (
+          <View className="gap-4">
+            <Text className="text-base font-semibold text-z-text">{t('sessions.book.confirmDescription')}</Text>
+            {selectedExpert && selectedSessionType && slot ? (
+              <ZCard className="gap-0">
+                <View className="flex-row items-center gap-3 py-3">
+                  <ZAvatar
+                    size={40}
+                    shape="circle"
+                    image={selectedExpert.avatar ? avatarSrc(selectedExpert.avatar) : undefined}
+                    fallback={initialsFromName(`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim())}
+                    alt={`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim()}
+                  />
+                  <View className="flex-1">
+                    <Text className="font-semibold text-z-text">{selectedSessionType.name}</Text>
+                    <Text className="text-sm text-z-muted">
+                      {`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim()}
+                    </Text>
+                  </View>
+                  <ZBadge
+                    label={t('common.labels.minutesShort', { count: selectedSessionType.duration_minutes })}
+                    tone="primary"
+                  />
+                </View>
+                <ZDivider />
+                <View className="py-3">
+                  <Text className="text-z-text">{`${formatDay(slot.starts_at)} · ${formatRange(slot)}`}</Text>
+                  <Text className="text-sm text-z-muted">{t('common.labels.yourLocalTime')}</Text>
+                </View>
+              </ZCard>
+            ) : null}
+            <ZTextarea
+              testID="book-notes"
+              value={notes}
+              onChangeText={setNotes}
+              accessibilityLabel={t('sessions.book.notes')}
+              placeholder={t('sessions.book.notesPlaceholder')}
+              rows={3}
+            />
+          </View>
+        );
+      default:
+        return null;
+    }
+  }
+
   // ── render ─────────────────────────────────────────────────────────────────
   return (
     <ZScreen edges={['bottom']}>
-      {/* Native sheet header with title + cancel affordance. */}
       <Stack.Screen
         options={{
           title: t('sessions.bookLive'),
@@ -225,283 +449,81 @@ export default function BookScreen() {
       />
 
       {booked ? (
-        // ── Success state ─────────────────────────────────────────────────────
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ padding: 16, flexGrow: 1, justifyContent: 'center' }}
-        >
+        <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, flexGrow: 1, justifyContent: 'center' }}>
           <View testID="book-success" className="items-center gap-4">
-            <View className="h-12 w-12 items-center justify-center rounded-md bg-z-primary-soft">
-              <ZSymbol name="check" label={t('sessions.book.bookedHeading')} size={24} color={colors.primary} />
+            <View className="h-14 w-14 items-center justify-center rounded-2xl bg-z-success-soft">
+              <ZSymbol name="check" label={t('sessions.book.bookedHeading')} size={28} color={colors.success} />
             </View>
-            <Text className="text-center text-xl font-semibold text-z-text">
-              {t('sessions.book.bookedHeading')}
-            </Text>
+            <Text className="text-center text-xl font-semibold text-z-text">{t('sessions.book.bookedHeading')}</Text>
             <Text className="max-w-md text-center text-sm leading-6 text-z-muted">
               {t('sessions.book.bookedDescription')}
             </Text>
+            {selectedExpert && selectedSessionType && slot ? (
+              <ZCard className="w-full flex-row items-center gap-3">
+                <ZAvatar
+                  size={44}
+                  shape="circle"
+                  image={selectedExpert.avatar ? avatarSrc(selectedExpert.avatar) : undefined}
+                  fallback={initialsFromName(`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim())}
+                  alt={`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim()}
+                />
+                <View className="flex-1">
+                  <Text className="font-semibold text-z-text">{selectedSessionType.name}</Text>
+                  <Text className="text-sm text-z-muted">{`${formatDay(slot.starts_at)} · ${formatTime(slot.starts_at)}`}</Text>
+                </View>
+                <ZBadge
+                  label={t('common.labels.minutesShort', { count: selectedSessionType.duration_minutes })}
+                  tone="primary"
+                />
+              </ZCard>
+            ) : null}
             <ZButton
               testID="book-view-sessions"
-              label={t('sessions.book.viewSessions')}
+              label={t('common.actions.done')}
               onPress={() => router.replace('/coaching')}
             />
           </View>
         </ScrollView>
+      ) : groupsQuery.isPending ? (
+        <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 12 }}>
+          <ZSkeleton className="h-8 w-full rounded-full" />
+          <ZSkeleton className="h-16 w-full rounded-2xl" />
+          <ZSkeleton className="h-16 w-full rounded-2xl" />
+        </ScrollView>
+      ) : groupsQuery.isError ? (
+        <View className="flex-1 p-4">
+          <ZQueryError title={t('home.error.title')} onRetry={() => void groupsQuery.refetch()} testID="book-groups-retry" />
+        </View>
+      ) : groups.length === 0 ? (
+        <View className="flex-1 justify-center p-4">
+          <ZEmptyState title={t('groups.noGroupsYet')} description={t('groups.noGroupsJoined')} />
+        </View>
       ) : (
-        // Note: no ZKeyboardAvoidingView here — this is a formSheet route and the
-        // native sheet owns keyboard avoidance (AGENTS.md: "Do not apply the KAV
-        // pattern inside native sheet routes"). keyboardShouldPersistTaps is kept.
-        <ScrollView
-          className="flex-1"
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ padding: 16, gap: 24 }}
-        >
-            {/* Progress stepper */}
-            <View className="gap-3">
-              <ZStepper steps={stepperSteps} testID="book-stepper" />
-              <Text className="text-sm leading-6 text-z-muted">{stepDescriptions[activeStep]}</Text>
-            </View>
-
-            {/* ── Group section (hidden when exactly one group) ─────────────────── */}
-            {groups.length !== 1 && (
-              <ZCard>
-                <Text className="mb-2 text-base font-semibold text-z-text">
-                  {t('sessions.book.selectGroup')}
-                </Text>
-                {groupsQuery.isPending ? (
-                  <View className="gap-2">
-                    <ZSkeleton className="h-8 w-1/2 rounded-full" />
-                    <ZSkeleton className="h-8 w-1/3 rounded-full" />
-                  </View>
-                ) : groupsQuery.isError ? (
-                  <ZQueryError
-                    title={t('home.error.title')}
-                    onRetry={() => void groupsQuery.refetch()}
-                    testID="book-groups-retry"
-                  />
-                ) : groups.length === 0 ? (
-                  <ZEmptyState
-                    title={t('groups.noGroupsYet')}
-                    description={t('groups.noGroupsJoined')}
-                  />
-                ) : (
-                  <View className="flex-row flex-wrap gap-2">
-                    {groups.map((g) => (
-                      <ZChip
-                        key={g.id}
-                        label={g.name}
-                        selected={groupId === g.id}
-                        onPress={() => handleSelectGroup(g.id)}
-                        testID={`book-group-${g.id}`}
-                      />
-                    ))}
-                  </View>
-                )}
-              </ZCard>
-            )}
-
-            {/* ── Expert section ────────────────────────────────────────────────── */}
-            {groupId !== '' && (
-              <ZCard>
-                <Text className="mb-2 text-base font-semibold text-z-text">
-                  {t('sessions.book.selectExpert')}
-                </Text>
-                {expertsQuery.isPending ? (
-                  <View className="flex-row gap-2">
-                    <ZSkeleton className="h-8 w-24 rounded-full" />
-                    <ZSkeleton className="h-8 w-24 rounded-full" />
-                  </View>
-                ) : expertsQuery.isError ? (
-                  <ZQueryError
-                    title={t('sessions.book.loadExpertsFailed')}
-                    onRetry={() => void expertsQuery.refetch()}
-                    testID="book-experts-retry"
-                  />
-                ) : experts.length === 0 ? (
-                  <ZEmptyState
-                    title={t('sessions.book.noExperts')}
-                    description={t('sessions.book.noExpertsDescription')}
-                  />
-                ) : (
-                  <View className="flex-row flex-wrap gap-2">
-                    {experts.map((e) => (
-                      <ZChip
-                        key={e.expert_id}
-                        label={`${e.first_name} ${e.last_name}`.trim()}
-                        selected={expertId === e.expert_id}
-                        onPress={() => handleSelectExpert(e.expert_id)}
-                        testID={`book-expert-${e.expert_id}`}
-                      />
-                    ))}
-                  </View>
-                )}
-              </ZCard>
-            )}
-
-            {/* ── Session Type section ──────────────────────────────────────────── */}
-            {expertId !== '' && (
-              <View>
-                <Text className="mb-2 text-base font-semibold text-z-text">
-                  {t('sessions.book.sessionType')}
-                </Text>
-                {sessionTypesQuery.isPending ? (
-                  <View className="gap-2">
-                    <ZSkeleton className="h-20 w-full rounded-lg" />
-                    <ZSkeleton className="h-20 w-full rounded-lg" />
-                  </View>
-                ) : sessionTypesQuery.isError ? (
-                  <ZQueryError
-                    title={t('sessions.book.loadSessionTypesFailed')}
-                    onRetry={() => void sessionTypesQuery.refetch()}
-                    testID="book-types-retry"
-                  />
-                ) : sessionTypes.length === 0 ? (
-                  <ZEmptyState
-                    title={t('sessions.book.noSessionTypes')}
-                    description={t('sessions.book.noSessionTypesDescription')}
-                  />
-                ) : (
-                  <View className="gap-2">
-                    {sessionTypes.map((st) => {
-                      const isSelected = sessionTypeId === st.id;
-                      return (
-                        <Touchable
-                          key={st.id}
-                          testID={`book-type-${st.id}`}
-                          accessibilityLabel={st.name}
-                          selected={isSelected}
-                          onPress={() => handleSelectSessionType(st.id)}
-                        >
-                          <ZCard tone={isSelected ? 'accent' : 'surface'}>
-                            <View className="flex-row items-start justify-between gap-2">
-                              <Text className="flex-1 font-semibold text-z-text">{st.name}</Text>
-                              <ZBadge label={t('common.labels.minutesShort', { count: st.duration_minutes })} />
-                            </View>
-                            <Text className="mt-2 text-sm leading-6 text-z-muted">
-                              {st.description}
-                            </Text>
-                          </ZCard>
-                        </Touchable>
-                      );
-                    })}
-                  </View>
-                )}
-              </View>
-            )}
-
-            {/* ── Slot section ──────────────────────────────────────────────────── */}
-            {groupId !== '' && expertId !== '' && sessionTypeId !== '' && (
-              <ZCard>
-                <Text className="mb-2 text-base font-semibold text-z-text">
-                  {t('sessions.book.selectTime')}
-                </Text>
-                {slotsQuery.isPending ? (
-                  <View className="gap-3">
-                    <ZSkeleton className="h-6 w-1/3" />
-                    <View className="flex-row flex-wrap gap-2">
-                      <ZSkeleton className="h-8 w-20 rounded-full" />
-                      <ZSkeleton className="h-8 w-20 rounded-full" />
-                      <ZSkeleton className="h-8 w-20 rounded-full" />
-                    </View>
-                  </View>
-                ) : slotsQuery.isError ? (
-                  <ZQueryError
-                    title={t('sessions.book.loadSlotsFailed')}
-                    onRetry={() => void slotsQuery.refetch()}
-                    testID="book-slots-retry"
-                  />
-                ) : slots.length === 0 ? (
-                  <ZEmptyState
-                    title={t('sessions.book.noTimes')}
-                    description={t('sessions.book.noTimesDescription')}
-                  />
-                ) : (
-                  <View className="gap-4">
-                    {Array.from(slotsByDay.entries()).map(([dayKey, daySlots]) => (
-                      <View key={dayKey}>
-                        <Text className="mb-2 text-sm font-semibold text-z-muted">
-                          {formatDay(daySlots[0].starts_at)}
-                        </Text>
-                        <View className="flex-row flex-wrap gap-2">
-                          {daySlots.map((s) => (
-                            <ZChip
-                              key={s.starts_at}
-                              label={formatRange(s)}
-                              selected={slot?.starts_at === s.starts_at}
-                              onPress={() => handleSelectSlot(s)}
-                              testID={`book-slot-${s.starts_at}`}
-                            />
-                          ))}
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </ZCard>
-            )}
-
-            {/* Inline submit error — shown outside confirm section so it persists after slot reset */}
-            {submitError !== null && (
+        <>
+          <ScrollView
+            className="flex-1"
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ padding: 16, gap: 20 }}
+          >
+            <ZStepper steps={stepperSteps} reached={reached} onStepPress={onStepPress} testID="book-stepper" />
+            {renderStage()}
+            {submitError !== null ? (
               <Text testID="book-error" className="text-sm text-z-danger">
                 {submitError}
               </Text>
-            )}
-
-            {/* ── Confirm section ───────────────────────────────────────────────── */}
-            {slot !== null && selectedExpert !== null && selectedSessionType !== null && (
-              <ZCard className="gap-3">
-                <Text className="text-lg font-semibold text-z-text">
-                  {t('sessions.book.confirmDescription')}
-                </Text>
-
-                {/* Summary lines */}
-                <View className="gap-1">
-                  <Text className="text-sm text-z-text">
-                    <Text className="font-semibold">{t('sessions.book.selectExpert')}: </Text>
-                    {`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim()}
-                  </Text>
-                  <Text className="text-sm text-z-text">
-                    <Text className="font-semibold">{t('sessions.book.sessionType')}: </Text>
-                    {selectedSessionType.name}
-                  </Text>
-                  <Text className="text-sm text-z-text">
-                    {formatDay(slot.starts_at)} {formatRange(slot)}
-                  </Text>
-                  <Text className="text-sm text-z-muted">{t('common.labels.yourLocalTime')}</Text>
-                </View>
-
-                {/* Optional notes */}
-                <ZTextarea
-                  testID="book-notes"
-                  value={notes}
-                  onChangeText={setNotes}
-                  accessibilityLabel={t('sessions.book.notes')}
-                  placeholder={t('sessions.book.notesPlaceholder')}
-                  rows={3}
-                />
-
-                {/* Submit */}
-                <ZButton
-                  testID="book-submit"
-                  label={isSubmitting ? t('sessions.book.booking') : t('sessions.book.bookSession')}
-                  loading={isSubmitting}
-                  onPress={() => void handleSubmit()}
-                />
-
-                {/* Secondary back to the slot step */}
-                <ZButton
-                  testID="book-back"
-                  label={t('common.actions.back')}
-                  variant="secondary"
-                  disabled={isSubmitting}
-                  onPress={() => setSlot(null)}
-                />
-              </ZCard>
-            )}
-
-            {/* Bottom spacer */}
-            <View className="h-8" />
+            ) : null}
           </ScrollView>
+          <ZBookingBar
+            testID="book-bar"
+            headline={headline}
+            hint={hint}
+            context={context}
+            ctaLabel={ctaLabel}
+            ctaDisabled={!canAdvance}
+            ctaLoading={isSubmitting}
+            onPress={handleCta}
+          />
+        </>
       )}
     </ZScreen>
   );
