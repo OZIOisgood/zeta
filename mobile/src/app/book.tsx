@@ -209,6 +209,8 @@ export default function BookScreen() {
 
   async function handleSubmit() {
     if (!expertId || !sessionTypeId || !slot) return;
+    // Clear any prior failure so a retry starts clean (no stale banner).
+    setSubmitError(null);
     try {
       await mutateAsync({
         expertId,
@@ -220,9 +222,13 @@ export default function BookScreen() {
       showToast(t('sessions.book.bookedHeading'), t('sessions.book.bookedDescription'), 'success');
     } catch (err) {
       if (err instanceof BookingError && err.status === 409) {
+        // Slot taken: drop it, refetch availability, and send the user back to
+        // the time step to re-pick — otherwise the confirm CTA stays enabled but
+        // would silently no-op (no slot selected).
         setSlot(null);
         void queryClient.invalidateQueries({ queryKey: ['coaching', groupId, 'slots'] });
         setSubmitError(t('sessions.book.slotTaken'));
+        goStep(stageIndex('time'));
       } else if (err instanceof BookingError && err.status === 400) {
         setSubmitError(t('sessions.book.tooLate'));
       } else {
@@ -245,6 +251,12 @@ export default function BookScreen() {
   const hint = headline ? undefined : stepLabels[stageId];
 
   // ── stage body ────────────────────────────────────────────────────────────
+  // Per-step selection lists (group/expert/type) use `.map()` rather than
+  // FlatList by design: each is a short, bounded set (a group's experts, an
+  // expert's session types) and only one is visible per step inside the shared
+  // ScrollView. A same-axis nested FlatList would emit RN's "VirtualizedLists
+  // should never be nested" warning, and `scrollEnabled={false}` to silence it
+  // removes all virtualization benefit — so FlatList here would be pure ceremony.
   function renderStage() {
     switch (stageId) {
       case 'group':

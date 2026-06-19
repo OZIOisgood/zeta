@@ -7,6 +7,8 @@ export type { ZTimeGridProps, ZTimeGridSlot } from './z-time-grid.types';
 /**
  * 3-column grid of start-time cells. Selected = accent fill / on-accent text;
  * unselected = surface-1 / on-surface with a 1px outline inset. Radius 12.
+ * Both states carry a 1px border (transparent when selected) so toggling
+ * selection never shifts the cell's box size.
  */
 export function ZTimeGrid({
   slots,
@@ -29,8 +31,8 @@ export function ZTimeGrid({
                 accessibilityLabel={s.label}
                 selected={selected}
                 onPress={() => onSelect(s.startsAt)}
-                className={`min-h-[44px] items-center justify-center rounded-xl ${
-                  selected ? 'bg-accent' : 'border border-outline bg-surface-1'
+                className={`min-h-[44px] items-center justify-center rounded-xl border ${
+                  selected ? 'border-transparent bg-accent' : 'border-outline bg-surface-1'
                 }`}
               >
                 <Text

@@ -174,13 +174,15 @@ test('Fertig on success returns to coaching', async () => {
   expect(mockReplace).toHaveBeenCalledWith('/coaching');
 });
 
-test('409 conflict clears the slot and shows the taken error', async () => {
+test('409 conflict clears the slot, shows the taken error, and returns to the time step', async () => {
   mockMutateAsync.mockRejectedValueOnce(new BookingError(409));
   await renderScreen();
   await advanceToConfirm();
   await act(async () => { fireEvent.press(screen.getByTestId('book-bar-cta')); });
   await waitFor(() => expect(screen.getByTestId('book-error')).toBeTruthy());
   expect(screen.queryByTestId('book-success')).toBeNull();
+  // Sent back to the time step to re-pick (the cleared slot makes Confirm a dead end).
+  expect(screen.getByTestId('book-daterail')).toBeTruthy();
 });
 
 test('navigable stepper jumps back to the expert step', async () => {
