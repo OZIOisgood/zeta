@@ -25,8 +25,8 @@ export function ZEmptyState({
       <View className="h-12 w-12 items-center justify-center rounded-lg bg-z-surface-warm">
         {icon}
       </View>
-      <Text className="mt-4 text-base font-semibold text-z-text text-center">{title}</Text>
-      <Text className="mt-2 text-sm leading-6 text-z-muted text-center">{description}</Text>
+      <Text className="mt-4 text-base font-bold text-z-text text-center">{title}</Text>
+      <Text className="mt-2 text-[15px] leading-6 text-z-muted text-center">{description}</Text>
       {children ? <View className="mt-5">{children}</View> : null}
     </View>
   );

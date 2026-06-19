@@ -259,7 +259,7 @@ export default function HomeScreen() {
         {/* Module 3: your videos */}
         <View className="px-4">
           <View className="mb-2.5 flex-row items-center justify-between">
-            <Text numberOfLines={1} className="text-[17px] font-extrabold text-z-text">
+            <Text numberOfLines={1} className="text-[19px] font-extrabold text-z-text">
               {t('home.latestVideos')}
             </Text>
             <ZButton
@@ -276,8 +276,8 @@ export default function HomeScreen() {
         {showFirstSteps ? (
           <ZCard testID="first-steps-card" className="mx-4">
             <View className="flex-row items-center justify-between">
-              <Text className="text-base font-extrabold text-z-text">{t('home.firstSteps.title')}</Text>
-              <Text className="text-[13px] font-bold text-z-muted">
+              <Text className="text-[19px] font-extrabold text-z-text">{t('home.firstSteps.title')}</Text>
+              <Text className="text-xs font-medium text-z-muted">
                 {completedCount}/{steps.length}
               </Text>
             </View>

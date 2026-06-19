@@ -62,11 +62,11 @@ export function FirstStepRow({
       <View className="min-w-0 flex-1">
         <Text
           numberOfLines={1}
-          className={`text-[15px] font-bold ${completed ? 'text-z-muted' : 'text-z-text'}`}
+          className={`text-base font-bold ${completed ? 'text-z-muted' : 'text-z-text'}`}
         >
           {label}
         </Text>
-        <Text numberOfLines={2} className="mt-0.5 text-[13px] text-z-muted">
+        <Text numberOfLines={2} className="mt-0.5 text-[15px] text-z-muted">
           {description}
         </Text>
       </View>

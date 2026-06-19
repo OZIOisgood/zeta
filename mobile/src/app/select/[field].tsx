@@ -122,8 +122,8 @@ export default function SelectFieldScreen() {
                 <Text
                   className={
                     isSelected
-                      ? 'flex-1 font-semibold text-z-primary-strong'
-                      : 'flex-1 text-z-text'
+                      ? 'flex-1 text-base font-bold text-z-primary-strong'
+                      : 'flex-1 text-base font-bold text-z-text'
                   }
                   numberOfLines={1}
                 >

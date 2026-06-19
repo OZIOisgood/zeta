@@ -135,7 +135,7 @@ export function BookingCard({
     <ZCard tone="surface">
       {/* Row 1: session type name + status + recording badges */}
       <View className="flex-row flex-wrap items-center gap-2">
-        <Text className="flex-shrink text-base font-extrabold text-z-text" numberOfLines={1}>
+        <Text className="flex-shrink text-base font-bold text-z-text" numberOfLines={1}>
           {sessionTypeName}
         </Text>
         <ZBadge
@@ -153,7 +153,7 @@ export function BookingCard({
       </View>
 
       {/* Row 2: counterpart role + name */}
-      <Text className="mt-1 text-sm text-z-muted">
+      <Text className="mt-1 text-[15px] text-z-muted">
         {counterpartLabel}: {counterpart}
       </Text>
 
@@ -163,21 +163,21 @@ export function BookingCard({
             status label ('upcoming') would mis-announce. The adjacent date/time
             text conveys the info, so the glyph is not announced (label=""). */}
         <ZSymbol name="clock" label="" size={14} color={colors.muted} />
-        <Text className="text-sm text-z-muted">
+        <Text className="text-xs font-medium text-z-muted">
           {dateText} · {booking.duration_minutes} min
         </Text>
       </View>
 
       {/* Optional notes */}
       {booking.notes ? (
-        <Text className="mt-1 text-sm text-z-muted" numberOfLines={1}>
+        <Text className="mt-1 text-[15px] text-z-muted" numberOfLines={1}>
           {booking.notes}
         </Text>
       ) : null}
 
       {/* Cancellation reason — danger-toned, mirrors web rose-700 line */}
       {booking.status === 'cancelled' && booking.cancellation_reason ? (
-        <Text testID="booking-cancellation-reason" className="mt-2 text-sm text-z-danger">
+        <Text testID="booking-cancellation-reason" className="mt-2 text-[15px] text-z-danger">
           {t('common.labels.reason', { reason: booking.cancellation_reason })}
         </Text>
       ) : null}

@@ -25,7 +25,7 @@ export function UploadProgressCard({
   return (
     <View className="rounded-lg border border-z-border bg-z-surface p-3">
       <View className="mb-1 flex-row items-center justify-between">
-        <Text className="text-sm font-semibold text-z-text">{job.title}</Text>
+        <Text className="text-base font-bold text-z-text">{job.title}</Text>
 
         {job.status === 'done' && (
           <ZIconButton
@@ -52,7 +52,7 @@ export function UploadProgressCard({
 
       {(job.status === 'uploading' || job.status === 'completing') && (
         <View className="gap-1">
-          <Text className="text-xs text-z-muted">
+          <Text className="text-xs font-medium text-z-muted">
             {doneCount}/{job.files.length}
           </Text>
           <View className="h-2 overflow-hidden rounded-full bg-z-surface-muted">

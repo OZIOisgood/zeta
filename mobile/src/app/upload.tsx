@@ -172,8 +172,8 @@ export default function UploadScreen() {
                   size={30}
                   color={colors.muted}
                 />
-                <Text className="text-sm font-bold text-z-text">{t('upload.selectVideo')}</Text>
-                <Text className="text-center text-z-muted" style={{ fontSize: 12.5 }}>
+                <Text className="text-base font-bold text-z-text">{t('upload.selectVideo')}</Text>
+                <Text className="text-center text-[15px] text-z-muted">
                   {t('upload.multiPartHint')}
                 </Text>
               </Touchable>
@@ -186,7 +186,7 @@ export default function UploadScreen() {
                       className="flex-row items-center rounded-lg border border-z-border bg-z-surface px-3 py-2"
                     >
                       <ZSymbol name="file-video" label={file.filename} size={18} color={colors.primary} />
-                      <Text className="ml-2 flex-1 text-sm font-semibold text-z-text" numberOfLines={1}>
+                      <Text className="ml-2 flex-1 text-base font-bold text-z-text" numberOfLines={1}>
                         {file.filename}
                       </Text>
                       <ZIconButton
@@ -287,20 +287,20 @@ export default function UploadScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-base font-bold text-z-text">{t('upload.readyTitle')}</Text>
-                  <Text className="mt-1 text-sm text-z-muted">{t('upload.readySummary')}</Text>
+                  <Text className="mt-1 text-[15px] text-z-muted">{t('upload.readySummary')}</Text>
                 </View>
               </View>
   
               <View className="mt-4 gap-2 rounded-[12px] border border-z-border p-3">
-                <Text className="text-sm text-z-text">
+                <Text className="text-[15px] text-z-text">
                   <Text className="font-semibold">{t('common.fields.title')}: </Text>
                   {title}
                 </Text>
-                <Text className="text-sm text-z-text">
+                <Text className="text-[15px] text-z-text">
                   <Text className="font-semibold">{t('common.fields.group')}: </Text>
                   {selectedGroupName}
                 </Text>
-                <Text className="text-sm text-z-text">
+                <Text className="text-[15px] text-z-text">
                   <Text className="font-semibold">{t('upload.selectVideo')}: </Text>
                   {picked.length}
                 </Text>

@@ -212,7 +212,7 @@ export default function GroupPreferencesScreen() {
         >
           {/* Form summary */}
           <View className="px-4 pb-4">
-            <Text className="mt-1 text-sm leading-6 text-z-muted">
+            <Text className="mt-1 text-[15px] leading-6 text-z-muted">
               {t('groups.phase4.preferencesSummary')}
             </Text>
           </View>
@@ -322,7 +322,7 @@ export default function GroupPreferencesScreen() {
           ) : (
             // Neither owner (can delete) nor a member who can leave: explain why.
             <View className="px-4 pt-6">
-              <Text className="text-sm leading-6 text-z-muted">
+              <Text className="text-[15px] leading-6 text-z-muted">
                 {t('groups.deleteUnavailable')}
               </Text>
             </View>

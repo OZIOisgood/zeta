@@ -102,10 +102,10 @@ function MemberSection({
         <ZIconTile tone="neutral" icon={<ZSymbol name={iconName} label={title} size={20} color={colors.primary} />} />
         <View className="flex-1">
           <View className="flex-row flex-wrap items-center gap-2">
-            <Text className="text-base font-extrabold text-z-text">{title}</Text>
+            <Text className="text-[19px] font-extrabold text-z-text">{title}</Text>
             <ZBadge label={String(count)} tone="neutral" />
           </View>
-          <Text className="mt-1 text-sm leading-6 text-z-muted">{description}</Text>
+          <Text className="mt-1 text-[15px] leading-6 text-z-muted">{description}</Text>
         </View>
       </View>
 
@@ -256,10 +256,10 @@ function InviteSection({ groupId }: { groupId: string }) {
       <View className="flex-row items-start gap-3">
         <ZIconTile tone="neutral" icon={<ZSymbol name="qr-code" label={t('groups.inviteDialog.title')} size={20} color={colors.primary} />} />
         <View className="flex-1">
-          <Text className="text-base font-extrabold text-z-text">
+          <Text className="text-[19px] font-extrabold text-z-text">
             {t('groups.inviteDialog.title')}
           </Text>
-          <Text className="mt-1 text-sm leading-6 text-z-muted">
+          <Text className="mt-1 text-[15px] leading-6 text-z-muted">
             {t('groups.inviteDialog.cardDescription')}
           </Text>
         </View>
@@ -286,7 +286,7 @@ function InviteSection({ groupId }: { groupId: string }) {
           {/* Email hint */}
           <View className="flex-row items-start gap-2 rounded-md border border-z-border bg-z-bg p-3">
             <ZSymbol name="mail" label={t('groups.inviteDialog.emailHint')} size={16} color={colors.primary} />
-            <Text className="flex-1 text-sm leading-6 text-z-muted">
+            <Text className="flex-1 text-[15px] leading-6 text-z-muted">
               {t('groups.inviteDialog.emailHint')}
             </Text>
           </View>
@@ -299,7 +299,7 @@ function InviteSection({ groupId }: { groupId: string }) {
               testID="group-invite-error"
               className="rounded-md border border-z-danger bg-z-danger/10 p-3"
             >
-              <Text className="text-sm text-z-danger">{errorBanner}</Text>
+              <Text className="text-[15px] text-z-danger">{errorBanner}</Text>
             </View>
           )}
 
@@ -350,7 +350,7 @@ function InviteSection({ groupId }: { groupId: string }) {
               <View className="mt-2 rounded-md border border-z-border bg-z-surface px-3 py-2">
                 <Text className="text-xs text-z-muted" numberOfLines={2}>{inviteLink}</Text>
               </View>
-              <Text className="mt-2 text-sm leading-6 text-z-muted">
+              <Text className="mt-2 text-[15px] leading-6 text-z-muted">
                 {t('groups.inviteDialog.shareHint')}
               </Text>
             </View>
@@ -527,7 +527,7 @@ export default function GroupDetailScreen() {
           </View>
 
           <View className="px-4 pb-4">
-            <Text className="text-sm text-z-muted">
+            <Text className="text-[15px] text-z-muted">
               {data.description || t('groups.phase4.noDescription')}
             </Text>
           </View>

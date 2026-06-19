@@ -154,7 +154,7 @@ function SessionTypeSheet({
       closeLabel={t('common.actions.cancel')}
     >
       <ScrollView keyboardShouldPersistTaps="handled">
-        <Text className="mb-4 text-base font-semibold text-z-text">
+        <Text className="mb-4 text-[19px] font-extrabold text-z-text">
           {editing
             ? t('sessions.availability.editSessionType')
             : t('sessions.availability.addSessionType')}
@@ -264,7 +264,7 @@ function AvailabilitySheet({
   return (
     <ZDialogPanel visible onClose={onClose} closeLabel={t('common.actions.cancel')}>
       <ScrollView keyboardShouldPersistTaps="handled">
-        <Text className="mb-4 text-base font-semibold text-z-text">
+        <Text className="mb-4 text-[19px] font-extrabold text-z-text">
           {editing
             ? t('sessions.availability.editAvailability')
             : t('sessions.availability.addAvailability')}
@@ -372,7 +372,7 @@ function BlockedSheet({
   return (
     <ZDialogPanel visible onClose={onClose} closeLabel={t('common.actions.cancel')}>
       <ScrollView keyboardShouldPersistTaps="handled">
-        <Text className="mb-4 text-base font-semibold text-z-text">
+        <Text className="mb-4 text-[19px] font-extrabold text-z-text">
           {t('sessions.availability.addBlockTime')}
         </Text>
         <View className="gap-3">

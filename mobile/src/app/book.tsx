@@ -262,7 +262,7 @@ export default function BookScreen() {
       case 'group':
         return (
           <View className="gap-2">
-            <Text className="text-base font-semibold text-z-text">{t('sessions.book.selectGroup')}</Text>
+            <Text className="text-[19px] font-extrabold text-z-text">{t('sessions.book.selectGroup')}</Text>
             {groups.map((g) => (
               <ZListItem
                 key={g.id}
@@ -277,7 +277,7 @@ export default function BookScreen() {
       case 'expert':
         return (
           <View className="gap-2">
-            <Text className="text-base font-semibold text-z-text">{t('sessions.book.selectExpert')}</Text>
+            <Text className="text-[19px] font-extrabold text-z-text">{t('sessions.book.selectExpert')}</Text>
             {expertsQuery.isPending ? (
               <View className="gap-2">
                 <ZSkeleton className="h-16 w-full rounded-2xl" />
@@ -319,7 +319,7 @@ export default function BookScreen() {
       case 'type':
         return (
           <View className="gap-2">
-            <Text className="text-base font-semibold text-z-text">{t('sessions.book.sessionType')}</Text>
+            <Text className="text-[19px] font-extrabold text-z-text">{t('sessions.book.sessionType')}</Text>
             {sessionTypesQuery.isPending ? (
               <View className="gap-2">
                 <ZSkeleton className="h-20 w-full rounded-2xl" />
@@ -360,7 +360,7 @@ export default function BookScreen() {
       case 'time':
         return (
           <View className="gap-3">
-            <Text className="text-base font-semibold text-z-text">{t('sessions.book.selectTime')}</Text>
+            <Text className="text-[19px] font-extrabold text-z-text">{t('sessions.book.selectTime')}</Text>
             {slotsQuery.isPending ? (
               <View className="gap-3">
                 <ZSkeleton className="h-16 w-full rounded-2xl" />
@@ -378,7 +378,7 @@ export default function BookScreen() {
               <>
                 <ZDateRail days={railDays} selectedKey={dayKey} onSelect={handleSelectDay} testID="book-daterail" />
                 {dayKey === '' ? (
-                  <Text className="text-sm text-z-muted">{t('sessions.book.selectDate')}</Text>
+                  <Text className="text-[15px] text-z-muted">{t('sessions.book.selectDate')}</Text>
                 ) : (
                   <ZTimeGrid
                     slots={gridSlots}
@@ -399,7 +399,7 @@ export default function BookScreen() {
       case 'confirm':
         return (
           <View className="gap-4">
-            <Text className="text-base font-semibold text-z-text">{t('sessions.book.confirmDescription')}</Text>
+            <Text className="text-[19px] font-extrabold text-z-text">{t('sessions.book.confirmDescription')}</Text>
             {selectedExpert && selectedSessionType && slot ? (
               <ZCard className="gap-0">
                 <View className="flex-row items-center gap-3 py-3">
@@ -411,8 +411,8 @@ export default function BookScreen() {
                     alt={`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim()}
                   />
                   <View className="flex-1">
-                    <Text className="font-semibold text-z-text">{selectedSessionType.name}</Text>
-                    <Text className="text-sm text-z-muted">
+                    <Text className="text-base font-bold text-z-text">{selectedSessionType.name}</Text>
+                    <Text className="text-[15px] text-z-muted">
                       {`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim()}
                     </Text>
                   </View>
@@ -424,7 +424,7 @@ export default function BookScreen() {
                 <ZDivider />
                 <View className="py-3">
                   <Text className="text-z-text">{`${formatDay(slot.starts_at)} · ${formatRange(slot)}`}</Text>
-                  <Text className="text-sm text-z-muted">{t('common.labels.yourLocalTime')}</Text>
+                  <Text className="text-[15px] text-z-muted">{t('common.labels.yourLocalTime')}</Text>
                 </View>
               </ZCard>
             ) : null}
@@ -467,7 +467,7 @@ export default function BookScreen() {
               <ZSymbol name="check" label={t('sessions.book.bookedHeading')} size={28} color={colors.success} />
             </View>
             <Text className="text-center text-xl font-semibold text-z-text">{t('sessions.book.bookedHeading')}</Text>
-            <Text className="max-w-md text-center text-sm leading-6 text-z-muted">
+            <Text className="max-w-md text-center text-[15px] leading-6 text-z-muted">
               {t('sessions.book.bookedDescription')}
             </Text>
             {selectedExpert && selectedSessionType && slot ? (
@@ -480,8 +480,8 @@ export default function BookScreen() {
                   alt={`${selectedExpert.first_name} ${selectedExpert.last_name}`.trim()}
                 />
                 <View className="flex-1">
-                  <Text className="font-semibold text-z-text">{selectedSessionType.name}</Text>
-                  <Text className="text-sm text-z-muted">{`${formatDay(slot.starts_at)} · ${formatTime(slot.starts_at)}`}</Text>
+                  <Text className="text-base font-bold text-z-text">{selectedSessionType.name}</Text>
+                  <Text className="text-[15px] text-z-muted">{`${formatDay(slot.starts_at)} · ${formatTime(slot.starts_at)}`}</Text>
                 </View>
                 <ZBadge
                   label={t('common.labels.minutesShort', { count: selectedSessionType.duration_minutes })}

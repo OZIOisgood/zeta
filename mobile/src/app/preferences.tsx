@@ -46,8 +46,8 @@ function CardSectionHeader({
         icon={<ZSymbol name={icon} label={title} size={20} color={colors.primary} />}
       />
       <View className="flex-1">
-        <Text className="text-base font-semibold text-on-surface">{title}</Text>
-        <Text className="mt-1 text-sm leading-5 text-on-surface-variant">{summary}</Text>
+        <Text className="text-[19px] font-extrabold text-on-surface">{title}</Text>
+        <Text className="mt-1 text-[15px] leading-5 text-on-surface-variant">{summary}</Text>
       </View>
       {badge}
     </View>

@@ -129,7 +129,7 @@ export default function InviteScreen() {
                 </View>
               ) : (
                 <ZCard className="mb-4 items-center gap-3">
-                  <Text className="text-center text-sm text-z-muted">
+                  <Text className="text-center text-[15px] text-z-muted">
                     {t('groups.invite.cameraHint')}
                   </Text>
                   <ZButton
@@ -212,7 +212,7 @@ export default function InviteScreen() {
               {info && (
                 <View className="gap-4">
                   {/* Invitation headline */}
-                  <Text className="text-center text-sm text-z-muted">
+                  <Text className="text-center text-[15px] text-z-muted">
                     {t('groups.invitationDialog.invited', { group: info.group_name })}
                   </Text>
 
@@ -226,7 +226,7 @@ export default function InviteScreen() {
                         alt={info.group_name}
                       />
                       <View className="flex-1">
-                        <Text className="text-base font-semibold text-z-text">
+                        <Text className="text-base font-bold text-z-text">
                           {info.group_name}
                         </Text>
                       </View>
@@ -240,7 +240,7 @@ export default function InviteScreen() {
 
                   {info.already_member ? (
                     <View className="gap-3">
-                      <Text className="text-center text-sm text-z-muted">
+                      <Text className="text-center text-[15px] text-z-muted">
                         {t('groups.invitationDialog.alreadyMember', { group: info.group_name })}
                       </Text>
                       <ZButton

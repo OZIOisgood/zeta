@@ -65,7 +65,7 @@ export function ZListItem({
       {leading ? <View className="shrink-0">{leading}</View> : null}
       <View className="min-w-0 flex-1">
         <View className="flex-row items-center gap-2">
-          <Text numberOfLines={1} className="min-w-0 flex-1 text-[15px] font-bold text-on-surface">
+          <Text numberOfLines={1} className="min-w-0 flex-1 text-base font-bold text-on-surface">
             {title}
           </Text>
           {titleAccessory ? <View className="shrink-0">{titleAccessory}</View> : null}
@@ -73,7 +73,7 @@ export function ZListItem({
         {subtitle ? (
           <Text
             numberOfLines={subtitleNumberOfLines}
-            className="mt-0.5 text-[13px] text-on-surface-variant"
+            className="mt-0.5 text-[15px] text-on-surface-variant"
           >
             {subtitle}
           </Text>

@@ -33,7 +33,7 @@ export function StatCard({
   const inner = (
     <>
       <View className="min-h-10 flex-row items-start justify-between gap-2">
-        <Text numberOfLines={2} className="flex-1 text-xs font-bold leading-5 text-z-muted">
+        <Text numberOfLines={2} className="flex-1 text-xs font-medium leading-5 text-z-muted">
           {label}
         </Text>
         {icon}

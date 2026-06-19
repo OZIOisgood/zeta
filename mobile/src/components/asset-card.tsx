@@ -62,11 +62,11 @@ export function AssetCard({ asset, onPress }: { asset: Asset; onPress: () => voi
       </View>
 
       <View className="flex-1 gap-[5px]">
-        <Text numberOfLines={1} className="text-[15px] font-bold text-z-text">
+        <Text numberOfLines={1} className="text-base font-bold text-z-text">
           {asset.title}
         </Text>
         {secondaryLine ? (
-          <Text numberOfLines={1} className="text-[12.5px] text-z-muted">
+          <Text numberOfLines={1} className="text-xs font-medium text-z-muted">
             {secondaryLine}
           </Text>
         ) : null}

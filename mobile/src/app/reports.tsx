@@ -211,7 +211,7 @@ export default function ReportsScreen() {
 
             {report.count > 0 ? (
               <View className="flex-row items-center justify-between">
-                <Text className="text-base font-semibold text-z-text">
+                <Text className="text-[19px] font-extrabold text-z-text">
                   {t('reports.events.sectionTitle')}
                 </Text>
                 <ZBadge
@@ -244,10 +244,10 @@ export default function ReportsScreen() {
               }
             />
             <View className="min-w-0 flex-1">
-              <Text numberOfLines={1} className="text-sm font-semibold text-z-text">
+              <Text numberOfLines={1} className="text-base font-bold text-z-text">
                 {item.title}
               </Text>
-              <Text numberOfLines={1} className="text-xs text-z-muted">
+              <Text numberOfLines={1} className="text-xs font-medium text-z-muted">
                 {eventMeta(item)}
               </Text>
             </View>

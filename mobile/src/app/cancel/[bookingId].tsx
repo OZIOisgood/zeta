@@ -75,7 +75,7 @@ export default function CancelSessionScreen() {
           stranding the actions at the screen bottom (hidden below the fold). */}
       <View className="gap-4">
         {otherParty && scheduledAt ? (
-          <Text className="text-base leading-6 text-z-text">
+          <Text className="text-[15px] leading-6 text-z-text">
             {t('sessions.cancel.descriptionText', { otherParty, scheduledAt })}
           </Text>
         ) : null}
