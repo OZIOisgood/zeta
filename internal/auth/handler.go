@@ -472,6 +472,22 @@ func (h *Handler) refreshSessionForDefaultOrg(ctx context.Context, refreshToken 
 	})
 }
 
+// RefreshSessionCookies re-mints the session for the default org from the request's
+// refresh-token cookie and writes fresh session cookies. Used after a role change so
+// the new role/permissions take effect without a manual re-login.
+func (h *Handler) RefreshSessionCookies(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	refreshCookie, err := r.Cookie(RefreshCookieName)
+	if err != nil || refreshCookie.Value == "" {
+		return fmt.Errorf("no refresh token cookie")
+	}
+	resp, err := h.refreshSessionForDefaultOrg(ctx, refreshCookie.Value)
+	if err != nil {
+		return err
+	}
+	setSessionCookies(w, resp.AccessToken, resp.RefreshToken, true)
+	return nil
+}
+
 // getPermissionsForRole fetches the permissions for a given role slug from WorkOS.
 // The Go SDK's roles.Role struct does not include Permissions, so we call the
 // WorkOS REST API directly and decode into a custom response struct.
@@ -671,6 +687,20 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Lazily ensure a user_access row exists (defaults to waitlisted) so clients
+	// can route waitlisted users to the invite-code screen. A failure here must
+	// never break login: log and fall back to the waitlisted default.
+	accessStatus := string(db.AccessStatusWaitlisted)
+	if acc, accErr := h.q.EnsureUserAccess(ctx, user.ID); accErr != nil {
+		h.logger.ErrorContext(ctx, "auth_ensure_access_failed",
+			slog.String("component", "auth"),
+			slog.String("user_id", user.ID),
+			slog.Any("err", accErr),
+		)
+	} else {
+		accessStatus = string(acc.Status)
+	}
+
 	// Construct response using local preferences for display profile fields.
 	resp := map[string]interface{}{
 		"id":                user.ID,
@@ -683,6 +713,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"email_preferences": preferences.FromUserPreferences(prefs),
 		"role":              user.Role,
 		"permissions":       user.Permissions,
+		"access_status":     accessStatus,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

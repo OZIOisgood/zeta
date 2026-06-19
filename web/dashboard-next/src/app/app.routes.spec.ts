@@ -5,14 +5,18 @@ describe('app routes', () => {
     expect(routes[0].path).toBe('sessions/:groupId/:bookingId/call');
   });
 
+  it('exposes the waitlist redeem route ahead of the shell', () => {
+    expect(routes[1].path).toBe('welcome');
+  });
+
   it('exposes the authenticated personal preferences route', () => {
-    expect(routes[1].children).toEqual(
+    expect(routes[2].children).toEqual(
       expect.arrayContaining([expect.objectContaining({ path: 'preferences/:tab' })]),
     );
   });
 
   it('protects permission-gated feature routes like the old dashboard', () => {
-    const shellRoutes = routes[1].children ?? [];
+    const shellRoutes = routes[2].children ?? [];
 
     expect(shellRoutes).toEqual(
       expect.arrayContaining([

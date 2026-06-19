@@ -19,6 +19,7 @@ const mockUser: User = {
   timezone: 'Europe/Berlin',
   role: 'expert',
   permissions: [],
+  access_status: 'active',
   email_preferences: {
     notifications_enabled: true,
     asset_uploads_enabled: true,

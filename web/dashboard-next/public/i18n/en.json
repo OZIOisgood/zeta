@@ -83,6 +83,7 @@
     "nav": {
       "groups": "Groups",
       "home": "Home",
+      "inviteCodes": "Invite codes",
       "menu": "Menu",
       "report": "Report",
       "sessions": "Sessions",
@@ -690,6 +691,36 @@
       "videoUploadedNoGroup": "{{uploader}} uploaded a video for you",
       "coachingBookingCreated": "{{student}} booked a session with you",
       "generic": "You have a new notification"
+    }
+  },
+  "access": {
+    "welcome": {
+      "title": "You're almost in",
+      "subtitle": "Enter your invite code to activate your account.",
+      "waitlistTitle": "You're on the waitlist",
+      "waitlistSubtitle": "We'll let you know as soon as you get access.",
+      "haveCode": "I have an invite code",
+      "back": "Back",
+      "codeLabel": "Invite code",
+      "codePlaceholder": "Enter your code",
+      "codeRequired": "Please enter your invite code.",
+      "invalidCode": "That code is invalid or has already been used.",
+      "redeeming": "Activating…",
+      "submit": "Activate",
+      "logout": "Sign out"
+    },
+    "codes": {
+      "title": "Invite codes",
+      "subtitle": "Share these codes to invite new experts.",
+      "empty": "No invite codes yet",
+      "emptyDescription": "Generate codes to start inviting experts.",
+      "loadError": "Couldn't load your invite codes. Please try again.",
+      "copy": "Copy",
+      "copied": "Invite code copied",
+      "generate": "Generate more codes",
+      "generateErrorTitle": "Couldn't generate codes",
+      "generateError": "Something went wrong. Please try again.",
+      "status": { "available": "Available", "consumed": "Used" }
     }
   }
 }

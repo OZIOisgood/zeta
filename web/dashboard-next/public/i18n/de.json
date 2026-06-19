@@ -83,6 +83,7 @@
     "nav": {
       "groups": "Gruppen",
       "home": "Start",
+      "inviteCodes": "Einladungscodes",
       "menu": "Menü",
       "report": "Bericht",
       "sessions": "Termine",
@@ -690,6 +691,36 @@
       "videoUploadedNoGroup": "{{uploader}} hat ein Video für dich hochgeladen",
       "coachingBookingCreated": "{{student}} hat einen Termin mit dir gebucht",
       "generic": "Du hast eine neue Benachrichtigung"
+    }
+  },
+  "access": {
+    "welcome": {
+      "title": "Fast geschafft",
+      "subtitle": "Gib deinen Einladungscode ein, um dein Konto zu aktivieren.",
+      "waitlistTitle": "Du bist auf der Warteliste",
+      "waitlistSubtitle": "Wir benachrichtigen dich, sobald du Zugang erhältst.",
+      "haveCode": "Ich habe einen Einladungscode",
+      "back": "Zurück",
+      "codeLabel": "Einladungscode",
+      "codePlaceholder": "Code eingeben",
+      "codeRequired": "Bitte gib deinen Einladungscode ein.",
+      "invalidCode": "Dieser Code ist ungültig oder wurde bereits verwendet.",
+      "redeeming": "Wird aktiviert…",
+      "submit": "Aktivieren",
+      "logout": "Abmelden"
+    },
+    "codes": {
+      "title": "Einladungscodes",
+      "subtitle": "Teile diese Codes, um neue Experten einzuladen.",
+      "empty": "Noch keine Einladungscodes",
+      "emptyDescription": "Generiere Codes, um Experten einzuladen.",
+      "loadError": "Deine Einladungscodes konnten nicht geladen werden. Bitte versuche es erneut.",
+      "copy": "Kopieren",
+      "copied": "Einladungscode kopiert",
+      "generate": "Weitere Codes generieren",
+      "generateErrorTitle": "Codes konnten nicht generiert werden",
+      "generateError": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+      "status": { "available": "Verfügbar", "consumed": "Verbraucht" }
     }
   }
 }

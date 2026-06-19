@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/OZIOisgood/zeta/internal/access"
 	"github.com/OZIOisgood/zeta/internal/assets"
 	"github.com/OZIOisgood/zeta/internal/audit"
 	"github.com/OZIOisgood/zeta/internal/auth"
@@ -84,6 +85,7 @@ func (s *Server) routes(ctx context.Context) {
 	// Initialize Handlers
 	workosClient := auth.NewWorkOSClient()
 	authHandler := auth.NewHandler(s.Logger, queries, workosClient)
+	accessHandler := access.NewHandler(queries, workosClient, authHandler, s.Logger)
 	emailService := email.NewService(s.Logger)
 	llmService := llm.NewService(s.Logger)
 	muxClient := assets.NewMuxClient()
@@ -183,31 +185,43 @@ func (s *Server) routes(ctx context.Context) {
 	// Protected Routes
 	s.Router.Group(func(r chi.Router) {
 		r.Use(auth.RequireAuth)
-		r.Route("/assets", assetsHandler.RegisterRoutes)
-		r.Route("/assets/videos", reviewsHandler.RegisterRoutes)
-		r.Route("/reviews", func(r chi.Router) {
-			r.Post("/enhance", reviewsHandler.EnhanceText)
+
+		// Reachable while waitlisted: redeem an invite code to activate.
+		r.Post("/access/redeem", accessHandler.Redeem)
+
+		// Everything else requires an activated account.
+		r.Group(func(r chi.Router) {
+			r.Use(accessHandler.RequireActiveAccess)
+
+			r.Get("/access/codes", accessHandler.ListCodes)
+			r.Post("/access/codes", accessHandler.GenerateCodes)
+
+			r.Route("/assets", assetsHandler.RegisterRoutes)
+			r.Route("/assets/videos", reviewsHandler.RegisterRoutes)
+			r.Route("/reviews", func(r chi.Router) {
+				r.Post("/enhance", reviewsHandler.EnhanceText)
+			})
+			r.Route("/groups", func(r chi.Router) {
+				r.Get("/", groupsHandler.ListGroups)
+				r.Post("/", groupsHandler.CreateGroup)
+				r.Get("/{groupID}", groupsHandler.GetGroupByID)
+				r.Put("/{groupID}", groupsHandler.UpdateGroupPreferences)
+				r.Delete("/{groupID}", groupsHandler.DeleteGroup)
+				r.Delete("/{groupID}/membership", groupsHandler.LeaveGroup)
+				r.Get("/{groupID}/users", usersHandler.ListGroupUsers)
+				r.Get("/{groupID}/experts", usersHandler.ListGroupExperts)
+				r.Delete("/{groupID}/users/{userID}", usersHandler.RemoveGroupUser)
+				r.Post("/{groupID}/invitations", invitationsHandler.CreateInvitation)
+				r.Get("/{groupID}/invitations/{invitationID}/qr", invitationsHandler.GetInvitationQR)
+				r.Get("/invitations/{code}", invitationsHandler.GetInvitationInfo)
+				r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)
+				r.Post("/invitations/decline", invitationsHandler.DeclineInvitation)
+			})
+			r.Route("/notifications", notificationsHandler.RegisterRoutes)
+			r.Route("/feedback", feedbackHandler.RegisterRoutes)
+			reportsHandler.RegisterRoutes(r)
+			coachingHandler.RegisterRoutes(r)
 		})
-		r.Route("/groups", func(r chi.Router) {
-			r.Get("/", groupsHandler.ListGroups)
-			r.Post("/", groupsHandler.CreateGroup)
-			r.Get("/{groupID}", groupsHandler.GetGroupByID)
-			r.Put("/{groupID}", groupsHandler.UpdateGroupPreferences)
-			r.Delete("/{groupID}", groupsHandler.DeleteGroup)
-			r.Delete("/{groupID}/membership", groupsHandler.LeaveGroup)
-			r.Get("/{groupID}/users", usersHandler.ListGroupUsers)
-			r.Get("/{groupID}/experts", usersHandler.ListGroupExperts)
-			r.Delete("/{groupID}/users/{userID}", usersHandler.RemoveGroupUser)
-			r.Post("/{groupID}/invitations", invitationsHandler.CreateInvitation)
-			r.Get("/{groupID}/invitations/{invitationID}/qr", invitationsHandler.GetInvitationQR)
-			r.Get("/invitations/{code}", invitationsHandler.GetInvitationInfo)
-			r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)
-			r.Post("/invitations/decline", invitationsHandler.DeclineInvitation)
-		})
-		r.Route("/notifications", notificationsHandler.RegisterRoutes)
-		r.Route("/feedback", feedbackHandler.RegisterRoutes)
-		reportsHandler.RegisterRoutes(r)
-		coachingHandler.RegisterRoutes(r)
 	})
 
 	// Internal routes (not behind user auth — protected by the scheduler secret)

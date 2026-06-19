@@ -11,11 +11,14 @@ import (
 )
 
 type Querier interface {
+	ActivateUserAccess(ctx context.Context, arg ActivateUserAccessParams) (UserAccess, error)
 	AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error
 	CancelBooking(ctx context.Context, arg CancelBookingParams) (CoachingBooking, error)
 	CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) (bool, error)
 	CheckVideoVisibleToUser(ctx context.Context, arg CheckVideoVisibleToUserParams) (bool, error)
+	ConsumeSignupCode(ctx context.Context, arg ConsumeSignupCodeParams) (SignupCode, error)
 	CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error)
+	CountSignupCodesByOwner(ctx context.Context, ownerUserID string) (int64, error)
 	CountUnreadNotifications(ctx context.Context, recipientID string) (int64, error)
 	CountVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (int64, error)
 	CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error)
@@ -34,6 +37,7 @@ type Querier interface {
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	// === Session Types ===
 	CreateSessionType(ctx context.Context, arg CreateSessionTypeParams) (CoachingSessionType, error)
+	CreateSignupCode(ctx context.Context, arg CreateSignupCodeParams) (SignupCode, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	CreateVideoFromMuxAsset(ctx context.Context, arg CreateVideoFromMuxAssetParams) (Video, error)
 	CreateVideoReview(ctx context.Context, arg CreateVideoReviewParams) (VideoReview, error)
@@ -43,6 +47,7 @@ type Querier interface {
 	DeleteGroup(ctx context.Context, arg DeleteGroupParams) error
 	DeleteVideoReview(ctx context.Context, arg DeleteVideoReviewParams) error
 	EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error)
+	EnsureUserAccess(ctx context.Context, userID string) (UserAccess, error)
 	GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error)
 	GetAssetOwnerByVideoID(ctx context.Context, id pgtype.UUID) (GetAssetOwnerByVideoIDRow, error)
 	GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (AssetStatus, error)
@@ -57,6 +62,7 @@ type Querier interface {
 	GetGroupInvitationsByCodes(ctx context.Context, dollar_1 []string) ([]GroupInvitation, error)
 	GetNotification(ctx context.Context, id pgtype.UUID) (Notification, error)
 	GetSessionType(ctx context.Context, arg GetSessionTypeParams) (CoachingSessionType, error)
+	GetUserAccess(ctx context.Context, userID string) (UserAccess, error)
 	GetUserEmailPreferences(ctx context.Context, userID string) (GetUserEmailPreferencesRow, error)
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
 	// === Timezone ===
@@ -82,6 +88,7 @@ type Querier interface {
 	ListRecordingsPastEnd(ctx context.Context, limit int32) ([]CoachingBookingRecording, error)
 	ListSessionTypesByExpertGroup(ctx context.Context, arg ListSessionTypesByExpertGroupParams) ([]CoachingSessionType, error)
 	ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UUID) ([]CoachingSessionType, error)
+	ListSignupCodesByOwner(ctx context.Context, ownerUserID string) ([]SignupCode, error)
 	ListUserGroups(ctx context.Context, userID string) ([]ListUserGroupsRow, error)
 	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]ListVideoReviewsRow, error)
 	// Ready videos without a captured duration. Either identifier may be empty:
@@ -103,6 +110,7 @@ type Querier interface {
 	MarkRecordingImportMuxCreated(ctx context.Context, arg MarkRecordingImportMuxCreatedParams) (CoachingRecordingImport, error)
 	MarkRecordingImportReady(ctx context.Context, arg MarkRecordingImportReadyParams) (CoachingRecordingImport, error)
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
+	ReleaseSignupCode(ctx context.Context, id pgtype.UUID) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
 	// Past, non-cancelled sessions the expert ran. Title is the session type name.
 	ReportSessionEventsForExpert(ctx context.Context, expertID string) ([]ReportSessionEventsForExpertRow, error)

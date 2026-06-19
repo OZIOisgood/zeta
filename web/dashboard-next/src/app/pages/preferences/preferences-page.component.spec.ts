@@ -23,6 +23,7 @@ const user: User = {
     'groups:create',
     'groups:invites:create',
   ],
+  access_status: 'active',
   email_preferences: {
     notifications_enabled: true,
     asset_uploads_enabled: true,
@@ -50,6 +51,7 @@ describe('PreferencesPageComponent', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mutationStatus.set('idle');
+    session.user.set(user);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -61,6 +63,7 @@ describe('PreferencesPageComponent', () => {
                 actions: { save: 'Save' },
                 aria: { avatarPreview: 'Avatar preview' },
                 fields: { avatar: 'Avatar', language: 'Language', timezone: 'Timezone' },
+                nav: { inviteCodes: 'Invite codes' },
               },
               avatar: {
                 invalidImage: 'Invalid image',
@@ -223,5 +226,87 @@ describe('PreferencesPageComponent', () => {
     expect(error?.textContent).toContain('First name is required.');
     expect(input?.getAttribute('aria-invalid')).toBe('true');
     expect(input?.getAttribute('aria-describedby')).toBe('preferences-first-name-error');
+  });
+
+  it('offers the invite-codes tab for experts', async () => {
+    session.user.set({ ...user, role: 'expert' });
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+
+    const values = fixture.componentInstance['tabOptions']().map((option) => option.value);
+    expect(values).toContain('invite-codes');
+  });
+
+  it('offers the invite-codes tab for admins', async () => {
+    session.user.set({ ...user, role: 'admin' });
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+
+    const values = fixture.componentInstance['tabOptions']().map((option) => option.value);
+    expect(values).toContain('invite-codes');
+  });
+
+  it('hides the invite-codes tab for students', async () => {
+    session.user.set({ ...user, role: 'student' });
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+
+    const values = fixture.componentInstance['tabOptions']().map((option) => option.value);
+    expect(values).not.toContain('invite-codes');
+  });
+});
+
+describe('PreferencesPageComponent invite-codes routing', () => {
+  const mutationStatus = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const navigate = vi.fn();
+
+  async function setup(role: string): Promise<void> {
+    vi.clearAllMocks();
+    mutationStatus.set('idle');
+
+    const session = {
+      user: signal<User | null>({ ...user, role }),
+      mutationStatus,
+      hasPermission: (permission: string) => user.permissions.includes(permission),
+      updateCurrentUser: vi.fn(async (data) => ({ ...user, ...data })),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [
+        PreferencesPageComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {} },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+          preloadLangs: true,
+        }),
+      ],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ tab: 'invite-codes' })) },
+        },
+        { provide: Router, useValue: { navigate } },
+        { provide: SessionStore, useValue: session },
+        { provide: AppShellStore, useValue: { setLanguage: vi.fn(), showToast: vi.fn() } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+    await fixture.whenStable();
+  }
+
+  it('keeps an expert on the invite-codes tab', async () => {
+    await setup('expert');
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('redirects a student away from invite-codes to personal-data', async () => {
+    await setup('student');
+
+    expect(navigate).toHaveBeenCalledWith(['/preferences', 'personal-data'], { replaceUrl: true });
   });
 });

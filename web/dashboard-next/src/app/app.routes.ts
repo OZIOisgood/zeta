@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { accessActiveGuard, waitlistedOnlyGuard } from './core/guards/access-active.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { ShellComponent } from './core/shell/shell.component';
@@ -14,6 +15,7 @@ import { ManageAvailabilityPageComponent } from './pages/manage-availability/man
 import { PreferencesPageComponent } from './pages/preferences/preferences-page.component';
 import { SessionsPageComponent } from './pages/sessions/sessions-page.component';
 import { UploadVideoPageComponent } from './pages/upload-video/upload-video-page.component';
+import { WelcomePageComponent } from './pages/welcome/welcome-page.component';
 import { VideoCallPageComponent } from './pages/video-call/video-call-page.component';
 import { VideoDetailsPageComponent } from './pages/video-details/video-details-page.component';
 import { VideosPageComponent } from './pages/videos/videos-page.component';
@@ -27,9 +29,15 @@ export const routes: Routes = [
     title: 'Live coaching',
   },
   {
+    path: 'welcome',
+    component: WelcomePageComponent,
+    canActivate: [authGuard, waitlistedOnlyGuard],
+    title: 'Zeta',
+  },
+  {
     path: '',
     component: ShellComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessActiveGuard],
     children: [
       { path: '', component: HomePageComponent, title: 'Strido' },
       { path: 'videos', component: VideosPageComponent, title: 'Strido Videos' },

@@ -14,6 +14,7 @@ const user: User = {
   timezone: 'Europe/Rome',
   role: 'expert',
   permissions: ['assets:create'],
+  access_status: 'active',
   email_preferences: {
     notifications_enabled: true,
     asset_uploads_enabled: true,
