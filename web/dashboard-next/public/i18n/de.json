@@ -68,6 +68,7 @@
       "microphone": "Mikrofon",
       "minutes": "{{count}} Minuten",
       "minutesShort": "{{count}} Min.",
+      "today": "Heute",
       "preview": "Vorschau",
       "reason": "Grund: {{reason}}",
       "student": "Schüler",
