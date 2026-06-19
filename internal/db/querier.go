@@ -22,6 +22,7 @@ type Querier interface {
 	CountUnreadNotifications(ctx context.Context, recipientID string) (int64, error)
 	CountVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (int64, error)
 	CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error)
+	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) error
 	// === Availability ===
 	CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (CoachingAvailability, error)
 	// === Blocked Slots ===
@@ -29,6 +30,7 @@ type Querier interface {
 	CreateBooking(ctx context.Context, arg CreateBookingParams) (CoachingBooking, error)
 	// === Booking Reminders ===
 	CreateBookingReminder(ctx context.Context, arg CreateBookingReminderParams) error
+	CreateFeedbackSubmission(ctx context.Context, arg CreateFeedbackSubmissionParams) (FeedbackSubmission, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateGroupInvitation(ctx context.Context, arg CreateGroupInvitationParams) (GroupInvitation, error)
 	CreateMissingRecordingImports(ctx context.Context) (int64, error)
@@ -98,6 +100,9 @@ type Querier interface {
 	MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopping(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
+	MarkFeedbackDiscordFailed(ctx context.Context, arg MarkFeedbackDiscordFailedParams) error
+	MarkFeedbackDiscordPosted(ctx context.Context, arg MarkFeedbackDiscordPostedParams) error
+	MarkFeedbackDiscordSkipped(ctx context.Context, arg MarkFeedbackDiscordSkippedParams) error
 	MarkNotificationRead(ctx context.Context, arg MarkNotificationReadParams) error
 	MarkNotificationReadByInviteCode(ctx context.Context, arg MarkNotificationReadByInviteCodeParams) error
 	MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error

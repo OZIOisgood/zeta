@@ -114,23 +114,23 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 	durationStr := formatDuration(b.DurationMinutes)
 
 	buildMessage := func(loc *goi18n.Localizer, partnerName string) email.Message {
-		details := []email.Detail{
-			{Label: i18n.T(loc, "email.detail.session"), Value: sessionTypeName},
-			{Label: i18n.T(loc, "email.detail.with"), Value: partnerName},
-			{Label: i18n.T(loc, "email.detail.group"), Value: groupName},
-			{Label: i18n.T(loc, "email.detail.date_and_time"), Value: scheduledStr},
-			{Label: i18n.T(loc, "email.detail.duration"), Value: durationStr},
-		}
+		note := ""
 		if b.Notes.Valid && b.Notes.String != "" {
-			details = append(details, email.Detail{Label: i18n.T(loc, "email.detail.notes"), Value: b.Notes.String})
+			note = i18n.T(loc, "email.booking_confirmed.note", map[string]any{"Note": b.Notes.String})
 		}
 		return email.Message{
 			Copy: email.Copy{
 				Preheader: i18n.T(loc, "email.booking_confirmed.preheader"),
 				Title:     i18n.T(loc, "email.booking_confirmed.title"),
-				Intro:     i18n.T(loc, "email.booking_confirmed.intro"),
+				Intro: i18n.T(loc, "email.booking_confirmed.intro", map[string]any{
+					"SessionName": sessionTypeName,
+					"PartnerName": partnerName,
+					"GroupName":   groupName,
+					"ScheduledAt": scheduledStr,
+					"Duration":    durationStr,
+				}),
+				Note: note,
 			},
-			Details: details,
 		}
 	}
 
@@ -240,24 +240,23 @@ func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBookin
 
 	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
 	loc := i18n.For(preferences.UserLang(ctx, h.q, h.logger, otherID))
-	details := []email.Detail{
-		{Label: i18n.T(loc, "email.detail.session"), Value: sessionTypeName},
-		{Label: i18n.T(loc, "email.detail.group"), Value: groupName},
-		{Label: i18n.T(loc, "email.detail.date_and_time"), Value: scheduledStr},
-		{Label: i18n.T(loc, "email.detail.duration"), Value: formatDuration(b.DurationMinutes)},
-		{Label: i18n.T(loc, "email.detail.cancelled_by"), Value: cancellerName},
-	}
+	note := ""
 	if reason := b.CancellationReason.String; reason != "" {
-		details = append(details, email.Detail{Label: i18n.T(loc, "email.detail.reason"), Value: reason})
+		note = i18n.T(loc, "email.booking_cancelled.note", map[string]any{"Reason": reason})
 	}
 	subject := i18n.T(loc, "email.booking_cancelled.subject")
 	message := email.Message{
 		Copy: email.Copy{
 			Preheader: i18n.T(loc, "email.booking_cancelled.preheader"),
 			Title:     i18n.T(loc, "email.booking_cancelled.title"),
-			Intro:     i18n.T(loc, "email.booking_cancelled.intro"),
+			Intro: i18n.T(loc, "email.booking_cancelled.intro", map[string]any{
+				"SessionName":   sessionTypeName,
+				"GroupName":     groupName,
+				"ScheduledAt":   scheduledStr,
+				"CancellerName": cancellerName,
+			}),
+			Note: note,
 		},
-		Details: details,
 	}
 
 	if err := h.emailService.SendTemplate([]string{otherEmail}, subject, email.TemplateNotification, message); err != nil {

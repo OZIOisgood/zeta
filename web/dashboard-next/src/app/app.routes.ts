@@ -39,8 +39,8 @@ export const routes: Routes = [
     component: ShellComponent,
     canActivate: [authGuard, accessActiveGuard],
     children: [
-      { path: '', component: HomePageComponent, title: 'Zeta' },
-      { path: 'videos', component: VideosPageComponent, title: 'Zeta Videos' },
+      { path: '', component: HomePageComponent, title: 'Strido' },
+      { path: 'videos', component: VideosPageComponent, title: 'Strido Videos' },
       { path: 'reports', redirectTo: 'reports/experts', pathMatch: 'full' },
       {
         path: 'reports/experts',
@@ -72,7 +72,7 @@ export const routes: Routes = [
         component: GroupsPageComponent,
         canActivate: [permissionGuard],
         data: { permission: 'groups:read' },
-        title: 'Zeta Groups',
+        title: 'Strido Groups',
       },
       {
         path: 'create-group',

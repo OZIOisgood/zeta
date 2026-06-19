@@ -7,18 +7,18 @@ const meta: Meta = {
       <div class="grid gap-6 bg-[var(--z-bg)] p-6 text-[var(--z-text)]">
         <section class="grid gap-3">
           <div>
-            <h2 class="text-base font-semibold">Preferred logo export</h2>
+            <h2 class="text-base font-semibold">Current Strido logo</h2>
             <p class="mt-1 text-sm text-[var(--z-muted)]">
-              Top-left mark exported as a flat orange transparent production candidate.
+              Production wordmark shared with the Strido landing page.
             </p>
           </div>
           <div
-            class="grid size-40 place-items-center rounded-lg border border-[var(--z-border)] bg-white"
+            class="grid h-32 w-64 place-items-center rounded-lg border border-[var(--z-border)] bg-white"
           >
             <img
-              class="size-28"
-              src="/assets/brand/mark/zeta-horse-mark-orange-512.png"
-              alt="Preferred orange geometric horse-head logo mark"
+              class="h-auto w-44"
+              src="/assets/brand/strido/strido-logo.svg"
+              alt="Strido logo"
             />
           </div>
         </section>

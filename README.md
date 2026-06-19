@@ -19,6 +19,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle and automatic import into the review flow.
 - **Templated Email Notifications**: Transactional emails use embedded Go HTML templates, a shared Zeta layout, and CSS inlining before delivery through Resend.
 - **Notification Preferences**: Users can control all email notifications or individual email categories from their Preferences page.
+- **Feedback Inbox**: Authenticated dashboard users can submit rated feedback that is stored in Postgres and mirrored into the environment-specific Discord forum.
 
 ## How to start
 
@@ -55,8 +56,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 5. **Resend Configuration**:
    - Create a Resend API key and set `RESEND_API_KEY`.
    - Verify the sender domain in Resend.
-   - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@dev.zeta.m4xon.com` for the deployed development environment.
-   - Optionally set `EMAIL_LOGO_URL` to the absolute hosted app icon URL used in HTML emails. If unset, emails use `FRONTEND_URL + /app-full-icon.png`, then `https://dev.zeta.m4xon.com/app-full-icon.png`.
+   - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@strido.net`.
+   - HTML emails use the hosted Strido logo at `FRONTEND_URL + /assets/brand/strido/strido-logo-320.png`, with the dev dashboard URL as a local fallback.
    - To render local email previews with fake data, run `make email:preview`. Final inlined HTML files are written to `build/email-previews/`.
 
 6. **Agora Configuration**:
@@ -70,6 +71,47 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
    - `CANCELLATION_NOTICE` — minimum notice to cancel (default: `1h`)
    - `CONNECT_WINDOW` — how early participants can join a call (default: `15m`)
+
+8. **Discord Feedback Inbox**:
+   - Create a Discord bot token and store it in `DISCORD_BOT_TOKEN`.
+   - Set `DISCORD_FEEDBACK_FORUM_CHANNEL_ID` to the target forum channel.
+   - `DISCORD_APPLICATION_ID` and `DISCORD_PUBLIC_KEY` are public bot metadata reserved for future Discord interactions.
+
+### Custom Domains
+
+| Environment           | URL                          | Cloud Run service     |
+| --------------------- | ---------------------------- | --------------------- |
+| Landing               | `https://strido.net`         | `zeta-landing`        |
+| Production dashboard  | `https://app.strido.net`     | `zeta-dashboard-prod` |
+| Production API        | `https://api.strido.net`     | `zeta-api-prod`       |
+| Development dashboard | `https://app.dev.strido.net` | `zeta-dashboard-dev`  |
+| Development API       | `https://api.dev.strido.net` | `zeta-api-dev`        |
+
+`strido.de` redirects to `https://strido.net` at the registrar and is not mapped to Cloud Run. The landing page is a static nginx container under `web/landing`; its HTML and bundled assets can be updated without changing the infrastructure.
+
+1. Verify ownership of `strido.net` with the Google accounts that apply the dev and prod Terraform environments. Verifying the apex domain also permits mapping its subdomains.
+2. In WorkOS Dashboard > Configuration > Redirect URIs, add both callbacks before deploying:
+   - `https://api.strido.net/auth/callback`
+   - `https://api.dev.strido.net/auth/callback`
+3. Run the `Infra` GitHub Actions workflow for `dev` and `prod`, first with `plan` and then with `apply`. Terraform creates the five Cloud Run domain mappings, dedicated `*-dev` and `*-prod` services, and the landing service. Both states deliberately forget the legacy shared services with `destroy = false`, so the existing deployment remains online during migration.
+4. Inspect the required records from the Terraform outputs if DNS needs verification:
+
+   ```bash
+   cd infra/terraform/envs/dev
+   terraform output dashboard_dns_records
+   terraform output api_dns_records
+
+   cd ../prod
+   terraform output landing_dns_records
+   terraform output dashboard_dns_records
+   terraform output api_dns_records
+   ```
+
+5. In Spaceship DNS, the expected hosts are `@`, `app`, `api`, `app.dev`, and `api.dev`. Remove only conflicting `A`, `AAAA`, or `CNAME` records for those hosts; keep all Resend MX/TXT/DKIM records.
+6. Deploy `main` for the dev services, then create a production release tag. API/dashboard workflows configure CORS, frontend and API URLs, WorkOS callbacks, logout redirects, and email branding. Landing changes under `web/landing` deploy independently on pushes to `main`; the workflow can also be run manually.
+7. After all five domains and authentication flows are verified, the legacy `zeta-api` and `zeta-dashboard` Cloud Run services can be removed manually.
+
+Google currently labels direct Cloud Run domain mapping as Preview and does not recommend it for production services. This repository still uses the existing mapping approach; use a global external Application Load Balancer for a GA domain-routing product or advanced traffic controls.
 
 ### Quick Start
 
@@ -86,13 +128,17 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    ```
 
 3. **Run Backend**:
+
    ```bash
    make api:start
    ```
+
    For live reload during Go API development, run:
+
    ```bash
    make api:dev
    ```
+
    This uses the project-pinned Air tool through `go tool air`.
 
 4. **Run Frontend**:
@@ -184,6 +230,14 @@ sequenceDiagram
     end
 ```
 
+### Feedback Inbox Flow
+
+1. A signed-in user opens the global Feedback button in the dashboard shell.
+2. The user selects a 1–5 rating and enters a short message.
+3. The dashboard posts the feedback to `POST /feedback` with the current page URL.
+4. The API stores the submission in `feedback_submissions` with the authenticated user's display name and internal user ID.
+5. The API creates a new post in the configured Discord forum channel. If Discord delivery fails, the database row records the failure while the user's feedback remains saved.
+
 ### API Examples
 
 Check auth status:
@@ -240,6 +294,7 @@ graph TD
     Web -->|Video Call| Agora
     Scheduler[GCP Cloud Scheduler] -->|POST /internal/coaching/reminders| API
     Scheduler -->|POST /internal/coaching/recordings/cleanup/process| API
+    Scheduler -->|POST /internal/audit/maintenance| API
 ```
 
 ### Video Call Sequence
@@ -595,6 +650,17 @@ erDiagram
         timestamp created_at
     }
 
+    audit_events {
+        uuid id PK
+        timestamptz occurred_at
+        string actor_id "WorkOS User ID or system"
+        string actor_type "user, system"
+        string action "e.g. asset.created, group.member.removed"
+        string resource_type "asset, group, user, etc."
+        uuid resource_id
+        jsonb metadata "optional extra context incl. opt-in client IP"
+    }
+
     groups ||--o{ coaching_session_types : has
     users ||--o{ coaching_session_types : creates
     users ||--o{ coaching_availability : sets
@@ -606,4 +672,7 @@ erDiagram
     assets ||--o{ coaching_recording_imports : "created by"
     videos ||--o{ coaching_recording_imports : "created by"
     coaching_bookings ||--o{ coaching_booking_reminders : has
+    users ||--o{ audit_events : "actor in"
 ```
+
+> **`audit_events`** is an append-only, monthly-partitioned table. UPDATE and DELETE are blocked by a database trigger. Expired partitions (older than `AUDIT_RETENTION_DAYS`, default 3 years) are dropped by the daily maintenance job (`POST /internal/audit/maintenance`). Domain wiring — recording which mutations emit events — is rolled out incrementally.

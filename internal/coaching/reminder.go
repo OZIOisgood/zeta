@@ -2,7 +2,6 @@ package coaching
 
 import (
 	"context"
-	"crypto/subtle"
 	"log/slog"
 	"net/http"
 	"time"
@@ -22,13 +21,6 @@ import (
 func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-
-	// Validate scheduler secret via Authorization header.
-	secret := r.Header.Get("Authorization")
-	if h.schedulerSecret == "" || subtle.ConstantTimeCompare([]byte(secret), []byte("Bearer "+h.schedulerSecret)) != 1 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
 	reminders, err := h.q.ListPendingReminders(ctx)
 	if err != nil {
@@ -93,11 +85,10 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 				Copy: email.Copy{
 					Preheader: i18n.T(loc, "email.reminder.preheader"),
 					Title:     i18n.T(loc, "email.reminder.title"),
-					Intro:     i18n.T(loc, introKey),
-				},
-				Details: []email.Detail{
-					{Label: i18n.T(loc, "email.detail.date_and_time"), Value: scheduledStr},
-					{Label: i18n.T(loc, "email.detail.duration"), Value: formatDuration(rem.DurationMinutes)},
+					Intro: i18n.T(loc, introKey, map[string]any{
+						"ScheduledAt": scheduledStr,
+						"Duration":    formatDuration(rem.DurationMinutes),
+					}),
 				},
 			}
 			if joinURL != "" {

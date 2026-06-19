@@ -12,10 +12,12 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/access"
 	"github.com/OZIOisgood/zeta/internal/assets"
+	"github.com/OZIOisgood/zeta/internal/audit"
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/coaching"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
+	"github.com/OZIOisgood/zeta/internal/feedback"
 	"github.com/OZIOisgood/zeta/internal/groups"
 	"github.com/OZIOisgood/zeta/internal/invitations"
 	"github.com/OZIOisgood/zeta/internal/llm"
@@ -77,6 +79,9 @@ func (s *Server) routes(ctx context.Context) {
 
 	queries := db.New(s.Pool)
 
+	auditRetention := time.Duration(parseIntOrDefault(os.Getenv("AUDIT_RETENTION_DAYS"), audit.DefaultRetentionDays)) * 24 * time.Hour
+	auditHandler := audit.NewHandler(s.Pool, s.Logger, auditRetention)
+
 	// Initialize Handlers
 	workosClient := auth.NewWorkOSClient()
 	authHandler := auth.NewHandler(s.Logger, queries, workosClient)
@@ -84,12 +89,22 @@ func (s *Server) routes(ctx context.Context) {
 	emailService := email.NewService(s.Logger)
 	llmService := llm.NewService(s.Logger)
 	muxClient := assets.NewMuxClient()
-	assetsHandler := assets.NewHandler(queries, muxClient, emailService, workosClient, s.Logger, os.Getenv("SCHEDULER_SECRET"))
+	assetsHandler := assets.NewHandler(queries, muxClient, emailService, workosClient, s.Logger)
 	groupsHandler := groups.NewHandler(queries, s.Logger)
 	invitationsHandler := invitations.NewHandler(queries, emailService, workosClient, s.Logger, frontendBaseURL())
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	reportsHandler := reports.NewHandler(queries, s.Logger)
+	var discordPoster feedback.DiscordPoster
+	if discordToken := os.Getenv("DISCORD_BOT_TOKEN"); strings.TrimSpace(discordToken) != "" {
+		discordPoster = feedback.NewDiscordClient(discordToken)
+	}
+	feedbackHandler := feedback.NewHandler(
+		queries,
+		discordPoster,
+		s.Logger,
+		feedback.HandlerConfig{DiscordChannelID: os.Getenv("DISCORD_FEEDBACK_FORUM_CHANNEL_ID")},
+	)
 
 	// In-app notifications: a per-instance hub fed by a Postgres LISTEN/NOTIFY
 	// listener (started below) delivers events to connected SSE clients.
@@ -138,7 +153,6 @@ func (s *Server) routes(ctx context.Context) {
 		RecordingClient:     recordingClient,
 		RecordingStore:      recordingStore,
 		RecordingMux:        muxClient,
-		SchedulerSecret:     os.Getenv("SCHEDULER_SECRET"),
 		AppBaseURL:          frontendBaseURL(),
 		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
 		CancellationNotice:  parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
@@ -147,6 +161,7 @@ func (s *Server) routes(ctx context.Context) {
 
 	// Global Middleware
 	s.Router.Use(auth.Middleware(s.Logger, jwksCache))
+	s.Router.Use(audit.Middleware(parseBool(os.Getenv("AUDIT_CAPTURE_IP"))))
 
 	// Public Routes
 	s.Router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -203,16 +218,21 @@ func (s *Server) routes(ctx context.Context) {
 				r.Post("/invitations/decline", invitationsHandler.DeclineInvitation)
 			})
 			r.Route("/notifications", notificationsHandler.RegisterRoutes)
+			r.Route("/feedback", feedbackHandler.RegisterRoutes)
 			reportsHandler.RegisterRoutes(r)
 			coachingHandler.RegisterRoutes(r)
 		})
 	})
 
-	// Internal routes (not behind user auth — protected by scheduler secret)
-	s.Router.Post("/internal/coaching/reminders", coachingHandler.ProcessReminders)
-	s.Router.Post("/internal/coaching/recordings/cleanup", coachingHandler.CleanupFinishedRecordings)
-	s.Router.Post("/internal/coaching/recordings/process", coachingHandler.ProcessRecordingImports)
-	s.Router.Post("/internal/assets/durations/backfill", assetsHandler.BackfillVideoDurations)
+	// Internal routes (not behind user auth — protected by the scheduler secret)
+	s.Router.Group(func(r chi.Router) {
+		r.Use(auth.RequireSchedulerSecret(os.Getenv("SCHEDULER_SECRET"), s.Logger))
+		r.Post("/internal/coaching/reminders", coachingHandler.ProcessReminders)
+		r.Post("/internal/coaching/recordings/cleanup", coachingHandler.CleanupFinishedRecordings)
+		r.Post("/internal/coaching/recordings/process", coachingHandler.ProcessRecordingImports)
+		r.Post("/internal/assets/durations/backfill", assetsHandler.BackfillVideoDurations)
+		r.Post("/internal/audit/maintenance", auditHandler.RunMaintenance)
+	})
 }
 
 // allowedOrigins returns CORS origins from the ALLOWED_ORIGINS env var (comma-separated)

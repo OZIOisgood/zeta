@@ -25,6 +25,7 @@ type Copy struct {
 	Preheader  string
 	Title      string
 	Intro      string
+	Note       string
 	Button     string // CTA button label; used when Action != nil
 	FooterNote string
 }
@@ -34,16 +35,10 @@ type Action struct {
 	URL string
 }
 
-type Detail struct {
-	Label string
-	Value string
-}
-
-// Message carries Copy, structured key/value details, and an optional CTA action.
+// Message carries translated copy and an optional CTA action.
 type Message struct {
-	Copy    Copy
-	Details []Detail
-	Action  *Action
+	Copy   Copy
+	Action *Action
 }
 
 type RenderedEmail struct {
@@ -57,7 +52,6 @@ type templateEnvelope struct {
 	Year      int
 	Styles    template.CSS
 	Copy      Copy
-	Details   []Detail
 	Action    *Action
 }
 
@@ -68,18 +62,19 @@ func RenderTemplate(templateName TemplateName, message Message) (RenderedEmail, 
 	}
 
 	name := string(templateName)
-	tmpl, err := template.ParseFS(templateFiles, "templates/layout.html", "templates/"+name+".html")
+	tmpl, err := template.New("email").Funcs(template.FuncMap{
+		"richText": formatRichText,
+	}).ParseFS(templateFiles, "templates/layout.html", "templates/"+name+".html")
 	if err != nil {
 		return RenderedEmail{}, fmt.Errorf("parse email template: %w", err)
 	}
 
 	envelope := templateEnvelope{
-		BrandName: "Zeta",
+		BrandName: "Strido",
 		LogoURL:   logoURL(),
 		Year:      time.Now().Year(),
 		Styles:    template.CSS(string(styles)),
 		Copy:      message.Copy,
-		Details:   message.Details,
 		Action:    message.Action,
 	}
 
@@ -110,11 +105,28 @@ func RenderTemplate(templateName TemplateName, message Message) (RenderedEmail, 
 }
 
 func logoURL() string {
-	if v := strings.TrimSpace(os.Getenv("EMAIL_LOGO_URL")); v != "" {
-		return v
-	}
 	if v := strings.TrimSpace(os.Getenv("FRONTEND_URL")); v != "" {
-		return strings.TrimRight(v, "/") + "/app-full-icon.png"
+		return strings.TrimRight(v, "/") + "/assets/brand/strido/strido-logo-320.png"
 	}
-	return "https://dev.zeta.m4xon.com/app-full-icon.png"
+	return "https://app.dev.strido.net/assets/brand/strido/strido-logo-320.png"
+}
+
+func formatRichText(value string) template.HTML {
+	escaped := template.HTMLEscapeString(value)
+	if strings.Count(escaped, "**")%2 != 0 {
+		return template.HTML(escaped)
+	}
+
+	parts := strings.Split(escaped, "**")
+	var result strings.Builder
+	for index, part := range parts {
+		if index%2 == 1 {
+			result.WriteString("<strong>")
+			result.WriteString(part)
+			result.WriteString("</strong>")
+			continue
+		}
+		result.WriteString(part)
+	}
+	return template.HTML(result.String())
 }

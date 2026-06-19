@@ -305,10 +305,7 @@ func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {
 			Copy: email.Copy{
 				Preheader: i18n.T(loc, "email.member_removed.preheader", map[string]any{"GroupName": group.Name}),
 				Title:     i18n.T(loc, "email.member_removed.title"),
-				Intro:     i18n.T(loc, "email.member_removed.intro"),
-			},
-			Details: []email.Detail{
-				{Label: i18n.T(loc, "email.detail.group"), Value: group.Name},
+				Intro:     i18n.T(loc, "email.member_removed.intro", map[string]any{"GroupName": group.Name}),
 			},
 		}
 		if err := h.email.SendTemplate([]string{removedUser.Email}, subject, email.TemplateNotification, message); err != nil {

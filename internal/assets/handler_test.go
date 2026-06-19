@@ -39,7 +39,7 @@ func assetTestUUID() pgtype.UUID {
 func TestListAssets_StudentUsesOwnerVisibilityScope(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+	h := NewHandler(q, nil, nil, nil, slog.Default())
 
 	user := &auth.UserContext{ID: "student-1", Role: permissions.RoleStudent}
 	assetID := assetTestUUID()
@@ -82,7 +82,7 @@ func TestListAssets_StudentUsesOwnerVisibilityScope(t *testing.T) {
 func TestListAssets_ExpertUsesGroupMembershipVisibilityScope(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+	h := NewHandler(q, nil, nil, nil, slog.Default())
 
 	user := &auth.UserContext{ID: "expert-1", Role: permissions.RoleExpert}
 	q.EXPECT().ListVisibleAssets(gomock.Any(), db.ListVisibleAssetsParams{
@@ -104,7 +104,7 @@ func TestListAssets_ExpertUsesGroupMembershipVisibilityScope(t *testing.T) {
 func TestListAssets_AdminUsesGroupMembershipVisibilityScope(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+	h := NewHandler(q, nil, nil, nil, slog.Default())
 
 	user := &auth.UserContext{ID: "admin-1", Role: permissions.RoleAdmin}
 	q.EXPECT().ListVisibleAssets(gomock.Any(), db.ListVisibleAssetsParams{
@@ -126,7 +126,7 @@ func TestListAssets_AdminUsesGroupMembershipVisibilityScope(t *testing.T) {
 func TestGetAsset_NotVisibleReturnsNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+	h := NewHandler(q, nil, nil, nil, slog.Default())
 
 	user := &auth.UserContext{ID: "student-1", Role: permissions.RoleStudent}
 	assetID := assetTestUUID()
@@ -152,7 +152,7 @@ func TestGetAsset_NotVisibleReturnsNotFound(t *testing.T) {
 func TestFinalizeAsset_NotVisibleReturnsNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default(), "")
+	h := NewHandler(q, nil, nil, nil, slog.Default())
 
 	user := &auth.UserContext{
 		ID:          "expert-1",
@@ -182,13 +182,14 @@ func TestFinalizeAsset_NotVisibleReturnsNotFound(t *testing.T) {
 func TestBackfillVideoDurations_RejectsWithoutSecret(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, nil, nil, nil, slog.Default(), "scheduler-secret")
+	h := NewHandler(q, nil, nil, nil, slog.Default())
+	protected := auth.RequireSchedulerSecret("scheduler-secret", slog.Default())(http.HandlerFunc(h.BackfillVideoDurations))
 
 	req := httptest.NewRequest(http.MethodPost, "/internal/assets/durations/backfill", nil)
 	req.Header.Set("Authorization", "Bearer wrong")
 	rec := httptest.NewRecorder()
 
-	h.BackfillVideoDurations(rec, req)
+	protected.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("got %d, want %d", rec.Code, http.StatusUnauthorized)
@@ -199,7 +200,7 @@ func TestBackfillVideoDurations_UpdatesMissingDurations(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
 	mux := mocks.NewMockMuxClient(ctrl)
-	h := NewHandler(q, mux, nil, nil, slog.Default(), "scheduler-secret")
+	h := NewHandler(q, mux, nil, nil, slog.Default())
 
 	videoID := assetTestUUID()
 	q.EXPECT().ListVideosMissingDuration(gomock.Any(), int32(100)).Return([]db.ListVideosMissingDurationRow{
@@ -214,7 +215,6 @@ func TestBackfillVideoDurations_UpdatesMissingDurations(t *testing.T) {
 	}).Return(nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/internal/assets/durations/backfill", nil)
-	req.Header.Set("Authorization", "Bearer scheduler-secret")
 	rec := httptest.NewRecorder()
 
 	h.BackfillVideoDurations(rec, req)
@@ -240,7 +240,7 @@ func TestBackfillVideoDurations_ResolvesViaUploadID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
 	mux := mocks.NewMockMuxClient(ctrl)
-	h := NewHandler(q, mux, nil, nil, slog.Default(), "scheduler-secret")
+	h := NewHandler(q, mux, nil, nil, slog.Default())
 
 	videoID := assetTestUUID()
 	q.EXPECT().ListVideosMissingDuration(gomock.Any(), int32(100)).Return([]db.ListVideosMissingDurationRow{
@@ -258,7 +258,6 @@ func TestBackfillVideoDurations_ResolvesViaUploadID(t *testing.T) {
 	}).Return(nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/internal/assets/durations/backfill", nil)
-	req.Header.Set("Authorization", "Bearer scheduler-secret")
 	rec := httptest.NewRecorder()
 
 	h.BackfillVideoDurations(rec, req)

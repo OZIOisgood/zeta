@@ -1,0 +1,170 @@
+/* ============================================================
+   ZETA DESIGN SYSTEM — colors_and_type.css
+   Digital video coaching platform.
+   Source of truth: src/styles.scss + Tailwind usage in the
+   Angular codebase. Warm cream canvas, geometric orange brand.
+   ============================================================ */
+
+/* Brand font — Inter is self-hosted via fonts.css (see src/styles/fonts.css). */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Core palette (verbatim from src/styles.scss) ---- */
+  --z-bg: #fff8ed;            /* app canvas — warm cream */
+  --z-surface: #ffffff;       /* cards, panels, sheets */
+  --z-surface-warm: #fff1dc;  /* hover fills, active nav, chips */
+  --z-surface-muted: #f7e4c7; /* skeletons, deep wells */
+  --z-text: #26180f;          /* primary text — espresso brown */
+  --z-muted: #735f4d;         /* secondary text — taupe */
+  --z-primary: #ea580c;       /* brand orange — FILLS, icons, focus ring, accents */
+  --z-primary-strong: #c2410c;/* hover / pressed primary */
+  --z-primary-text: #c2410c;  /* orange as TEXT on light bg — meets WCAG AA (≥4.9:1).
+                                 Use for links, the group link, the "Verbessern" label,
+                                 the composer timestamp. NEVER use raw --z-primary for
+                                 body-sized text on a light surface (only ~3.5:1). */
+  --z-primary-soft: #fed7aa;  /* primary badge fills, soft borders */
+  --z-accent: #f59e0b;        /* amber — sparing highlight */
+  --z-border: #ead2b8;        /* hairline border — warm sand */
+
+  /* ---- Semantic status ---- */
+  --z-success: #15803d;
+  --z-success-soft: #f0fdf4;  /* green-50 */
+  --z-success-border: #bbf7d0;/* green-200 */
+  --z-warning: #b45309;
+  --z-warning-soft: #fffbeb;  /* amber-50 */
+  --z-warning-border: #fde68a;/* amber-200 */
+  --z-danger: #be123c;
+  --z-danger-strong: #9f1239; /* rose-800, danger hover */
+  --z-danger-solid: #b91c1c;  /* rose-700, solid danger button */
+  --z-danger-soft: #fff1f2;   /* rose-50 */
+  --z-danger-border: #fecdd3; /* rose-200 */
+
+  /* Dark surface — only the live video-call room uses this */
+  --z-night: #0c0a09;         /* stone-950 */
+  --z-night-surface: #1c1917; /* stone-900 */
+
+  /* ---- Type ---- */
+  --z-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Type scale (px) — mirrors Tailwind steps used in product */
+  --z-text-xs: 12px;   /* meta, timestamps, helper text */
+  --z-text-sm: 14px;   /* body default — the workhorse size */
+  --z-text-base: 16px; /* section titles */
+  --z-text-lg: 18px;   /* page H1 (mobile) */
+  --z-text-xl: 20px;   /* page H1, card titles */
+  --z-text-2xl: 24px;  /* brand wordmark */
+  --z-text-page: 28px; /* page-header titles — bold 700 ("Alle meine Videos") */
+  --z-text-3xl: 30px;  /* dashboard stat numerals */
+
+  --z-weight-regular: 400;
+  --z-weight-medium: 500;
+  --z-weight-semibold: 600; /* the brand's "bold" — used for all emphasis */
+  --z-weight-bold: 700;
+
+  --z-leading-tight: 1.15;
+  --z-leading-snug: 1.4;
+  --z-leading-normal: 1.5;
+  --z-leading-relaxed: 1.7; /* comment / review body copy */
+
+  /* ---- Radii ---- */
+  --z-radius-sm: 6px;   /* rounded-md — buttons, badges, inputs */
+  --z-radius-md: 8px;   /* rounded-lg — cards, panels */
+  --z-radius-lg: 12px;  /* rounded-xl — auth card, hero wells */
+  --z-radius-full: 9999px;
+
+  /* ---- Spacing (4px base) ---- */
+  --z-space-1: 4px;
+  --z-space-2: 8px;
+  --z-space-3: 12px;
+  --z-space-4: 16px;
+  --z-space-5: 20px;
+  --z-space-6: 24px;
+  --z-space-8: 32px;
+
+  /* ---- Elevation — warm, low, tinted toward orange-950 ---- */
+  --z-shadow-sm: 0 1px 2px 0 rgb(38 24 15 / 0.06);
+  --z-shadow-card: 0 1px 3px 0 rgb(38 24 15 / 0.08);
+  --z-shadow-pop: 0 10px 25px -5px rgb(124 45 18 / 0.12),
+    0 8px 10px -6px rgb(124 45 18 / 0.10); /* menus, popovers */
+  --z-shadow-drawer: 0 20px 40px -12px rgb(124 45 18 / 0.18); /* drawers, dialogs */
+
+  /* ---- Motion (verbatim from src/styles.scss keyframes) ---- */
+  --z-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1); /* @kind other */ /* drawers, toasts */
+  --z-dur-fast: 140ms;   /* @kind other */ /* pop / fade out */
+  --z-dur-base: 160ms;   /* @kind other */ /* fade in, ghost hover */
+  --z-dur-slow: 220ms;   /* @kind other */ /* drawer / toast / list enter */
+}
+
+/* ============================================================
+   SEMANTIC TYPE CLASSES
+   ============================================================ */
+body {
+  font-family: var(--z-font-sans);
+  color: var(--z-text);
+  background: var(--z-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Page-header title — the large bold heading inside each list page's
+   white header card (Videos / Groups / Sessions). Note: weight 700,
+   heavier than the 600 used elsewhere. */
+.z-page-title {
+  font-size: var(--z-text-page);
+  font-weight: var(--z-weight-bold);
+  line-height: var(--z-leading-tight);
+  letter-spacing: -0.02em;
+}
+.z-h1 {
+  font-size: var(--z-text-xl);
+  font-weight: var(--z-weight-semibold);
+  line-height: var(--z-leading-tight);
+  letter-spacing: -0.01em;
+}
+.z-h2 {
+  font-size: var(--z-text-base);
+  font-weight: var(--z-weight-semibold);
+  line-height: var(--z-leading-snug);
+}
+.z-h3 {
+  font-size: var(--z-text-sm);
+  font-weight: var(--z-weight-semibold);
+  line-height: var(--z-leading-snug);
+}
+.z-stat {
+  font-size: var(--z-text-3xl);
+  font-weight: var(--z-weight-semibold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.z-body {
+  font-size: var(--z-text-sm);
+  font-weight: var(--z-weight-regular);
+  line-height: var(--z-leading-normal);
+}
+.z-body-relaxed {
+  font-size: var(--z-text-sm);
+  line-height: var(--z-leading-relaxed); /* review/comment copy */
+}
+.z-muted {
+  color: var(--z-muted);
+}
+.z-meta {
+  font-size: var(--z-text-xs);
+  color: var(--z-muted);
+  line-height: var(--z-leading-normal);
+}
+.z-label {
+  font-size: var(--z-text-xs);
+  font-weight: var(--z-weight-semibold);
+}
+.z-link {
+  color: var(--z-primary-text);
+  font-weight: var(--z-weight-semibold);
+  text-decoration: none;
+}
+.z-link:hover {
+  color: #9a3412;
+}

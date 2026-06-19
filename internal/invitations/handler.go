@@ -173,9 +173,6 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 				Button:     i18n.T(loc, "email.invitation.button"),
 				FooterNote: i18n.T(loc, "email.invitation.footer"),
 			},
-			Details: []email.Detail{
-				{Label: i18n.T(loc, "email.detail.invitation_link"), Value: inviteLink},
-			},
 			Action: &email.Action{URL: inviteLink},
 		}
 
@@ -484,11 +481,10 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 				Copy: email.Copy{
 					Preheader: i18n.T(loc, "email.invitation_accepted.preheader", map[string]any{"JoinerName": joinerName}),
 					Title:     i18n.T(loc, "email.invitation_accepted.title"),
-					Intro:     i18n.T(loc, "email.invitation_accepted.intro", map[string]any{"JoinerName": joinerName}),
-				},
-				Details: []email.Detail{
-					{Label: i18n.T(loc, "email.detail.group"), Value: group.Name},
-					{Label: i18n.T(loc, "email.detail.new_member"), Value: joinerName},
+					Intro: i18n.T(loc, "email.invitation_accepted.intro", map[string]any{
+						"JoinerName": joinerName,
+						"GroupName":  group.Name,
+					}),
 				},
 			}
 			if err := h.email.SendTemplate([]string{inviter.Email}, subject, email.TemplateNotification, message); err != nil {

@@ -413,6 +413,21 @@ type Asset struct {
 	OwnerID     string             `json:"owner_id"`
 }
 
+type AuditEvent struct {
+	ID           pgtype.UUID        `json:"id"`
+	OccurredAt   pgtype.Timestamptz `json:"occurred_at"`
+	ActorID      pgtype.Text        `json:"actor_id"`
+	ActorType    string             `json:"actor_type"`
+	ActorLabel   pgtype.Text        `json:"actor_label"`
+	Action       string             `json:"action"`
+	ResourceType string             `json:"resource_type"`
+	ResourceID   pgtype.Text        `json:"resource_id"`
+	GroupID      pgtype.Text        `json:"group_id"`
+	OldValues    []byte             `json:"old_values"`
+	NewValues    []byte             `json:"new_values"`
+	Metadata     []byte             `json:"metadata"`
+}
+
 type CoachingAvailability struct {
 	ID        pgtype.UUID        `json:"id"`
 	ExpertID  string             `json:"expert_id"`
@@ -499,6 +514,23 @@ type CoachingSessionType struct {
 	IsActive        bool               `json:"is_active"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type FeedbackSubmission struct {
+	ID               pgtype.UUID        `json:"id"`
+	UserID           string             `json:"user_id"`
+	UserDisplayName  string             `json:"user_display_name"`
+	Rating           int32              `json:"rating"`
+	Message          string             `json:"message"`
+	PageUrl          string             `json:"page_url"`
+	UserAgent        string             `json:"user_agent"`
+	DiscordStatus    string             `json:"discord_status"`
+	DiscordChannelID string             `json:"discord_channel_id"`
+	DiscordThreadID  string             `json:"discord_thread_id"`
+	DiscordMessageID string             `json:"discord_message_id"`
+	DiscordError     string             `json:"discord_error"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Group struct {
