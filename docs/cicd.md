@@ -23,6 +23,13 @@ Public domains:
 
 Cloud Run domain mappings are Terraform-managed. DNS records live at the registrar. Resend verification records are separate from Cloud Run records and must remain present.
 
+Resend inbound webhook endpoints are environment-specific:
+
+| Environment | Endpoint |
+| --- | --- |
+| `dev` | `https://api.dev.strido.net/webhooks/resend` |
+| `prod` | `https://api.strido.net/webhooks/resend` |
+
 ## Workflows
 
 | Workflow | Trigger | Purpose |
@@ -91,6 +98,8 @@ Examples:
 | `zeta-prod-agora-recording-hmac-access-key` | Terraform output/use | Terraform storage module |
 | `zeta-dev-workos-api-key` | `WORKOS_API_KEY` | Manual secure provisioning |
 | `zeta-prod-resend-api-key` | `RESEND_API_KEY` | Manual secure provisioning |
+| `zeta-dev-resend-webhook-signing-secret` | `RESEND_WEBHOOK_SIGNING_SECRET` | Resend dev webhook; manual secure provisioning |
+| `zeta-prod-resend-webhook-signing-secret` | `RESEND_WEBHOOK_SIGNING_SECRET` | Resend prod webhook; manual secure provisioning |
 | `zeta-dev-scheduler-secret` | `SCHEDULER_SECRET` and scheduler header | Manual secret; consumed by deploy and Terraform workflow |
 | `zeta-dev-discord-bot-token` | `DISCORD_BOT_TOKEN` | Manual secret for feedback forum posting |
 | `zeta-prod-discord-bot-token` | `DISCORD_BOT_TOKEN` | Manual secret for feedback forum posting |
@@ -121,6 +130,13 @@ printf '%s' "$DISCORD_BOT_TOKEN" | gcloud secrets versions add zeta-prod-discord
   --data-file=- --project="$PROJECT_ID"
 ```
 
+Inbound mailbox addresses, Discord forum IDs, and copy recipients are plain
+runtime configuration owned by the deploy workflows. Production routes
+`social@strido.net`, `support@strido.net`, and `dsa@strido.net`; development
+routes the corresponding `*-dev@strido.net` addresses. The current copy
+recipient is `pashalobaryev111@gmail.com`. The Resend webhook signing secret is
+endpoint-specific signing material and must remain in Secret Manager.
+
 ## Terraform Ownership
 
 Terraform modules under `infra/terraform/modules/` manage:
@@ -130,6 +146,9 @@ Terraform modules under `infra/terraform/modules/` manage:
 - Cloud SQL and its generated `DB_URL`
 - Agora recording storage and generated HMAC credentials
 - Cloud Scheduler jobs and related IAM
+
+The inbound reconciliation jobs run every five minutes as
+`inbound-email-reconcile` in dev and `inbound-email-reconcile-prod` in prod.
 
 Deploy workflows own images and Cloud Run container runtime bindings. The Cloud Run module intentionally allows deployments to update container configuration without Terraform continually reverting it.
 

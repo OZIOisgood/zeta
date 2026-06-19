@@ -553,6 +553,39 @@ type GroupInvitation struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type InboundEmail struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ResendEmailID      string             `json:"resend_email_id"`
+	SvixID             string             `json:"svix_id"`
+	Inbox              string             `json:"inbox"`
+	InboxAddress       string             `json:"inbox_address"`
+	Sender             string             `json:"sender"`
+	Recipients         []string           `json:"recipients"`
+	Cc                 []string           `json:"cc"`
+	Bcc                []string           `json:"bcc"`
+	Subject            string             `json:"subject"`
+	MessageID          string             `json:"message_id"`
+	ReceivedAt         pgtype.Timestamptz `json:"received_at"`
+	BodyText           string             `json:"body_text"`
+	Attachments        []byte             `json:"attachments"`
+	ProcessingStatus   string             `json:"processing_status"`
+	ProcessingAttempts int32              `json:"processing_attempts"`
+	LastAttemptAt      pgtype.Timestamptz `json:"last_attempt_at"`
+	NextAttemptAt      pgtype.Timestamptz `json:"next_attempt_at"`
+	ClaimUntil         pgtype.Timestamptz `json:"claim_until"`
+	ProcessedAt        pgtype.Timestamptz `json:"processed_at"`
+	DiscordStatus      string             `json:"discord_status"`
+	DiscordChannelID   string             `json:"discord_channel_id"`
+	DiscordThreadID    string             `json:"discord_thread_id"`
+	DiscordMessageID   string             `json:"discord_message_id"`
+	DiscordError       string             `json:"discord_error"`
+	ForwardingStatus   string             `json:"forwarding_status"`
+	ForwardingEmailID  string             `json:"forwarding_email_id"`
+	ForwardingError    string             `json:"forwarding_error"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Notification struct {
 	ID          pgtype.UUID        `json:"id"`
 	RecipientID string             `json:"recipient_id"`

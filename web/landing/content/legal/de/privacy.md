@@ -53,9 +53,9 @@ Anbieter: Agora Lab, Inc., USA. Zu Übermittlungen in Drittländer siehe Ziffer 
 
 ## 7. E-Mail-Versand (Resend)
 
-Für den Versand dienstbezogener E-Mails (z. B. Benachrichtigungen, Buchungs- und Terminmails sowie Antworten auf Kontaktanfragen) nutzen wir den Versanddienstleister Resend. Verarbeitet werden Ihre E-Mail-Adresse sowie Inhalt und Metadaten der jeweiligen Nachricht (Art. 6 Abs. 1 lit. b und lit. f DSGVO).
+Für den Versand und Empfang dienstbezogener E-Mails (z. B. Benachrichtigungen, Buchungs- und Terminmails sowie Support-, Social-Media- und DSA-Anfragen) nutzen wir den E-Mail-Dienstleister Resend. Verarbeitet werden Ihre E-Mail-Adresse sowie Inhalt, Anhänge und Metadaten der jeweiligen Nachricht (Art. 6 Abs. 1 lit. b, lit. c und lit. f DSGVO). Eingehende Nachrichten können autorisierten betrieblichen Empfängern bereitgestellt und zur Bearbeitung in zugriffsbeschränkte Discord-Kanäle gespiegelt werden.
 
-Anbieter: Resend (Plus Five Five, Inc.), USA. Zu Übermittlungen in Drittländer siehe Ziffer 13.
+Anbieter: Resend (Plus Five Five, Inc.), USA, und Discord Inc., USA. Zu Übermittlungen in Drittländer siehe Ziffer 13.
 
 ## 8. KI-gestützte Textverbesserung (OpenRouter)
 
@@ -89,7 +89,7 @@ Wir verwenden **keine** Analyse-, Tracking- oder Werbedienste und keine nicht er
 
 ## 13. Übermittlung in Drittländer
 
-Einige der von uns eingesetzten Dienstleister haben ihren Sitz bzw. verarbeiten Daten in den USA oder anderen Drittländern außerhalb des Europäischen Wirtschaftsraums (insbesondere WorkOS, Mux, Agora, Resend, OpenRouter, Expo sowie die Konzernmutter von Google). Soweit dabei personenbezogene Daten in ein Drittland übermittelt werden, erfolgt dies auf Grundlage eines Angemessenheitsbeschlusses (insbesondere des EU-US Data Privacy Framework, soweit der jeweilige Anbieter zertifiziert ist) oder auf Grundlage geeigneter Garantien, insbesondere der Standardvertragsklauseln der EU-Kommission (Art. 44 ff., Art. 46 DSGVO). Eine Kopie der Garantien können Sie bei uns anfordern.
+Einige der von uns eingesetzten Dienstleister haben ihren Sitz bzw. verarbeiten Daten in den USA oder anderen Drittländern außerhalb des Europäischen Wirtschaftsraums (insbesondere WorkOS, Mux, Agora, Resend, Discord, OpenRouter, Expo sowie die Konzernmutter von Google). Soweit dabei personenbezogene Daten in ein Drittland übermittelt werden, erfolgt dies auf Grundlage eines Angemessenheitsbeschlusses (insbesondere des EU-US Data Privacy Framework, soweit der jeweilige Anbieter zertifiziert ist) oder auf Grundlage geeigneter Garantien, insbesondere der Standardvertragsklauseln der EU-Kommission (Art. 44 ff., Art. 46 DSGVO). Eine Kopie der Garantien können Sie bei uns anfordern.
 
 ## 14. Speicherdauer
 

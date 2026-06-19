@@ -20,6 +20,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Templated Email Notifications**: Transactional emails use embedded Go HTML templates, a shared Zeta layout, and CSS inlining before delivery through Resend.
 - **Notification Preferences**: Users can control all email notifications or individual email categories from their Preferences page.
 - **Feedback Inbox**: Authenticated dashboard users can submit rated feedback that is stored in Postgres and mirrored into the environment-specific Discord forum.
+- **Inbound Email Inboxes**: Social, support, and DSA email is durably ingested from Resend, mirrored into environment-specific Discord forums, and copied to configured recipients.
 
 ## How to start
 
@@ -59,6 +60,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@strido.net`.
    - HTML emails use the hosted Strido logo at `FRONTEND_URL + /assets/brand/strido/strido-logo-320.png`, with the dev dashboard URL as a local fallback.
    - To render local email previews with fake data, run `make email:preview`. Final inlined HTML files are written to `build/email-previews/`.
+   - For inbound email, configure the three `INBOUND_EMAIL_*_ADDRESS` routes, Discord forum IDs, optional `INBOUND_EMAIL_COPY_RECIPIENTS`, and a verified Resend webhook at `/webhooks/resend`.
+   - Store the endpoint-specific webhook signing secret in `RESEND_WEBHOOK_SIGNING_SECRET`; never treat it as plain runtime config.
 
 6. **Agora Configuration**:
    - Create a project in [Agora Console](https://console.agora.io/).
@@ -238,6 +241,14 @@ sequenceDiagram
 4. The API stores the submission in `feedback_submissions` with the authenticated user's display name and internal user ID.
 5. The API creates a new post in the configured Discord forum channel. If Discord delivery fails, the database row records the failure while the user's feedback remains saved.
 
+### Inbound Email Flow
+
+1. Resend sends a signed `email.received` event to `POST /webhooks/resend`.
+2. The API verifies the Svix signature against the raw body and matches the recipient to social, support, or DSA.
+3. The API idempotently stores the event in `inbound_emails` before attempting delivery.
+4. The processor fetches the complete body and attachment metadata from Resend, creates one Discord forum thread, and forwards a copy to configured recipients with an idempotency key.
+5. Discord and forwarding outcomes are tracked independently. `POST /internal/inbound-email/reconcile` polls recent Resend mail and retries pending or failed work every five minutes.
+
 ### API Examples
 
 Check auth status:
@@ -284,6 +295,7 @@ graph TD
     Web -->|HTTP API| API[Go API Server]
     API -->|SQL| DB[(PostgreSQL)]
     API -->|Email| Resend[Resend]
+    Resend -->|Signed inbound webhook| API
     API -->|Auth| WorkOS[WorkOS]
     API -->|Video API| Mux[Mux]
     Web -->|Direct Upload| Mux
@@ -295,6 +307,7 @@ graph TD
     Scheduler[GCP Cloud Scheduler] -->|POST /internal/coaching/reminders| API
     Scheduler -->|POST /internal/coaching/recordings/cleanup/process| API
     Scheduler -->|POST /internal/audit/maintenance| API
+    Scheduler -->|POST /internal/inbound-email/reconcile| API
 ```
 
 ### Video Call Sequence
@@ -659,6 +672,25 @@ erDiagram
         string resource_type "asset, group, user, etc."
         uuid resource_id
         jsonb metadata "optional extra context incl. opt-in client IP"
+    }
+
+    inbound_emails {
+        uuid id PK
+        string resend_email_id UK
+        string inbox "social, support, dsa"
+        string sender
+        string_array recipients
+        string subject
+        string body_text
+        jsonb attachments
+        string processing_status
+        string discord_status
+        string discord_thread_id
+        string forwarding_status
+        string forwarding_email_id
+        timestamp received_at
+        timestamp created_at
+        timestamp updated_at
     }
 
     groups ||--o{ coaching_session_types : has

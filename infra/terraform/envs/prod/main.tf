@@ -296,7 +296,7 @@ resource "google_cloud_scheduler_job" "coaching_recordings_cleanup" {
 }
 
 resource "google_cloud_scheduler_job" "audit_maintenance" {
-  name             = "audit-maintenance"
+  name             = "audit-maintenance-prod"
   region           = var.region
   schedule         = "0 3 * * *"
   time_zone        = "UTC"
@@ -304,7 +304,24 @@ resource "google_cloud_scheduler_job" "audit_maintenance" {
   depends_on       = [module.github_wif]
 
   http_target {
-    uri         = "${module.cloud_run.service_url}/internal/audit/maintenance"
+    uri         = "${module.cloud_run_prod.service_url}/internal/audit/maintenance"
+    http_method = "POST"
+    headers = {
+      "Authorization" = "Bearer ${var.scheduler_secret}"
+    }
+  }
+}
+
+resource "google_cloud_scheduler_job" "inbound_email_reconcile" {
+  name             = "inbound-email-reconcile-prod"
+  region           = var.region
+  schedule         = "*/5 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "60s"
+  depends_on       = [module.github_wif]
+
+  http_target {
+    uri         = "${module.cloud_run_prod.service_url}/internal/inbound-email/reconcile"
     http_method = "POST"
     headers = {
       "Authorization" = "Bearer ${var.scheduler_secret}"

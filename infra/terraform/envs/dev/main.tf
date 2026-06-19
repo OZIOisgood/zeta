@@ -252,7 +252,24 @@ resource "google_cloud_scheduler_job" "audit_maintenance" {
   depends_on       = [module.github_wif]
 
   http_target {
-    uri         = "${module.cloud_run.service_url}/internal/audit/maintenance"
+    uri         = "${module.cloud_run_dev.service_url}/internal/audit/maintenance"
+    http_method = "POST"
+    headers = {
+      "Authorization" = "Bearer ${var.scheduler_secret}"
+    }
+  }
+}
+
+resource "google_cloud_scheduler_job" "inbound_email_reconcile" {
+  name             = "inbound-email-reconcile"
+  region           = var.region
+  schedule         = "*/5 * * * *"
+  time_zone        = "UTC"
+  attempt_deadline = "60s"
+  depends_on       = [module.github_wif]
+
+  http_target {
+    uri         = "${module.cloud_run_dev.service_url}/internal/inbound-email/reconcile"
     http_method = "POST"
     headers = {
       "Authorization" = "Bearer ${var.scheduler_secret}"

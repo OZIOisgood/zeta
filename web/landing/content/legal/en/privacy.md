@@ -53,9 +53,9 @@ Provider: Agora Lab, Inc., USA. On transfers to third countries, see section 13.
 
 ## 7. Email dispatch (Resend)
 
-To send service-related emails (e.g. notifications, booking and appointment emails, and replies to contact enquiries), we use the email service provider Resend. Your email address as well as the content and metadata of the respective message are processed (Art. 6 (1) (b) and (f) GDPR).
+To send and receive service-related emails (e.g. notifications, booking and appointment emails, support, social-media and DSA enquiries), we use the email service provider Resend. Your email address as well as the content, attachments and metadata of the respective message are processed (Art. 6 (1) (b), (c) and (f) GDPR). Incoming messages may be made available to authorised operational recipients and mirrored into access-restricted Discord channels for processing.
 
-Provider: Resend (Plus Five Five, Inc.), USA. On transfers to third countries, see section 13.
+Providers: Resend (Plus Five Five, Inc.), USA, and Discord Inc., USA. On transfers to third countries, see section 13.
 
 ## 8. AI-assisted text improvement (OpenRouter)
 
@@ -89,7 +89,7 @@ We use **no** analytics, tracking or advertising services and no non-essential e
 
 ## 13. Transfers to third countries
 
-Some of the service providers we use are based in, or process data in, the USA or other third countries outside the European Economic Area (in particular WorkOS, Mux, Agora, Resend, OpenRouter, Expo, as well as Google's parent company). Where personal data is transferred to a third country, this takes place on the basis of an adequacy decision (in particular the EU-US Data Privacy Framework, where the respective provider is certified) or on the basis of appropriate safeguards, in particular the European Commission's standard contractual clauses (Art. 44 et seq., Art. 46 GDPR). You may request a copy of the safeguards from us.
+Some of the service providers we use are based in, or process data in, the USA or other third countries outside the European Economic Area (in particular WorkOS, Mux, Agora, Resend, Discord, OpenRouter, Expo, as well as Google's parent company). Where personal data is transferred to a third country, this takes place on the basis of an adequacy decision (in particular the EU-US Data Privacy Framework, where the respective provider is certified) or on the basis of appropriate safeguards, in particular the European Commission's standard contractual clauses (Art. 44 et seq., Art. 46 GDPR). You may request a copy of the safeguards from us.
 
 ## 14. Storage period
 

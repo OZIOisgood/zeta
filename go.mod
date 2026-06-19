@@ -18,7 +18,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
 	github.com/muxinc/mux-go v1.1.1
-	github.com/resend/resend-go/v2 v2.28.0
+	github.com/resend/resend-go/v3 v3.9.2
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/testcontainers/testcontainers-go v0.42.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.42.0
@@ -76,7 +76,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.15 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/inbucket/html2text v1.0.0 // indirect
+	github.com/inbucket/html2text v1.0.0
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
