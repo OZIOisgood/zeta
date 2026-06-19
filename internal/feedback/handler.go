@@ -10,6 +10,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/discord"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/pgutil"
 	"github.com/go-chi/chi/v5"
@@ -32,7 +33,7 @@ type Store interface {
 
 type Handler struct {
 	q                Store
-	discord          DiscordPoster
+	discord          discord.Poster
 	logger           *slog.Logger
 	discordChannelID string
 }
@@ -41,10 +42,10 @@ type HandlerConfig struct {
 	DiscordChannelID string
 }
 
-func NewHandler(q Store, discord DiscordPoster, logger *slog.Logger, cfg HandlerConfig) *Handler {
+func NewHandler(q Store, discordPoster discord.Poster, logger *slog.Logger, cfg HandlerConfig) *Handler {
 	return &Handler{
 		q:                q,
-		discord:          discord,
+		discord:          discordPoster,
 		logger:           logger,
 		discordChannelID: strings.TrimSpace(cfg.DiscordChannelID),
 	}
@@ -104,8 +105,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		UserDisplayName:  displayName,
 		Rating:           int32(req.Rating),
 		Message:          message,
-		PageUrl:          truncate(req.PageURL, maxPageURLLength),
-		UserAgent:        truncate(r.UserAgent(), maxUserAgentLength),
+		PageUrl:          discord.Truncate(req.PageURL, maxPageURLLength),
+		UserAgent:        discord.Truncate(r.UserAgent(), maxUserAgentLength),
 		DiscordChannelID: h.discordChannelID,
 	})
 	if err != nil {
@@ -154,7 +155,7 @@ func (h *Handler) deliverDiscord(ctx context.Context, log *slog.Logger, row db.F
 
 	thread, err := h.discord.CreateForumPost(ctx, h.discordChannelID, buildDiscordPost(row))
 	if err != nil {
-		errorMessage := truncate(err.Error(), maxErrorLength)
+		errorMessage := discord.Truncate(err.Error(), maxErrorLength)
 		if updateErr := h.q.MarkFeedbackDiscordFailed(ctx, db.MarkFeedbackDiscordFailedParams{
 			ID:           row.ID,
 			DiscordError: errorMessage,
@@ -190,7 +191,7 @@ func (h *Handler) deliverDiscord(ctx context.Context, log *slog.Logger, row db.F
 	return "posted"
 }
 
-func buildDiscordPost(row db.FeedbackSubmission) DiscordPost {
+func buildDiscordPost(row db.FeedbackSubmission) discord.Post {
 	feedbackID := pgutil.UUIDToString(row.ID)
 	title := fmt.Sprintf("%d/5 feedback from %s", row.Rating, row.UserDisplayName)
 	content := fmt.Sprintf(
@@ -202,7 +203,7 @@ func buildDiscordPost(row db.FeedbackSubmission) DiscordPost {
 		emptyFallback(row.PageUrl, "not captured"),
 		row.Message,
 	)
-	return DiscordPost{Title: title, Content: content}
+	return discord.Post{Title: title, Content: content}
 }
 
 func emptyFallback(value, fallback string) string {

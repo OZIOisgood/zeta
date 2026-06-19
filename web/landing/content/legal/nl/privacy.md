@@ -53,9 +53,9 @@ Aanbieder: Agora Lab, Inc., VS. Voor doorgiften naar derde landen, zie punt 13.
 
 ## 7. E-mailverzending (Resend)
 
-Voor het verzenden van dienstgerelateerde e-mails (bijvoorbeeld meldingen, boekings- en afspraakmails en antwoorden op contactverzoeken) gebruiken wij de verzenddienstverlener Resend. Verwerkt worden uw e-mailadres alsmede de inhoud en metagegevens van het betreffende bericht (artikel 6, lid 1, onder b) en f), AVG).
+Voor het verzenden en ontvangen van dienstgerelateerde e-mails (bijvoorbeeld meldingen, boekings- en afspraakmails en verzoeken over ondersteuning, sociale media en de DSA) gebruiken wij de e-maildienst Resend. Verwerkt worden uw e-mailadres alsmede de inhoud, bijlagen en metagegevens van het betreffende bericht (artikel 6, lid 1, onder b), c) en f), AVG). Inkomende berichten kunnen beschikbaar worden gesteld aan bevoegde operationele ontvangers en voor behandeling worden gespiegeld naar Discord-kanalen met beperkte toegang.
 
-Aanbieder: Resend (Plus Five Five, Inc.), VS. Voor doorgiften naar derde landen, zie punt 13.
+Aanbieders: Resend (Plus Five Five, Inc.), VS, en Discord Inc., VS. Voor doorgiften naar derde landen, zie punt 13.
 
 ## 8. AI-ondersteunde tekstverbetering (OpenRouter)
 
@@ -89,7 +89,7 @@ Wij gebruiken **geen** analyse-, tracking- of advertentiediensten en geen niet-n
 
 ## 13. Doorgifte naar derde landen
 
-Sommige van de door ons gebruikte dienstverleners zijn gevestigd in, of verwerken gegevens in, de VS of andere derde landen buiten de Europese Economische Ruimte (met name WorkOS, Mux, Agora, Resend, OpenRouter, Expo, alsmede de moedermaatschappij van Google). Voor zover daarbij persoonsgegevens naar een derde land worden doorgegeven, gebeurt dit op grond van een adequaatheidsbesluit (met name het EU-US Data Privacy Framework, voor zover de betreffende aanbieder is gecertificeerd) of op grond van passende waarborgen, met name de standaardcontractbepalingen van de Europese Commissie (artikel 44 e.v., artikel 46 AVG). U kunt een kopie van de waarborgen bij ons opvragen.
+Sommige van de door ons gebruikte dienstverleners zijn gevestigd in, of verwerken gegevens in, de VS of andere derde landen buiten de Europese Economische Ruimte (met name WorkOS, Mux, Agora, Resend, Discord, OpenRouter, Expo, alsmede de moedermaatschappij van Google). Voor zover daarbij persoonsgegevens naar een derde land worden doorgegeven, gebeurt dit op grond van een adequaatheidsbesluit (met name het EU-US Data Privacy Framework, voor zover de betreffende aanbieder is gecertificeerd) of op grond van passende waarborgen, met name de standaardcontractbepalingen van de Europese Commissie (artikel 44 e.v., artikel 46 AVG). U kunt een kopie van de waarborgen bij ons opvragen.
 
 ## 14. Bewaartermijn
 

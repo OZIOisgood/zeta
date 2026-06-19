@@ -16,6 +16,8 @@ type Querier interface {
 	CancelBooking(ctx context.Context, arg CancelBookingParams) (CoachingBooking, error)
 	CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) (bool, error)
 	CheckVideoVisibleToUser(ctx context.Context, arg CheckVideoVisibleToUserParams) (bool, error)
+	ClaimInboundEmailByResendID(ctx context.Context, resendEmailID string) (InboundEmail, error)
+	ClaimPendingInboundEmails(ctx context.Context, limit int32) ([]InboundEmail, error)
 	ConsumeSignupCode(ctx context.Context, arg ConsumeSignupCodeParams) (SignupCode, error)
 	CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error)
 	CountSignupCodesByOwner(ctx context.Context, ownerUserID string) (int64, error)
@@ -103,6 +105,12 @@ type Querier interface {
 	MarkFeedbackDiscordFailed(ctx context.Context, arg MarkFeedbackDiscordFailedParams) error
 	MarkFeedbackDiscordPosted(ctx context.Context, arg MarkFeedbackDiscordPostedParams) error
 	MarkFeedbackDiscordSkipped(ctx context.Context, arg MarkFeedbackDiscordSkippedParams) error
+	MarkInboundEmailDiscordFailed(ctx context.Context, arg MarkInboundEmailDiscordFailedParams) error
+	MarkInboundEmailDiscordPosted(ctx context.Context, arg MarkInboundEmailDiscordPostedParams) error
+	MarkInboundEmailDiscordSkipped(ctx context.Context, arg MarkInboundEmailDiscordSkippedParams) error
+	MarkInboundEmailForwarded(ctx context.Context, arg MarkInboundEmailForwardedParams) error
+	MarkInboundEmailForwardingFailed(ctx context.Context, arg MarkInboundEmailForwardingFailedParams) error
+	MarkInboundEmailForwardingSkipped(ctx context.Context, arg MarkInboundEmailForwardingSkippedParams) error
 	MarkNotificationRead(ctx context.Context, arg MarkNotificationReadParams) error
 	MarkNotificationReadByInviteCode(ctx context.Context, arg MarkNotificationReadByInviteCodeParams) error
 	MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error
@@ -110,6 +118,7 @@ type Querier interface {
 	MarkRecordingImportMuxCreated(ctx context.Context, arg MarkRecordingImportMuxCreatedParams) (CoachingRecordingImport, error)
 	MarkRecordingImportReady(ctx context.Context, arg MarkRecordingImportReadyParams) (CoachingRecordingImport, error)
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
+	ReleaseInboundEmailClaim(ctx context.Context, id pgtype.UUID) error
 	ReleaseSignupCode(ctx context.Context, id pgtype.UUID) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
 	// Past, non-cancelled sessions the expert ran. Title is the session type name.
@@ -136,6 +145,7 @@ type Querier interface {
 	UpdateAvailability(ctx context.Context, arg UpdateAvailabilityParams) (CoachingAvailability, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateGroupInvitationStatus(ctx context.Context, arg UpdateGroupInvitationStatusParams) error
+	UpdateInboundEmailContent(ctx context.Context, arg UpdateInboundEmailContentParams) error
 	UpdateSessionType(ctx context.Context, arg UpdateSessionTypeParams) (CoachingSessionType, error)
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error)
 	UpdateUserEmailPreferences(ctx context.Context, arg UpdateUserEmailPreferencesParams) (UserPreference, error)
@@ -144,6 +154,7 @@ type Querier interface {
 	UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewParams) (VideoReview, error)
 	UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusParams) error
 	UpdateVideoStatusByUploadID(ctx context.Context, arg UpdateVideoStatusByUploadIDParams) error
+	UpsertInboundEmail(ctx context.Context, arg UpsertInboundEmailParams) (InboundEmail, error)
 }
 
 var _ Querier = (*Queries)(nil)

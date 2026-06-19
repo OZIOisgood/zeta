@@ -53,9 +53,9 @@ Proveedor: Agora Lab, Inc., EE. UU. En cuanto a las transferencias a terceros pa
 
 ## 7. Envío de correos electrónicos (Resend)
 
-Para el envío de correos electrónicos relacionados con el servicio (por ejemplo, notificaciones, correos de reserva y de cita, y respuestas a consultas de contacto) utilizamos el proveedor de envío Resend. Se tratan su dirección de correo electrónico, así como el contenido y los metadatos del mensaje correspondiente (artículo 6, apdo. 1, letras b) y f), del RGPD).
+Para el envío y la recepción de correos electrónicos relacionados con el servicio (por ejemplo, notificaciones, correos de reserva y de cita, y consultas de soporte, redes sociales y DSA) utilizamos el proveedor Resend. Se tratan su dirección de correo electrónico, así como el contenido, los archivos adjuntos y los metadatos del mensaje correspondiente (artículo 6, apdo. 1, letras b), c) y f), del RGPD). Los mensajes entrantes pueden ponerse a disposición de destinatarios operativos autorizados y copiarse en canales de Discord de acceso restringido para su tramitación.
 
-Proveedor: Resend (Plus Five Five, Inc.), EE. UU. En cuanto a las transferencias a terceros países, véase el punto 13.
+Proveedores: Resend (Plus Five Five, Inc.), EE. UU., y Discord Inc., EE. UU. En cuanto a las transferencias a terceros países, véase el punto 13.
 
 ## 8. Mejora de texto asistida por IA (OpenRouter)
 
@@ -89,7 +89,7 @@ No utilizamos **ningún** servicio de análisis, seguimiento o publicidad ni rec
 
 ## 13. Transferencias a terceros países
 
-Algunos de los proveedores que utilizamos tienen su sede o tratan datos en EE. UU. u otros terceros países fuera del Espacio Económico Europeo (en particular WorkOS, Mux, Agora, Resend, OpenRouter, Expo, así como la sociedad matriz de Google). Cuando se transfieren datos personales a un tercer país, ello se realiza sobre la base de una decisión de adecuación (en particular el Marco de Privacidad de Datos UE-EE. UU. [EU-US Data Privacy Framework], en la medida en que el proveedor correspondiente esté certificado) o sobre la base de garantías adecuadas, en particular las cláusulas contractuales tipo de la Comisión Europea (artículos 44 y siguientes, artículo 46 del RGPD). Puede solicitarnos una copia de las garantías.
+Algunos de los proveedores que utilizamos tienen su sede o tratan datos en EE. UU. u otros terceros países fuera del Espacio Económico Europeo (en particular WorkOS, Mux, Agora, Resend, Discord, OpenRouter, Expo, así como la sociedad matriz de Google). Cuando se transfieren datos personales a un tercer país, ello se realiza sobre la base de una decisión de adecuación (en particular el Marco de Privacidad de Datos UE-EE. UU. [EU-US Data Privacy Framework], en la medida en que el proveedor correspondiente esté certificado) o sobre la base de garantías adecuadas, en particular las cláusulas contractuales tipo de la Comisión Europea (artículos 44 y siguientes, artículo 46 del RGPD). Puede solicitarnos una copia de las garantías.
 
 ## 14. Plazo de conservación
 

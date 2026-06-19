@@ -14,6 +14,7 @@ import (
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/discord"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -60,7 +61,7 @@ func TestCreateValidatesRequest(t *testing.T) {
 
 func TestCreateStoresFeedbackAndPostsToDiscord(t *testing.T) {
 	store := &fakeStore{}
-	discord := &fakeDiscord{thread: DiscordThread{ThreadID: "thread-1", MessageID: "message-1"}}
+	discord := &fakeDiscord{thread: discord.Thread{ThreadID: "thread-1", MessageID: "message-1"}}
 	h := NewHandler(store, discord, testLogger(), HandlerConfig{DiscordChannelID: "forum-1"})
 	req := authenticatedRequest(`{"rating":4,"message":"I like the review flow.","page_url":"https://app.test/videos"}`)
 	rec := httptest.NewRecorder()
@@ -188,16 +189,16 @@ func (s *fakeStore) MarkFeedbackDiscordSkipped(_ context.Context, arg db.MarkFee
 
 type fakeDiscord struct {
 	channelID string
-	post      DiscordPost
-	thread    DiscordThread
+	post      discord.Post
+	thread    discord.Thread
 	err       error
 }
 
-func (d *fakeDiscord) CreateForumPost(_ context.Context, channelID string, post DiscordPost) (DiscordThread, error) {
+func (d *fakeDiscord) CreateForumPost(_ context.Context, channelID string, post discord.Post) (discord.Thread, error) {
 	d.channelID = channelID
 	d.post = post
 	if d.err != nil {
-		return DiscordThread{}, d.err
+		return discord.Thread{}, d.err
 	}
 	return d.thread, nil
 }

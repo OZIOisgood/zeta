@@ -16,9 +16,11 @@ import (
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/coaching"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/discord"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/feedback"
 	"github.com/OZIOisgood/zeta/internal/groups"
+	"github.com/OZIOisgood/zeta/internal/inboundemail"
 	"github.com/OZIOisgood/zeta/internal/invitations"
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
@@ -95,15 +97,43 @@ func (s *Server) routes(ctx context.Context) {
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	reportsHandler := reports.NewHandler(queries, s.Logger)
-	var discordPoster feedback.DiscordPoster
+	var discordPoster discord.Poster
 	if discordToken := os.Getenv("DISCORD_BOT_TOKEN"); strings.TrimSpace(discordToken) != "" {
-		discordPoster = feedback.NewDiscordClient(discordToken)
+		discordPoster = discord.NewClient(discordToken)
 	}
 	feedbackHandler := feedback.NewHandler(
 		queries,
 		discordPoster,
 		s.Logger,
 		feedback.HandlerConfig{DiscordChannelID: os.Getenv("DISCORD_FEEDBACK_FORUM_CHANNEL_ID")},
+	)
+	inboundEmailHandler := inboundemail.NewHandler(
+		queries,
+		inboundemail.NewResendProvider(os.Getenv("RESEND_API_KEY")),
+		discordPoster,
+		s.Logger,
+		inboundemail.Config{
+			WebhookSigningSecret: os.Getenv("RESEND_WEBHOOK_SIGNING_SECRET"),
+			ForwardFrom:          os.Getenv("RESEND_FROM_EMAIL"),
+			CopyRecipients:       splitCSV(os.Getenv("INBOUND_EMAIL_COPY_RECIPIENTS")),
+			Routes: []inboundemail.Route{
+				{
+					Inbox:            "social",
+					Address:          os.Getenv("INBOUND_EMAIL_SOCIAL_ADDRESS"),
+					DiscordChannelID: os.Getenv("DISCORD_SOCIAL_INBOX_FORUM_CHANNEL_ID"),
+				},
+				{
+					Inbox:            "support",
+					Address:          os.Getenv("INBOUND_EMAIL_SUPPORT_ADDRESS"),
+					DiscordChannelID: os.Getenv("DISCORD_SUPPORT_INBOX_FORUM_CHANNEL_ID"),
+				},
+				{
+					Inbox:            "dsa",
+					Address:          os.Getenv("INBOUND_EMAIL_DSA_ADDRESS"),
+					DiscordChannelID: os.Getenv("DISCORD_DSA_INBOX_FORUM_CHANNEL_ID"),
+				},
+			},
+		},
 	)
 
 	// In-app notifications: a per-instance hub fed by a Postgres LISTEN/NOTIFY
@@ -168,6 +198,7 @@ func (s *Server) routes(ctx context.Context) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
+	s.Router.Post("/webhooks/resend", inboundEmailHandler.Webhook)
 
 	// Auth Routes
 	s.Router.Group(func(r chi.Router) {
@@ -232,6 +263,7 @@ func (s *Server) routes(ctx context.Context) {
 		r.Post("/internal/coaching/recordings/process", coachingHandler.ProcessRecordingImports)
 		r.Post("/internal/assets/durations/backfill", assetsHandler.BackfillVideoDurations)
 		r.Post("/internal/audit/maintenance", auditHandler.RunMaintenance)
+		r.Post("/internal/inbound-email/reconcile", inboundEmailHandler.Reconcile)
 	})
 }
 
