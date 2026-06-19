@@ -35,11 +35,16 @@ type ReceivedEmail struct {
 	Attachments []Attachment
 }
 
+type ForwardMetadata struct {
+	Inbox        string
+	InboxAddress string
+}
+
 type Provider interface {
 	VerifyWebhook(payload []byte, headers WebhookHeaders, signingSecret string) error
 	GetReceivedEmail(ctx context.Context, emailID string) (ReceivedEmail, error)
 	ListReceivedEmails(ctx context.Context, limit int) ([]ReceivedEmail, error)
-	ForwardReceivedEmail(ctx context.Context, email ReceivedEmail, recipients []string, from, idempotencyKey string) (string, error)
+	ForwardReceivedEmail(ctx context.Context, email ReceivedEmail, metadata ForwardMetadata, recipients []string, from, idempotencyKey string) (string, error)
 }
 
 type Route struct {

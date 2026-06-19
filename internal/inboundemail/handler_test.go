@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/mail"
 	"net/url"
 	"strconv"
 	"strings"
@@ -129,6 +130,9 @@ func TestProcessClaimedRetriesOnlyFailedForward(t *testing.T) {
 	if provider.forwardCalls != 1 || !store.forwarded {
 		t.Fatal("failed forwarding delivery was not retried")
 	}
+	if provider.forwardMetadata.Inbox != "support" || provider.forwardMetadata.InboxAddress != "support-dev@strido.net" {
+		t.Fatalf("forward metadata = %+v", provider.forwardMetadata)
+	}
 	if store.contentParams.BodyText != "Hello team." {
 		t.Fatalf("HTML fallback produced %q", store.contentParams.BodyText)
 	}
@@ -181,7 +185,13 @@ func TestReconcileUpsertsEmailMissedByWebhook(t *testing.T) {
 
 func TestForwardReceivedEmailPreservesAttachmentsAndIdempotency(t *testing.T) {
 	var requestBody struct {
-		To          []string `json:"to"`
+		From        string            `json:"from"`
+		To          []string          `json:"to"`
+		Subject     string            `json:"subject"`
+		ReplyTo     string            `json:"reply_to"`
+		Text        string            `json:"text"`
+		HTML        string            `json:"html"`
+		Headers     map[string]string `json:"headers"`
 		Attachments []struct {
 			Path      string `json:"path"`
 			Filename  string `json:"filename"`
@@ -213,7 +223,7 @@ func TestForwardReceivedEmailPreservesAttachmentsAndIdempotency(t *testing.T) {
 		Attachments: []Attachment{{
 			Filename: "photo.png", DownloadURL: "https://signed.example/photo", ContentID: "<photo-1>",
 		}},
-	}, []string{"copy@example.com"}, "notifications@strido.net", "inbound-forward-received-1")
+	}, ForwardMetadata{Inbox: "support", InboxAddress: "support-dev@strido.net"}, []string{"copy@example.com"}, "notifications@strido.net", "inbound-forward-received-1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,6 +235,43 @@ func TestForwardReceivedEmailPreservesAttachmentsAndIdempotency(t *testing.T) {
 	}
 	if requestBody.Attachments[0].ContentID != "photo-1" {
 		t.Fatalf("content ID = %q, want photo-1", requestBody.Attachments[0].ContentID)
+	}
+	from, err := mail.ParseAddress(requestBody.From)
+	if err != nil || from.Name != "Strido Support Inbox" || from.Address != "notifications@strido.net" {
+		t.Fatalf("from = %q (%v)", requestBody.From, err)
+	}
+	if requestBody.Subject != "[Support] Fwd: Hello" {
+		t.Fatalf("subject = %q", requestBody.Subject)
+	}
+	if requestBody.ReplyTo != "ada@example.com" {
+		t.Fatalf("reply_to = %q", requestBody.ReplyTo)
+	}
+	if !strings.Contains(requestBody.Text, "Originally sent to: support-dev@strido.net") || !strings.Contains(requestBody.Text, "Body") {
+		t.Fatalf("text banner missing: %q", requestBody.Text)
+	}
+	if !strings.Contains(requestBody.HTML, "Originally sent to") || !strings.Contains(requestBody.HTML, "support-dev@strido.net") {
+		t.Fatalf("HTML banner missing: %q", requestBody.HTML)
+	}
+	if requestBody.Headers["X-Strido-Original-To"] != "support-dev@strido.net" {
+		t.Fatalf("original-to header = %q", requestBody.Headers["X-Strido-Original-To"])
+	}
+}
+
+func TestBuildForwardContentEscapesMetadataAndPreservesHTMLDocument(t *testing.T) {
+	content := buildForwardContent(ReceivedEmail{
+		From:      `Bad <script> <bad@example.com>`,
+		HTML:      `<!doctype html><html><body><p>Original</p></body></html>`,
+		CreatedAt: time.Date(2026, 6, 19, 20, 0, 0, 0, time.UTC),
+	}, ForwardMetadata{Inbox: "dsa", InboxAddress: `dsa-dev@strido.net<script>`})
+
+	if strings.Count(content.HTML, "<body>") != 1 || !strings.Contains(content.HTML, "<body><div") {
+		t.Fatalf("banner was not inserted into body: %s", content.HTML)
+	}
+	if strings.Contains(content.HTML, "dsa-dev@strido.net<script>") || !strings.Contains(content.HTML, "dsa-dev@strido.net&lt;script&gt;") {
+		t.Fatalf("metadata was not escaped: %s", content.HTML)
+	}
+	if !strings.Contains(content.HTML, "<p>Original</p>") {
+		t.Fatalf("original HTML was not preserved: %s", content.HTML)
 	}
 }
 
@@ -351,15 +398,16 @@ func (s *fakeStore) ReleaseInboundEmailClaim(context.Context, pgtype.UUID) error
 }
 
 type fakeProvider struct {
-	verifyErr    error
-	received     ReceivedEmail
-	getErr       error
-	getCalls     int
-	forwardID    string
-	forwardErr   error
-	forwardCalls int
-	listed       []ReceivedEmail
-	listErr      error
+	verifyErr       error
+	received        ReceivedEmail
+	getErr          error
+	getCalls        int
+	forwardID       string
+	forwardErr      error
+	forwardCalls    int
+	forwardMetadata ForwardMetadata
+	listed          []ReceivedEmail
+	listErr         error
 }
 
 func (p *fakeProvider) VerifyWebhook([]byte, WebhookHeaders, string) error { return p.verifyErr }
@@ -373,8 +421,9 @@ func (p *fakeProvider) ListReceivedEmails(context.Context, int) ([]ReceivedEmail
 	return p.listed, p.listErr
 }
 
-func (p *fakeProvider) ForwardReceivedEmail(context.Context, ReceivedEmail, []string, string, string) (string, error) {
+func (p *fakeProvider) ForwardReceivedEmail(_ context.Context, _ ReceivedEmail, metadata ForwardMetadata, _ []string, _, _ string) (string, error) {
 	p.forwardCalls++
+	p.forwardMetadata = metadata
 	if p.forwardID == "" {
 		p.forwardID = "forward-1"
 	}
