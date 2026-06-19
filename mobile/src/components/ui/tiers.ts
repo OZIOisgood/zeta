@@ -51,6 +51,16 @@ export const TIERS: Record<string, Tier> = {
   // its own. Classified as COMPOSITION_EXCEPTION in primitive-contract.test.ts.
   'z-danger-zone-card': 'custom-no-native',
   'z-stepper': 'custom-no-native',
+  // ZDateRail: horizontal day-pill rail for the booking time step — no OS widget
+  // maps to a branded selectable date strip. Single shared NativeWind file
+  // (Custom-RN (b), no .ios/.android split).
+  'z-date-rail': 'custom-no-native',
+  // ZTimeGrid: 3-column start-time grid for the booking time step — no OS widget
+  // equivalent. Single shared NativeWind file (Custom-RN (b)).
+  'z-time-grid': 'custom-no-native',
+  // ZBookingBar: persistent footer summary bar for the booking flow — composition
+  // over a native ZButton child; no platform split of its own (Custom-RN).
+  'z-booking-bar': 'custom-no-native',
   // ZListItem: a list ROW — a composition (leading/title/subtitle/trailing,
   // optionally pressable via Touchable), not a single OS widget. @expo/ui
   // exposes only container List/Section (iOS) and a slot-only ListItem without
