@@ -1,5 +1,7 @@
-import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { ZStepper, type ZStep } from './z-stepper';
+
+afterEach(cleanup);
 
 const steps: ZStep[] = [
   { label: 'Upload', state: 'completed' },
@@ -41,4 +43,39 @@ test('renders all five step labels without dropping any on narrow widths', async
   for (const step of fiveSteps) {
     expect(screen.getByText(step.label)).toBeOnTheScreen();
   }
+});
+
+const REACHED_STEPS: ZStep[] = [
+  { label: 'Expert', state: 'completed' },
+  { label: 'Type', state: 'active' },
+  { label: 'Time', state: 'upcoming' },
+  { label: 'Confirm', state: 'upcoming' },
+];
+
+test('reached gates press: index <= reached is pressable, beyond is not', async () => {
+  const user = userEvent.setup();
+  const onStepPress = jest.fn();
+  // reached = 2 → indices 0,1,2 pressable; index 3 locked
+  await render(<ZStepper steps={REACHED_STEPS} reached={2} onStepPress={onStepPress} />);
+
+  await user.press(screen.getByLabelText('Expert')); // index 0, reached
+  expect(onStepPress).toHaveBeenCalledWith(0);
+
+  onStepPress.mockClear();
+  await user.press(screen.getByLabelText('Time')); // index 2, == reached
+  expect(onStepPress).toHaveBeenCalledWith(2);
+
+  onStepPress.mockClear();
+  fireEvent.press(screen.getByLabelText('Confirm')); // index 3, > reached → locked
+  expect(onStepPress).not.toHaveBeenCalled();
+});
+
+test('without reached, falls back to upcoming-disabled behavior', async () => {
+  const user = userEvent.setup();
+  const onStepPress = jest.fn();
+  await render(<ZStepper steps={REACHED_STEPS} onStepPress={onStepPress} />);
+  fireEvent.press(screen.getByLabelText('Time')); // upcoming → disabled
+  expect(onStepPress).not.toHaveBeenCalled();
+  await user.press(screen.getByLabelText('Expert')); // completed → enabled
+  expect(onStepPress).toHaveBeenCalledWith(0);
 });

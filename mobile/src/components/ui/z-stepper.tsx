@@ -32,10 +32,17 @@ const labelClasses: Record<ZStepState, string> = {
 export function ZStepper({
   steps,
   onStepPress,
+  reached,
   testID,
 }: {
   steps: ZStep[];
   onStepPress?: (index: number) => void;
+  /**
+   * Highest step index the user has reached. When provided, a step is pressable
+   * iff `index <= reached` (enables back/forward jumps to visited steps).
+   * When omitted, falls back to the legacy rule: `upcoming` steps are disabled.
+   */
+  reached?: number;
   testID?: string;
 }) {
   const { color } = useRoleColors();
@@ -48,7 +55,7 @@ export function ZStepper({
       contentContainerStyle={{ flexDirection: 'row', alignItems: 'flex-start' }}
     >
       {steps.map((step, index) => {
-        const disabled = step.state === 'upcoming';
+        const disabled = reached != null ? index > reached : step.state === 'upcoming';
         return (
           <View key={index} className="flex-row items-start">
             {index > 0 ? (

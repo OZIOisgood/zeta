@@ -20,6 +20,19 @@ type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {};
 
+export const Navigable: Story = {
+  args: {
+    steps: [
+      { label: 'Expert', state: 'completed' },
+      { label: 'Type', state: 'active' },
+      { label: 'Time', state: 'upcoming' },
+      { label: 'Confirm', state: 'upcoming' },
+    ],
+    reached: 1,
+    onStepPress: () => {},
+  },
+};
+
 export const States: Story = {
   render: () => (
     <View className="gap-6">
