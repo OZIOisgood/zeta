@@ -132,6 +132,7 @@ func (h *Handler) deliverForward(ctx context.Context, row db.InboundEmail, email
 	forwardID, err := h.provider.ForwardReceivedEmail(
 		ctx,
 		email,
+		ForwardMetadata{Inbox: row.Inbox, InboxAddress: row.InboxAddress},
 		h.config.CopyRecipients,
 		h.config.ForwardFrom,
 		"inbound-forward-"+row.ResendEmailID,

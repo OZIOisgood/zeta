@@ -81,7 +81,7 @@ func (p *ResendProvider) ListReceivedEmails(ctx context.Context, limit int) ([]R
 	return emails, nil
 }
 
-func (p *ResendProvider) ForwardReceivedEmail(ctx context.Context, email ReceivedEmail, recipients []string, from, idempotencyKey string) (string, error) {
+func (p *ResendProvider) ForwardReceivedEmail(ctx context.Context, email ReceivedEmail, metadata ForwardMetadata, recipients []string, from, idempotencyKey string) (string, error) {
 	attachments := make([]*resend.Attachment, 0, len(email.Attachments))
 	for _, attachment := range email.Attachments {
 		if attachment.DownloadURL == "" {
@@ -94,16 +94,19 @@ func (p *ResendProvider) ForwardReceivedEmail(ctx context.Context, email Receive
 			ContentId:   strings.Trim(attachment.ContentID, "<>"),
 		})
 	}
+	content := buildForwardContent(email, metadata)
 
 	params := &resend.SendEmailRequest{
-		From:        from,
+		From:        forwardFrom(from, metadata.Inbox),
 		To:          recipients,
-		Subject:     forwardSubject(email.Subject),
-		Text:        email.Text,
-		Html:        email.HTML,
+		Subject:     forwardSubject(metadata.Inbox, email.Subject),
+		Text:        content.Text,
+		Html:        content.HTML,
 		Attachments: attachments,
 		Headers: map[string]string{
 			"X-Strido-Forwarded-Resend-ID": email.ID,
+			"X-Strido-Inbox":               metadata.Inbox,
+			"X-Strido-Original-To":         metadata.InboxAddress,
 		},
 	}
 	if address := parseAddress(email.From); address != "" {
@@ -171,12 +174,4 @@ func mapReceivedEmail(id, from string, to, cc, bcc []string, subject, messageID,
 		Text:      text,
 		HTML:      html,
 	}, nil
-}
-
-func forwardSubject(subject string) string {
-	subject = strings.TrimSpace(subject)
-	if subject == "" {
-		return "Fwd: (no subject)"
-	}
-	return "Fwd: " + subject
 }

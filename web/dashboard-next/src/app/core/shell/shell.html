@@ -357,7 +357,11 @@
                     <svg
                       lucideStar
                       class="size-6"
-                      [ngClass]="rating <= (feedbackRating() ?? 0) ? 'fill-amber-400' : ''"
+                      [ngClass]="
+                        rating <= (feedbackRating() ?? 0)
+                          ? 'fill-amber-400 stroke-amber-500 text-amber-500'
+                          : ''
+                      "
                       aria-hidden="true"
                     ></svg>
                   </button>
