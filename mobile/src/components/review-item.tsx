@@ -106,6 +106,7 @@ export function ReviewItem({
         alt={authorName}
         size={isReply ? 28 : 36}
         shape="circle"
+        tone="accent"
       />
 
       <View className="min-w-0 flex-1">

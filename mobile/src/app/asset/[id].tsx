@@ -32,15 +32,35 @@ import { Touchable } from '../../components/ui/touchable';
 import { colors } from '../../theme/colors';
 
 type AssetVideo = components['schemas']['AssetVideo'];
+type AssetGroup = NonNullable<components['schemas']['Asset']['group']>;
 
 function streamUrl(playbackId: string) {
   return `https://stream.mux.com/${playbackId}.m3u8`;
 }
 
-// ── Description clamp/show-more state ──────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
+ * Asset (video) detail — rebuilt to the UI-kit handoff
+ * (mobile/handoffs/handoff_ui_kit/design-references/screens.jsx `AssetDetail`).
+ *
+ * Layout, top to bottom:
+ *   • native header (Stack.Screen title) — carries the asset title
+ *   • player (edge-to-edge 16:9, native expo-video controls)
+ *   • ZVideoPartRail — clip switcher flush under the player (episode picker)
+ *   • content (p-4, gap-4):
+ *       – meta card: identity row (avatar · group · status badge) + clamped desc
+ *       – comments card: heading + review thread + composer
+ *
+ * Type scale is the handoff's, lifted ~1px because the app renders the brand
+ * font Nunito Sans (more compact than the Inter web mock): heading 19/800,
+ * names 16/700, body 15, muted labels 12/500. Avatars use the handoff's peach
+ * `accent` tone. Real functionality (queries, seeking, comment CRUD, finalize,
+ * permissions, four states) is unchanged from the prior implementation.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+// ── Description clamp / show-more state ────────────────────────────────────────
 // Both flags live in one reducer so the reset effect dispatches a single action
-// (satisfying react-hooks/set-state-in-effect, which flags multiple synchronous
-// setState setters inside one effect — same pattern as group preferences).
+// (satisfies react-hooks/set-state-in-effect, which flags multiple synchronous
+// setState setters in one effect — same pattern as group preferences).
 type DescState = { expanded: boolean; overflows: boolean };
 type DescAction = { type: 'reset' } | { type: 'toggle' } | { type: 'setOverflows'; value: boolean };
 
@@ -55,7 +75,7 @@ function descReducer(state: DescState, action: DescAction): DescState {
   }
 }
 
-// ── Player ───────────────────────────────────────────────────────────────────
+// ── Player ─────────────────────────────────────────────────────────────────────
 
 function Player({
   video,
@@ -71,15 +91,126 @@ function Player({
   }, [player, onPlayer]);
 
   return (
-    <VideoView
-      player={player}
-      style={{ width: '100%', height: '100%' }}
-      fullscreenOptions={{ enable: true }}
-    />
+    <VideoView player={player} style={{ width: '100%', height: '100%' }} fullscreenOptions={{ enable: true }} />
   );
 }
 
-// ── Reviews section ──────────────────────────────────────────────────────────
+// ── Meta card: identity row + clamped description ──────────────────────────────
+
+function MetaCard({
+  group,
+  description,
+  statusLabel,
+  statusTone,
+  canFinalize,
+  onPressGroup,
+  onPressFinalize,
+}: {
+  group: AssetGroup | undefined;
+  description: string;
+  statusLabel: string;
+  statusTone: 'success' | 'primary';
+  canFinalize: boolean;
+  onPressGroup: (groupId: string) => void;
+  onPressFinalize: () => void;
+}) {
+  const { t } = useTranslation();
+  const [desc, dispatchDesc] = useReducer(descReducer, { expanded: false, overflows: false });
+
+  // Reset the clamp state when the description changes, so a stale
+  // expanded/overflows can't leak across a route reuse / refetch.
+  useEffect(() => {
+    dispatchDesc({ type: 'reset' });
+  }, [description]);
+
+  return (
+    <ZCard className="gap-2.5">
+      {/* Identity row — group avatar + name, status badge pushed to the corner.
+          The asset title itself is carried by the native header. */}
+      {group ? (
+        <Touchable
+          onPress={() => onPressGroup(group.id)}
+          accessibilityLabel={group.name}
+          className="flex-row items-center gap-2"
+        >
+          <ZAvatar
+            image={group.avatar}
+            fallback={initialsFromName(group.name)}
+            size={24}
+            shape="circle"
+            tone="accent"
+            alt={group.name}
+          />
+          <Text className="flex-1 text-base font-bold text-z-text" numberOfLines={1}>
+            {group.name}
+          </Text>
+          {/* Wrap so the row's items-center wins over ZBadge's baked-in self-start. */}
+          <View>
+            <ZBadge label={statusLabel} tone={statusTone} />
+          </View>
+        </Touchable>
+      ) : (
+        <View className="flex-row items-center justify-end">
+          <ZBadge label={statusLabel} tone={statusTone} />
+        </View>
+      )}
+
+      {/* Description — clamped to 2 lines with a show-more toggle. Mobile renders
+          nothing when empty (native density); the web shows a placeholder. */}
+      {description ? (
+        <View className="gap-1">
+          <Text
+            testID="asset-description"
+            className="text-[15px] leading-[22px] text-z-muted"
+            numberOfLines={desc.expanded ? undefined : 2}
+          >
+            {description}
+          </Text>
+          {/* Hidden, unclamped "ghost" measurer. We can't measure overflow on the
+              visible (clamped) Text: onTextLayout.lines is platform-divergent under
+              numberOfLines — iOS reports the full count, Android caps it at the
+              clamp (≤2), so the toggle would never appear on Android. This twin
+              spans the same width with NO clamp, giving the true line count on both
+              platforms. Keep its size/line-height identical to the visible Text. */}
+          <Text
+            testID="desc-measure"
+            aria-hidden
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={{ position: 'absolute', left: 0, right: 0, opacity: 0 }}
+            className="text-[15px] leading-[22px]"
+            onTextLayout={(e) => dispatchDesc({ type: 'setOverflows', value: e.nativeEvent.lines.length > 2 })}
+          >
+            {description}
+          </Text>
+          {desc.overflows ? (
+            <Touchable
+              testID="asset-description-toggle"
+              accessibilityLabel={desc.expanded ? t('videos.showLess') : t('videos.showMore')}
+              onPress={() => dispatchDesc({ type: 'toggle' })}
+              className="self-start"
+            >
+              <Text className="text-[13px] font-bold text-z-primary">
+                {desc.expanded ? t('videos.showLess') : t('videos.showMore')}
+              </Text>
+            </Touchable>
+          ) : null}
+        </View>
+      ) : null}
+
+      {canFinalize ? (
+        <ZButton
+          label={t('videos.markReviewed')}
+          testID="asset-finalize"
+          icon={<ZSymbol name="check" label={t('videos.markReviewed')} size={16} color={colors.onPrimary} />}
+          onPress={onPressFinalize}
+        />
+      ) : null}
+    </ZCard>
+  );
+}
+
+// ── Comments card: heading + review thread + composer ──────────────────────────
 
 function ReviewsSkeleton() {
   return (
@@ -148,7 +279,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
     }
   }
 
-  // Thread: top-level reviews sorted by created_at ASC
+  // Top-level reviews, oldest first.
   const topLevel = useMemo(
     () =>
       (data ?? [])
@@ -157,7 +288,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
     [data],
   );
 
-  // Replies grouped by parent id
+  // Replies grouped by parent id, each group oldest first.
   const repliesByParent = useMemo(() => {
     const map = new Map<string, Review[]>();
     for (const r of data ?? []) {
@@ -167,7 +298,6 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
         map.set(r.parent_id, arr);
       }
     }
-    // sort each group ASC
     for (const [, arr] of map) {
       arr.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     }
@@ -186,6 +316,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
 
   return (
     <ZCard className="gap-4">
+      {/* Heading — icon · "Kommentare" · count, with breathing room beneath. */}
       <View className="mb-3 flex-row items-center gap-2">
         <ZSymbol name="message" label={t('videos.comments')} size={20} color={colors.primary} />
         <Text className="text-[19px] font-extrabold text-z-text">{t('videos.comments')}</Text>
@@ -221,7 +352,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
               onEnhance={canEdit ? handleEnhance : undefined}
               deleting={deleting && pendingDelete?.id === review.id}
             />
-            {/* Replies render inline (matches the handoff — no collapse control). */}
+            {/* Replies render inline, indented (handoff has no collapse control). */}
             {(repliesByParent.get(review.id) ?? []).map((reply) => (
               <View key={reply.id} className="ps-[22px]">
                 <ReviewItem
@@ -239,7 +370,9 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
         ))}
 
       {mutationError ? (
-        <Text testID="mutation-error-banner" className="text-sm text-z-danger">{mutationError}</Text>
+        <Text testID="mutation-error-banner" className="text-sm text-z-danger">
+          {mutationError}
+        </Text>
       ) : null}
 
       {canCompose && (
@@ -268,7 +401,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
   );
 }
 
-// ── Screen ───────────────────────────────────────────────────────────────────
+// ── Screen ─────────────────────────────────────────────────────────────────────
 
 export default function AssetDetailScreen() {
   const { t } = useTranslation();
@@ -283,22 +416,11 @@ export default function AssetDetailScreen() {
   const canDelete = (permissions?.includes('reviews:delete') ?? false) && !isFinalized;
   const canFinalize = (permissions?.includes('assets:finalize') ?? false) && !isFinalized;
 
-  // Finalize
+  // Finalize flow.
   const { mutateAsync: finalizeAsset } = useFinalizeAssetMutation(id ?? '');
   const [finalizeOpen, setFinalizeOpen] = useState(false);
   const [unreviewedOpen, setUnreviewedOpen] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
-
-  // Description clamp/show-more state for the meta card.
-  const [desc, dispatchDesc] = useReducer(descReducer, { expanded: false, overflows: false });
-  const descExpanded = desc.expanded;
-  const descOverflows = desc.overflows;
-
-  // Reset the description UI when the asset (or its description) changes, so a
-  // stale "expanded"/"overflows" state can't leak across a route reuse/refetch.
-  useEffect(() => {
-    dispatchDesc({ type: 'reset' });
-  }, [id, data?.description]);
 
   async function confirmFinalize() {
     if (finalizing) return;
@@ -316,15 +438,15 @@ export default function AssetDetailScreen() {
 
   function onPressFinalize() {
     const hasUnreviewed = (data?.videos ?? []).some((v) => v.review_count === 0);
-    if (hasUnreviewed) {
-      setUnreviewedOpen(true);
-    } else {
-      setFinalizeOpen(true);
-    }
+    if (hasUnreviewed) setUnreviewedOpen(true);
+    else setFinalizeOpen(true);
   }
 
-  // Player ref for seeking
+  // Player ref for seeking from comment timecodes.
   const playerRef = useRef<ReturnType<typeof useVideoPlayer> | null>(null);
+  const handlePlayer = useCallback((p: ReturnType<typeof useVideoPlayer>) => {
+    playerRef.current = p;
+  }, []);
 
   function seekTo(seconds: number) {
     const p = playerRef.current;
@@ -338,19 +460,11 @@ export default function AssetDetailScreen() {
     return playerRef.current?.currentTime ?? 0;
   }
 
-  const playable = useMemo(
-    () => (data?.videos ?? []).filter((v) => v.playback_id !== ''),
-    [data],
-  );
+  // The active clip drives the player source AND the per-part comment thread
+  // (both keyed on active.id, so switching remounts both).
+  const playable = useMemo(() => (data?.videos ?? []).filter((v) => v.playback_id !== ''), [data]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = playable.find((v) => v.id === activeId) ?? playable[0] ?? null;
-
-  const handlePlayer = useCallback(
-    (p: ReturnType<typeof useVideoPlayer>) => {
-      playerRef.current = p;
-    },
-    [],
-  );
 
   if (isPending) {
     return (
@@ -375,26 +489,20 @@ export default function AssetDetailScreen() {
   }
 
   const videos = data.videos ?? [];
-  const group = data.group;
   const statusLabel =
     data.status === 'completed' ? t('common.status.reviewed') : t('common.status.inReview');
-  const statusTone = data.status === 'completed' ? 'success' : 'primary';
+  const statusTone: 'success' | 'primary' = data.status === 'completed' ? 'success' : 'primary';
 
   return (
-    // The video player stays edge-to-edge at the top; the content below it
-    // never reaches the status bar, so only the bottom inset is needed.
+    // The player stays edge-to-edge at the top; content below it never reaches
+    // the status bar, so only the bottom inset is applied.
     <ZScreen edges={['bottom']}>
-      {/* Dynamic title: set once asset data is available. Shows the asset title
-          in the native header (short, truncated by the OS). */}
       <Stack.Screen options={{ title: data.title }} />
       <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ paddingBottom: 32 }}>
+        {/* Player (edge-to-edge 16:9). */}
         <View className="aspect-video w-full items-center justify-center bg-black">
           {active ? (
-            <Player
-              key={active.id}
-              video={active}
-              onPlayer={handlePlayer}
-            />
+            <Player key={active.id} video={active} onPlayer={handlePlayer} />
           ) : (
             <View className="items-center gap-2">
               <ZSymbol name="clock" label={t('videos.processingUnavailable')} size={28} color={colors.bg} />
@@ -403,11 +511,8 @@ export default function AssetDetailScreen() {
           )}
         </View>
 
-        {/* Video-parts rail — a clip switcher flush under the player (episode
-            picker). Renders nothing for a single clip; a subtle pill row for
-            2–5 clips; a "Part X of N" trigger + bottom sheet for many. Switching
-            drives `active`, so the player source AND the per-part comment thread
-            remount on change (both keyed on `active.id`). */}
+        {/* Clip switcher flush under the player: nothing for one clip, a pill row
+            for 2–5, a "Part X of N" trigger + sheet for many. */}
         <ZVideoPartRail
           parts={videos.map((v) => ({ id: v.id, ready: v.playback_id !== '' }))}
           activeId={active?.id ?? null}
@@ -415,90 +520,16 @@ export default function AssetDetailScreen() {
         />
 
         <View className="gap-4 p-4">
-          {/* Metadata card: identity row (group + status) and description.
-              The asset title is carried by the native header (Stack.Screen). */}
-          <ZCard className="gap-2.5">
-            {group ? (
-              <Touchable
-                onPress={() => router.push(`/group/${group.id}`)}
-                accessibilityLabel={group.name}
-                className="flex-row items-center gap-2"
-              >
-                <ZAvatar image={group.avatar} fallback={initialsFromName(group.name)} size={24} shape="circle" alt={group.name} />
-                <Text className="flex-1 text-base font-bold text-z-text" numberOfLines={1}>
-                  {group.name}
-                </Text>
-                {/* Wrap so the row's items-center wins: ZBadge has a baked-in
-                    self-start that would otherwise top-align it next to the
-                    taller avatar/name. */}
-                <View>
-                  <ZBadge label={statusLabel} tone={statusTone} />
-                </View>
-              </Touchable>
-            ) : (
-              <View className="flex-row items-center justify-end">
-                <ZBadge label={statusLabel} tone={statusTone} />
-              </View>
-            )}
-            {/* Mobile intentionally renders nothing when there is no description
-                (native density). The web dashboard instead shows the
-                `videos.phase4.noDescription` placeholder — a deliberate
-                divergence, not a missing case. */}
-            {data.description ? (
-              <View className="gap-1">
-                <Text
-                  testID="asset-description"
-                  className="text-[15px] leading-[22px] text-z-muted"
-                  numberOfLines={descExpanded ? undefined : 2}
-                >
-                  {data.description}
-                </Text>
-                {/* Hidden, unclamped "ghost" measurer. We CANNOT measure overflow
-                    on the visible (clamped) Text: `onTextLayout.lines` is
-                    platform-divergent when numberOfLines is set — iOS reports the
-                    full pre-clamp line count, but Android caps it at numberOfLines
-                    (≤2), so the toggle would never appear on Android. This twin
-                    spans the same content width with NO clamp, so lines.length is
-                    the TRUE line count on both platforms. Keep its text styling
-                    (text-sm / line-height) identical to the visible Text. */}
-                <Text
-                  testID="desc-measure"
-                  aria-hidden
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                  style={{ position: 'absolute', left: 0, right: 0, opacity: 0 }}
-                  className="text-[15px] leading-[22px]"
-                  onTextLayout={(e) =>
-                    dispatchDesc({ type: 'setOverflows', value: e.nativeEvent.lines.length > 2 })
-                  }
-                >
-                  {data.description}
-                </Text>
-                {descOverflows ? (
-                  <Touchable
-                    testID="asset-description-toggle"
-                    accessibilityLabel={descExpanded ? t('videos.showLess') : t('videos.showMore')}
-                    onPress={() => dispatchDesc({ type: 'toggle' })}
-                    className="self-start"
-                  >
-                    <Text className="text-[13px] font-bold text-z-primary">
-                      {descExpanded ? t('videos.showLess') : t('videos.showMore')}
-                    </Text>
-                  </Touchable>
-                ) : null}
-              </View>
-            ) : null}
-            {canFinalize ? (
-              <ZButton
-                label={t('videos.markReviewed')}
-                testID="asset-finalize"
-                icon={<ZSymbol name="check" label={t('videos.markReviewed')} size={16} color={colors.onPrimary} />}
-                onPress={onPressFinalize}
-              />
-            ) : null}
-          </ZCard>
+          <MetaCard
+            group={data.group}
+            description={data.description}
+            statusLabel={statusLabel}
+            statusTone={statusTone}
+            canFinalize={canFinalize}
+            onPressGroup={(groupId) => router.push(`/group/${groupId}`)}
+            onPressFinalize={onPressFinalize}
+          />
 
-          {/* Comments card. */}
           {active ? (
             <ReviewsSection
               key={active.id}
