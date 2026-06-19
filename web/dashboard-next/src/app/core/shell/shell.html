@@ -50,7 +50,16 @@
         }
       </nav>
 
-      <div class="border-t border-[var(--z-border)] pt-3">
+      <div class="space-y-1 border-t border-[var(--z-border)] pt-3">
+        <button
+          type="button"
+          class="flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+          [attr.aria-label]="'feedback.open' | transloco"
+          (click)="openFeedback(feedbackDialog)"
+        >
+          <svg lucideMessageSquareText class="size-4" aria-hidden="true"></svg>
+          <span>{{ 'feedback.button' | transloco }}</span>
+        </button>
         <z-dropdown-menu
           [label]="'common.legal.menu' | transloco"
           [items]="legalLinks()"
@@ -282,7 +291,16 @@
               }
             </nav>
 
-            <div class="border-t border-[var(--z-border)] pt-3">
+            <div class="space-y-1 border-t border-[var(--z-border)] pt-3">
+              <button
+                type="button"
+                class="flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                [attr.aria-label]="'feedback.open' | transloco"
+                (click)="shell.closeNavigation(); openFeedback(feedbackDialog)"
+              >
+                <svg lucideMessageSquareText class="size-4" aria-hidden="true"></svg>
+                <span>{{ 'feedback.button' | transloco }}</span>
+              </button>
               <z-dropdown-menu
                 [label]="'common.legal.menu' | transloco"
                 [items]="legalLinks()"
@@ -365,25 +383,6 @@
           <svg z-dialog-confirm-icon lucideSend class="size-4" aria-hidden="true"></svg>
         </z-action-dialog>
       </ng-template>
-
-      <z-icon-button
-        class="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-20 shadow-lg shadow-orange-950/10 sm:hidden"
-        variant="secondary"
-        [label]="'feedback.open' | transloco"
-        (pressed)="openFeedback(feedbackDialog)"
-      >
-        <svg lucideMessageSquareText class="size-5" aria-hidden="true"></svg>
-      </z-icon-button>
-
-      <z-button
-        class="fixed bottom-6 right-6 z-40 hidden shadow-lg shadow-orange-950/10 sm:inline-flex"
-        variant="secondary"
-        [ariaLabel]="'feedback.open' | transloco"
-        (pressed)="openFeedback(feedbackDialog)"
-      >
-        <svg lucideMessageSquareText class="size-4" aria-hidden="true"></svg>
-        <span>{{ 'feedback.button' | transloco }}</span>
-      </z-button>
 
       @if (shell.isToastVisible()) {
         <div
