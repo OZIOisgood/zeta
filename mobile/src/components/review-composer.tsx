@@ -162,7 +162,7 @@ export function ReviewComposer({
           disabled={!content.trim() || busy}
           onPress={() => void handleSend()}
         >
-          <Send color={colors.bg} size={16} />
+          <Send color={colors.onPrimary} size={16} />
         </ZIconButton>
       </View>
     </View>
