@@ -63,6 +63,7 @@
 
 - Prioritize correctness, authorization/visibility regressions, data leaks, config drift, missing tests, and broken build paths.
 - Check permission changes against `internal/permissions/permissions.go`.
+- For every new or renamed permission, use the WorkOS Authorization API with `WORKOS_API_KEY` from the target environment's `.env` to create/update its name and description, add it to the intended roles, and verify the live role assignments. Prefer additive role-permission calls; never use the replace-all endpoint unless intentionally reconciling the complete role permission set.
 - For UI reviews, check responsive layout, accessible primitives, keyboard behavior, loading/empty/error states, and copy terminology.
 - For logging reviews, treat sensitive data in logs as high severity.
 

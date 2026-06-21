@@ -14,6 +14,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
 	"github.com/OZIOisgood/zeta/internal/permissions"
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
@@ -30,7 +31,7 @@ func (f *fakeRefresher) RefreshSessionCookies(ctx context.Context, w http.Respon
 func redeemRequestFor(userID, role, code string) *http.Request {
 	body, _ := json.Marshal(map[string]string{"code": code})
 	req := httptest.NewRequest(http.MethodPost, "/access/redeem", bytes.NewReader(body))
-	return req.WithContext(context.WithValue(req.Context(), auth.UserKey, &auth.UserContext{ID: userID, Role: role, Permissions: []string{}}))
+	return req.WithContext(context.WithValue(req.Context(), auth.UserKey, &auth.UserContext{ID: userID, Email: "x@y.z", Role: role, Permissions: []string{}}))
 }
 
 func TestRedeemExpertCodeUpgradesRole(t *testing.T) {
@@ -74,6 +75,7 @@ func TestRedeemGroupCodeActivatesStudent(t *testing.T) {
 	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "GRP123").Return(db.GroupInvitation{Status: db.InvitationStatusPending}, nil)
 	q.EXPECT().CheckUserGroup(gomock.Any(), gomock.Any()).Return(false, nil)
 	q.EXPECT().AddUserToGroup(gomock.Any(), gomock.Any()).Return(nil)
+	q.EXPECT().GetGroup(gomock.Any(), gomock.Any()).Return(db.Group{Name: "Training group"}, nil)
 	q.EXPECT().ActivateUserAccess(gomock.Any(), gomock.Any()).Return(db.UserAccess{Status: db.AccessStatusActive}, nil)
 
 	h := NewHandler(q, workos, &fakeRefresher{}, slog.Default())
@@ -106,6 +108,7 @@ func TestRedeemNormalizesCodeInput(t *testing.T) {
 	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "GRP123").Return(db.GroupInvitation{Status: db.InvitationStatusPending}, nil)
 	q.EXPECT().CheckUserGroup(gomock.Any(), gomock.Any()).Return(false, nil)
 	q.EXPECT().AddUserToGroup(gomock.Any(), gomock.Any()).Return(nil)
+	q.EXPECT().GetGroup(gomock.Any(), gomock.Any()).Return(db.Group{Name: "Training group"}, nil)
 	q.EXPECT().ActivateUserAccess(gomock.Any(), gomock.Any()).Return(db.UserAccess{Status: db.AccessStatusActive}, nil)
 
 	h := NewHandler(q, workos, &fakeRefresher{}, slog.Default())
@@ -148,6 +151,7 @@ func TestRedeemPendingEmailInviteMarksAccepted(t *testing.T) {
 	q.EXPECT().CheckUserGroup(gomock.Any(), gomock.Any()).Return(false, nil)
 	q.EXPECT().AddUserToGroup(gomock.Any(), gomock.Any()).Return(nil)
 	q.EXPECT().UpdateGroupInvitationStatus(gomock.Any(), gomock.Any()).Return(nil)
+	q.EXPECT().GetGroup(gomock.Any(), gomock.Any()).Return(db.Group{Name: "Training group"}, nil)
 	q.EXPECT().ActivateUserAccess(gomock.Any(), gomock.Any()).Return(db.UserAccess{Status: db.AccessStatusActive}, nil)
 
 	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
@@ -156,6 +160,23 @@ func TestRedeemPendingEmailInviteMarksAccepted(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestRedeemEmailInviteRejectsDifferentRecipient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	q.EXPECT().GetUserAccess(gomock.Any(), "user_wrong").Return(db.UserAccess{Status: db.AccessStatusWaitlisted}, nil)
+	q.EXPECT().ConsumeSignupCode(gomock.Any(), gomock.Any()).Return(db.SignupCode{}, pgx.ErrNoRows)
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "EMA11PEND").Return(
+		db.GroupInvitation{Email: pgtype.Text{String: "invited@example.com", Valid: true}, Status: db.InvitationStatusPending}, nil)
+
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	rec := httptest.NewRecorder()
+	h.Redeem(rec, redeemRequestFor("user_wrong", permissions.RoleStudent, "EMA11PEND"))
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rec.Code)
 	}
 }
 
@@ -206,55 +227,98 @@ func TestRedeemAlreadyActiveIsNoOp(t *testing.T) {
 	}
 }
 
-func TestListCodesLazilySeedsFiveForExpert(t *testing.T) {
+func TestRedeemActiveStudentExpertCodeUpgradesRole(t *testing.T) {
+	t.Setenv("DEFAULT_ORG_ID", "org_123")
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	q.EXPECT().CountSignupCodesByOwner(gomock.Any(), "exp_1").Return(int64(0), nil)
-	q.EXPECT().CreateSignupCode(gomock.Any(), gomock.Any()).Times(ExpertCodeAllotment).Return(db.SignupCode{}, nil)
-	q.EXPECT().ListSignupCodesByOwner(gomock.Any(), "exp_1").Return([]db.SignupCode{
+	workos := authmocks.NewMockUserManagement(ctrl)
+	ref := &fakeRefresher{}
+
+	q.EXPECT().GetUserAccess(gomock.Any(), "student_active").Return(
+		db.UserAccess{UserID: "student_active", Status: db.AccessStatusActive}, nil)
+	q.EXPECT().ConsumeSignupCode(gomock.Any(), db.ConsumeSignupCodeParams{
+		Code: "EXPERT01", RedeemedByUserID: pgtype.Text{String: "student_active", Valid: true},
+	}).Return(db.SignupCode{Code: "EXPERT01"}, nil)
+	workos.EXPECT().ListOrganizationMemberships(gomock.Any(), gomock.Any()).Return(
+		usermanagement.ListOrganizationMembershipsResponse{
+			Data: []usermanagement.OrganizationMembership{{ID: "om_student"}},
+		}, nil)
+	workos.EXPECT().UpdateOrganizationMembership(
+		gomock.Any(), "om_student",
+		usermanagement.UpdateOrganizationMembershipOpts{RoleSlug: permissions.RoleExpert},
+	).Return(usermanagement.OrganizationMembership{}, nil)
+	q.EXPECT().ActivateUserAccess(gomock.Any(), gomock.Any()).Return(
+		db.UserAccess{UserID: "student_active", Status: db.AccessStatusActive}, nil)
+
+	h := NewHandler(q, workos, ref, slog.Default())
+	rec := httptest.NewRecorder()
+	h.Redeem(rec, redeemRequestFor("student_active", permissions.RoleStudent, "EXPERT01"))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
+	}
+	if !ref.called {
+		t.Fatal("expected session refresh after active student role upgrade")
+	}
+}
+
+func TestListCodesReturnsPersonalAllowance(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	existing := []db.SignupCode{
 		{Code: "AAAA1111", Status: db.SignupCodeStatusAvailable},
-	}, nil)
+		{Code: "BBBB2222", Status: db.SignupCodeStatusConsumed},
+	}
+	complete := append(append([]db.SignupCode{}, existing...),
+		db.SignupCode{Code: "CCCC3333", Status: db.SignupCodeStatusAvailable},
+		db.SignupCode{Code: "DDDD4444", Status: db.SignupCodeStatusAvailable},
+		db.SignupCode{Code: "EEEE5555", Status: db.SignupCodeStatusAvailable},
+	)
+	q.EXPECT().ListSignupCodesByOwner(gomock.Any(), "exp_1").Return(existing, nil)
+	q.EXPECT().CreateSignupCodeWithinLimit(gomock.Any(), gomock.Any()).Times(3).
+		Return(db.SignupCode{Status: db.SignupCodeStatusAvailable}, nil)
+	q.EXPECT().ListSignupCodesByOwner(gomock.Any(), "exp_1").Return(complete, nil)
 
 	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
 	req := httptest.NewRequest(http.MethodGet, "/access/codes", nil).
-		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "exp_1", Role: permissions.RoleExpert}))
+		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "exp_1", Permissions: []string{permissions.AccessInviteCodesRead}}))
 	rec := httptest.NewRecorder()
 	h.ListCodes(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
 	}
-}
-
-func TestGenerateCodesRequiresAdmin(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	q := dbmocks.NewMockQuerier(ctrl)
-	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
-
-	body := bytes.NewReader([]byte(`{"count":3}`))
-	req := httptest.NewRequest(http.MethodPost, "/access/codes", body).
-		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "exp_1", Role: permissions.RoleExpert}))
-	rec := httptest.NewRecorder()
-	h.GenerateCodes(rec, req)
-
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("status = %d, want 403", rec.Code)
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body["successful_referrals"] != float64(1) || body["remaining_referrals"] != float64(4) {
+		t.Fatalf("unexpected allowance: %v", body)
 	}
 }
 
-func TestGenerateCodesAdminMintsCount(t *testing.T) {
+func TestPreviewGroupInvitationForWaitlistedRecipient(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)
-	q.EXPECT().CreateSignupCode(gomock.Any(), gomock.Any()).Times(3).Return(db.SignupCode{}, nil)
-	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	groupID := pgtype.UUID{Bytes: [16]byte{2}, Valid: true}
+	q.EXPECT().GetGroupInvitationByCode(gomock.Any(), "GR0UP123").Return(db.GroupInvitation{
+		GroupID: groupID, Email: pgtype.Text{String: "x@y.z", Valid: true}, Status: db.InvitationStatusPending,
+	}, nil)
+	q.EXPECT().GetGroup(gomock.Any(), groupID).Return(db.Group{ID: groupID, Name: "Morning training", Avatar: "avatar"}, nil)
+	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{UserID: "wait_1", GroupID: groupID}).Return(false, nil)
 
-	body := bytes.NewReader([]byte(`{"count":3}`))
-	req := httptest.NewRequest(http.MethodPost, "/access/codes", body).
-		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "adm_1", Role: permissions.RoleAdmin}))
+	h := NewHandler(q, authmocks.NewMockUserManagement(ctrl), &fakeRefresher{}, slog.Default())
+	router := chi.NewRouter()
+	router.Get("/access/group-invitations/{code}", h.PreviewGroupInvitation)
+	req := httptest.NewRequest(http.MethodGet, "/access/group-invitations/GR0UP123", nil).
+		WithContext(context.WithValue(context.Background(), auth.UserKey, &auth.UserContext{ID: "wait_1", Email: "X@Y.Z"}))
 	rec := httptest.NewRecorder()
-	h.GenerateCodes(rec, req)
-	if rec.Code != http.StatusCreated {
-		t.Fatalf("status = %d, want 201", rec.Code)
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", rec.Code, rec.Body.String())
+	}
+	if !bytes.Contains(rec.Body.Bytes(), []byte("Morning training")) {
+		t.Fatalf("response missing group context: %s", rec.Body.String())
 	}
 }
 

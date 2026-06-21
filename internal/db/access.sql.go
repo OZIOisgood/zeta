@@ -64,7 +64,8 @@ func (q *Queries) ConsumeSignupCode(ctx context.Context, arg ConsumeSignupCodePa
 }
 
 const countSignupCodesByOwner = `-- name: CountSignupCodesByOwner :one
-SELECT COUNT(*) FROM signup_codes WHERE owner_user_id = $1
+SELECT COUNT(*) FROM signup_codes
+WHERE owner_user_id = $1
 `
 
 func (q *Queries) CountSignupCodesByOwner(ctx context.Context, ownerUserID string) (int64, error) {
@@ -74,19 +75,26 @@ func (q *Queries) CountSignupCodesByOwner(ctx context.Context, ownerUserID strin
 	return count, err
 }
 
-const createSignupCode = `-- name: CreateSignupCode :one
+const createSignupCodeWithinLimit = `-- name: CreateSignupCodeWithinLimit :one
 INSERT INTO signup_codes (code, owner_user_id)
-VALUES ($1, $2)
+SELECT $1, $2
+FROM (SELECT pg_advisory_xact_lock(hashtextextended($2, 0))) AS owner_lock
+WHERE (
+    SELECT COUNT(*)
+    FROM signup_codes AS existing
+    WHERE existing.owner_user_id = $2
+) < $3::bigint
 RETURNING id, code, owner_user_id, status, redeemed_by_user_id, consumed_at, created_at
 `
 
-type CreateSignupCodeParams struct {
-	Code        string `json:"code"`
-	OwnerUserID string `json:"owner_user_id"`
+type CreateSignupCodeWithinLimitParams struct {
+	Code      string `json:"code"`
+	OwnerID   string `json:"owner_id"`
+	CodeLimit int64  `json:"code_limit"`
 }
 
-func (q *Queries) CreateSignupCode(ctx context.Context, arg CreateSignupCodeParams) (SignupCode, error) {
-	row := q.db.QueryRow(ctx, createSignupCode, arg.Code, arg.OwnerUserID)
+func (q *Queries) CreateSignupCodeWithinLimit(ctx context.Context, arg CreateSignupCodeWithinLimitParams) (SignupCode, error) {
+	row := q.db.QueryRow(ctx, createSignupCodeWithinLimit, arg.Code, arg.OwnerID, arg.CodeLimit)
 	var i SignupCode
 	err := row.Scan(
 		&i.ID,
@@ -138,7 +146,8 @@ func (q *Queries) GetUserAccess(ctx context.Context, userID string) (UserAccess,
 }
 
 const listSignupCodesByOwner = `-- name: ListSignupCodesByOwner :many
-SELECT id, code, owner_user_id, status, redeemed_by_user_id, consumed_at, created_at FROM signup_codes WHERE owner_user_id = $1 ORDER BY created_at ASC
+SELECT id, code, owner_user_id, status, redeemed_by_user_id, consumed_at, created_at
+FROM signup_codes WHERE owner_user_id = $1 ORDER BY created_at ASC
 `
 
 func (q *Queries) ListSignupCodesByOwner(ctx context.Context, ownerUserID string) ([]SignupCode, error) {

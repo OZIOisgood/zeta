@@ -219,13 +219,13 @@ func (s *Server) routes(ctx context.Context) {
 
 		// Reachable while waitlisted: redeem an invite code to activate.
 		r.Post("/access/redeem", accessHandler.Redeem)
+		r.Get("/access/group-invitations/{code}", accessHandler.PreviewGroupInvitation)
 
 		// Everything else requires an activated account.
 		r.Group(func(r chi.Router) {
 			r.Use(accessHandler.RequireActiveAccess)
 
 			r.Get("/access/codes", accessHandler.ListCodes)
-			r.Post("/access/codes", accessHandler.GenerateCodes)
 
 			r.Route("/assets", assetsHandler.RegisterRoutes)
 			r.Route("/assets/videos", reviewsHandler.RegisterRoutes)
@@ -243,6 +243,8 @@ func (s *Server) routes(ctx context.Context) {
 				r.Get("/{groupID}/experts", usersHandler.ListGroupExperts)
 				r.Delete("/{groupID}/users/{userID}", usersHandler.RemoveGroupUser)
 				r.Post("/{groupID}/invitations", invitationsHandler.CreateInvitation)
+				r.Get("/{groupID}/invitations", invitationsHandler.ListInvitations)
+				r.Delete("/{groupID}/invitations/{invitationID}", invitationsHandler.RevokeInvitation)
 				r.Get("/{groupID}/invitations/{invitationID}/qr", invitationsHandler.GetInvitationQR)
 				r.Get("/invitations/{code}", invitationsHandler.GetInvitationInfo)
 				r.Post("/invitations/accept", invitationsHandler.AcceptInvitation)

@@ -29,7 +29,15 @@ export type GroupMember = {
 export type GroupInvitation = {
   id: string;
   code: string;
+  delivery: 'email' | 'link';
+  email?: string;
+  status: 'pending' | 'accepted' | 'declined' | 'revoked';
+  invite_url: string;
+  created_at?: string;
+  status_changed_at?: string;
 };
+
+export type GroupInvitationsResponse = { invitations: GroupInvitation[] };
 
 export type GroupInvitationInfo = {
   code: string;
@@ -108,6 +116,16 @@ export class GroupsApiClient {
     return this.http.post<GroupInvitation>(`${this.apiUrl}/${groupId}/invitations`, {
       email: email || undefined,
     });
+  }
+
+  listGroupInvitations(groupId: string): Observable<GroupInvitation[]> {
+    return this.http
+      .get<GroupInvitationsResponse>(`${this.apiUrl}/${groupId}/invitations`)
+      .pipe(map((response) => response.invitations));
+  }
+
+  revokeGroupInvitation(groupId: string, invitationId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${groupId}/invitations/${invitationId}`);
   }
 
   getGroupInvitationQrCode(groupId: string, invitationId: string): Observable<Blob> {

@@ -15,6 +15,8 @@ export type Permission =
   | 'groups:user-list:delete'
   | 'groups:membership:leave'
   | 'groups:invites:create'
+  | 'groups:invites:read'
+  | 'groups:invites:revoke'
   | 'groups:preferences:edit'
   | 'groups:delete'
   | 'coaching:availability:manage'

@@ -100,6 +100,83 @@ func TestCreateInvitationAllowsMissingEmail(t *testing.T) {
 	}
 }
 
+func TestListInvitationsReturnsDeliveryAndStatus(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, slog.Default(), "http://localhost:4200")
+
+	groupID := "11111111-1111-1111-1111-111111111111"
+	pgGroupID := invitationTestUUID(t, groupID)
+	invitationID := invitationTestUUID(t, "22222222-2222-2222-2222-222222222222")
+	createdAt := time.Date(2026, 6, 21, 12, 0, 0, 0, time.UTC)
+
+	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{
+		UserID: "user-1", GroupID: pgGroupID,
+	}).Return(true, nil)
+	q.EXPECT().ListGroupInvitations(gomock.Any(), pgGroupID).Return([]db.GroupInvitation{{
+		ID: invitationID, GroupID: pgGroupID, InviterID: "user-1",
+		Email: pgtype.Text{}, Code: "QY92265W", Status: db.InvitationStatusPending,
+		CreatedAt: pgtype.Timestamptz{Time: createdAt, Valid: true},
+	}}, nil)
+
+	router := chi.NewRouter()
+	router.Get("/groups/{groupID}/invitations", h.ListInvitations)
+	req := httptest.NewRequest(http.MethodGet, "/groups/"+groupID+"/invitations", nil)
+	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{
+		ID: "user-1", Role: "expert", Permissions: []string{permissions.GroupsInvitesRead},
+	}))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got status %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	var body struct {
+		Invitations []groupInvitationView `json:"invitations"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Invitations) != 1 {
+		t.Fatalf("got %d invitations, want 1", len(body.Invitations))
+	}
+	got := body.Invitations[0]
+	if got.Delivery != "link" || got.Status != "pending" || got.InviteURL != "http://localhost:4200/groups?invite=QY92265W" {
+		t.Fatalf("unexpected invitation view: %+v", got)
+	}
+}
+
+func TestRevokeInvitationRevokesPendingInvitation(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, slog.Default(), "http://localhost:4200")
+
+	groupID := "11111111-1111-1111-1111-111111111111"
+	invitationID := "22222222-2222-2222-2222-222222222222"
+	pgGroupID := invitationTestUUID(t, groupID)
+	pgInvitationID := invitationTestUUID(t, invitationID)
+
+	q.EXPECT().CheckUserGroup(gomock.Any(), db.CheckUserGroupParams{
+		UserID: "user-1", GroupID: pgGroupID,
+	}).Return(true, nil)
+	q.EXPECT().RevokeGroupInvitation(gomock.Any(), db.RevokeGroupInvitationParams{
+		ID: pgInvitationID, GroupID: pgGroupID,
+	}).Return(db.GroupInvitation{ID: pgInvitationID, GroupID: pgGroupID, Status: db.InvitationStatusRevoked}, nil)
+
+	router := chi.NewRouter()
+	router.Delete("/groups/{groupID}/invitations/{invitationID}", h.RevokeInvitation)
+	req := httptest.NewRequest(http.MethodDelete, "/groups/"+groupID+"/invitations/"+invitationID, nil)
+	req = req.WithContext(invitationTestContext(req.Context(), &auth.UserContext{
+		ID: "user-1", Role: "expert", Permissions: []string{permissions.GroupsInvitesRevoke},
+	}))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("got status %d, want %d; body: %s", rec.Code, http.StatusNoContent, rec.Body.String())
+	}
+}
+
 type createGenericInvitationMatcher struct {
 	groupID   pgtype.UUID
 	inviterID string

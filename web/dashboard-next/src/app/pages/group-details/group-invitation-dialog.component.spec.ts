@@ -35,7 +35,10 @@ describe('GroupInvitationDialogComponent', () => {
               groups: {
                 inviteDialog: {
                   creating: 'Creating invitation...',
+                  code: 'Invitation code',
                   description: 'Create a reusable invite link and QR code.',
+                  detailsDescription: 'Review and share this invitation.',
+                  detailsTitle: 'Invitation details',
                   emailHint: 'Leave the email empty to create a generic link.',
                   emailInvalid: 'Please enter a valid email address.',
                   failed: 'Failed to create invitation.',
@@ -44,9 +47,11 @@ describe('GroupInvitationDialogComponent', () => {
                   qrUnavailable: 'QR unavailable',
                   sent: 'Invitation sent successfully!',
                   shareHint: 'Students can use this link.',
+                  inactiveHint: 'This invitation is no longer active.',
                   shareLink: 'Share link',
                   title: 'Create invitation',
                 },
+                invitations: { status: { pending: 'Pending' } },
               },
               toast: { successTitle: 'Success' },
             },
@@ -76,7 +81,15 @@ describe('GroupInvitationDialogComponent', () => {
         {
           provide: GroupsApiClient,
           useValue: {
-            createGroupInvitation: vi.fn(() => of({ id: 'invite-1', code: 'ABC123' })),
+            createGroupInvitation: vi.fn(() =>
+              of({
+                id: 'invite-1',
+                code: 'ABC12345',
+                delivery: 'link',
+                status: 'pending',
+                invite_url: 'http://localhost:4200/groups?invite=ABC12345',
+              }),
+            ),
             getGroupInvitationQrCode: vi.fn(() => of(new Blob(['qr']))),
           },
         },
@@ -110,7 +123,9 @@ describe('GroupInvitationDialogComponent', () => {
     expect(api.createGroupInvitation).toHaveBeenCalledWith('group-1', undefined);
     expect(api.getGroupInvitationQrCode).toHaveBeenCalledWith('group-1', 'invite-1');
     expect(shell.showToast).toHaveBeenCalledWith('Success', 'Invitation link created!', 'success');
-    expect(fixture.nativeElement.textContent).toContain('/groups?invite=ABC123');
+    expect(fixture.nativeElement.textContent).toContain('/groups?invite=ABC12345');
+    expect(fixture.nativeElement.textContent).toContain('ABC12345');
+    expect(fixture.nativeElement.querySelector('.overflow-x-auto')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Download QR');
   });
 

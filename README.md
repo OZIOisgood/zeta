@@ -160,8 +160,8 @@ Google currently labels direct Cloud Run domain mapping as Preview and does not 
 ### Access Gate (Soft Launch)
 
 - Registration is open: WorkOS public sign-up stays **ON**. A newly registered user is created as `waitlisted` (`user_access.status`) and must redeem an invite code at `POST /access/redeem` to become `active`.
-- **Expert codes** (`signup_codes`) upgrade the redeeming user to the `expert` role. Existing group-invite codes still work and activate the user as a `student`, joining the corresponding group.
-- Experts receive **5 invite codes**, created lazily and listed at `GET /access/codes`. Admins can mint additional codes via `POST /access/codes`.
+- **Expert recommendation codes** (`signup_codes`) upgrade either a waitlisted user or an active `student` to the WorkOS `expert` role. Students redeem a recommendation under Preferences > Become an expert. `GET /access/codes` automatically ensures that each expert has five personal codes and returns their redemption status. Used codes permanently count toward the five-referral allowance; expert codes cannot be created or revoked manually. Viewing the list requires `access:invite-codes:read`.
+- Existing group-invite codes activate the user as a `student` and join the corresponding group. Direct email invitations require the signed-in WorkOS email to match the intended recipient; generic link/QR invitations remain reusable. Group members with `groups:invites:read` can revisit invitation history and QR codes, while `groups:invites:revoke` allows active invitations to be revoked.
 - Protected feature routes require an active account; `waitlisted` users receive **403**. `/auth/me` returns `access_status` so clients can route to the redeem screen.
 - Existing users were grandfathered to `active`. No new environment variables are introduced.
 
@@ -176,10 +176,10 @@ Google currently labels direct Cloud Run domain mapping as Preview and does not 
 
 1. An admin or expert opens the group details page and clicks "Invite".
 2. A dialog accepts an optional invitee email address.
-3. The backend generates a unique 6-character code and, when an email is provided, sends an email with the invite link (`/groups?invite=<CODE>`).
+3. The backend generates a unique 8-character code and, when an email is provided, sends an email with the invite link (`/groups?invite=<CODE>`).
 4. The dialog displays a **QR code** (server-generated PNG) encoding the invite URL, with options to copy the link or download the QR image.
-5. When a non-member opens the link (or scans the QR code), a confirmation dialog shows the group name and avatar.
-6. On acceptance, the user is added to the group and redirected to the group details page.
+5. When an active non-member opens the link (or scans the QR code), a confirmation dialog shows the group name and avatar. A newly registered waitlisted user returns from WorkOS to `/welcome`, sees the same group context, and explicitly activates as a student before joining.
+6. On acceptance, the user is added idempotently to the group and redirected to the group details page. Email-specific invitations can only be accepted by the matching WorkOS email address.
 7. If the current user already belongs to the group, the dashboard skips the invitation dialog and opens the group directly.
 8. Email-specific invitations are single-use. Email-less invitation links remain reusable for sharing in print, on walls, or in group chats.
 

@@ -8,13 +8,17 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/permissions"
 	"github.com/OZIOisgood/zeta/internal/tools"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 )
@@ -61,6 +65,12 @@ type redeemRequest struct {
 	Code string `json:"code"`
 }
 
+type redeemGroupView struct {
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Avatar *string `json:"avatar,omitempty"`
+}
+
 // Redeem activates the calling (authenticated) user via an invite code.
 func (h *Handler) Redeem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -83,10 +93,15 @@ func (h *Handler) Redeem(w http.ResponseWriter, r *http.Request) {
 	// Normalize user-entered input to match generated (uppercase Crockford) codes.
 	code := tools.NormalizeCode(req.Code)
 
-	// Idempotent: an already-active user does not consume a fresh code.
+	// Active students may still redeem an expert recommendation code. Users who
+	// are already experts or admins must never consume another expert's code.
+	alreadyActive := false
 	if acc, err := h.q.GetUserAccess(ctx, user.ID); err == nil && acc.Status == db.AccessStatusActive {
-		writeRedeemResponse(w, db.AccessStatusActive, user.Role, false)
-		return
+		alreadyActive = true
+		if user.Role != permissions.RoleStudent {
+			writeRedeemResponse(w, db.AccessStatusActive, user.Role, false, nil)
+			return
+		}
 	} else if err != nil && err != pgx.ErrNoRows {
 		log.ErrorContext(ctx, "access_redeem_get_access_failed",
 			slog.String("component", "access"), slog.String("user_id", user.ID), slog.Any("err", err))
@@ -110,13 +125,19 @@ func (h *Handler) Redeem(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to activate account", http.StatusInternalServerError)
 			return
 		}
-		h.activateAndRespond(w, r, user.ID, "expert_code", permissions.RoleExpert, true)
+		h.activateAndRespond(w, r, user.ID, "expert_code", permissions.RoleExpert, true, nil)
 		return
 	}
 	if err != pgx.ErrNoRows {
 		log.ErrorContext(ctx, "access_redeem_consume_failed",
 			slog.String("component", "access"), slog.Any("err", err))
 		http.Error(w, "Failed to redeem code", http.StatusInternalServerError)
+		return
+	}
+	if alreadyActive {
+		log.WarnContext(ctx, "access_redeem_invalid_expert_code",
+			slog.String("component", "access"), slog.String("user_id", user.ID))
+		http.Error(w, "Invalid or already used code", http.StatusBadRequest)
 		return
 	}
 
@@ -137,6 +158,9 @@ func (h *Handler) tryGroupRedeem(ctx context.Context, w http.ResponseWriter, r *
 	inv, err := h.q.GetGroupInvitationByCode(ctx, code)
 	if err != nil {
 		return false // not a group code — let the caller emit the neutral error
+	}
+	if invitationHasEmail(inv) && !strings.EqualFold(strings.TrimSpace(inv.Email.String), strings.TrimSpace(user.Email)) {
+		return false
 	}
 
 	isMember, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{UserID: user.ID, GroupID: inv.GroupID})
@@ -174,12 +198,23 @@ func (h *Handler) tryGroupRedeem(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	// Role stays student (the default). Generic codes remain multi-use.
-	h.activateAndRespond(w, r, user.ID, "group_code", user.Role, false)
+	group, err := h.q.GetGroup(ctx, inv.GroupID)
+	if err != nil {
+		log.ErrorContext(ctx, "access_redeem_group_fetch_failed",
+			slog.String("component", "access"), slog.Any("err", err))
+		http.Error(w, "Failed to load group", http.StatusInternalServerError)
+		return true
+	}
+	groupView := redeemGroupView{ID: uuid.UUID(inv.GroupID.Bytes).String(), Name: group.Name}
+	if strings.TrimSpace(group.Avatar) != "" {
+		groupView.Avatar = &group.Avatar
+	}
+	h.activateAndRespond(w, r, user.ID, "group_code", user.Role, false, &groupView)
 	return true
 }
 
 // activateAndRespond flips the user to active, refreshes cookies (best-effort), and responds.
-func (h *Handler) activateAndRespond(w http.ResponseWriter, r *http.Request, userID, via, role string, roleUpgraded bool) {
+func (h *Handler) activateAndRespond(w http.ResponseWriter, r *http.Request, userID, via, role string, roleUpgraded bool, group *redeemGroupView) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
 	if _, err := h.q.ActivateUserAccess(ctx, db.ActivateUserAccessParams{
@@ -199,16 +234,20 @@ func (h *Handler) activateAndRespond(w http.ResponseWriter, r *http.Request, use
 	}
 	log.InfoContext(ctx, "access_redeemed",
 		slog.String("component", "access"), slog.String("user_id", userID), slog.String("via", via))
-	writeRedeemResponse(w, db.AccessStatusActive, role, roleUpgraded)
+	writeRedeemResponse(w, db.AccessStatusActive, role, roleUpgraded, group)
 }
 
-func writeRedeemResponse(w http.ResponseWriter, status db.AccessStatus, role string, roleUpgraded bool) {
+func writeRedeemResponse(w http.ResponseWriter, status db.AccessStatus, role string, roleUpgraded bool, group *redeemGroupView) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	response := map[string]any{
 		"access_status": string(status),
 		"role":          role,
 		"role_upgraded": roleUpgraded,
-	})
+	}
+	if group != nil {
+		response["group"] = group
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func pgtypeText(s string) pgtype.Text {
@@ -216,12 +255,13 @@ func pgtypeText(s string) pgtype.Text {
 }
 
 type signupCodeView struct {
-	Code   string `json:"code"`
-	Status string `json:"status"`
+	ID         string     `json:"id"`
+	Code       string     `json:"code"`
+	Status     string     `json:"status"`
+	ConsumedAt *time.Time `json:"consumed_at,omitempty"`
 }
 
-// ListCodes returns the caller's signup codes. Experts get a lazily-created
-// allotment of ExpertCodeAllotment on first call.
+// ListCodes ensures and returns the caller's fixed expert referral allotment.
 func (h *Handler) ListCodes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
@@ -230,25 +270,9 @@ func (h *Handler) ListCodes(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	if user.Role != permissions.RoleExpert && user.Role != permissions.RoleAdmin {
+	if !permissions.HasPermission(user.Permissions, permissions.AccessInviteCodesRead) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
-	}
-
-	if user.Role == permissions.RoleExpert {
-		count, err := h.q.CountSignupCodesByOwner(ctx, user.ID)
-		if err != nil {
-			log.ErrorContext(ctx, "access_codes_count_failed", slog.String("component", "access"), slog.Any("err", err))
-			http.Error(w, "Failed to load codes", http.StatusInternalServerError)
-			return
-		}
-		for i := count; i < ExpertCodeAllotment; i++ {
-			if err := h.mintCode(ctx, user.ID); err != nil {
-				log.ErrorContext(ctx, "access_codes_seed_failed", slog.String("component", "access"), slog.Any("err", err))
-				http.Error(w, "Failed to create codes", http.StatusInternalServerError)
-				return
-			}
-		}
 	}
 
 	codes, err := h.q.ListSignupCodesByOwner(ctx, user.ID)
@@ -257,53 +281,109 @@ func (h *Handler) ListCodes(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to load codes", http.StatusInternalServerError)
 		return
 	}
-	views := make([]signupCodeView, 0, len(codes))
-	for _, c := range codes {
-		views = append(views, signupCodeView{Code: c.Code, Status: string(c.Status)})
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{"codes": views})
-}
-
-// GenerateCodes mints additional expert codes. Admin only, no cap.
-func (h *Handler) GenerateCodes(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	log := logger.From(ctx, h.logger)
-	user := auth.GetUser(ctx)
-	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	if user.Role != permissions.RoleAdmin {
-		http.Error(w, "Permission denied", http.StatusForbidden)
-		return
-	}
-	var req struct {
-		Count int `json:"count"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Count < 1 || req.Count > 100 {
-		http.Error(w, "Invalid count (1-100)", http.StatusBadRequest)
-		return
-	}
-	for i := 0; i < req.Count; i++ {
-		if err := h.mintCode(ctx, user.ID); err != nil {
-			log.ErrorContext(ctx, "access_codes_generate_failed", slog.String("component", "access"), slog.Any("err", err))
-			http.Error(w, "Failed to generate codes", http.StatusInternalServerError)
+	minted := 0
+	for len(codes)+minted < ExpertCodeAllotment {
+		_, err := h.mintCode(ctx, user.ID)
+		if err == pgx.ErrNoRows {
+			break
+		}
+		if err != nil {
+			log.ErrorContext(ctx, "access_codes_ensure_failed", slog.String("component", "access"), slog.Any("err", err))
+			http.Error(w, "Failed to load codes", http.StatusInternalServerError)
 			return
 		}
+		minted++
 	}
-	log.InfoContext(ctx, "access_codes_generated",
-		slog.String("component", "access"), slog.String("user_id", user.ID), slog.Int("count", req.Count))
-	w.WriteHeader(http.StatusCreated)
+	if minted > 0 {
+		codes, err = h.q.ListSignupCodesByOwner(ctx, user.ID)
+		if err != nil {
+			log.ErrorContext(ctx, "access_codes_reload_failed", slog.String("component", "access"), slog.Any("err", err))
+			http.Error(w, "Failed to load codes", http.StatusInternalServerError)
+			return
+		}
+		log.InfoContext(ctx, "access_codes_ensured",
+			slog.String("component", "access"), slog.String("user_id", user.ID), slog.Int("created_count", minted))
+	}
+	views := make([]signupCodeView, 0, len(codes))
+	used := 0
+	for _, c := range codes {
+		if c.Status == db.SignupCodeStatusConsumed {
+			used++
+		}
+		views = append(views, signupCodeView{
+			ID: uuid.UUID(c.ID.Bytes).String(), Code: c.Code, Status: string(c.Status),
+			ConsumedAt: timePtr(c.ConsumedAt),
+		})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"codes": views, "successful_referrals": used,
+		"referral_limit": ExpertCodeAllotment, "remaining_referrals": max(0, ExpertCodeAllotment-used),
+	})
 }
 
-func (h *Handler) mintCode(ctx context.Context, ownerID string) error {
-	code, err := tools.GenerateCode(signupCodeLength)
-	if err != nil {
-		return err
+func (h *Handler) mintCode(ctx context.Context, ownerID string) (db.SignupCode, error) {
+	for i := 0; i < 3; i++ {
+		code, err := tools.GenerateCode(signupCodeLength)
+		if err != nil {
+			return db.SignupCode{}, err
+		}
+		created, err := h.q.CreateSignupCodeWithinLimit(ctx, db.CreateSignupCodeWithinLimitParams{
+			Code: code, OwnerID: ownerID, CodeLimit: ExpertCodeAllotment,
+		})
+		if err == nil || err == pgx.ErrNoRows {
+			return created, err
+		}
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) || pgErr.Code != "23505" {
+			return db.SignupCode{}, err
+		}
 	}
-	_, err = h.q.CreateSignupCode(ctx, db.CreateSignupCodeParams{Code: code, OwnerUserID: ownerID})
-	return err
+	return db.SignupCode{}, errors.New("failed to generate unique signup code")
+}
+
+// PreviewGroupInvitation returns safe context for a waitlisted user's confirmation screen.
+func (h *Handler) PreviewGroupInvitation(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user := auth.GetUser(ctx)
+	code := tools.NormalizeCode(chi.URLParam(r, "code"))
+	if user == nil || code == "" {
+		http.Error(w, "Invitation not found", http.StatusNotFound)
+		return
+	}
+	inv, err := h.q.GetGroupInvitationByCode(ctx, code)
+	if err != nil || inv.Status != db.InvitationStatusPending ||
+		(invitationHasEmail(inv) && !strings.EqualFold(strings.TrimSpace(inv.Email.String), strings.TrimSpace(user.Email))) {
+		http.Error(w, "Invitation not found", http.StatusNotFound)
+		return
+	}
+	group, err := h.q.GetGroup(ctx, inv.GroupID)
+	if err != nil {
+		http.Error(w, "Invitation not found", http.StatusNotFound)
+		return
+	}
+	isMember, err := h.q.CheckUserGroup(ctx, db.CheckUserGroupParams{UserID: user.ID, GroupID: inv.GroupID})
+	if err != nil {
+		http.Error(w, "Failed to preview invitation", http.StatusInternalServerError)
+		return
+	}
+	view := redeemGroupView{ID: uuid.UUID(inv.GroupID.Bytes).String(), Name: group.Name}
+	if strings.TrimSpace(group.Avatar) != "" {
+		view.Avatar = &group.Avatar
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"code": code, "group": view, "already_member": isMember})
+}
+
+func invitationHasEmail(inv db.GroupInvitation) bool {
+	return inv.Email.Valid && strings.TrimSpace(inv.Email.String) != ""
+}
+
+func timePtr(value pgtype.Timestamptz) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	return &value.Time
 }
 
 // RequireActiveAccess blocks waitlisted users from protected feature routes.

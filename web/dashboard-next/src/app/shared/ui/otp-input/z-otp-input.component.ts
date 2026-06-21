@@ -1,23 +1,21 @@
 import { NgClass } from '@angular/common';
-import { Component, computed, forwardRef, input, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  forwardRef,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { NgpInputOtp, NgpInputOtpInput, NgpInputOtpSlot } from 'ng-primitives/input-otp';
 
-/**
- * Case-insensitive Crockford Base32 alphabet (digits + uppercase letters,
- * excluding I, L, O, U). Lowercase is accepted while typing and uppercased on
- * the way out so reactive-form values are always canonical.
- */
-const CROCKFORD_PATTERN = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]';
+const NON_CROCKFORD = /[^0-9A-HJKMNP-TV-Z]/g;
 
-/**
- * Crockford-friendly one-time-code input. Wraps the headless `ngpInputOtp`
- * primitive and renders a fixed number of slot boxes styled like `z-text-input`.
- * Implements `ControlValueAccessor` so it can be used with reactive forms.
- */
 @Component({
   selector: 'z-otp-input',
-  imports: [NgClass, NgpInputOtp, NgpInputOtpInput, NgpInputOtpSlot],
+  imports: [NgClass],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -27,65 +25,121 @@ const CROCKFORD_PATTERN = '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]';
   ],
   template: `
     <div
-      ngpInputOtp
-      class="relative flex gap-1.5 sm:gap-2"
-      [ngpInputOtpValue]="value()"
-      [ngpInputOtpPattern]="pattern"
-      [ngpInputOtpPasteTransformer]="uppercaseTransformer"
-      [ngpInputOtpDisabled]="isEffectivelyDisabled()"
-      [ngpInputOtpPlaceholder]="placeholder()"
-      (ngpInputOtpValueChange)="onValue($event)"
+      class="relative flex items-center gap-2.5"
+      role="group"
+      [attr.aria-label]="ariaLabel()"
+      (click)="focus()"
     >
       <input
-        ngpInputOtpInput
+        #field
+        class="absolute inset-0 size-full cursor-text border-0 bg-transparent text-transparent caret-transparent outline-none"
+        type="text"
         inputmode="text"
         autocapitalize="characters"
-        [attr.aria-describedby]="ariaDescribedBy() || null"
+        autocomplete="one-time-code"
+        spellcheck="false"
+        [attr.maxlength]="length()"
+        [value]="value()"
+        [attr.aria-label]="ariaLabel()"
         [attr.aria-invalid]="invalid() || null"
-        (blur)="onTouched()"
+        [attr.aria-describedby]="ariaDescribedBy() || null"
+        [disabled]="isEffectivelyDisabled()"
+        (input)="handleInput($event)"
+        (focus)="focused.set(true)"
+        (blur)="handleBlur()"
+        (keydown.enter)="onEnter($event)"
       />
-      @for (slot of slots(); track slot) {
-        <div
-          ngpInputOtpSlot
-          [ngClass]="slotClasses()"
-          class="flex h-11 w-9 items-center justify-center rounded-md border bg-white sm:w-11 text-center text-base font-semibold uppercase tabular-nums transition outline-none data-[active]:ring-2 data-[caret]:after:ml-px data-[caret]:after:inline-block data-[caret]:after:h-5 data-[caret]:after:w-px data-[caret]:after:animate-pulse data-[caret]:after:bg-[var(--z-primary)] data-[caret]:after:content-['']"
-        ></div>
+
+      @for (group of groups(); track $index; let last = $last) {
+        <div class="flex flex-1 gap-2 sm:gap-2.5">
+          @for (slot of group; track slot.index) {
+            <div
+              class="z-otp-slot relative grid h-[52px] min-w-0 flex-1 place-items-center border-b-[3px] text-2xl font-bold uppercase tabular-nums transition-colors"
+              [ngClass]="cellClasses(slot)"
+              aria-hidden="true"
+            >
+              @if (slot.char) {
+                {{ slot.char }}
+              } @else if (slot.active) {
+                <span
+                  class="h-[26px] w-0.5 rounded-sm bg-[var(--z-primary)] motion-safe:animate-[z-otp-blink_1s_step-end_infinite]"
+                ></span>
+              }
+            </div>
+          }
+        </div>
+        @if (!last) {
+          <span
+            class="h-0.5 w-3 shrink-0 rounded-sm bg-[var(--z-muted)] opacity-45"
+            aria-hidden="true"
+          ></span>
+        }
       }
     </div>
+  `,
+  styles: `
+    @keyframes z-otp-blink {
+      50% {
+        opacity: 0;
+      }
+    }
   `,
 })
 export class ZOtpInputComponent implements ControlValueAccessor {
   readonly length = input(8);
+  readonly groupSize = input(4);
   readonly invalid = input(false);
+  readonly ariaLabel = input('Invite code');
   readonly ariaDescribedBy = input('');
-  readonly placeholder = input('');
   readonly disabled = input(false);
 
-  protected readonly pattern = CROCKFORD_PATTERN;
+  readonly completed = output<string>();
+  readonly submitted = output<void>();
+
+  private readonly field = viewChild.required<ElementRef<HTMLInputElement>>('field');
   protected readonly value = signal('');
-  protected readonly isDisabled = signal(false);
-  protected readonly isEffectivelyDisabled = computed(() => this.disabled() || this.isDisabled());
+  protected readonly focused = signal(false);
+  protected readonly formDisabled = signal(false);
+  protected readonly isEffectivelyDisabled = computed(() => this.disabled() || this.formDisabled());
 
-  /** One entry per slot; the index is what the primitive reads, value is unused. */
-  protected readonly slots = computed(() => Array.from({ length: this.length() }, (_, i) => i));
-
-  protected readonly slotClasses = computed(() => [
-    this.invalid()
-      ? 'border-rose-300 text-rose-700 data-[active]:border-rose-500 data-[active]:ring-rose-100'
-      : 'border-[var(--z-border)] text-[var(--z-text)] data-[active]:border-[var(--z-primary)] data-[active]:ring-orange-100',
-    this.isEffectivelyDisabled()
-      ? 'cursor-not-allowed bg-[var(--z-surface-warm)] text-[var(--z-muted)]'
-      : '',
-  ]);
-
-  /** Crockford codes are uppercase; normalize pasted text before it is filtered. */
-  protected readonly uppercaseTransformer = (text: string): string => text.toUpperCase();
+  protected readonly groups = computed(() => {
+    const chars = this.value();
+    const total = this.length();
+    const size = Math.max(1, this.groupSize());
+    const slots = Array.from({ length: total }, (_, index) => ({
+      index,
+      char: chars[index] ?? '',
+      active: this.focused() && index === Math.min(chars.length, total - 1),
+    }));
+    const grouped: (typeof slots)[] = [];
+    for (let i = 0; i < slots.length; i += size) grouped.push(slots.slice(i, i + size));
+    return grouped;
+  });
 
   private onChange: (value: string) => void = () => undefined;
-  protected onTouched: () => void = () => undefined;
+  private onTouched: () => void = () => undefined;
+
+  protected cellClasses(slot: { active: boolean }): string {
+    if (this.invalid()) return 'border-rose-400 text-rose-700';
+    if (this.isEffectivelyDisabled())
+      return 'cursor-not-allowed border-[var(--z-border)] text-[var(--z-muted)]';
+    return this.focused() && slot.active
+      ? 'border-[var(--z-primary)]'
+      : 'border-[rgba(38,24,15,0.28)]';
+  }
+
+  focus(): void {
+    if (!this.isEffectivelyDisabled()) this.field().nativeElement.focus();
+  }
+
+  reselect(): void {
+    const element = this.field().nativeElement;
+    element.focus();
+    element.select();
+  }
 
   writeValue(value: string | null | undefined): void {
-    this.value.set((value ?? '').toUpperCase());
+    this.value.set(this.normalize(value ?? ''));
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -96,13 +150,35 @@ export class ZOtpInputComponent implements ControlValueAccessor {
     this.onTouched = fn;
   }
 
-  setDisabledState(isDisabled: boolean): void {
-    this.isDisabled.set(isDisabled);
+  setDisabledState(disabled: boolean): void {
+    this.formDisabled.set(disabled);
   }
 
-  protected onValue(next: string): void {
-    const upper = next.toUpperCase();
-    this.value.set(upper);
-    this.onChange(upper);
+  protected handleInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const next = this.normalize(input.value);
+    input.value = next;
+    this.value.set(next);
+    this.onChange(next);
+    if (next.length === this.length()) this.completed.emit(next);
+  }
+
+  protected handleBlur(): void {
+    this.focused.set(false);
+    this.onTouched();
+  }
+
+  protected onEnter(event: Event): void {
+    event.preventDefault();
+    this.submitted.emit();
+  }
+
+  private normalize(raw: string): string {
+    return raw
+      .toUpperCase()
+      .replace(/[IL]/g, '1')
+      .replace(/O/g, '0')
+      .replace(NON_CROCKFORD, '')
+      .slice(0, this.length());
   }
 }

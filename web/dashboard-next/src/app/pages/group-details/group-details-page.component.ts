@@ -2,7 +2,6 @@ import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  LucideLink,
   LucideRefreshCw,
   LucideSettings,
   LucideShieldCheck,
@@ -24,7 +23,7 @@ import { ZConfirmDialogComponent } from '../../shared/ui/dialog/z-confirm-dialog
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
-import { GroupInvitationDialogComponent } from './group-invitation-dialog.component';
+import { GroupInvitationsSectionComponent } from './group-invitations-section.component';
 
 @Component({
   selector: 'app-group-details-page',
@@ -38,10 +37,9 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
     ZButtonComponent,
     ZConfirmDialogComponent,
     ZEmptyStateComponent,
-    GroupInvitationDialogComponent,
+    GroupInvitationsSectionComponent,
     ZIconButtonComponent,
     ZSkeletonComponent,
-    LucideLink,
     LucideRefreshCw,
     LucideSettings,
     LucideShieldCheck,
@@ -110,38 +108,8 @@ import { GroupInvitationDialogComponent } from './group-invitation-dialog.compon
           </div>
         </section>
 
-        @if (canInviteStudents()) {
-          <ng-template #inviteDialog let-close="close">
-            <app-group-invitation-dialog [groupId]="group.id" [close]="close" />
-          </ng-template>
-          <article
-            class="rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4"
-          >
-            <div class="flex items-start gap-3">
-              <span
-                class="grid size-10 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-              >
-                <svg lucideLink class="size-5" aria-hidden="true"></svg>
-              </span>
-              <div>
-                <h3 class="text-base font-semibold">
-                  {{ 'groups.createInvitationTitle' | transloco }}
-                </h3>
-                <p class="mt-1 text-sm leading-6 text-[var(--z-muted)]">
-                  {{ 'groups.inviteDialog.cardDescription' | transloco }}
-                </p>
-              </div>
-            </div>
-            <z-button
-              class="mt-4 block sm:mt-0"
-              type="button"
-              [mobileFullWidth]="true"
-              [nowrap]="true"
-              [ngpDialogTrigger]="inviteDialog"
-            >
-              <span>{{ 'common.actions.createInvitation' | transloco }}</span>
-            </z-button>
-          </article>
+        @if (canReadInvitations()) {
+          <app-group-invitations-section [groupId]="group.id" />
         }
 
         @if (memberSections().length) {
@@ -279,8 +247,8 @@ export class GroupDetailsPageComponent {
   protected readonly canReadExperts = computed(() =>
     this.permissions.hasPermission('groups:expert-list:read'),
   );
-  protected readonly canInviteStudents = computed(() =>
-    this.permissions.hasPermission('groups:invites:create'),
+  protected readonly canReadInvitations = computed(() =>
+    this.permissions.hasPermission('groups:invites:read'),
   );
   protected readonly canRemoveUsers = computed(() =>
     this.permissions.hasPermission('groups:user-list:delete'),

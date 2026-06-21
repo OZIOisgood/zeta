@@ -9,28 +9,56 @@ import {
 } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { RedeemResponse } from '../../core/http/access-api.service';
+import { AsyncSlice } from '../../core/state/async-state';
 import { AccessStore } from '../../features/access/access.store';
 import { SessionStore } from '../../features/session/session.store';
 import { WelcomePageComponent } from './welcome-page.component';
 
-const redeemResult: RedeemResponse = {
+const studentResult: RedeemResponse = {
   access_status: 'active',
   role: 'student',
   role_upgraded: false,
+  group: { id: 'group-1', name: 'Morning training' },
 };
 
-type AccessStub = {
-  redeemStatus: ReturnType<typeof signal<string>>;
-  redeem: ReturnType<typeof vi.fn>;
-  resetRedeem: ReturnType<typeof vi.fn>;
-};
-type SessionStub = {
+type AccessStub = ReturnType<typeof createAccessStub>;
+let access: AccessStub;
+let session: {
+  user: ReturnType<typeof signal>;
   loadCurrentUser: ReturnType<typeof vi.fn>;
   logout: ReturnType<typeof vi.fn>;
 };
 
-let access: AccessStub;
-let session: SessionStub;
+function createAccessStub() {
+  const redeemStatus = signal<'idle' | 'loading' | 'error' | 'success'>('idle');
+  const result = signal<RedeemResponse | null>(null);
+  return {
+    redeemStatus,
+    previewSlice: signal<AsyncSlice>({ status: 'idle', error: null }),
+    preview: signal<{
+      code: string;
+      group: { id: string; name: string };
+      already_member: boolean;
+    } | null>(null),
+    isSubmitting: () => redeemStatus() === 'loading',
+    isActivated: () => redeemStatus() === 'success',
+    role: () => result()?.role ?? '',
+    joinedGroup: () => result()?.group ?? null,
+    resetRedeem: vi.fn(() => {
+      redeemStatus.set('idle');
+      result.set(null);
+    }),
+    resetError: vi.fn(() => {
+      if (redeemStatus() === 'error') redeemStatus.set('idle');
+    }),
+    previewGroupInvitation: vi.fn(async () => null),
+    redeem: vi.fn(async () => {
+      result.set(studentResult);
+      redeemStatus.set('success');
+      return studentResult;
+    }),
+  };
+}
 
 function routeStub(queryParams: Record<string, string> = {}): {
   snapshot: { queryParamMap: ParamMap };
@@ -41,16 +69,12 @@ function routeStub(queryParams: Record<string, string> = {}): {
 async function setup(
   queryParams: Record<string, string> = {},
 ): Promise<ComponentFixture<WelcomePageComponent>> {
-  access = {
-    redeemStatus: signal<string>('idle'),
-    redeem: vi.fn(async () => redeemResult),
-    resetRedeem: vi.fn(),
-  };
+  access = createAccessStub();
   session = {
+    user: signal({ language: 'en' }),
     loadCurrentUser: vi.fn(async () => undefined),
     logout: vi.fn(),
   };
-
   await TestBed.configureTestingModule({
     imports: [
       WelcomePageComponent,
@@ -71,94 +95,77 @@ async function setup(
       },
     })
     .compileComponents();
-
   const fixture = TestBed.createComponent(WelcomePageComponent);
   fixture.detectChanges();
   return fixture;
 }
 
-function setCode(fixture: ComponentFixture<WelcomePageComponent>, value: string): void {
-  fixture.componentInstance['form'].controls.code.setValue(value);
-  fixture.detectChanges();
-}
-
-function revealCodeEntry(fixture: ComponentFixture<WelcomePageComponent>): void {
-  fixture.componentInstance['showCodeEntry'].set(true);
-  fixture.detectChanges();
-}
-
-function findButtonByText(
-  fixture: ComponentFixture<WelcomePageComponent>,
-  text: string,
-): HTMLButtonElement | undefined {
-  const buttons = Array.from(
-    fixture.nativeElement.querySelectorAll('button'),
-  ) as HTMLButtonElement[];
-  return buttons.find((button) => button.textContent?.includes(text));
-}
-
 describe('WelcomePageComponent', () => {
-  it('renders the waitlist state by default without the code-entry form', async () => {
+  it('renders the waitlist state before code entry', async () => {
     const fixture = await setup();
-
     expect(fixture.nativeElement.textContent).toContain('access.welcome.waitlistTitle');
-    expect(fixture.nativeElement.textContent).toContain('access.welcome.waitlistSubtitle');
-    expect(findButtonByText(fixture, 'access.welcome.haveCode')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('form')).toBeNull();
     expect(fixture.nativeElement.querySelector('z-otp-input')).toBeNull();
   });
 
-  it('reveals the code-entry form when the "I have an invite code" button is clicked', async () => {
+  it('reveals manual code entry', async () => {
     const fixture = await setup();
+    fixture.componentInstance['showCode'].set(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('z-otp-input')).not.toBeNull();
+  });
 
-    const haveCodeButton = findButtonByText(fixture, 'access.welcome.haveCode');
-    expect(haveCodeButton).toBeTruthy();
-    haveCodeButton?.click();
+  it('enables account activation only for a complete alphanumeric code', async () => {
+    const fixture = await setup();
+    fixture.componentInstance['showCode'].set(true);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance['showCodeEntry']()).toBe(true);
-    expect(fixture.nativeElement.querySelector('form')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('z-otp-input')).toBeTruthy();
+    const activateButton = (): HTMLButtonElement =>
+      fixture.nativeElement.querySelector('z-button button') as HTMLButtonElement;
+    expect(activateButton().disabled).toBe(true);
+
+    fixture.componentInstance['codeControl'].setValue('ABCDEFGH');
+    fixture.detectChanges();
+    expect(activateButton().disabled).toBe(false);
   });
 
-  it('redeems a trimmed code, reloads the user, and navigates to the root on success', async () => {
+  it('keeps the success screen until the user continues', async () => {
     const fixture = await setup();
-    revealCodeEntry(fixture);
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
-    setCode(fixture, '  ABC12345  ');
-
-    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
-    form.dispatchEvent(new Event('submit'));
-    await fixture.whenStable();
-
+    fixture.componentInstance['showCode'].set(true);
+    fixture.componentInstance['codeControl'].setValue('ABC12345');
+    await fixture.componentInstance['redeem']();
+    fixture.detectChanges();
     expect(access.redeem).toHaveBeenCalledWith('ABC12345');
-    expect(session.loadCurrentUser).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/']);
+    expect(fixture.nativeElement.textContent).toContain('access.welcome.successTitle');
+    expect(session.loadCurrentUser).not.toHaveBeenCalled();
   });
 
-  it('does not redeem when the code is empty and marks the control touched', async () => {
+  it('continues a joined student directly to the group', async () => {
     const fixture = await setup();
-    revealCodeEntry(fixture);
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
-    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
-    form.dispatchEvent(new Event('submit'));
-    await fixture.whenStable();
-
-    expect(access.redeem).not.toHaveBeenCalled();
-    expect(session.loadCurrentUser).not.toHaveBeenCalled();
-    expect(navigate).not.toHaveBeenCalled();
-    expect(fixture.componentInstance['form'].controls.code.touched).toBe(true);
+    fixture.componentInstance['showCode'].set(true);
+    fixture.componentInstance['codeControl'].setValue('ABC12345');
+    await fixture.componentInstance['redeem']();
+    await fixture.componentInstance['enterApp']();
+    expect(session.loadCurrentUser).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/groups', 'group-1']);
   });
 
-  it('starts in the code-entry state with the control pre-filled from the ?code query param', async () => {
+  it('previews a preserved group invitation after auth redirect', async () => {
     const fixture = await setup({ code: 'abc12345' });
+    expect(fixture.componentInstance['hasDeepLink']()).toBe(true);
+    expect(fixture.componentInstance['codeControl'].value).toBe('ABC12345');
+    expect(access.previewGroupInvitation).toHaveBeenCalledWith('ABC12345');
+  });
 
-    expect(fixture.componentInstance['showCodeEntry']()).toBe(true);
-    expect(fixture.componentInstance['form'].controls.code.value).toBe('ABC12345');
-    expect(fixture.nativeElement.querySelector('form')).toBeTruthy();
+  it('adds a data URI prefix to a raw base64 group avatar', async () => {
+    const fixture = await setup();
+
+    expect(fixture.componentInstance['avatarSrc']('aGVsbG8=')).toBe(
+      'data:image/jpeg;base64,aGVsbG8=',
+    );
+    expect(fixture.componentInstance['avatarSrc']('data:image/png;base64,aGVsbG8=')).toBe(
+      'data:image/png;base64,aGVsbG8=',
+    );
   });
 });

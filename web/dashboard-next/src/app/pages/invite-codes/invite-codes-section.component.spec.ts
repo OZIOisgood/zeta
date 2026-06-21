@@ -6,38 +6,34 @@ import { SignupCode } from '../../core/http/access-api.service';
 import { AppShellStore } from '../../core/state/app-shell.store';
 import { AsyncSlice } from '../../core/state/async-state';
 import { AccessStore } from '../../features/access/access.store';
-import { SessionStore } from '../../features/session/session.store';
 import { InviteCodesSectionComponent } from './invite-codes-section.component';
 
 type AccessStub = {
   codes: ReturnType<typeof signal<SignupCode[]>>;
   codesSlice: ReturnType<typeof signal<AsyncSlice>>;
   loadCodes: ReturnType<typeof vi.fn>;
-  generateCodes: ReturnType<typeof vi.fn>;
-};
-type SessionStub = {
-  user: ReturnType<typeof signal<{ role: string } | null>>;
+  successfulReferrals: ReturnType<typeof signal<number>>;
+  referralLimit: ReturnType<typeof signal<number>>;
+  remainingReferrals: ReturnType<typeof signal<number>>;
 };
 type ShellStub = {
   showToast: ReturnType<typeof vi.fn>;
 };
 
 let access: AccessStub;
-let session: SessionStub;
 let shell: ShellStub;
 
-async function setup(role: string): Promise<ComponentFixture<InviteCodesSectionComponent>> {
+async function setup(): Promise<ComponentFixture<InviteCodesSectionComponent>> {
   access = {
     codes: signal<SignupCode[]>([
-      { code: 'ALPHA1', status: 'available' },
-      { code: 'BETA22', status: 'consumed' },
+      { id: '1', code: 'ALPHA1', status: 'available' },
+      { id: '2', code: 'BETA22', status: 'consumed', consumed_at: '2026-06-02T00:00:00Z' },
     ]),
     codesSlice: signal<AsyncSlice>({ status: 'success', error: null }),
     loadCodes: vi.fn(async () => undefined),
-    generateCodes: vi.fn(async () => false),
-  };
-  session = {
-    user: signal<{ role: string } | null>({ role }),
+    successfulReferrals: signal(1),
+    referralLimit: signal(5),
+    remainingReferrals: signal(4),
   };
   shell = {
     showToast: vi.fn(),
@@ -58,7 +54,6 @@ async function setup(role: string): Promise<ComponentFixture<InviteCodesSectionC
       set: {
         providers: [
           { provide: AccessStore, useValue: access },
-          { provide: SessionStore, useValue: session },
           { provide: AppShellStore, useValue: shell },
         ],
       },
@@ -72,13 +67,13 @@ async function setup(role: string): Promise<ComponentFixture<InviteCodesSectionC
 
 describe('InviteCodesSectionComponent', () => {
   it('loads the codes on init', async () => {
-    await setup('expert');
+    await setup();
 
     expect(access.loadCodes).toHaveBeenCalled();
   });
 
   it('renders one row per code', async () => {
-    const fixture = await setup('expert');
+    const fixture = await setup();
 
     const rows = fixture.nativeElement.querySelectorAll('li');
     expect(rows.length).toBe(2);
@@ -86,33 +81,8 @@ describe('InviteCodesSectionComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('BETA22');
   });
 
-  it('hides the generate button for non-admins', async () => {
-    const fixture = await setup('expert');
-
-    expect(fixture.nativeElement.textContent).not.toContain('access.codes.generate');
-  });
-
-  it('shows the generate button for admins', async () => {
-    const fixture = await setup('admin');
-
-    expect(fixture.nativeElement.textContent).toContain('access.codes.generate');
-  });
-
-  it('toasts when generation fails', async () => {
-    const fixture = await setup('admin');
-
-    await fixture.componentInstance['generate']();
-
-    expect(access.generateCodes).toHaveBeenCalledWith(5);
-    expect(shell.showToast).toHaveBeenCalledWith(
-      'access.codes.generateErrorTitle',
-      'access.codes.generateError',
-      'error',
-    );
-  });
-
   it('renders the empty state when there are no codes and the slice succeeded', async () => {
-    const fixture = await setup('expert');
+    const fixture = await setup();
 
     access.codes.set([]);
     access.codesSlice.set({ status: 'success', error: null });
@@ -123,7 +93,7 @@ describe('InviteCodesSectionComponent', () => {
   });
 
   it('renders the error notice when the slice failed', async () => {
-    const fixture = await setup('expert');
+    const fixture = await setup();
 
     access.codesSlice.set({ status: 'error', error: 'boom' });
     fixture.detectChanges();
@@ -136,7 +106,7 @@ describe('InviteCodesSectionComponent', () => {
     const writeText = vi.fn(async () => undefined);
     Object.assign(navigator, { clipboard: { writeText } });
 
-    const fixture = await setup('expert');
+    const fixture = await setup();
 
     await fixture.componentInstance['copy']('ALPHA1');
     fixture.detectChanges();

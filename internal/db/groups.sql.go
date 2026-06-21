@@ -13,6 +13,7 @@ import (
 
 const addUserToGroup = `-- name: AddUserToGroup :exec
 INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2)
+ON CONFLICT (user_id, group_id) DO NOTHING
 `
 
 type AddUserToGroupParams struct {
@@ -74,7 +75,7 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 
 const createGroupInvitation = `-- name: CreateGroupInvitation :one
 INSERT INTO group_invitations (group_id, inviter_id, email, code)
-VALUES ($1, $2, $3, $4) RETURNING id, group_id, inviter_id, email, code, status, created_at
+VALUES ($1, $2, $3, $4) RETURNING id, group_id, inviter_id, email, code, status, created_at, status_changed_at
 `
 
 type CreateGroupInvitationParams struct {
@@ -100,6 +101,7 @@ func (q *Queries) CreateGroupInvitation(ctx context.Context, arg CreateGroupInvi
 		&i.Code,
 		&i.Status,
 		&i.CreatedAt,
+		&i.StatusChangedAt,
 	)
 	return i, err
 }
@@ -139,7 +141,7 @@ func (q *Queries) GetGroup(ctx context.Context, id pgtype.UUID) (Group, error) {
 }
 
 const getGroupInvitationByCode = `-- name: GetGroupInvitationByCode :one
-SELECT id, group_id, inviter_id, email, code, status, created_at FROM group_invitations
+SELECT id, group_id, inviter_id, email, code, status, created_at, status_changed_at FROM group_invitations
 WHERE code = $1 LIMIT 1
 `
 
@@ -154,12 +156,13 @@ func (q *Queries) GetGroupInvitationByCode(ctx context.Context, code string) (Gr
 		&i.Code,
 		&i.Status,
 		&i.CreatedAt,
+		&i.StatusChangedAt,
 	)
 	return i, err
 }
 
 const getGroupInvitationByID = `-- name: GetGroupInvitationByID :one
-SELECT id, group_id, inviter_id, email, code, status, created_at FROM group_invitations
+SELECT id, group_id, inviter_id, email, code, status, created_at, status_changed_at FROM group_invitations
 WHERE id = $1 AND group_id = $2 LIMIT 1
 `
 
@@ -179,12 +182,13 @@ func (q *Queries) GetGroupInvitationByID(ctx context.Context, arg GetGroupInvita
 		&i.Code,
 		&i.Status,
 		&i.CreatedAt,
+		&i.StatusChangedAt,
 	)
 	return i, err
 }
 
 const getGroupInvitationsByCodes = `-- name: GetGroupInvitationsByCodes :many
-SELECT id, group_id, inviter_id, email, code, status, created_at FROM group_invitations
+SELECT id, group_id, inviter_id, email, code, status, created_at, status_changed_at FROM group_invitations
 WHERE code = ANY($1::text[])
 `
 
@@ -205,6 +209,7 @@ func (q *Queries) GetGroupInvitationsByCodes(ctx context.Context, dollar_1 []str
 			&i.Code,
 			&i.Status,
 			&i.CreatedAt,
+			&i.StatusChangedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -240,6 +245,41 @@ func (q *Queries) LeaveGroupIfNotLastMember(ctx context.Context, arg LeaveGroupI
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const listGroupInvitations = `-- name: ListGroupInvitations :many
+SELECT id, group_id, inviter_id, email, code, status, created_at, status_changed_at FROM group_invitations
+WHERE group_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListGroupInvitations(ctx context.Context, groupID pgtype.UUID) ([]GroupInvitation, error) {
+	rows, err := q.db.Query(ctx, listGroupInvitations, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GroupInvitation
+	for rows.Next() {
+		var i GroupInvitation
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.InviterID,
+			&i.Email,
+			&i.Code,
+			&i.Status,
+			&i.CreatedAt,
+			&i.StatusChangedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listGroupMembers = `-- name: ListGroupMembers :many
@@ -327,6 +367,36 @@ func (q *Queries) RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGro
 	return err
 }
 
+const revokeGroupInvitation = `-- name: RevokeGroupInvitation :one
+UPDATE group_invitations
+SET status = 'revoked', status_changed_at = NOW()
+WHERE id = $1
+  AND group_id = $2
+  AND status = 'pending'
+RETURNING id, group_id, inviter_id, email, code, status, created_at, status_changed_at
+`
+
+type RevokeGroupInvitationParams struct {
+	ID      pgtype.UUID `json:"id"`
+	GroupID pgtype.UUID `json:"group_id"`
+}
+
+func (q *Queries) RevokeGroupInvitation(ctx context.Context, arg RevokeGroupInvitationParams) (GroupInvitation, error) {
+	row := q.db.QueryRow(ctx, revokeGroupInvitation, arg.ID, arg.GroupID)
+	var i GroupInvitation
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.InviterID,
+		&i.Email,
+		&i.Code,
+		&i.Status,
+		&i.CreatedAt,
+		&i.StatusChangedAt,
+	)
+	return i, err
+}
+
 const updateGroup = `-- name: UpdateGroup :one
 UPDATE groups SET name = $2, description = $3, avatar = $4, updated_at = NOW() WHERE id = $1 RETURNING id, name, owner_id, avatar, created_at, updated_at, description
 `
@@ -359,7 +429,9 @@ func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group
 }
 
 const updateGroupInvitationStatus = `-- name: UpdateGroupInvitationStatus :exec
-UPDATE group_invitations SET status = $1 WHERE id = $2
+UPDATE group_invitations
+SET status = $1, status_changed_at = NOW()
+WHERE id = $2
 `
 
 type UpdateGroupInvitationStatusParams struct {

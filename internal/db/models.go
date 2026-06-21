@@ -192,6 +192,7 @@ const (
 	InvitationStatusPending  InvitationStatus = "pending"
 	InvitationStatusAccepted InvitationStatus = "accepted"
 	InvitationStatusDeclined InvitationStatus = "declined"
+	InvitationStatusRevoked  InvitationStatus = "revoked"
 )
 
 func (e *InvitationStatus) Scan(src interface{}) error {
@@ -544,13 +545,14 @@ type Group struct {
 }
 
 type GroupInvitation struct {
-	ID        pgtype.UUID        `json:"id"`
-	GroupID   pgtype.UUID        `json:"group_id"`
-	InviterID string             `json:"inviter_id"`
-	Email     pgtype.Text        `json:"email"`
-	Code      string             `json:"code"`
-	Status    InvitationStatus   `json:"status"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID              pgtype.UUID        `json:"id"`
+	GroupID         pgtype.UUID        `json:"group_id"`
+	InviterID       string             `json:"inviter_id"`
+	Email           pgtype.Text        `json:"email"`
+	Code            string             `json:"code"`
+	Status          InvitationStatus   `json:"status"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	StatusChangedAt pgtype.Timestamptz `json:"status_changed_at"`
 }
 
 type InboundEmail struct {

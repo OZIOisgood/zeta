@@ -13,22 +13,30 @@ SET status = 'active', activated_at = NOW(), activated_via = @activated_via
 WHERE user_id = @user_id
 RETURNING *;
 
--- name: CreateSignupCode :one
+-- name: CreateSignupCodeWithinLimit :one
 INSERT INTO signup_codes (code, owner_user_id)
-VALUES ($1, $2)
-RETURNING *;
+SELECT @code, @owner_id
+FROM (SELECT pg_advisory_xact_lock(hashtextextended(@owner_id, 0))) AS owner_lock
+WHERE (
+    SELECT COUNT(*)
+    FROM signup_codes AS existing
+    WHERE existing.owner_user_id = @owner_id
+) < @code_limit::bigint
+RETURNING id, code, owner_user_id, status, redeemed_by_user_id, consumed_at, created_at;
 
 -- name: ListSignupCodesByOwner :many
-SELECT * FROM signup_codes WHERE owner_user_id = $1 ORDER BY created_at ASC;
+SELECT id, code, owner_user_id, status, redeemed_by_user_id, consumed_at, created_at
+FROM signup_codes WHERE owner_user_id = $1 ORDER BY created_at ASC;
 
 -- name: CountSignupCodesByOwner :one
-SELECT COUNT(*) FROM signup_codes WHERE owner_user_id = $1;
+SELECT COUNT(*) FROM signup_codes
+WHERE owner_user_id = $1;
 
 -- name: ConsumeSignupCode :one
 UPDATE signup_codes
 SET status = 'consumed', redeemed_by_user_id = @redeemed_by_user_id, consumed_at = NOW()
 WHERE code = @code AND status = 'available'
-RETURNING *;
+RETURNING id, code, owner_user_id, status, redeemed_by_user_id, consumed_at, created_at;
 
 -- name: ReleaseSignupCode :exec
 UPDATE signup_codes

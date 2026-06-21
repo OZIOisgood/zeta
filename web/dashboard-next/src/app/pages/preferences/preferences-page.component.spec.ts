@@ -22,6 +22,7 @@ const user: User = {
     'coaching:bookings:read',
     'groups:create',
     'groups:invites:create',
+    'access:invite-codes:read',
   ],
   access_status: 'active',
   email_preferences: {
@@ -40,7 +41,8 @@ describe('PreferencesPageComponent', () => {
   const session = {
     user: signal<User | null>(user),
     mutationStatus,
-    hasPermission: (permission: string) => user.permissions.includes(permission),
+    hasPermission: (permission: string) =>
+      session.user()?.permissions.includes(permission) ?? false,
     updateCurrentUser: vi.fn(async (data) => ({ ...user, ...data })),
   };
   const shell = {
@@ -228,8 +230,8 @@ describe('PreferencesPageComponent', () => {
     expect(input?.getAttribute('aria-describedby')).toBe('preferences-first-name-error');
   });
 
-  it('offers the invite-codes tab for experts', async () => {
-    session.user.set({ ...user, role: 'expert' });
+  it('offers the invite-codes tab with read permission', async () => {
+    session.user.set({ ...user, permissions: [...user.permissions, 'access:invite-codes:read'] });
     const fixture = TestBed.createComponent(PreferencesPageComponent);
 
     await fixture.whenStable();
@@ -238,24 +240,21 @@ describe('PreferencesPageComponent', () => {
     expect(values).toContain('invite-codes');
   });
 
-  it('offers the invite-codes tab for admins', async () => {
-    session.user.set({ ...user, role: 'admin' });
-    const fixture = TestBed.createComponent(PreferencesPageComponent);
-
-    await fixture.whenStable();
-
-    const values = fixture.componentInstance['tabOptions']().map((option) => option.value);
-    expect(values).toContain('invite-codes');
-  });
-
-  it('hides the invite-codes tab for students', async () => {
-    session.user.set({ ...user, role: 'student' });
+  it('hides the invite-codes tab without read permission', async () => {
+    session.user.set({
+      ...user,
+      role: 'student',
+      permissions: user.permissions.filter(
+        (permission) => permission !== 'access:invite-codes:read',
+      ),
+    });
     const fixture = TestBed.createComponent(PreferencesPageComponent);
 
     await fixture.whenStable();
 
     const values = fixture.componentInstance['tabOptions']().map((option) => option.value);
     expect(values).not.toContain('invite-codes');
+    expect(values).toContain('expert-access');
   });
 });
 
@@ -263,14 +262,21 @@ describe('PreferencesPageComponent invite-codes routing', () => {
   const mutationStatus = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
   const navigate = vi.fn();
 
-  async function setup(role: string): Promise<void> {
+  async function setup(hasInviteCodePermission: boolean): Promise<void> {
     vi.clearAllMocks();
     mutationStatus.set('idle');
 
     const session = {
-      user: signal<User | null>({ ...user, role }),
+      user: signal<User | null>({
+        ...user,
+        role: hasInviteCodePermission ? 'expert' : 'student',
+        permissions: hasInviteCodePermission
+          ? [...user.permissions, 'access:invite-codes:read']
+          : user.permissions.filter((permission) => permission !== 'access:invite-codes:read'),
+      }),
       mutationStatus,
-      hasPermission: (permission: string) => user.permissions.includes(permission),
+      hasPermission: (permission: string) =>
+        hasInviteCodePermission && permission === 'access:invite-codes:read',
       updateCurrentUser: vi.fn(async (data) => ({ ...user, ...data })),
     };
 
@@ -299,13 +305,13 @@ describe('PreferencesPageComponent invite-codes routing', () => {
   }
 
   it('keeps an expert on the invite-codes tab', async () => {
-    await setup('expert');
+    await setup(true);
 
     expect(navigate).not.toHaveBeenCalled();
   });
 
   it('redirects a student away from invite-codes to personal-data', async () => {
-    await setup('student');
+    await setup(false);
 
     expect(navigate).toHaveBeenCalledWith(['/preferences', 'personal-data'], { replaceUrl: true });
   });

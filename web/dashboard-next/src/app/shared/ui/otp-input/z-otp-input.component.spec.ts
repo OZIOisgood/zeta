@@ -16,7 +16,7 @@ class HostComponent {
 }
 
 function slots(fixture: ComponentFixture<HostComponent>): HTMLElement[] {
-  return Array.from(fixture.nativeElement.querySelectorAll('[ngpInputOtpSlot]'));
+  return Array.from(fixture.nativeElement.querySelectorAll('.z-otp-slot'));
 }
 
 function hiddenInput(fixture: ComponentFixture<HostComponent>): HTMLInputElement {
@@ -48,7 +48,7 @@ describe('ZOtpInputComponent', () => {
     fixture.componentInstance.control.setValue('abc12345');
     fixture.detectChanges();
 
-    const chars = slots(fixture).map((slot) => slot.textContent);
+    const chars = slots(fixture).map((slot) => slot.textContent?.trim());
     expect(chars).toEqual(['A', 'B', 'C', '1', '2', '3', '4', '5']);
   });
 
@@ -63,13 +63,38 @@ describe('ZOtpInputComponent', () => {
     expect(fixture.componentInstance.control.value).toBe('ABC12');
   });
 
+  it('accepts every character in the Crockford alphabet', async () => {
+    const fixture = await setup();
+    const crockfordAlphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    fixture.componentInstance.length.set(crockfordAlphabet.length);
+    fixture.detectChanges();
+    const input = hiddenInput(fixture);
+
+    input.value = crockfordAlphabet.toLowerCase();
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.control.value).toBe(crockfordAlphabet);
+  });
+
+  it('maps ambiguous I, L, and O input to Crockford digits and rejects U', async () => {
+    const fixture = await setup();
+    const input = hiddenInput(fixture);
+
+    input.value = 'ilouxyz9';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.control.value).toBe('110XYZ9');
+  });
+
   it('reflects the invalid input with a danger border on the slots', async () => {
     const fixture = await setup();
-    expect(slots(fixture)[0].className).toContain('border-[var(--z-border)]');
+    expect(slots(fixture)[0].className).toContain('border-[rgba(38,24,15,0.28)]');
 
     fixture.componentInstance.invalid.set(true);
     fixture.detectChanges();
-    expect(slots(fixture)[0].className).toContain('border-rose-300');
+    expect(slots(fixture)[0].className).toContain('border-rose-400');
   });
 
   it('respects the disabled state from the form control', async () => {

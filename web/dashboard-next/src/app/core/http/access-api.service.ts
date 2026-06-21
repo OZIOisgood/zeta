@@ -7,11 +7,29 @@ export type RedeemResponse = {
   access_status: string;
   role: string;
   role_upgraded: boolean;
+  group?: AccessGroup;
 };
 
+export type AccessGroup = { id: string; name: string; avatar?: string };
+
 export type SignupCode = {
+  id: string;
   code: string;
-  status: string;
+  status: 'available' | 'consumed';
+  consumed_at?: string;
+};
+
+export type SignupCodesResponse = {
+  codes: SignupCode[];
+  successful_referrals: number;
+  referral_limit: number;
+  remaining_referrals: number;
+};
+
+export type GroupInvitationPreview = {
+  code: string;
+  group: AccessGroup;
+  already_member: boolean;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -27,11 +45,13 @@ export class AccessApiClient {
     return this.http.post<RedeemResponse>(`${this.baseUrl}/redeem`, { code });
   }
 
-  listCodes(): Observable<{ codes: SignupCode[] }> {
-    return this.http.get<{ codes: SignupCode[] }>(`${this.baseUrl}/codes`);
+  previewGroupInvitation(code: string): Observable<GroupInvitationPreview> {
+    return this.http.get<GroupInvitationPreview>(
+      `${this.baseUrl}/group-invitations/${encodeURIComponent(code)}`,
+    );
   }
 
-  generateCodes(count: number): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/codes`, { count });
+  listCodes(): Observable<SignupCodesResponse> {
+    return this.http.get<SignupCodesResponse>(`${this.baseUrl}/codes`);
   }
 }

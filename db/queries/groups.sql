@@ -2,7 +2,8 @@
 INSERT INTO groups (name, owner_id, avatar, description) VALUES ($1, $2, $3, $4) RETURNING *;
 
 -- name: AddUserToGroup :exec
-INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2);
+INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2)
+ON CONFLICT (user_id, group_id) DO NOTHING;
 
 -- name: ListUserGroups :many
 SELECT g.id, g.name, g.owner_id, g.avatar, g.description, g.created_at, g.updated_at
@@ -37,6 +38,19 @@ WHERE code = $1 LIMIT 1;
 SELECT * FROM group_invitations
 WHERE id = $1 AND group_id = $2 LIMIT 1;
 
+-- name: ListGroupInvitations :many
+SELECT * FROM group_invitations
+WHERE group_id = $1
+ORDER BY created_at DESC;
+
+-- name: RevokeGroupInvitation :one
+UPDATE group_invitations
+SET status = 'revoked', status_changed_at = NOW()
+WHERE id = @id
+  AND group_id = @group_id
+  AND status = 'pending'
+RETURNING *;
+
 -- name: RemoveUserFromGroup :exec
 DELETE FROM user_groups WHERE user_id = $1 AND group_id = $2;
 
@@ -53,7 +67,9 @@ WHERE ug.user_id = $1
   AND EXISTS (SELECT 1 FROM remaining_members);
 
 -- name: UpdateGroupInvitationStatus :exec
-UPDATE group_invitations SET status = @status WHERE id = @id;
+UPDATE group_invitations
+SET status = @status, status_changed_at = NOW()
+WHERE id = @id;
 
 -- name: GetGroupInvitationsByCodes :many
 SELECT * FROM group_invitations

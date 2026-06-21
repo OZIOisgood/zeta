@@ -23,8 +23,9 @@ import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
 import { ZTabsComponent } from '../../shared/ui/tabs/z-tabs.component';
 import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
 import { InviteCodesSectionComponent } from '../invite-codes/invite-codes-section.component';
+import { ExpertAccessSectionComponent } from '../invite-codes/expert-access-section.component';
 
-type PreferencesTab = 'personal-data' | 'email-preferences' | 'invite-codes';
+type PreferencesTab = 'personal-data' | 'email-preferences' | 'expert-access' | 'invite-codes';
 type PreferencesFormValue = {
   first_name: string;
   last_name: string;
@@ -60,6 +61,7 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
     ZTabsComponent,
     ZTextInputComponent,
     InviteCodesSectionComponent,
+    ExpertAccessSectionComponent,
     LucideBell,
     LucideCircleUserRound,
     LucideSave,
@@ -86,6 +88,8 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
       <z-tab-panel tabsId="preferences-tabs" [value]="activeTab()">
         @if (activeTab() === 'invite-codes') {
           <app-invite-codes-section />
+        } @else if (activeTab() === 'expert-access') {
+          <app-expert-access-section />
         } @else {
           <form class="grid gap-5" [formGroup]="form" (ngSubmit)="save()">
             @if (activeTab() === 'personal-data') {
@@ -424,8 +428,7 @@ export class PreferencesPageComponent {
     }));
   });
   protected readonly canManageInviteCodes = computed(() => {
-    const r = this.session.user()?.role;
-    return r === 'expert' || r === 'admin';
+    return this.session.hasPermission('access:invite-codes:read');
   });
   protected readonly tabOptions = computed(() => {
     this._translationEvents();
@@ -442,6 +445,11 @@ export class PreferencesPageComponent {
       options.push({
         value: 'invite-codes',
         label: this.transloco.translate('common.nav.inviteCodes'),
+      });
+    } else if (this.session.user()?.role === 'student') {
+      options.push({
+        value: 'expert-access',
+        label: this.transloco.translate('preferences.expertAccess'),
       });
     }
 
@@ -476,6 +484,11 @@ export class PreferencesPageComponent {
         return;
       }
 
+      if (tab === 'expert-access' && this.session.user()?.role === 'student') {
+        this.activeTab.set(tab);
+        return;
+      }
+
       void this.router.navigate(['/preferences', 'personal-data'], { replaceUrl: true });
     });
 
@@ -504,7 +517,12 @@ export class PreferencesPageComponent {
   }
 
   protected setTab(tab: string): void {
-    if (tab === 'personal-data' || tab === 'email-preferences' || tab === 'invite-codes') {
+    if (
+      tab === 'personal-data' ||
+      tab === 'email-preferences' ||
+      tab === 'expert-access' ||
+      tab === 'invite-codes'
+    ) {
       void this.router.navigate(['/preferences', tab]);
     }
   }

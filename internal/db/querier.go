@@ -39,7 +39,7 @@ type Querier interface {
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	// === Session Types ===
 	CreateSessionType(ctx context.Context, arg CreateSessionTypeParams) (CoachingSessionType, error)
-	CreateSignupCode(ctx context.Context, arg CreateSignupCodeParams) (SignupCode, error)
+	CreateSignupCodeWithinLimit(ctx context.Context, arg CreateSignupCodeWithinLimitParams) (SignupCode, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	CreateVideoFromMuxAsset(ctx context.Context, arg CreateVideoFromMuxAssetParams) (Video, error)
 	CreateVideoReview(ctx context.Context, arg CreateVideoReviewParams) (VideoReview, error)
@@ -82,6 +82,7 @@ type Querier interface {
 	// === Bookings ===
 	ListBookingsByExpertInRange(ctx context.Context, arg ListBookingsByExpertInRangeParams) ([]CoachingBooking, error)
 	ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error)
+	ListGroupInvitations(ctx context.Context, groupID pgtype.UUID) ([]GroupInvitation, error)
 	ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error)
 	ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error)
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
@@ -137,6 +138,7 @@ type Querier interface {
 	ReportUploadEventsForExpert(ctx context.Context, expertID string) ([]ReportUploadEventsForExpertRow, error)
 	// One row per asset the student uploaded. The reviewing expert is the group owner.
 	ReportUploadEventsForStudent(ctx context.Context, studentID string) ([]ReportUploadEventsForStudentRow, error)
+	RevokeGroupInvitation(ctx context.Context, arg RevokeGroupInvitationParams) (GroupInvitation, error)
 	SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error)
 	SeedUserPreferencesWithAvatar(ctx context.Context, arg SeedUserPreferencesWithAvatarParams) (UserPreference, error)
 	SetVideoDurationByID(ctx context.Context, arg SetVideoDurationByIDParams) error

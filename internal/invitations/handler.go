@@ -9,6 +9,7 @@ import (
 	"net/mail"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -22,6 +23,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/tools"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
@@ -47,6 +49,17 @@ func NewHandler(q db.Querier, email email.Sender, workos auth.UserManagement, lo
 
 type CreateInvitationRequest struct {
 	Email string `json:"email"`
+}
+
+type groupInvitationView struct {
+	ID              string     `json:"id"`
+	Code            string     `json:"code"`
+	Delivery        string     `json:"delivery"`
+	Email           *string    `json:"email,omitempty"`
+	Status          string     `json:"status"`
+	InviteURL       string     `json:"invite_url"`
+	CreatedAt       *time.Time `json:"created_at,omitempty"`
+	StatusChangedAt *time.Time `json:"status_changed_at,omitempty"`
 }
 
 func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
@@ -230,10 +243,83 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":   pgutil.UUIDToString(invitation.ID),
-		"code": invitation.Code,
+	json.NewEncoder(w).Encode(h.invitationView(invitation))
+}
+
+// ListInvitations returns invitation history for a group member with explicit visibility permission.
+func (h *Handler) ListInvitations(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsInvitesRead) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	groupID, ok := h.requireGroupMembership(w, r, user.ID)
+	if !ok {
+		return
+	}
+	invitations, err := h.q.ListGroupInvitations(ctx, groupID)
+	if err != nil {
+		log.ErrorContext(ctx, "invitation_list_failed",
+			slog.String("component", "invitations"), slog.String("user_id", user.ID), slog.Any("err", err))
+		http.Error(w, "Failed to load invitations", http.StatusInternalServerError)
+		return
+	}
+
+	views := make([]groupInvitationView, 0, len(invitations))
+	for _, invitation := range invitations {
+		views = append(views, h.invitationView(invitation))
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"invitations": views})
+}
+
+// RevokeInvitation invalidates an active group invitation.
+func (h *Handler) RevokeInvitation(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsInvitesRevoke) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	groupID, ok := h.requireGroupMembership(w, r, user.ID)
+	if !ok {
+		return
+	}
+	invitationUUID, err := uuid.Parse(chi.URLParam(r, "invitationID"))
+	if err != nil {
+		http.Error(w, "Invalid invitation ID", http.StatusBadRequest)
+		return
+	}
+	_, err = h.q.RevokeGroupInvitation(ctx, db.RevokeGroupInvitationParams{
+		ID: pgtype.UUID{Bytes: invitationUUID, Valid: true}, GroupID: groupID,
 	})
+	if err == pgx.ErrNoRows {
+		http.Error(w, "Invitation cannot be revoked", http.StatusConflict)
+		return
+	}
+	if err != nil {
+		log.ErrorContext(ctx, "invitation_revoke_failed",
+			slog.String("component", "invitations"), slog.String("user_id", user.ID), slog.Any("err", err))
+		http.Error(w, "Failed to revoke invitation", http.StatusInternalServerError)
+		return
+	}
+	log.InfoContext(ctx, "invitation_revoked",
+		slog.String("component", "invitations"), slog.String("user_id", user.ID),
+		slog.String("group_id", pgutil.UUIDToString(groupID)))
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) GetInvitationInfo(w http.ResponseWriter, r *http.Request) {
@@ -259,6 +345,13 @@ func (h *Handler) GetInvitationInfo(w http.ResponseWriter, r *http.Request) {
 			slog.String("component", "invitations"),
 			slog.Any("err", err),
 		)
+		http.Error(w, "Invitation not found", http.StatusNotFound)
+		return
+	}
+	if invitationHasEmail(invitation) &&
+		!strings.EqualFold(strings.TrimSpace(invitation.Email.String), strings.TrimSpace(user.Email)) {
+		log.WarnContext(ctx, "invitation_info_recipient_mismatch",
+			slog.String("component", "invitations"), slog.String("user_id", user.ID))
 		http.Error(w, "Invitation not found", http.StatusNotFound)
 		return
 	}
@@ -332,6 +425,13 @@ func (h *Handler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 			slog.String("component", "invitations"),
 			slog.Any("err", err),
 		)
+		http.Error(w, "Invitation not found", http.StatusNotFound)
+		return
+	}
+	if invitationHasEmail(invitation) &&
+		!strings.EqualFold(strings.TrimSpace(invitation.Email.String), strings.TrimSpace(user.Email)) {
+		log.WarnContext(ctx, "invitation_accept_recipient_mismatch",
+			slog.String("component", "invitations"), slog.String("user_id", user.ID))
 		http.Error(w, "Invitation not found", http.StatusNotFound)
 		return
 	}
@@ -609,6 +709,10 @@ func (h *Handler) GetInvitationQR(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	if !permissions.HasPermission(user.Permissions, permissions.GroupsInvitesRead) {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
 
 	groupIDStr := chi.URLParam(r, "groupID")
 	groupID, err := uuid.Parse(groupIDStr)
@@ -703,6 +807,49 @@ func (h *Handler) GetInvitationQR(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) inviteURL(code string) string {
 	return fmt.Sprintf("%s/groups?invite=%s", h.webInviteBaseURL, code)
+}
+
+func (h *Handler) invitationView(invitation db.GroupInvitation) groupInvitationView {
+	view := groupInvitationView{
+		ID:              pgutil.UUIDToString(invitation.ID),
+		Code:            invitation.Code,
+		Delivery:        invitationDelivery(invitation.Email),
+		Status:          string(invitation.Status),
+		InviteURL:       h.inviteURL(invitation.Code),
+		CreatedAt:       timestamptzPtr(invitation.CreatedAt),
+		StatusChangedAt: timestamptzPtr(invitation.StatusChangedAt),
+	}
+	if invitationHasEmail(invitation) {
+		email := invitation.Email.String
+		view.Email = &email
+	}
+	return view
+}
+
+func (h *Handler) requireGroupMembership(w http.ResponseWriter, r *http.Request, userID string) (pgtype.UUID, bool) {
+	groupUUID, err := uuid.Parse(chi.URLParam(r, "groupID"))
+	if err != nil {
+		http.Error(w, "Invalid group ID", http.StatusBadRequest)
+		return pgtype.UUID{}, false
+	}
+	groupID := pgtype.UUID{Bytes: groupUUID, Valid: true}
+	isMember, err := h.q.CheckUserGroup(r.Context(), db.CheckUserGroupParams{UserID: userID, GroupID: groupID})
+	if err != nil {
+		http.Error(w, "Failed to verify group membership", http.StatusInternalServerError)
+		return pgtype.UUID{}, false
+	}
+	if !isMember {
+		http.Error(w, "You are not a member of this group", http.StatusForbidden)
+		return pgtype.UUID{}, false
+	}
+	return groupID, true
+}
+
+func timestamptzPtr(value pgtype.Timestamptz) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	return &value.Time
 }
 
 func invitationHasEmail(invitation db.GroupInvitation) bool {
