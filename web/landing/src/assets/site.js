@@ -4,6 +4,48 @@
   });
   if (window.lucide) window.lucide.createIcons();
 
+  document.querySelectorAll('[data-contact-form]').forEach(function (form) {
+    var button = form.querySelector('[data-contact-submit]');
+    var status = form.querySelector('[data-contact-status]');
+    if (!button || !status || !window.fetch) return;
+    var defaultLabel = button.textContent;
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+
+      var fields = new FormData(form);
+      button.disabled = true;
+      button.textContent = form.dataset.sendingLabel;
+      status.textContent = '';
+      status.className = 'contact-form-note';
+
+      window.fetch(form.dataset.contactEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: fields.get('name'),
+          email: fields.get('email'),
+          message: fields.get('message'),
+          website: fields.get('website'),
+          locale: document.documentElement.lang || '',
+          page_url: window.location.href
+        })
+      }).then(function (response) {
+        if (!response.ok) throw new Error('contact request failed');
+        form.reset();
+        status.textContent = form.dataset.successLabel;
+        status.classList.add('is-success');
+      }).catch(function () {
+        status.textContent = form.dataset.errorLabel;
+        status.classList.add('is-error');
+      }).finally(function () {
+        button.disabled = false;
+        button.textContent = defaultLabel;
+      });
+    });
+  });
+
   // Manual prev/next scrolling for the sports marquee (used in the reduced-motion fallback)
   document.querySelectorAll('[data-marquee-wrap]').forEach(function (wrap) {
     var m = wrap.querySelector('[data-marquee]');

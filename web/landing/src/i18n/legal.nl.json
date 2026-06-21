@@ -64,5 +64,8 @@
   "Wie können wir helfen?": "Hoe kunnen we helpen?",
   "Kontakt": "Contact",
   "Nutzungsbedingungen": "Gebruiksvoorwaarden",
-  "Ich habe die {link} gelesen und verstanden.": "Ik heb het {link} gelezen en begrepen."
+  "Ich habe die {link} gelesen und verstanden.": "Ik heb het {link} gelezen en begrepen.",
+  "Wird gesendet…": "Wordt verzonden…",
+  "Danke! Deine Nachricht wurde gesendet.": "Bedankt! Je bericht is verzonden.",
+  "Deine Nachricht konnte nicht gesendet werden. Bitte versuche es noch einmal.": "Je bericht kon niet worden verzonden. Probeer het opnieuw."
 }

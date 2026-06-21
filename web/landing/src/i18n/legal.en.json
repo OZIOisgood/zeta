@@ -66,5 +66,8 @@
   "Kontakt": "Contact",
   "Nutzungsbedingungen": "Terms of Use",
   "Name": "Name",
-  "Ich habe die {link} gelesen und verstanden.": "I have read and understood the {link}."
+  "Ich habe die {link} gelesen und verstanden.": "I have read and understood the {link}.",
+  "Wird gesendet…": "Sending…",
+  "Danke! Deine Nachricht wurde gesendet.": "Thank you! Your message has been sent.",
+  "Deine Nachricht konnte nicht gesendet werden. Bitte versuche es noch einmal.": "Your message could not be sent. Please try again."
 }

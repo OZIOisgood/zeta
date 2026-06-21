@@ -354,6 +354,21 @@ func (mr *MockQuerierMockRecorder) CreateGroupInvitation(ctx, arg any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroupInvitation", reflect.TypeOf((*MockQuerier)(nil).CreateGroupInvitation), ctx, arg)
 }
 
+// CreateLandingContactSubmission mocks base method.
+func (m *MockQuerier) CreateLandingContactSubmission(ctx context.Context, arg db.CreateLandingContactSubmissionParams) (db.LandingContactSubmission, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateLandingContactSubmission", ctx, arg)
+	ret0, _ := ret[0].(db.LandingContactSubmission)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateLandingContactSubmission indicates an expected call of CreateLandingContactSubmission.
+func (mr *MockQuerierMockRecorder) CreateLandingContactSubmission(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLandingContactSubmission", reflect.TypeOf((*MockQuerier)(nil).CreateLandingContactSubmission), ctx, arg)
+}
+
 // CreateMissingRecordingImports mocks base method.
 func (m *MockQuerier) CreateMissingRecordingImports(ctx context.Context) (int64, error) {
 	m.ctrl.T.Helper()
@@ -1419,6 +1434,34 @@ func (m *MockQuerier) MarkInboundEmailForwardingSkipped(ctx context.Context, arg
 func (mr *MockQuerierMockRecorder) MarkInboundEmailForwardingSkipped(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkInboundEmailForwardingSkipped", reflect.TypeOf((*MockQuerier)(nil).MarkInboundEmailForwardingSkipped), ctx, arg)
+}
+
+// MarkLandingContactEmailFailed mocks base method.
+func (m *MockQuerier) MarkLandingContactEmailFailed(ctx context.Context, arg db.MarkLandingContactEmailFailedParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkLandingContactEmailFailed", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkLandingContactEmailFailed indicates an expected call of MarkLandingContactEmailFailed.
+func (mr *MockQuerierMockRecorder) MarkLandingContactEmailFailed(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkLandingContactEmailFailed", reflect.TypeOf((*MockQuerier)(nil).MarkLandingContactEmailFailed), ctx, arg)
+}
+
+// MarkLandingContactEmailSent mocks base method.
+func (m *MockQuerier) MarkLandingContactEmailSent(ctx context.Context, arg db.MarkLandingContactEmailSentParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkLandingContactEmailSent", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkLandingContactEmailSent indicates an expected call of MarkLandingContactEmailSent.
+func (mr *MockQuerierMockRecorder) MarkLandingContactEmailSent(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkLandingContactEmailSent", reflect.TypeOf((*MockQuerier)(nil).MarkLandingContactEmailSent), ctx, arg)
 }
 
 // MarkNotificationRead mocks base method.

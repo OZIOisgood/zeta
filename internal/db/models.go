@@ -588,6 +588,21 @@ type InboundEmail struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type LandingContactSubmission struct {
+	ID            pgtype.UUID        `json:"id"`
+	Name          string             `json:"name"`
+	Email         string             `json:"email"`
+	Message       string             `json:"message"`
+	Locale        string             `json:"locale"`
+	PageUrl       string             `json:"page_url"`
+	UserAgent     string             `json:"user_agent"`
+	EmailStatus   string             `json:"email_status"`
+	ResendEmailID string             `json:"resend_email_id"`
+	EmailError    string             `json:"email_error"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Notification struct {
 	ID          pgtype.UUID        `json:"id"`
 	RecipientID string             `json:"recipient_id"`

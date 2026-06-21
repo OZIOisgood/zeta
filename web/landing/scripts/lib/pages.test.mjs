@@ -49,13 +49,15 @@ test('rewriteLegalLinks maps localized legal slugs (and contact-form URLs) to ca
   assert.equal($('a').eq(3).attr('href'), '/privacy.html');
 });
 
-test('buildContactForm renders a non-wired form with consent checkbox', () => {
+test('buildContactForm renders a wired, validated form with consent and bot protection', () => {
   const out = buildContactForm({ 'Nachricht senden': 'Send message', 'Dein Name': 'Your name', 'Name': 'Name' });
-  assert.match(out, /<form class="contact-form" onsubmit="return false;">/);
+  assert.match(out, /data-contact-endpoint="https:\/\/api\.strido\.net\/contact"/);
   assert.match(out, />Send message</);
   assert.match(out, /placeholder="Your name"/);
-  assert.match(out, /<textarea/);
+  assert.match(out, /name="message"[^>]+maxlength="5000"[^>]+required/);
   assert.match(out, /type="checkbox"/);
+  assert.match(out, /class="contact-honeypot"/);
+  assert.match(out, /role="status" aria-live="polite"/);
   assert.match(out, /href="\/privacy\.html"/); // canonical privacy link (rewriteLinks adds the locale prefix)
 });
 

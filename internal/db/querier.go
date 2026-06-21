@@ -35,6 +35,7 @@ type Querier interface {
 	CreateFeedbackSubmission(ctx context.Context, arg CreateFeedbackSubmissionParams) (FeedbackSubmission, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateGroupInvitation(ctx context.Context, arg CreateGroupInvitationParams) (GroupInvitation, error)
+	CreateLandingContactSubmission(ctx context.Context, arg CreateLandingContactSubmissionParams) (LandingContactSubmission, error)
 	CreateMissingRecordingImports(ctx context.Context) (int64, error)
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	// === Session Types ===
@@ -112,6 +113,8 @@ type Querier interface {
 	MarkInboundEmailForwarded(ctx context.Context, arg MarkInboundEmailForwardedParams) error
 	MarkInboundEmailForwardingFailed(ctx context.Context, arg MarkInboundEmailForwardingFailedParams) error
 	MarkInboundEmailForwardingSkipped(ctx context.Context, arg MarkInboundEmailForwardingSkippedParams) error
+	MarkLandingContactEmailFailed(ctx context.Context, arg MarkLandingContactEmailFailedParams) error
+	MarkLandingContactEmailSent(ctx context.Context, arg MarkLandingContactEmailSentParams) error
 	MarkNotificationRead(ctx context.Context, arg MarkNotificationReadParams) error
 	MarkNotificationReadByInviteCode(ctx context.Context, arg MarkNotificationReadByInviteCodeParams) error
 	MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error

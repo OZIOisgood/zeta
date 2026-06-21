@@ -79,8 +79,6 @@ export function rewriteLegalLinks($) {
   });
 }
 
-// Non-wired demo contact form (matches the handoff), with strings translated via the dict.
-// Actual submission (backend) is a go-live task.
 export function buildContactCard(dict, email) {
   const t = (k) => dict[k] || k;
   return (
@@ -100,17 +98,21 @@ export function buildContactForm(dict) {
   const consent = t('Ich habe die {link} gelesen und verstanden.')
     .replace('{link}', `<a href="/privacy.html">${t('Datenschutzerklärung')}</a>`);
   return (
-    '<form class="contact-form" onsubmit="return false;">' +
+    '<form class="contact-form" data-contact-form data-contact-endpoint="https://api.strido.net/contact"' +
+    ` data-sending-label="${attr('Wird gesendet…')}" data-error-label="${attr('Deine Nachricht konnte nicht gesendet werden. Bitte versuche es noch einmal.')}"` +
+    ` data-success-label="${attr('Danke! Deine Nachricht wurde gesendet.')}">` +
     `<h2>${t('Nachricht senden')}</h2>` +
     `<div class="contact-field"><label for="cf-name">${t('Name')}</label>` +
-    `<input id="cf-name" type="text" placeholder="${attr('Dein Name')}" autocomplete="name"></div>` +
+    `<input id="cf-name" name="name" type="text" placeholder="${attr('Dein Name')}" autocomplete="name" maxlength="120" required></div>` +
     `<div class="contact-field"><label for="cf-email">${t('E-Mail')}</label>` +
-    `<input id="cf-email" type="email" placeholder="${attr('du@beispiel.de')}" autocomplete="email"></div>` +
+    `<input id="cf-email" name="email" type="email" placeholder="${attr('du@beispiel.de')}" autocomplete="email" maxlength="254" required></div>` +
     `<div class="contact-field"><label for="cf-msg">${t('Nachricht')}</label>` +
-    `<textarea id="cf-msg" placeholder="${attr('Wie können wir helfen?')}"></textarea></div>` +
+    `<textarea id="cf-msg" name="message" placeholder="${attr('Wie können wir helfen?')}" maxlength="5000" required></textarea></div>` +
+    '<div class="contact-honeypot" aria-hidden="true"><label for="cf-website">Website</label>' +
+    '<input id="cf-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>' +
     `<label class="contact-consent"><input type="checkbox" required> <span>${consent}</span></label>` +
-    `<button class="lp-btn lp-btn-primary" type="submit">${t('Nachricht senden')}</button>` +
-    `<p class="contact-form-note">${t('Demo-Formular — wird noch nicht versendet.')}</p>` +
+    `<button class="lp-btn lp-btn-primary" type="submit" data-contact-submit>${t('Nachricht senden')}</button>` +
+    '<p class="contact-form-note" data-contact-status role="status" aria-live="polite"></p>' +
     '</form>'
   );
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/audit"
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/coaching"
+	"github.com/OZIOisgood/zeta/internal/contact"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/discord"
 	"github.com/OZIOisgood/zeta/internal/email"
@@ -97,6 +98,15 @@ func (s *Server) routes(ctx context.Context) {
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	reportsHandler := reports.NewHandler(queries, s.Logger)
+	contactHandler := contact.NewHandler(
+		queries,
+		contact.NewResendSender(
+			os.Getenv("RESEND_API_KEY"),
+			os.Getenv("RESEND_FROM_EMAIL"),
+			os.Getenv("INBOUND_EMAIL_SUPPORT_ADDRESS"),
+		),
+		s.Logger,
+	)
 	var discordPoster discord.Poster
 	if discordToken := os.Getenv("DISCORD_BOT_TOKEN"); strings.TrimSpace(discordToken) != "" {
 		discordPoster = discord.NewClient(discordToken)
@@ -199,6 +209,7 @@ func (s *Server) routes(ctx context.Context) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 	s.Router.Post("/webhooks/resend", inboundEmailHandler.Webhook)
+	s.Router.Route("/contact", contactHandler.RegisterRoutes)
 
 	// Auth Routes
 	s.Router.Group(func(r chi.Router) {
@@ -279,6 +290,9 @@ func allowedOrigins() []string {
 				origins = append(origins, o)
 			}
 		}
+	}
+	if landingOrigin := strings.TrimSpace(os.Getenv("LANDING_ORIGIN")); landingOrigin != "" {
+		origins = append(origins, strings.TrimRight(landingOrigin, "/"))
 	}
 	return origins
 }

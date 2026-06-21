@@ -67,5 +67,8 @@
   "Wie können wir helfen?": "¿Cómo podemos ayudarte?",
   "Kontakt": "Contacto",
   "Nutzungsbedingungen": "Condiciones de uso",
-  "Ich habe die {link} gelesen und verstanden.": "He leído y comprendido la {link}."
+  "Ich habe die {link} gelesen und verstanden.": "He leído y comprendido la {link}.",
+  "Wird gesendet…": "Enviando…",
+  "Danke! Deine Nachricht wurde gesendet.": "¡Gracias! Tu mensaje ha sido enviado.",
+  "Deine Nachricht konnte nicht gesendet werden. Bitte versuche es noch einmal.": "No se pudo enviar tu mensaje. Inténtalo de nuevo."
 }

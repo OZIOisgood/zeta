@@ -65,7 +65,7 @@ env:
   PROD_RESEND_FROM_EMAIL: notifications@strido.net
 ```
 
-The API deploy maps these constants to `ALLOWED_ORIGINS`, `FRONTEND_URL`, `WORKOS_REDIRECT_URI`, and `RESEND_FROM_EMAIL`. The dashboard deploy maps the API URL to browser-visible `API_URL`.
+The API deploy maps these constants to `ALLOWED_ORIGINS`, `LANDING_ORIGIN`, `FRONTEND_URL`, `WORKOS_REDIRECT_URI`, and `RESEND_FROM_EMAIL`. `LANDING_ORIGIN` is the public origin allowed to call the unauthenticated contact endpoint. The dashboard deploy maps the API URL to browser-visible `API_URL`.
 
 ## GitHub Environments
 

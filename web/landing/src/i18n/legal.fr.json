@@ -67,5 +67,8 @@
   "Wie können wir helfen?": "Comment pouvons-nous aider ?",
   "Kontakt": "Contact",
   "Nutzungsbedingungen": "Conditions d'utilisation",
-  "Ich habe die {link} gelesen und verstanden.": "J’ai lu et compris la {link}."
+  "Ich habe die {link} gelesen und verstanden.": "J’ai lu et compris la {link}.",
+  "Wird gesendet…": "Envoi en cours…",
+  "Danke! Deine Nachricht wurde gesendet.": "Merci ! Ton message a été envoyé.",
+  "Deine Nachricht konnte nicht gesendet werden. Bitte versuche es noch einmal.": "Ton message n’a pas pu être envoyé. Réessaie."
 }
