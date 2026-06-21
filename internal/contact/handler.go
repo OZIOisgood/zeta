@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -41,18 +42,22 @@ type EmailSender interface {
 }
 
 type Handler struct {
-	q       Store
-	email   EmailSender
-	logger  *slog.Logger
-	limiter *rateLimiter
+	q                Store
+	email            EmailSender
+	logger           *slog.Logger
+	limiter          *rateLimiter
+	discord          discord.Poster
+	discordChannelID string
 }
 
-func NewHandler(q Store, email EmailSender, baseLogger *slog.Logger) *Handler {
+func NewHandler(q Store, email EmailSender, discordPoster discord.Poster, discordChannelID string, baseLogger *slog.Logger) *Handler {
 	return &Handler{
-		q:       q,
-		email:   email,
-		logger:  baseLogger,
-		limiter: newRateLimiter(3, 10*time.Minute),
+		q:                q,
+		email:            email,
+		logger:           baseLogger,
+		limiter:          newRateLimiter(3, 10*time.Minute),
+		discord:          discordPoster,
+		discordChannelID: strings.TrimSpace(discordChannelID),
 	}
 }
 
@@ -171,6 +176,36 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		slog.String("resend_email_id", resendID),
 	)
 	writeCreated(w, contactID)
+
+	if h.discord != nil && h.discordChannelID != "" {
+		go h.postDiscord(contactID, row)
+	}
+}
+
+func (h *Handler) postDiscord(contactID string, submission db.LandingContactSubmission) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	title := discord.Truncate("[Landing] Contact from "+submission.Name, 100)
+	body := fmt.Sprintf(
+		"**Source:** landing_page\n**Contact ID:** %s\n**Name:** %s\n**Email:** %s\n**Locale:** %s\n**Page:** %s\n\n**Message:**\n%s",
+		contactID,
+		submission.Name,
+		submission.Email,
+		emptyFallback(submission.Locale, "not captured"),
+		emptyFallback(submission.PageUrl, "not captured"),
+		submission.Message,
+	)
+	if _, err := h.discord.CreateForumPost(ctx, h.discordChannelID, discord.Post{
+		Title:   title,
+		Content: body,
+	}); err != nil {
+		h.logger.WarnContext(ctx, "landing_contact_discord_post_failed",
+			slog.String("component", component),
+			slog.String("contact_id", contactID),
+			slog.Any("err", err),
+		)
+	}
 }
 
 func handleDeliveryFailure(ctx context.Context, q Store, log *slog.Logger, row db.LandingContactSubmission, deliveryErr error) {

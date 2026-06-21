@@ -15,13 +15,15 @@ type ResendSender struct {
 	client         *resend.Client
 	from           string
 	supportAddress string
+	copyRecipients []string
 }
 
-func NewResendSender(apiKey, from, supportAddress string) *ResendSender {
+func NewResendSender(apiKey, from, supportAddress string, copyRecipients []string) *ResendSender {
 	return &ResendSender{
 		client:         resend.NewClient(strings.TrimSpace(apiKey)),
 		from:           strings.TrimSpace(from),
 		supportAddress: strings.TrimSpace(supportAddress),
+		copyRecipients: copyRecipients,
 	}
 }
 
@@ -45,6 +47,7 @@ func (s *ResendSender) Send(ctx context.Context, submission db.LandingContactSub
 	request := &resend.SendEmailRequest{
 		From:    s.from,
 		To:      []string{s.supportAddress},
+		Cc:      s.copyRecipients,
 		ReplyTo: submission.Email,
 		Subject: subject,
 		Text:    body,

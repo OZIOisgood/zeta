@@ -17,7 +17,7 @@ import (
 func TestCreateStoresAndSendsLandingContact(t *testing.T) {
 	store := &fakeStore{}
 	sender := &fakeSender{id: "resend-1"}
-	h := NewHandler(store, sender, testLogger())
+	h := NewHandler(store, sender, nil, "", testLogger())
 	req := request(`{"name":" Ada Coach ","email":" ADA@example.com ","message":" Hello support ","locale":"en","page_url":"https://strido.net/en/contact.html"}`)
 	rec := httptest.NewRecorder()
 
@@ -51,7 +51,7 @@ func TestCreateValidatesBeforePersisting(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &fakeStore{}
-			h := NewHandler(store, &fakeSender{}, testLogger())
+			h := NewHandler(store, &fakeSender{}, nil, "", testLogger())
 			rec := httptest.NewRecorder()
 
 			h.Create(rec, request(tt.body))
@@ -68,7 +68,7 @@ func TestCreateValidatesBeforePersisting(t *testing.T) {
 
 func TestCreateQuietlyAcceptsHoneypot(t *testing.T) {
 	store := &fakeStore{}
-	h := NewHandler(store, &fakeSender{}, testLogger())
+	h := NewHandler(store, &fakeSender{}, nil, "", testLogger())
 	rec := httptest.NewRecorder()
 
 	h.Create(rec, request(`{"name":"Bot","email":"bot@example.com","message":"Spam","website":"https://spam.example"}`))
@@ -83,7 +83,7 @@ func TestCreateQuietlyAcceptsHoneypot(t *testing.T) {
 
 func TestCreateMarksEmailFailure(t *testing.T) {
 	store := &fakeStore{}
-	h := NewHandler(store, &fakeSender{err: errors.New("resend unavailable")}, testLogger())
+	h := NewHandler(store, &fakeSender{err: errors.New("resend unavailable")}, nil, "", testLogger())
 	rec := httptest.NewRecorder()
 
 	h.Create(rec, request(`{"name":"Ada","email":"ada@example.com","message":"Hello"}`))
@@ -98,7 +98,7 @@ func TestCreateMarksEmailFailure(t *testing.T) {
 
 func TestCreateRateLimitsRepeatedSubmissions(t *testing.T) {
 	store := &fakeStore{}
-	h := NewHandler(store, &fakeSender{}, testLogger())
+	h := NewHandler(store, &fakeSender{}, nil, "", testLogger())
 	body := `{"name":"Ada","email":"ada@example.com","message":"Hello"}`
 
 	for i := 0; i < 4; i++ {

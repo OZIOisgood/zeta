@@ -98,19 +98,22 @@ func (s *Server) routes(ctx context.Context) {
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	reportsHandler := reports.NewHandler(queries, s.Logger)
+	var discordPoster discord.Poster
+	if discordToken := os.Getenv("DISCORD_BOT_TOKEN"); strings.TrimSpace(discordToken) != "" {
+		discordPoster = discord.NewClient(discordToken)
+	}
 	contactHandler := contact.NewHandler(
 		queries,
 		contact.NewResendSender(
 			os.Getenv("RESEND_API_KEY"),
 			os.Getenv("RESEND_FROM_EMAIL"),
 			os.Getenv("INBOUND_EMAIL_SUPPORT_ADDRESS"),
+			splitCSV(os.Getenv("INBOUND_EMAIL_COPY_RECIPIENTS")),
 		),
+		discordPoster,
+		os.Getenv("DISCORD_SUPPORT_INBOX_FORUM_CHANNEL_ID"),
 		s.Logger,
 	)
-	var discordPoster discord.Poster
-	if discordToken := os.Getenv("DISCORD_BOT_TOKEN"); strings.TrimSpace(discordToken) != "" {
-		discordPoster = discord.NewClient(discordToken)
-	}
 	feedbackHandler := feedback.NewHandler(
 		queries,
 		discordPoster,

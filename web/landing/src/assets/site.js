@@ -10,6 +10,13 @@
     if (!button || !status || !window.fetch) return;
     var defaultLabel = button.textContent;
 
+    function updateButton() {
+      button.disabled = !form.checkValidity();
+    }
+    updateButton();
+    form.addEventListener('input', updateButton);
+    form.addEventListener('change', updateButton);
+
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       if (!form.reportValidity()) return;
@@ -36,6 +43,7 @@
         form.reset();
         status.textContent = form.dataset.successLabel;
         status.classList.add('is-success');
+        updateButton();
       }).catch(function () {
         status.textContent = form.dataset.errorLabel;
         status.classList.add('is-error');
