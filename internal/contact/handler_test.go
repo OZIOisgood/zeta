@@ -16,8 +16,8 @@ import (
 
 func TestCreateStoresAndSendsLandingContact(t *testing.T) {
 	store := &fakeStore{}
-	sender := &fakeSender{id: "resend-1"}
-	h := NewHandler(store, sender, nil, "", testLogger())
+	sender := &fakeSender{supportID: "resend-1", acknowledgementID: "resend-2"}
+	h := NewHandler(store, sender, testLogger())
 	req := request(`{"name":" Ada Coach ","email":" ADA@example.com ","message":" Hello support ","locale":"en","page_url":"https://strido.net/en/contact.html"}`)
 	rec := httptest.NewRecorder()
 
@@ -35,6 +35,9 @@ func TestCreateStoresAndSendsLandingContact(t *testing.T) {
 	if !store.sent || store.sentParams.ResendEmailID != "resend-1" {
 		t.Fatalf("email success was not stored: %+v", store.sentParams)
 	}
+	if !sender.acknowledgementSent || sender.acknowledgementSubmission.Email != "ada@example.com" {
+		t.Fatalf("acknowledgement was not sent to the submitter: %+v", sender.acknowledgementSubmission)
+	}
 }
 
 func TestCreateValidatesBeforePersisting(t *testing.T) {
@@ -51,7 +54,7 @@ func TestCreateValidatesBeforePersisting(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &fakeStore{}
-			h := NewHandler(store, &fakeSender{}, nil, "", testLogger())
+			h := NewHandler(store, &fakeSender{}, testLogger())
 			rec := httptest.NewRecorder()
 
 			h.Create(rec, request(tt.body))
@@ -68,7 +71,7 @@ func TestCreateValidatesBeforePersisting(t *testing.T) {
 
 func TestCreateQuietlyAcceptsHoneypot(t *testing.T) {
 	store := &fakeStore{}
-	h := NewHandler(store, &fakeSender{}, nil, "", testLogger())
+	h := NewHandler(store, &fakeSender{}, testLogger())
 	rec := httptest.NewRecorder()
 
 	h.Create(rec, request(`{"name":"Bot","email":"bot@example.com","message":"Spam","website":"https://spam.example"}`))
@@ -83,7 +86,7 @@ func TestCreateQuietlyAcceptsHoneypot(t *testing.T) {
 
 func TestCreateMarksEmailFailure(t *testing.T) {
 	store := &fakeStore{}
-	h := NewHandler(store, &fakeSender{err: errors.New("resend unavailable")}, nil, "", testLogger())
+	h := NewHandler(store, &fakeSender{supportErr: errors.New("resend unavailable")}, testLogger())
 	rec := httptest.NewRecorder()
 
 	h.Create(rec, request(`{"name":"Ada","email":"ada@example.com","message":"Hello"}`))
@@ -96,9 +99,24 @@ func TestCreateMarksEmailFailure(t *testing.T) {
 	}
 }
 
+func TestCreateSucceedsWhenAcknowledgementFails(t *testing.T) {
+	store := &fakeStore{}
+	h := NewHandler(store, &fakeSender{supportID: "resend-1", acknowledgementErr: errors.New("resend unavailable")}, testLogger())
+	rec := httptest.NewRecorder()
+
+	h.Create(rec, request(`{"name":"Ada","email":"ada@example.com","message":"Hello"}`))
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("got %d, want %d; body: %s", rec.Code, http.StatusCreated, rec.Body.String())
+	}
+	if !store.sent || store.failed {
+		t.Fatalf("support delivery should remain successful: sent=%t failed=%t", store.sent, store.failed)
+	}
+}
+
 func TestCreateRateLimitsRepeatedSubmissions(t *testing.T) {
 	store := &fakeStore{}
-	h := NewHandler(store, &fakeSender{}, nil, "", testLogger())
+	h := NewHandler(store, &fakeSender{}, testLogger())
 	body := `{"name":"Ada","email":"ada@example.com","message":"Hello"}`
 
 	for i := 0; i < 4; i++ {
@@ -149,14 +167,24 @@ func (s *fakeStore) MarkLandingContactEmailFailed(_ context.Context, arg db.Mark
 }
 
 type fakeSender struct {
-	id         string
-	err        error
-	submission db.LandingContactSubmission
+	supportID                 string
+	supportErr                error
+	submission                db.LandingContactSubmission
+	acknowledgementID         string
+	acknowledgementErr        error
+	acknowledgementSent       bool
+	acknowledgementSubmission db.LandingContactSubmission
 }
 
-func (s *fakeSender) Send(_ context.Context, submission db.LandingContactSubmission) (string, error) {
+func (s *fakeSender) SendSupport(_ context.Context, submission db.LandingContactSubmission) (string, error) {
 	s.submission = submission
-	return s.id, s.err
+	return s.supportID, s.supportErr
+}
+
+func (s *fakeSender) SendAcknowledgement(_ context.Context, submission db.LandingContactSubmission) (string, error) {
+	s.acknowledgementSent = true
+	s.acknowledgementSubmission = submission
+	return s.acknowledgementID, s.acknowledgementErr
 }
 
 func request(body string) *http.Request {

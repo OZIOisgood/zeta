@@ -43,5 +43,12 @@
   "email.reminder.title": "Erinnerung an Coaching-Sitzung",
   "email.reminder.intro": "Deine Coaching-Sitzung beginnt am **{{.ScheduledAt}}** und dauert {{.Duration}}.",
   "email.reminder.intro_imminent": "Deine Coaching-Sitzung beginnt gleich am **{{.ScheduledAt}}** und dauert {{.Duration}}.",
-  "email.reminder.button": "Sitzung beitreten"
+  "email.reminder.button": "Sitzung beitreten",
+
+  "email.landing_contact_received.subject": "Wir haben deine Nachricht erhalten",
+  "email.landing_contact_received.preheader": "Deine Nachricht hat das Strido-Supportteam erreicht.",
+  "email.landing_contact_received.title": "Danke, dass du Strido kontaktiert hast",
+  "email.landing_contact_received.intro": "Hallo **{{.Name}}**, wir haben deine Nachricht erhalten.",
+  "email.landing_contact_received.note": "Unser Supportteam wird sie prüfen und sich so bald wie möglich bei dir melden.",
+  "email.landing_contact_received.footer": "Du erhältst diese Bestätigung, weil diese E-Mail-Adresse im Kontaktformular auf strido.net eingegeben wurde."
 }

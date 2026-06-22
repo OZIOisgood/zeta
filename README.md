@@ -21,7 +21,7 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Notification Preferences**: Users can control all email notifications or individual email categories from their Preferences page.
 - **Feedback Inbox**: Authenticated dashboard users can submit rated feedback that is stored in Postgres and mirrored into the environment-specific Discord forum.
 - **Inbound Email Inboxes**: Social, support, and DSA email is durably ingested from Resend, mirrored into environment-specific Discord forums, and copied to configured recipients.
-- **Landing Contact Inbox**: Public landing-page contact messages are persisted and sent to the support inbox, where the inbound pipeline labels them for Discord and configured copy recipients.
+- **Landing Contact Inbox**: Public landing-page contact messages are persisted and sent to the support inbox, where the inbound pipeline labels them for Discord and configured copy recipients. The sender receives a localized confirmation email.
 
 ## How to start
 

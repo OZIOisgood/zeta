@@ -108,10 +108,7 @@ func (s *Server) routes(ctx context.Context) {
 			os.Getenv("RESEND_API_KEY"),
 			os.Getenv("RESEND_FROM_EMAIL"),
 			os.Getenv("INBOUND_EMAIL_SUPPORT_ADDRESS"),
-			splitCSV(os.Getenv("INBOUND_EMAIL_COPY_RECIPIENTS")),
 		),
-		discordPoster,
-		os.Getenv("DISCORD_SUPPORT_INBOX_FORUM_CHANNEL_ID"),
 		s.Logger,
 	)
 	feedbackHandler := feedback.NewHandler(
