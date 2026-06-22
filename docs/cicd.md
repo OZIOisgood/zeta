@@ -83,6 +83,8 @@ Variables per environment:
 | Name | Purpose |
 | --- | --- |
 | `GCP_PROJECT_ID` | GCP project used by workflows |
+| `OBSERVABILITY_NOTIFICATION_EMAIL` | Optional shared email or Google Group that receives dev Monitoring alerts |
+| `OBSERVABILITY_VIEWER_MEMBERS` | Comma-separated IAM principals such as `user:colleague@example.com,group:ops@example.com` |
 
 Legacy `CLOUD_RUN_*_URL` GitHub variables are not consumed by the current workflows and should not be used as a second source of truth.
 
@@ -146,6 +148,7 @@ Terraform modules under `infra/terraform/modules/` manage:
 - Cloud SQL and its generated `DB_URL`
 - Agora recording storage and generated HMAC credentials
 - Cloud Scheduler jobs and related IAM
+- Dev Monitoring dashboard, uptime check, alerts, notification channel, and viewer IAM
 
 The inbound reconciliation jobs run every five minutes as
 `inbound-email-reconcile` in dev and `inbound-email-reconcile-prod` in prod.
@@ -153,6 +156,34 @@ The inbound reconciliation jobs run every five minutes as
 Deploy workflows own images and Cloud Run container runtime bindings. The Cloud Run module intentionally allows deployments to update container configuration without Terraform continually reverting it.
 
 Run infrastructure changes through `.github/workflows/infra.yml`, review `plan`, then run `apply`. A full prod Terraform apply is required before the first production tag deployment creates or updates dedicated prod services and domain mappings.
+
+## Observability Access
+
+The development overview is managed by `infra/terraform/modules/observability` and
+is exposed by the `observability_dashboard_url` Terraform output. It combines Cloud
+Run and Cloud SQL metrics with filtered application log panels. The module also
+owns the external `/health` uptime check and dev warning policies.
+
+Google Cloud Console access uses Google IAM, not a Zeta-specific login and password.
+Add a colleague's existing Google account to the dev GitHub Environment variable
+`OBSERVABILITY_VIEWER_MEMBERS` using `user:email@example.com`. Prefer a Google Group
+with the `group:` prefix when several operators need access. The module grants only:
+
+- `roles/monitoring.viewer`
+- `roles/logging.viewer`
+- `roles/cloudtrace.user`
+- `roles/errorreporting.viewer`
+
+Set `OBSERVABILITY_NOTIFICATION_EMAIL` to a shared mailbox or group if alerts should
+send email. These addresses are ordinary configuration, not secrets. Run the Infra
+workflow for `dev` with `plan`, review the IAM and notification-channel additions,
+then apply. The colleague signs in to Google Cloud with that same Google account;
+never create, share, or commit a password for observability access.
+
+The API receives `GCP_PROJECT_ID` as plain Cloud Run runtime configuration so its
+structured request logs can populate the standard Cloud Logging trace fields. Logs
+remain on stdout; no logging agent, OTLP log exporter, or additional log datastore
+is required.
 
 ## Runtime Configuration Changes
 

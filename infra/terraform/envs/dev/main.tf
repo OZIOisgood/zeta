@@ -39,6 +39,18 @@ variable "region" {
   default = "europe-west1"
 }
 
+variable "observability_notification_email" {
+  type        = string
+  description = "Optional shared email address for dev alert notifications"
+  default     = ""
+}
+
+variable "observability_viewer_members_csv" {
+  type        = string
+  description = "Comma-separated user: or group: principals with read-only observability access"
+  default     = ""
+}
+
 # Dev and prod originally shared these Cloud Run resources in the same GCP
 # project. Forget the prod services from dev state without deleting them, then
 # create dedicated dev services below.
@@ -129,6 +141,21 @@ module "cloud_sql" {
   disk_size_gb        = 10
   availability_type   = "ZONAL"
   deletion_protection = false
+}
+
+module "observability_dev" {
+  source = "../../modules/observability"
+
+  project_id              = var.project_id
+  environment             = "dev"
+  api_service_name        = "zeta-api-dev"
+  dashboard_service_name  = "zeta-dashboard-dev"
+  cloud_sql_instance_name = "zeta-dev"
+  api_host                = local.api_domain
+  notification_email      = trimspace(var.observability_notification_email)
+  viewer_members = toset(compact([
+    for member in split(",", var.observability_viewer_members_csv) : trimspace(member)
+  ]))
 }
 
 module "agora_recording_storage" {
@@ -297,4 +324,12 @@ output "api_dns_records" {
 
 output "resend_from_email" {
   value = local.resend_from_email
+}
+
+output "observability_dashboard_id" {
+  value = module.observability_dev.dashboard_id
+}
+
+output "observability_dashboard_url" {
+  value = module.observability_dev.dashboard_url
 }

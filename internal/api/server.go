@@ -62,7 +62,7 @@ func (s *Server) Shutdown() {
 
 func (s *Server) routes(ctx context.Context) {
 	// Structured logging middleware replaces middleware.Logger
-	s.Router.Use(logger.Middleware(s.Logger))
+	s.Router.Use(logger.Middleware(s.Logger, os.Getenv("GCP_PROJECT_ID")))
 	s.Router.Use(middleware.Recoverer)
 	s.Router.Use(middleware.StripSlashes)
 

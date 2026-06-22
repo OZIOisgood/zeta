@@ -40,6 +40,18 @@ variable "region" {
   default = "europe-west1"
 }
 
+# Accepted by the shared Infra workflow. Production observability is enabled
+# only after the dev dashboard and alert thresholds have been tuned.
+variable "observability_notification_email" {
+  type    = string
+  default = ""
+}
+
+variable "observability_viewer_members_csv" {
+  type    = string
+  default = ""
+}
+
 # Dev and prod originally shared these Cloud Run resources in the same GCP
 # project. Keep the legacy services running during the blue-green migration,
 # but stop managing them from prod state before creating dedicated services.

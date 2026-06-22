@@ -151,6 +151,20 @@ Google currently labels direct Cloud Run domain mapping as Preview and does not 
    ```
    Dashboard available at `http://localhost:4200`.
 
+### Development Observability
+
+The `Zeta Dev Overview` dashboard in Google Cloud Monitoring shows Cloud Run
+requests, errors, latency, CPU, memory, instances, billable time, Cloud SQL health,
+and recent operational warnings. Terraform also manages an external API health
+check and warning alerts for availability, 5xx responses, latency, memory, SQL disk,
+and critical workflow failures.
+
+Run `terraform output observability_dashboard_url` from
+`infra/terraform/envs/dev` to print the direct dashboard link. Viewer access is
+granted to existing Google accounts through the `OBSERVABILITY_VIEWER_MEMBERS`
+GitHub Environment variable; there is no separate Zeta observability password. See
+`docs/cicd.md` for IAM roles and notification-channel setup.
+
 ### Auth Flow
 
 - Public: `/health`
