@@ -14,6 +14,8 @@ const (
 	ResourceAsset           = "asset"
 	ResourceVideo           = "video"
 	ResourceProfile         = "profile"
+	ResourceUserRole        = "user_role"
+	ResourceAdminExpertCode = "admin_expert_code"
 )
 
 // Actions — stable verbs. These names are part of the trail's contract; never
@@ -48,6 +50,11 @@ const (
 	ActionVideoDeleted = "video.deleted"
 
 	ActionProfileUpdated = "profile.updated"
+
+	ActionUserRoleUpdated       = "user.role_updated"
+	ActionAdminExpertCodeCreated = "admin_expert_code.created"
+	ActionAdminExpertCodeRevoked = "admin_expert_code.revoked"
+	ActionAdminExpertCodeRedeemed = "admin_expert_code.redeemed"
 )
 
 // Event describes a single audited mutation. ResourceID and GroupID are empty

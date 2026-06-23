@@ -30,6 +30,14 @@ const (
 	ReportsRead = "reports:read"
 
 	AccessInviteCodesRead = "access:invite-codes:read"
+
+	AdminUsersRead       = "admin:users:read"
+	AdminUsersRoleUpdate = "admin:users:role:update"
+	AdminVideosRead      = "admin:videos:read"
+	AdminSessionsRead    = "admin:sessions:read"
+	AdminCodesRead       = "admin:codes:read"
+	AdminCodesManage     = "admin:codes:manage"
+	AdminAuditRead       = "admin:audit:read"
 )
 
 // Roles
