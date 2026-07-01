@@ -11,6 +11,8 @@
   width: 100%;
   height: 440px;
   aspect-ratio: auto;
+  object-fit: cover;
+  object-position: 70% 50%;
   box-shadow: var(--z-shadow-pop);
   border-radius: var(--z-radius-lg);
 }
@@ -164,7 +166,7 @@ body[data-hero="zentriert"] .lp-hero-visual { max-width: 720px; width: 100%; }
 
 /* ---- Audience photos ---- */
 .lp-audience-card { padding: 0; overflow: hidden; }
-.lp-audience-photo { display: block; width: 100%; height: 240px; }
+.lp-audience-photo { display: block; width: 100%; height: 320px; object-fit: cover; object-position: 50% 55%; }
 .lp-audience-body { padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
 
 /* ---- Reports mini-mockup ---- */
