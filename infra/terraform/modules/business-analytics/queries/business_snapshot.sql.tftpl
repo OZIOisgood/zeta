@@ -1,0 +1,282 @@
+DECLARE run_id STRING DEFAULT GENERATE_UUID();
+DECLARE started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
+
+TRUNCATE TABLE `${project_id}.${dataset_id}.business_video_uploads_daily`;
+TRUNCATE TABLE `${project_id}.${dataset_id}.business_reviews_daily`;
+TRUNCATE TABLE `${project_id}.${dataset_id}.business_live_coachings_daily`;
+
+INSERT INTO `${project_id}.${dataset_id}.business_video_uploads_daily` (
+  bucket_date,
+  bucket_week,
+  environment,
+  group_id,
+  group_name,
+  expert_id,
+  expert_display_name,
+  asset_status,
+  video_status,
+  submitted_uploads,
+  video_parts,
+  total_duration_seconds,
+  exported_at
+)
+SELECT
+  bucket_date,
+  DATE_TRUNC(bucket_date, WEEK(MONDAY)) AS bucket_week,
+  '${environment}' AS environment,
+  group_id,
+  group_name,
+  expert_id,
+  expert_display_name,
+  asset_status,
+  video_status,
+  CAST(submitted_uploads AS INT64) AS submitted_uploads,
+  CAST(video_parts AS INT64) AS video_parts,
+  CAST(total_duration_seconds AS FLOAT64) AS total_duration_seconds,
+  CURRENT_TIMESTAMP() AS exported_at
+FROM EXTERNAL_QUERY('${connection_id}', '''
+  WITH asset_rollup AS (
+    SELECT
+      a.id,
+      a.created_at::date AS bucket_date,
+      g.id::text AS group_id,
+      g.name AS group_name,
+      g.owner_id AS expert_id,
+      COALESCE(NULLIF(TRIM(CONCAT(up.first_name, ' ', up.last_name)), ''), 'Unknown expert') AS expert_display_name,
+      a.status::text AS asset_status,
+      COUNT(v.id)::bigint AS video_parts,
+      COALESCE(SUM(v.duration_seconds), 0)::double precision AS total_duration_seconds,
+      CASE
+        WHEN COUNT(v.id) = 0 THEN 'waiting_upload'
+        WHEN COUNT(*) FILTER (WHERE v.status = 'failed') > 0 THEN 'failed'
+        WHEN COUNT(*) FILTER (WHERE v.status = 'ready') = COUNT(v.id) THEN 'ready'
+        ELSE 'waiting_upload'
+      END AS video_status
+    FROM assets a
+    JOIN groups g ON g.id = a.group_id
+    LEFT JOIN videos v ON v.asset_id = a.id
+    LEFT JOIN user_preferences up ON up.user_id = g.owner_id
+    WHERE a.status != 'waiting_upload'
+    GROUP BY a.id, a.created_at, g.id, g.name, g.owner_id, up.first_name, up.last_name, a.status
+  )
+  SELECT
+    bucket_date,
+    group_id,
+    group_name,
+    expert_id,
+    expert_display_name,
+    asset_status,
+    video_status,
+    COUNT(*)::bigint AS submitted_uploads,
+    SUM(video_parts)::bigint AS video_parts,
+    SUM(total_duration_seconds)::double precision AS total_duration_seconds
+  FROM asset_rollup
+  GROUP BY bucket_date, group_id, group_name, expert_id, expert_display_name, asset_status, video_status
+''');
+
+INSERT INTO `${project_id}.${dataset_id}.business_reviews_daily` (
+  bucket_date,
+  bucket_week,
+  environment,
+  group_id,
+  group_name,
+  expert_id,
+  expert_display_name,
+  review_comments,
+  reviewed_videos,
+  top_level_comments,
+  reply_comments,
+  timestamped_comments,
+  exported_at
+)
+SELECT
+  bucket_date,
+  DATE_TRUNC(bucket_date, WEEK(MONDAY)) AS bucket_week,
+  '${environment}' AS environment,
+  group_id,
+  group_name,
+  expert_id,
+  expert_display_name,
+  CAST(review_comments AS INT64) AS review_comments,
+  CAST(reviewed_videos AS INT64) AS reviewed_videos,
+  CAST(top_level_comments AS INT64) AS top_level_comments,
+  CAST(reply_comments AS INT64) AS reply_comments,
+  CAST(timestamped_comments AS INT64) AS timestamped_comments,
+  CURRENT_TIMESTAMP() AS exported_at
+FROM EXTERNAL_QUERY('${connection_id}', '''
+  SELECT
+    r.created_at::date AS bucket_date,
+    g.id::text AS group_id,
+    g.name AS group_name,
+    g.owner_id AS expert_id,
+    COALESCE(NULLIF(TRIM(CONCAT(up.first_name, ' ', up.last_name)), ''), 'Unknown expert') AS expert_display_name,
+    COUNT(r.id)::bigint AS review_comments,
+    COUNT(DISTINCT r.video_id)::bigint AS reviewed_videos,
+    COUNT(*) FILTER (WHERE r.parent_id IS NULL)::bigint AS top_level_comments,
+    COUNT(*) FILTER (WHERE r.parent_id IS NOT NULL)::bigint AS reply_comments,
+    COUNT(*) FILTER (WHERE r.timestamp_seconds IS NOT NULL)::bigint AS timestamped_comments
+  FROM video_reviews r
+  JOIN videos v ON v.id = r.video_id
+  JOIN assets a ON a.id = v.asset_id
+  JOIN groups g ON g.id = a.group_id
+  LEFT JOIN user_preferences up ON up.user_id = g.owner_id
+  GROUP BY r.created_at::date, g.id, g.name, g.owner_id, up.first_name, up.last_name
+''');
+
+INSERT INTO `${project_id}.${dataset_id}.business_live_coachings_daily` (
+  bucket_date,
+  bucket_week,
+  environment,
+  group_id,
+  group_name,
+  expert_id,
+  expert_display_name,
+  session_type_id,
+  session_type_name,
+  status,
+  bookings_count,
+  total_duration_minutes,
+  exported_at
+)
+SELECT
+  bucket_date,
+  DATE_TRUNC(bucket_date, WEEK(MONDAY)) AS bucket_week,
+  '${environment}' AS environment,
+  group_id,
+  group_name,
+  expert_id,
+  expert_display_name,
+  session_type_id,
+  session_type_name,
+  status,
+  CAST(bookings_count AS INT64) AS bookings_count,
+  CAST(total_duration_minutes AS INT64) AS total_duration_minutes,
+  CURRENT_TIMESTAMP() AS exported_at
+FROM EXTERNAL_QUERY('${connection_id}', '''
+  WITH coaching_events AS (
+    SELECT
+      cb.created_at::date AS bucket_date,
+      g.id::text AS group_id,
+      g.name AS group_name,
+      cb.expert_id,
+      COALESCE(NULLIF(TRIM(CONCAT(up.first_name, ' ', up.last_name)), ''), 'Unknown expert') AS expert_display_name,
+      cb.session_type_id::text AS session_type_id,
+      COALESCE(cst.name, '') AS session_type_name,
+      'booked' AS status,
+      COUNT(cb.id)::bigint AS bookings_count,
+      SUM(cb.duration_minutes)::bigint AS total_duration_minutes
+    FROM coaching_bookings cb
+    JOIN groups g ON g.id = cb.group_id
+    LEFT JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+    LEFT JOIN user_preferences up ON up.user_id = cb.expert_id
+    GROUP BY cb.created_at::date, g.id, g.name, cb.expert_id, up.first_name, up.last_name, cb.session_type_id, cst.name
+
+    UNION ALL
+
+    SELECT
+      cb.updated_at::date AS bucket_date,
+      g.id::text AS group_id,
+      g.name AS group_name,
+      cb.expert_id,
+      COALESCE(NULLIF(TRIM(CONCAT(up.first_name, ' ', up.last_name)), ''), 'Unknown expert') AS expert_display_name,
+      cb.session_type_id::text AS session_type_id,
+      COALESCE(cst.name, '') AS session_type_name,
+      'cancelled' AS status,
+      COUNT(cb.id)::bigint AS bookings_count,
+      SUM(cb.duration_minutes)::bigint AS total_duration_minutes
+    FROM coaching_bookings cb
+    JOIN groups g ON g.id = cb.group_id
+    LEFT JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+    LEFT JOIN user_preferences up ON up.user_id = cb.expert_id
+    WHERE cb.is_cancelled = true
+    GROUP BY cb.updated_at::date, g.id, g.name, cb.expert_id, up.first_name, up.last_name, cb.session_type_id, cst.name
+
+    UNION ALL
+
+    SELECT
+      cb.scheduled_at::date AS bucket_date,
+      g.id::text AS group_id,
+      g.name AS group_name,
+      cb.expert_id,
+      COALESCE(NULLIF(TRIM(CONCAT(up.first_name, ' ', up.last_name)), ''), 'Unknown expert') AS expert_display_name,
+      cb.session_type_id::text AS session_type_id,
+      COALESCE(cst.name, '') AS session_type_name,
+      'completed' AS status,
+      COUNT(cb.id)::bigint AS bookings_count,
+      SUM(cb.duration_minutes)::bigint AS total_duration_minutes
+    FROM coaching_bookings cb
+    JOIN groups g ON g.id = cb.group_id
+    LEFT JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+    LEFT JOIN user_preferences up ON up.user_id = cb.expert_id
+    WHERE cb.is_cancelled = false
+      AND cb.scheduled_at < NOW()
+    GROUP BY cb.scheduled_at::date, g.id, g.name, cb.expert_id, up.first_name, up.last_name, cb.session_type_id, cst.name
+
+    UNION ALL
+
+    SELECT
+      cb.scheduled_at::date AS bucket_date,
+      g.id::text AS group_id,
+      g.name AS group_name,
+      cb.expert_id,
+      COALESCE(NULLIF(TRIM(CONCAT(up.first_name, ' ', up.last_name)), ''), 'Unknown expert') AS expert_display_name,
+      cb.session_type_id::text AS session_type_id,
+      COALESCE(cst.name, '') AS session_type_name,
+      'upcoming' AS status,
+      COUNT(cb.id)::bigint AS bookings_count,
+      SUM(cb.duration_minutes)::bigint AS total_duration_minutes
+    FROM coaching_bookings cb
+    JOIN groups g ON g.id = cb.group_id
+    LEFT JOIN coaching_session_types cst ON cst.id = cb.session_type_id
+    LEFT JOIN user_preferences up ON up.user_id = cb.expert_id
+    WHERE cb.is_cancelled = false
+      AND cb.scheduled_at >= NOW()
+    GROUP BY cb.scheduled_at::date, g.id, g.name, cb.expert_id, up.first_name, up.last_name, cb.session_type_id, cst.name
+  )
+  SELECT * FROM coaching_events
+''');
+
+INSERT INTO `${project_id}.${dataset_id}.business_analytics_export_runs` (
+  run_id,
+  started_at,
+  completed_at,
+  environment,
+  status,
+  window_start,
+  window_end,
+  video_rows,
+  review_rows,
+  coaching_rows,
+  error
+)
+SELECT
+  run_id,
+  started_at,
+  CURRENT_TIMESTAMP(),
+  '${environment}',
+  'success',
+  (
+    SELECT MIN(bucket_date)
+    FROM (
+      SELECT bucket_date FROM `${project_id}.${dataset_id}.business_video_uploads_daily`
+      UNION ALL
+      SELECT bucket_date FROM `${project_id}.${dataset_id}.business_reviews_daily`
+      UNION ALL
+      SELECT bucket_date FROM `${project_id}.${dataset_id}.business_live_coachings_daily`
+    )
+  ),
+  (
+    SELECT MAX(bucket_date)
+    FROM (
+      SELECT bucket_date FROM `${project_id}.${dataset_id}.business_video_uploads_daily`
+      UNION ALL
+      SELECT bucket_date FROM `${project_id}.${dataset_id}.business_reviews_daily`
+      UNION ALL
+      SELECT bucket_date FROM `${project_id}.${dataset_id}.business_live_coachings_daily`
+    )
+  ),
+  (SELECT COUNT(*) FROM `${project_id}.${dataset_id}.business_video_uploads_daily`),
+  (SELECT COUNT(*) FROM `${project_id}.${dataset_id}.business_reviews_daily`),
+  (SELECT COUNT(*) FROM `${project_id}.${dataset_id}.business_live_coachings_daily`),
+  NULL;
+

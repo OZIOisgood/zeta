@@ -79,6 +79,27 @@ resource "google_project_iam_member" "cloudscheduler_admin" {
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
+# Allow the deploy SA to manage BigQuery datasets, tables, jobs, and IAM.
+resource "google_project_iam_member" "bigquery_admin" {
+  project = var.project_id
+  role    = "roles/bigquery.admin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# Allow the deploy SA to manage BigQuery Cloud SQL federated connections.
+resource "google_project_iam_member" "bigquery_connection_admin" {
+  project = var.project_id
+  role    = "roles/bigquery.connectionAdmin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# Allow Terraform to enable APIs required by newly adopted infrastructure modules.
+resource "google_project_iam_member" "service_usage_admin" {
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageAdmin"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
 # Allow the deploy SA to manage IAM on service accounts via Terraform.
 resource "google_project_iam_member" "sa_admin" {
   project = var.project_id

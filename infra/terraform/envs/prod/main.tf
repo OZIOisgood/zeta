@@ -52,6 +52,11 @@ variable "observability_viewer_members_csv" {
   default = ""
 }
 
+variable "analytics_viewer_members_csv" {
+  type    = string
+  default = ""
+}
+
 # Dev and prod originally shared these Cloud Run resources in the same GCP
 # project. Keep the legacy services running during the blue-green migration,
 # but stop managing them from prod state before creating dedicated services.

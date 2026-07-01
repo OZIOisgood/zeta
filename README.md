@@ -165,6 +165,19 @@ granted to existing Google accounts through the `OBSERVABILITY_VIEWER_MEMBERS`
 GitHub Environment variable; there is no separate Zeta observability password. See
 `docs/cicd.md` for IAM roles and notification-channel setup.
 
+### Development Business Analytics
+
+The dev business analytics dataset in BigQuery materializes daily aggregates for
+video uploads, review comments, and live coachings. Terraform manages the
+BigQuery dataset, aggregate tables, read-only Cloud SQL connection, and scheduled
+refresh query. Looker Studio should connect to the BigQuery aggregate tables, not
+directly to Cloud SQL.
+
+Run `terraform output business_analytics_dataset_url` from
+`infra/terraform/envs/dev` to open the BigQuery dataset. Viewer access is granted
+through the `ANALYTICS_VIEWER_MEMBERS` GitHub Environment variable and Looker
+Studio report sharing; there is no separate analytics password.
+
 ### Auth Flow
 
 - Public: `/health`

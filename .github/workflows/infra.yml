@@ -24,6 +24,7 @@ env:
   TF_VERSION: "1.10.5"
   TF_VAR_observability_notification_email: ${{ vars.OBSERVABILITY_NOTIFICATION_EMAIL }}
   TF_VAR_observability_viewer_members_csv: ${{ vars.OBSERVABILITY_VIEWER_MEMBERS }}
+  TF_VAR_analytics_viewer_members_csv: ${{ vars.ANALYTICS_VIEWER_MEMBERS }}
 
 jobs:
   terraform:

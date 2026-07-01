@@ -51,6 +51,12 @@ variable "observability_viewer_members_csv" {
   default     = ""
 }
 
+variable "analytics_viewer_members_csv" {
+  type        = string
+  description = "Comma-separated user: or group: principals with read-only business analytics access"
+  default     = ""
+}
+
 # Dev and prod originally shared these Cloud Run resources in the same GCP
 # project. Forget the prod services from dev state without deleting them, then
 # create dedicated dev services below.
@@ -156,6 +162,25 @@ module "observability_dev" {
   viewer_members = toset(compact([
     for member in split(",", var.observability_viewer_members_csv) : trimspace(member)
   ]))
+}
+
+module "business_analytics_dev" {
+  source = "../../modules/business-analytics"
+
+  project_id                         = var.project_id
+  region                             = var.region
+  environment                        = "dev"
+  dataset_id                         = "zeta_analytics_dev"
+  bigquery_location                  = var.region
+  cloud_sql_instance_name            = module.cloud_sql.instance_name
+  cloud_sql_instance_connection_name = module.cloud_sql.instance_connection_name
+  cloud_sql_database_name            = module.cloud_sql.database_name
+  deploy_service_account_email       = module.github_wif.service_account_email
+  viewer_members = toset(compact([
+    for member in split(",", var.analytics_viewer_members_csv) : trimspace(member)
+  ]))
+
+  depends_on = [module.cloud_sql, module.github_wif]
 }
 
 module "agora_recording_storage" {
@@ -332,4 +357,12 @@ output "observability_dashboard_id" {
 
 output "observability_dashboard_url" {
   value = module.observability_dev.dashboard_url
+}
+
+output "business_analytics_dataset_id" {
+  value = module.business_analytics_dev.dataset_id
+}
+
+output "business_analytics_dataset_url" {
+  value = module.business_analytics_dev.dataset_console_url
 }
