@@ -13,7 +13,14 @@
 import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-export type ZButtonVariant = 'primary' | 'tonal' | 'secondary' | 'ghost' | 'danger' | 'link';
+export type ZButtonVariant =
+  | 'primary'
+  | 'tonal'
+  | 'secondary'
+  | 'ghost'
+  | 'danger'
+  | 'danger-outline'
+  | 'link';
 
 export type ZButtonProps = {
   /** User-visible label text; also the accessibilityLabel. */
@@ -28,7 +35,11 @@ export type ZButtonProps = {
    *                 but more prominent than `secondary`/`ghost`.
    * - `secondary` — outlined / bordered; secondary action.
    * - `ghost`     — no chrome; tertiary / in-context action.
-   * - `danger`    — destructive action (red).
+   * - `danger`    — destructive action, high-emphasis (filled red); the confirm
+   *                 action in a dialog or the primary action of a destructive screen.
+   * - `danger-outline` — destructive action, low-emphasis (red outline, no fill);
+   *                 a destructive action that is NOT the primary CTA (e.g. a
+   *                 "leave group" / "remove" action sitting in page content).
    * - `link`      — plain inline text link in accent color.
    * @default 'primary'
    */
@@ -37,6 +48,13 @@ export type ZButtonProps = {
   disabled?: boolean;
   /** When true, shows a loading indicator and disables the button. */
   loading?: boolean;
+  /**
+   * When true, the button stretches to fill its container's width (full-width
+   * CTA). Default is content-width (HIG/M3 default). The consumer still controls
+   * the container width (e.g. a `w-full` parent).
+   * @default false
+   */
+  fullWidth?: boolean;
   /** Optional leading icon node (lucide icon or ZSymbol). */
   icon?: ReactNode;
   /** NativeWind classes for the outer wrapper (margins, alignment, positioning). */

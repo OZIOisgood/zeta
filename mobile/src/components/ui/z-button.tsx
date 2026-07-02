@@ -29,6 +29,8 @@ const containerClasses: Record<ZButtonVariant, string> = {
   secondary: 'bg-z-surface border border-z-border active:bg-z-surface-warm',
   ghost: 'bg-transparent active:bg-z-surface-muted',
   danger: 'bg-z-danger active:opacity-90',
+  // Low-emphasis destructive: red outline, transparent fill, soft-red press tint.
+  'danger-outline': 'bg-transparent border border-z-danger active:bg-z-danger-soft',
   // Inline primary-colored text link (web's `text-sm text-[var(--z-primary)]`
   // anchor): transparent, no button chrome, dims on press.
   link: 'bg-transparent active:opacity-70',
@@ -40,6 +42,7 @@ const labelClasses: Record<ZButtonVariant, string> = {
   secondary: 'text-z-text',
   ghost: 'text-z-muted',
   danger: 'text-white',
+  'danger-outline': 'text-z-danger',
   // AA-safe deep accent for the inline link text (z-primary #ea580c is 3.56:1 on
   // white; z-primary-strong #c2410c is 5.18:1).
   link: 'text-z-primary-strong',
@@ -54,6 +57,7 @@ const spinnerColor: Record<ZButtonVariant, string> = {
   secondary: colors.text,
   ghost: colors.text,
   danger: colors.onPrimary,
+  'danger-outline': colors.danger,
   link: colors.primary,
 };
 
@@ -63,6 +67,7 @@ export function ZButton({
   variant = 'primary',
   disabled = false,
   loading = false,
+  fullWidth = false,
   icon,
   className,
   style,
@@ -78,7 +83,9 @@ export function ZButton({
   // All variants use the web's 14px label size; only the link variant changes chrome.
   const labelSizeClasses = 'text-sm';
   return (
-    <View className={className} style={[styles.wrap, style]}>
+    // fullWidth: drop the content-width `alignItems:'flex-start'` so the
+    // Pressable stretches to the wrapper's full width.
+    <View className={className} style={[fullWidth ? null : styles.wrap, style]}>
       <Pressable
         testID={testID}
         accessibilityRole="button"

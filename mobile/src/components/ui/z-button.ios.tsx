@@ -9,6 +9,10 @@
  *   secondary → buttonStyle('bordered') + tint(outline)
  *   ghost     → buttonStyle('borderless')
  *   danger    → buttonStyle('bordered') + role='destructive'
+ *   danger-outline → buttonStyle('bordered') + role='destructive' (iOS has no
+ *                 separate filled-vs-outline destructive; the system destructive
+ *                 role is the HIG-native low-emphasis red, so it coincides with
+ *                 `danger` here — the filled/outline split only differs on Android/web)
  *   link      → buttonStyle('plain') + tint(accent)
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
@@ -31,6 +35,7 @@ import {
   buttonStyle,
   controlSize,
   disabled,
+  frame,
   tint,
 } from '@expo/ui/swift-ui/modifiers';
 import { StyleSheet, View } from 'react-native';
@@ -52,6 +57,7 @@ const STYLE_MAP: Record<ZButtonVariant, SwiftUIButtonStyle> = {
   secondary: 'bordered',
   ghost: 'borderless',
   danger: 'bordered',
+  'danger-outline': 'bordered',
   link: 'plain',
 };
 
@@ -62,6 +68,7 @@ const ROLE_MAP: Record<ZButtonVariant, SwiftUIButtonRole> = {
   secondary: 'default',
   ghost: 'default',
   danger: 'destructive',
+  'danger-outline': 'destructive',
   link: 'default',
 };
 
@@ -71,6 +78,7 @@ export function ZButton({
   variant = 'primary',
   disabled: isDisabled = false,
   loading = false,
+  fullWidth = false,
   icon,
   className,
   style,
@@ -106,6 +114,10 @@ export function ZButton({
     accessibilityLabel(label),
     ...(testID ? [accessibilityIdentifier(testID)] : []),
     ...(tintModifier ? [tintModifier] : []),
+    // fullWidth: a large maxWidth makes the SwiftUI button fill the container
+    // (RN cannot pass .infinity over the bridge; a huge finite value clamps to
+    // the wrapper's width, which is stretched below).
+    ...(fullWidth ? [frame({ maxWidth: 100000 })] : []),
   ];
 
   // For the label-only case (no icon, no loading) use the simpler `label` prop
@@ -134,7 +146,7 @@ export function ZButton({
   );
 
   return (
-    <View className={className} style={[styles.wrap, style]}>
+    <View className={className} style={[fullWidth ? styles.wrapFull : styles.wrap, style]}>
       {composed}
     </View>
   );
@@ -142,4 +154,6 @@ export function ZButton({
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'flex-start' },
+  // fullWidth: stretch the wrapper so the framed SwiftUI button fills it.
+  wrapFull: { alignSelf: 'stretch' },
 });
