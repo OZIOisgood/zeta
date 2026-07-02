@@ -2,6 +2,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { Text, View } from 'react-native';
 import { ZAvatar } from './z-avatar';
 import { ZButton } from './z-button';
+import { ZSymbol } from './z-symbol';
+import { Touchable } from './touchable';
+import { colors } from '../../theme/colors';
 
 /**
  * Pick/upload an avatar. Mobile counterpart of the web `z-avatar-input`
@@ -20,6 +23,7 @@ export function ZAvatarInput({
   label,
   helperText,
   disabled = false,
+  centered = false,
   testID,
 }: {
   value?: string;
@@ -29,6 +33,12 @@ export function ZAvatarInput({
   label: string;
   helperText?: string;
   disabled?: boolean;
+  /**
+   * Centered layout (handoff "Persönliche Daten"): a large tappable avatar with
+   * an accent edit-badge overlay and the `label` as the caption beneath it,
+   * instead of the inline avatar + secondary button. Default is the inline layout.
+   */
+  centered?: boolean;
   testID?: string;
 }) {
   async function handlePick() {
@@ -43,6 +53,39 @@ export function ZAvatarInput({
     if (base64) {
       onChange(base64);
     }
+  }
+
+  // Centered layout (handoff): large tappable avatar + accent edit-badge overlay
+  // + caption. Badge uses inline styles — NativeWind arbitrary size/radius
+  // classes mis-render on Android.
+  if (centered) {
+    return (
+      <View testID={testID} style={{ alignItems: 'center', gap: 8 }}>
+        <Touchable accessibilityLabel={label} disabled={disabled} onPress={() => void handlePick()}>
+          <View style={{ position: 'relative' }}>
+            <ZAvatar image={value} fallback={fallback} alt={alt} size={88} />
+            <View
+              style={{
+                position: 'absolute',
+                right: 0,
+                bottom: 0,
+                width: 30,
+                height: 30,
+                borderRadius: 999,
+                borderWidth: 2.5,
+                borderColor: colors.bg,
+                backgroundColor: colors.primary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ZSymbol name="edit" label="" size={15} color={colors.onPrimary} />
+            </View>
+          </View>
+        </Touchable>
+        <Text className="text-xs text-z-muted">{label}</Text>
+      </View>
+    );
   }
 
   return (

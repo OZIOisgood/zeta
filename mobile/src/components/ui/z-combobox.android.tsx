@@ -78,13 +78,14 @@ export function ZCombobox({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={handlePress}
-      className={`min-h-11 w-full flex-row items-center justify-between rounded-md border px-3 py-2 ${
-        disabled ? 'bg-z-surface-warm' : 'bg-z-surface'
-      } ${invalid ? 'border-z-danger' : 'border-z-border'}`}
+      style={{ minHeight: 52 }}
+      className={`w-full flex-row items-center justify-between rounded-xl border px-3 py-3 ${
+        disabled ? 'bg-surface-variant' : 'bg-background'
+      } ${invalid ? 'border-role-danger' : 'border-outline'}`}
     >
       <Text
         numberOfLines={1}
-        className={`flex-1 ${selectedLabel ? 'text-z-text' : 'text-z-muted'}`}
+        className={`flex-1 text-[15px] ${selectedLabel ? 'text-on-surface' : 'text-on-surface-variant'}`}
       >
         {selectedLabel ?? placeholder}
       </Text>

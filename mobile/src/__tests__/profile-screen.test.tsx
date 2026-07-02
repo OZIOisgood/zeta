@@ -121,7 +121,7 @@ test('renders the grouped navigation rows and the sign-out button', async () => 
   // Verfügbarkeit verwalten (gated by coaching:availability:manage).
   expect(screen.getByRole('button', { name: 'Availability' })).toBeOnTheScreen();
   // E-Mail-Benachrichtigungen master switch.
-  expect(screen.getByRole('switch', { name: 'Email preferences' })).toBeOnTheScreen();
+  expect(screen.getByRole('switch', { name: 'Email notifications' })).toBeOnTheScreen();
   // Sign out.
   expect(screen.getByRole('button', { name: 'Sign out' })).toBeOnTheScreen();
 });
@@ -183,7 +183,7 @@ test('the master email switch reflects the user state and persists when toggled'
 
   await render(<ProfileScreen />);
 
-  const master = screen.getByRole('switch', { name: 'Email preferences' });
+  const master = screen.getByRole('switch', { name: 'Email notifications' });
   expect(master.props.accessibilityState?.checked).toBe(true);
 
   // Toggling the master switch persists immediately (fire-and-forget mutation).

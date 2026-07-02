@@ -1,34 +1,36 @@
 /**
- * ZCard — Android implementation (Jetpack Compose via @expo/ui/jetpack-compose).
+ * ZCard — Android implementation (Tier: Native)
  *
- * Renders a native Compose `Card` (Material 3 filled card surface) with
- * role-token colors. Material You direction — the container tone carries
- * elevation, so the default filled card is borderless and flat:
+ * Material 3 filled-card surface rendered as a role-token-styled RN View
+ * (NOT @expo/ui/jetpack-compose). The Compose `Host` dropped its FIRST paint
+ * whenever a card mounted in a non-initial React commit — which is exactly what
+ * the `isPending → data` swap on every detail screen produces. The card
+ * measured and laid out correctly (correct bounds) but never drew until a
+ * remount, leaving detail screens blank below the first painted element until
+ * the screen was reopened (a cache-hit reopen mounts the cards in the initial
+ * commit, so they paint). Forcing a recomposition/remount of the Host did not
+ * recover the paint, so this mirrors the iOS implementation (z-card.ios.tsx)
+ * and draws the Material surface directly with an RN View, which paints
+ * reliably regardless of when the card mounts.
  *
- *   - tone='surface'   (default) → containerColor = `surface`
- *   - tone='accent'              → containerColor = `accentContainer`
- *   - tone='secondary'           → containerColor = `secondaryContainer`
- *   - variant='outlined' (legacy)→ surface fill + 1dp `outline` border overlay
- *   - variant='elevated' (legacy)→ ~2dp elevation (soft drop shadow)
+ * Surface / tone (Material You — the fill tint carries elevation):
+ *   - tone='surface'   (default) → `surface` fill, borderless.
+ *   - tone='accent'              → `accentContainer` fill (featured surface).
+ *   - tone='secondary'           → `secondaryContainer` fill (secondary emphasis).
+ *   - variant='outlined' (legacy)→ surface fill + 1dp `outline` hairline border.
+ *   - variant='elevated' (legacy)→ ~2dp native Material elevation (soft shadow).
  *
- * Shape: 20dp corner radius by default, 28dp when `hero` — applied via the
- * `clip` modifier (Shapes.RoundedCorner) since CardProps has no shape arg.
+ * Shape: 20dp corner radius by default, 28dp when `hero` (Material 3 cards).
  *
  * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
- * `className` is forwarded to an outer NativeWind View so that consumer layout
+ * `className` is forwarded to an outer NativeWind View so consumer layout
  * classes (gap-*, flex-row, margins, selected-card highlights) are applied on
- * real device builds. Without this wrapper the @expo/ui Host does not honor
- * NativeWind classes, breaking layout-via-className consumers silently
- * (CI is green because jest uses the bare .tsx fallback). Padding is applied
- * via a wrapping RN View so that the content respects the p-4 contract even
- * inside the Compose card (which handles its own surface clipping).
+ * real device builds.
  *
- * @expo/ui version: ~56.0.17
  * Material 3 reference: https://m3.material.io/components/cards/overview
  */
 
-import { Card, Host } from '@expo/ui/jetpack-compose';
-import { Shapes, clip } from '@expo/ui/jetpack-compose/modifiers';
+import type { ViewStyle } from 'react-native';
 import { View } from 'react-native';
 import { useRoleColors } from '../../theme/native';
 import type { ZCardProps } from './z-card.types';
@@ -47,40 +49,33 @@ export function ZCard({
 
   // Container fill: outlined/elevated keep the surface fill; otherwise the
   // tonal fill is selected from `tone`.
-  const containerColor =
+  const backgroundColor =
     variant === 'filled' && tone === 'accent'
       ? color('accentContainer')
       : variant === 'filled' && tone === 'secondary'
         ? color('secondaryContainer')
         : color('surface');
 
-  // 20dp default radius, 28dp for prominent hero cards.
-  const radius = hero ? 28 : 20;
+  const style: ViewStyle = {
+    backgroundColor,
+    // 20dp default radius, 28dp for prominent hero cards (Material 3).
+    borderRadius: hero ? 28 : 20,
+    padding: 16,
+    ...(variant === 'outlined'
+      ? { borderWidth: 1, borderColor: color('outline') }
+      : { borderWidth: 0 }),
+    // Legacy elevated look: ~2dp native Material elevation (Android shadow). The
+    // filled/outlined cards stay flat — the tonal fill carries the elevation.
+    ...(variant === 'elevated' ? { elevation: 2 } : {}),
+  };
 
   return (
-    // Outer NativeWind View carries className (layout extensions from consumer)
-    // and testID. Android Host's PrimitiveBaseProps does not include a testID
-    // field (unlike iOS Host), so testID lives on this wrapper View.
-    <View className={className} testID={testID}>
-      {/* Both dimensions: horizontal-only collapses the card to 0 height in a
-          height-auto/centered parent (Compose Host sizes the unmatched axis to
-          the parent, which is unconstrained here) → invisible card. */}
-      <Host matchContents={{ horizontal: true, vertical: true }}>
-        <Card
-          colors={{ containerColor }}
-          // Filled/outlined cards are flat (tone carries elevation); the legacy
-          // elevated variant gets a soft ~2dp Material drop shadow.
-          elevation={variant === 'elevated' ? 2 : 0}
-          // Legacy outlined: 1dp warm hairline border on the surface fill.
-          border={
-            variant === 'outlined' ? { width: 1, color: color('outline') } : undefined
-          }
-          modifiers={[clip(Shapes.RoundedCorner(radius))]}
-        >
-          {/* p-4 equivalent (16dp) applied via RN View so content respects the contract */}
-          <View style={{ padding: 16 }}>{children}</View>
-        </Card>
-      </Host>
+    // Outer NativeWind View carries className (consumer layout extensions); the
+    // inner styled View draws the Material surface and owns testID.
+    <View className={className}>
+      <View testID={testID} style={style}>
+        {children}
+      </View>
     </View>
   );
 }

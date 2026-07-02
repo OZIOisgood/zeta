@@ -17,7 +17,12 @@ jest.mock('expo-image-picker', () => ({
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
-  Stack: { Screen: () => null },
+  // The real native-stack header is not mounted by RNTL, so render the
+  // header-right node (the Save action) inline to keep it testable.
+  Stack: {
+    Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+      options?.headerRight ? options.headerRight() : null,
+  },
 }));
 
 // Spy on the imperative toast API; the host is mounted at the app root, not here.
@@ -90,14 +95,14 @@ test('renders a skeleton placeholder (no chrome, no loading text) while the user
   expect(screen.queryByText(/loading/i)).toBeNull();
 });
 
-test('renders the editable personal-data fields and role badge for the signed-in user', async () => {
+test('renders the editable personal-data fields and the header Save action', async () => {
   authStore.setState({ status: 'signedIn', user: makeUser() });
   await render(<PreferencesScreen />);
 
-  // Role renders as a localized badge label, not the raw enum.
-  expect(screen.getByText('Student')).toBeOnTheScreen();
   expect(screen.getByDisplayValue('Heinrich')).toBeOnTheScreen();
   expect(screen.getByDisplayValue('Mergel')).toBeOnTheScreen();
+  // Email is shown read-only (used for sign-in).
+  expect(screen.getByDisplayValue('h@example.test')).toBeOnTheScreen();
   expect(screen.getByRole('button', { name: 'Save' })).toBeOnTheScreen();
 });
 
@@ -209,11 +214,12 @@ test('toggling an email-preference switch flips it and dirties the form', async 
   await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled());
 });
 
-test('the master email switch is present on the Preferences screen', async () => {
+test('does not render the master email switch (it lives on the Profile screen)', async () => {
   authStore.setState({ status: 'signedIn', user: makeUser() });
 
   await render(<PreferencesScreen />);
 
-  // Master toggle for all notification emails.
-  expect(screen.getByRole('switch', { name: 'All notification emails' })).toBeOnTheScreen();
+  // The master toggle was moved to the Profile overview per the handoff; this
+  // screen edits only the granular, permission-gated categories.
+  expect(screen.queryByRole('switch', { name: 'All notification emails' })).toBeNull();
 });

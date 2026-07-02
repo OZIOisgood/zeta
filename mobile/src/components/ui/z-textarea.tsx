@@ -53,7 +53,7 @@ export function ZTextarea({
       numberOfLines={rows}
       textAlignVertical="top"
       className={`min-h-14 w-full rounded-xl border px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-inset focus:ring-accent ${
-        disabled ? 'bg-surface-variant text-on-surface-variant' : 'bg-surface text-on-surface'
+        disabled ? 'bg-surface-variant text-on-surface-variant' : 'bg-background text-on-surface'
       } ${invalid ? 'border-role-danger' : 'border-outline'}`}
     />
   );

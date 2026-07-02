@@ -2,7 +2,6 @@ import { Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { GroupUser } from '../api/queries/groups';
 import { ZAvatar } from './ui/z-avatar';
-import { ZBadge } from './ui/z-badge';
 import { ZIconButton } from './ui/z-icon-button';
 import { ZListItem } from './ui/z-list-item';
 import { colors } from '../theme/colors';
@@ -12,12 +11,6 @@ function initials(member: GroupUser): string {
   const last = member.last_name.charAt(0).toUpperCase();
   return `${first}${last}`;
 }
-
-const ROLE_KEYS: Record<string, string> = {
-  admin: 'groups.roles.admin',
-  expert: 'groups.roles.expert',
-  student: 'groups.roles.student',
-};
 
 export function MemberRow({
   member,
@@ -29,8 +22,6 @@ export function MemberRow({
 }) {
   const { t } = useTranslation();
   const fullName = `${member.first_name} ${member.last_name}`.trim();
-  const roleKey = ROLE_KEYS[member.role];
-  const roleLabel = roleKey ? t(roleKey) : member.role;
   return (
     <ZListItem
       // Non-interactive: the row surfaces its own remove control, so it must not
@@ -46,7 +37,6 @@ export function MemberRow({
         />
       }
       title={fullName}
-      titleAccessory={<ZBadge label={roleLabel} tone="primary" />}
       subtitle={member.email}
       trailing={
         onRemove ? (
