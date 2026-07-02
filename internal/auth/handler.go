@@ -268,6 +268,47 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
+// sessionTokens bundles the WorkOS tokens established for a login session.
+type sessionTokens struct {
+	AccessToken  string
+	RefreshToken string
+	UserID       string
+}
+
+// establishSession exchanges an AuthKit authorization code for WorkOS tokens
+// and ensures the session is scoped to the default organization. codeVerifier
+// is empty for the web cookie flow and set for the mobile PKCE flow.
+func (h *Handler) establishSession(ctx context.Context, code, codeVerifier string) (sessionTokens, error) {
+	resp, err := h.workos.AuthenticateWithCode(ctx, usermanagement.AuthenticateWithCodeOpts{
+		ClientID:     os.Getenv("WORKOS_CLIENT_ID"),
+		Code:         code,
+		CodeVerifier: codeVerifier,
+	})
+	if err != nil {
+		return sessionTokens{}, fmt.Errorf("authenticate with code: %w", err)
+	}
+
+	tokens := sessionTokens{
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+		UserID:       resp.User.ID,
+	}
+
+	if resp.OrganizationID == "" {
+		if _, _, err := h.ensureUserInOrg(ctx, resp.User.ID); err != nil {
+			return sessionTokens{}, fmt.Errorf("ensure user in org: %w", err)
+		}
+		scoped, err := h.refreshSessionForDefaultOrg(ctx, tokens.RefreshToken)
+		if err != nil {
+			return sessionTokens{}, fmt.Errorf("refresh session for default org: %w", err)
+		}
+		tokens.AccessToken = scoped.AccessToken
+		tokens.RefreshToken = scoped.RefreshToken
+	}
+
+	return tokens, nil
+}
+
 func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	code := r.URL.Query().Get("code")
@@ -305,48 +346,17 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	clientID := os.Getenv("WORKOS_CLIENT_ID")
-
-	resp, err := h.workos.AuthenticateWithCode(ctx, usermanagement.AuthenticateWithCodeOpts{
-		ClientID: clientID,
-		Code:     code,
-	})
+	tokens, err := h.establishSession(ctx, code, "")
 	if err != nil {
-		h.logger.ErrorContext(ctx, "auth_authenticate_failed",
+		h.logger.ErrorContext(ctx, "auth_session_establish_failed",
 			slog.String("component", "auth"),
 			slog.Any("err", err),
 		)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Authentication failed", http.StatusInternalServerError)
 		return
 	}
-
-	accessToken := resp.AccessToken
-	refreshToken := resp.RefreshToken
-
-	if resp.OrganizationID == "" {
-		if _, _, err := h.ensureUserInOrg(ctx, resp.User.ID); err != nil {
-			h.logger.ErrorContext(ctx, "auth_ensure_org_failed",
-				slog.String("component", "auth"),
-				slog.String("user_id", resp.User.ID),
-				slog.Any("err", err),
-			)
-			http.Error(w, "Failed to prepare user organization", http.StatusInternalServerError)
-			return
-		}
-
-		scoped, err := h.refreshSessionForDefaultOrg(ctx, refreshToken)
-		if err != nil {
-			h.logger.ErrorContext(ctx, "auth_org_session_refresh_failed",
-				slog.String("component", "auth"),
-				slog.String("user_id", resp.User.ID),
-				slog.Any("err", err),
-			)
-			http.Error(w, "Failed to prepare user session", http.StatusInternalServerError)
-			return
-		}
-		accessToken = scoped.AccessToken
-		refreshToken = scoped.RefreshToken
-	}
+	accessToken := tokens.AccessToken
+	refreshToken := tokens.RefreshToken
 
 	// Extract Session ID from WorkOS Access Token (needed for logout URL later)
 	var claims jwt.MapClaims
@@ -372,7 +382,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	h.logger.InfoContext(ctx, "auth_login_succeeded",
 		slog.String("component", "auth"),
-		slog.String("user_id", resp.User.ID),
+		slog.String("user_id", tokens.UserID),
 	)
 
 	http.Redirect(w, r, frontendRedirectURL(returnTo), http.StatusSeeOther)
@@ -381,7 +391,7 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	// 1. Clear local cookies
-	cookie, err := r.Cookie(CookieName)
+	cookie, cookieErr := r.Cookie(CookieName)
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    "",
@@ -401,43 +411,67 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		SameSite: cookieSameSite(),
 	})
 
-	// 2. Determine redirect URL
+	// 2. Resolve the WorkOS session ID.
+	//
+	// Web callers send the access token in a cookie; Bearer/mobile callers have
+	// no cookie but the JWT middleware has already validated their token and
+	// populated UserContext.SID. We try the cookie path first (preserving the
+	// existing web behaviour), then fall back to the context user so that mobile
+	// callers also have their WorkOS session revoked.
+	var sid string
+	var isBearerCaller bool
+
+	if cookieErr == nil && cookie.Value != "" {
+		var logoutClaims jwt.MapClaims
+		_, _, _ = jwt.NewParser().ParseUnverified(cookie.Value, &logoutClaims)
+		sid, _ = logoutClaims["sid"].(string)
+	} else {
+		if cookieErr != nil {
+			h.logger.WarnContext(ctx, "auth_logout_no_cookie",
+				slog.String("component", "auth"),
+				slog.Any("err", cookieErr),
+			)
+		} else {
+			h.logger.WarnContext(ctx, "auth_logout_empty_cookie",
+				slog.String("component", "auth"),
+			)
+		}
+		// Fall back to the SID populated by the JWT middleware for Bearer callers.
+		if u := GetUser(ctx); u != nil && u.SID != "" {
+			sid = u.SID
+			isBearerCaller = true
+		}
+	}
+
+	// 3. Determine redirect / logout URL.
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
 		frontendURL = "http://localhost:4200"
 	}
 	redirectTarget := frontendURL
 
-	if err != nil {
-		h.logger.WarnContext(ctx, "auth_logout_no_cookie",
-			slog.String("component", "auth"),
-			slog.Any("err", err),
-		)
-	} else if cookie.Value == "" {
-		h.logger.WarnContext(ctx, "auth_logout_empty_cookie",
-			slog.String("component", "auth"),
-		)
-	}
-
-	if err == nil && cookie.Value != "" {
-		tokenString := cookie.Value
-
-		var logoutClaims jwt.MapClaims
-		_, _, _ = jwt.NewParser().ParseUnverified(tokenString, &logoutClaims)
-
-		if sid, ok := logoutClaims["sid"].(string); ok && sid != "" {
-			logoutURL, err := h.workos.GetLogoutURL(usermanagement.GetLogoutURLOpts{
-				SessionID: sid,
-				ReturnTo:  frontendURL,
-			})
-			if err != nil {
-				h.logger.ErrorContext(ctx, "auth_logout_url_failed",
-					slog.String("component", "auth"),
-					slog.Any("err", err),
-				)
-			} else {
-				redirectTarget = logoutURL.String()
-			}
+	if sid != "" {
+		// Web callers return to the frontend URL. Bearer/mobile callers DO open
+		// the logout URL in a browser tab (to clear the AuthKit cookie), so
+		// WorkOS will redirect that tab somewhere afterwards: MOBILE_LOGOUT_RETURN_TO
+		// (a deep link such as zeta://login, whitelisted as a WorkOS logout
+		// redirect URI) bounces it back into the app. When unset, WorkOS falls
+		// back to the dashboard-configured default redirect.
+		returnTo := frontendURL
+		if isBearerCaller {
+			returnTo = os.Getenv("MOBILE_LOGOUT_RETURN_TO")
+		}
+		logoutURL, err := h.workos.GetLogoutURL(usermanagement.GetLogoutURLOpts{
+			SessionID: sid,
+			ReturnTo:  returnTo,
+		})
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_logout_url_failed",
+				slog.String("component", "auth"),
+				slog.Any("err", err),
+			)
+		} else {
+			redirectTarget = logoutURL.String()
 		}
 	}
 
@@ -445,7 +479,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		slog.String("component", "auth"),
 	)
 
-	// 3. Return the logout URL as JSON instead of redirecting
+	// 4. Return the logout URL as JSON instead of redirecting.
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"logoutUrl": redirectTarget,
@@ -711,6 +745,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"avatar":            prefs.Avatar,
 		"timezone":          prefs.Timezone,
 		"email_preferences": preferences.FromUserPreferences(prefs),
+		"push_preferences":  preferences.FromUserPreferencesPush(prefs),
 		"role":              user.Role,
 		"permissions":       user.Permissions,
 		"access_status":     accessStatus,
@@ -727,6 +762,7 @@ type UpdateUserRequest struct {
 	Avatar           *string                       `json:"avatar"`
 	Timezone         string                        `json:"timezone"`
 	EmailPreferences *preferences.EmailPreferences `json:"email_preferences"`
+	PushPreferences  *preferences.PushPreferences  `json:"push_preferences"`
 }
 
 func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
@@ -778,6 +814,20 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 				slog.Any("err", err),
 			)
 			http.Error(w, "Failed to update email preferences", http.StatusInternalServerError)
+			return
+		}
+		prefs = updated
+	}
+
+	if req.PushPreferences != nil {
+		updated, err := h.q.UpdateUserPushPreferences(ctx, preferences.ToUpdatePushParams(user.ID, *req.PushPreferences))
+		if err != nil {
+			h.logger.ErrorContext(ctx, "auth_update_push_preferences_failed",
+				slog.String("component", "auth"),
+				slog.String("user_id", user.ID),
+				slog.Any("err", err),
+			)
+			http.Error(w, "Failed to update push preferences", http.StatusInternalServerError)
 			return
 		}
 		prefs = updated
@@ -850,6 +900,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		"avatar":            prefs.Avatar,
 		"timezone":          prefs.Timezone,
 		"email_preferences": preferences.FromUserPreferences(prefs),
+		"push_preferences":  preferences.FromUserPreferencesPush(prefs),
 		"role":              user.Role,
 		"permissions":       user.Permissions,
 	}
@@ -894,6 +945,107 @@ func (h *Handler) DevToken(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": resp.AccessToken})
+}
+
+type tokenExchangeRequest struct {
+	Code         string `json:"code"`
+	CodeVerifier string `json:"code_verifier"`
+}
+
+type tokenPairResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// TokenExchange exchanges an AuthKit authorization code (PKCE) for WorkOS
+// tokens and returns them as JSON. This is the mobile counterpart of Callback:
+// same session establishment, but tokens travel in the response body instead
+// of HttpOnly cookies. The mobile client stores them in secure storage.
+func (h *Handler) TokenExchange(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req tokenExchangeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.Code == "" {
+		http.Error(w, "code is required", http.StatusBadRequest)
+		return
+	}
+
+	tokens, err := h.establishSession(ctx, req.Code, req.CodeVerifier)
+	if err != nil {
+		h.logger.WarnContext(ctx, "auth_token_exchange_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Authentication failed", http.StatusUnauthorized)
+		return
+	}
+
+	h.logger.InfoContext(ctx, "auth_token_exchange_succeeded",
+		slog.String("component", "auth"),
+		slog.String("user_id", tokens.UserID),
+	)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tokenPairResponse{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	})
+}
+
+type tokenRefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+// TokenRefresh rotates a WorkOS token pair for the mobile flow. WorkOS
+// invalidates the presented refresh token, so the client must always replace
+// its stored pair with the returned one.
+func (h *Handler) TokenRefresh(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req tokenRefreshRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if req.RefreshToken == "" {
+		http.Error(w, "refresh_token is required", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := h.workos.AuthenticateWithRefreshToken(ctx, usermanagement.AuthenticateWithRefreshTokenOpts{
+		ClientID:     os.Getenv("WORKOS_CLIENT_ID"),
+		RefreshToken: req.RefreshToken,
+	})
+	if err != nil {
+		h.logger.WarnContext(ctx, "auth_token_refresh_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Refresh failed", http.StatusUnauthorized)
+		return
+	}
+
+	// The refresh response carries no user object; extract the user ID from
+	// the freshly issued access token (same trust as Callback's sid parse).
+	logAttrs := []any{slog.String("component", "auth")}
+	var refreshClaims jwt.MapClaims
+	if _, _, err := jwt.NewParser().ParseUnverified(resp.AccessToken, &refreshClaims); err == nil {
+		if userID, ok := refreshClaims["sub"].(string); ok && userID != "" {
+			logAttrs = append(logAttrs, slog.String("user_id", userID))
+		}
+	}
+
+	h.logger.InfoContext(ctx, "auth_token_refresh_succeeded", logAttrs...)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tokenPairResponse{
+		AccessToken:  resp.AccessToken,
+		RefreshToken: resp.RefreshToken,
+	})
 }
 
 // fetchURLAsBase64 downloads the content at url and returns it as a base64-encoded string.

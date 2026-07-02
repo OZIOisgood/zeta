@@ -76,7 +76,40 @@ func (h *Handler) CompleteUpload(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-	err := h.q.UpdateAssetStatus(ctx, db.UpdateAssetStatusParams{
+	userInfo := auth.GetUser(ctx)
+	if userInfo == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	asset, err := h.q.GetVisibleAsset(ctx, db.GetVisibleAssetParams{
+		AssetID:   uuid,
+		UserID:    userInfo.ID,
+		IsStudent: isStudent(userInfo),
+	})
+	if err != nil {
+		log.WarnContext(ctx, "asset_complete_upload_visibility_denied",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.String("user_id", userInfo.ID),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Video not found", http.StatusNotFound)
+		return
+	}
+
+	// Only the uploader may mark their own upload as complete.
+	if asset.OwnerID != userInfo.ID {
+		log.WarnContext(ctx, "asset_complete_upload_not_owner",
+			slog.String("component", "assets"),
+			slog.String("asset_id", idStr),
+			slog.String("user_id", userInfo.ID),
+		)
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
+	err = h.q.UpdateAssetStatus(ctx, db.UpdateAssetStatusParams{
 		ID:     uuid,
 		Status: db.AssetStatusPending,
 	})

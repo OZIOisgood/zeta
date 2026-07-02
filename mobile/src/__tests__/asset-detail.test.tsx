@@ -1,0 +1,414 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, render, screen, fireEvent, waitFor, within } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
+
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(async () => null),
+  setItemAsync: jest.fn(async () => undefined),
+  deleteItemAsync: jest.fn(async () => undefined),
+}));
+
+jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
+
+// Shared mutable player object — tests can inspect & reset it.
+const mockPlayer = { currentTime: 0, play: jest.fn() };
+jest.mock('expo-video', () => ({
+  useVideoPlayer: jest.fn(() => mockPlayer),
+  VideoView: () => null,
+}));
+
+const mockUseAssetQuery = jest.fn();
+const mockUseFinalizeAssetMutation = jest.fn();
+jest.mock('../api/queries/assets', () => ({
+  ...jest.requireActual('../api/queries/assets'),
+  useAssetQuery: (id: string) => mockUseAssetQuery(id),
+  useFinalizeAssetMutation: (id: string) => mockUseFinalizeAssetMutation(id),
+}));
+
+const mockUseReviewsQuery = jest.fn();
+const mockUseCreateReviewMutation = jest.fn();
+const mockUseUpdateReviewMutation = jest.fn();
+const mockUseDeleteReviewMutation = jest.fn();
+const mockUseEnhanceReviewTextMutation = jest.fn();
+jest.mock('../api/queries/reviews', () => ({
+  ...jest.requireActual('../api/queries/reviews'),
+  useReviewsQuery: (videoId: string) => mockUseReviewsQuery(videoId),
+  useCreateReviewMutation: (videoId: string) => mockUseCreateReviewMutation(videoId),
+  useUpdateReviewMutation: (videoId: string) => mockUseUpdateReviewMutation(videoId),
+  useDeleteReviewMutation: (videoId: string) => mockUseDeleteReviewMutation(videoId),
+  useEnhanceReviewTextMutation: () => mockUseEnhanceReviewTextMutation(),
+}));
+
+let mockPermissions: string[] | null = null;
+jest.mock('../../src/auth/auth-store', () => ({
+  ...jest.requireActual('../../src/auth/auth-store'),
+  useAuth: (selector: (s: { user: { permissions: string[] } | null }) => unknown) =>
+    selector({ user: mockPermissions !== null ? { permissions: mockPermissions } : null }),
+}));
+
+jest.mock('expo-router', () => ({
+  useLocalSearchParams: () => ({ id: 'a1' }),
+  useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+  Stack: { Screen: () => null },
+}));
+
+import { initI18n } from '../i18n';
+import AssetDetailScreen from '../app/asset/[id]';
+
+beforeAll(() => initI18n('en'));
+
+let client: QueryClient;
+beforeEach(() => {
+  mockPermissions = null;
+  mockPlayer.currentTime = 0;
+  mockPlayer.play.mockClear();
+  // Default: no reviews
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: [] });
+  mockUseCreateReviewMutation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false, isError: false });
+  mockUseUpdateReviewMutation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false, isError: false });
+  mockUseDeleteReviewMutation.mockReturnValue({ mutateAsync: jest.fn(), isPending: false, isError: false });
+  mockUseEnhanceReviewTextMutation.mockReturnValue({ mutateAsync: jest.fn() });
+  mockUseFinalizeAssetMutation.mockReturnValue({ mutateAsync: jest.fn() });
+  client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+});
+afterEach(() => client.clear());
+
+function Providers({ children }: { children: ReactNode }) {
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+}
+
+const DETAIL = {
+  id: 'a1', title: 'Kata 1', description: 'Front stance drill', owner_id: 'u1',
+  status: 'pending' as const, review_count: 0, playback_id: 'pb1',
+  group: { id: 'g1', name: 'Dojo Alpha', avatar: undefined },
+  videos: [
+    { id: 'v1', playback_id: 'pb1', status: 'ready', review_count: 2 },
+    { id: 'v2', playback_id: '', status: 'preparing', review_count: 0 },
+  ],
+};
+
+const REVIEWS = [
+  {
+    id: 'r1',
+    content: 'Great stance overall',
+    timestamp_seconds: 75,
+    parent_id: undefined,
+    author: { name: 'Coach Ana' },
+    created_at: new Date(Date.now() - 3600_000).toISOString(),
+  },
+  {
+    id: 'r2',
+    content: 'Watch your left foot',
+    timestamp_seconds: undefined,
+    parent_id: undefined,
+    author: { name: 'Coach Ben' },
+    created_at: new Date(Date.now() - 1800_000).toISOString(),
+  },
+  {
+    id: 'r3',
+    content: 'Agreed, tuck it under',
+    timestamp_seconds: undefined,
+    parent_id: 'r1',
+    author: { name: 'Student Joe' },
+    created_at: new Date(Date.now() - 900_000).toISOString(),
+  },
+];
+
+// ── Test 1: reviews render ────────────────────────────────────────────────────
+
+test('reviews of the active part render under the player', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.getByText('Great stance overall')).toBeOnTheScreen();
+  expect(screen.getByText('Watch your left foot')).toBeOnTheScreen();
+  // Reply (r3) is rendered nested under r1
+  expect(screen.getByText('Agreed, tuck it under')).toBeOnTheScreen();
+});
+
+// ── Test 2: timestamp chip seeks the player ───────────────────────────────────
+
+test('timestamp chip seeks the player', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // '1:15' is the formatted label for 75 seconds (review r1)
+  const chip = screen.getByText('1:15');
+  fireEvent.press(chip);
+
+  expect(mockPlayer.currentTime).toBe(75);
+  expect(mockPlayer.play).toHaveBeenCalled();
+});
+
+// ── Test 3: composer hidden without reviews:create ────────────────────────────
+
+test('composer hidden without reviews:create', async () => {
+  mockPermissions = [];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.queryByTestId('review-input')).toBeNull();
+});
+
+// ── Test 4: composer visible with reviews:create ──────────────────────────────
+
+test('composer visible with reviews:create', async () => {
+  mockPermissions = ['reviews:create'];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.getByTestId('review-input')).toBeOnTheScreen();
+});
+
+// ── Test 5: composer hidden on completed asset even with reviews:create ──────────
+
+test('composer hidden when asset is completed even with reviews:create', async () => {
+  mockPermissions = ['reviews:create'];
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, status: 'completed' as const },
+    refetch: jest.fn(),
+  });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.queryByTestId('review-input')).toBeNull();
+});
+
+// ── Existing tests (keep passing) ─────────────────────────────────────────────
+
+test('shows description and group in the meta card; in-card title is gone (header carries it)', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  // The asset title is carried by the native header (Stack.Screen), not an
+  // in-card heading — so 'Kata 1' is NOT rendered as in-card body text.
+  expect(screen.queryByText('Kata 1')).toBeNull();
+  expect(screen.getByText('Front stance drill')).toBeOnTheScreen();
+  expect(screen.getByText('Dojo Alpha')).toBeOnTheScreen();
+});
+
+// ── WP2: meta-card density ────────────────────────────────────────────────────
+
+test('status badge renders within the identity row', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  // DETAIL.status === 'pending' → "In review" badge
+  expect(screen.getByText('In review')).toBeOnTheScreen();
+});
+
+test('status badge still renders when the asset has no group', async () => {
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, group: undefined },
+    refetch: jest.fn(),
+  });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  expect(screen.getByText('In review')).toBeOnTheScreen();
+  expect(screen.queryByText('Dojo Alpha')).toBeNull();
+});
+
+test('empty description renders nothing (no noDescription fallback)', async () => {
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, description: '' },
+    refetch: jest.fn(),
+  });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  expect(screen.queryByText('No description was added for this video.')).toBeNull();
+});
+
+test('description show-more toggle appears on overflow and toggles expand/collapse', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // Overflow is detected on the hidden, unclamped "ghost" measurer — the
+  // visible Text no longer carries onTextLayout (Android clamps lines.length
+  // to numberOfLines, so measuring the clamped Text is unreliable there).
+  // The measurer is hidden from accessibility, so opt into hidden elements.
+  const measure = screen.getByTestId('desc-measure', { includeHiddenElements: true });
+  // jest/RNTL does not run real layout — simulate overflow (>2 lines) via a
+  // synthetic textLayout event so the toggle logic becomes testable.
+  await act(async () => {
+    fireEvent(measure, 'textLayout', {
+      nativeEvent: { lines: [{}, {}, {}] },
+    });
+  });
+
+  // The visible description is still rendered.
+  expect(screen.getByTestId('asset-description')).toBeOnTheScreen();
+
+  // Toggle appears once overflow is detected.
+  const toggle = screen.getByTestId('asset-description-toggle');
+  expect(within(toggle).getByText('Show more')).toBeOnTheScreen();
+
+  // Expand
+  await act(async () => { fireEvent.press(toggle); });
+  expect(within(toggle).getByText('Show less')).toBeOnTheScreen();
+
+  // Collapse
+  await act(async () => { fireEvent.press(toggle); });
+  expect(within(toggle).getByText('Show more')).toBeOnTheScreen();
+});
+
+test('description still renders (toggle absent) when text fits in 2 lines', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  const measure = screen.getByTestId('desc-measure', { includeHiddenElements: true });
+  await act(async () => {
+    fireEvent(measure, 'textLayout', {
+      nativeEvent: { lines: [{}, {}] },
+    });
+  });
+
+  // No overflow → no toggle, but the description text is still shown.
+  expect(screen.queryByTestId('asset-description-toggle')).toBeNull();
+  expect(screen.getByTestId('asset-description')).toBeOnTheScreen();
+  expect(screen.getByText('Front stance drill')).toBeOnTheScreen();
+});
+
+test('no description renders neither the text, the toggle, nor the measurer', async () => {
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, description: '' },
+    refetch: jest.fn(),
+  });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.queryByText('Front stance drill')).toBeNull();
+  expect(screen.queryByTestId('asset-description')).toBeNull();
+  expect(screen.queryByTestId('asset-description-toggle')).toBeNull();
+  // includeHiddenElements so we assert true absence, not merely a11y-hidden.
+  expect(screen.queryByTestId('desc-measure', { includeHiddenElements: true })).toBeNull();
+});
+
+test('loading state renders a skeleton', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: true, isError: false, data: undefined, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  expect(screen.getByTestId('asset-detail-skeleton')).toBeOnTheScreen();
+});
+
+// ── WP3: video-parts rail replaces the standalone parts card ──────────────────
+
+test('the standalone parts card is gone (no "Video parts" header, no processing banner)', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  // The old card header and processing banner no longer exist — the rail owns
+  // the parts UI now.
+  expect(screen.queryByText('Video parts')).toBeNull();
+  expect(screen.queryByTestId('processing-parts-banner')).toBeNull();
+});
+
+test('the rail renders a pill per part when the asset has 2+ video parts', async () => {
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  // DETAIL has 2 videos → subtle pill row under the player.
+  expect(screen.getByText('Parts')).toBeOnTheScreen();
+  expect(screen.getByTestId('part-pill-v1')).toBeOnTheScreen();
+  expect(screen.getByTestId('part-pill-v2')).toBeOnTheScreen();
+});
+
+test('tapping a ready part pill switches the active part (player + thread remount on the new id)', async () => {
+  // Both clips ready so we can switch from v1 → v2; reviews query is keyed on
+  // the active video id, so a switch refetches against the new id.
+  const bothReady = {
+    ...DETAIL,
+    videos: [
+      { id: 'v1', playback_id: 'pb1', status: 'ready', review_count: 2 },
+      { id: 'v2', playback_id: 'pb2', status: 'ready', review_count: 1 },
+    ],
+  };
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: bothReady, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // Initially the reviews query is asked for the first playable clip (v1).
+  expect(mockUseReviewsQuery).toHaveBeenCalledWith('v1');
+  mockUseReviewsQuery.mockClear();
+
+  // Switch to part 2.
+  await act(async () => { fireEvent.press(screen.getByTestId('part-pill-v2')); });
+
+  // After the switch the reviews thread is queried for v2 (the new active id),
+  // proving the player source + comment thread followed the selection.
+  expect(mockUseReviewsQuery).toHaveBeenCalledWith('v2');
+});
+
+test('a single video part renders no rail (progressive disclosure)', async () => {
+  const oneClip = {
+    ...DETAIL,
+    videos: [{ id: 'v1', playback_id: 'pb1', status: 'ready', review_count: 2 }],
+  };
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: oneClip, refetch: jest.fn() });
+  await render(<Providers><AssetDetailScreen /></Providers>);
+  expect(screen.queryByText('Parts')).toBeNull();
+  expect(screen.queryByTestId('part-pill-v1')).toBeNull();
+});
+
+// ── Fix 1: handleEdit re-throws on failure so inline form stays open ──────────
+
+test('edit form stays open and draft is preserved when the update mutation fails', async () => {
+  // reviews:edit but NOT reviews:create (simulates edit-only role)
+  mockPermissions = ['reviews:edit'];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  const failingUpdate = jest.fn().mockRejectedValue(new Error('network error'));
+  mockUseUpdateReviewMutation.mockReturnValue({ mutateAsync: failingUpdate });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // Open inline edit form on the first review (there are multiple edit buttons)
+  await act(async () => { fireEvent.press(screen.getAllByTestId('review-edit')[0]); });
+
+  // Modify the draft
+  await act(async () => {
+    fireEvent.changeText(screen.getByTestId('review-edit-input'), 'My updated note');
+  });
+
+  // Attempt to save — the mutation rejects; handleEdit re-throws so setIsEditing(false)
+  // is skipped; saveEdit catches the rethrow to avoid unhandled rejection.
+  await act(async () => { fireEvent.press(screen.getByTestId('review-edit-save')); });
+
+  // The edit form must still be visible (draft not discarded)
+  await waitFor(() => expect(screen.getByTestId('review-edit-form')).toBeOnTheScreen());
+
+  // The draft text must still be present in the input
+  expect(screen.getByTestId('review-edit-input').props.value).toBe('My updated note');
+});
+
+// ── Fix 2: mutationError banner visible outside canCompose guard ──────────────
+
+test('mutation error banner shows for edit-only role (no reviews:create)', async () => {
+  // edit-only role: can edit/delete but NOT compose
+  mockPermissions = ['reviews:edit', 'reviews:delete'];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  const failingUpdate = jest.fn().mockRejectedValue(new Error('network error'));
+  mockUseUpdateReviewMutation.mockReturnValue({ mutateAsync: failingUpdate });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // Open inline edit form on the first review (there are multiple edit buttons)
+  await act(async () => { fireEvent.press(screen.getAllByTestId('review-edit')[0]); });
+  // Save triggers the failing mutation; handleEdit sets mutationError and re-throws;
+  // saveEdit catches the rethrow so no unhandled rejection surfaces.
+  await act(async () => { fireEvent.press(screen.getByTestId('review-edit-save')); });
+
+  // The error banner must appear even though canCompose is false
+  await waitFor(() =>
+    expect(screen.getByTestId('mutation-error-banner')).toBeOnTheScreen()
+  );
+});

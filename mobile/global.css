@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* BEGIN GENERATED TOKENS (scripts/sync-tokens.mjs — do not edit by hand) */
+:root {
+  --z-bg: #fff8f4;
+  --z-surface: #fdf1ea;
+  --z-surface-warm: #faece2;
+  --z-surface-muted: #f5e6db;
+  --z-text: #221a15;
+  --z-muted: #54443b;
+  --z-primary: #bd4309;
+  --z-primary-strong: #bd4309;
+  --z-primary-soft: #ffdbc8;
+  --z-accent: #f59e0b;
+  --z-border: #d8c3b6;
+  --z-success: #15803d;
+  --z-success-soft: #c7f1d2;
+  --z-warning: #b45309;
+  --z-warning-soft: #fef3c7;
+  --z-danger: #be123c;
+  --z-danger-soft: #ffe4e6;
+  --role-accent: #bd4309;
+  --role-on-accent: #ffffff;
+  --role-accent-container: #ffdbc8;
+  --role-on-accent-container: #3a1400;
+  --role-accent-strong: #bd4309;
+  --role-secondary-container: #ffdcc4;
+  --role-on-secondary-container: #5a3214;
+  --role-success: #15803d;
+  --role-on-success: #ffffff;
+  --role-success-container: #c7f1d2;
+  --role-on-success-container: #05351a;
+  --role-warning: #b45309;
+  --role-on-warning: #ffffff;
+  --role-warning-container: #fef3c7;
+  --role-on-warning-container: #b45309;
+  --role-danger: #be123c;
+  --role-on-danger: #ffffff;
+  --role-danger-container: #ffe4e6;
+  --role-on-danger-container: #be123c;
+  --role-background: #fff8f4;
+  --role-surface: #fdf1ea;
+  --role-surface-variant: #faece2;
+  --role-surface-1: #fdf1ea;
+  --role-surface-2: #faece2;
+  --role-surface-3: #f5e6db;
+  --role-surface-4: #efe0d4;
+  --role-on-surface: #221a15;
+  --role-on-surface-variant: #54443b;
+  --role-outline: #d8c3b6;
+  --role-outline-strong: #897668;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --z-bg: #18120d;
+    --z-surface: #1f160f;
+    --z-surface-warm: #261c14;
+    --z-surface-muted: #31271d;
+    --z-text: #f2dfd2;
+    --z-muted: #d8c3b6;
+    --z-primary: #ffb68f;
+    --z-primary-strong: #ffb68f;
+    --z-primary-soft: #7c3500;
+    --z-accent: #fbbf24;
+    --z-border: #54443b;
+    --z-success: #7fd99a;
+    --z-success-soft: #1f4a30;
+    --z-warning: #fbbf24;
+    --z-warning-soft: #3b1500;
+    --z-danger: #fb7185;
+    --z-danger-soft: #500724;
+    --role-accent: #ffb68f;
+    --role-on-accent: #522300;
+    --role-accent-container: #7c3500;
+    --role-on-accent-container: #ffdbc8;
+    --role-accent-strong: #ffb68f;
+    --role-secondary-container: #5d4030;
+    --role-on-secondary-container: #ffdcc4;
+    --role-success: #7fd99a;
+    --role-on-success: #052e16;
+    --role-success-container: #1f4a30;
+    --role-on-success-container: #c7f1d2;
+    --role-warning: #fbbf24;
+    --role-on-warning: #451a03;
+    --role-warning-container: #3b1500;
+    --role-on-warning-container: #fde68a;
+    --role-danger: #fb7185;
+    --role-on-danger: #4c0519;
+    --role-danger-container: #500724;
+    --role-on-danger-container: #fda4af;
+    --role-background: #18120d;
+    --role-surface: #1f160f;
+    --role-surface-variant: #261c14;
+    --role-surface-1: #1f160f;
+    --role-surface-2: #261c14;
+    --role-surface-3: #31271d;
+    --role-surface-4: #3c3026;
+    --role-on-surface: #f2dfd2;
+    --role-on-surface-variant: #d8c3b6;
+    --role-outline: #54443b;
+    --role-outline-strong: #a18d80;
+  }
+}
+/* END GENERATED TOKENS */
+
+/* ── Brand font (Nunito Sans) ──────────────────────────────────────────────
+ * RN/Android cannot synthesize the right cut from a single family + numeric
+ * fontWeight, so each weight utility must resolve to its own real face name.
+ * The faces are loaded at runtime in src/app/_layout.tsx via useFonts().
+ *
+ * NativeWind v4 compiles class selectors (but drops a universal `*` selector),
+ * so we override the weight utilities here: each `.font-*` already carries its
+ * font-weight from the preset; we add the matching font-family. The face name
+ * wins over the global default because className styles are merged after the
+ * Text default style set in _layout.tsx.
+ *
+ * Default (no weight class → 400) is handled by Text.defaultProps in
+ * _layout.tsx, since the universal selector is unsupported here. */
+@layer base {
+  .font-normal {
+    font-family: 'NunitoSans_400Regular';
+  }
+  .font-medium {
+    font-family: 'NunitoSans_500Medium';
+  }
+  .font-semibold {
+    font-family: 'NunitoSans_600SemiBold';
+  }
+  .font-bold {
+    font-family: 'NunitoSans_700Bold';
+  }
+  .font-extrabold {
+    font-family: 'NunitoSans_800ExtraBold';
+  }
+}

@@ -1,0 +1,61 @@
+/* Strido base layer — minimal, opinionated defaults.
+ *
+ * Sets the brand typeface + page color on the body and a couple of ergonomic
+ * defaults. Intentionally light: components carry their own styling via the
+ * tokens. Specimen cards and UI kits inherit these.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--role-on-surface);
+  background: var(--role-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular numerals for counts, durations, timestamps. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Material 3 state layer ───────────────────────────────────────────────
+ * Pressed / hover / focus overlay for interactive surfaces. Opt in by setting
+ * data-m3-state on a button or row; the ::after tints with the element's own
+ * on-color (currentColor) at the M3 state opacities (hover 8 %, focus 10 %,
+ * pressed 12 %). This is the signature Android interaction feedback the kit's
+ * Material components attach on `platform="material"` only (iOS uses press-dim).
+ */
+[data-m3-state] {
+  position: relative;
+  overflow: hidden;
+}
+[data-m3-state]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+@media (hover: hover) {
+  [data-m3-state]:hover::after { opacity: 0.08; }
+}
+[data-m3-state]:focus-visible::after { opacity: 0.1; }
+[data-m3-state]:active::after { opacity: 0.12; }
+[data-m3-state]:disabled::after { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  [data-m3-state]::after { transition: none; }
+}

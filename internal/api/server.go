@@ -17,6 +17,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/coaching"
 	"github.com/OZIOisgood/zeta/internal/contact"
 	"github.com/OZIOisgood/zeta/internal/db"
+	"github.com/OZIOisgood/zeta/internal/devices"
 	"github.com/OZIOisgood/zeta/internal/discord"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/feedback"
@@ -26,6 +27,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/OZIOisgood/zeta/internal/notifications"
+	"github.com/OZIOisgood/zeta/internal/push"
 	"github.com/OZIOisgood/zeta/internal/reports"
 	"github.com/OZIOisgood/zeta/internal/reviews"
 	"github.com/OZIOisgood/zeta/internal/users"
@@ -82,6 +84,11 @@ func (s *Server) routes(ctx context.Context) {
 
 	queries := db.New(s.Pool)
 
+	// Wire push delivery into the notifications pipeline. push.Sender satisfies
+	// the Notifier interface defined in notifications; the import is one-way
+	// (api → push; notifications → preferences; push does not import notifications).
+	notifications.SetNotifier(push.NewSender(queries, s.Logger))
+
 	auditRetention := time.Duration(parseIntOrDefault(os.Getenv("AUDIT_RETENTION_DAYS"), audit.DefaultRetentionDays)) * 24 * time.Hour
 	auditHandler := audit.NewHandler(s.Pool, s.Logger, auditRetention)
 
@@ -98,6 +105,7 @@ func (s *Server) routes(ctx context.Context) {
 	reviewsHandler := reviews.NewHandler(queries, s.Logger, llmService)
 	usersHandler := users.NewHandler(s.Logger, queries, emailService, workosClient)
 	reportsHandler := reports.NewHandler(queries, s.Logger)
+	devicesHandler := devices.NewHandler(queries, s.Logger)
 	var discordPoster discord.Poster
 	if discordToken := os.Getenv("DISCORD_BOT_TOKEN"); strings.TrimSpace(discordToken) != "" {
 		discordPoster = discord.NewClient(discordToken)
@@ -218,9 +226,19 @@ func (s *Server) routes(ctx context.Context) {
 		r.Post("/auth/logout", authHandler.Logout)
 		r.Get("/auth/me", authHandler.Me)
 		r.Put("/auth/me", authHandler.UpdateMe)
+		// Credential endpoints are unauthenticated and fan out to WorkOS —
+		// throttle per client IP against brute force and cost amplification.
+		tokenLimiter := auth.NewIPRateLimiter(s.Logger, 10, 10)
+		r.Group(func(r chi.Router) {
+			r.Use(tokenLimiter.Middleware)
+			// Mobile PKCE flow: exchanges an AuthKit code for a JSON token pair
+			r.Post("/auth/token", authHandler.TokenExchange)
+			// Mobile flow: rotates a token pair using a refresh token
+			r.Post("/auth/token/refresh", authHandler.TokenRefresh)
+		})
 		// Dev-only: issues a Zeta JWT via password auth — never enable in production
 		if os.Getenv("DEV_AUTH_ENABLED") == "true" {
-			r.Post("/auth/token", authHandler.DevToken)
+			r.Post("/auth/dev/token", authHandler.DevToken)
 		}
 	})
 
@@ -265,6 +283,7 @@ func (s *Server) routes(ctx context.Context) {
 			r.Route("/feedback", feedbackHandler.RegisterRoutes)
 			reportsHandler.RegisterRoutes(r)
 			coachingHandler.RegisterRoutes(r)
+			devicesHandler.RegisterRoutes(r)
 		})
 	})
 

@@ -15,6 +15,7 @@
       "createInvitation": "Créer une invitation",
       "decline": "Refuser",
       "delete": "Supprimer",
+      "details": "Détails",
       "done": "Terminé",
       "downloadQr": "Télécharger le QR",
       "edit": "Modifier",
@@ -30,7 +31,8 @@
       "signOut": "Se déconnecter",
       "uploadVideo": "Téléverser une vidéo",
       "viewAll": "Voir tout",
-      "retry": "Réessayer"
+      "retry": "Réessayer",
+      "changePhoto": "Changer la photo"
     },
     "aria": {
       "appLogo": "Logo de l'application",
@@ -56,7 +58,8 @@
       "reasonOptional": "Motif (optionnel)",
       "startTime": "Heure de début",
       "timezone": "Fuseau horaire",
-      "title": "Titre"
+      "title": "Titre",
+      "email": "E-mail"
     },
     "labels": {
       "actions": "Actions",
@@ -67,27 +70,21 @@
       "microphone": "Microphone",
       "minutes": "{{count}} minutes",
       "minutesShort": "{{count}} min",
+      "today": "Aujourd'hui",
       "preview": "Aperçu",
       "reason": "Motif : {{reason}}",
       "student": "Étudiant",
       "user": "Utilisateur",
       "yourLocalTime": "votre heure locale"
     },
-    "legal": {
-      "contact": "Contact",
-      "imprint": "Mentions légales",
-      "menu": "Aide",
-      "privacy": "Confidentialité",
-      "terms": "Conditions d'utilisation"
-    },
     "nav": {
       "groups": "Groupes",
       "home": "Accueil",
-      "inviteCodes": "Invitations d’experts",
       "menu": "Menu",
       "report": "Rapport",
       "sessions": "Séances",
-      "videos": "Vidéos"
+      "videos": "Vidéos",
+      "inviteCodes": "Invitations d’experts"
     },
     "status": {
       "cancelled": "annulé",
@@ -101,42 +98,35 @@
       "reviewed": "Révisé",
       "upcoming": "à venir"
     },
+    "time": {
+      "justNow": "à l'instant",
+      "minutesAgo": "il y a {{count}} min",
+      "hoursAgo": "il y a {{count}} h",
+      "daysAgo": "il y a {{count}} j"
+    },
     "closeNavigation": "Fermer la navigation",
     "dismiss": "Fermer",
     "language": "Langue",
     "notifications": "Notifications",
     "openNavigation": "Ouvrir la navigation",
     "preferences": "Préférences",
-    "search": "Rechercher"
-  },
-  "feedback": {
-    "button": "Feedback",
-    "open": "Ouvrir le formulaire de feedback",
-    "dialog": {
-      "title": "Envoyer un feedback",
-      "description": "Dis-nous ce qui a bien fonctionné, ce qui était difficile ou ce que tu attendais."
-    },
-    "rating": {
-      "label": "Comment s'est passée ton expérience ?",
-      "option": "{{rating}} sur 5"
-    },
-    "message": {
-      "label": "Feedback",
-      "placeholder": "Écris une courte note..."
-    },
-    "actions": {
-      "send": "Envoyer le feedback"
-    },
-    "toast": {
-      "successTitle": "Feedback envoyé",
-      "successMessage": "Merci. Nous allons y jeter un œil.",
-      "errorTitle": "Impossible d'envoyer le feedback",
-      "errorMessage": "Réessaie, s'il te plaît."
+    "noResults": "Aucun résultat",
+    "search": "Rechercher",
+    "legal": {
+      "contact": "Contact",
+      "imprint": "Mentions légales",
+      "menu": "Aide",
+      "privacy": "Confidentialité",
+      "terms": "Conditions d'utilisation"
     }
   },
   "reports": {
-    "expert": { "title": "Rapport expert" },
-    "student": { "title": "Rapport élève" },
+    "expert": {
+      "title": "Rapport expert"
+    },
+    "student": {
+      "title": "Rapport élève"
+    },
     "description": "{{kind}} pour {{name}} · {{count}} activités.",
     "kind": {
       "month": "Rapport mensuel",
@@ -158,7 +148,8 @@
       "year": "Année",
       "prev": "Période précédente",
       "next": "Période suivante",
-      "today": "Aujourd'hui"
+      "today": "Aujourd'hui",
+      "summary": "{{count}} activités · {{period}}"
     },
     "stats": {
       "videos": "Vidéos téléversées",
@@ -177,7 +168,8 @@
     },
     "event": {
       "videoUploaded": "Vidéo téléversée",
-      "liveCoaching": "Coaching en direct"
+      "liveCoaching": "Coaching en direct",
+      "meta": "{{prefix}} · {{group}} · {{leaf}} · {{date}}"
     },
     "empty": {
       "title": "Aucune activité durant cette période",
@@ -201,9 +193,26 @@
       "type": "Type",
       "description": "Description",
       "minutes": "Durée (min)"
-    }
+    },
+    "openReport": "Ouvrir le rapport",
+    "entry": {
+      "subtitle": "Vos vidéos et coachings en direct par période"
+    },
+    "events": {
+      "sectionTitle": "Activité"
+    },
+    "loadFailed": "Impossible de charger votre rapport"
   },
   "home": {
+    "greeting": {
+      "morning": "Bonjour",
+      "afternoon": "Bon après-midi",
+      "evening": "Bonsoir"
+    },
+    "nextSession": {
+      "title": "Prochaine séance",
+      "titleWith": "{{type}} avec {{name}}"
+    },
     "latestVideos": "Dernières vidéos",
     "upcomingCoachingSessions": "Prochaines séances",
     "emptyCoaching": {
@@ -273,6 +282,8 @@
   "videos": {
     "filtersLabel": "Filtrer les vidéos",
     "title": "Vidéos",
+    "videoCount_one": "{{count}} vidéo",
+    "videoCount_other": "{{count}} vidéos",
     "all": "Toutes",
     "allMyVideos": "Toutes mes vidéos",
     "noVideosYet": "Aucune vidéo pour le moment",
@@ -303,11 +314,24 @@
     "replyPlaceholder": "Écrire une réponse…",
     "reply.one": "réponse",
     "reply.other": "réponses",
+    "reply_one": "réponse",
+    "reply_other": "réponses",
     "unknownAuthor": "Inconnu",
+    "replyingTo": "Répondre à {{name}}",
+    "cancelReply": "Annuler la réponse",
+    "send": "Envoyer",
+    "atTime": "à {{time}}",
+    "seekTo": "Aller à {{time}}",
+    "partsProcessing_one": "{{count}} partie supplémentaire en cours de traitement.",
+    "partsProcessing_other": "{{count}} parties supplémentaires en cours de traitement.",
+    "partsLabel": "Parties",
+    "partProcessing": "En cours de traitement",
+    "partOfCount": "Partie {{n}} sur {{count}}",
     "leaveComment": "Laissez un commentaire pour partager votre retour sur cette vidéo.",
     "reviewerNoComments": "Votre réviseur n'a pas encore laissé de commentaires.",
     "showLess": "Afficher moins",
     "showMore": "Afficher plus",
+    "confirmDeleteCommentTitle": "Supprimer le commentaire ?",
     "confirmDeleteComment": "Êtes-vous sûr de vouloir supprimer ce commentaire ? Cette action est irréversible.",
     "deleteComment": "Supprimer le commentaire",
     "commentDeleted": "Commentaire supprimé avec succès",
@@ -373,6 +397,8 @@
     },
     "experts": "Experts",
     "students": "Étudiants",
+    "memberCount_one": "{{count}} membre",
+    "memberCount_other": "{{count}} membres",
     "expertsDescription": "Personnes qui peuvent revoir les vidéos et accompagner ce groupe.",
     "studentsDescription": "Étudiants actuellement associés à ce groupe de coaching.",
     "noExperts": "Aucun expert pour le moment",
@@ -388,6 +414,7 @@
       "expert": "Expert",
       "student": "Étudiant"
     },
+    "emailPlaceholder": "name@example.com",
     "createInvitationTitle": "Créer une invitation",
     "invitationReady": "Invitation prête",
     "invitationDialog": {
@@ -400,12 +427,23 @@
       "notFound": "Cette invitation est invalide, expirée ou déjà utilisée.",
       "alreadyMember": "Vous êtes déjà membre de {{group}}."
     },
+    "invite": {
+      "cameraHint": "L'accès à la caméra est nécessaire pour scanner un code QR.",
+      "codeInvalid": "Saisissez le code à 6 caractères de l'invitation.",
+      "codePlaceholder": "p. ex. ABC123",
+      "genericError": "Une erreur est survenue. Veuillez réessayer.",
+      "grantCamera": "Autoriser la caméra",
+      "lookUp": "Vérifier le code",
+      "manualDivider": "ou saisir le code manuellement",
+      "notFound": "Code d'invitation introuvable ou expiré.",
+      "openGroup": "Ouvrir le groupe",
+      "tryDifferent": "Essayer un autre code",
+      "codeLabel": "Code d'invitation"
+    },
     "inviteDialog": {
       "cardDescription": "Créez un lien d’invitation partageable ou envoyez une invitation directement par e-mail.",
       "title": "Créer une invitation",
-      "detailsTitle": "Détails de l’invitation",
       "description": "Invitez un étudiant avec une adresse e-mail, ou laissez le champ vide pour générer un lien réutilisable et un QR code.",
-      "detailsDescription": "Consultez le code, le lien et le QR code de l’invitation.",
       "emailInvalid": "Saisissez une adresse e-mail valide.",
       "emailHint": "Laissez l’e-mail vide pour créer un lien d’invitation générique à partager vous-même.",
       "creating": "Création...",
@@ -413,13 +451,34 @@
       "linkCreated": "Lien d'invitation créé !",
       "qrAlt": "QR code d'invitation",
       "qrUnavailable": "QR code indisponible",
-      "code": "Code d’invitation",
       "shareLink": "Lien de partage",
       "shareHint": "Toute personne disposant de ce lien peut ouvrir l’invitation et demander à rejoindre le groupe.",
-      "inactiveHint": "Cette invitation n’est plus active.",
       "linkCopied": "Lien d’invitation copié",
-      "failed": "Échec de la création de l'invitation. Veuillez réessayer."
+      "failed": "Échec de la création de l'invitation. Veuillez réessayer.",
+      "detailsTitle": "Détails de l’invitation",
+      "detailsDescription": "Consultez le code, le lien et le QR code de l’invitation.",
+      "code": "Code d’invitation",
+      "inactiveHint": "Cette invitation n’est plus active."
     },
+    "users": {
+      "removeUser": "Retirer l'utilisateur",
+      "confirmRemove": "Êtes-vous sûr de vouloir retirer {{name}} de ce groupe ?",
+      "removed": "{{name}} a été retiré du groupe",
+      "removeFailed": "Échec du retrait de l'utilisateur"
+    },
+    "phase4": {
+      "summary": "Parcourez les groupes de coaching, ouvrez les pages de groupe et préparez les invitations.",
+      "loadFailed": "Impossible de charger les groupes",
+      "detailFailed": "Impossible de charger le groupe",
+      "noDescription": "Aucune description n’a été ajoutée pour ce groupe.",
+      "membersPlaceholder": "Les listes de membres seront connectées aux points d’API étudiants et experts dans la prochaine tranche.",
+      "invitePlaceholder": "Les liens d’invitation et QR codes utiliseront les points d’API existants dans la prochaine tranche groupe.",
+      "preferencesSummary": "Mettez à jour le nom, la description et l’image du groupe."
+    },
+    "namePlaceholder": "p. ex. Groupe Academy",
+    "descriptionPlaceholder": "Décrivez à qui ce groupe est destiné.",
+    "createFailed": "Impossible de créer le groupe",
+    "created": "Groupe créé avec succès",
     "invitations": {
       "title": "Invitations au groupe",
       "description": "Créez, rouvrez et gérez les invitations à ce groupe.",
@@ -439,7 +498,10 @@
         "status": "Statut",
         "actions": "Actions"
       },
-      "delivery": { "email": "Directe", "link": "Réutilisable" },
+      "delivery": {
+        "email": "Directe",
+        "link": "Réutilisable"
+      },
       "status": {
         "pending": "En attente",
         "accepted": "Acceptée",
@@ -452,24 +514,7 @@
         "declined": "Refusée le {{date}}",
         "revoked": "Révoquée le {{date}}"
       }
-    },
-    "users": {
-      "removeUser": "Retirer l'utilisateur",
-      "confirmRemove": "Êtes-vous sûr de vouloir retirer {{name}} de ce groupe ?",
-      "removed": "{{name}} a été retiré du groupe",
-      "removeFailed": "Échec du retrait de l'utilisateur"
-    },
-    "phase4": {
-      "summary": "Parcourez les groupes de coaching, ouvrez les pages de groupe et préparez les invitations.",
-      "loadFailed": "Impossible de charger les groupes",
-      "detailFailed": "Impossible de charger le groupe",
-      "noDescription": "Aucune description n’a été ajoutée pour ce groupe.",
-      "membersPlaceholder": "Les listes de membres seront connectées aux points d’API étudiants et experts dans la prochaine tranche.",
-      "invitePlaceholder": "Les liens d’invitation et QR codes utiliseront les points d’API existants dans la prochaine tranche groupe.",
-      "preferencesSummary": "Mettez à jour le nom, la description et l’image du groupe."
-    },
-    "namePlaceholder": "p. ex. Groupe Academy",
-    "descriptionPlaceholder": "Décrivez à qui ce groupe est destiné."
+    }
   },
   "upload": {
     "title": "Téléverser une vidéo",
@@ -536,7 +581,7 @@
       "noTimesDescription": "Cet expert n'a pas de créneaux libres pour le moment. Essayez un autre type de séance ou revenez plus tard.",
       "selectDate": "Sélectionnez une date pour voir les horaires disponibles",
       "bookedAlt": "Séance réservée",
-      "bookedHeading": "Séance réservée !",
+      "bookedHeading": "Session confirmée",
       "bookedDescription": "Votre séance de coaching a été planifiée avec succès.",
       "viewSessions": "Voir mes séances",
       "confirmDescription": "Vérifiez les détails de votre séance et confirmez votre réservation.",
@@ -546,12 +591,16 @@
       "booking": "Réservation en cours...",
       "bookSession": "Réserver la séance",
       "slotTaken": "Ce créneau vient d'être pris. Veuillez en choisir un autre.",
+      "tooLate": "Ce créneau ne peut plus être réservé. Veuillez en choisir un plus tardif.",
       "failed": "Échec de la réservation. Veuillez réessayer.",
       "loadExpertsFailed": "Échec du chargement des experts",
       "loadSessionTypesFailed": "Échec du chargement des types de séances",
-      "loadSlotsFailed": "Échec du chargement des créneaux disponibles"
+      "loadSlotsFailed": "Échec du chargement des créneaux disponibles",
+      "addToCalendar": "Ajouter au calendrier"
     },
+    "loadFailed": "Vos sessions n'ont pas pu être chargées.",
     "cancel": {
+      "cancelledToast": "Session annulée",
       "title": "Annuler la séance",
       "description": "Cela annulera la séance avec <strong>{{otherParty}}</strong> le {{scheduledAt}}.",
       "descriptionText": "Cela annulera la séance avec {{otherParty}} le {{scheduledAt}}.",
@@ -561,6 +610,11 @@
       "failed": "Échec de l'annulation de la réservation."
     },
     "availability": {
+      "savedSessionType": "Type de session enregistré",
+      "savedAvailability": "Disponibilité enregistrée",
+      "savedBlockTime": "Créneau bloqué enregistré",
+      "deletedEntry": "Entrée supprimée",
+      "deleteFailed": "L'entrée n'a pas pu être supprimée",
       "title": "Gérer les disponibilités",
       "titleForGroup": "Gérer les disponibilités pour {{group}}",
       "summary": "Choisissez un groupe, puis configurez les types de séances, les disponibilités hebdomadaires et les créneaux bloqués.",
@@ -593,6 +647,9 @@
       "failedDeleteAvailability": "Échec de la suppression de la plage de disponibilité",
       "failedBlockTime": "Échec du blocage du temps",
       "failedRemoveBlocked": "Échec de la suppression du créneau bloqué",
+      "loadFailedSessionTypes": "Impossible de charger les types de séance",
+      "loadFailedSchedule": "Impossible de charger le planning",
+      "loadFailedBlocked": "Impossible de charger les dates bloquées",
       "namePlaceholder": "ex. Séance stratégique",
       "descriptionOptional": "Description (optionnel)",
       "descriptionPlaceholder": "Courte description",
@@ -601,7 +658,14 @@
       "durationInvalid": "Saisissez une durée supérieure à zéro.",
       "startTimeRequired": "L’heure de début est obligatoire.",
       "endTimeRequired": "L’heure de fin est obligatoire.",
-      "dateRequired": "La date est obligatoire."
+      "dateRequired": "La date est obligatoire.",
+      "manageTitle": "Disponibilités",
+      "noPermission": "Disponibilités non disponibles",
+      "noPermissionDescription": "Vous n’avez pas la permission de gérer les disponibilités de coaching.",
+      "endBeforeStart": "L’heure de fin doit être après l’heure de début.",
+      "selectDayPlaceholder": "Sélectionner un jour",
+      "selectTimePlaceholder": "Sélectionner une heure",
+      "selectDatePlaceholder": "Sélectionner une date"
     },
     "call": {
       "connecting": "Connexion à la séance...",
@@ -612,16 +676,22 @@
       "joinFailed": "Échec du démarrage de l'appel vidéo",
       "connectFailed": "Échec de la connexion à la séance",
       "microphoneFallback": "Microphone {{index}}",
-      "cameraFallback": "Caméra {{index}}"
+      "cameraFallback": "Caméra {{index}}",
+      "permissionHeading": "Caméra et microphone requis",
+      "permissionBody": "L'accès à la caméra et au microphone est requis pour les séances de coaching en direct.",
+      "grantCamera": "Autoriser la caméra",
+      "grantMicrophone": "Autoriser le microphone",
+      "switchCamera": "Changer de caméra"
     }
   },
   "preferences": {
+    "profileTab": "Profil",
     "title": "Préférences",
     "summary": "Tenez à jour votre profil, votre heure locale, votre langue et vos paramètres de notification.",
     "personalData": "Données personnelles",
     "personalSummary": "Mettez à jour les informations utilisées dans votre tableau de bord et vos séances de coaching.",
     "emailPreferences": "Préférences e-mail",
-    "expertAccess": "Devenir expert",
+    "emailNotifications": "Notifications par e-mail",
     "emailSummary": "Choisissez les activités Strido qui doivent arriver dans votre boîte de réception.",
     "firstName": "Prénom",
     "firstNameRequired": "Le prénom est obligatoire.",
@@ -649,13 +719,23 @@
       "invitationActivity": "Activité des invitations",
       "groupMembership": "Mises à jour d'appartenance au groupe",
       "coachingBookings": "Réservations et annulations de coaching",
-      "coachingReminders": "Rappels de coaching"
+      "coachingReminders": "Rappels de coaching",
+      "descriptions": {
+        "newVideos": "Quand une vidéo est ajoutée à un groupe que tu possèdes.",
+        "reviewedVideos": "Quand un expert évalue une de tes vidéos.",
+        "invitationActivity": "Mises à jour de tes invitations de groupe.",
+        "groupMembership": "Quand tu rejoins ou quittes un groupe.",
+        "coachingBookings": "Confirmations et annulations de réservation.",
+        "coachingReminders": "Rappels avant les prochaines sessions."
+      }
     },
     "languages": {
       "en": "Anglais",
       "de": "Allemand",
       "fr": "Français"
-    }
+    },
+    "emailHint": "Utilisé pour la connexion.",
+    "expertAccess": "Devenir expert"
   },
   "avatar": {
     "selectImage": "Sélectionner une image",
@@ -699,6 +779,7 @@
     "today": "Aujourd'hui",
     "earlier": "Plus tôt",
     "unread": "Non lues",
+    "loadFailed": "Impossible de charger les notifications",
     "viewAll": "Voir toutes les notifications",
     "invite": {
       "accept": "Accepter",
@@ -729,6 +810,39 @@
       "videoUploadedNoGroup": "{{uploader}} a téléversé une vidéo pour vous",
       "coachingBookingCreated": "{{student}} a réservé une séance avec vous",
       "generic": "Vous avez une nouvelle notification"
+    }
+  },
+  "auth": {
+    "login": {
+      "heading": "Connectez-vous pour continuer",
+      "subtitle": "Coaching vidéo numérique — connectez-vous pour consulter et enregistrer vos séances.",
+      "signIn": "Se connecter",
+      "failed": "Connexion échouée. Veuillez réessayer."
+    }
+  },
+  "feedback": {
+    "button": "Feedback",
+    "open": "Ouvrir le formulaire de feedback",
+    "dialog": {
+      "title": "Envoyer un feedback",
+      "description": "Dis-nous ce qui a bien fonctionné, ce qui était difficile ou ce que tu attendais."
+    },
+    "rating": {
+      "label": "Comment s'est passée ton expérience ?",
+      "option": "{{rating}} sur 5"
+    },
+    "message": {
+      "label": "Feedback",
+      "placeholder": "Écris une courte note..."
+    },
+    "actions": {
+      "send": "Envoyer le feedback"
+    },
+    "toast": {
+      "successTitle": "Feedback envoyé",
+      "successMessage": "Merci. Nous allons y jeter un œil.",
+      "errorTitle": "Impossible d'envoyer le feedback",
+      "errorMessage": "Réessaie, s'il te plaît."
     }
   },
   "access": {
@@ -779,7 +893,10 @@
       "copy": "Copier",
       "copied": "Code d'invitation copié",
       "used": "Utilisé le {{date}}",
-      "status": { "available": "Disponible", "consumed": "Utilisé" }
+      "status": {
+        "available": "Disponible",
+        "consumed": "Utilisé"
+      }
     },
     "expertAccess": {
       "title": "Devenir expert",
