@@ -1,4 +1,9 @@
-import { createAuthStore, isWorkOSLogoutUrl, type AuthenticatedClientLike } from './auth-store';
+import {
+  createAuthStore,
+  isWorkOSLogoutUrl,
+  LOGOUT_RETURN_URL,
+  type AuthenticatedClientLike,
+} from './auth-store';
 import { clearTokens, getTokens, setTokens } from './token-store';
 import { queryClient } from '../api/query-client';
 import * as WebBrowser from 'expo-web-browser';
@@ -13,7 +18,7 @@ jest.mock('expo-secure-store', () => {
 });
 
 jest.mock('expo-web-browser', () => ({
-  openBrowserAsync: jest.fn(async () => ({ type: 'opened' })),
+  openAuthSessionAsync: jest.fn(async () => ({ type: 'dismiss' })),
 }));
 
 const ME = {
@@ -36,7 +41,7 @@ function clientReturning(me: typeof ME | null) {
 
 beforeEach(async () => {
   await clearTokens();
-  (WebBrowser.openBrowserAsync as jest.Mock).mockClear();
+  (WebBrowser.openAuthSessionAsync as jest.Mock).mockClear();
 });
 
 test('restore without stored tokens lands on signedOut', async () => {
@@ -140,7 +145,7 @@ test('signOut posts to /auth/logout and opens the returned logout URL when it is
   await store.getState().signOut();
 
   expect(client.POST).toHaveBeenCalledWith('/auth/logout');
-  expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(WORKOS_LOGOUT_URL);
+  expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledWith(WORKOS_LOGOUT_URL, LOGOUT_RETURN_URL);
   expect(store.getState().status).toBe('signedOut');
   expect(store.getState().user).toBeNull();
   expect(await getTokens()).toBeNull();
@@ -152,7 +157,7 @@ test('signOut still clears locally when the logout call returns an error', async
   const store = createAuthStore(client as unknown as AuthenticatedClientLike);
   await store.getState().signOut();
 
-  expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
+  expect(WebBrowser.openAuthSessionAsync).not.toHaveBeenCalled();
   expect(store.getState().status).toBe('signedOut');
   expect(await getTokens()).toBeNull();
 });
@@ -182,7 +187,7 @@ test('signOut does NOT open browser when server returns the plain frontend URL',
   const store = createAuthStore(client as unknown as AuthenticatedClientLike);
   await store.getState().signOut();
 
-  expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
+  expect(WebBrowser.openAuthSessionAsync).not.toHaveBeenCalled();
   expect(store.getState().status).toBe('signedOut');
   expect(await getTokens()).toBeNull();
 });

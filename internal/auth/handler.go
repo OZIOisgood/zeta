@@ -451,13 +451,15 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	redirectTarget := frontendURL
 
 	if sid != "" {
-		// For Bearer/mobile callers we do not supply a ReturnTo: there is no
-		// browser session to redirect after WorkOS terminates the server-side
-		// session. Web callers keep the existing behaviour of returning to the
-		// frontend URL.
+		// Web callers return to the frontend URL. Bearer/mobile callers DO open
+		// the logout URL in a browser tab (to clear the AuthKit cookie), so
+		// WorkOS will redirect that tab somewhere afterwards: MOBILE_LOGOUT_RETURN_TO
+		// (a deep link such as zeta://login, whitelisted as a WorkOS logout
+		// redirect URI) bounces it back into the app. When unset, WorkOS falls
+		// back to the dashboard-configured default redirect.
 		returnTo := frontendURL
 		if isBearerCaller {
-			returnTo = ""
+			returnTo = os.Getenv("MOBILE_LOGOUT_RETURN_TO")
 		}
 		logoutURL, err := h.workos.GetLogoutURL(usermanagement.GetLogoutURLOpts{
 			SessionID: sid,

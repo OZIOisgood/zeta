@@ -286,6 +286,37 @@ func TestLogout_BearerFallback(t *testing.T) {
 		"Bearer callers must not receive a browser ReturnTo")
 }
 
+// TestLogout_BearerReturnTo: when MOBILE_LOGOUT_RETURN_TO is configured, Bearer
+// callers get it as the WorkOS ReturnTo so the logout browser tab deep-links
+// back into the app instead of landing on the dashboard default redirect.
+func TestLogout_BearerReturnTo(t *testing.T) {
+	t.Setenv("DEV_AUTH_ENABLED", "true")
+	t.Setenv("FRONTEND_URL", "https://app.example.test")
+	t.Setenv("MOBILE_LOGOUT_RETURN_TO", "zeta://login")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().GetLogoutURL(usermanagement.GetLogoutURLOpts{
+		SessionID: "session_bearer",
+		ReturnTo:  "zeta://login",
+	}).Return(url.Parse(logoutBaseURL + "?session_id=session_bearer&return_to=zeta%3A%2F%2Flogin"))
+
+	h := NewHandler(slog.Default(), nil, workos)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req = contextWithUser(req, &UserContext{ID: "user_1", SID: "session_bearer"})
+	rec := httptest.NewRecorder()
+
+	h.Logout(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	var resp map[string]string
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&resp))
+	u := parseLogoutURL(t, resp["logoutUrl"])
+	assert.Equal(t, "zeta://login", u.Query().Get("return_to"),
+		"configured mobile return_to must reach WorkOS")
+}
+
 // TestLogout_NeitherCookieNorSID verifies graceful degradation when there is
 // no cookie and no SID in context (unauthenticated or already-expired token):
 // the response is still 200 with the frontend URL so the client can sign out locally.

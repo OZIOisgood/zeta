@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { makeRedirectUri, ResponseType, useAuthRequest } from 'expo-auth-session';
+import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { ZButton } from '../components/ui/z-button';
 import { ZScreen } from '../components/ui/z-screen';
@@ -20,8 +21,11 @@ if (__DEV__) {
 
 export default function LoginScreen() {
   const { t } = useTranslation();
+  // `error` arrives from auth/callback when its token exchange threw — the
+  // callback route can't render the message itself (it always redirects here).
+  const { error } = useLocalSearchParams<{ error?: string }>();
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState(error === 'exchange');
 
   const [request, , promptAsync] = useAuthRequest(
     {

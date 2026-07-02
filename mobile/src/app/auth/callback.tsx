@@ -18,12 +18,17 @@ export default function AuthCallback() {
   const { code } = useLocalSearchParams<{ code?: string }>();
   const status = useAuth((s) => s.status);
   const [exchanging, setExchanging] = useState(() => typeof code === 'string' && code.length > 0);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (typeof code !== 'string' || code.length === 0) return;
     let stale = false;
     completeLogin(code)
-      .catch(() => undefined)
+      .catch(() => {
+        // A thrown exchange is a real failure (network / rejected code) — a
+        // `false` return is the resume-path no-op handled by the login screen.
+        if (!stale) setFailed(true);
+      })
       .finally(() => {
         if (!stale) setExchanging(false);
       });
@@ -33,7 +38,8 @@ export default function AuthCallback() {
   }, [code]);
 
   if (status === 'signedIn') return <Redirect href="/" />;
-  if (!exchanging && status !== 'loading') return <Redirect href="/login" />;
+  if (!exchanging && status !== 'loading')
+    return <Redirect href={failed ? { pathname: '/login', params: { error: 'exchange' } } : '/login'} />;
 
   return (
     <ZScreen className="items-center justify-center">

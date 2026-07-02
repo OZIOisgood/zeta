@@ -93,11 +93,17 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
         // If the server fell back to the plain FRONTEND_URL (no session to revoke,
         // or the server was unreachable) we skip the browser open and rely on
         // local teardown. Best-effort: any failure must still clear tokens locally.
+        //
+        // openAuthSessionAsync (not openBrowserAsync): the tab dismisses itself
+        // as soon as WorkOS redirects to LOGOUT_RETURN_URL (backend
+        // MOBILE_LOGOUT_RETURN_TO + WorkOS logout-redirect whitelist). Without
+        // that config WorkOS redirects to its dashboard default and the user
+        // closes the tab manually — no worse than openBrowserAsync.
         try {
           const { data, error } = await api.POST('/auth/logout' as never);
           const logoutUrl = (data as { logoutUrl?: string } | undefined)?.logoutUrl;
           if (!error && logoutUrl && isWorkOSLogoutUrl(logoutUrl)) {
-            await WebBrowser.openBrowserAsync(logoutUrl);
+            await WebBrowser.openAuthSessionAsync(logoutUrl, LOGOUT_RETURN_URL);
           }
         } catch {
           // Swallow: local teardown below is the source of truth for sign-out.
@@ -123,6 +129,14 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
 
   return store;
 }
+
+/**
+ * Post-logout deep link the WorkOS logout redirect lands on. Literal `zeta://`
+ * (the app.json scheme) rather than expo-auth-session's makeRedirectUri: the
+ * store is not a component, and Expo Go's exp:// URIs cannot be whitelisted as
+ * WorkOS logout redirect URIs anyway. Routes to /login, which already exists.
+ */
+export const LOGOUT_RETURN_URL = 'zeta://login';
 
 /**
  * Returns true only when `url` is a genuine WorkOS session-logout URL
