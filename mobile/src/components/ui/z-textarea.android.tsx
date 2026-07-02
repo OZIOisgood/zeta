@@ -1,49 +1,28 @@
 /**
- * ZTextarea — Android implementation (Jetpack Compose OutlinedTextField,
- * multiline, via @expo/ui/jetpack-compose).
+ * ZTextarea — Android implementation (styled RN TextInput).
  *
- * Renders a Material 3 OutlinedTextField configured for multiline input.
- * `minLines` sets the minimum visible height (driven by the `rows` prop);
- * the field expands naturally as the user types.
+ * Rewritten from the @expo/ui Jetpack Compose `OutlinedTextField` to a NativeWind
+ * `TextInput`, mirroring z-card.android.tsx's reasoning: the Compose field could
+ * not match the UI-kit handoff textarea. It sized to content width instead of
+ * full width (`Host matchContents`), exposed no way to set the handoff's 12dp
+ * all-around corner radius (M3 fields have fixed small top corners + a bottom
+ * indicator), and drew a transparent container rather than the handoff's filled
+ * surface — and the Host multiline measurement collapsed the height. A styled RN
+ * TextInput gives the exact handoff geometry (full width · rounded-xl · surface
+ * fill · 1dp outline) with reliable height control.
  *
- * Public API ↔ Compose mapping:
- *   value / onChangeText → value (ObservableState) / onValueChange; useEffect
- *                          keeps the observable in sync with external value changes
- *   placeholder          → OutlinedTextField.Label slot (floats above field)
- *   rows                 → minLines prop (minimum visible text rows)
- *   invalid              → isError prop
- *   disabled             → enabled={false}
- *   accessibilityLabel   → LIMITATION: @expo/ui ~56.0.17 does not expose a
- *                          contentDescription/semantics prop on OutlinedTextField
- *                          or Host. The `semantics` modifier only accepts
- *                          `contentType`, not `contentDescription`. The prop is
- *                          accepted but cannot be forwarded to TalkBack in this
- *                          release. The floating Label text is the only
- *                          TalkBack-visible identifier for the field.
- *                          deviceValidation: verify TalkBack reads the Label text
- *                          on a real Android device; update when @expo/ui adds
- *                          contentDescription support.
- *   testID               → testID modifier on Host
+ * Tier note: ZTextarea is declared Native, but — exactly like ZCard — the Android
+ * surface is drawn with RN where @expo/ui cannot reproduce the required look.
+ * iOS keeps its SwiftUI field (z-textarea.ios.tsx); the bare z-textarea.tsx is
+ * the identical web/jest fallback.
  *
- * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
- * No hardcoded hex values.
- *
- * Controlled-value sync strategy: identical to z-text-input.android.tsx —
- * ObservableState driven by useNativeState(value), with a useEffect to push
- * externally changed values back into the observable.
- *
- * @expo/ui version: ~56.0.17
- * Material 3 reference: https://m3.material.io/components/text-fields/overview
+ * Geometry matches z-textarea.tsx (the handoff field): 56dp min height + 24dp per
+ * extra row (M3 outlined-field metric), 12dp radius, surface fill, outline border.
  */
 
-import { useEffect } from 'react';
-import { Host, OutlinedTextField, Text, useNativeState } from '@expo/ui/jetpack-compose';
-import {
-  fillMaxWidth,
-  testID as testIDModifier,
-} from '@expo/ui/jetpack-compose/modifiers';
-
-import { useRoleColors } from '../../theme/native';
+import { useState } from 'react';
+import { TextInput } from 'react-native';
+import { colors } from '../../theme/colors';
 import type { ZTextareaProps } from './z-textarea.types';
 
 export type { ZTextareaProps } from './z-textarea.types';
@@ -51,63 +30,40 @@ export type { ZTextareaProps } from './z-textarea.types';
 export function ZTextarea({
   value,
   onChangeText,
-  // accessibilityLabel: accepted by the public API but cannot be forwarded to
-  // TalkBack — @expo/ui ~56.0.17 exposes no contentDescription path on
-  // OutlinedTextField or Host. See header comment for details.
-  accessibilityLabel: _accessibilityLabel,
+  accessibilityLabel,
   placeholder = '',
   rows = 4,
   invalid = false,
-  disabled: isDisabled = false,
+  disabled = false,
   testID,
 }: ZTextareaProps) {
-  const { color } = useRoleColors();
-
-  // ObservableState bridges the controlled RN value into the Compose layer.
-  const nativeValue = useNativeState(value);
-
-  // Keep the observable in sync when the parent changes value externally.
-  useEffect(() => {
-    nativeValue.set(value);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-
-  const hostModifiers = testID ? [testIDModifier(testID)] : [];
-
+  // Handoff: 2dp accent focus border (see z-text-input.android.tsx — same
+  // border/padding compensation so the text does not shift on focus).
+  const [focused, setFocused] = useState(false);
   return (
-    <Host matchContents style={{ alignSelf: 'stretch' }} modifiers={hostModifiers}>
-      <OutlinedTextField
-        value={nativeValue}
-        enabled={!isDisabled}
-        isError={invalid}
-        // multiline: singleLine=false (default) + minLines drives minimum height
-        singleLine={false}
-        minLines={rows}
-        onValueChange={(text) => {
-          onChangeText(text);
-        }}
-        modifiers={[fillMaxWidth()]}
-        colors={{
-          focusedIndicatorColor: color('accent'),
-          unfocusedIndicatorColor: color('outline'),
-          errorIndicatorColor: color('danger'),
-          errorLabelColor: color('danger'),
-          errorTextColor: color('onSurface'),
-          focusedTextColor: color('onSurface'),
-          unfocusedTextColor: color('onSurface'),
-          disabledTextColor: color('onSurfaceVariant'),
-          focusedContainerColor: 'transparent',
-          unfocusedContainerColor: 'transparent',
-          disabledContainerColor: 'transparent',
-          errorContainerColor: 'transparent',
-        }}
-      >
-        {placeholder ? (
-          <OutlinedTextField.Label>
-            <Text style={{ fontFamily: 'NunitoSans_400Regular' }}>{placeholder}</Text>
-          </OutlinedTextField.Label>
-        ) : null}
-      </OutlinedTextField>
-    </Host>
+    <TextInput
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor={colors.muted}
+      editable={!disabled}
+      multiline
+      numberOfLines={rows}
+      textAlignVertical="top"
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      style={{
+        minHeight: 56 + (rows - 1) * 24,
+        borderWidth: focused ? 2 : 1,
+        paddingHorizontal: focused ? 11 : 12,
+        paddingVertical: focused ? 11 : 12,
+      }}
+      className={`w-full rounded-xl text-[15px] ${
+        disabled ? 'bg-surface-variant text-on-surface-variant' : 'bg-background text-on-surface'
+      } ${invalid ? 'border-role-danger' : focused ? 'border-accent' : 'border-outline'}`}
+    />
   );
 }

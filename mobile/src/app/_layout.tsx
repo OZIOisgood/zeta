@@ -2,6 +2,7 @@ import '../../global.css';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -15,7 +16,7 @@ import {
 import { initI18n } from '../i18n';
 import { authStore, useAuth } from '../auth/auth-store';
 import { queryClient } from '../api/query-client';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { ZToastHost } from '../components/ui/z-toast';
 
 void initI18n();
@@ -61,23 +62,35 @@ if (typeof PatchableText.render === 'function' && !PatchableText.__zetaFontPatch
   PatchableText.__zetaFontPatched = true;
 }
 
-/** Shared options applied to every detail/form screen that gets a native header.
- *  - headerBackButtonDisplayMode:'minimal' → iOS shows only the chevron, no
- *    label (HIG recommendation for deeper stacks; avoids long dynamic titles
- *    appearing in the back button of a subsequent push).
- *  - headerTintColor: accent orange for the interactive back chevron/button.
- *  - headerStyle / headerTitleStyle: neutral chrome so only interactive items
- *    carry the accent — not the title itself. */
-const DETAIL_SCREEN_OPTIONS = {
-  headerShown: true,
-  headerBackButtonDisplayMode: 'minimal' as const,
-  headerTintColor: colors.primary,
-  headerStyle: { backgroundColor: colors.bg },
-  headerTitleStyle: { color: colors.text, fontFamily: 'NunitoSans_600SemiBold' },
-} as const;
-
 export default function RootLayout() {
   const status = useAuth((s) => s.status);
+  const { color } = useRoleColors();
+
+  /** Scheme-aware header chrome. Built per-render from role tokens — the
+   *  static light-only `colors` module froze the header bars light in dark
+   *  mode ("Dark mode flips role tokens", handoff). Shared by the detail
+   *  screens and the three formSheet routes below. */
+  const headerChrome = {
+    headerTintColor: color('accent'),
+    headerStyle: { backgroundColor: color('background') },
+    headerTitleStyle: { color: color('onSurface'), fontFamily: 'NunitoSans_600SemiBold' },
+  } as const;
+
+  /** Shared options applied to every detail/form screen that gets a native header.
+   *  - headerBackButtonDisplayMode:'minimal' → iOS shows only the chevron, no
+   *    label (HIG recommendation for deeper stacks; avoids long dynamic titles
+   *    appearing in the back button of a subsequent push).
+   *  - headerTintColor: accent for the interactive back chevron/button.
+   *  - headerStyle / headerTitleStyle: neutral chrome so only interactive items
+   *    carry the accent — not the title itself. */
+  const detailScreenOptions = {
+    headerShown: true,
+    headerBackButtonDisplayMode: 'minimal' as const,
+    ...headerChrome,
+    // Flat header (no hard divider/drop-shadow) to match the handoff — the header
+    // shares the screen's warm bg, so the elevation line reads as a hard seam.
+    headerShadowVisible: false,
+  } as const;
 
   // Brand font (Nunito Sans). The real per-weight faces are required because
   // RN — notably Android — will NOT synthesize the correct cut from a single
@@ -104,7 +117,7 @@ export default function RootLayout() {
   const content =
     (!fontsLoaded && !fontError) || status === 'loading' ? (
       <View className="flex-1 items-center justify-center bg-z-bg">
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={color('accent')} />
       </View>
     ) : (
       <Stack screenOptions={{ headerShown: false }}>
@@ -113,16 +126,16 @@ export default function RootLayout() {
           {/* Detail / form screens — native header with back + swipe-back.
               Dynamic titles (asset/[id], group/[id]) are set inside the screen
               component via <Stack.Screen options={{ title }} /> once data loads. */}
-          <Stack.Screen name="asset/[id]" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="group/[id]" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="group/[id]/preferences" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="group/create" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="availability" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="preferences" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="notifications" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="reports" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="select/[field]" options={DETAIL_SCREEN_OPTIONS} />
-          <Stack.Screen name="invite" options={DETAIL_SCREEN_OPTIONS} />
+          <Stack.Screen name="asset/[id]" options={detailScreenOptions} />
+          <Stack.Screen name="group/[id]" options={detailScreenOptions} />
+          <Stack.Screen name="group/[id]/preferences" options={detailScreenOptions} />
+          <Stack.Screen name="group/create" options={detailScreenOptions} />
+          <Stack.Screen name="availability" options={detailScreenOptions} />
+          <Stack.Screen name="preferences" options={detailScreenOptions} />
+          <Stack.Screen name="notifications" options={detailScreenOptions} />
+          <Stack.Screen name="reports" options={detailScreenOptions} />
+          <Stack.Screen name="select/[field]" options={detailScreenOptions} />
+          <Stack.Screen name="invite" options={detailScreenOptions} />
           {/* Modal screens — formSheet gives native grab-bar + detents on iOS
               (UISheetPresentationController) and a bottom sheet on Android.
               headerShown:true lets the screen set its own title + cancel
@@ -130,21 +143,21 @@ export default function RootLayout() {
               upload: full height (media picker needs room); single detent '1.0'
                 so the sheet always expands — no half-sheet for a multi-step wizard
                 that embeds a video picker.
-              book: half-or-full fluid detents so the user can see the coaching
-                calendar below when the sheet is partially open (UX improvement
-                over a full-screen push). */}
+              book: full height ('1.0' single detent) — the stepped booking
+                wizard pins a persistent bottom CTA bar, and Android does NOT
+                reflow the sheet content to a half detent (it lays out at full
+                height), so a [0.5,1.0] sheet hides the "Weiter"/"Buchen" button
+                below the fold until dragged up. Same reasoning as upload. */}
           <Stack.Screen
             name="upload"
             options={{
               presentation: 'formSheet',
               headerShown: true,
               headerBackButtonDisplayMode: 'minimal' as const,
-              headerTintColor: colors.primary,
-              headerStyle: { backgroundColor: colors.bg },
-              headerTitleStyle: { color: colors.text, fontFamily: 'NunitoSans_600SemiBold' },
+              ...headerChrome,
               sheetAllowedDetents: [1.0],
               sheetGrabberVisible: true,
-              sheetCornerRadius: 16,
+              sheetCornerRadius: 28,
             }}
           />
           <Stack.Screen
@@ -153,12 +166,10 @@ export default function RootLayout() {
               presentation: 'formSheet',
               headerShown: true,
               headerBackButtonDisplayMode: 'minimal' as const,
-              headerTintColor: colors.primary,
-              headerStyle: { backgroundColor: colors.bg },
-              headerTitleStyle: { color: colors.text, fontFamily: 'NunitoSans_600SemiBold' },
-              sheetAllowedDetents: [0.5, 1.0],
+              ...headerChrome,
+              sheetAllowedDetents: [1.0],
               sheetGrabberVisible: true,
-              sheetCornerRadius: 16,
+              sheetCornerRadius: 28,
             }}
           />
           {/* Cancel-session confirm — native formSheet (replaces the broken
@@ -169,12 +180,10 @@ export default function RootLayout() {
               presentation: 'formSheet',
               headerShown: true,
               headerBackButtonDisplayMode: 'minimal' as const,
-              headerTintColor: colors.primary,
-              headerStyle: { backgroundColor: colors.bg },
-              headerTitleStyle: { color: colors.text, fontFamily: 'NunitoSans_600SemiBold' },
+              ...headerChrome,
               sheetAllowedDetents: [0.5, 1.0],
               sheetGrabberVisible: true,
-              sheetCornerRadius: 16,
+              sheetCornerRadius: 28,
             }}
           />
           {/* Full-screen live call — keeps its own chrome, no nav header. */}
@@ -192,6 +201,10 @@ export default function RootLayout() {
     // gesture is silently dead on Android.
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
+        {/* Without an explicit style Android keeps light (white) status-bar
+            icons over the warm light background — unreadable on every screen.
+            "auto" follows the color scheme (dark icons in light mode). */}
+        <StatusBar style="auto" />
         {content}
         <ZToastHost />
       </QueryClientProvider>

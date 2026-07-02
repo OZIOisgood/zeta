@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { TAB_SCREEN_OPTIONS } from '../../../lib/tab-screen-options';
+import { useTabScreenOptions } from '../../../lib/tab-screen-options';
 
 /**
  * Per-tab Stack for the Groups tab.
@@ -12,9 +12,10 @@ import { TAB_SCREEN_OPTIONS } from '../../../lib/tab-screen-options';
  */
 export default function GroupsTabLayout() {
   const { t } = useTranslation();
+  const tabScreenOptions = useTabScreenOptions();
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ ...TAB_SCREEN_OPTIONS, title: t('groups.myGroups') }} />
+      <Stack.Screen name="index" options={{ ...tabScreenOptions, title: t('groups.myGroups') }} />
     </Stack>
   );
 }

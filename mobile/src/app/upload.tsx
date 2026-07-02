@@ -19,6 +19,7 @@ import { ZSkeleton } from '../components/ui/z-skeleton';
 import { ZStepper, type ZStepState } from '../components/ui/z-stepper';
 import { ZTextInput } from '../components/ui/z-text-input';
 import { ZTextarea } from '../components/ui/z-textarea';
+import { SheetHeader } from '../components/sheet-header';
 import { Touchable } from '../components/ui/touchable';
 import { colors } from '../theme/colors';
 import { useRoleColors } from '../theme/native';
@@ -134,6 +135,9 @@ export default function UploadScreen() {
           ),
         }}
       />
+      {/* Android renders no formSheet header — this in-content header carries
+          the title + close there; iOS keeps the native one (see SheetHeader). */}
+      <SheetHeader title={t('upload.title')} onClose={() => router.back()} testID="upload-sheet-header" />
       {/* Note: no ZKeyboardAvoidingView here — this is a formSheet route and the
           native sheet owns keyboard avoidance (AGENTS.md: "Do not apply the KAV
           pattern inside native sheet routes"). keyboardShouldPersistTaps is applied

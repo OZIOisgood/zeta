@@ -31,6 +31,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Host, Snackbar, SnackbarHost, type SnackbarHostRef } from '@expo/ui/jetpack-compose';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRoleColors, type Role } from '../../theme/native';
 import { toastStore, type ZToastTone } from './z-toast.shared';
@@ -66,6 +67,7 @@ const TONE_ROLES: Record<ZToastTone, ToneColors> = {
  */
 export function ZToastHost() {
   const { color } = useRoleColors();
+  const insets = useSafeAreaInsets();
   const snackbarRef = useRef<SnackbarHostRef>(null);
   // Track which IDs we have already dispatched so re-renders don't re-fire.
   const firedIds = useRef(new Set<number>());
@@ -110,7 +112,15 @@ export function ZToastHost() {
   }, []);
 
   return (
-    <Host matchContents useViewportSizeMeasurement style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+    // M3: snackbars float ABOVE bottom bars — bottom:0 rendered the pill on top
+    // of the native tab bar, hiding its labels. 80dp M3 NavigationBar + 16dp
+    // breathing room; insets cover 3-button vs gesture navigation. On sheet
+    // routes (no tab bar) the pill floats a bar-height up, which M3 permits.
+    <Host
+      matchContents
+      useViewportSizeMeasurement
+      style={{ position: 'absolute', bottom: insets.bottom + 96, left: 0, right: 0 }}
+    >
       <SnackbarHost ref={snackbarRef}>
         <Snackbar
           containerColor={color(toneRoles.containerColor)}

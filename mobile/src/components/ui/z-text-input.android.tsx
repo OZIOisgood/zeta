@@ -1,196 +1,75 @@
 /**
- * ZTextInput — Android implementation (Jetpack Compose OutlinedTextField via
- * @expo/ui/jetpack-compose).
+ * ZTextInput — Android implementation (styled RN TextInput).
  *
- * Renders a Material 3 OutlinedTextField inside a Host wrapper. The field is
- * controlled via an ObservableState that bridges the RN value prop into the
- * Compose layer.
+ * Rewritten from the @expo/ui Compose `OutlinedTextField` to a NativeWind
+ * `TextInput`, mirroring z-textarea.android.tsx + z-card.android.tsx. The Compose
+ * field could not match the UI-kit handoff input: it floated the placeholder as
+ * an M3 label (redundant — screens already render a `ZFieldLabel` ABOVE each
+ * field), sized to content width, and drew a transparent outlined box rather
+ * than the handoff's filled rounded box. A styled RN TextInput gives the exact
+ * handoff geometry (full width · rounded-xl · surface fill · 1dp outline),
+ * label-above (not floating), and — unlike Compose — forwards accessibilityLabel
+ * to TalkBack.
  *
- * Public API ↔ Compose mapping:
- *   value / onChangeText    → value (ObservableState) / onValueChange; a useEffect
- *                             keeps the observable in sync when value changes externally
- *   placeholder             → OutlinedTextField.Label slot (floats above field)
- *   invalid                 → isError prop
- *   disabled                → enabled={false}
- *   autoCapitalize          → keyboardOptions.capitalization
- *   autoCorrect             → keyboardOptions.autoCorrectEnabled
- *   returnKeyType           → keyboardOptions.imeAction (best-effort mapping)
- *   onSubmitEditing         → keyboardActions.onDone / onGo / onSearch / onSend / onNext
- *   accessibilityLabel      → LIMITATION: @expo/ui ~56.0.17 does not expose a
- *                             contentDescription/semantics prop on OutlinedTextField
- *                             or Host. The `semantics` modifier only accepts
- *                             `contentType`, not `contentDescription`. The prop is
- *                             accepted and stored but cannot be forwarded to TalkBack
- *                             in this release. The floating Label text is the only
- *                             TalkBack-visible identifier for the field.
- *                             deviceValidation: verify TalkBack reads the Label text
- *                             on a real Android device; update when @expo/ui adds
- *                             contentDescription support.
- *   testID                  → testID modifier on Host
- *
- * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
- * No hardcoded hex values.
- *
- * Focus treatment (handoff UI kit): the M3 accent focus indicator is inherent
- * to Compose `OutlinedTextField` — on focus the outline thickens to 2dp and
- * recolors to `focusedIndicatorColor` (accent). Compose reserves the focused
- * stroke width in the field's layout, so the border does NOT reflow / shift the
- * surrounding content when focus changes (no-layout-shift, matching the bare
- * `.tsx` inset-ring contract). No code change is needed for this.
- *
- * Controlled-value sync strategy (Android / Compose):
- *   Compose OutlinedTextField is driven by `value` (ObservableState<string>).
- *   When the user types, `onValueChange` fires and we call `onChangeText` so RN
- *   state updates. When the parent updates `value` (e.g. programmatic reset),
- *   a `useEffect` pushes the new value into the observable via `value.set(v)`.
- *   This is the same pattern used by z-select.android.tsx for displayLabel sync.
- *
- * @expo/ui version: ~56.0.17
- * Material 3 reference: https://m3.material.io/components/text-fields/overview
+ * Tier note: ZTextInput is declared Native, but — like ZCard/ZTextarea — the
+ * Android surface is drawn with RN where @expo/ui cannot reproduce the look.
+ * iOS keeps its SwiftUI field; the bare z-text-input.tsx is the identical
+ * web/jest fallback. Geometry matches z-textarea.android.tsx for a consistent
+ * filled-input look across single- and multi-line fields.
  */
 
-import { useEffect } from 'react';
-import { Host, OutlinedTextField, Text, useNativeState } from '@expo/ui/jetpack-compose';
-import {
-  fillMaxWidth,
-  testID as testIDModifier,
-} from '@expo/ui/jetpack-compose/modifiers';
-
-import { useRoleColors } from '../../theme/native';
+import { useState } from 'react';
+import { TextInput } from 'react-native';
+import { colors } from '../../theme/colors';
 import type { ZTextInputProps } from './z-text-input.types';
 
 export type { ZTextInputProps } from './z-text-input.types';
 
-// Maps RN autoCapitalize to Compose TextFieldCapitalization.
-type ComposeCapitalization = 'none' | 'characters' | 'words' | 'sentences';
-
-function toComposeCapitalization(
-  autoCapitalize: ZTextInputProps['autoCapitalize'],
-): ComposeCapitalization {
-  switch (autoCapitalize) {
-    case 'characters':
-      return 'characters';
-    case 'words':
-      return 'words';
-    case 'sentences':
-      return 'sentences';
-    case 'none':
-    default:
-      return 'none';
-  }
-}
-
-// Maps RN returnKeyType to Compose TextFieldImeAction.
-type ComposeImeAction = 'default' | 'none' | 'go' | 'search' | 'send' | 'previous' | 'next' | 'done';
-
-function toComposeImeAction(
-  returnKeyType: ZTextInputProps['returnKeyType'],
-): ComposeImeAction {
-  switch (returnKeyType) {
-    case 'done':
-      return 'done';
-    case 'go':
-      return 'go';
-    case 'next':
-      return 'next';
-    case 'previous':
-      return 'previous';
-    case 'search':
-      return 'search';
-    case 'send':
-      return 'send';
-    case 'none':
-      return 'none';
-    default:
-      return 'default';
-  }
-}
-
 export function ZTextInput({
   value,
   onChangeText,
-  // accessibilityLabel: accepted by the public API but cannot be forwarded to
-  // TalkBack — @expo/ui ~56.0.17 exposes no contentDescription path on
-  // OutlinedTextField or Host. See header comment for details.
-  accessibilityLabel: _accessibilityLabel,
+  accessibilityLabel,
   placeholder = '',
   invalid = false,
-  disabled: isDisabled = false,
+  disabled = false,
   testID,
   autoCapitalize,
   autoCorrect,
   returnKeyType,
   onSubmitEditing,
 }: ZTextInputProps) {
-  const { color } = useRoleColors();
-
-  // ObservableState bridges the controlled RN value into the Compose layer.
-  const nativeValue = useNativeState(value);
-
-  // Keep the observable in sync when the parent changes value externally
-  // (e.g. form reset, programmatic clear).
-  useEffect(() => {
-    nativeValue.set(value);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-
-  const imeAction = toComposeImeAction(returnKeyType);
-
-  // Wire onSubmitEditing to the matching keyboardAction callback.
-  const submitHandler = onSubmitEditing
-    ? (text: string) => onSubmitEditing({ nativeEvent: { text } } as never)
-    : undefined;
-
-  const keyboardActions = submitHandler
-    ? {
-        onDone: imeAction === 'done' || imeAction === 'default' ? submitHandler : undefined,
-        onGo: imeAction === 'go' ? submitHandler : undefined,
-        onSearch: imeAction === 'search' ? submitHandler : undefined,
-        onSend: imeAction === 'send' ? submitHandler : undefined,
-        onNext: imeAction === 'next' ? submitHandler : undefined,
-      }
-    : undefined;
-
-  const hostModifiers = testID ? [testIDModifier(testID)] : [];
-
+  // Handoff: the outlined field turns 2dp accent on focus (the bare fallback
+  // does it via focus: classes, which NativeWind does not apply to native
+  // TextInput). RN has no inset ring, so the border widens 1→2dp and the
+  // padding gives the extra dp back — no layout shift. `invalid` keeps the
+  // danger color even while focused (M3 error precedence).
+  const [focused, setFocused] = useState(false);
   return (
-    <Host matchContents style={{ alignSelf: 'stretch' }} modifiers={hostModifiers}>
-      <OutlinedTextField
-        value={nativeValue}
-        enabled={!isDisabled}
-        isError={invalid}
-        singleLine
-        onValueChange={(text) => {
-          onChangeText(text);
-        }}
-        keyboardOptions={{
-          capitalization: toComposeCapitalization(autoCapitalize),
-          autoCorrectEnabled: autoCorrect !== false,
-          imeAction,
-        }}
-        keyboardActions={keyboardActions}
-        modifiers={[fillMaxWidth()]}
-        colors={{
-          focusedIndicatorColor: color('accent'),
-          unfocusedIndicatorColor: color('outline'),
-          errorIndicatorColor: color('danger'),
-          errorLabelColor: color('danger'),
-          errorTextColor: color('onSurface'),
-          focusedTextColor: color('onSurface'),
-          unfocusedTextColor: color('onSurface'),
-          disabledTextColor: color('onSurfaceVariant'),
-          focusedContainerColor: 'transparent',
-          unfocusedContainerColor: 'transparent',
-          disabledContainerColor: 'transparent',
-          errorContainerColor: 'transparent',
-        }}
-      >
-        {placeholder ? (
-          <OutlinedTextField.Label>
-            <Text style={{ fontFamily: 'NunitoSans_400Regular' }}>{placeholder}</Text>
-          </OutlinedTextField.Label>
-        ) : null}
-      </OutlinedTextField>
-    </Host>
+    <TextInput
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor={colors.muted}
+      editable={!disabled}
+      autoCapitalize={autoCapitalize}
+      autoCorrect={autoCorrect}
+      returnKeyType={returnKeyType}
+      onSubmitEditing={onSubmitEditing}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      // 56dp: handoff M3 outlined-field height (bare + textarea already use it).
+      style={{
+        minHeight: 56,
+        borderWidth: focused ? 2 : 1,
+        paddingHorizontal: focused ? 11 : 12,
+        paddingVertical: focused ? 11 : 12,
+      }}
+      className={`w-full rounded-xl text-[15px] ${
+        disabled ? 'bg-surface-variant text-on-surface-variant' : 'bg-background text-on-surface'
+      } ${invalid ? 'border-role-danger' : focused ? 'border-accent' : 'border-outline'}`}
+    />
   );
 }

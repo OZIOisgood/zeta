@@ -9,6 +9,7 @@ import {
   useMyBookingsQuery,
 } from '../../api/queries/coaching';
 import { useAuth } from '../../auth/auth-store';
+import { SheetHeader } from '../../components/sheet-header';
 import { ZButton } from '../../components/ui/z-button';
 import { ZFieldError } from '../../components/ui/z-field-error';
 import { ZScreen } from '../../components/ui/z-screen';
@@ -59,7 +60,7 @@ export default function CancelSessionScreen() {
     const trimmed = reason.trim();
     try {
       await mutateAsync({ bookingId, reason: trimmed === '' ? undefined : trimmed });
-      showToast(t('toast.successTitle'), undefined, 'success');
+      showToast(t('toast.successTitle'), t('sessions.cancel.cancelledToast'), 'success');
       router.back();
     } catch {
       setError(t('sessions.cancel.failed'));
@@ -67,13 +68,18 @@ export default function CancelSessionScreen() {
   }
 
   return (
-    <ZScreen edges={['bottom']} className="flex-1 px-4 pt-3">
+    <ZScreen edges={['bottom']} className="flex-1">
       <Stack.Screen options={{ title: t('sessions.cancel.title') }} />
-      {/* Compact confirm: title (native header) → context → reason → actions,
+      {/* Android renders no formSheet header — without this in-content header
+          the sheet had no title/close and the first text line clipped under the
+          sheet's top corner radius. iOS keeps the native header (SheetHeader
+          renders null there). */}
+      <SheetHeader title={t('sessions.cancel.title')} onClose={() => router.back()} testID="cancel-sheet-header" />
+      {/* Compact confirm: title (header above) → context → reason → actions,
           top-aligned so every control is visible at the opening (0.5) detent.
           No flex-1 spacer — a confirmation sheet hugs its content rather than
           stranding the actions at the screen bottom (hidden below the fold). */}
-      <View className="gap-4">
+      <View className="gap-4 px-4 pt-1">
         {otherParty && scheduledAt ? (
           <Text className="text-[15px] leading-6 text-z-text">
             {t('sessions.cancel.descriptionText', { otherParty, scheduledAt })}
@@ -94,6 +100,7 @@ export default function CancelSessionScreen() {
             testID="cancel-confirm"
             label={t('sessions.cancel.title')}
             variant="danger"
+            fullWidth
             disabled={isPending}
             onPress={() => void handleCancel()}
           />
@@ -101,6 +108,7 @@ export default function CancelSessionScreen() {
             testID="cancel-keep"
             label={t('sessions.cancel.keep')}
             variant="secondary"
+            fullWidth
             onPress={() => router.back()}
           />
         </View>
