@@ -2,7 +2,7 @@
 
 ## Kontext
 
-Branch war 420 Commits vor der Merge-Base, main 81 voraus (Audit-Trail, Invite-Code-Soft-Launch, Feedback-Inbox, Inbound-E-Mail→Discord, Landing v2, Strido-Rename Web). Statt Rebase (hätte i18n-Konflikte über hunderte Commits wiederholt) wurde main in den Branch gemergt — der Merge-Commit verschwindet beim Squash-Merge. Merge-Commit: `5dbce3a`.
+Branch war 420 Commits vor der Merge-Base, main 81 voraus (Audit-Trail, Invite-Code-Soft-Launch, Feedback-Inbox, Inbound-E-Mail→Discord, Landing v2, Strido-Rename Web). Statt Rebase (hätte i18n-Konflikte über hunderte Commits wiederholt) wurde main in den Branch gemergt — der Merge-Commit verschwindet beim Squash-Merge. Merge-Commit: `f2b4aa0`.
 
 ## Entscheidungen (12 Konfliktdateien)
 
@@ -19,7 +19,11 @@ Branch war 420 Commits vor der Merge-Base, main 81 voraus (Audit-Trail, Invite-C
 - Go: build + `go test ./internal/...` + vet grün
 - Web: 142/142 Vitest, Lint, Build grün
 - Mobile: 817/113 Jest, Lint 0 Errors, tsc grün
-- GitHub CI auf `6b32b25`: alle 4 Jobs grün
+- GitHub CI: alle 4 Jobs grün (nach dem History-Rewrite erneut auf dem neuen Tip)
+
+## Nachtrag: businessplan.md aus der Historie entfernt
+
+`docs/businessplan.md` war versehentlich committet (im WIP-Batch) und gepusht. Entfernt per `git filter-branch --index-filter` über exakt die 6 Branch-Commits (`--not origin/main`), damit mains Commits und der Merge-Parent unangetastet bleiben; verifiziert (Tree-Diff alt→neu = nur die eine Datei, Merge-Parent = origin/main-Tip), dann Force-Push. `docs/businessplan.*` steht jetzt in `.gitignore`; die PDF war nie committet. Rest-Risiko: alte SHAs bleiben bei GitHub bis zu deren GC per Direktlink abrufbar (vollständige Löschung nur via GitHub Support), und existierende Clones behalten die alte Historie.
 
 ## PR #15
 
