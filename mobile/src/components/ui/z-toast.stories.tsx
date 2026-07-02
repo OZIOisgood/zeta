@@ -9,18 +9,11 @@ import { ToastCard, type ZToast } from './z-toast';
 // dot, no dismiss "X").
 const noop = () => {};
 
-const toast = (
-  id: number,
-  tone: ZToast['tone'],
-  title: string,
-  message?: string,
-  action?: ZToast['action'],
-): ZToast => ({
+const toast = (id: number, tone: ZToast['tone'], title: string, message?: string): ZToast => ({
   id,
   tone,
   title,
   message,
-  action,
 });
 
 const meta = {
@@ -52,11 +45,6 @@ export const Matrix: Story = {
       />
       {/* title only (no message) */}
       <ToastCard toast={toast(4, 'success', 'Invite sent')} onDismiss={noop} />
-      {/* optional accent action label */}
-      <ToastCard
-        toast={toast(5, 'success', 'Member removed', undefined, { label: 'Undo', onPress: noop })}
-        onDismiss={noop}
-      />
       {/* single-line truncation (title + message clipped to one line) */}
       <ToastCard
         toast={toast(

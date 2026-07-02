@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { components } from '../schema';
 import { api } from '../../auth/auth-store';
@@ -35,9 +36,14 @@ export type CancelBookingInput = {
 /**
  * Localized booking timestamp (medium date + short time). Shared by the booking
  * card and the cancel dialog so the displayed format stays in lockstep.
+ * APP language (i18next), not the device locale — a German UI must not render
+ * "Jul 6, 2026, 7:00 AM" because the device is set to en-US.
  */
 export function formatBookingDateTime(iso: string): string {
-  return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  return new Date(iso).toLocaleString(i18next.language || undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
 }
 
 /**

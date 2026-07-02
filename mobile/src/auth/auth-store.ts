@@ -43,7 +43,19 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
     async function loadUser(): Promise<boolean> {
       const { data, error } = await api.GET('/auth/me' as never);
       if (error || !data) return false;
-      set({ status: 'signedIn', user: data as Me });
+      const user = data as Me;
+      set({ status: 'signedIn', user });
+      // Apply the PROFILE language on every sign-in/restore: initI18n boots
+      // with the DEVICE locale, so without this a user whose account says "de"
+      // gets an English app on an en-US device until they touch the language
+      // dropdown (updateCurrentUser was the only changeLanguage call site).
+      if (user.language && user.language !== i18next.language) {
+        try {
+          await i18next.changeLanguage(user.language);
+        } catch {
+          // Best-effort — a language-switch failure must never fail sign-in.
+        }
+      }
       return true;
     }
 

@@ -118,15 +118,6 @@ function IosToastBanner({ toast, onDismiss }: { toast: ZToast; onDismiss: (id: n
           ) : null}
         </Text>
       </View>
-      {toast.action ? (
-        <Text
-          accessibilityRole="button"
-          className="text-sm font-semibold text-accent"
-          onPress={toast.action.onPress}
-        >
-          {toast.action.label}
-        </Text>
-      ) : null}
     </Animated.View>
   );
 }

@@ -1,5 +1,5 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
 
@@ -81,21 +81,6 @@ test('ToastCard renders the dark inverse pill and no dismiss control', async () 
   const card = screen.getByTestId('toast-1');
   expect(card.props.className).toContain('bg-on-surface');
   expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
-});
-
-test('ToastCard renders an optional action label', async () => {
-  const onPress = jest.fn();
-  await render(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ToastCard
-        toast={{ id: 2, title: 'Removed', tone: 'success', action: { label: 'Undo', onPress } }}
-        onDismiss={jest.fn()}
-      />
-    </SafeAreaProvider>,
-  );
-  expect(screen.getByText('Undo')).toBeOnTheScreen();
-  fireEvent.press(screen.getByText('Undo'));
-  expect(onPress).toHaveBeenCalledTimes(1);
 });
 
 test('the toast auto-dismisses after the timeout', async () => {

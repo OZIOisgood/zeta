@@ -82,7 +82,7 @@ export function ZToastHost() {
         if (firedIds.current.has(toast.id)) continue;
         firedIds.current.add(toast.id);
 
-        const { id, title, message, tone, action } = toast;
+        const { id, title, message, tone } = toast;
         const displayMessage = message ? `${title}: ${message}` : title;
 
         // Apply this toast's tone colors to the styling child before showing.
@@ -91,12 +91,10 @@ export function ZToastHost() {
         snackbarRef.current
           ?.showSnackbar({
             message: displayMessage,
-            actionLabel: action?.label,
             withDismissAction: false, // handoff: auto-dismiss only, no "X".
             duration: 'short',
           })
-          .then((result) => {
-            if (result === 'actionPerformed') action?.onPress();
+          .then(() => {
             // Drop the id once resolved so the Set doesn't grow per toast over a session.
             firedIds.current.delete(id);
             dismiss(id);

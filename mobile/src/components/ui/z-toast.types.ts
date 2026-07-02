@@ -19,4 +19,4 @@
  */
 
 // Re-export shared types so consumers can import from the canonical entry.
-export type { ZToastTone, ZToast, ZToastAction } from './z-toast.shared';
+export type { ZToastTone, ZToast } from './z-toast.shared';

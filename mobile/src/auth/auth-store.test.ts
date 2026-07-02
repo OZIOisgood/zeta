@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import {
   createAuthStore,
   isWorkOSLogoutUrl,
@@ -57,6 +58,19 @@ test('restore with stored tokens loads the user', async () => {
   await store.getState().restore();
   expect(store.getState().status).toBe('signedIn');
   expect(store.getState().user?.first_name).toBe('Heinrich');
+});
+
+test('restore applies the profile language to i18next', async () => {
+  // initI18n boots with the device locale — the stored account language must
+  // win on sign-in/restore, not only when the user edits the dropdown.
+  const changeSpy = jest.spyOn(i18next, 'changeLanguage').mockResolvedValue(undefined as never);
+  await setTokens({ accessToken: 'a', refreshToken: 'r' });
+  const store = createAuthStore(
+    clientReturning({ ...ME, language: 'de' }) as unknown as AuthenticatedClientLike,
+  );
+  await store.getState().restore();
+  expect(changeSpy).toHaveBeenCalledWith('de');
+  changeSpy.mockRestore();
 });
 
 test('restore with stored tokens but failing /auth/me lands on signedOut', async () => {

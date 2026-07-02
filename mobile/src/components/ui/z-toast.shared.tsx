@@ -18,24 +18,15 @@ import { createStore } from 'zustand/vanilla';
 
 export type ZToastTone = 'success' | 'error' | 'info';
 
-/** Optional accent action shown on the right of a toast (e.g. "Undo"). */
-export type ZToastAction = {
-  label: string;
-  onPress: () => void;
-};
-
+// No `action` field: an accent Snackbar action was plumbed through here once
+// but neither show() nor showToast() could ever set one — dead speculative
+// API, removed (YAGNI). Re-add end-to-end (store → hosts) when a feature
+// actually needs an "Undo".
 export type ZToast = {
   id: number;
   title: string;
   message?: string;
   tone: ZToastTone;
-  /**
-   * Optional accent action label. Additive and forward-compatible — existing
-   * `showToast(title, message, tone)` callers never set it. On Android it maps
-   * to the M3 Snackbar action; on iOS / the fallback it renders as a tinted
-   * label inside the banner/pill.
-   */
-  action?: ZToastAction;
 };
 
 /** How long a toast stays on screen before it auto-dismisses. */
@@ -115,15 +106,6 @@ export function ToastCard({ toast, onDismiss }: { toast: ZToast; onDismiss: (id:
           {toast.message ? <Text className="text-surface">{`  ${toast.message}`}</Text> : null}
         </Text>
       </View>
-      {toast.action ? (
-        <Text
-          accessibilityRole="button"
-          className="text-sm font-semibold text-accent"
-          onPress={toast.action.onPress}
-        >
-          {toast.action.label}
-        </Text>
-      ) : null}
     </View>
   );
 }
