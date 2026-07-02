@@ -124,7 +124,7 @@ describe('ShellComponent', () => {
     menuButton?.click();
     fixture.detectChanges();
 
-    expect(menuButton?.querySelector('z-avatar')?.classList).toContain('size-8');
+    expect(menuButton?.querySelector('z-avatar')?.classList).toContain('size-9');
     expect(menuButton?.getAttribute('aria-expanded')).toBe('true');
     expect(el.textContent).toContain('ada@example.com');
     expect(el.querySelector('.absolute .border-b z-avatar')?.classList).toContain('size-10');
