@@ -24,6 +24,7 @@ export type User = {
   email_preferences: EmailPreferences;
   role: string;
   permissions: string[];
+  access_status: string;
 };
 
 export type UpdateUserRequest = {

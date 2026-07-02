@@ -1,0 +1,8 @@
+{
+  "email.landing_contact_received.subject": "Hemos recibido tu mensaje",
+  "email.landing_contact_received.preheader": "Tu mensaje ha llegado al equipo de soporte de Strido.",
+  "email.landing_contact_received.title": "Gracias por contactar con Strido",
+  "email.landing_contact_received.intro": "Hola **{{.Name}}**, hemos recibido tu mensaje.",
+  "email.landing_contact_received.note": "Nuestro equipo de soporte lo revisará y se pondrá en contacto contigo lo antes posible.",
+  "email.landing_contact_received.footer": "Recibes esta confirmación porque esta dirección de correo electrónico se introdujo en el formulario de contacto de strido.net."
+}

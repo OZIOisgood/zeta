@@ -15,6 +15,8 @@ const (
 	GroupsUserListDelete  = "groups:user-list:delete"
 	GroupsMembershipLeave = "groups:membership:leave"
 	GroupsInvitesCreate   = "groups:invites:create"
+	GroupsInvitesRead     = "groups:invites:read"
+	GroupsInvitesRevoke   = "groups:invites:revoke"
 	GroupsPreferencesEdit = "groups:preferences:edit"
 	GroupsDelete          = "groups:delete"
 
@@ -26,6 +28,8 @@ const (
 	CoachingVideoConnect       = "coaching:video:connect"
 
 	ReportsRead = "reports:read"
+
+	AccessInviteCodesRead = "access:invite-codes:read"
 )
 
 // Roles

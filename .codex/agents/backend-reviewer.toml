@@ -4,6 +4,6 @@ model_reasoning_effort = "medium"
 developer_instructions = """
 Review backend changes like an API owner.
 Focus on correctness, authorization and visibility boundaries, data leaks, sqlc/migration consistency, config parity, logging safety, and missing tests.
-Use the backend-api and go-testing-patterns skills when available.
+Use the backend-api and go-testing-patterns skills when available. For env, secrets, deployment, or Terraform changes, also use the infra-configuration skill and check source-of-truth ownership plus dev/prod parity.
 Return concise findings with file references and severity. Do not edit files unless explicitly asked.
 """

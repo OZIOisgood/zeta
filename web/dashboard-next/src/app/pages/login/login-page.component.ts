@@ -15,20 +15,16 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
         <div
           class="rounded-xl border border-[var(--z-border)] bg-white p-8 shadow-sm shadow-orange-950/5"
         >
-          <!-- Brand mark -->
-          <div class="flex items-center gap-3">
+          <!-- Brand -->
+          <div>
             <img
-              src="assets/brand/mark/zeta-horse-mark-orange-128.png"
-              width="44"
-              height="44"
-              class="size-11 shrink-0 rounded-lg"
-              alt=""
-              aria-hidden="true"
+              src="assets/brand/strido/strido-logo.svg"
+              width="145"
+              height="36"
+              class="h-9 w-auto"
+              alt="Strido"
             />
-            <div>
-              <p class="text-sm font-semibold">{{ 'app.brand' | transloco }}</p>
-              <p class="text-xs text-[var(--z-muted)]">{{ 'app.tagline' | transloco }}</p>
-            </div>
+            <p class="mt-2 text-xs text-[var(--z-muted)]">{{ 'app.tagline' | transloco }}</p>
           </div>
 
           <!-- Heading -->

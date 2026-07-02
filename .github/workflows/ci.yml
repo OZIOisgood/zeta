@@ -58,6 +58,10 @@ jobs:
         working-directory: web/dashboard-next
         run: pnpm run build
 
+      - name: Build Landing Container
+        working-directory: web/landing
+        run: docker build -t zeta-landing:ci .
+
   lint-openapi:
     name: Lint OpenAPI Spec
     runs-on: ubuntu-latest

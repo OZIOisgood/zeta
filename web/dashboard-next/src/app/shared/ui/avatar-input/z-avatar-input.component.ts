@@ -29,34 +29,36 @@ import { ZButtonComponent } from '../button/z-button.component';
       </div>
 
       <div
-        class="grid gap-3 rounded-lg border bg-white p-3 transition sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
+        class="grid gap-4 rounded-lg border bg-white p-4 transition"
         [ngClass]="
           visibleError()
             ? 'border-rose-300 bg-rose-50/40'
             : 'border-[var(--z-border)] hover:border-[var(--z-primary-soft)]'
         "
       >
-        <span
-          class="grid size-16 place-items-center overflow-hidden rounded-lg border border-[var(--z-border)] bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-        >
-          @if (preview(); as previewUrl) {
-            <img class="size-full object-cover" [src]="previewUrl" [alt]="previewLabel()" />
-          } @else {
-            <svg lucideImage class="size-7" aria-hidden="true"></svg>
-          }
-        </span>
+        <div class="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+          <span
+            class="grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg border border-[var(--z-border)] bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
+          >
+            @if (preview(); as previewUrl) {
+              <img class="size-full object-cover" [src]="previewUrl" [alt]="previewLabel()" />
+            } @else {
+              <svg lucideImage class="size-7" aria-hidden="true"></svg>
+            }
+          </span>
 
-        <div class="min-w-0">
-          <p class="text-sm font-semibold">{{ helperTitle() }}</p>
-          <p class="mt-1 text-xs leading-5 text-[var(--z-muted)]">{{ helperText() }}</p>
-          @if (selectedFileName(); as fileName) {
-            <p class="mt-1 truncate text-xs font-medium text-[var(--z-primary)]">
-              {{ fileName }}
-            </p>
-          }
-          @if (visibleError(); as message) {
-            <p class="mt-2 text-xs font-medium text-rose-700" role="alert">{{ message }}</p>
-          }
+          <div class="min-w-0">
+            <p class="text-sm font-semibold">{{ helperTitle() }}</p>
+            <p class="mt-1 text-xs leading-5 text-[var(--z-muted)]">{{ helperText() }}</p>
+            @if (selectedFileName(); as fileName) {
+              <p class="mt-1 truncate text-xs font-medium text-[var(--z-primary)]">
+                {{ fileName }}
+              </p>
+            }
+            @if (visibleError(); as message) {
+              <p class="mt-2 text-xs font-medium text-rose-700" role="alert">{{ message }}</p>
+            }
+          </div>
         </div>
 
         <input
@@ -69,8 +71,10 @@ import { ZButtonComponent } from '../button/z-button.component';
         />
 
         <z-button
+          class="block w-full"
           type="button"
           variant="secondary"
+          [fullWidth]="true"
           [disabled]="isDisabled()"
           (pressed)="fileInput.click()"
         >

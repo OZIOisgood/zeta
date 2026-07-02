@@ -83,7 +83,8 @@
       "menu": "Menu",
       "report": "Report",
       "sessions": "Sessions",
-      "videos": "Videos"
+      "videos": "Videos",
+      "inviteCodes": "Expert invitations"
     },
     "status": {
       "cancelled": "Cancelled",
@@ -110,7 +111,14 @@
     "openNavigation": "Open navigation",
     "preferences": "Preferences",
     "noResults": "No results",
-    "search": "Search"
+    "search": "Search",
+    "legal": {
+      "contact": "Contact",
+      "imprint": "Imprint",
+      "menu": "Help",
+      "privacy": "Privacy",
+      "terms": "Terms of Use"
+    }
   },
   "reports": {
     "expert": {
@@ -176,7 +184,7 @@
       "errorTitle": "PDF export failed",
       "errorMessage": "Please try again.",
       "toastMessage": "{{count}} entries · {{period}}",
-      "fileName": "Zeta-Report",
+      "fileName": "Strido-Report",
       "total": "Total"
     },
     "columns": {
@@ -214,7 +222,7 @@
       "button": "Book live coaching"
     },
     "firstSteps": {
-      "eyebrow": "Welcome to Zeta",
+      "eyebrow": "Welcome to Strido",
       "title": "First steps",
       "description": "Complete the basics to start sharing videos and working with your coaching group.",
       "groupCreated": "Group created",
@@ -446,7 +454,11 @@
       "shareLink": "Share link",
       "shareHint": "Anyone with this link can open the invitation and request to join the group.",
       "linkCopied": "Invitation link copied",
-      "failed": "Failed to create invitation. Please try again."
+      "failed": "Failed to create invitation. Please try again.",
+      "detailsTitle": "Invitation details",
+      "detailsDescription": "Review the invitation code, link, and QR code.",
+      "code": "Invitation code",
+      "inactiveHint": "This invitation is no longer active."
     },
     "users": {
       "removeUser": "Remove user",
@@ -466,7 +478,43 @@
     "namePlaceholder": "e.g. Academy Group",
     "descriptionPlaceholder": "Describe who this group is for.",
     "createFailed": "Failed to create group",
-    "created": "Group created successfully"
+    "created": "Group created successfully",
+    "invitations": {
+      "title": "Group invitations",
+      "description": "Create, revisit, and manage invitations to this group.",
+      "loadError": "Group invitations could not be loaded.",
+      "anyone": "Anyone with the link",
+      "open": "View",
+      "revokeTitle": "Revoke invitation?",
+      "revokeDescription": "This invitation link will stop working immediately.",
+      "revoke": "Revoke",
+      "revoked": "Invitation revoked",
+      "revokeError": "The invitation could not be revoked.",
+      "empty": "No invitations yet",
+      "emptyDescription": "Create an invitation to add a student to this group.",
+      "columns": {
+        "code": "Code",
+        "recipient": "Recipient",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "delivery": {
+        "email": "Direct",
+        "link": "Reusable"
+      },
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "revoked": "Revoked"
+      },
+      "date": {
+        "created": "Created {{date}}",
+        "accepted": "Accepted {{date}}",
+        "declined": "Declined {{date}}",
+        "revoked": "Revoked {{date}}"
+      }
+    }
   },
   "upload": {
     "title": "Upload video",
@@ -644,7 +692,7 @@
     "personalSummary": "Update the details used across your dashboard and coaching sessions.",
     "emailPreferences": "Email preferences",
     "emailNotifications": "Email notifications",
-    "emailSummary": "Choose which Zeta activity should reach your inbox.",
+    "emailSummary": "Choose which Strido activity should reach your inbox.",
     "firstName": "First name",
     "firstNameRequired": "First name is required.",
     "lastName": "Last name",
@@ -686,7 +734,8 @@
       "de": "German",
       "fr": "French"
     },
-    "emailHint": "Used to sign in."
+    "emailHint": "Used to sign in.",
+    "expertAccess": "Become an expert"
   },
   "avatar": {
     "selectImage": "Select image",
@@ -707,7 +756,7 @@
     "6": "Saturday"
   },
   "app": {
-    "brand": "Zeta",
+    "brand": "Strido",
     "tagline": "Video coaching"
   },
   "toast": {
@@ -718,8 +767,8 @@
   },
   "user": {
     "initials": "ZT",
-    "name": "Zeta Team",
-    "role": "Zeta"
+    "name": "Strido Team",
+    "role": "Strido"
   },
   "notifications": {
     "title": "Notifications",
@@ -769,6 +818,94 @@
       "subtitle": "Digital video coaching — sign in to review and record sessions.",
       "signIn": "Sign in",
       "failed": "Sign-in failed. Please try again."
+    }
+  },
+  "feedback": {
+    "button": "Feedback",
+    "open": "Open feedback form",
+    "dialog": {
+      "title": "Share feedback",
+      "description": "Tell us what worked, what felt rough, or what you expected."
+    },
+    "rating": {
+      "label": "How was your experience?",
+      "option": "{{rating}} out of 5"
+    },
+    "message": {
+      "label": "Feedback",
+      "placeholder": "Write a short note..."
+    },
+    "actions": {
+      "send": "Send feedback"
+    },
+    "toast": {
+      "successTitle": "Feedback sent",
+      "successMessage": "Thanks. We will take a look.",
+      "errorTitle": "Could not send feedback",
+      "errorMessage": "Please try again."
+    }
+  },
+  "access": {
+    "welcome": {
+      "brandHeadline": "Get better, video by video.",
+      "brandSubline": "Upload your training and get precise feedback from real experts.",
+      "eyebrowWaitlist": "Early access",
+      "waitlistTitle": "You're on the waitlist.",
+      "waitlistBody": "We'll let you know when access opens up. Already have a code from an expert or coach? You can enter right away.",
+      "enterCode": "Enter invite code",
+      "signOut": "Sign out",
+      "back": "Back",
+      "eyebrowCode": "Invite code",
+      "codeTitle": "Almost there.",
+      "codeBody": "Enter the 8-character code from your invitation to activate your account.",
+      "codeLabel": "Enter your 8-character code",
+      "codeHint": "Codes are 8 characters — letter case doesn't matter.",
+      "errorIncomplete": "Please enter your full code.",
+      "errorInvalid": "This code is invalid, unavailable, or has already been used.",
+      "activating": "Activating…",
+      "activate": "Activate account",
+      "noCode": "Didn't get a code?",
+      "groupEyebrow": "Group invitation",
+      "groupTitle": "Your coach invited you.",
+      "groupBody": "Activate your account as a student and join this group.",
+      "groupRole": "You'll join as a student",
+      "joinGroup": "Activate and join group",
+      "notYou": "Not your invitation? Sign out",
+      "inviteUnavailableTitle": "This invitation isn't available.",
+      "inviteUnavailableBody": "It may have been used, revoked, or sent to another email address.",
+      "enterAnotherCode": "Enter another code",
+      "eyebrowDone": "Account activated",
+      "successTitle": "Welcome to Strido.",
+      "successExpert": "You now have expert access. Create a group and invite your students to start coaching.",
+      "successStudent": "You've joined {{group}}. Upload your first video when you're ready for feedback.",
+      "roleExpert": "Role: Expert",
+      "roleStudent": "Role: Student",
+      "goToApp": "Go to Strido"
+    },
+    "codes": {
+      "title": "Expert invitations",
+      "subtitle": "Share one of your five codes with a trusted expert. Each used code permanently counts toward your allowance.",
+      "allowance": "{{used}} of {{limit}} expert invitations used",
+      "allowanceRemaining": "{{remaining}} remaining",
+      "empty": "No invite codes yet",
+      "emptyDescription": "Your five invitation codes will be created automatically.",
+      "loadError": "Couldn't load your invite codes. Please try again.",
+      "copy": "Copy",
+      "copied": "Invite code copied",
+      "used": "Used {{date}}",
+      "status": {
+        "available": "Available",
+        "consumed": "Used"
+      }
+    },
+    "expertAccess": {
+      "title": "Become an expert",
+      "description": "Enter a recommendation code from an existing Strido expert. Your account will be upgraded immediately.",
+      "codeLabel": "Expert recommendation code",
+      "activate": "Activate expert access",
+      "upgrading": "Activating...",
+      "invalidCode": "This expert code is invalid, unavailable, or has already been used.",
+      "success": "Your account now has expert access."
     }
   }
 }

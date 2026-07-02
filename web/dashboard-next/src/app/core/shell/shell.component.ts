@@ -4,14 +4,17 @@ import {
   ElementRef,
   HostListener,
   OnDestroy,
+  TemplateRef,
+  ViewContainerRef,
   computed,
   effect,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService, translateSignal } from '@jsverse/transloco';
 import {
   LucideBell,
   LucideCalendarDays,
@@ -20,14 +23,19 @@ import {
   LucideChevronRight,
   LucideHome,
   LucideLogOut,
+  LucideMessageSquareText,
   LucideMenu,
+  LucideSend,
   LucideSettings,
+  LucideStar,
   LucideUserRound,
   LucideUsers,
   LucideVideo,
   LucideX,
 } from '@lucide/angular';
-import { filter } from 'rxjs';
+import { NgpDialogContext, NgpDialogManager } from 'ng-primitives/dialog';
+import { filter, firstValueFrom } from 'rxjs';
+import { FeedbackApiClient } from '../../core/http/feedback-api.service';
 import { NotificationItem } from '../../core/http/notifications-api.service';
 import { NotificationListComponent } from '../../features/notifications/notification-list.component';
 import {
@@ -38,7 +46,13 @@ import { NotificationsStore } from '../../features/notifications/notifications.s
 import { SessionStore } from '../../features/session/session.store';
 import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZActionDialogComponent } from '../../shared/ui/dialog/z-action-dialog.component';
+import {
+  ZDropdownMenuComponent,
+  ZDropdownMenuItem,
+} from '../../shared/ui/dropdown-menu/z-dropdown-menu.component';
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
+import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
 import { DashboardLocalizationService } from '../i18n/dashboard-localization.service';
 import { PermissionsService } from '../permissions/permissions.service';
@@ -47,13 +61,16 @@ import { AppShellStore } from '../state/app-shell.store';
 @Component({
   selector: 'app-shell',
   imports: [
+    FormsModule,
     NgClass,
     RouterLink,
     RouterOutlet,
     TranslocoPipe,
     ZAvatarComponent,
     ZButtonComponent,
+    ZActionDialogComponent,
     ZIconButtonComponent,
+    ZTextareaComponent,
     ZToastComponent,
     NotificationListComponent,
     LucideBell,
@@ -63,12 +80,16 @@ import { AppShellStore } from '../state/app-shell.store';
     LucideChevronRight,
     LucideHome,
     LucideLogOut,
+    LucideMessageSquareText,
     LucideMenu,
+    LucideSend,
     LucideSettings,
+    LucideStar,
     LucideUserRound,
     LucideUsers,
     LucideVideo,
     LucideX,
+    ZDropdownMenuComponent,
   ],
   templateUrl: './shell.html',
 })
@@ -119,6 +140,54 @@ export class ShellComponent implements OnDestroy {
   private readonly localization = inject(DashboardLocalizationService);
   private readonly transloco = inject(TranslocoService);
   private readonly router = inject(Router);
+  private readonly feedbackApi = inject(FeedbackApiClient);
+  private readonly dialogManager = inject(NgpDialogManager);
+  private readonly viewContainerRef = inject(ViewContainerRef);
+  protected readonly feedbackRating = signal<number | null>(null);
+  protected readonly feedbackMessage = signal('');
+  protected readonly feedbackSubmitting = signal(false);
+  protected readonly ratingOptions = [1, 2, 3, 4, 5];
+  private readonly legalImprintLabel = translateSignal('common.legal.imprint');
+  private readonly legalPrivacyLabel = translateSignal('common.legal.privacy');
+  private readonly legalTermsLabel = translateSignal('common.legal.terms');
+  private readonly legalContactLabel = translateSignal('common.legal.contact');
+  protected readonly legalLinks = computed<ZDropdownMenuItem[]>(() => {
+    const language = this.localization.currentLanguage();
+    const prefix = language === 'de' ? '' : `/${language}`;
+
+    return [
+      {
+        id: 'imprint',
+        label: this.legalImprintLabel(),
+        href: `https://strido.net${prefix}/imprint.html`,
+        icon: 'file-text',
+      },
+      {
+        id: 'privacy',
+        label: this.legalPrivacyLabel(),
+        href: `https://strido.net${prefix}/privacy.html`,
+        icon: 'shield',
+      },
+      {
+        id: 'terms',
+        label: this.legalTermsLabel(),
+        href: `https://strido.net${prefix}/terms.html`,
+        icon: 'file-text',
+      },
+      {
+        id: 'contact',
+        label: this.legalContactLabel(),
+        href: `https://strido.net${prefix}/contact.html`,
+        icon: 'mail',
+      },
+    ];
+  });
+  protected readonly feedbackSubmitDisabled = computed(
+    () =>
+      this.feedbackSubmitting() ||
+      this.feedbackRating() === null ||
+      this.feedbackMessage().trim().length === 0,
+  );
 
   constructor() {
     effect(() => {
@@ -173,6 +242,53 @@ export class ShellComponent implements OnDestroy {
     const ok = await this.notifications.declineInvite(item);
     if (!ok) {
       this.toastInviteError('notifications.invite.declineError');
+    }
+  }
+
+  protected openFeedback(template: TemplateRef<NgpDialogContext<void, boolean>>): void {
+    this.shell.closeNotifications();
+    this.shell.closeUserMenu();
+    this.dialogManager.open<void, boolean>(template, {
+      viewContainerRef: this.viewContainerRef,
+      closeOnEscape: () => !this.feedbackSubmitting(),
+      closeOnOutsideClick: () => !this.feedbackSubmitting(),
+    });
+  }
+
+  protected setFeedbackRating(rating: number): void {
+    this.feedbackRating.set(rating);
+  }
+
+  protected async submitFeedback(close: (result?: unknown) => void): Promise<void> {
+    const rating = this.feedbackRating();
+    const message = this.feedbackMessage().trim();
+    if (rating === null || message === '' || this.feedbackSubmitting()) return;
+
+    this.feedbackSubmitting.set(true);
+    try {
+      await firstValueFrom(
+        this.feedbackApi.create({
+          rating,
+          message,
+          page_url: window.location.href,
+        }),
+      );
+      close(true);
+      this.feedbackRating.set(null);
+      this.feedbackMessage.set('');
+      this.shell.showToast(
+        this.transloco.translate('feedback.toast.successTitle'),
+        this.transloco.translate('feedback.toast.successMessage'),
+        'success',
+      );
+    } catch {
+      this.shell.showToast(
+        this.transloco.translate('feedback.toast.errorTitle'),
+        this.transloco.translate('feedback.toast.errorMessage'),
+        'error',
+      );
+    } finally {
+      this.feedbackSubmitting.set(false);
     }
   }
 

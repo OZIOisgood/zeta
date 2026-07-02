@@ -12,6 +12,20 @@ env:
   IMAGE_DASHBOARD: europe-west1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/zeta/dashboard
   CLOUD_SQL_PROXY_VERSION: "2.14.2"
   MIGRATE_VERSION: "4.18.1"
+  PROD_DASHBOARD_URL: https://app.strido.net
+  PROD_API_URL: https://api.strido.net
+  PROD_LANDING_ORIGIN: https://strido.net
+  PROD_RESEND_FROM_EMAIL: notifications@strido.net
+  PROD_DISCORD_FEEDBACK_FORUM_CHANNEL_ID: "1516499707550240818"
+  PROD_INBOUND_EMAIL_SOCIAL_ADDRESS: social@strido.net
+  PROD_INBOUND_EMAIL_SUPPORT_ADDRESS: support@strido.net
+  PROD_INBOUND_EMAIL_DSA_ADDRESS: dsa@strido.net
+  PROD_DISCORD_SOCIAL_INBOX_FORUM_CHANNEL_ID: "1516917159677268059"
+  PROD_DISCORD_SUPPORT_INBOX_FORUM_CHANNEL_ID: "1516917298932219915"
+  PROD_DISCORD_DSA_INBOX_FORUM_CHANNEL_ID: "1516917891272937564"
+  INBOUND_EMAIL_COPY_RECIPIENTS: pashalobaryev111@gmail.com
+  DISCORD_APPLICATION_ID: "1516495868608385105"
+  DISCORD_PUBLIC_KEY: "343214aae17ab4e203b5f60b2680552dd1b51fe21d8b9f8193213161ad19bdfe"
 
 jobs:
   build-and-deploy-api:
@@ -95,22 +109,22 @@ jobs:
 
       - name: Remove legacy Agora recording secret bindings
         run: |
-          gcloud run services update zeta-api \
+          gcloud run services update zeta-api-prod \
             --region ${{ env.REGION }} \
             --project ${{ vars.GCP_PROJECT_ID }} \
             --remove-secrets="AGORA_CLOUD_RECORDING_ENABLED,AGORA_CLOUD_RECORDING_BASE_URL,AGORA_RECORDING_MODE,AGORA_RECORDING_STORAGE_VENDOR,AGORA_RECORDING_STORAGE_REGION,AGORA_RECORDING_STORAGE_BUCKET,AGORA_RECORDING_FILE_PREFIX,AGORA_RECORDING_MAX_IDLE_TIME,AGORA_RECORDING_TRANSCODING_WIDTH,AGORA_RECORDING_TRANSCODING_HEIGHT,AGORA_RECORDING_TRANSCODING_BITRATE,AGORA_RECORDING_TRANSCODING_FPS"
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy zeta-api \
+          gcloud run deploy zeta-api-prod \
             --image "${{ env.IMAGE_API }}:${{ github.ref_name }}" \
             --region ${{ env.REGION }} \
             --project ${{ vars.GCP_PROJECT_ID }} \
             --platform managed \
             --allow-unauthenticated \
             --add-cloudsql-instances=${{ vars.GCP_PROJECT_ID }}:${{ env.REGION }}:zeta-prod \
-            --set-secrets="DB_URL=zeta-prod-db-url:latest,WORKOS_API_KEY=zeta-prod-workos-api-key:latest,WORKOS_CLIENT_ID=zeta-prod-workos-client-id:latest,MUX_TOKEN_ID=zeta-prod-mux-token-id:latest,MUX_TOKEN_SECRET=zeta-prod-mux-token-secret:latest,RESEND_API_KEY=zeta-prod-resend-api-key:latest,OPENROUTER_API_KEY=zeta-prod-openrouter-api-key:latest,DEFAULT_ORG_ID=zeta-prod-default-org-id:latest,AGORA_APP_ID=zeta-prod-agora-app-id:latest,AGORA_APP_CERTIFICATE=zeta-prod-agora-app-certificate:latest,SCHEDULER_SECRET=zeta-prod-scheduler-secret:latest,AGORA_REST_CUSTOMER_ID=zeta-prod-agora-rest-customer-id:latest,AGORA_REST_CUSTOMER_SECRET=zeta-prod-agora-rest-customer-secret:latest,AGORA_RECORDING_STORAGE_ACCESS_KEY=zeta-prod-agora-recording-storage-access-key:latest,AGORA_RECORDING_STORAGE_SECRET_KEY=zeta-prod-agora-recording-storage-secret-key:latest" \
-            --set-env-vars="ENV=prod,LOG_LEVEL=info,DEFAULT_LANGUAGE=en,RESEND_FROM_EMAIL=notifications@zeta.m4xon.com,ALLOWED_ORIGINS=https://${{ vars.CLOUD_RUN_PROD_DASHBOARD_URL }},FRONTEND_URL=https://${{ vars.CLOUD_RUN_PROD_DASHBOARD_URL }},EMAIL_LOGO_URL=https://${{ vars.CLOUD_RUN_PROD_DASHBOARD_URL }}/app-full-icon.png,WORKOS_REDIRECT_URI=https://${{ vars.CLOUD_RUN_PROD_URL }}/auth/callback,AGORA_CLOUD_RECORDING_ENABLED=true,AGORA_CLOUD_RECORDING_BASE_URL=https://api.sd-rtn.com,AGORA_RECORDING_MODE=mix,AGORA_RECORDING_STORAGE_VENDOR=6,AGORA_RECORDING_STORAGE_REGION=0,AGORA_RECORDING_FILE_PREFIX=liveCoachingRecordings,AGORA_RECORDING_MAX_IDLE_TIME=30,AGORA_RECORDING_TRANSCODING_WIDTH=640,AGORA_RECORDING_TRANSCODING_HEIGHT=360,AGORA_RECORDING_TRANSCODING_BITRATE=1500,AGORA_RECORDING_TRANSCODING_FPS=30,AGORA_RECORDING_STORAGE_BUCKET=${{ vars.GCP_PROJECT_ID }}-zeta-prod-coaching-recordings"
+            --set-secrets="DB_URL=zeta-prod-db-url:latest,WORKOS_API_KEY=zeta-prod-workos-api-key:latest,WORKOS_CLIENT_ID=zeta-prod-workos-client-id:latest,MUX_TOKEN_ID=zeta-prod-mux-token-id:latest,MUX_TOKEN_SECRET=zeta-prod-mux-token-secret:latest,RESEND_API_KEY=zeta-prod-resend-api-key:latest,RESEND_WEBHOOK_SIGNING_SECRET=zeta-prod-resend-webhook-signing-secret:latest,OPENROUTER_API_KEY=zeta-prod-openrouter-api-key:latest,DEFAULT_ORG_ID=zeta-prod-default-org-id:latest,AGORA_APP_ID=zeta-prod-agora-app-id:latest,AGORA_APP_CERTIFICATE=zeta-prod-agora-app-certificate:latest,SCHEDULER_SECRET=zeta-prod-scheduler-secret:latest,AGORA_REST_CUSTOMER_ID=zeta-prod-agora-rest-customer-id:latest,AGORA_REST_CUSTOMER_SECRET=zeta-prod-agora-rest-customer-secret:latest,AGORA_RECORDING_STORAGE_ACCESS_KEY=zeta-prod-agora-recording-storage-access-key:latest,AGORA_RECORDING_STORAGE_SECRET_KEY=zeta-prod-agora-recording-storage-secret-key:latest,DISCORD_BOT_TOKEN=zeta-prod-discord-bot-token:latest" \
+            --set-env-vars="ENV=prod,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }},LOG_LEVEL=info,DEFAULT_LANGUAGE=en,RESEND_FROM_EMAIL=${{ env.PROD_RESEND_FROM_EMAIL }},ALLOWED_ORIGINS=${{ env.PROD_DASHBOARD_URL }},LANDING_ORIGIN=${{ env.PROD_LANDING_ORIGIN }},FRONTEND_URL=${{ env.PROD_DASHBOARD_URL }},WORKOS_REDIRECT_URI=${{ env.PROD_API_URL }}/auth/callback,DISCORD_FEEDBACK_FORUM_CHANNEL_ID=${{ env.PROD_DISCORD_FEEDBACK_FORUM_CHANNEL_ID }},INBOUND_EMAIL_SOCIAL_ADDRESS=${{ env.PROD_INBOUND_EMAIL_SOCIAL_ADDRESS }},INBOUND_EMAIL_SUPPORT_ADDRESS=${{ env.PROD_INBOUND_EMAIL_SUPPORT_ADDRESS }},INBOUND_EMAIL_DSA_ADDRESS=${{ env.PROD_INBOUND_EMAIL_DSA_ADDRESS }},DISCORD_SOCIAL_INBOX_FORUM_CHANNEL_ID=${{ env.PROD_DISCORD_SOCIAL_INBOX_FORUM_CHANNEL_ID }},DISCORD_SUPPORT_INBOX_FORUM_CHANNEL_ID=${{ env.PROD_DISCORD_SUPPORT_INBOX_FORUM_CHANNEL_ID }},DISCORD_DSA_INBOX_FORUM_CHANNEL_ID=${{ env.PROD_DISCORD_DSA_INBOX_FORUM_CHANNEL_ID }},INBOUND_EMAIL_COPY_RECIPIENTS=${{ env.INBOUND_EMAIL_COPY_RECIPIENTS }},DISCORD_APPLICATION_ID=${{ env.DISCORD_APPLICATION_ID }},DISCORD_PUBLIC_KEY=${{ env.DISCORD_PUBLIC_KEY }},AGORA_CLOUD_RECORDING_ENABLED=true,AGORA_CLOUD_RECORDING_BASE_URL=https://api.sd-rtn.com,AGORA_RECORDING_MODE=mix,AGORA_RECORDING_STORAGE_VENDOR=6,AGORA_RECORDING_STORAGE_REGION=0,AGORA_RECORDING_FILE_PREFIX=liveCoachingRecordings,AGORA_RECORDING_MAX_IDLE_TIME=30,AGORA_RECORDING_TRANSCODING_WIDTH=640,AGORA_RECORDING_TRANSCODING_HEIGHT=360,AGORA_RECORDING_TRANSCODING_BITRATE=1500,AGORA_RECORDING_TRANSCODING_FPS=30,AGORA_RECORDING_STORAGE_BUCKET=${{ vars.GCP_PROJECT_ID }}-zeta-prod-coaching-recordings"
 
   build-and-deploy-dashboard:
     name: Build & Deploy Dashboard to Prod
@@ -145,10 +159,10 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy zeta-dashboard \
+          gcloud run deploy zeta-dashboard-prod \
             --image "${{ env.IMAGE_DASHBOARD }}:${{ github.ref_name }}" \
             --region ${{ env.REGION }} \
             --project ${{ vars.GCP_PROJECT_ID }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars="API_URL=https://${{ vars.CLOUD_RUN_PROD_URL }}"
+            --set-env-vars="API_URL=${{ env.PROD_API_URL }}"

@@ -41,8 +41,16 @@
 - Use structured `log/slog` JSON logging. Inject `*slog.Logger`; in handlers use `logger.From(ctx, h.logger)`.
 - Log stable snake_case event names, include `component`, and log errors with the `err` field.
 - Never log tokens, cookies, passwords, API keys, full email bodies, or raw PII such as full email addresses.
-- When env/config changes, update `.env.example`, docs if relevant, and Terraform wiring under `infra/terraform/` in the same task.
+- For env, secrets, Cloud Run, GitHub Actions, DNS, IAM, or Terraform changes, use `.agents/skills/infra-configuration/SKILL.md`; classify ownership before editing and update every applicable parity surface.
 - Update README diagrams when database tables, API flows, architecture, or user journeys change.
+
+## Infrastructure Rules
+
+- Plain runtime configuration such as public URLs, sender addresses, feature flags, and limits belongs in Cloud Run `--set-env-vars`, not Secret Manager.
+- Credentials, passwords, signing material, and private connection strings belong in Secret Manager and are bound with `--set-secrets`.
+- Workflow-level `env:` only configures GitHub Actions; a value reaches Cloud Run only when the deploy command passes it explicitly.
+- Terraform owns infrastructure shape and generated secrets. Inspect state and plan before apply; do not manually mutate Terraform-owned resources without a reconciliation plan.
+- Keep dev/prod workflows, `.env.example`, provider callbacks, DNS, docs, and live runtime bindings aligned when their behavior depends on the same setting.
 
 ## Frontend Rules
 
@@ -57,6 +65,7 @@
 
 - Prioritize correctness, authorization/visibility regressions, data leaks, config drift, missing tests, and broken build paths.
 - Check permission changes against `internal/permissions/permissions.go`.
+- For every new or renamed permission, use the WorkOS Authorization API with `WORKOS_API_KEY` from the target environment's `.env` to create/update its name and description, add it to the intended roles, and verify the live role assignments. Prefer additive role-permission calls; never use the replace-all endpoint unless intentionally reconciling the complete role permission set.
 - For UI reviews, check responsive layout, accessible primitives, keyboard behavior, loading/empty/error states, and copy terminology.
 - Mobile UI changes must include an emulator screenshot of the affected screens in the PR description.
 - For logging reviews, treat sensitive data in logs as high severity.

@@ -11,6 +11,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AccessStatus string
+
+const (
+	AccessStatusWaitlisted AccessStatus = "waitlisted"
+	AccessStatusActive     AccessStatus = "active"
+)
+
+func (e *AccessStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AccessStatus(s)
+	case string:
+		*e = AccessStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AccessStatus: %T", src)
+	}
+	return nil
+}
+
+type NullAccessStatus struct {
+	AccessStatus AccessStatus `json:"access_status"`
+	Valid        bool         `json:"valid"` // Valid is true if AccessStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAccessStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.AccessStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AccessStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAccessStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AccessStatus), nil
+}
+
 type AssetStatus string
 
 const (
@@ -150,6 +192,7 @@ const (
 	InvitationStatusPending  InvitationStatus = "pending"
 	InvitationStatusAccepted InvitationStatus = "accepted"
 	InvitationStatusDeclined InvitationStatus = "declined"
+	InvitationStatusRevoked  InvitationStatus = "revoked"
 )
 
 func (e *InvitationStatus) Scan(src interface{}) error {
@@ -275,6 +318,48 @@ func (ns NullNotificationType) Value() (driver.Value, error) {
 	return string(ns.NotificationType), nil
 }
 
+type SignupCodeStatus string
+
+const (
+	SignupCodeStatusAvailable SignupCodeStatus = "available"
+	SignupCodeStatusConsumed  SignupCodeStatus = "consumed"
+)
+
+func (e *SignupCodeStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SignupCodeStatus(s)
+	case string:
+		*e = SignupCodeStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SignupCodeStatus: %T", src)
+	}
+	return nil
+}
+
+type NullSignupCodeStatus struct {
+	SignupCodeStatus SignupCodeStatus `json:"signup_code_status"`
+	Valid            bool             `json:"valid"` // Valid is true if SignupCodeStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSignupCodeStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.SignupCodeStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SignupCodeStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSignupCodeStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SignupCodeStatus), nil
+}
+
 type VideoStatus string
 
 const (
@@ -327,6 +412,21 @@ type Asset struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	GroupID     pgtype.UUID        `json:"group_id"`
 	OwnerID     string             `json:"owner_id"`
+}
+
+type AuditEvent struct {
+	ID           pgtype.UUID        `json:"id"`
+	OccurredAt   pgtype.Timestamptz `json:"occurred_at"`
+	ActorID      pgtype.Text        `json:"actor_id"`
+	ActorType    string             `json:"actor_type"`
+	ActorLabel   pgtype.Text        `json:"actor_label"`
+	Action       string             `json:"action"`
+	ResourceType string             `json:"resource_type"`
+	ResourceID   pgtype.Text        `json:"resource_id"`
+	GroupID      pgtype.Text        `json:"group_id"`
+	OldValues    []byte             `json:"old_values"`
+	NewValues    []byte             `json:"new_values"`
+	Metadata     []byte             `json:"metadata"`
 }
 
 type CoachingAvailability struct {
@@ -417,6 +517,23 @@ type CoachingSessionType struct {
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
+type FeedbackSubmission struct {
+	ID               pgtype.UUID        `json:"id"`
+	UserID           string             `json:"user_id"`
+	UserDisplayName  string             `json:"user_display_name"`
+	Rating           int32              `json:"rating"`
+	Message          string             `json:"message"`
+	PageUrl          string             `json:"page_url"`
+	UserAgent        string             `json:"user_agent"`
+	DiscordStatus    string             `json:"discord_status"`
+	DiscordChannelID string             `json:"discord_channel_id"`
+	DiscordThreadID  string             `json:"discord_thread_id"`
+	DiscordMessageID string             `json:"discord_message_id"`
+	DiscordError     string             `json:"discord_error"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Group struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
@@ -428,13 +545,62 @@ type Group struct {
 }
 
 type GroupInvitation struct {
-	ID        pgtype.UUID        `json:"id"`
-	GroupID   pgtype.UUID        `json:"group_id"`
-	InviterID string             `json:"inviter_id"`
-	Email     pgtype.Text        `json:"email"`
-	Code      string             `json:"code"`
-	Status    InvitationStatus   `json:"status"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID              pgtype.UUID        `json:"id"`
+	GroupID         pgtype.UUID        `json:"group_id"`
+	InviterID       string             `json:"inviter_id"`
+	Email           pgtype.Text        `json:"email"`
+	Code            string             `json:"code"`
+	Status          InvitationStatus   `json:"status"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	StatusChangedAt pgtype.Timestamptz `json:"status_changed_at"`
+}
+
+type InboundEmail struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ResendEmailID      string             `json:"resend_email_id"`
+	SvixID             string             `json:"svix_id"`
+	Inbox              string             `json:"inbox"`
+	InboxAddress       string             `json:"inbox_address"`
+	Sender             string             `json:"sender"`
+	Recipients         []string           `json:"recipients"`
+	Cc                 []string           `json:"cc"`
+	Bcc                []string           `json:"bcc"`
+	Subject            string             `json:"subject"`
+	MessageID          string             `json:"message_id"`
+	ReceivedAt         pgtype.Timestamptz `json:"received_at"`
+	BodyText           string             `json:"body_text"`
+	Attachments        []byte             `json:"attachments"`
+	ProcessingStatus   string             `json:"processing_status"`
+	ProcessingAttempts int32              `json:"processing_attempts"`
+	LastAttemptAt      pgtype.Timestamptz `json:"last_attempt_at"`
+	NextAttemptAt      pgtype.Timestamptz `json:"next_attempt_at"`
+	ClaimUntil         pgtype.Timestamptz `json:"claim_until"`
+	ProcessedAt        pgtype.Timestamptz `json:"processed_at"`
+	DiscordStatus      string             `json:"discord_status"`
+	DiscordChannelID   string             `json:"discord_channel_id"`
+	DiscordThreadID    string             `json:"discord_thread_id"`
+	DiscordMessageID   string             `json:"discord_message_id"`
+	DiscordError       string             `json:"discord_error"`
+	ForwardingStatus   string             `json:"forwarding_status"`
+	ForwardingEmailID  string             `json:"forwarding_email_id"`
+	ForwardingError    string             `json:"forwarding_error"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type LandingContactSubmission struct {
+	ID            pgtype.UUID        `json:"id"`
+	Name          string             `json:"name"`
+	Email         string             `json:"email"`
+	Message       string             `json:"message"`
+	Locale        string             `json:"locale"`
+	PageUrl       string             `json:"page_url"`
+	UserAgent     string             `json:"user_agent"`
+	EmailStatus   string             `json:"email_status"`
+	ResendEmailID string             `json:"resend_email_id"`
+	EmailError    string             `json:"email_error"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Notification struct {
@@ -444,6 +610,24 @@ type Notification struct {
 	Payload     []byte             `json:"payload"`
 	ReadAt      pgtype.Timestamptz `json:"read_at"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type SignupCode struct {
+	ID               pgtype.UUID        `json:"id"`
+	Code             string             `json:"code"`
+	OwnerUserID      string             `json:"owner_user_id"`
+	Status           SignupCodeStatus   `json:"status"`
+	RedeemedByUserID pgtype.Text        `json:"redeemed_by_user_id"`
+	ConsumedAt       pgtype.Timestamptz `json:"consumed_at"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+type UserAccess struct {
+	UserID       string             `json:"user_id"`
+	Status       AccessStatus       `json:"status"`
+	ActivatedAt  pgtype.Timestamptz `json:"activated_at"`
+	ActivatedVia pgtype.Text        `json:"activated_via"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type UserDevice struct {

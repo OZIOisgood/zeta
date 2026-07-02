@@ -22,7 +22,17 @@ describe('GroupDetailsPageComponent', () => {
   function configure(permissions: string[]) {
     const groupsApi = {
       getGroup: vi.fn(() => of(group)),
-      createGroupInvitation: vi.fn(() => of({ id: 'invite-1', code: 'ABC123' })),
+      listGroupInvitations: vi.fn(() => of([])),
+      createGroupInvitation: vi.fn(() =>
+        of({
+          id: 'invite-1',
+          code: 'ABC12345',
+          delivery: 'link',
+          status: 'pending',
+          invite_url: 'http://localhost:4200/groups?invite=ABC12345',
+        }),
+      ),
+      revokeGroupInvitation: vi.fn(() => of(undefined)),
       getGroupInvitationQrCode: vi.fn(() => of(new Blob())),
       listGroupMembers: vi.fn((_groupId: string, kind: 'students' | 'experts') =>
         of(
@@ -67,6 +77,7 @@ describe('GroupDetailsPageComponent', () => {
                   preferences: 'Preferences',
                   remove: 'Remove',
                   retry: 'Retry',
+                  createInvitation: 'Create invitation',
                 },
                 nav: { groups: 'Groups' },
               },
@@ -78,6 +89,12 @@ describe('GroupDetailsPageComponent', () => {
                 inviteStudents: 'Invite students to join this group.',
                 inviteDialog: {
                   cardDescription: 'Create a shareable link or QR code.',
+                },
+                invitations: {
+                  title: 'Group invitations',
+                  description: 'Manage invitations to this group.',
+                  empty: 'No invitations yet',
+                  emptyDescription: 'New invitations will appear here.',
                 },
                 membersUnavailable: 'Member lists are not available',
                 membersUnavailableDescription: 'No permission to view members.',
@@ -140,6 +157,8 @@ describe('GroupDetailsPageComponent', () => {
       'groups:user-list:read',
       'groups:expert-list:read',
       'groups:invites:create',
+      'groups:invites:read',
+      'groups:invites:revoke',
       'groups:user-list:delete',
     ]);
 
@@ -151,7 +170,8 @@ describe('GroupDetailsPageComponent', () => {
     expect(groupsApi.listGroupMembers).toHaveBeenCalledWith(group.id, 'experts');
     expect(fixture.nativeElement.textContent).toContain('Student One');
     expect(fixture.nativeElement.textContent).toContain('Expert One');
-    expect(fixture.nativeElement.textContent).toContain('Create a shareable link or QR code.');
+    expect(groupsApi.listGroupInvitations).toHaveBeenCalledWith(group.id);
+    expect(fixture.nativeElement.textContent).toContain('Group invitations');
   });
 
   it('hides member lists without granular member permissions', async () => {

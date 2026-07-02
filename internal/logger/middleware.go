@@ -1,8 +1,12 @@
 package logger
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,10 +45,35 @@ func (rw *ResponseWriter) Unwrap() http.ResponseWriter {
 	return rw.ResponseWriter
 }
 
+type requestIDKey struct{}
+
+type cloudTraceContext struct {
+	traceID string
+	spanID  string
+	sampled *bool
+}
+
+// WithRequestID stores the request id in ctx so downstream middlewares (e.g.
+// audit) reuse the SAME id instead of generating their own.
+func WithRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDKey{}, id)
+}
+
+// RequestIDFromContext returns the request id set by Middleware ("" if absent).
+func RequestIDFromContext(ctx context.Context) string {
+	id, _ := ctx.Value(requestIDKey{}).(string)
+	return id
+}
+
 // Middleware returns an HTTP middleware that logs structured request information.
 // It extracts or generates a request ID, attaches a scoped logger to context,
 // captures response metadata, and logs a final HTTP request event.
-func Middleware(baseLogger *slog.Logger) func(http.Handler) http.Handler {
+func Middleware(baseLogger *slog.Logger, projectIDs ...string) func(http.Handler) http.Handler {
+	projectID := ""
+	if len(projectIDs) > 0 {
+		projectID = strings.TrimSpace(projectIDs[0])
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Extract or generate request ID
@@ -54,11 +83,27 @@ func Middleware(baseLogger *slog.Logger) func(http.Handler) http.Handler {
 			}
 
 			// Create scoped logger with request context
-			ctx := With(r.Context(), baseLogger,
+			attrs := []slog.Attr{
 				slog.String("request_id", requestID),
 				slog.String("method", r.Method),
 				slog.String("path", r.URL.Path),
-			)
+			}
+			if projectID != "" {
+				if trace, ok := parseCloudTraceContext(r.Header.Get("X-Cloud-Trace-Context")); ok {
+					attrs = append(attrs,
+						slog.String("logging.googleapis.com/trace", "projects/"+projectID+"/traces/"+trace.traceID),
+					)
+					if trace.spanID != "" {
+						attrs = append(attrs, slog.String("logging.googleapis.com/spanId", trace.spanID))
+					}
+					if trace.sampled != nil {
+						attrs = append(attrs, slog.Bool("logging.googleapis.com/trace_sampled", *trace.sampled))
+					}
+				}
+			}
+
+			ctx := WithRequestID(r.Context(), requestID)
+			ctx = With(ctx, baseLogger, attrs...)
 
 			// Wrap response writer to capture status and bytes
 			rw := &ResponseWriter{
@@ -80,4 +125,45 @@ func Middleware(baseLogger *slog.Logger) func(http.Handler) http.Handler {
 			)
 		})
 	}
+}
+
+func parseCloudTraceContext(header string) (cloudTraceContext, bool) {
+	header = strings.TrimSpace(header)
+	if header == "" {
+		return cloudTraceContext{}, false
+	}
+
+	traceAndOptions := strings.Split(header, ";")
+	traceAndSpan := strings.SplitN(strings.TrimSpace(traceAndOptions[0]), "/", 2)
+	traceID := traceAndSpan[0]
+	if len(traceID) != 32 {
+		return cloudTraceContext{}, false
+	}
+	if _, err := strconv.ParseUint(traceID[:16], 16, 64); err != nil {
+		return cloudTraceContext{}, false
+	}
+	if _, err := strconv.ParseUint(traceID[16:], 16, 64); err != nil {
+		return cloudTraceContext{}, false
+	}
+
+	trace := cloudTraceContext{traceID: strings.ToLower(traceID)}
+	if len(traceAndSpan) == 2 && strings.TrimSpace(traceAndSpan[1]) != "" {
+		spanID, err := strconv.ParseUint(strings.TrimSpace(traceAndSpan[1]), 10, 64)
+		if err != nil {
+			return cloudTraceContext{}, false
+		}
+		trace.spanID = fmt.Sprintf("%016x", spanID)
+	}
+
+	for _, option := range traceAndOptions[1:] {
+		key, value, ok := strings.Cut(strings.TrimSpace(option), "=")
+		if !ok || key != "o" {
+			continue
+		}
+		sampled := value == "1"
+		trace.sampled = &sampled
+		break
+	}
+
+	return trace, true
 }

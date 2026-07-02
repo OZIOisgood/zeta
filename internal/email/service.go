@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/OZIOisgood/zeta/internal/tools"
-	"github.com/resend/resend-go/v2"
+	"github.com/resend/resend-go/v3"
 )
 
 //go:generate mockgen -source=service.go -destination=mocks/mock_sender.go -package=mocks

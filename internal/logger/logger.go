@@ -3,6 +3,7 @@ package logger
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"os"
 )
@@ -13,16 +14,32 @@ const loggerKey contextKey = "logger"
 
 // New creates a new JSON-formatted slog.Logger configured for production output.
 func New() *slog.Logger {
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	})
-	return slog.New(handler)
+	return newJSONLogger(os.Stdout, slog.LevelInfo)
 }
 
 // NewWithLevel creates a new JSON-formatted slog.Logger with a specific log level.
 func NewWithLevel(level slog.Level) *slog.Logger {
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	return newJSONLogger(os.Stdout, level)
+}
+
+func newJSONLogger(w io.Writer, level slog.Level) *slog.Logger {
+	handler := slog.NewJSONHandler(w, &slog.HandlerOptions{
 		Level: level,
+		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+			if len(groups) != 0 {
+				return attr
+			}
+
+			switch attr.Key {
+			case slog.TimeKey:
+				attr.Key = "timestamp"
+			case slog.LevelKey:
+				attr.Key = "severity"
+			case slog.MessageKey:
+				attr.Key = "message"
+			}
+			return attr
+		},
 	})
 	return slog.New(handler)
 }

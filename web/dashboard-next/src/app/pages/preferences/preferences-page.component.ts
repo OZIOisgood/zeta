@@ -22,8 +22,10 @@ import { SelectOption } from '../../shared/ui/select/z-select.component';
 import { ZTabPanelComponent } from '../../shared/ui/tabs/z-tab-panel.component';
 import { ZTabsComponent } from '../../shared/ui/tabs/z-tabs.component';
 import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.component';
+import { InviteCodesSectionComponent } from '../invite-codes/invite-codes-section.component';
+import { ExpertAccessSectionComponent } from '../invite-codes/expert-access-section.component';
 
-type PreferencesTab = 'personal-data' | 'email-preferences';
+type PreferencesTab = 'personal-data' | 'email-preferences' | 'expert-access' | 'invite-codes';
 type PreferencesFormValue = {
   first_name: string;
   last_name: string;
@@ -58,6 +60,8 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
     ZTabPanelComponent,
     ZTabsComponent,
     ZTextInputComponent,
+    InviteCodesSectionComponent,
+    ExpertAccessSectionComponent,
     LucideBell,
     LucideCircleUserRound,
     LucideSave,
@@ -82,286 +86,292 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
       />
 
       <z-tab-panel tabsId="preferences-tabs" [value]="activeTab()">
-        <form class="grid gap-5" [formGroup]="form" (ngSubmit)="save()">
-          @if (activeTab() === 'personal-data') {
-            <section
-              class="grid gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm"
-            >
-              <div class="flex items-start gap-3 border-b border-[var(--z-border)] pb-4">
-                <span
-                  class="grid size-10 shrink-0 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-                >
-                  <svg lucideCircleUserRound class="size-5" aria-hidden="true"></svg>
-                </span>
-                <div>
-                  <h2 class="text-base font-semibold">
-                    {{ 'preferences.personalData' | transloco }}
-                  </h2>
-                  <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
-                    {{ 'preferences.personalSummary' | transloco }}
-                  </p>
+        @if (activeTab() === 'invite-codes') {
+          <app-invite-codes-section />
+        } @else if (activeTab() === 'expert-access') {
+          <app-expert-access-section />
+        } @else {
+          <form class="grid gap-5" [formGroup]="form" (ngSubmit)="save()">
+            @if (activeTab() === 'personal-data') {
+              <section
+                class="grid gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm"
+              >
+                <div class="flex items-start gap-3 border-b border-[var(--z-border)] pb-4">
+                  <span
+                    class="grid size-10 shrink-0 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
+                  >
+                    <svg lucideCircleUserRound class="size-5" aria-hidden="true"></svg>
+                  </span>
+                  <div>
+                    <h2 class="text-base font-semibold">
+                      {{ 'preferences.personalData' | transloco }}
+                    </h2>
+                    <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
+                      {{ 'preferences.personalSummary' | transloco }}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div class="grid gap-4 sm:grid-cols-2">
-                <label class="grid gap-2">
-                  <z-field-label
-                    [label]="'preferences.firstName' | transloco"
-                    [control]="form.controls.first_name"
-                  />
-                  <z-text-input
-                    formControlName="first_name"
-                    autocomplete="given-name"
-                    ariaDescribedBy="preferences-first-name-error"
-                    [invalid]="
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="grid gap-2">
+                    <z-field-label
+                      [label]="'preferences.firstName' | transloco"
+                      [control]="form.controls.first_name"
+                    />
+                    <z-text-input
+                      formControlName="first_name"
+                      autocomplete="given-name"
+                      ariaDescribedBy="preferences-first-name-error"
+                      [invalid]="
+                        (form.controls.first_name.dirty || form.controls.first_name.touched) &&
+                        form.controls.first_name.invalid
+                      "
+                    />
+                    @if (
                       (form.controls.first_name.dirty || form.controls.first_name.touched) &&
                       form.controls.first_name.invalid
-                    "
-                  />
-                  @if (
-                    (form.controls.first_name.dirty || form.controls.first_name.touched) &&
-                    form.controls.first_name.invalid
-                  ) {
-                    <z-field-error
-                      id="preferences-first-name-error"
-                      [message]="'preferences.firstNameRequired' | transloco"
-                    />
-                  }
-                </label>
+                    ) {
+                      <z-field-error
+                        id="preferences-first-name-error"
+                        [message]="'preferences.firstNameRequired' | transloco"
+                      />
+                    }
+                  </label>
 
-                <label class="grid gap-2">
-                  <z-field-label
-                    [label]="'preferences.lastName' | transloco"
-                    [control]="form.controls.last_name"
-                  />
-                  <z-text-input
-                    formControlName="last_name"
-                    autocomplete="family-name"
-                    ariaDescribedBy="preferences-last-name-error"
-                    [invalid]="
+                  <label class="grid gap-2">
+                    <z-field-label
+                      [label]="'preferences.lastName' | transloco"
+                      [control]="form.controls.last_name"
+                    />
+                    <z-text-input
+                      formControlName="last_name"
+                      autocomplete="family-name"
+                      ariaDescribedBy="preferences-last-name-error"
+                      [invalid]="
+                        (form.controls.last_name.dirty || form.controls.last_name.touched) &&
+                        form.controls.last_name.invalid
+                      "
+                    />
+                    @if (
                       (form.controls.last_name.dirty || form.controls.last_name.touched) &&
                       form.controls.last_name.invalid
-                    "
-                  />
-                  @if (
-                    (form.controls.last_name.dirty || form.controls.last_name.touched) &&
-                    form.controls.last_name.invalid
-                  ) {
-                    <z-field-error
-                      id="preferences-last-name-error"
-                      [message]="'preferences.lastNameRequired' | transloco"
-                    />
-                  }
-                </label>
+                    ) {
+                      <z-field-error
+                        id="preferences-last-name-error"
+                        [message]="'preferences.lastNameRequired' | transloco"
+                      />
+                    }
+                  </label>
 
-                <label class="grid gap-2">
-                  <z-field-label
-                    [label]="'common.fields.language' | transloco"
-                    [control]="form.controls.language"
-                  />
-                  <z-combobox
-                    ariaDescribedBy="preferences-language-error"
-                    [invalid]="
+                  <label class="grid gap-2">
+                    <z-field-label
+                      [label]="'common.fields.language' | transloco"
+                      [control]="form.controls.language"
+                    />
+                    <z-combobox
+                      ariaDescribedBy="preferences-language-error"
+                      [invalid]="
+                        (form.controls.language.dirty || form.controls.language.touched) &&
+                        form.controls.language.invalid
+                      "
+                      [label]="'preferences.searchLanguages' | transloco"
+                      [toggleLabel]="'preferences.toggleLanguages' | transloco"
+                      [noOptionsLabel]="'preferences.noLanguages' | transloco"
+                      [options]="languageOptions()"
+                      [value]="form.controls.language.value"
+                      [placeholder]="'preferences.selectLanguage' | transloco"
+                      (valueChange)="setLanguage($event)"
+                    />
+                    @if (
                       (form.controls.language.dirty || form.controls.language.touched) &&
                       form.controls.language.invalid
-                    "
-                    [label]="'preferences.searchLanguages' | transloco"
-                    [toggleLabel]="'preferences.toggleLanguages' | transloco"
-                    [noOptionsLabel]="'preferences.noLanguages' | transloco"
-                    [options]="languageOptions()"
-                    [value]="form.controls.language.value"
-                    [placeholder]="'preferences.selectLanguage' | transloco"
-                    (valueChange)="setLanguage($event)"
-                  />
-                  @if (
-                    (form.controls.language.dirty || form.controls.language.touched) &&
-                    form.controls.language.invalid
-                  ) {
-                    <z-field-error
-                      id="preferences-language-error"
-                      [message]="'preferences.languageRequired' | transloco"
-                    />
-                  }
-                </label>
+                    ) {
+                      <z-field-error
+                        id="preferences-language-error"
+                        [message]="'preferences.languageRequired' | transloco"
+                      />
+                    }
+                  </label>
 
-                <label class="grid gap-2">
-                  <z-field-label
-                    [label]="'common.fields.timezone' | transloco"
-                    [control]="form.controls.timezone"
-                  />
-                  <z-combobox
-                    ariaDescribedBy="preferences-timezone-error"
-                    [invalid]="
+                  <label class="grid gap-2">
+                    <z-field-label
+                      [label]="'common.fields.timezone' | transloco"
+                      [control]="form.controls.timezone"
+                    />
+                    <z-combobox
+                      ariaDescribedBy="preferences-timezone-error"
+                      [invalid]="
+                        (form.controls.timezone.dirty || form.controls.timezone.touched) &&
+                        form.controls.timezone.invalid
+                      "
+                      [label]="'preferences.searchTimezones' | transloco"
+                      [toggleLabel]="'preferences.toggleTimezones' | transloco"
+                      [noOptionsLabel]="'preferences.noTimezones' | transloco"
+                      [placeholder]="'preferences.selectTimezone' | transloco"
+                      [options]="timezoneOptions"
+                      [value]="form.controls.timezone.value || undefined"
+                      (valueChange)="setTimezone($event)"
+                    />
+                    @if (
                       (form.controls.timezone.dirty || form.controls.timezone.touched) &&
                       form.controls.timezone.invalid
-                    "
-                    [label]="'preferences.searchTimezones' | transloco"
-                    [toggleLabel]="'preferences.toggleTimezones' | transloco"
-                    [noOptionsLabel]="'preferences.noTimezones' | transloco"
-                    [placeholder]="'preferences.selectTimezone' | transloco"
-                    [options]="timezoneOptions"
-                    [value]="form.controls.timezone.value || undefined"
-                    (valueChange)="setTimezone($event)"
-                  />
-                  @if (
-                    (form.controls.timezone.dirty || form.controls.timezone.touched) &&
-                    form.controls.timezone.invalid
-                  ) {
-                    <z-field-error
-                      id="preferences-timezone-error"
-                      [message]="'preferences.timezoneRequired' | transloco"
+                    ) {
+                      <z-field-error
+                        id="preferences-timezone-error"
+                        [message]="'preferences.timezoneRequired' | transloco"
+                      />
+                    }
+                  </label>
+                </div>
+
+                <z-avatar-input
+                  formControlName="avatar"
+                  [label]="'common.fields.avatar' | transloco"
+                  [helperTitle]="'preferences.avatarTitle' | transloco"
+                  [helperText]="'avatar.optionalRequirement' | transloco"
+                  [previewLabel]="'common.aria.avatarPreview' | transloco"
+                  [selectLabel]="'avatar.selectImage' | transloco"
+                  [invalidImageMessage]="'avatar.invalidImage' | transloco"
+                  [sizeExceededMessage]="'avatar.sizeExceeded' | transloco"
+                  [loadFailedMessage]="'avatar.loadFailed' | transloco"
+                  [readFailedMessage]="'avatar.readFailed' | transloco"
+                />
+              </section>
+            } @else {
+              <section
+                class="grid gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm"
+                formGroupName="email_preferences"
+              >
+                <div class="flex items-start gap-3 border-b border-[var(--z-border)] pb-4">
+                  <span
+                    class="grid size-10 shrink-0 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
+                  >
+                    <svg lucideBell class="size-5" aria-hidden="true"></svg>
+                  </span>
+                  <div>
+                    <h2 class="text-base font-semibold">
+                      {{ 'preferences.emailPreferences' | transloco }}
+                    </h2>
+                    <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
+                      {{ 'preferences.emailSummary' | transloco }}
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="rounded-md border border-[var(--z-border)] bg-[var(--z-surface-warm)] p-4"
+                >
+                  <label class="flex items-start gap-3">
+                    <z-checkbox
+                      [label]="'preferences.email.all' | transloco"
+                      [checked]="emailControls.notifications_enabled.value"
+                      (checkedChange)="setEmailPreference('notifications_enabled', $event)"
+                    />
+                    <span>
+                      <span class="block text-sm font-semibold">
+                        {{ 'preferences.email.all' | transloco }}
+                      </span>
+                      <span class="mt-1 block text-xs leading-5 text-[var(--z-muted)]">
+                        {{ 'preferences.email.allDescription' | transloco }}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+
+                <div class="grid gap-3 md:grid-cols-2">
+                  @if (canReceiveAssetUploadEmails()) {
+                    <ng-container
+                      [ngTemplateOutlet]="emailOption"
+                      [ngTemplateOutletContext]="{
+                        key: 'asset_uploads_enabled',
+                        label: 'preferences.email.newVideos',
+                      }"
                     />
                   }
-                </label>
-              </div>
-
-              <z-avatar-input
-                formControlName="avatar"
-                [label]="'common.fields.avatar' | transloco"
-                [helperTitle]="'preferences.avatarTitle' | transloco"
-                [helperText]="'avatar.optionalRequirement' | transloco"
-                [previewLabel]="'common.aria.avatarPreview' | transloco"
-                [selectLabel]="'avatar.selectImage' | transloco"
-                [invalidImageMessage]="'avatar.invalidImage' | transloco"
-                [sizeExceededMessage]="'avatar.sizeExceeded' | transloco"
-                [loadFailedMessage]="'avatar.loadFailed' | transloco"
-                [readFailedMessage]="'avatar.readFailed' | transloco"
-              />
-            </section>
-          } @else {
-            <section
-              class="grid gap-5 rounded-lg border border-[var(--z-border)] bg-white p-5 shadow-sm"
-              formGroupName="email_preferences"
-            >
-              <div class="flex items-start gap-3 border-b border-[var(--z-border)] pb-4">
-                <span
-                  class="grid size-10 shrink-0 place-items-center rounded-md bg-[var(--z-surface-warm)] text-[var(--z-primary)]"
-                >
-                  <svg lucideBell class="size-5" aria-hidden="true"></svg>
-                </span>
-                <div>
-                  <h2 class="text-base font-semibold">
-                    {{ 'preferences.emailPreferences' | transloco }}
-                  </h2>
-                  <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
-                    {{ 'preferences.emailSummary' | transloco }}
-                  </p>
+                  @if (canReceiveAssetReviewEmails()) {
+                    <ng-container
+                      [ngTemplateOutlet]="emailOption"
+                      [ngTemplateOutletContext]="{
+                        key: 'asset_reviews_enabled',
+                        label: 'preferences.email.reviewedVideos',
+                      }"
+                    />
+                  }
+                  @if (canReceiveInvitationEmails()) {
+                    <ng-container
+                      [ngTemplateOutlet]="emailOption"
+                      [ngTemplateOutletContext]="{
+                        key: 'invitation_updates_enabled',
+                        label: 'preferences.email.invitationActivity',
+                      }"
+                    />
+                  }
+                  <ng-container
+                    [ngTemplateOutlet]="emailOption"
+                    [ngTemplateOutletContext]="{
+                      key: 'group_membership_updates_enabled',
+                      label: 'preferences.email.groupMembership',
+                    }"
+                  />
+                  @if (canReceiveCoachingEmails()) {
+                    <ng-container
+                      [ngTemplateOutlet]="emailOption"
+                      [ngTemplateOutletContext]="{
+                        key: 'coaching_booking_updates_enabled',
+                        label: 'preferences.email.coachingBookings',
+                      }"
+                    />
+                    <ng-container
+                      [ngTemplateOutlet]="emailOption"
+                      [ngTemplateOutletContext]="{
+                        key: 'coaching_reminders_enabled',
+                        label: 'preferences.email.coachingReminders',
+                      }"
+                    />
+                  }
                 </div>
-              </div>
+              </section>
+            }
 
-              <div
-                class="rounded-md border border-[var(--z-border)] bg-[var(--z-surface-warm)] p-4"
+            <ng-template #emailOption let-key="key" let-label="label">
+              <label
+                class="flex items-start gap-3 rounded-md border border-[var(--z-border)] bg-white p-4 transition"
+                [class.opacity-60]="!emailControls.notifications_enabled.value"
               >
-                <label class="flex items-start gap-3">
-                  <z-checkbox
-                    [label]="'preferences.email.all' | transloco"
-                    [checked]="emailControls.notifications_enabled.value"
-                    (checkedChange)="setEmailPreference('notifications_enabled', $event)"
-                  />
-                  <span>
-                    <span class="block text-sm font-semibold">
-                      {{ 'preferences.email.all' | transloco }}
-                    </span>
-                    <span class="mt-1 block text-xs leading-5 text-[var(--z-muted)]">
-                      {{ 'preferences.email.allDescription' | transloco }}
-                    </span>
-                  </span>
-                </label>
-              </div>
-
-              <div class="grid gap-3 md:grid-cols-2">
-                @if (canReceiveAssetUploadEmails()) {
-                  <ng-container
-                    [ngTemplateOutlet]="emailOption"
-                    [ngTemplateOutletContext]="{
-                      key: 'asset_uploads_enabled',
-                      label: 'preferences.email.newVideos',
-                    }"
-                  />
-                }
-                @if (canReceiveAssetReviewEmails()) {
-                  <ng-container
-                    [ngTemplateOutlet]="emailOption"
-                    [ngTemplateOutletContext]="{
-                      key: 'asset_reviews_enabled',
-                      label: 'preferences.email.reviewedVideos',
-                    }"
-                  />
-                }
-                @if (canReceiveInvitationEmails()) {
-                  <ng-container
-                    [ngTemplateOutlet]="emailOption"
-                    [ngTemplateOutletContext]="{
-                      key: 'invitation_updates_enabled',
-                      label: 'preferences.email.invitationActivity',
-                    }"
-                  />
-                }
-                <ng-container
-                  [ngTemplateOutlet]="emailOption"
-                  [ngTemplateOutletContext]="{
-                    key: 'group_membership_updates_enabled',
-                    label: 'preferences.email.groupMembership',
-                  }"
+                <z-checkbox
+                  [label]="label | transloco"
+                  [checked]="emailControlValue(key)"
+                  [disabled]="!emailControls.notifications_enabled.value"
+                  (checkedChange)="setEmailPreference(key, $event)"
                 />
-                @if (canReceiveCoachingEmails()) {
-                  <ng-container
-                    [ngTemplateOutlet]="emailOption"
-                    [ngTemplateOutletContext]="{
-                      key: 'coaching_booking_updates_enabled',
-                      label: 'preferences.email.coachingBookings',
-                    }"
-                  />
-                  <ng-container
-                    [ngTemplateOutlet]="emailOption"
-                    [ngTemplateOutletContext]="{
-                      key: 'coaching_reminders_enabled',
-                      label: 'preferences.email.coachingReminders',
-                    }"
-                  />
-                }
-              </div>
-            </section>
-          }
+                <span class="text-sm font-semibold leading-5">{{ label | transloco }}</span>
+              </label>
+            </ng-template>
 
-          <ng-template #emailOption let-key="key" let-label="label">
-            <label
-              class="flex items-start gap-3 rounded-md border border-[var(--z-border)] bg-white p-4 transition"
-              [class.opacity-60]="!emailControls.notifications_enabled.value"
-            >
-              <z-checkbox
-                [label]="label | transloco"
-                [checked]="emailControlValue(key)"
-                [disabled]="!emailControls.notifications_enabled.value"
-                (checkedChange)="setEmailPreference(key, $event)"
-              />
-              <span class="text-sm font-semibold leading-5">{{ label | transloco }}</span>
-            </label>
-          </ng-template>
+            @if (feedback() === 'error') {
+              <p
+                class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800"
+                role="alert"
+              >
+                {{ 'preferences.saveFailed' | transloco }}
+              </p>
+            }
 
-          @if (feedback() === 'error') {
-            <p
-              class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800"
-              role="alert"
-            >
-              {{ 'preferences.saveFailed' | transloco }}
-            </p>
-          }
-
-          <div class="flex justify-end">
-            <z-button type="submit" [disabled]="saveDisabled()">
-              <svg lucideSave class="size-4" aria-hidden="true"></svg>
-              <span>
-                {{
-                  (session.mutationStatus() === 'loading'
-                    ? 'preferences.saving'
-                    : 'common.actions.save'
-                  ) | transloco
-                }}
-              </span>
-            </z-button>
-          </div>
-        </form>
+            <div class="flex justify-end">
+              <z-button type="submit" [disabled]="saveDisabled()">
+                <svg lucideSave class="size-4" aria-hidden="true"></svg>
+                <span>
+                  {{
+                    (session.mutationStatus() === 'loading'
+                      ? 'preferences.saving'
+                      : 'common.actions.save'
+                    ) | transloco
+                  }}
+                </span>
+              </z-button>
+            </div>
+          </form>
+        }
       </z-tab-panel>
     </div>
   `,
@@ -417,16 +427,33 @@ export class PreferencesPageComponent {
       label: this.transloco.translate(language.nameKey),
     }));
   });
+  protected readonly canManageInviteCodes = computed(() => {
+    return this.session.hasPermission('access:invite-codes:read');
+  });
   protected readonly tabOptions = computed(() => {
     this._translationEvents();
 
-    return [
+    const options = [
       { value: 'personal-data', label: this.transloco.translate('preferences.personalData') },
       {
         value: 'email-preferences',
         label: this.transloco.translate('preferences.emailPreferences'),
       },
     ];
+
+    if (this.canManageInviteCodes()) {
+      options.push({
+        value: 'invite-codes',
+        label: this.transloco.translate('common.nav.inviteCodes'),
+      });
+    } else if (this.session.user()?.role === 'student') {
+      options.push({
+        value: 'expert-access',
+        label: this.transloco.translate('preferences.expertAccess'),
+      });
+    }
+
+    return options;
   });
   protected readonly canReceiveAssetUploadEmails = computed(() =>
     this.session.hasPermission('groups:create'),
@@ -448,6 +475,16 @@ export class PreferencesPageComponent {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const tab = params.get('tab');
       if (tab === 'personal-data' || tab === 'email-preferences') {
+        this.activeTab.set(tab);
+        return;
+      }
+
+      if (tab === 'invite-codes' && this.canManageInviteCodes()) {
+        this.activeTab.set(tab);
+        return;
+      }
+
+      if (tab === 'expert-access' && this.session.user()?.role === 'student') {
         this.activeTab.set(tab);
         return;
       }
@@ -480,7 +517,12 @@ export class PreferencesPageComponent {
   }
 
   protected setTab(tab: string): void {
-    if (tab === 'personal-data' || tab === 'email-preferences') {
+    if (
+      tab === 'personal-data' ||
+      tab === 'email-preferences' ||
+      tab === 'expert-access' ||
+      tab === 'invite-codes'
+    ) {
       void this.router.navigate(['/preferences', tab]);
     }
   }

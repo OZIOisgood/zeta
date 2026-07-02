@@ -11,14 +11,20 @@ import (
 )
 
 type Querier interface {
+	ActivateUserAccess(ctx context.Context, arg ActivateUserAccessParams) (UserAccess, error)
 	AddUserToGroup(ctx context.Context, arg AddUserToGroupParams) error
 	CancelBooking(ctx context.Context, arg CancelBookingParams) (CoachingBooking, error)
 	CheckUserGroup(ctx context.Context, arg CheckUserGroupParams) (bool, error)
 	CheckVideoVisibleToUser(ctx context.Context, arg CheckVideoVisibleToUserParams) (bool, error)
+	ClaimInboundEmailByResendID(ctx context.Context, resendEmailID string) (InboundEmail, error)
+	ClaimPendingInboundEmails(ctx context.Context, limit int32) ([]InboundEmail, error)
+	ConsumeSignupCode(ctx context.Context, arg ConsumeSignupCodeParams) (SignupCode, error)
 	CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error)
+	CountSignupCodesByOwner(ctx context.Context, ownerUserID string) (int64, error)
 	CountUnreadNotifications(ctx context.Context, recipientID string) (int64, error)
 	CountVideosWithoutReviews(ctx context.Context, assetID pgtype.UUID) (int64, error)
 	CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error)
+	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) error
 	// === Availability ===
 	CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (CoachingAvailability, error)
 	// === Blocked Slots ===
@@ -26,12 +32,15 @@ type Querier interface {
 	CreateBooking(ctx context.Context, arg CreateBookingParams) (CoachingBooking, error)
 	// === Booking Reminders ===
 	CreateBookingReminder(ctx context.Context, arg CreateBookingReminderParams) error
+	CreateFeedbackSubmission(ctx context.Context, arg CreateFeedbackSubmissionParams) (FeedbackSubmission, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateGroupInvitation(ctx context.Context, arg CreateGroupInvitationParams) (GroupInvitation, error)
+	CreateLandingContactSubmission(ctx context.Context, arg CreateLandingContactSubmissionParams) (LandingContactSubmission, error)
 	CreateMissingRecordingImports(ctx context.Context) (int64, error)
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	// === Session Types ===
 	CreateSessionType(ctx context.Context, arg CreateSessionTypeParams) (CoachingSessionType, error)
+	CreateSignupCodeWithinLimit(ctx context.Context, arg CreateSignupCodeWithinLimitParams) (SignupCode, error)
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	CreateVideoFromMuxAsset(ctx context.Context, arg CreateVideoFromMuxAssetParams) (Video, error)
 	CreateVideoReview(ctx context.Context, arg CreateVideoReviewParams) (VideoReview, error)
@@ -43,6 +52,7 @@ type Querier interface {
 	DeleteGroup(ctx context.Context, arg DeleteGroupParams) error
 	DeleteVideoReview(ctx context.Context, arg DeleteVideoReviewParams) error
 	EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error)
+	EnsureUserAccess(ctx context.Context, userID string) (UserAccess, error)
 	GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error)
 	GetAssetOwnerByVideoID(ctx context.Context, id pgtype.UUID) (GetAssetOwnerByVideoIDRow, error)
 	GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (AssetStatus, error)
@@ -57,6 +67,7 @@ type Querier interface {
 	GetGroupInvitationsByCodes(ctx context.Context, dollar_1 []string) ([]GroupInvitation, error)
 	GetNotification(ctx context.Context, id pgtype.UUID) (Notification, error)
 	GetSessionType(ctx context.Context, arg GetSessionTypeParams) (CoachingSessionType, error)
+	GetUserAccess(ctx context.Context, userID string) (UserAccess, error)
 	GetUserEmailPreferences(ctx context.Context, userID string) (GetUserEmailPreferencesRow, error)
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
 	GetUserPushPreferences(ctx context.Context, userID string) (GetUserPushPreferencesRow, error)
@@ -76,6 +87,7 @@ type Querier interface {
 	ListBookingsByExpertInRange(ctx context.Context, arg ListBookingsByExpertInRangeParams) ([]CoachingBooking, error)
 	ListDevicesForUser(ctx context.Context, userID string) ([]UserDevice, error)
 	ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error)
+	ListGroupInvitations(ctx context.Context, groupID pgtype.UUID) ([]GroupInvitation, error)
 	ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error)
 	ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error)
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
@@ -84,6 +96,7 @@ type Querier interface {
 	ListRecordingsPastEnd(ctx context.Context, limit int32) ([]CoachingBookingRecording, error)
 	ListSessionTypesByExpertGroup(ctx context.Context, arg ListSessionTypesByExpertGroupParams) ([]CoachingSessionType, error)
 	ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UUID) ([]CoachingSessionType, error)
+	ListSignupCodesByOwner(ctx context.Context, ownerUserID string) ([]SignupCode, error)
 	ListUserGroups(ctx context.Context, userID string) ([]ListUserGroupsRow, error)
 	ListVideoReviews(ctx context.Context, videoID pgtype.UUID) ([]ListVideoReviewsRow, error)
 	// Ready videos without a captured duration. Either identifier may be empty:
@@ -95,6 +108,17 @@ type Querier interface {
 	MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
 	MarkBookingRecordingStopping(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
+	MarkFeedbackDiscordFailed(ctx context.Context, arg MarkFeedbackDiscordFailedParams) error
+	MarkFeedbackDiscordPosted(ctx context.Context, arg MarkFeedbackDiscordPostedParams) error
+	MarkFeedbackDiscordSkipped(ctx context.Context, arg MarkFeedbackDiscordSkippedParams) error
+	MarkInboundEmailDiscordFailed(ctx context.Context, arg MarkInboundEmailDiscordFailedParams) error
+	MarkInboundEmailDiscordPosted(ctx context.Context, arg MarkInboundEmailDiscordPostedParams) error
+	MarkInboundEmailDiscordSkipped(ctx context.Context, arg MarkInboundEmailDiscordSkippedParams) error
+	MarkInboundEmailForwarded(ctx context.Context, arg MarkInboundEmailForwardedParams) error
+	MarkInboundEmailForwardingFailed(ctx context.Context, arg MarkInboundEmailForwardingFailedParams) error
+	MarkInboundEmailForwardingSkipped(ctx context.Context, arg MarkInboundEmailForwardingSkippedParams) error
+	MarkLandingContactEmailFailed(ctx context.Context, arg MarkLandingContactEmailFailedParams) error
+	MarkLandingContactEmailSent(ctx context.Context, arg MarkLandingContactEmailSentParams) error
 	MarkNotificationRead(ctx context.Context, arg MarkNotificationReadParams) error
 	MarkNotificationReadByInviteCode(ctx context.Context, arg MarkNotificationReadByInviteCodeParams) error
 	MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error
@@ -102,6 +126,8 @@ type Querier interface {
 	MarkRecordingImportMuxCreated(ctx context.Context, arg MarkRecordingImportMuxCreatedParams) (CoachingRecordingImport, error)
 	MarkRecordingImportReady(ctx context.Context, arg MarkRecordingImportReadyParams) (CoachingRecordingImport, error)
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
+	ReleaseInboundEmailClaim(ctx context.Context, id pgtype.UUID) error
+	ReleaseSignupCode(ctx context.Context, id pgtype.UUID) error
 	RemoveUserFromGroup(ctx context.Context, arg RemoveUserFromGroupParams) error
 	// Past, non-cancelled sessions the expert ran. Title is the session type name.
 	ReportSessionEventsForExpert(ctx context.Context, expertID string) ([]ReportSessionEventsForExpertRow, error)
@@ -119,6 +145,7 @@ type Querier interface {
 	ReportUploadEventsForExpert(ctx context.Context, expertID string) ([]ReportUploadEventsForExpertRow, error)
 	// One row per asset the student uploaded. The reviewing expert is the group owner.
 	ReportUploadEventsForStudent(ctx context.Context, studentID string) ([]ReportUploadEventsForStudentRow, error)
+	RevokeGroupInvitation(ctx context.Context, arg RevokeGroupInvitationParams) (GroupInvitation, error)
 	SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error)
 	SeedUserPreferencesWithAvatar(ctx context.Context, arg SeedUserPreferencesWithAvatarParams) (UserPreference, error)
 	SetVideoDurationByID(ctx context.Context, arg SetVideoDurationByIDParams) error
@@ -127,6 +154,7 @@ type Querier interface {
 	UpdateAvailability(ctx context.Context, arg UpdateAvailabilityParams) (CoachingAvailability, error)
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateGroupInvitationStatus(ctx context.Context, arg UpdateGroupInvitationStatusParams) error
+	UpdateInboundEmailContent(ctx context.Context, arg UpdateInboundEmailContentParams) error
 	UpdateSessionType(ctx context.Context, arg UpdateSessionTypeParams) (CoachingSessionType, error)
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error)
 	UpdateUserEmailPreferences(ctx context.Context, arg UpdateUserEmailPreferencesParams) (UserPreference, error)
@@ -137,6 +165,7 @@ type Querier interface {
 	UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusParams) error
 	UpdateVideoStatusByUploadID(ctx context.Context, arg UpdateVideoStatusByUploadIDParams) error
 	UpsertDevice(ctx context.Context, arg UpsertDeviceParams) (UserDevice, error)
+	UpsertInboundEmail(ctx context.Context, arg UpsertInboundEmailParams) (InboundEmail, error)
 }
 
 var _ Querier = (*Queries)(nil)

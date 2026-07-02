@@ -22,7 +22,9 @@ const user: User = {
     'coaching:bookings:read',
     'groups:create',
     'groups:invites:create',
+    'access:invite-codes:read',
   ],
+  access_status: 'active',
   email_preferences: {
     notifications_enabled: true,
     asset_uploads_enabled: true,
@@ -39,7 +41,8 @@ describe('PreferencesPageComponent', () => {
   const session = {
     user: signal<User | null>(user),
     mutationStatus,
-    hasPermission: (permission: string) => user.permissions.includes(permission),
+    hasPermission: (permission: string) =>
+      session.user()?.permissions.includes(permission) ?? false,
     updateCurrentUser: vi.fn(async (data) => ({ ...user, ...data })),
   };
   const shell = {
@@ -50,6 +53,7 @@ describe('PreferencesPageComponent', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mutationStatus.set('idle');
+    session.user.set(user);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -61,6 +65,7 @@ describe('PreferencesPageComponent', () => {
                 actions: { save: 'Save' },
                 aria: { avatarPreview: 'Avatar preview' },
                 fields: { avatar: 'Avatar', language: 'Language', timezone: 'Timezone' },
+                nav: { inviteCodes: 'Invite codes' },
               },
               avatar: {
                 invalidImage: 'Invalid image',
@@ -223,5 +228,91 @@ describe('PreferencesPageComponent', () => {
     expect(error?.textContent).toContain('First name is required.');
     expect(input?.getAttribute('aria-invalid')).toBe('true');
     expect(input?.getAttribute('aria-describedby')).toBe('preferences-first-name-error');
+  });
+
+  it('offers the invite-codes tab with read permission', async () => {
+    session.user.set({ ...user, permissions: [...user.permissions, 'access:invite-codes:read'] });
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+
+    const values = fixture.componentInstance['tabOptions']().map((option) => option.value);
+    expect(values).toContain('invite-codes');
+  });
+
+  it('hides the invite-codes tab without read permission', async () => {
+    session.user.set({
+      ...user,
+      role: 'student',
+      permissions: user.permissions.filter(
+        (permission) => permission !== 'access:invite-codes:read',
+      ),
+    });
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+
+    const values = fixture.componentInstance['tabOptions']().map((option) => option.value);
+    expect(values).not.toContain('invite-codes');
+    expect(values).toContain('expert-access');
+  });
+});
+
+describe('PreferencesPageComponent invite-codes routing', () => {
+  const mutationStatus = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const navigate = vi.fn();
+
+  async function setup(hasInviteCodePermission: boolean): Promise<void> {
+    vi.clearAllMocks();
+    mutationStatus.set('idle');
+
+    const session = {
+      user: signal<User | null>({
+        ...user,
+        role: hasInviteCodePermission ? 'expert' : 'student',
+        permissions: hasInviteCodePermission
+          ? [...user.permissions, 'access:invite-codes:read']
+          : user.permissions.filter((permission) => permission !== 'access:invite-codes:read'),
+      }),
+      mutationStatus,
+      hasPermission: (permission: string) =>
+        hasInviteCodePermission && permission === 'access:invite-codes:read',
+      updateCurrentUser: vi.fn(async (data) => ({ ...user, ...data })),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [
+        PreferencesPageComponent,
+        TranslocoTestingModule.forRoot({
+          langs: { en: {} },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+          preloadLangs: true,
+        }),
+      ],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ tab: 'invite-codes' })) },
+        },
+        { provide: Router, useValue: { navigate } },
+        { provide: SessionStore, useValue: session },
+        { provide: AppShellStore, useValue: { setLanguage: vi.fn(), showToast: vi.fn() } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+    await fixture.whenStable();
+  }
+
+  it('keeps an expert on the invite-codes tab', async () => {
+    await setup(true);
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('redirects a student away from invite-codes to personal-data', async () => {
+    await setup(false);
+
+    expect(navigate).toHaveBeenCalledWith(['/preferences', 'personal-data'], { replaceUrl: true });
   });
 });

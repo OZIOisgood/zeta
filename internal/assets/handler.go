@@ -2,7 +2,6 @@ package assets
 
 import (
 	"context"
-	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -24,22 +23,20 @@ import (
 )
 
 type Handler struct {
-	q               db.Querier
-	mux             MuxClient
-	email           email.Sender
-	workos          auth.UserManagement
-	logger          *slog.Logger
-	schedulerSecret string
+	q      db.Querier
+	mux    MuxClient
+	email  email.Sender
+	workos auth.UserManagement
+	logger *slog.Logger
 }
 
-func NewHandler(q db.Querier, mux MuxClient, email email.Sender, workos auth.UserManagement, logger *slog.Logger, schedulerSecret string) *Handler {
+func NewHandler(q db.Querier, mux MuxClient, email email.Sender, workos auth.UserManagement, logger *slog.Logger) *Handler {
 	return &Handler{
-		q:               q,
-		mux:             mux,
-		email:           email,
-		workos:          workos,
-		logger:          logger,
-		schedulerSecret: schedulerSecret,
+		q:      q,
+		mux:    mux,
+		email:  email,
+		workos: workos,
+		logger: logger,
 	}
 }
 
@@ -442,12 +439,6 @@ func (h *Handler) BackfillVideoDurations(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
 
-	secret := r.Header.Get("Authorization")
-	if h.schedulerSecret == "" || subtle.ConstantTimeCompare([]byte(secret), []byte("Bearer "+h.schedulerSecret)) != 1 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
 	const batchSize = 100
 	videos, err := h.q.ListVideosMissingDuration(ctx, batchSize)
 	if err != nil {
@@ -694,12 +685,11 @@ func (h *Handler) CreateAsset(w http.ResponseWriter, r *http.Request) {
 			Copy: email.Copy{
 				Preheader: i18n.T(loc, "email.video_uploaded.preheader", map[string]any{"UploaderName": userName}),
 				Title:     i18n.T(loc, "email.video_uploaded.title"),
-				Intro:     i18n.T(loc, "email.video_uploaded.intro", map[string]any{"UploaderName": userName}),
-			},
-			Details: []email.Detail{
-				{Label: i18n.T(loc, "email.detail.video"), Value: asset.Name},
-				{Label: i18n.T(loc, "email.detail.group"), Value: group.Name},
-				{Label: i18n.T(loc, "email.detail.uploaded_by"), Value: userName},
+				Intro: i18n.T(loc, "email.video_uploaded.intro", map[string]any{
+					"UploaderName": userName,
+					"VideoName":    asset.Name,
+					"GroupName":    group.Name,
+				}),
 			},
 		}
 		subject := i18n.T(loc, "email.video_uploaded.subject")
@@ -878,10 +868,7 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 					Copy: email.Copy{
 						Preheader: i18n.T(loc, "email.video_reviewed.preheader", map[string]any{"VideoName": asset.Name}),
 						Title:     i18n.T(loc, "email.video_reviewed.title"),
-						Intro:     i18n.T(loc, "email.video_reviewed.intro"),
-					},
-					Details: []email.Detail{
-						{Label: i18n.T(loc, "email.detail.video"), Value: asset.Name},
+						Intro:     i18n.T(loc, "email.video_reviewed.intro", map[string]any{"VideoName": asset.Name}),
 					},
 				}
 				err = h.email.SendTemplate([]string{owner.Email}, subject, email.TemplateNotification, message)

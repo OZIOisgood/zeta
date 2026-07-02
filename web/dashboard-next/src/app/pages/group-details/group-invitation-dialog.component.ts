@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LucideCopy, LucideDownload, LucideLink, LucideMail, LucideQrCode } from '@lucide/angular';
@@ -6,6 +6,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { GroupsApiClient, GroupInvitation } from '../../core/http/groups-api.service';
 import { AppShellStore } from '../../core/state/app-shell.store';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZActionDialogComponent } from '../../shared/ui/dialog/z-action-dialog.component';
 import { ZFieldErrorComponent } from '../../shared/ui/field-error/z-field-error.component';
 import { ZFieldLabelComponent } from '../../shared/ui/field-label/z-field-label.component';
@@ -18,6 +19,7 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
     ReactiveFormsModule,
     TranslocoPipe,
     ZButtonComponent,
+    ZBadgeComponent,
     ZActionDialogComponent,
     ZFieldErrorComponent,
     ZFieldLabelComponent,
@@ -31,8 +33,16 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
   ],
   template: `
     <z-action-dialog
-      [title]="'groups.inviteDialog.title' | transloco"
-      [description]="'groups.inviteDialog.description' | transloco"
+      [title]="
+        (existingInvitation() ? 'groups.inviteDialog.detailsTitle' : 'groups.inviteDialog.title')
+          | transloco
+      "
+      [description]="
+        (existingInvitation()
+          ? 'groups.inviteDialog.detailsDescription'
+          : 'groups.inviteDialog.description'
+        ) | transloco
+      "
       tone="info"
       [showToneIcon]="false"
       [hasProjectedMedia]="true"
@@ -140,37 +150,61 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
             </div>
 
             <div class="min-w-0">
-              <div class="flex items-center gap-2 text-sm font-semibold">
+              <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p
+                    class="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--z-muted)]"
+                  >
+                    {{ 'groups.inviteDialog.code' | transloco }}
+                  </p>
+                  <code
+                    class="mt-1 block font-mono text-2xl font-bold tracking-[0.16em] text-[var(--z-text)]"
+                  >
+                    {{ invitation()?.code }}
+                  </code>
+                </div>
+                <z-badge [tone]="invitation()?.status === 'pending' ? 'success' : 'neutral'">
+                  {{ 'groups.invitations.status.' + invitation()?.status | transloco }}
+                </z-badge>
+              </div>
+              <div class="mt-5 flex items-center gap-2 text-sm font-semibold">
                 <svg lucideLink class="size-4 text-[var(--z-primary)]" aria-hidden="true"></svg>
                 <span>{{ 'groups.inviteDialog.shareLink' | transloco }}</span>
               </div>
               <code
-                class="mt-3 block overflow-x-auto rounded-md border border-[var(--z-border)] bg-white px-3 py-2 text-xs text-[var(--z-muted)]"
+                class="mt-3 block break-all whitespace-normal rounded-md border border-[var(--z-border)] bg-white px-3 py-2 text-xs leading-5 text-[var(--z-muted)]"
               >
                 {{ inviteLink() }}
               </code>
               <p class="mt-3 text-sm leading-6 text-[var(--z-muted)]">
-                {{ 'groups.inviteDialog.shareHint' | transloco }}
+                {{
+                  (invitation()?.status === 'pending'
+                    ? 'groups.inviteDialog.shareHint'
+                    : 'groups.inviteDialog.inactiveHint'
+                  ) | transloco
+                }}
               </p>
             </div>
           </div>
 
           <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <z-button
-              type="button"
-              variant="secondary"
-              [mobileFullWidth]="true"
-              [nowrap]="true"
-              (pressed)="copyLink()"
-            >
-              <svg lucideCopy class="size-4" aria-hidden="true"></svg>
-              <span>
-                {{
-                  (linkCopied() ? 'common.actions.copied' : 'common.actions.copyLink') | transloco
-                }}
-              </span>
-            </z-button>
-            @if (qrImageUrl()) {
+            @if (invitation()?.status === 'pending') {
+              <z-button
+                type="button"
+                variant="secondary"
+                [mobileFullWidth]="true"
+                [nowrap]="true"
+                (pressed)="copyLink()"
+              >
+                <svg lucideCopy class="size-4" aria-hidden="true"></svg>
+                <span>
+                  {{
+                    (linkCopied() ? 'common.actions.copied' : 'common.actions.copyLink') | transloco
+                  }}
+                </span>
+              </z-button>
+            }
+            @if (invitation()?.status === 'pending' && qrImageUrl()) {
               <z-button
                 type="button"
                 variant="secondary"
@@ -196,9 +230,10 @@ import { ZTextInputComponent } from '../../shared/ui/text-input/z-text-input.com
     </z-action-dialog>
   `,
 })
-export class GroupInvitationDialogComponent implements OnDestroy {
+export class GroupInvitationDialogComponent implements OnInit, OnDestroy {
   readonly groupId = input.required<string>();
   readonly close = input.required<(result?: boolean) => void>();
+  readonly existingInvitation = input<GroupInvitation | null>(null);
 
   private readonly api = inject(GroupsApiClient);
   private readonly sanitizer = inject(DomSanitizer);
@@ -214,15 +249,25 @@ export class GroupInvitationDialogComponent implements OnDestroy {
   protected readonly linkCopied = signal(false);
   protected readonly qrImageUrl = signal<SafeUrl | null>(null);
   protected readonly qrStatus = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
-  protected readonly sentByEmail = signal(false);
   protected readonly status = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
   protected readonly inviteLink = computed(() => {
     const invitation = this.invitation();
 
-    return invitation ? `${window.location.origin}/groups?invite=${invitation.code}` : '';
+    return (
+      invitation?.invite_url ||
+      (invitation ? `${window.location.origin}/groups?invite=${invitation.code}` : '')
+    );
   });
 
   private qrBlobUrl = '';
+
+  ngOnInit(): void {
+    const existing = this.existingInvitation();
+    if (!existing) return;
+    this.invitation.set(existing);
+    this.status.set('success');
+    if (existing.status === 'pending') this.loadQrCode(existing.id);
+  }
 
   ngOnDestroy(): void {
     this.revokeQrBlobUrl();
@@ -243,7 +288,6 @@ export class GroupInvitationDialogComponent implements OnDestroy {
     this.api.createGroupInvitation(this.groupId(), email || undefined).subscribe({
       next: (invitation) => {
         this.invitation.set(invitation);
-        this.sentByEmail.set(!!email);
         this.status.set('success');
         this.shell.showToast(
           this.transloco.translate('toast.successTitle'),

@@ -19,6 +19,9 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - **Live Session Recording**: Optional Agora Cloud Recording for live coaching sessions, with server-managed start/stop lifecycle and automatic import into the review flow.
 - **Templated Email Notifications**: Transactional emails use embedded Go HTML templates, a shared Zeta layout, and CSS inlining before delivery through Resend.
 - **Notification Preferences**: Users can control all email notifications or individual email categories from their Preferences page.
+- **Feedback Inbox**: Authenticated dashboard users can submit rated feedback that is stored in Postgres and mirrored into the environment-specific Discord forum.
+- **Inbound Email Inboxes**: Social, support, and DSA email is durably ingested from Resend, mirrored into environment-specific Discord forums, and copied to configured recipients.
+- **Landing Contact Inbox**: Public landing-page contact messages are persisted and sent to the support inbox, where the inbound pipeline labels them for Discord and configured copy recipients. The sender receives a localized confirmation email.
 
 ## How to start
 
@@ -55,9 +58,11 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 5. **Resend Configuration**:
    - Create a Resend API key and set `RESEND_API_KEY`.
    - Verify the sender domain in Resend.
-   - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@dev.zeta.m4xon.com` for the deployed development environment.
-   - Optionally set `EMAIL_LOGO_URL` to the absolute hosted app icon URL used in HTML emails. If unset, emails use `FRONTEND_URL + /app-full-icon.png`, then `https://dev.zeta.m4xon.com/app-full-icon.png`.
+   - Set `RESEND_FROM_EMAIL` to an address on the verified domain, for example `notifications@strido.net`.
+   - HTML emails use the hosted Strido logo at `FRONTEND_URL + /assets/brand/strido/strido-logo-320.png`, with the dev dashboard URL as a local fallback.
    - To render local email previews with fake data, run `make email:preview`. Final inlined HTML files are written to `build/email-previews/`.
+   - For inbound email, configure the three `INBOUND_EMAIL_*_ADDRESS` routes, Discord forum IDs, optional `INBOUND_EMAIL_COPY_RECIPIENTS`, and a verified Resend webhook at `/webhooks/resend`.
+   - Store the endpoint-specific webhook signing secret in `RESEND_WEBHOOK_SIGNING_SECRET`; never treat it as plain runtime config.
 
 6. **Agora Configuration**:
    - Create a project in [Agora Console](https://console.agora.io/).
@@ -70,6 +75,47 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
    - `CANCELLATION_NOTICE` — minimum notice to cancel (default: `1h`)
    - `CONNECT_WINDOW` — how early participants can join a call (default: `15m`)
+
+8. **Discord Feedback Inbox**:
+   - Create a Discord bot token and store it in `DISCORD_BOT_TOKEN`.
+   - Set `DISCORD_FEEDBACK_FORUM_CHANNEL_ID` to the target forum channel.
+   - `DISCORD_APPLICATION_ID` and `DISCORD_PUBLIC_KEY` are public bot metadata reserved for future Discord interactions.
+
+### Custom Domains
+
+| Environment           | URL                          | Cloud Run service     |
+| --------------------- | ---------------------------- | --------------------- |
+| Landing               | `https://strido.net`         | `zeta-landing`        |
+| Production dashboard  | `https://app.strido.net`     | `zeta-dashboard-prod` |
+| Production API        | `https://api.strido.net`     | `zeta-api-prod`       |
+| Development dashboard | `https://app.dev.strido.net` | `zeta-dashboard-dev`  |
+| Development API       | `https://api.dev.strido.net` | `zeta-api-dev`        |
+
+`strido.de` redirects to `https://strido.net` at the registrar and is not mapped to Cloud Run. The landing page is a static nginx container under `web/landing`; its HTML and bundled assets can be updated without changing the infrastructure.
+
+1. Verify ownership of `strido.net` with the Google accounts that apply the dev and prod Terraform environments. Verifying the apex domain also permits mapping its subdomains.
+2. In WorkOS Dashboard > Configuration > Redirect URIs, add both callbacks before deploying:
+   - `https://api.strido.net/auth/callback`
+   - `https://api.dev.strido.net/auth/callback`
+3. Run the `Infra` GitHub Actions workflow for `dev` and `prod`, first with `plan` and then with `apply`. Terraform creates the five Cloud Run domain mappings, dedicated `*-dev` and `*-prod` services, and the landing service. Both states deliberately forget the legacy shared services with `destroy = false`, so the existing deployment remains online during migration.
+4. Inspect the required records from the Terraform outputs if DNS needs verification:
+
+   ```bash
+   cd infra/terraform/envs/dev
+   terraform output dashboard_dns_records
+   terraform output api_dns_records
+
+   cd ../prod
+   terraform output landing_dns_records
+   terraform output dashboard_dns_records
+   terraform output api_dns_records
+   ```
+
+5. In Spaceship DNS, the expected hosts are `@`, `app`, `api`, `app.dev`, and `api.dev`. Remove only conflicting `A`, `AAAA`, or `CNAME` records for those hosts; keep all Resend MX/TXT/DKIM records.
+6. Deploy `main` for the dev services, then create a production release tag. API/dashboard workflows configure CORS, frontend and API URLs, WorkOS callbacks, logout redirects, and email branding. Landing changes under `web/landing` deploy independently on pushes to `main`; the workflow can also be run manually.
+7. After all five domains and authentication flows are verified, the legacy `zeta-api` and `zeta-dashboard` Cloud Run services can be removed manually.
+
+Google currently labels direct Cloud Run domain mapping as Preview and does not recommend it for production services. This repository still uses the existing mapping approach; use a global external Application Load Balancer for a GA domain-routing product or advanced traffic controls.
 
 ### Quick Start
 
@@ -86,13 +132,17 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    ```
 
 3. **Run Backend**:
+
    ```bash
    make api:start
    ```
+
    For live reload during Go API development, run:
+
    ```bash
    make api:dev
    ```
+
    This uses the project-pinned Air tool through `go tool air`.
 
 4. **Run Frontend**:
@@ -108,6 +158,20 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    Expo dev server for the `mobile/` app. Expo Go works for all features
    **except live video calls** — those require a development build (APK) built
    via EAS. See `mobile/README.md` → Development builds.
+
+### Development Observability
+
+The `Zeta Dev Overview` dashboard in Google Cloud Monitoring shows Cloud Run
+requests, errors, latency, CPU, memory, instances, billable time, Cloud SQL health,
+and recent operational warnings. Terraform also manages an external API health
+check and warning alerts for availability, 5xx responses, latency, memory, SQL disk,
+and critical workflow failures.
+
+Run `terraform output observability_dashboard_url` from
+`infra/terraform/envs/dev` to print the direct dashboard link. Viewer access is
+granted to existing Google accounts through the `OBSERVABILITY_VIEWER_MEMBERS`
+GitHub Environment variable; there is no separate Zeta observability password. See
+`docs/cicd.md` for IAM roles and notification-channel setup.
 
 ### Auth Flow
 
@@ -128,6 +192,14 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 - The API contract for mobile clients lives in `docs/openapi.yaml` (lint with
   `make api:openapi:lint`).
 
+### Access Gate (Soft Launch)
+
+- Registration is open: WorkOS public sign-up stays **ON**. A newly registered user is created as `waitlisted` (`user_access.status`) and must redeem an invite code at `POST /access/redeem` to become `active`.
+- **Expert recommendation codes** (`signup_codes`) upgrade either a waitlisted user or an active `student` to the WorkOS `expert` role. Students redeem a recommendation under Preferences > Become an expert. `GET /access/codes` automatically ensures that each expert has five personal codes and returns their redemption status. Used codes permanently count toward the five-referral allowance; expert codes cannot be created or revoked manually. Viewing the list requires `access:invite-codes:read`.
+- Existing group-invite codes activate the user as a `student` and join the corresponding group. Direct email invitations require the signed-in WorkOS email to match the intended recipient; generic link/QR invitations remain reusable. Group members with `groups:invites:read` can revisit invitation history and QR codes, while `groups:invites:revoke` allows active invitations to be revoked.
+- Protected feature routes require an active account; `waitlisted` users receive **403**. `/auth/me` returns `access_status` so clients can route to the redeem screen.
+- Existing users were grandfathered to `active`. No new environment variables are introduced.
+
 ### Asset Visibility
 
 - Students can only see assets and videos they uploaded themselves.
@@ -139,10 +211,10 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
 
 1. An admin or expert opens the group details page and clicks "Invite".
 2. A dialog accepts an optional invitee email address.
-3. The backend generates a unique 6-character code and, when an email is provided, sends an email with the invite link (`/groups?invite=<CODE>`).
+3. The backend generates a unique 8-character code and, when an email is provided, sends an email with the invite link (`/groups?invite=<CODE>`).
 4. The dialog displays a **QR code** (server-generated PNG) encoding the invite URL, with options to copy the link or download the QR image.
-5. When a non-member opens the link (or scans the QR code), a confirmation dialog shows the group name and avatar.
-6. On acceptance, the user is added to the group and redirected to the group details page.
+5. When an active non-member opens the link (or scans the QR code), a confirmation dialog shows the group name and avatar. A newly registered waitlisted user returns from WorkOS to `/welcome`, sees the same group context, and explicitly activates as a student before joining.
+6. On acceptance, the user is added idempotently to the group and redirected to the group details page. Email-specific invitations can only be accepted by the matching WorkOS email address.
 7. If the current user already belongs to the group, the dashboard skips the invitation dialog and opens the group directly.
 8. Email-specific invitations are single-use. Email-less invitation links remain reusable for sharing in print, on walls, or in group chats.
 
@@ -196,6 +268,22 @@ sequenceDiagram
     end
 ```
 
+### Feedback Inbox Flow
+
+1. A signed-in user opens the global Feedback button in the dashboard shell.
+2. The user selects a 1–5 rating and enters a short message.
+3. The dashboard posts the feedback to `POST /feedback` with the current page URL.
+4. The API stores the submission in `feedback_submissions` with the authenticated user's display name and internal user ID.
+5. The API creates a new post in the configured Discord forum channel. If Discord delivery fails, the database row records the failure while the user's feedback remains saved.
+
+### Inbound Email Flow
+
+1. Resend sends a signed `email.received` event to `POST /webhooks/resend`.
+2. The API verifies the Svix signature against the raw body and matches the recipient to social, support, or DSA.
+3. The API idempotently stores the event in `inbound_emails` before attempting delivery.
+4. The processor fetches the complete body and attachment metadata from Resend, creates one Discord forum thread, and forwards a copy to configured recipients with an idempotency key.
+5. Discord and forwarding outcomes are tracked independently. `POST /internal/inbound-email/reconcile` polls recent Resend mail and retries pending or failed work every five minutes.
+
 ### API Examples
 
 Check auth status:
@@ -246,6 +334,7 @@ graph TD
     Mobile -->|Direct Upload| Mux
     API -->|SQL| DB[(PostgreSQL)]
     API -->|Email| Resend[Resend]
+    Resend -->|Signed inbound webhook| API
     API -->|Auth| WorkOS[WorkOS]
     API -->|Video API| Mux[Mux]
     Web -->|Direct Upload| Mux
@@ -257,6 +346,8 @@ graph TD
     Mobile -->|Video Call| Agora
     Scheduler[GCP Cloud Scheduler] -->|POST /internal/coaching/reminders| API
     Scheduler -->|POST /internal/coaching/recordings/cleanup/process| API
+    Scheduler -->|POST /internal/audit/maintenance| API
+    Scheduler -->|POST /internal/inbound-email/reconcile| API
 ```
 
 ### Video Call Sequence
@@ -441,6 +532,29 @@ erDiagram
 
     users ||--|| user_preferences : "has settings"
 
+    user_access {
+        string user_id PK "WorkOS User ID ref"
+        enum status "waitlisted, active"
+        timestamptz activated_at
+        string activated_via "expert_code, group_code, grandfathered"
+        timestamp created_at
+    }
+
+    users ||--|| user_access : "gated by"
+
+    signup_codes {
+        uuid id PK
+        string code "unique bearer string"
+        string owner_user_id FK "WorkOS User ID ref"
+        enum status "available, consumed"
+        string redeemed_by_user_id FK "WorkOS User ID ref"
+        timestamptz consumed_at
+        timestamp created_at
+    }
+
+    users ||--o{ signup_codes : owns
+    users ||--o{ signup_codes : redeems
+
     groups {
         uuid id PK
         string name
@@ -589,6 +703,36 @@ erDiagram
         timestamp created_at
     }
 
+    audit_events {
+        uuid id PK
+        timestamptz occurred_at
+        string actor_id "WorkOS User ID or system"
+        string actor_type "user, system"
+        string action "e.g. asset.created, group.member.removed"
+        string resource_type "asset, group, user, etc."
+        uuid resource_id
+        jsonb metadata "optional extra context incl. opt-in client IP"
+    }
+
+    inbound_emails {
+        uuid id PK
+        string resend_email_id UK
+        string inbox "social, support, dsa"
+        string sender
+        string_array recipients
+        string subject
+        string body_text
+        jsonb attachments
+        string processing_status
+        string discord_status
+        string discord_thread_id
+        string forwarding_status
+        string forwarding_email_id
+        timestamp received_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
     groups ||--o{ coaching_session_types : has
     users ||--o{ coaching_session_types : creates
     users ||--o{ coaching_availability : sets
@@ -600,4 +744,7 @@ erDiagram
     assets ||--o{ coaching_recording_imports : "created by"
     videos ||--o{ coaching_recording_imports : "created by"
     coaching_bookings ||--o{ coaching_booking_reminders : has
+    users ||--o{ audit_events : "actor in"
 ```
+
+> **`audit_events`** is an append-only, monthly-partitioned table. UPDATE and DELETE are blocked by a database trigger. Expired partitions (older than `AUDIT_RETENTION_DAYS`, default 3 years) are dropped by the daily maintenance job (`POST /internal/audit/maintenance`). Domain wiring — recording which mutations emit events — is rolled out incrementally.
