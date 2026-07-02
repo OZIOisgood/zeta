@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, Text } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
+import { t as i18nT } from 'i18next';
 import { colors } from '../../theme/colors';
 import type { ZSelectProps } from './z-select.types';
 
@@ -57,7 +58,9 @@ export function ZSelect({
         onRequestClose={() => setOpen(false)}
       >
         <Pressable
-          accessibilityLabel="Close"
+          // i18next directly (not the hook): the bare fallback keeps zero
+          // render-time deps, and the label must still localize for TalkBack.
+          accessibilityLabel={i18nT('common.actions.cancel')}
           onPress={() => setOpen(false)}
           className="flex-1 justify-end bg-black/40"
         >

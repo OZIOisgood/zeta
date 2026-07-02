@@ -31,7 +31,8 @@
       "signOut": "Abmelden",
       "uploadVideo": "Video hochladen",
       "viewAll": "Alle ansehen",
-      "retry": "Erneut versuchen"
+      "retry": "Erneut versuchen",
+      "changePhoto": "Bild ändern"
     },
     "aria": {
       "appLogo": "App-Logo",
@@ -57,7 +58,8 @@
       "reasonOptional": "Grund (optional)",
       "startTime": "Startzeit",
       "timezone": "Zeitzone",
-      "title": "Titel"
+      "title": "Titel",
+      "email": "E-Mail"
     },
     "labels": {
       "actions": "Aktionen",
@@ -387,6 +389,8 @@
     },
     "experts": "Experten",
     "students": "Schüler",
+    "memberCount_one": "{{count}} Mitglied",
+    "memberCount_other": "{{count}} Mitglieder",
     "expertsDescription": "Personen, die Videos prüfen und diese Gruppe unterstützen können.",
     "studentsDescription": "Schüler, die dieser Coaching-Gruppe aktuell zugeordnet sind.",
     "noExperts": "Noch keine Experten",
@@ -402,6 +406,7 @@
       "expert": "Experte",
       "student": "Schüler"
     },
+    "emailPlaceholder": "name@example.com",
     "createInvitationTitle": "Einladung erstellen",
     "invitationReady": "Einladung bereit",
     "invitationDialog": {
@@ -424,7 +429,8 @@
       "manualDivider": "oder Code manuell eingeben",
       "notFound": "Einladungscode nicht gefunden oder abgelaufen.",
       "openGroup": "Gruppe öffnen",
-      "tryDifferent": "Anderen Code versuchen"
+      "tryDifferent": "Anderen Code versuchen",
+      "codeLabel": "Einladungscode"
     },
     "inviteDialog": {
       "cardDescription": "Erstelle einen teilbaren Einladungslink oder sende eine Einladung direkt per E-Mail.",
@@ -527,7 +533,7 @@
       "noTimesDescription": "Dieser Experte hat aktuell keine freien Zeiten. Wähle eine andere Terminart oder versuche es später erneut.",
       "selectDate": "Wähle ein Datum, um verfügbare Zeiten zu sehen",
       "bookedAlt": "Termin gebucht",
-      "bookedHeading": "Termin gebucht!",
+      "bookedHeading": "Termin bestätigt",
       "bookedDescription": "Dein Coaching-Termin wurde erfolgreich geplant.",
       "viewSessions": "Meine Termine ansehen",
       "confirmDescription": "Prüfe deine Termindetails und bestätige die Buchung.",
@@ -541,10 +547,12 @@
       "failed": "Termin konnte nicht gebucht werden. Bitte versuche es erneut.",
       "loadExpertsFailed": "Experten konnten nicht geladen werden",
       "loadSessionTypesFailed": "Terminarten konnten nicht geladen werden",
-      "loadSlotsFailed": "Verfügbare Termine konnten nicht geladen werden"
+      "loadSlotsFailed": "Verfügbare Termine konnten nicht geladen werden",
+      "addToCalendar": "Zum Kalender hinzufügen"
     },
     "loadFailed": "Deine Sessions konnten nicht geladen werden.",
     "cancel": {
+      "cancelledToast": "Session storniert",
       "title": "Termin absagen",
       "description": "Dies sagt den Termin mit <strong>{{otherParty}}</strong> am {{scheduledAt}} ab.",
       "descriptionText": "Dies sagt den Termin mit {{otherParty}} am {{scheduledAt}} ab.",
@@ -554,6 +562,11 @@
       "failed": "Termin konnte nicht abgesagt werden."
     },
     "availability": {
+      "savedSessionType": "Session-Art gespeichert",
+      "savedAvailability": "Verfügbarkeit gespeichert",
+      "savedBlockTime": "Blockierte Zeit gespeichert",
+      "deletedEntry": "Eintrag gelöscht",
+      "deleteFailed": "Der Eintrag konnte nicht gelöscht werden",
       "title": "Verfügbarkeit verwalten",
       "titleForGroup": "Verfügbarkeit für {{group}} verwalten",
       "summary": "Wähle eine Gruppe aus und konfiguriere dann Terminarten, wöchentliche Verfügbarkeit und blockierte Zeiten.",
@@ -624,11 +637,13 @@
     }
   },
   "preferences": {
+    "profileTab": "Profil",
     "title": "Einstellungen",
     "summary": "Halte dein Profil, deine Ortszeit, Sprache und Benachrichtigungseinstellungen aktuell.",
     "personalData": "Persönliche Daten",
     "personalSummary": "Aktualisiere die Angaben, die im Dashboard und in Coaching-Terminen verwendet werden.",
     "emailPreferences": "E-Mail-Einstellungen",
+    "emailNotifications": "E-Mail-Benachrichtigungen",
     "emailSummary": "Wähle aus, welche Zeta-Aktivitäten dein Postfach erreichen sollen.",
     "firstName": "Vorname",
     "firstNameRequired": "Der Vorname ist erforderlich.",
@@ -656,13 +671,22 @@
       "invitationActivity": "Einladungsaktivität",
       "groupMembership": "Updates zur Gruppenmitgliedschaft",
       "coachingBookings": "Coaching-Buchungen und Absagen",
-      "coachingReminders": "Coaching-Erinnerungen"
+      "coachingReminders": "Coaching-Erinnerungen",
+      "descriptions": {
+        "newVideos": "Wenn ein Video in eine deiner Gruppen hochgeladen wird.",
+        "reviewedVideos": "Wenn ein Experte eines deiner Videos prüft.",
+        "invitationActivity": "Updates zu deinen Gruppeneinladungen.",
+        "groupMembership": "Wenn du einer Gruppe beitrittst oder sie verlässt.",
+        "coachingBookings": "Buchungsbestätigungen und Stornierungen.",
+        "coachingReminders": "Erinnerungen vor anstehenden Sessions."
+      }
     },
     "languages": {
       "en": "Englisch",
       "de": "Deutsch",
       "fr": "Französisch"
-    }
+    },
+    "emailHint": "Wird für die Anmeldung verwendet."
   },
   "avatar": {
     "selectImage": "Bild auswählen",

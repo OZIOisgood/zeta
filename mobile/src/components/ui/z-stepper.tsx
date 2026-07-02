@@ -1,13 +1,9 @@
-import { Check } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useRoleColors } from '../../theme/native';
+import type { ZStepperProps, ZStepState } from './z-stepper.types';
+import { ZSymbol } from './z-symbol';
 
-export type ZStepState = 'completed' | 'active' | 'upcoming';
-
-export type ZStep = {
-  label: string;
-  state: ZStepState;
-};
+export type { ZStep, ZStepState, ZStepperProps } from './z-stepper.types';
 
 const circleClasses: Record<ZStepState, string> = {
   completed: 'border-z-primary bg-z-primary',
@@ -29,22 +25,7 @@ const labelClasses: Record<ZStepState, string> = {
  * mode (onAccent is white in both schemes, but wired through the role adapter
  * for consistency).
  */
-export function ZStepper({
-  steps,
-  onStepPress,
-  reached,
-  testID,
-}: {
-  steps: ZStep[];
-  onStepPress?: (index: number) => void;
-  /**
-   * Highest step index the user has reached. When provided, a step is pressable
-   * iff `index <= reached` (enables back/forward jumps to visited steps).
-   * When omitted, falls back to the legacy rule: `upcoming` steps are disabled.
-   */
-  reached?: number;
-  testID?: string;
-}) {
+export function ZStepper({ steps, onStepPress, reached, testID }: ZStepperProps) {
   const { color } = useRoleColors();
 
   return (
@@ -75,7 +56,10 @@ export function ZStepper({
                 className={`h-8 w-8 items-center justify-center rounded-full border-2 ${circleClasses[step.state]}`}
               >
                 {step.state === 'completed' ? (
-                  <Check color={color('onAccent')} size={16} />
+                  // ZSymbol (not lucide): SF Symbols / Material Symbols on
+                  // device per the kit's icon mapping; decorative (label="") —
+                  // the step's Pressable already announces the label.
+                  <ZSymbol name="check" label="" size={16} color={color('onAccent')} />
                 ) : (
                   <Text
                     className={`text-sm font-semibold ${

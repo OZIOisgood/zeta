@@ -1,4 +1,14 @@
+import i18next from 'i18next';
 import type { TFunction } from 'i18next';
+
+/**
+ * The APP language (user preference), not the device locale — absolute dates
+ * must not render "7/2/2026" inside a German UI when the device is set to
+ * en-US. Falls back to the device locale before i18n has initialised.
+ */
+function appLocale(): string | undefined {
+  return i18next.language || undefined;
+}
 
 /**
  * The single relative/absolute time helper for the mobile app. Consolidates the
@@ -21,9 +31,25 @@ export function formatRelativeTime(iso: string, t: TFunction): string {
 
 /** Locale-aware absolute date (day/slot/absolute display). Empty on invalid input. */
 export function formatDate(iso: string): string {
-  const date = new Date(iso);
+  // Date-only keys (YYYY-MM-DD) parse as UTC midnight per the ECMA spec — west
+  // of UTC that DISPLAYS the previous day. Re-build them from local parts.
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const date = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString();
+  return date.toLocaleDateString(appLocale());
+}
+
+/**
+ * YYYY-MM-DD from LOCAL date parts — the availability API's date key.
+ * `toISOString().slice(0, 10)` is the UTC date: off by one every evening west
+ * of UTC, and after midnight east of it (experts blocked the wrong day).
+ */
+export function localDateKey(date: Date): string {
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${m}-${d}`;
 }
 
 /**
@@ -34,5 +60,5 @@ export function formatDate(iso: string): string {
 export function formatMonthYear(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString(appLocale(), { month: 'long', year: 'numeric' });
 }

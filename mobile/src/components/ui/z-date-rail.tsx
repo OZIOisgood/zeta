@@ -49,6 +49,8 @@ export function ZDateRail({
               className={`mt-0.5 text-lg font-extrabold ${
                 selected ? 'text-on-accent' : 'text-on-surface'
               }`}
+              // Copy rule "numbers/time tabular" — day numbers align across pills.
+              style={{ fontVariant: ['tabular-nums'] }}
             >
               {d.day}
             </Text>

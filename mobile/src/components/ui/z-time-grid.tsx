@@ -39,6 +39,9 @@ export function ZTimeGrid({
                   className={`text-[15px] font-bold ${
                     selected ? 'text-on-accent' : 'text-on-surface'
                   }`}
+                  // Copy rule "numbers/time tabular" — keeps the grid's times
+                  // equal-width (the rail + seek chip already do this).
+                  style={{ fontVariant: ['tabular-nums'] }}
                 >
                   {s.label}
                 </Text>

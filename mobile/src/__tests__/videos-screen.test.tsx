@@ -169,10 +169,14 @@ test('upload action: headerRight create button renders with accessible label and
   const HeaderRight = lastCall.headerRight as React.ComponentType;
   await render(<HeaderRight />);
 
-  expect(screen.getByTestId('videos-create-header-btn')).toBeOnTheScreen();
-  expect(screen.getByLabelText('Upload Video')).toBeOnTheScreen();
+  // Both the header button and the FAB now carry "Upload video" (upload.title
+  // was sentence-cased) — target the header element by testID and assert its
+  // accessible label directly.
+  const headerBtn = screen.getByTestId('videos-create-header-btn');
+  expect(headerBtn).toBeOnTheScreen();
+  expect(headerBtn.props.accessibilityLabel).toBe('Upload video');
 
-  await user.press(screen.getByLabelText('Upload Video'));
+  await user.press(headerBtn);
   expect(mockPush).toHaveBeenCalledWith('/upload');
 });
 
@@ -192,33 +196,31 @@ test('header-right notification bell renders on every tab screen and navigates t
   expect(mockPush).toHaveBeenCalledWith('/notifications');
 });
 
-test('filter tabs render as plain labels without counts', async () => {
-  // 2 pending + 1 completed. The segmented filter shows plain labels (no "(N)").
+test('filter tabs carry per-segment counts', async () => {
+  // 2 pending + 1 completed → All (3) · To review (2) · Reviewed (1). Counts in
+  // the segment labels — the one segment-count pattern app-wide (Sessions +
+  // Notifications do the same).
   mockUseAssetsQuery.mockReturnValue({
     isPending: false, isError: false, data: [PENDING_ASSET, PENDING_ASSET_2, COMPLETED_ASSET], refetch: jest.fn(), isRefetching: false,
   });
   await render(<Providers><VideosScreen /></Providers>);
 
-  // All / To review / Reviewed each render as a tab with a plain label.
-  expect(screen.getByRole('tab', { name: 'All' })).toBeOnTheScreen();
-  expect(screen.getByRole('tab', { name: 'To review' })).toBeOnTheScreen();
-  expect(screen.getByRole('tab', { name: 'Reviewed' })).toBeOnTheScreen();
-  // No per-segment count badges anymore.
-  expect(screen.queryByText('3')).toBeNull();
-  expect(screen.queryByText('2')).toBeNull();
-  expect(screen.queryByText('1')).toBeNull();
+  expect(screen.getByRole('tab', { name: /All/ })).toBeOnTheScreen();
+  expect(screen.getByRole('tab', { name: /To review/ })).toBeOnTheScreen();
+  expect(screen.getByRole('tab', { name: /Reviewed/ })).toBeOnTheScreen();
+  // Per-segment count badges (bare ZTabs renders counts as ZBadge).
+  expect(screen.getByText('3')).toBeOnTheScreen();
+  expect(screen.getByText('2')).toBeOnTheScreen();
+  expect(screen.getByText('1')).toBeOnTheScreen();
 });
 
-test('data state shows the total-count overline above the list', async () => {
-  // The overline uses the TOTAL asset count (3), independent of the active filter.
+test('the total-count overline is gone — counts live in the segments', async () => {
   mockUseAssetsQuery.mockReturnValue({
     isPending: false, isError: false, data: [PENDING_ASSET, PENDING_ASSET_2, COMPLETED_ASSET], refetch: jest.fn(), isRefetching: false,
   });
   await render(<Providers><VideosScreen /></Providers>);
 
-  const overline = screen.getByTestId('videos-count-overline');
-  expect(overline).toBeOnTheScreen();
-  expect(overline).toHaveTextContent('3 videos');
+  expect(screen.queryByTestId('videos-count-overline')).toBeNull();
 });
 
 test('selecting a filter narrows the visible list', async () => {

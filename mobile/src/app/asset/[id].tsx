@@ -23,6 +23,7 @@ import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
 import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZConfirmDialog } from '../../components/ui/z-confirm-dialog';
+import { ZKeyboardAvoidingView } from '../../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../../components/ui/z-screen';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { showToast } from '../../components/ui/z-toast';
@@ -316,11 +317,13 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
 
   return (
     <ZCard className="gap-4">
-      {/* Heading — icon · "Kommentare" · count, with breathing room beneath. */}
+      {/* Heading — icon · "Kommentare" · count, with breathing room beneath.
+          Count = ALL comments incl. replies: the asset-card comment badge counts
+          the full thread, so "2" on the card must not become "1" here. */}
       <View className="mb-3 flex-row items-center gap-2">
         <ZSymbol name="message" label={t('videos.comments')} size={20} color={colors.primary} />
         <Text className="text-[19px] font-extrabold text-z-text">{t('videos.comments')}</Text>
-        <ZBadge label={String(topLevel.length)} />
+        <ZBadge label={String((data ?? []).length)} />
       </View>
 
       {isPending && <ReviewsSkeleton />}
@@ -498,7 +501,16 @@ export default function AssetDetailScreen() {
     // the status bar, so only the bottom inset is applied.
     <ZScreen edges={['bottom']}>
       <Stack.Screen options={{ title: data.title }} />
-      <ScrollView className="flex-1 bg-z-bg" contentContainerStyle={{ paddingBottom: 32 }}>
+      {/* KAV + persistTaps: the review composer lives at the bottom of this
+          scroll — without them the keyboard covers the field on iOS and the
+          first tap on "Send" only dismisses the keyboard (Custom-RN form on a
+          plain detail route; the formSheet keyboard rule does not apply here). */}
+      <ZKeyboardAvoidingView>
+        <ScrollView
+          className="flex-1 bg-z-bg"
+          contentContainerStyle={{ paddingBottom: 32 }}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Player (edge-to-edge 16:9). */}
         <View className="aspect-video w-full items-center justify-center bg-black">
           {active ? (
@@ -566,7 +578,8 @@ export default function AssetDetailScreen() {
             testID="asset-finalize-unreviewed"
           />
         </View>
-      </ScrollView>
+        </ScrollView>
+      </ZKeyboardAvoidingView>
     </ZScreen>
   );
 }

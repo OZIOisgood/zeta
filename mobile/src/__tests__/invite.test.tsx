@@ -146,7 +146,7 @@ test('accept: press accept button → mutateAsync called with code, router.repla
 
   // Success toast fired with the joined message + success tone
   expect(mockShowToast).toHaveBeenCalledWith(
-    'Group Invitation',
+    'Group invitation',
     'You joined Karate Club.',
     'success',
   );
@@ -211,7 +211,7 @@ test('accept failure: mutation rejects → error toast fires, no navigation', as
 
   await waitFor(() => {
     expect(mockShowToast).toHaveBeenCalledWith(
-      'Group Invitation',
+      'Group invitation',
       'Failed to join the group. Please try again.',
       'error',
     );
@@ -312,8 +312,10 @@ test('unknown code: error shown with invite-reset button; press reset → code i
 
   await waitFor(() => expect(getByTestId('invite-reset')).toBeOnTheScreen());
 
-  // Reset button uses a distinct action label, not the description copy
-  expect(getByTestId('invite-reset')).toHaveTextContent('Retry');
+  // Primary action retries the SAME code (network blips must not force a
+  // reset); the secondary reset goes back to the capture phase.
+  expect(getByTestId('invite-retry')).toHaveTextContent('Retry');
+  expect(getByTestId('invite-reset')).toHaveTextContent('Back');
   expect(getByText('Try a different code')).toBeOnTheScreen();
 
   // Error text visible, accept not visible

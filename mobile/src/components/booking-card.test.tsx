@@ -60,8 +60,8 @@ test('status label is driven by the server status, not the date: server `done` i
     />,
   );
   const badge = screen.getByTestId('booking-status-done');
-  expect(within(badge).getByText('done')).toBeOnTheScreen();
-  expect(screen.queryByText('upcoming')).toBeNull();
+  expect(within(badge).getByText('Done')).toBeOnTheScreen();
+  expect(screen.queryByText('Upcoming')).toBeNull();
 });
 
 test('status label is driven by the server status, not the date: server `pending` in the client-past still reads "upcoming"', async () => {
@@ -82,8 +82,8 @@ test('status label is driven by the server status, not the date: server `pending
     />,
   );
   const badge = screen.getByTestId('booking-status-pending');
-  expect(within(badge).getByText('upcoming')).toBeOnTheScreen();
-  expect(screen.queryByText('done')).toBeNull();
+  expect(within(badge).getByText('Upcoming')).toBeOnTheScreen();
+  expect(screen.queryByText('Done')).toBeNull();
 });
 
 test('shows student name when current user is the expert', async () => {

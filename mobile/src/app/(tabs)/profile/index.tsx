@@ -110,14 +110,22 @@ function ProfileOverview({ user }: { user: Me }) {
   // the pushed Preferences form consistent.
   async function toggleNotifications(value: boolean) {
     setPendingMaster(true);
-    const updated = await authStore.getState().updateCurrentUser({
-      first_name: user.first_name,
-      last_name: user.last_name,
-      language: user.language,
-      timezone: user.timezone,
-      email_preferences: { ...user.email_preferences, notifications_enabled: value },
-    });
-    setPendingMaster(false);
+    // try/finally: a thrown fetch (network reject) must still re-enable the
+    // toggle — it stayed disabled forever otherwise.
+    let updated: Awaited<ReturnType<ReturnType<typeof authStore.getState>['updateCurrentUser']>> = null;
+    try {
+      updated = await authStore.getState().updateCurrentUser({
+        first_name: user.first_name,
+        last_name: user.last_name,
+        language: user.language,
+        timezone: user.timezone,
+        email_preferences: { ...user.email_preferences, notifications_enabled: value },
+      });
+    } catch {
+      updated = null;
+    } finally {
+      setPendingMaster(false);
+    }
     if (!updated) {
       showToast(t('toast.errorTitle'), t('preferences.saveFailed'), 'error');
       return;
@@ -188,7 +196,10 @@ function ProfileOverview({ user }: { user: Me }) {
           <ZCard tone="surface">
             {visibleRows.map((row, index) => (
               <View key={row.key}>
-                {index > 0 ? <ZDivider inset={58} /> : null}
+                {/* M3 grouped rows have NO dividers (filled surface card, rows
+                    spaced by their own padding); the iOS inset-grouped table
+                    keeps hairline dividers. Mirrors the handoff GroupedRows. */}
+                {index > 0 && Platform.OS === 'ios' ? <ZDivider inset={58} /> : null}
                 <ZListItem
                   leading={
                     <ZIconTile
@@ -202,20 +213,20 @@ function ProfileOverview({ user }: { user: Me }) {
                 />
               </View>
             ))}
-            <ZDivider inset={58} />
+            {Platform.OS === 'ios' ? <ZDivider inset={58} /> : null}
             <ZListItem
               leading={
                 <ZIconTile
                   tone="neutral"
-                  icon={<ZSymbol name="mail" label={t('preferences.emailPreferences')} size={20} color={colors.primary} />}
+                  icon={<ZSymbol name="mail" label={t('preferences.emailNotifications')} size={20} color={colors.primary} />}
                 />
               }
-              title={t('preferences.emailPreferences')}
+              title={t('preferences.emailNotifications')}
               trailing={
                 <ZSwitch
                   checked={user.email_preferences.notifications_enabled}
                   disabled={pendingMaster}
-                  accessibilityLabel={t('preferences.emailPreferences')}
+                  accessibilityLabel={t('preferences.emailNotifications')}
                   onChange={(value) => void toggleNotifications(value)}
                 />
               }
@@ -225,6 +236,7 @@ function ProfileOverview({ user }: { user: Me }) {
           <ZButton
             label={t('common.actions.signOut')}
             variant="secondary"
+            fullWidth
             icon={<ZSymbol name="logout" label={t('common.actions.signOut')} size={16} color={colors.text} />}
             onPress={() => void authStore.getState().signOut()}
           />

@@ -86,7 +86,9 @@ test('confirm with a reason → mutateAsync(bookingId + reason), success toast, 
   await waitFor(() =>
     expect(mockMutateAsync).toHaveBeenCalledWith({ bookingId: 'b1', reason: 'Schedule conflict' }),
   );
-  await waitFor(() => expect(mockShowToast).toHaveBeenCalledWith('Success', undefined, 'success'));
+  await waitFor(() =>
+    expect(mockShowToast).toHaveBeenCalledWith('Success', 'Session cancelled', 'success'),
+  );
   await waitFor(() => expect(mockBack).toHaveBeenCalled());
 });
 

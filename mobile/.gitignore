@@ -33,9 +33,10 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env
-.env*.local
+# local env files — the broad glob also catches ad-hoc backups (.env.bak.*),
+# which used to show up in git status as committable.
+.env*
+!.env.example
 
 # typescript
 *.tsbuildinfo

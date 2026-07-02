@@ -96,7 +96,7 @@ test('students: header-right Join button renders and navigates to /invite (iOS p
   expect(screen.queryByTestId('groups-create-header-btn')).toBeNull();
   // The notification bell sits alongside the role action on every tab screen.
   expect(screen.getByTestId('notification-bell')).toBeOnTheScreen();
-  fireEvent.press(screen.getByLabelText('Join Group'));
+  fireEvent.press(screen.getByLabelText('Join group'));
   expect(mockPush).toHaveBeenCalledWith('/invite');
 });
 
@@ -132,6 +132,6 @@ test('experts: header-right Create button renders and navigates to /group/create
 
   expect(screen.getByTestId('groups-create-header-btn')).toBeOnTheScreen();
   expect(screen.queryByTestId('groups-join-header-btn')).toBeNull();
-  fireEvent.press(screen.getByLabelText('Create Group'));
+  fireEvent.press(screen.getByLabelText('Create group'));
   expect(mockPush).toHaveBeenCalledWith('/group/create');
 });

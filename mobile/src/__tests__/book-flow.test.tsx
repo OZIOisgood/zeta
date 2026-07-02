@@ -38,10 +38,9 @@ jest.mock('expo-router', () => ({
   Stack: { Screen: () => null },
 }));
 
-const mockShowToast = jest.fn();
-jest.mock('../components/ui/z-toast', () => ({
-  ...jest.requireActual('../components/ui/z-toast'),
-  showToast: (...args: unknown[]) => mockShowToast(...args),
+const mockAddSessionToCalendar = jest.fn();
+jest.mock('../lib/add-to-calendar', () => ({
+  addSessionToCalendar: (...args: unknown[]) => mockAddSessionToCalendar(...args),
 }));
 
 import { initI18n } from '../i18n';
@@ -151,7 +150,7 @@ test('full happy path books the session and shows success', async () => {
   await renderScreen();
   await advanceToConfirm();
   // The confirm-stage CTA is the persistent booking-bar button.
-  expect(screen.queryByTestId('book-submit') ?? screen.getByTestId('book-bar-cta')).toBeTruthy();
+  expect(screen.getByTestId('book-bar-cta')).toBeTruthy();
   await act(async () => {
     fireEvent.press(screen.getByTestId('book-bar-cta')); // Confirm → Book
   });
@@ -162,7 +161,6 @@ test('full happy path books the session and shows success', async () => {
     notes: undefined,
   }));
   await waitFor(() => expect(screen.getByTestId('book-success')).toBeTruthy());
-  expect(mockShowToast).toHaveBeenCalled();
 });
 
 test('Fertig on success returns to coaching', async () => {
@@ -172,6 +170,17 @@ test('Fertig on success returns to coaching', async () => {
   await waitFor(() => expect(screen.getByTestId('book-success')).toBeTruthy());
   fireEvent.press(screen.getByTestId('book-view-sessions'));
   expect(mockReplace).toHaveBeenCalledWith('/coaching');
+});
+
+test('success screen offers add-to-calendar with the booked slot', async () => {
+  await renderScreen();
+  await advanceToConfirm();
+  await act(async () => { fireEvent.press(screen.getByTestId('book-bar-cta')); });
+  await waitFor(() => expect(screen.getByTestId('book-add-calendar')).toBeTruthy());
+  fireEvent.press(screen.getByTestId('book-add-calendar'));
+  expect(mockAddSessionToCalendar).toHaveBeenCalledWith(
+    expect.objectContaining({ title: 'Video review', startsAt: SLOT_A.starts_at, endsAt: SLOT_A.ends_at }),
+  );
 });
 
 test('409 conflict clears the slot, shows the taken error, and returns to the time step', async () => {
@@ -191,7 +200,7 @@ test('navigable stepper jumps back to the expert step', async () => {
   await press('book-bar-cta'); // now on Type step
   expect(screen.getByTestId('book-type-t1')).toBeTruthy();
   await act(async () => {
-    fireEvent.press(screen.getByLabelText('Select Expert')); // tap stepper step 0
+    fireEvent.press(screen.getByLabelText('Select expert')); // tap stepper step 0
   });
   expect(screen.getByTestId('book-expert-e1')).toBeTruthy();
 });

@@ -185,7 +185,7 @@ test('Groups: creator renders an EXTENDED create FAB with the create label (Andr
 
   const fab = screen.getByTestId('groups-create-fab');
   expect(fab).toBeOnTheScreen();
-  expect(screen.getByText('Create Group')).toBeOnTheScreen();
+  expect(screen.getByText('Create group')).toBeOnTheScreen();
   // mutually exclusive: no join FAB for a creator
   expect(screen.queryByTestId('groups-join-fab')).toBeNull();
 
@@ -203,7 +203,7 @@ test('Groups: student renders an EXTENDED join FAB with the join label (Android)
 
   const fab = screen.getByTestId('groups-join-fab');
   expect(fab).toBeOnTheScreen();
-  expect(screen.getByText('Join Group')).toBeOnTheScreen();
+  expect(screen.getByText('Join group')).toBeOnTheScreen();
   // mutually exclusive: no create FAB for a student
   expect(screen.queryByTestId('groups-create-fab')).toBeNull();
 

@@ -127,8 +127,8 @@ export function useUpdateGroupMutation(
       return data;
     },
     onSuccess: async () => {
+      // Prefix invalidation covers ['groups', id] too (TanStack v5 matching).
       await qc.invalidateQueries({ queryKey: ['groups'] });
-      await qc.invalidateQueries({ queryKey: ['groups', id] });
     },
   });
 }

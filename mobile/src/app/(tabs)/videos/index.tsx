@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Platform, RefreshControl, Text, View } from 'react-native';
+import { FlatList, Platform, RefreshControl, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -123,10 +123,13 @@ export default function VideosScreen() {
   const assets = useMemo(() => data ?? [], [data]);
   const filteredAssets = useMemo(() => filterAssets(assets, activeFilter), [assets, activeFilter]);
 
+  // Counts in the segment labels — the one segment-count pattern app-wide
+  // (Sessions + Notifications do the same); the former "N VIDEOS" overline is
+  // gone so the count doesn't appear twice in two competing styles.
   const filterTabs = [
-    { id: 'all', label: t('videos.all') },
-    { id: 'toReview', label: t('videos.reviewStatus.toReview') },
-    { id: 'reviewed', label: t('videos.reviewStatus.reviewed') },
+    { id: 'all', label: t('videos.all'), count: assets.length },
+    { id: 'toReview', label: t('videos.reviewStatus.toReview'), count: filterAssets(assets, 'toReview').length },
+    { id: 'reviewed', label: t('videos.reviewStatus.reviewed'), count: filterAssets(assets, 'reviewed').length },
   ];
 
   // Render the segmented filter unconditionally (even during pending/error) so its
@@ -169,29 +172,13 @@ export default function VideosScreen() {
         </View>
       </View>
     );
-  } else if (filteredAssets.length === 0) {
-    // Empty copy mirrors the web page: distinguish "no videos at all" from
+  } else {
+    // Empty renders INSIDE the FlatList (ListEmptyComponent + flexGrow), not as
+    // a separate branch: exactly in the empty state — when users check whether
+    // something new arrived — pull-to-refresh must keep working.
+    // Copy mirrors the web page: distinguish "no videos at all" from
     // "no videos match the active filter".
     const noVideosAtAll = assets.length === 0;
-    content = (
-      <View testID="videos-empty" className="flex-1 bg-z-bg">
-        <JobCards jobs={jobs} />
-        <View className="flex-1 justify-center p-4">
-          <ZEmptyState
-            title={noVideosAtAll ? t('videos.noVideosYet') : t('videos.noVideosMatch')}
-            description={
-              noVideosAtAll ? t('videos.uploadFirstDescription') : t('videos.noVideosForStatuses')
-            }
-            icon={<ZSymbol name="video" label={t('videos.title')} size={24} color={colors.primary} />}
-          >
-            {canCreate ? (
-              <ZButton label={t('videos.uploadFirst')} onPress={() => router.push('/upload')} />
-            ) : null}
-          </ZEmptyState>
-        </View>
-      </View>
-    );
-  } else {
     content = (
       <View className="flex-1 bg-z-bg">
         <FlatList
@@ -200,20 +187,25 @@ export default function VideosScreen() {
           onScroll={onHeaderScroll}
           scrollEventThrottle={16}
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={{ padding: 16, paddingBottom: 16 + androidListPaddingBottom }}
-          ListHeaderComponent={
-            <>
-              <JobCards jobs={jobs} />
-              <Text
-                testID="videos-count-overline"
-                className="pb-2 text-[12.5px] font-bold uppercase tracking-wider text-z-muted"
-              >
-                {t('videos.videoCount', { count: assets.length })}
-              </Text>
-            </>
-          }
+          contentContainerStyle={{ padding: 16, paddingBottom: 16 + androidListPaddingBottom, flexGrow: 1 }}
+          ListHeaderComponent={<JobCards jobs={jobs} />}
           ItemSeparatorComponent={() => <View className="h-3" />}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+          ListEmptyComponent={
+            <View testID="videos-empty" className="flex-1 justify-center">
+              <ZEmptyState
+                title={noVideosAtAll ? t('videos.noVideosYet') : t('videos.noVideosMatch')}
+                description={
+                  noVideosAtAll ? t('videos.uploadFirstDescription') : t('videos.noVideosForStatuses')
+                }
+                icon={<ZSymbol name="video" label={t('videos.title')} size={24} color={colors.primary} />}
+              >
+                {canCreate ? (
+                  <ZButton label={t('videos.uploadFirst')} onPress={() => router.push('/upload')} />
+                ) : null}
+              </ZEmptyState>
+            </View>
+          }
           renderItem={({ item }) => (
             <AssetCard asset={item} onPress={() => router.push(`/asset/${item.id}`)} />
           )}

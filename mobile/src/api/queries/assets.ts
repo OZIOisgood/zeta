@@ -48,7 +48,7 @@ export function useFinalizeAssetMutation(
       return data;
     },
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['assets', assetId] });
+      // Prefix invalidation covers ['assets', assetId] too (TanStack v5 matching).
       await qc.invalidateQueries({ queryKey: ['assets'] });
     },
   });

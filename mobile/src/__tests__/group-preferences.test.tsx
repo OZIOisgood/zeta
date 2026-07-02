@@ -94,11 +94,11 @@ test('owner with groups:delete sees the delete button and confirms deletion', as
   fireEvent.press(getByTestId('group-delete-action'));
   // After pressing the action button, wait for the ZConfirmDialog (Modal) to
   // appear. The dialog is lazy-mounted so we must flush the state update first.
-  // Once open, the tree contains 3 elements with text 'Delete Group':
+  // Once open, the tree contains 3 elements with text 'Delete group':
   //   [0] action button, [1] dialog title, [2] dialog confirm button.
   // We press the last one (the confirm button).
-  await waitFor(() => expect(getAllByText('Delete Group').length).toBeGreaterThan(1));
-  const deleteTexts = getAllByText('Delete Group');
+  await waitFor(() => expect(getAllByText('Delete group').length).toBeGreaterThan(1));
+  const deleteTexts = getAllByText('Delete group');
   fireEvent.press(deleteTexts[deleteTexts.length - 1]);
   await waitFor(() => expect(deleteMutate).toHaveBeenCalledTimes(1));
   expect(mockRouterReplace).toHaveBeenCalledWith('/(tabs)/groups');

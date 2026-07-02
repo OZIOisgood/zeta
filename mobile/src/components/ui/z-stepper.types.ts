@@ -20,7 +20,14 @@ export type ZStep = {
 
 export type ZStepperProps = {
   steps: ZStep[];
-  /** Called when the user taps a completed or active step circle. */
+  /** Called when the user taps a reachable step circle. */
   onStepPress?: (index: number) => void;
+  /**
+   * Highest step index the user has reached. When provided, a step is pressable
+   * iff `index <= reached` (enables back-jumps to visited steps — the
+   * navigable-stepper contract from the booking-flow handoff). When omitted,
+   * falls back to the legacy rule: `upcoming` steps are disabled.
+   */
+  reached?: number;
   testID?: string;
 };

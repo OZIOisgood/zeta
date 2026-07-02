@@ -132,7 +132,9 @@ export default function ReportsScreen() {
     body = (
       <FlatList
         data={flatEvents}
-        keyExtractor={(e) => `${e.kind}:${e.group.id}:${e.at}`}
+        // Index suffix: kind+group+timestamp can collide (e.g. a multi-part
+        // upload emits several same-second events for one group).
+        keyExtractor={(e, index) => `${e.kind}:${e.group.id}:${e.at}:${index}`}
         contentContainerStyle={{ padding: 16, gap: 16 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
         ListHeaderComponent={

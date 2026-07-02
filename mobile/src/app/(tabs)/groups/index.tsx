@@ -129,21 +129,14 @@ export default function GroupsScreen() {
         <ZQueryError title={t('groups.phase4.loadFailed')} onRetry={() => void refetch()} />
       </View>
     );
-  } else if (!data || data.length === 0) {
-    content = (
-      <View testID="groups-empty" className="flex-1 justify-center bg-z-bg p-4">
-        <ZEmptyState
-          title={t('groups.noGroupsYet')}
-          description={t(canCreate ? 'groups.createFirstDescription' : 'groups.noGroupsJoined')}
-          icon={<ZSymbol name="users" label={t('groups.myGroups')} size={24} color={colors.primary} />}
-        />
-      </View>
-    );
   } else {
+    // Empty renders INSIDE the FlatList (ListEmptyComponent + flexGrow) so
+    // pull-to-refresh keeps working in exactly the state where users check
+    // whether an invitation/group has arrived.
     content = (
       <View className="flex-1 bg-z-bg">
         <FlatList
-          data={data}
+          data={data ?? []}
           keyExtractor={(g) => g.id}
           onScroll={onHeaderScroll}
           scrollEventThrottle={16}
@@ -151,8 +144,18 @@ export default function GroupsScreen() {
           contentContainerStyle={{
             padding: 16,
             paddingBottom: 16 + (Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0),
+            flexGrow: 1,
           }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+          ListEmptyComponent={
+            <View testID="groups-empty" className="flex-1 justify-center">
+              <ZEmptyState
+                title={t('groups.noGroupsYet')}
+                description={t(canCreate ? 'groups.createFirstDescription' : 'groups.noGroupsJoined')}
+                icon={<ZSymbol name="users" label={t('groups.myGroups')} size={24} color={colors.primary} />}
+              />
+            </View>
+          }
           renderItem={({ item }) => (
             <GroupCard group={item} onPress={() => router.push(`/group/${item.id}`)} />
           )}

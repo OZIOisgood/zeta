@@ -15,7 +15,7 @@
  * is the single teardown path.
  */
 import { useEffect, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { Linking, View, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
@@ -119,11 +119,18 @@ export default function CallScreen() {
             description={t('sessions.call.permissionBody')}
           >
             <View className="gap-2">
+              {/* canAskAgain === false ⇒ the OS suppresses the dialog and the
+                  request resolves silently — a dead-end button. Route to the
+                  system settings instead, which is the only remaining path. */}
               {!cameraGranted ? (
                 <ZButton
                   label={t('sessions.call.grantCamera')}
                   variant="primary"
-                  onPress={() => void requestCameraPermission()}
+                  onPress={() =>
+                    cameraPermission?.canAskAgain === false
+                      ? void Linking.openSettings()
+                      : void requestCameraPermission()
+                  }
                 />
               ) : null}
               {!micGranted ? (
@@ -132,7 +139,11 @@ export default function CallScreen() {
                   // Avoid two stacked primaries: when both are denied the camera
                   // grant is the single primary CTA and the mic grant is secondary.
                   variant={cameraGranted ? 'primary' : 'secondary'}
-                  onPress={() => void requestMicPermission()}
+                  onPress={() =>
+                    micPermission?.canAskAgain === false
+                      ? void Linking.openSettings()
+                      : void requestMicPermission()
+                  }
                 />
               ) : null}
               <ZButton

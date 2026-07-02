@@ -84,11 +84,16 @@ export function NotificationRow({
   onOpen,
   onAccept,
   onDecline,
+  inviteBusy = false,
 }: {
   item: NotificationItem;
   onOpen: (item: NotificationItem) => void;
   onAccept: (item: NotificationItem) => void;
   onDecline: (item: NotificationItem) => void;
+  /** True while an accept/decline mutation is in flight — disables both
+   *  buttons so a double-tap can't fire the mutation twice (the second call
+   *  fails and raises a misleading error toast). */
+  inviteBusy?: boolean;
 }) {
   const { t } = useTranslation();
   const view = presentNotification(item);
@@ -106,12 +111,14 @@ export function NotificationRow({
         <ZButton
           testID={`notification-accept-${item.id}`}
           label={t('notifications.invite.accept')}
+          disabled={inviteBusy}
           onPress={() => onAccept(item)}
         />
         <ZButton
           testID={`notification-decline-${item.id}`}
           variant="secondary"
           label={t('notifications.invite.decline')}
+          disabled={inviteBusy}
           onPress={() => onDecline(item)}
         />
       </View>
@@ -165,6 +172,9 @@ export function NotificationRow({
           />
         }
         title={t(view.messageKey, view.params)}
+        // The title IS the notification message — at one line every row
+        // truncated ("… booked a session wit…"); two lines carry the sentence.
+        titleNumberOfLines={2}
         subtitle={formatRelativeTime(item.created_at, t)}
         trailing={
           unread ? (

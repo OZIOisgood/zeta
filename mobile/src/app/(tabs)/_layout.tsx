@@ -100,10 +100,12 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>{t('common.nav.groups')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
-      {/* Profile / Preferences ─────────────────────────────────────────────── */}
+      {/* Profile ──────────────────────────────────────────────────────────────
+          Label "Profile" (handoff nav naming: person icon → profile), not the
+          screen title "Preferences" — the tab names the destination persona. */}
       <NativeTabs.Trigger name="profile">
         <NativeTabs.Trigger.Icon sf="person.fill" md="person" />
-        <NativeTabs.Trigger.Label>{t('preferences.title')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('preferences.profileTab')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

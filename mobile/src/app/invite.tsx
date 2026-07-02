@@ -14,6 +14,7 @@ import { ZCard } from '../components/ui/z-card';
 import { ZDivider } from '../components/ui/z-divider';
 import { ZEmptyState } from '../components/ui/z-empty-state';
 import { ZFieldError } from '../components/ui/z-field-error';
+import { ZFieldLabel } from '../components/ui/z-field-label';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
@@ -118,8 +119,8 @@ export default function InviteScreen() {
                 <View
                   accessible
                   accessibilityLabel={`${t('common.labels.camera')}. ${t('groups.invite.cameraHint')}`}
-                  className="mb-4 overflow-hidden rounded-[20px]"
-                  style={{ height: 280 }}
+                  className="mb-4 overflow-hidden"
+                  style={{ height: 280, borderRadius: 20 }}
                 >
                   <CameraView
                     style={{ flex: 1 }}
@@ -128,55 +129,72 @@ export default function InviteScreen() {
                   />
                 </View>
               ) : (
-                <ZCard className="mb-4 items-center gap-3">
-                  <Text className="text-center text-[15px] text-z-muted">
-                    {t('groups.invite.cameraHint')}
-                  </Text>
-                  <ZButton
-                    label={t('groups.invite.grantCamera')}
-                    variant="tonal"
-                    onPress={() => void requestPermission()}
-                  />
+                // Inner View holds the centering/gap — ZCard's className lands on
+                // the OUTER wrapper on Android, so `items-center` there would size
+                // the card to content (narrower than the full-width invite card).
+                <ZCard className="mb-4">
+                  <View className="gap-3">
+                    <Text className="text-center text-[15px] text-z-muted">
+                      {t('groups.invite.cameraHint')}
+                    </Text>
+                    <ZButton
+                      label={t('groups.invite.grantCamera')}
+                      variant="tonal"
+                      fullWidth
+                      onPress={() => void requestPermission()}
+                    />
+                  </View>
                 </ZCard>
               )}
 
-              {/* "or enter manually" labeled divider — ZDivider rules flank the label */}
+              {/* "or enter manually" labeled divider — rules flank the label,
+                  vertically centered (ZDivider's baked-in alignSelf:'stretch' is
+                  overridden to 'center' so the rules sit on the text's centerline
+                  instead of the top of the row). */}
               <View className="my-4 flex-row items-center gap-3">
-                <ZDivider className="flex-1" />
+                <ZDivider className="flex-1" style={{ alignSelf: 'center' }} />
                 <Text className="text-sm text-z-muted">{t('groups.invite.manualDivider')}</Text>
-                <ZDivider className="flex-1" />
+                <ZDivider className="flex-1" style={{ alignSelf: 'center' }} />
               </View>
 
-              {/* Manual entry */}
-              <ZTextInput
-                testID="invite-code-input"
-                accessibilityLabel={t('groups.invite.codePlaceholder')}
-                value={manualInput}
-                onChangeText={(v) => {
-                  setManualInput(v);
-                  if (manualInputError) setManualInputError(false);
-                }}
-                placeholder={t('groups.invite.codePlaceholder')}
-                invalid={manualInputError}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                returnKeyType="go"
-                onSubmitEditing={handleManualSubmit}
-              />
-              {manualInputError && (
-                <ZFieldError
-                  testID="invite-code-error"
-                  message={t('groups.invite.codeInvalid')}
-                />
-              )}
-              <View className="mt-3">
-                <ZButton
-                  testID="invite-code-submit"
-                  label={t('groups.invite.lookUp')}
-                  disabled={manualInput.trim().length === 0}
-                  onPress={handleManualSubmit}
-                />
-              </View>
+              {/* Manual entry — labeled, full-width input + CTA inside a card. */}
+              <ZCard>
+                <ZFieldLabel label={t('groups.invite.codeLabel')} />
+                <View className="mt-2">
+                  <ZTextInput
+                    testID="invite-code-input"
+                    accessibilityLabel={t('groups.invite.codeLabel')}
+                    value={manualInput}
+                    onChangeText={(v) => {
+                      setManualInput(v);
+                      if (manualInputError) setManualInputError(false);
+                    }}
+                    placeholder={t('groups.invite.codePlaceholder')}
+                    invalid={manualInputError}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    returnKeyType="go"
+                    onSubmitEditing={handleManualSubmit}
+                  />
+                </View>
+                {manualInputError && (
+                  <View className="mt-2">
+                    <ZFieldError
+                      testID="invite-code-error"
+                      message={t('groups.invite.codeInvalid')}
+                    />
+                  </View>
+                )}
+                <View className="mt-3">
+                  <ZButton
+                    testID="invite-code-submit"
+                    label={t('groups.invite.lookUp')}
+                    fullWidth
+                    disabled={manualInput.trim().length === 0}
+                    onPress={handleManualSubmit}
+                  />
+                </View>
+              </ZCard>
             </>
           )}
 
@@ -200,12 +218,23 @@ export default function InviteScreen() {
                   title={t('groups.invite.notFound')}
                   description={t('groups.invite.tryDifferent')}
                 >
-                  <ZButton
-                    testID="invite-reset"
-                    label={t('common.actions.retry')}
-                    variant="tonal"
-                    onPress={handleReset}
-                  />
+                  {/* Retry REFETCHES the same code first — a network blip must
+                      not force the user to discard a valid code (reset stays
+                      available as the secondary path). */}
+                  <View className="gap-2">
+                    <ZButton
+                      testID="invite-retry"
+                      label={t('common.actions.retry')}
+                      variant="tonal"
+                      onPress={() => void infoQuery.refetch()}
+                    />
+                    <ZButton
+                      testID="invite-reset"
+                      label={t('common.actions.back')}
+                      variant="ghost"
+                      onPress={handleReset}
+                    />
+                  </View>
                 </ZEmptyState>
               )}
 
@@ -246,6 +275,7 @@ export default function InviteScreen() {
                       <ZButton
                         testID="invite-open-group"
                         label={t('groups.invite.openGroup')}
+                        fullWidth
                         onPress={() => router.replace(`/group/${info.group_id}`)}
                       />
                     </View>
@@ -254,6 +284,7 @@ export default function InviteScreen() {
                       <ZButton
                         testID="invite-accept"
                         label={t('groups.invitationDialog.joinGroup')}
+                        fullWidth
                         disabled={acceptMutation.isPending || declineMutation.isPending}
                         onPress={() => void handleAccept()}
                       />
@@ -261,6 +292,7 @@ export default function InviteScreen() {
                         testID="invite-decline"
                         label={t('common.actions.decline')}
                         variant="ghost"
+                        fullWidth
                         disabled={acceptMutation.isPending || declineMutation.isPending}
                         onPress={() => void handleDecline()}
                       />

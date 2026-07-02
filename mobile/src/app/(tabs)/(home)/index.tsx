@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Platform, ScrollView, Text, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -111,7 +111,10 @@ export default function HomeScreen() {
 
   const steps = useMemo<HomeStep[]>(() => {
     const list: HomeStep[] = [];
-    if (has('groups:read')) {
+    // Creator steps gate on the CREATE/MANAGE permission, not the read
+    // permission — students have groups:read/reviews:read too and were shown
+    // "Your first group is ready for students and videos" (creator copy).
+    if (has('groups:create')) {
       list.push({
         completed: hasGroups,
         labelKey: hasGroups ? 'home.firstSteps.groupCreated' : 'home.firstSteps.createGroup',
@@ -134,7 +137,7 @@ export default function HomeScreen() {
         testID: 'first-step-upload',
       });
     }
-    if (has('reviews:read')) {
+    if (has('reviews:create')) {
       list.push({
         completed: hasReviewedVideos,
         labelKey: 'home.firstSteps.reviewVideos',
@@ -242,9 +245,37 @@ export default function HomeScreen() {
           paddingBottom: 16 + (Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0),
           gap: 22,
         }}
+        // Home was the only index screen without pull-to-refresh; one pull
+        // refreshes every module's query (isRefetching mirrors videos/index).
+        refreshControl={
+          <RefreshControl
+            refreshing={
+              assets.isRefetching ||
+              groups.isRefetching ||
+              bookings.isRefetching ||
+              notifications.isRefetching
+            }
+            onRefresh={() => {
+              void assets.refetch();
+              void groups.refetch();
+              void bookings.refetch();
+              void notifications.refetch();
+            }}
+          />
+        }
       >
-        {/* Module 2: next-session hero (renders nothing when no booking & cannot book) */}
-        {loaded ? (
+        {/* Module 2: next-session hero (renders nothing when no booking & cannot book).
+            A failed bookings fetch must NOT render the "book your first session"
+            empty state (error-as-empty) — it gets an explicit retry slot. */}
+        {bookings.isError ? (
+          <View className="px-4">
+            <ZQueryError
+              title={t('sessions.loadFailed')}
+              retryLabel={t('upload.retry')}
+              onRetry={() => void bookings.refetch()}
+            />
+          </View>
+        ) : loaded ? (
           <NextSessionCard
             booking={nextBooking}
             currentUserId={user?.id ?? ''}

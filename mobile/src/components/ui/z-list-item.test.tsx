@@ -29,6 +29,16 @@ test('subtitle respects a passed subtitleNumberOfLines', async () => {
   expect(screen.getByText('Manage alerts').props.numberOfLines).toBe(1);
 });
 
+test('title defaults to 1 line', async () => {
+  await render(<ZListItem title="Notifications" />);
+  expect(screen.getByText('Notifications').props.numberOfLines).toBe(1);
+});
+
+test('title respects a passed titleNumberOfLines', async () => {
+  await render(<ZListItem title="Long message" titleNumberOfLines={2} />);
+  expect(screen.getByText('Long message').props.numberOfLines).toBe(2);
+});
+
 test('renders leading and trailing nodes', async () => {
   await render(
     <ZListItem

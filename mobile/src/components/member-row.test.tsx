@@ -15,10 +15,16 @@ const MEMBER: GroupUser = {
   role: 'student',
 };
 
-test('renders full name and role', async () => {
+test('renders the member full name', async () => {
   await render(<MemberRow member={MEMBER} />);
   expect(screen.getByText('Alice Smith')).toBeOnTheScreen();
-  expect(screen.getByText('Student')).toBeOnTheScreen();
+});
+
+test('does not render a role pill', async () => {
+  // The role badge was removed from the member row per the handoff — the row
+  // shows name + email only.
+  await render(<MemberRow member={MEMBER} />);
+  expect(screen.queryByText('Student')).toBeNull();
 });
 
 test('renders the member email line', async () => {
@@ -48,8 +54,8 @@ test('renders the remove button and fires onRemove when provided', async () => {
   await render(<MemberRow member={MEMBER} onRemove={onRemove} />);
   const button = screen.getByTestId('member-remove');
   expect(button).toBeOnTheScreen();
-  // i18n: groups.users.removeUser → "Remove User"
-  expect(screen.getByLabelText('Remove User')).toBeOnTheScreen();
+  // i18n: groups.users.removeUser → "Remove user"
+  expect(screen.getByLabelText('Remove user')).toBeOnTheScreen();
   fireEvent.press(button);
   expect(onRemove).toHaveBeenCalledTimes(1);
 });

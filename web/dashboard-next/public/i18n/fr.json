@@ -31,7 +31,8 @@
       "signOut": "Se déconnecter",
       "uploadVideo": "Téléverser une vidéo",
       "viewAll": "Voir tout",
-      "retry": "Réessayer"
+      "retry": "Réessayer",
+      "changePhoto": "Changer la photo"
     },
     "aria": {
       "appLogo": "Logo de l'application",
@@ -57,7 +58,8 @@
       "reasonOptional": "Motif (optionnel)",
       "startTime": "Heure de début",
       "timezone": "Fuseau horaire",
-      "title": "Titre"
+      "title": "Titre",
+      "email": "E-mail"
     },
     "labels": {
       "actions": "Actions",
@@ -387,6 +389,8 @@
     },
     "experts": "Experts",
     "students": "Étudiants",
+    "memberCount_one": "{{count}} membre",
+    "memberCount_other": "{{count}} membres",
     "expertsDescription": "Personnes qui peuvent revoir les vidéos et accompagner ce groupe.",
     "studentsDescription": "Étudiants actuellement associés à ce groupe de coaching.",
     "noExperts": "Aucun expert pour le moment",
@@ -402,6 +406,7 @@
       "expert": "Expert",
       "student": "Étudiant"
     },
+    "emailPlaceholder": "name@example.com",
     "createInvitationTitle": "Créer une invitation",
     "invitationReady": "Invitation prête",
     "invitationDialog": {
@@ -424,7 +429,8 @@
       "manualDivider": "ou saisir le code manuellement",
       "notFound": "Code d'invitation introuvable ou expiré.",
       "openGroup": "Ouvrir le groupe",
-      "tryDifferent": "Essayer un autre code"
+      "tryDifferent": "Essayer un autre code",
+      "codeLabel": "Code d'invitation"
     },
     "inviteDialog": {
       "cardDescription": "Créez un lien d’invitation partageable ou envoyez une invitation directement par e-mail.",
@@ -527,7 +533,7 @@
       "noTimesDescription": "Cet expert n'a pas de créneaux libres pour le moment. Essayez un autre type de séance ou revenez plus tard.",
       "selectDate": "Sélectionnez une date pour voir les horaires disponibles",
       "bookedAlt": "Séance réservée",
-      "bookedHeading": "Séance réservée !",
+      "bookedHeading": "Session confirmée",
       "bookedDescription": "Votre séance de coaching a été planifiée avec succès.",
       "viewSessions": "Voir mes séances",
       "confirmDescription": "Vérifiez les détails de votre séance et confirmez votre réservation.",
@@ -541,10 +547,12 @@
       "failed": "Échec de la réservation. Veuillez réessayer.",
       "loadExpertsFailed": "Échec du chargement des experts",
       "loadSessionTypesFailed": "Échec du chargement des types de séances",
-      "loadSlotsFailed": "Échec du chargement des créneaux disponibles"
+      "loadSlotsFailed": "Échec du chargement des créneaux disponibles",
+      "addToCalendar": "Ajouter au calendrier"
     },
     "loadFailed": "Vos sessions n'ont pas pu être chargées.",
     "cancel": {
+      "cancelledToast": "Session annulée",
       "title": "Annuler la séance",
       "description": "Cela annulera la séance avec <strong>{{otherParty}}</strong> le {{scheduledAt}}.",
       "descriptionText": "Cela annulera la séance avec {{otherParty}} le {{scheduledAt}}.",
@@ -554,6 +562,11 @@
       "failed": "Échec de l'annulation de la réservation."
     },
     "availability": {
+      "savedSessionType": "Type de session enregistré",
+      "savedAvailability": "Disponibilité enregistrée",
+      "savedBlockTime": "Créneau bloqué enregistré",
+      "deletedEntry": "Entrée supprimée",
+      "deleteFailed": "L'entrée n'a pas pu être supprimée",
       "title": "Gérer les disponibilités",
       "titleForGroup": "Gérer les disponibilités pour {{group}}",
       "summary": "Choisissez un groupe, puis configurez les types de séances, les disponibilités hebdomadaires et les créneaux bloqués.",
@@ -624,11 +637,13 @@
     }
   },
   "preferences": {
+    "profileTab": "Profil",
     "title": "Préférences",
     "summary": "Tenez à jour votre profil, votre heure locale, votre langue et vos paramètres de notification.",
     "personalData": "Données personnelles",
     "personalSummary": "Mettez à jour les informations utilisées dans votre tableau de bord et vos séances de coaching.",
     "emailPreferences": "Préférences e-mail",
+    "emailNotifications": "Notifications par e-mail",
     "emailSummary": "Choisissez les activités Zeta qui doivent arriver dans votre boîte de réception.",
     "firstName": "Prénom",
     "firstNameRequired": "Le prénom est obligatoire.",
@@ -656,13 +671,22 @@
       "invitationActivity": "Activité des invitations",
       "groupMembership": "Mises à jour d'appartenance au groupe",
       "coachingBookings": "Réservations et annulations de coaching",
-      "coachingReminders": "Rappels de coaching"
+      "coachingReminders": "Rappels de coaching",
+      "descriptions": {
+        "newVideos": "Quand une vidéo est ajoutée à un groupe que tu possèdes.",
+        "reviewedVideos": "Quand un expert évalue une de tes vidéos.",
+        "invitationActivity": "Mises à jour de tes invitations de groupe.",
+        "groupMembership": "Quand tu rejoins ou quittes un groupe.",
+        "coachingBookings": "Confirmations et annulations de réservation.",
+        "coachingReminders": "Rappels avant les prochaines sessions."
+      }
     },
     "languages": {
       "en": "Anglais",
       "de": "Allemand",
       "fr": "Français"
-    }
+    },
+    "emailHint": "Utilisé pour la connexion."
   },
   "avatar": {
     "selectImage": "Sélectionner une image",

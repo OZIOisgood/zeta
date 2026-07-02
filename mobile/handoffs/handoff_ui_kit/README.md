@@ -86,7 +86,7 @@ Legend for **Status**: ✅ matches the spec · ⚠️ exists but **must be adapt
 | NavigationBar | native tabs (`app/(tabs)/_layout`) | ⚠️ | Android M3 `NavigationBar` pill (64×32); native tab bar |
 | TopAppBar | native header | 🆕 | Standardise an M3 small top app bar |
 | LargeTitleBar | native header | 🆕 | iOS large-title header (`headerLargeTitle`) |
-| Stepper | `z-stepper.*` | ✅ | Numbered (material) ↔ page dots (iOS) |
+| Stepper | `z-stepper.*` | ⚠️ | **Navigierbar machen** (`onStepPress` + `reached`); numbered (material) ↔ page dots (iOS). Siehe „Session buchen". |
 | EmptyState | `z-empty-state.*` | ✅ | — |
 | Skeleton | `z-skeleton.*` | ✅ | — |
 | ProgressBar | `z-progress.*` | ✅ | 6dp material / 4dp iOS |
@@ -240,6 +240,131 @@ show a header twice.
 
 ---
 
+## Asset detail — multi-clip upload ("Video parts")
+An upload can contain **several separate video clips** ("parts"), not chapters of
+one timeline. Treat it as a **clip switcher attached to the player** (episode-
+picker pattern), never as a standalone card with a header + count + one big chip:
+- **1 part → no switcher at all** (progressive disclosure). The parts UI appears
+  only at **2+** clips.
+- **2+ parts → a subtle pill row directly under the player**: a small "Teile"
+  label + one low-profile pill per clip (`Teil 1 · 1:12`), the active pill in
+  **secondary-container**, the rest outlined/transparent. **No thumbnails, no
+  per-clip titles** — keep it quiet but visible; tapping a pill switches the
+  player source. (A segmented control is an acceptable equivalent.)
+- **Many parts (> ~5) → a compact "Teil X von N ▾" trigger** under the player that
+  opens a **bottom sheet** (M3 bottom sheet / iOS sheet) with the full list — one
+  `ListItem` per clip (number/check · "Teil N" · duration, processing rows dimmed
+  with a spinner). Prefer a sheet over a native `Select`: the rows carry
+  per-clip metadata (duration, status) a picker can't show. Tapping a row selects
+  + closes; backdrop tap dismisses. Scroll the active row into view on open.
+- When the pill row overflows, keep a **peek** of the next pill so more-content is
+  discoverable.
+- **Status is per clip, on its thumbnail** — a clip still `processing` is dimmed
+  with a spinner + "Wird verarbeitet" and is not tappable. Kill the cryptic
+  global "ready (2)".
+- Player + rail are **one unit** (rail sits flush under the player, before the
+  meta card), so the multi-clip nature reads immediately.
+
+In the app: a `ZVideoPartRail` (or a horizontal `ListItem` rail) bound to the
+asset's clips; switching sets the player source. Build it on `ListItem`/Card
+tokens, not a filter-chip row.
+
+## Asset detail — comment timestamp = seek control
+Each posted review comment carries the video timestamp it refers to. **This is
+the primary navigation affordance of the review thread** — tapping it seeks the
+player to that moment (Frame.io / Vimeo Review pattern). Treat it as such, not as
+a passive tag:
+- **Promote it to the top of the comment** (on the author row), not buried in the
+  bottom meta line beside "2h ago / Antworten". The moment is the *context* — the
+  reader should orient before reading the body.
+- **Make it read as tappable & navigational:** an **accent-container pill with a
+  leading play glyph** (`▶ 0:12`, tabular-nums), accent text — distinct from the
+  muted relative-time and reply meta.
+- Wire `onPress` → seek the player to `r.ts`; `accessibilityLabel="Zu {ts} springen"`.
+- Bottom meta keeps only **relative time + Antworten** (muted, secondary).
+
+In the app this is a `ListItem`/`Chip`-token pill inside the comment cell, **not**
+a filter chip. Replies show it too.
+
+## Asset detail — meta block density
+The title/group/description block above the comments was four stacked lines with
+generous gaps and a **title that duplicates the nav header**. Tighten it:
+- **Drop the in-card title** — the top app bar / large-title header already
+  carries it; don't repeat it.
+- **One identity row, status to the corner:** lead with the group **avatar +
+  name** (identity); push the status `Badge` **right-aligned** to the end of the
+  row. Don't interleave a state chip (`Geprüft`) with attribution — they are
+  different semantic categories. Group name in **strong on-surface, not accent
+  bold** (the avatar carries the one accent); use accent only if the whole
+  avatar+name is a tappable link to the group.
+- **Clamp the description to 2 lines** with a **"Mehr anzeigen / Weniger"** toggle
+  (line-clamp + show-more — standard mobile pattern). Long uploader notes no
+  longer push the comments below the fold; the reader expands on demand.
+- Card gap 16 → ~10; the block collapses to roughly one third its height.
+
+---
+
+## Session buchen — gestufter Flow statt Scroll-Accordion
+Der Buchungs-Screen (`app/book.tsx`, Route `/book`, als `formSheet`) ist
+neugestaltet. **Im Prototyp:** Tab **Sessions → „Session buchen"**. Vorher ein
+einzelner Scroll mit progressiv eingeblendeten Karten unter einem **rein
+dekorativen** `ZStepper`; Zeitauswahl als umbrechende Chip-Wolke; Primär-CTA am
+Scroll-Ende vergraben; Experten als nackte Text-Chips. Neu: **eine Entscheidung
+pro Schritt**, navigierbarer Stepper, Datums-Schiene + Zeit-Raster, persistente
+Summary-Bar mit der einen CTA.
+
+**Zielablauf** (nach optionaler Gruppe): **1 Experte → 2 Art → 3 Zeit →
+4 Bestätigen → ✓**. Der Stepper oben ist **antippbar** (Rücksprung auf erreichte
+Schritte); die Summary-Bar unten bleibt über alle Schritte stehen.
+
+### ⚠️ Datenmodell-Realität — zuerst klären
+Der Prototyp zeigt mehr, als das Schema heute liefert (`src/api/schema.d.ts`):
+
+| Im Prototyp | Schema heute | Konsequenz |
+|---|---|---|
+| **Preis** (`39 €`, Summary-Headline) | `SessionType` hat **kein** `price` | Backend-Feld nötig — bis dahin Summary-Headline = **Dauer** (`30 Min`). |
+| **Rating/Spezialgebiet** (`★ 4.9 · Vielseitigkeit`) | `CoachingExpert` = nur `expert_id`, `first_name`, `last_name`, optional `avatar` (base64) | Sterne/Rolle **droppen**, bis Felder existieren. `avatar` → `ZAvatar`, sonst Initialen. |
+| **Art vor Experte** | `SessionType.expert_id` — Arten sind **pro Experte** | Reihenfolge bleibt **Experte → Art**. Übernommen wird die *Interaktion*, nicht die invertierte Reihenfolge. |
+
+**Gruppe** bleibt Schritt 0, **automatisch übersprungen bei genau einer Gruppe**
+(heute schon: `groups.length === 1` → Auto-Select). Die Prototyp-Option
+**„Erste*r verfügbare*r"** braucht eine gruppenweite Slot-Abfrage über alle
+Experten — erst bauen, wenn `useSlotsQuery` das ohne `expertId` unterstützt,
+sonst weglassen.
+
+### Komponenten für diesen Flow
+- **⚠️ `ZStepper` navigierbar:** Prop **`onStepPress(index)`** + `reached`-State
+  (höchster erreichter Schritt). `index <= reached` → `Pressable` (zurück),
+  spätere gesperrt. Heute read-only aus `activeStep` abgeleitet.
+- **🆕 `ZListItem`** (s. o.) für Experten- und Art-Auswahl: `leading`
+  (Avatar/IconTile) · Titel · `subtitle` · `selected`. Ersetzt die nackten
+  Experten-`ZChip`s und das `Touchable`+`ZCard`-Konstrukt der Arten.
+- **🆕 `ZDateRail`:** horizontale Tag-Pills (Wochentag/„Heute" · Tageszahl ·
+  Monat) aus den `slotsByDay`-Keys; Tage ohne Slots ausgegraut/`disabled` oder
+  weglassen (Open Q.). Selektiert = `accentStrong`/`onAccent`, Radius 16.
+- **🆕 `ZTimeGrid`:** 3-Spalten-Grid der Startzeiten des gewählten Tages,
+  Zelle ≥ 44dp, Radius 12, selektiert = `accentStrong`-Fill. Dauer **einmal**
+  als Hinweis unter dem Grid, nicht pro Zelle. Auswahl setzt den ganzen
+  `CoachingSlot` (wegen `ends_at`). Ersetzt die Chip-Wolke.
+- **🆕 `ZBookingBar`:** am Sheet-Boden fixiert, **außerhalb** der `ScrollView`
+  (Sibling im `ZScreen edges={['bottom']}`), 1px `outline`-Top. Links laufender
+  Kontext (Dauer/Preis · Art · Experte · Zeit), rechts ein `ZButton` —
+  `Weiter` (Schritt 1–3) → `Buchen` (Confirm), `disabled` bis der Schritt
+  erfüllt ist, `loading` bei `isSubmitting`. **Kein KAV** im Sheet (AGENTS.md).
+
+### State, Submit, Erfolg
+Bestehende `coaching`-Hooks unverändert: `useGroupsQuery`,
+`useCoachingExpertsQuery`, `useSessionTypesQuery` (weiter auf `expert_id`
+gefiltert), `useSlotsQuery`, `useCreateBookingMutation`. `slotsByDay`
+(`toDateString`-Gruppierung) speist `ZDateRail`. `handleSubmit` inkl. 409/400-
+Pfade (Slot vergeben / zu spät) behalten. Erfolgs-State anreichern:
+Zusammenfassungs-Karte (Avatar · Art · Tag/Zeit · Badge) + „Fertig"
+(`router.replace('/coaching')`); `showToast` beibehalten. `testID`s fortführen
+(`book-stepper/-expert-*/-type-*/-slot-*/-submit/-success`) + neue
+(`book-daterail-*`, `book-time-*`, `book-bar`).
+
+---
+
 ## Tokens — use the existing role tokens, never the prototype hexes
 Map the prototype's roles to `src/theme/roles.ts` (light/dark), exposed to
 NativeWind (`bg-accent`, `text-on-surface`, …) and native props
@@ -248,8 +373,8 @@ NativeWind (`bg-accent`, `text-on-surface`, …) and native props
 | Role | Light | Dark | NativeWind / native |
 |---|---|---|---|
 | accent | `#bd4309` | `#ffb68f` | `bg-accent` · `color('accent')` |
-| accentStrong (filled CTA) | `#bd4309` | `#bd4309` | `color('accentStrong')` |
-| onAccent | `#ffffff` | `#ffffff` | `text-on-accent` |
+| accentStrong (filled CTA) | `#bd4309` | `#bd4309`¹ | `color('accentStrong')` |
+| onAccent | `#ffffff` | `#ffffff`¹ | `text-on-accent` |
 | accent-container (hero, FAB-tonal, avatar) | `#ffdbc8` | `#7c3500` | `bg-accent-container` |
 | on-accent-container | `#3a1400` | `#ffdbc8` | `text-on-accent-container` |
 | **secondary-container** (selected seg/chip/nav pill, tonal btn) | `#ffdcc4` | `#5d4030` | `bg-secondary-container` |
@@ -263,6 +388,11 @@ NativeWind (`bg-accent`, `text-on-surface`, …) and native props
 | on-surface | `#221a15` | `#f2dfd2` | `text-on-surface` |
 | on-surface-variant | `#54443b` | `#d8c3b6` | `text-on-surface-variant` |
 | outline | `#d8c3b6` | `#54443b` | `border-outline` |
+
+¹ The generated tokens (`sync:tokens`, see `scripts/sync-tokens.mjs`) override
+the dark values to `accentStrong #ffb68f` / `onAccent #522300`: white on the
+dark-mode accent fails WCAG AA, so the generator derives an AA-safe pair. The
+generator wins — this table documents the seed intent.
 
 **Radii (dp):** field **12**, tile/row **16**, card **20**, hero/sheet **28**,
 pill `full` (buttons, chips, avatars, nav pill), **FAB 16** (rounded square).
@@ -304,9 +434,12 @@ resolve (mirror the existing `isSuccess` gating).
 ## Screens in the kit (`design-references/index.html`)
 The reference covers the full click-through: **Sign in → Home · Videos ·
 Sessions · Groups · Profile** (bottom tabs), **Asset detail** (player +
-timestamped review thread + composer), the full-bleed **live Call** screen
+timestamped review thread + composer — see **comment timestamp** below), the
+full-bleed **live Call** screen
 (mic/camera controls), and the **FAB** create actions (add video / book
-session). Additional starting-point screens live in the design system's
+session), and the redesigned **Session buchen** flow (stepped: Experte → Art →
+Zeit → Bestätigen, with the date rail / time grid / summary bar — see its own
+section above). Additional starting-point screens live in the design system's
 `templates/` (call · detail · empty · form · list · onboarding, plus the iOS
 `ios-videos` counterpart). Map them to the matching `app/**` routes; the
 component deltas above apply uniformly across all of them.
@@ -325,6 +458,11 @@ component deltas above apply uniformly across all of them.
 5. **Header strategy** — confirm native large-title (iOS) + M3 top app bar
    (Android) everywhere, with `headerShown:false` only on screens that carry an
    in-content greeting header.
+6. **Session-buchen-Felder** — `price`/`currency` auf `SessionType` und
+   Rating/Spezialgebiet auf `CoachingExpert` ergänzen (Backend), oder die
+   Summary-Bar/Experten-Rows auf Dauer + Name beschränken? Außerdem: leere Tage
+   in `ZDateRail` ausgegraut zeigen oder weglassen, und „Erste*r verfügbare*r"
+   bauen oder streichen?
 
 ## Files in this bundle
 - `design-references/index.html` — the full UI-kit prototype. Open it; use

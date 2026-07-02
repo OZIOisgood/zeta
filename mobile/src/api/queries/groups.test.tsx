@@ -182,12 +182,8 @@ test('useUpdateGroupMutation puts the body, returns the group, invalidates [grou
     body: input,
   });
   expect(group).toEqual(GROUP);
-  expect(invalidated).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ queryKey: ['groups'] }),
-      expect.objectContaining({ queryKey: ['groups', 'g1'] }),
-    ]),
-  );
+  // Prefix invalidation only — ['groups'] covers ['groups', 'g1'] in TanStack v5.
+  expect(invalidated).toEqual([expect.objectContaining({ queryKey: ['groups'] })]);
 });
 
 test('useUpdateGroupMutation does not invalidate on error', async () => {

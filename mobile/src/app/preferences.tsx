@@ -1,58 +1,23 @@
-import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ZAvatarInput } from '../components/ui/z-avatar-input';
-import { ZBadge } from '../components/ui/z-badge';
 import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
-import { ZDivider } from '../components/ui/z-divider';
-import { ZIconTile } from '../components/ui/z-icon-tile';
-import { ZListItem } from '../components/ui/z-list-item';
-import { ZSwitch } from '../components/ui/z-switch';
 import { ZCombobox, type ZComboboxOption } from '../components/ui/z-combobox';
+import { ZDivider } from '../components/ui/z-divider';
 import { ZFieldError } from '../components/ui/z-field-error';
 import { ZFieldLabel } from '../components/ui/z-field-label';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
+import { ZListItem } from '../components/ui/z-list-item';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
-import { ZSymbol } from '../components/ui/z-symbol';
+import { ZSwitch } from '../components/ui/z-switch';
 import { ZTextInput } from '../components/ui/z-text-input';
 import { showToast } from '../components/ui/z-toast';
 import { authStore, useAuth } from '../auth/auth-store';
 import type { Me, UpdateMeRequest } from '../auth/auth-store';
-import { colors } from '../theme/colors';
-
-/**
- * Section header for a settings card: a neutral icon tile + title + summary with
- * an optional trailing badge. One helper instead of the two hand-rolled copies
- * that re-inlined the icon tile (at the wrong radius) and a manual hairline.
- */
-function CardSectionHeader({
-  icon,
-  title,
-  summary,
-  badge,
-}: {
-  icon: ComponentProps<typeof ZSymbol>['name'];
-  title: string;
-  summary: string;
-  badge?: ReactNode;
-}) {
-  return (
-    <View className="flex-row items-start gap-3">
-      <ZIconTile
-        tone="neutral"
-        icon={<ZSymbol name={icon} label={title} size={20} color={colors.primary} />}
-      />
-      <View className="flex-1">
-        <Text className="text-[19px] font-extrabold text-on-surface">{title}</Text>
-        <Text className="mt-1 text-[15px] leading-5 text-on-surface-variant">{summary}</Text>
-      </View>
-      {badge}
-    </View>
-  );
-}
 
 type EmailPreferences = Me['email_preferences'];
 type Language = Me['language'];
@@ -62,9 +27,6 @@ const LANGUAGES: readonly Language[] = ['en', 'de', 'fr'] as const;
 /**
  * Minimal IANA timezone list shipped for environments where
  * `Intl.supportedValuesOf('timeZone')` is unavailable (older Hermes builds).
- * The web ships no static list — it relies on the runtime value — so when the
- * runtime exposes the full set we use it, falling back to this representative
- * subset only when it does not.
  */
 const FALLBACK_TIMEZONES: readonly string[] = [
   'UTC',
@@ -126,13 +88,11 @@ function initials(user: Me): string {
   return `${first}${last}`.toUpperCase() || user.email[0]?.toUpperCase() || '';
 }
 
-/** Roles with a localized label under `groups.roles.*`; others render no badge. */
-const KNOWN_ROLES: readonly string[] = ['admin', 'expert', 'student'] as const;
-
 /**
  * Stable, comparable string of the editable values, mirroring the web
  * `normalizeFormValue` (trim name fields, treat empty avatar as null). Two
- * snapshots are dirty-equal iff their strings differ.
+ * snapshots are dirty-equal iff their strings differ. The email address is NOT
+ * editable, so it is excluded.
  */
 function normalizeSnapshot(
   firstName: string,
@@ -167,12 +127,12 @@ function LoadingState() {
     <ZScreen edges={['bottom']}>
       <Stack.Screen options={{ title: t('preferences.personalData') }} />
       <ScrollView contentInsetAdjustmentBehavior="automatic">
-        <View className="gap-4 p-4">
-          <ZCard className="gap-4">
-            <View className="flex-row items-center gap-3">
-              <ZSkeleton className="h-[72px] w-[72px] rounded-md" />
-              <ZSkeleton className="h-10 w-28" />
-            </View>
+        <View className="gap-5 p-4">
+          <View className="items-center gap-2">
+            <ZSkeleton className="h-[88px] w-[88px] rounded-full" />
+            <ZSkeleton className="h-3 w-24" />
+          </View>
+          <ZCard tone="surface" className="gap-4">
             <FieldSkeleton />
             <FieldSkeleton />
             <FieldSkeleton />
@@ -185,17 +145,18 @@ function LoadingState() {
 }
 
 /**
- * Editable preferences form. Local edit state is initialized from `user`; the
- * parent remounts this via `key={user.id}` whenever the account changes, so no
- * effect-based syncing is needed.
+ * Personal data + email notifications — the Profil → "Persönliche Daten"
+ * destination, rebuilt to the handoff (handoff_ui_kit screens3.jsx `Preferences`):
+ * centered avatar, a single surface card of labeled fields (name · email · language
+ * · timezone), then a small-caps "E-Mail-Benachrichtigungen" section of toggle rows.
+ * Save is a native header-right action (no footer button), gated by validation +
+ * dirty state.
  *
- * This is the pushed Profile → "Persönliche Daten" destination: it carries the
- * personal-data fields AND the detailed email preferences (master + granular
- * sub-rows). The single source of truth for `email_preferences` is the auth
- * store; the Profile master switch and this form both bind to it, so toggling
- * either stays consistent. This form's local edit state is initialized from the
- * (always-fresh) store value because the Profile quick-toggle persists
- * immediately before navigation.
+ * The email-notifications MASTER (`notifications_enabled`) lives on the Profile
+ * overview (its quick toggle) per the handoff; this screen edits only the granular,
+ * permission-gated categories. The master value is preserved untouched on save.
+ * The single source of truth for `email_preferences` is the auth store; the parent
+ * remounts via `key={user.id}` so local edit state never goes stale.
  */
 function PreferencesForm({ user }: { user: Me }) {
   const { t } = useTranslation();
@@ -228,9 +189,6 @@ function PreferencesForm({ user }: { user: Me }) {
   const timezoneInvalid = timezone.trim().length === 0;
   const formInvalid = firstNameInvalid || lastNameInvalid || timezoneInvalid;
 
-  // Snapshot of the editable values as initialized from `user`; the parent
-  // remounts via `key={user.id}` on account change, so this never goes stale.
-  // Mirrors the web `initialFormValue`/`hasFormChanges` dirty gating.
   const initial = useMemo(
     () =>
       normalizeSnapshot(
@@ -254,7 +212,6 @@ function PreferencesForm({ user }: { user: Me }) {
   const isDirty = current !== initial;
   const saveDisabled = formInvalid || !isDirty || saving;
 
-  const notificationsEnabled = emailPreferences.notifications_enabled;
   const can = (permission: string) => user.permissions.includes(permission);
 
   function setEmailPreference(key: keyof EmailPreferences, value: boolean) {
@@ -275,8 +232,16 @@ function PreferencesForm({ user }: { user: Me }) {
       ...(avatarDirty ? { avatar: avatar ?? '' } : {}),
     };
 
-    const updated = await authStore.getState().updateCurrentUser(body);
-    setSaving(false);
+    // try/finally: a thrown fetch (network reject, not an HTTP error) must
+    // still re-enable the Save button — it stayed disabled forever otherwise.
+    let updated: Awaited<ReturnType<ReturnType<typeof authStore.getState>['updateCurrentUser']>> = null;
+    try {
+      updated = await authStore.getState().updateCurrentUser(body);
+    } catch {
+      updated = null;
+    } finally {
+      setSaving(false);
+    }
 
     if (!updated) {
       setSaveFailed(true);
@@ -286,36 +251,49 @@ function PreferencesForm({ user }: { user: Me }) {
     showToast(t('toast.successTitle'), t('preferences.saveSuccess'), 'success');
   }
 
-  const emailRows: { key: keyof EmailPreferences; label: string; show: boolean }[] = [
+  // Granular email categories — each gated by the permission fronting its source
+  // feature (mirrors the web). Master (`notifications_enabled`) is edited on the
+  // Profile overview, not here. Title + description match the handoff's toggle rows.
+  const emailRows: {
+    key: keyof EmailPreferences;
+    label: string;
+    desc: string;
+    show: boolean;
+  }[] = [
     {
       key: 'asset_uploads_enabled',
       label: t('preferences.email.newVideos'),
+      desc: t('preferences.email.descriptions.newVideos'),
       show: can('groups:create'),
     },
     {
       key: 'asset_reviews_enabled',
       label: t('preferences.email.reviewedVideos'),
+      desc: t('preferences.email.descriptions.reviewedVideos'),
       show: can('assets:create'),
     },
     {
       key: 'invitation_updates_enabled',
       label: t('preferences.email.invitationActivity'),
+      desc: t('preferences.email.descriptions.invitationActivity'),
       show: can('groups:invites:create'),
     },
-    // Group membership updates are always available (matches the web component).
     {
       key: 'group_membership_updates_enabled',
       label: t('preferences.email.groupMembership'),
+      desc: t('preferences.email.descriptions.groupMembership'),
       show: true,
     },
     {
       key: 'coaching_booking_updates_enabled',
       label: t('preferences.email.coachingBookings'),
+      desc: t('preferences.email.descriptions.coachingBookings'),
       show: can('coaching:bookings:read'),
     },
     {
       key: 'coaching_reminders_enabled',
       label: t('preferences.email.coachingReminders'),
+      desc: t('preferences.email.descriptions.coachingReminders'),
       show: can('coaching:bookings:read'),
     },
   ];
@@ -323,38 +301,50 @@ function PreferencesForm({ user }: { user: Me }) {
 
   return (
     <ZScreen edges={['bottom']}>
-      {/* Native header title — set here in the data-loaded render path. */}
-      <Stack.Screen options={{ title: t('preferences.personalData') }} />
+      {/* Native header: back (provided) + title + the Save action (handoff:
+          "Speichern" top-right). Disabled until the form is valid AND changed. */}
+      <Stack.Screen
+        options={{
+          title: t('preferences.personalData'),
+          headerRight: () => (
+            <ZButton
+              testID="preferences-save"
+              variant="link"
+              label={t('common.actions.save')}
+              disabled={saveDisabled}
+              loading={saving}
+              onPress={() => void handleSave()}
+            />
+          ),
+        }}
+      />
       <ZKeyboardAvoidingView>
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
         >
-          <View className="gap-4 p-4">
-            <ZCard className="gap-4">
-              <CardSectionHeader
-                icon="person"
-                title={t('preferences.personalData')}
-                summary={t('preferences.personalSummary')}
-                badge={
-                  KNOWN_ROLES.includes(user.role) ? (
-                    <ZBadge tone="neutral" label={t(`groups.roles.${user.role}`)} />
-                  ) : null
-                }
-              />
-              <ZDivider />
+          <View className="gap-5 p-4">
+            {/* Centered avatar with edit badge + caption. */}
+            <ZAvatarInput
+              centered
+              value={avatar ?? undefined}
+              fallback={initials(user)}
+              alt={t('common.aria.avatarPreview')}
+              label={t('common.actions.changePhoto')}
+              onChange={(base64) => {
+                setAvatar(base64);
+                setAvatarDirty(true);
+              }}
+            />
 
-              <ZAvatarInput
-                value={avatar ?? undefined}
-                fallback={initials(user)}
-                alt={t('common.aria.avatarPreview')}
-                label={t('common.fields.avatar')}
-                onChange={(base64) => {
-                  setAvatar(base64);
-                  setAvatarDirty(true);
-                }}
-              />
+            {saveFailed ? (
+              <Text accessibilityRole="alert" className="text-sm font-medium text-z-danger">
+                {t('preferences.saveFailed')}
+              </Text>
+            ) : null}
 
+            {/* Personal data — one surface card of labeled fields. */}
+            <ZCard tone="surface" className="gap-4">
               <View className="gap-2">
                 <ZFieldLabel label={t('preferences.firstName')} required />
                 <ZTextInput
@@ -383,6 +373,18 @@ function PreferencesForm({ user }: { user: Me }) {
                 {lastNameInvalid ? (
                   <ZFieldError message={t('preferences.lastNameRequired')} />
                 ) : null}
+              </View>
+
+              {/* Email — read-only (used for sign-in); hint mirrors the handoff. */}
+              <View className="gap-2">
+                <ZFieldLabel label={t('common.fields.email')} />
+                <ZTextInput
+                  value={user.email}
+                  onChangeText={() => {}}
+                  accessibilityLabel={t('common.fields.email')}
+                  disabled
+                />
+                <Text className="text-xs leading-5 text-z-muted">{t('preferences.emailHint')}</Text>
               </View>
 
               <View className="gap-2">
@@ -414,63 +416,29 @@ function PreferencesForm({ user }: { user: Me }) {
               </View>
             </ZCard>
 
-            <ZCard className="gap-4">
-              <CardSectionHeader
-                icon="bell"
-                title={t('preferences.emailPreferences')}
-                summary={t('preferences.emailSummary')}
-              />
-              <ZDivider />
-
-              {/* Master toggle — plain row (no tonal fill). */}
-              <ZListItem
-                title={t('preferences.email.all')}
-                subtitle={t('preferences.email.allDescription')}
-                trailing={
-                  <ZSwitch
-                    checked={notificationsEnabled}
-                    accessibilityLabel={t('preferences.email.all')}
-                    onChange={(value) => setEmailPreference('notifications_enabled', value)}
+            {/* Email notifications — small-caps section label + toggle-row card. */}
+            <Text className="px-1 text-xs font-extrabold uppercase tracking-wider text-z-muted">
+              {t('preferences.emailNotifications')}
+            </Text>
+            <ZCard tone="surface">
+              {visibleEmailRows.map((row, index) => (
+                <View key={row.key}>
+                  {index > 0 ? <ZDivider inset={16} /> : null}
+                  <ZListItem
+                    title={row.label}
+                    subtitle={row.desc}
+                    subtitleNumberOfLines={2}
+                    trailing={
+                      <ZSwitch
+                        checked={emailPreferences[row.key]}
+                        accessibilityLabel={row.label}
+                        onChange={(value) => setEmailPreference(row.key, value)}
+                      />
+                    }
                   />
-                }
-              />
-
-              <View className={notificationsEnabled ? '' : 'opacity-60'}>
-                {visibleEmailRows.map((row, index) => (
-                  <View key={row.key}>
-                    {index > 0 ? <ZDivider inset /> : null}
-                    <ZListItem
-                      title={row.label}
-                      trailing={
-                        <ZSwitch
-                          checked={emailPreferences[row.key]}
-                          accessibilityLabel={row.label}
-                          disabled={!notificationsEnabled}
-                          onChange={(value) => setEmailPreference(row.key, value)}
-                        />
-                      }
-                    />
-                  </View>
-                ))}
-              </View>
+                </View>
+              ))}
             </ZCard>
-
-            {saveFailed ? (
-              <Text
-                accessibilityRole="alert"
-                className="text-sm font-medium text-z-danger"
-              >
-                {t('preferences.saveFailed')}
-              </Text>
-            ) : null}
-
-            <ZButton
-              label={saving ? t('preferences.saving') : t('common.actions.save')}
-              loading={saving}
-              disabled={saveDisabled}
-              icon={<ZSymbol name="save" label={t('common.actions.save')} size={16} color={colors.onPrimary} />}
-              onPress={() => void handleSave()}
-            />
           </View>
         </ScrollView>
       </ZKeyboardAvoidingView>

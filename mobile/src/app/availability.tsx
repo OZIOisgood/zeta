@@ -23,7 +23,7 @@ import {
 } from '../api/queries/coaching';
 import { useGroupsQuery } from '../api/queries/groups';
 import { useAuth } from '../auth/auth-store';
-import { formatDate } from '../lib/datetime';
+import { formatDate, localDateKey } from '../lib/datetime';
 import { ScheduleDayRow } from '../components/schedule-day-row';
 import { SessionTypeRow } from '../components/session-type-row';
 import { ZButton } from '../components/ui/z-button';
@@ -77,7 +77,9 @@ function dateOptions(): ZSelectOption[] {
   for (let i = 0; i < 90; i += 1) {
     const d = new Date(today.getTime());
     d.setDate(today.getDate() + i);
-    const value = d.toISOString().slice(0, 10); // YYYY-MM-DD (the API value)
+    // LOCAL date key, not toISOString(): the UTC date is off by one every
+    // evening west of UTC — the picker labelled/blocked the wrong day.
+    const value = localDateKey(d); // YYYY-MM-DD (the API value)
     // Label via the shared datetime helper — no per-screen formatter.
     out.push({ value, label: formatDate(value) });
   }
@@ -136,7 +138,7 @@ function SessionTypeSheet({
       } else {
         await createType.mutateAsync(body);
       }
-      showToast(t('toast.successTitle'), undefined, 'success');
+      showToast(t('toast.successTitle'), t('sessions.availability.savedSessionType'), 'success');
       onClose();
     } catch {
       setFormError(
@@ -250,7 +252,7 @@ function AvailabilitySheet({
       } else {
         await createAvail.mutateAsync(body);
       }
-      showToast(t('toast.successTitle'), undefined, 'success');
+      showToast(t('toast.successTitle'), t('sessions.availability.savedAvailability'), 'success');
       onClose();
     } catch {
       setFormError(
@@ -327,7 +329,7 @@ function BlockedSheet({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey(new Date());
   const [date, setDate] = useState(today);
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
@@ -346,8 +348,11 @@ function BlockedSheet({
       return;
     }
     if ((start === '') !== (end === '')) {
-      // Exactly one is set
-      setFormError(t('sessions.availability.startTimeRequired'));
+      // Exactly one is set — name the field that is actually missing (the
+      // fixed "start time required" was wrong when the END time was missing).
+      setFormError(
+        t(start === '' ? 'sessions.availability.startTimeRequired' : 'sessions.availability.endTimeRequired'),
+      );
       return;
     }
     if (start !== '' && end !== '' && start >= end) {
@@ -362,7 +367,7 @@ function BlockedSheet({
         ...(end ? { end_time: end } : {}),
         ...(reason.trim() ? { reason: reason.trim() } : {}),
       });
-      showToast(t('toast.successTitle'), undefined, 'success');
+      showToast(t('toast.successTitle'), t('sessions.availability.savedBlockTime'), 'success');
       onClose();
     } catch {
       setFormError(t('sessions.availability.failedBlockTime'));
@@ -488,10 +493,10 @@ export default function AvailabilityScreen() {
         await deleteBlocked.mutateAsync(deleteTarget.id);
       }
       setDeleteTarget(null);
-      showToast(t('toast.successTitle'), undefined, 'success');
+      showToast(t('toast.successTitle'), t('sessions.availability.deletedEntry'), 'success');
     } catch {
       setDeleteTarget(null);
-      showToast(t('toast.errorTitle'), undefined, 'error');
+      showToast(t('toast.errorTitle'), t('sessions.availability.deleteFailed'), 'error');
     }
   }
 

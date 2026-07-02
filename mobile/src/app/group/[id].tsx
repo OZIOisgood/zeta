@@ -43,6 +43,12 @@ import { useRoleColors } from '../../theme/native';
  *  scanned by a system camera opens the web invitation page. Falls back to
  *  localhost for local development. */
 const WEB_BASE = process.env.EXPO_PUBLIC_WEB_BASE_URL ?? 'http://localhost:4200';
+if (!process.env.EXPO_PUBLIC_WEB_BASE_URL) {
+  // Loud, not silent: a build without the env var mints localhost invite
+  // links/QR codes that are dead for every recipient (mirrors login.ts's
+  // client-id warning). Warn in release too — that is where it hurts.
+  console.warn('EXPO_PUBLIC_WEB_BASE_URL is not set — invite links/QR codes will point at localhost.');
+}
 
 function buildInviteLink(code: string) {
   return `${WEB_BASE}/groups?invite=${code}`;
@@ -275,7 +281,7 @@ function InviteSection({ groupId }: { groupId: string }) {
               accessibilityLabel={t('common.fields.emailAddressOptional')}
               value={email}
               onChangeText={setEmail}
-              placeholder="student@example.com"
+              placeholder={t('groups.emailPlaceholder')}
               invalid={emailTouched && emailInvalid}
             />
             {emailTouched && emailInvalid && (
@@ -392,6 +398,7 @@ export default function GroupDetailScreen() {
   const router = useRouter();
 
   const { data, isPending, isError, refetch } = useGroupQuery(id ?? '');
+  const { color } = useRoleColors();
 
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const userId = useAuth((s) => s.user?.id ?? null);
@@ -421,6 +428,16 @@ export default function GroupDetailScreen() {
     isError: studentsError,
     refetch: refetchStudents,
   } = useGroupStudentsQuery(id ?? '', canSeeStudents);
+
+  // Hero member count = members visible to the current user (sum of the two
+  // permission-gated lists; mirrors the per-section count badges). The Group
+  // object carries no server-side total, so we count loaded rows. While the
+  // list(s) the user CAN read are still loading, show a skeleton rather than a
+  // premature "0".
+  const canSeeMembers = canSeeExperts || canSeeStudents;
+  const memberCount = (experts?.length ?? 0) + (students?.length ?? 0);
+  const memberCountLoading =
+    (canSeeExperts && expertsLoading) || (canSeeStudents && studentsLoading);
 
   const { mutateAsync, isPending: leaveIsPending } = useLeaveGroupMutation(id ?? '');
   const { mutateAsync: removeMember, isPending: removeIsPending } =
@@ -512,7 +529,7 @@ export default function GroupDetailScreen() {
           {/* Group identity hero — avatar + name displayed prominently in the
               body (the native header title is the concise fallback for the
               OS-level chrome; the body hero gives the full group card feel). */}
-          <View className="flex-row items-center gap-3 p-4">
+          <View className="flex-row items-start gap-3 p-4">
             <ZAvatar
               image={data.avatar ?? undefined}
               fallback={initialsFromName(data.name)}
@@ -523,6 +540,14 @@ export default function GroupDetailScreen() {
               <Text className="text-xl font-extrabold tracking-tight text-z-text" numberOfLines={2}>
                 {data.name}
               </Text>
+              {canSeeMembers &&
+                (memberCountLoading ? (
+                  <ZSkeleton className="mt-1.5 h-4 w-24" />
+                ) : (
+                  <Text className="mt-1 text-[15px] text-z-muted">
+                    {t('groups.memberCount', { count: memberCount })}
+                  </Text>
+                ))}
             </View>
           </View>
 
@@ -580,7 +605,9 @@ export default function GroupDetailScreen() {
                 <ZButton
                   testID="group-leave"
                   label={t('groups.leave.action')}
-                  variant="danger"
+                  variant="danger-outline"
+                  fullWidth
+                  icon={<ZSymbol name="logout" label="" size={18} color={color('danger')} />}
                   onPress={() => setShowLeaveConfirm(true)}
                 />
                 <ZConfirmDialog

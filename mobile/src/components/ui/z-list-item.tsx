@@ -23,7 +23,8 @@ export type { ZListItemProps } from './z-list-item.types';
  * (switch, button) must not pose as a button.
  *
  * Material 3 look:
- *   - title 15 / weight 700 (bold), subtitle 13 / 400
+ *   - title 16 / weight 700 (bold), subtitle 15 / 400 — the app-wide "videos
+ *     baseline" type scale (deliberately one step above the kit's 15/13)
  *   - 16dp container corner radius
  *   - selected fill = secondary-container; unselected = surface
  *   - M3 state layer: Touchable's Android ripple
@@ -36,6 +37,7 @@ export function ZListItem({
   titleAccessory,
   subtitle,
   subtitleNumberOfLines = 3,
+  titleNumberOfLines = 1,
   trailing,
   onPress,
   selected = false,
@@ -65,7 +67,10 @@ export function ZListItem({
       {leading ? <View className="shrink-0">{leading}</View> : null}
       <View className="min-w-0 flex-1">
         <View className="flex-row items-center gap-2">
-          <Text numberOfLines={1} className="min-w-0 flex-1 text-base font-bold text-on-surface">
+          <Text
+            numberOfLines={titleNumberOfLines}
+            className="min-w-0 flex-1 text-base font-bold text-on-surface"
+          >
             {title}
           </Text>
           {titleAccessory ? <View className="shrink-0">{titleAccessory}</View> : null}

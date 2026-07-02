@@ -329,8 +329,8 @@ test('Book action: header-right book button is labelled sessions.bookLive and na
   await render(<HeaderRight />);
 
   expect(screen.getByTestId('coaching-book-header-btn')).toBeOnTheScreen();
-  expect(screen.getByLabelText('Book Live Coaching')).toBeOnTheScreen();
-  fireEvent.press(screen.getByLabelText('Book Live Coaching'));
+  expect(screen.getByLabelText('Book live coaching')).toBeOnTheScreen();
+  fireEvent.press(screen.getByLabelText('Book live coaching'));
   expect(mockPush).toHaveBeenCalledWith('/book');
 });
 

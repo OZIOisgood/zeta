@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../api/queries/coaching';
 import { formatBookingDateTime } from '../api/queries/coaching';
@@ -103,6 +104,24 @@ export function BookingCard({
 }: BookingCardProps) {
   const { t } = useTranslation();
 
+  // Swipe-to-cancel is invisible to VoiceOver/TalkBack: RNGH renders the
+  // trailing action only during the gesture, so it never exists in the a11y
+  // tree. When a screen reader is active, surface cancel as an explicit
+  // footer button instead of the (unperformable) swipe.
+  const [screenReaderOn, setScreenReaderOn] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    void AccessibilityInfo.isScreenReaderEnabled().then((enabled) => {
+      if (mounted) setScreenReaderOn(enabled);
+    });
+    const sub = AccessibilityInfo.addEventListener('screenReaderChanged', setScreenReaderOn);
+    return () => {
+      mounted = false;
+      sub.remove();
+    };
+  }, []);
+  const showCancelButton = canCancel && screenReaderOn;
+
   const sessionTypeName = booking.session_type_name ?? t('sessions.sessionFallback');
 
   // Status label — driven by the server status (not the date) so it can never
@@ -164,7 +183,7 @@ export function BookingCard({
             text conveys the info, so the glyph is not announced (label=""). */}
         <ZSymbol name="clock" label="" size={14} color={colors.muted} />
         <Text className="text-xs font-medium text-z-muted">
-          {dateText} · {booking.duration_minutes} min
+          {dateText} · {t('common.labels.minutesShort', { count: booking.duration_minutes })}
         </Text>
       </View>
 
@@ -182,10 +201,20 @@ export function BookingCard({
         </Text>
       ) : null}
 
-      {/* Footer row: join + recording. Cancel is no longer a button here —
-          it's a swipe action on the whole card (see the ZSwipeable wrap below). */}
-      {(onJoin || recordingReady) ? (
+      {/* Footer row: join + recording. Cancel is a swipe action on the whole
+          card (see the ZSwipeable wrap below) — except under a screen reader,
+          where it renders as an explicit button (the swipe is unperformable
+          and its action is not in the a11y tree). */}
+      {(onJoin || recordingReady || showCancelButton) ? (
         <View className="mt-3 flex-row items-center gap-2">
+          {showCancelButton ? (
+            <ZButton
+              testID="booking-cancel-a11y"
+              label={t('sessions.cancel.title')}
+              variant="danger-outline"
+              onPress={onCancel}
+            />
+          ) : null}
           {onJoin ? (
             <ZButton
               testID="booking-join"

@@ -64,12 +64,8 @@ test('useFinalizeAssetMutation posts finalize and invalidates the asset and list
   expect(POST).toHaveBeenCalledWith('/assets/{id}/finalize', {
     params: { path: { id: 'a1' } },
   });
-  expect(invalidated).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ queryKey: ['assets', 'a1'] }),
-      expect.objectContaining({ queryKey: ['assets'] }),
-    ]),
-  );
+  // Prefix invalidation only — ['assets'] covers ['assets', 'a1'] in TanStack v5.
+  expect(invalidated).toEqual([expect.objectContaining({ queryKey: ['assets'] })]);
 });
 
 test('useFinalizeAssetMutation surfaces the unreviewed-parts 400 and does not invalidate', async () => {

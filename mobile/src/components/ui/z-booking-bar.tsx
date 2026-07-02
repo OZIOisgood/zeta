@@ -28,7 +28,13 @@ export function ZBookingBar({
       <View className="flex-1">
         {headline ? (
           <>
-            <Text className="text-[17px] font-extrabold text-on-surface">{headline}</Text>
+            {/* tabular-nums: the headline is a number ("15 min") — copy rule. */}
+            <Text
+              className="text-[17px] font-extrabold text-on-surface"
+              style={{ fontVariant: ['tabular-nums'] }}
+            >
+              {headline}
+            </Text>
             {context ? (
               <Text numberOfLines={1} className="text-xs text-on-surface-variant">
                 {context}

@@ -34,7 +34,8 @@
  *
  * Per-platform look:
  *   Android / bare (Material 3):
- *     - title 15 / weight 700, subtitle 13 / 400
+ *     - title 16 / weight 700, subtitle 15 / 400 (the app-wide "videos
+ *       baseline" type scale — deliberately one step above the kit's 15/13)
  *     - 16dp container corner radius
  *     - selected fill = secondary-container; unselected = surface
  *     - M3 state layer: Touchable's Android ripple
@@ -80,6 +81,14 @@ export type ZListItemProps = {
    * @default 3
    */
   subtitleNumberOfLines?: number;
+  /**
+   * Max lines the title may wrap to before truncating. Defaults to 1 (list rows
+   * keep a stable height). Pass 2 for message-style rows whose title carries
+   * the actual content (e.g. notification rows) and must not truncate
+   * mid-sentence on every row.
+   * @default 1
+   */
+  titleNumberOfLines?: number;
   /**
    * Trailing node — a chevron, badge, switch, or other affordance. Passed in by
    * the consumer; ZListItem renders it right-aligned.

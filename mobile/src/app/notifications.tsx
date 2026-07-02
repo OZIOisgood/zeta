@@ -154,7 +154,13 @@ export default function NotificationsScreen() {
           </Text>
         )}
         renderItem={({ item }) => (
-          <NotificationRow item={item} onOpen={onOpen} onAccept={onAccept} onDecline={onDecline} />
+          <NotificationRow
+            item={item}
+            onOpen={onOpen}
+            onAccept={onAccept}
+            onDecline={onDecline}
+            inviteBusy={accept.isPending || decline.isPending}
+          />
         )}
       />
     );
@@ -174,7 +180,13 @@ export default function NotificationsScreen() {
                 <Touchable
                   testID="notifications-mark-all"
                   accessibilityLabel={t('notifications.markAllRead')}
-                  onPress={() => markAll.mutate()}
+                  // Fire-and-forget rule: failures get a toast — silently doing
+                  // nothing left the user tapping a dead button.
+                  onPress={() =>
+                    markAll.mutate(undefined, {
+                      onError: () => showToast(t('toast.errorTitle'), t('notifications.markAllRead'), 'error'),
+                    })
+                  }
                   style={{ marginRight: 4 }}
                   haptic
                 >
@@ -189,14 +201,15 @@ export default function NotificationsScreen() {
             : undefined,
         }}
       />
-      {!isPending && !isError ? (
-        <ZTabs
-          testID="notifications-tabs"
-          tabs={tabs}
-          activeId={filter}
-          onChange={(id) => setFilter(id as NotificationFilter)}
-        />
-      ) : null}
+      {/* Unconditional: toggling the segmented null↔element across load states
+          re-measures sibling Compose Hosts (footgun #6, see videos/index.tsx)
+          and pops the layout. */}
+      <ZTabs
+        testID="notifications-tabs"
+        tabs={tabs}
+        activeId={filter}
+        onChange={(id) => setFilter(id as NotificationFilter)}
+      />
       {content}
     </ZScreen>
   );

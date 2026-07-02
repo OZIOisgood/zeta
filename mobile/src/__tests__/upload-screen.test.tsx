@@ -96,7 +96,7 @@ test('files step: Next is disabled until a video is picked', async () => {
   await render(<Providers><UploadScreen /></Providers>);
 
   // First step shows the file picker; Next is gated on having >=1 file.
-  // (testID disambiguates the pick button from the "Select Video" stepper label)
+  // (testID disambiguates the pick button from the "Select video" stepper label)
   expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
 
   await user.press(screen.getByTestId('upload-pick'));
