@@ -62,6 +62,12 @@
           "cameraPermission": "Allow Zeta to scan QR codes to join groups."
         }
       ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Allow Zeta to add your booked coaching sessions to your calendar."
+        }
+      ],
       "expo-sharing"
     ],
     "experiments": {
