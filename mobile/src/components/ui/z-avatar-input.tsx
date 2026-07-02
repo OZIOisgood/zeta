@@ -4,7 +4,7 @@ import { ZAvatar } from './z-avatar';
 import { ZButton } from './z-button';
 import { ZSymbol } from './z-symbol';
 import { Touchable } from './touchable';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 /**
  * Pick/upload an avatar. Mobile counterpart of the web `z-avatar-input`
@@ -41,6 +41,8 @@ export function ZAvatarInput({
   centered?: boolean;
   testID?: string;
 }) {
+  const { color } = useRoleColors();
+
   async function handlePick() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -57,7 +59,8 @@ export function ZAvatarInput({
 
   // Centered layout (handoff): large tappable avatar + accent edit-badge overlay
   // + caption. Badge uses inline styles — NativeWind arbitrary size/radius
-  // classes mis-render on Android.
+  // classes mis-render on Android. Colors via useRoleColors so the badge flips
+  // with the scheme (static light colors froze it orange-on-cream in dark mode).
   if (centered) {
     return (
       <View testID={testID} style={{ alignItems: 'center', gap: 8 }}>
@@ -73,13 +76,13 @@ export function ZAvatarInput({
                 height: 30,
                 borderRadius: 999,
                 borderWidth: 2.5,
-                borderColor: colors.bg,
-                backgroundColor: colors.primary,
+                borderColor: color('background'),
+                backgroundColor: color('accentStrong'),
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <ZSymbol name="edit" label="" size={15} color={colors.onPrimary} />
+              <ZSymbol name="edit" label="" size={15} color={color('onAccent')} />
             </View>
           </View>
         </Touchable>

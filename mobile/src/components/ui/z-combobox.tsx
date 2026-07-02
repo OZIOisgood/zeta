@@ -56,7 +56,7 @@ export function ZCombobox({
         accessibilityState={{ disabled, expanded: open }}
         disabled={disabled}
         onPress={() => setOpen(true)}
-        style={{ minHeight: 52 }}
+        style={{ minHeight: 56 }}
         className={`w-full flex-row items-center justify-between rounded-xl border px-3 py-3 ${
           disabled ? 'bg-surface-variant' : 'bg-background'
         } ${invalid ? 'border-role-danger' : 'border-outline'}`}
