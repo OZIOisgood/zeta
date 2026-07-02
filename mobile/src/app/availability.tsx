@@ -47,7 +47,7 @@ import { ZTextInput } from '../components/ui/z-text-input';
 import { ZTextarea } from '../components/ui/z-textarea';
 import { showToast } from '../components/ui/z-toast';
 import { Touchable } from '../components/ui/touchable';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 
 type Section = 'session-types' | 'schedule' | 'blocked';
 
@@ -442,6 +442,7 @@ function BlockedSheet({
 
 export default function AvailabilityScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const insets = useSafeAreaInsets();
   const listPaddingBottom = Platform.OS === 'android' ? 96 : 24;
   const permissions = useAuth((s) => (s as { user?: { permissions?: string[] } }).user?.permissions ?? null);
@@ -638,7 +639,7 @@ export default function AvailabilityScreen() {
         data={data}
         keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: listPaddingBottom }}
+        contentContainerStyle={{ marginBottom: listPaddingBottom }}
         renderItem={(item) => (
           <SessionTypeRow
             sessionType={item}
@@ -696,7 +697,7 @@ export default function AvailabilityScreen() {
         data={data}
         keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: listPaddingBottom }}
+        contentContainerStyle={{ marginBottom: listPaddingBottom }}
         renderItem={(item) => (
           <ScheduleDayRow
             availability={item}
@@ -754,7 +755,7 @@ export default function AvailabilityScreen() {
         data={data as CoachingBlockedSlot[]}
         keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: listPaddingBottom }}
+        contentContainerStyle={{ marginBottom: listPaddingBottom }}
         renderItem={(item) => {
           // Time-range vs full-day on the first subtitle line; the optional
           // reason follows on a second line (ZListItem subtitle allows 3 lines).
@@ -768,7 +769,7 @@ export default function AvailabilityScreen() {
               // Non-interactive: the row surfaces its own delete control.
               leading={
                 <ZIconTile
-                  icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={colors.text} />}
+                  icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={color('onSurface')} />}
                   tone="neutral"
                   size="sm"
                 />
@@ -782,7 +783,7 @@ export default function AvailabilityScreen() {
                   size="sm"
                   onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
                 >
-                  <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={colors.danger} />
+                  <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={color('danger')} />
                 </ZIconButton>
               }
             />
@@ -832,7 +833,7 @@ export default function AvailabilityScreen() {
                     onPress={handleAdd}
                     haptic
                   >
-                    <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
+                    <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={color('accent')} />
                   </Touchable>
                 )
               : undefined,
@@ -883,7 +884,7 @@ export default function AvailabilityScreen() {
             shape="circle"
             onPress={handleAdd}
           >
-            <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />
+            <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={color('onAccent')} />
           </ZIconButton>
         </View>
       ) : null}

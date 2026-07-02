@@ -42,6 +42,12 @@ export function ZGroupedList<T>({
     // Standalone virtualized list styled as the grouped card. The card surface +
     // rounding + 16dp inner padding live on the content container (which hugs its
     // content height and scrolls when taller than the viewport).
+    //
+    // ⚠️ Because the content container IS the card, a caller `paddingBottom`
+    // renders as empty card interior (the Availability card once carried its
+    // 96dp FAB clearance INSIDE the surface). Scroll clearance below the card
+    // belongs in `marginBottom` — padding only for space between rows and the
+    // card edge.
     return (
       <FlatList
         testID={testID}
