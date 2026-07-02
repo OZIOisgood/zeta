@@ -69,6 +69,14 @@ Alle Punkte der empfohlenen Reihenfolge umgesetzt und verifiziert (817/817 Jest,
 
 **Offen / bewusst nicht gemacht:** Dep-Removal (`expo-device`, `expo-glass-effect`, `burnt`) an den nächsten Native-Rebuild gekoppelt; iOS-Stepper-Dots (kein iOS-Gerät in der Session); Feld-Fill bg-surface (Regression-Risiko auf Karten); Icon-Tints in Screens weiter light-gepinnt (Chrome ist scheme-aware — Rest-Sweep als Folgeaufgabe); `z-combobox`-Dedup/jest-Mapper/`availability.tsx`-Split/ZToastAction (reine Refactors); Root-JPEGs + `businessplan.*` (User-Dateien, Entscheidung offen). **Nutzeraktion nötig:** `zeta://login` als WorkOS-Logout-Redirect-URI whitelisten + `MOBILE_LOGOUT_RETURN_TO=zeta://login` im Backend-Env setzen, sonst bleibt der Logout-Tab auf der Dashboard-Default-URL (Verhalten wie vorher). iOS-Smoke-Test der Sheet-Header steht aus.
 
+## Folgerunde (gleicher Tag, `f4bf870`–`cc6acd4`)
+
+- **Availability-Leerraum** gefixt: ZGroupedList (scroll) stylt den Content-Container als Karte — der 96dp-FAB-Freiraum lag IN der Karte; jetzt marginBottom außerhalb (Emulator-verifiziert).
+- **Dark-Mode-Rest-Sweep**: alle verbliebenen statischen `colors.*`-Tints (31 Dateien) auf `useRoleColors` (Codemod + tsc-geführte Nacharbeit; Modul-Scope-Maps halten Rollen-NAMEN). Night-Mode-Verifikation: Home/Asset/Notifications/Profil flippen komplett.
+- **Neuer Fund + Fix**: Die Konto-Sprache wurde nur beim Ändern angewendet, nie beim Login — `loadUser` wendet sie jetzt an (de-Konto bootet deutsch, Emulator-verifiziert); `formatBookingDateTime` folgt `i18next.language` („06.07.2026, 07:00" statt „Jul 6, 2026, 7:00 AM").
+- **ZToastAction-Plumbing entfernt** (YAGNI, war API-unerreichbar). `useTabChrome`-Hook bewusst NICHT gebaut: die vier Screens divergieren (Home braucht die ganze Notifications-Query fürs Pull-to-Refresh) — der Hook wäre unsauberer als die Duplikation.
+- Gate: tsc sauber, 0 Lint-Errors, 817/817 Tests. Handoff-Bundle separat ersetzt (`f310d33`, self-contained, rendert in Nunito — Playwright-verifiziert); Typo-Skala-Differenz zum Kit bleibt bewusst (af7e1cd).
+
 ## Empfohlene Reihenfolge
 
 1. C1 committen (1 Befehl), C2 Logout-Redirect-URL (Env/WorkOS-Konfig), C3 Fehlerpfad im Callback sichtbar machen.
