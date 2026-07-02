@@ -10,16 +10,16 @@ export type ZIconTileSize = 'sm' | 'md';
  * Background is a `z-*-soft` token surface per tone (never the saturated base
  * token, which would hide the glyph); the caller passes an already-coloured
  * lucide glyph as `icon` so the foreground matches the tone:
- *   neutral  → colors.primary    (on bg-z-surface-warm)
- *   primary  → colors.primary    (on bg-z-primary-soft)
- *   success  → colors.success    (on bg-z-success-soft)
- *   warning  → colors.warning    (on bg-z-warning-soft)
- *   danger   → colors.danger     (on bg-z-danger-soft)
+ *   neutral  → color('accent')    (on bg-z-surface-warm)
+ *   primary  → color('accent')    (on bg-z-primary-soft)
+ *   success  → color('success')    (on bg-z-success-soft)
+ *   warning  → color('warning')    (on bg-z-warning-soft)
+ *   danger   → color('danger')     (on bg-z-danger-soft)
  *
  * The web counterpart uses `bg-[var(--z-surface-warm)] text-[var(--z-primary)]`
  * for neutral/primary icon tiles (group-details-page.component.ts lines 122, 154).
  * Destructive tiles use a soft rose surface with a saturated danger glyph, as
- * ZConfirmDialog already demonstrates (bg-rose-50 / color={colors.danger}).
+ * ZConfirmDialog already demonstrates (bg-rose-50 / color={color('danger')}).
  */
 const toneSurface: Record<ZIconTileTone, string> = {
   neutral: 'bg-z-surface-warm',

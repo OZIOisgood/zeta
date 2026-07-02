@@ -36,7 +36,6 @@ import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { showToast } from '../../components/ui/z-toast';
 import { ZTextInput } from '../../components/ui/z-text-input';
 import { ZSymbol } from '../../components/ui/z-symbol';
-import { colors } from '../../theme/colors';
 import { useRoleColors } from '../../theme/native';
 
 /** Web invite base URL: produce the same link the web app generates so a QR
@@ -96,6 +95,7 @@ function MemberSection({
   currentUserId?: string | null;
 }) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const count = members?.length ?? 0;
   const iconName = kind === 'experts' ? 'award' : 'users';
   const emptyTitle = kind === 'experts' ? t('groups.noExperts') : t('groups.noStudents');
@@ -105,7 +105,7 @@ function MemberSection({
   return (
     <ZCard>
       <View className="flex-row items-start gap-3">
-        <ZIconTile tone="neutral" icon={<ZSymbol name={iconName} label={title} size={20} color={colors.primary} />} />
+        <ZIconTile tone="neutral" icon={<ZSymbol name={iconName} label={title} size={20} color={color('accent')} />} />
         <View className="flex-1">
           <View className="flex-row flex-wrap items-center gap-2">
             <Text className="text-[19px] font-extrabold text-z-text">{title}</Text>
@@ -122,7 +122,7 @@ function MemberSection({
           <ZEmptyState
             title={t('groups.membersLoadFailed')}
             description={t('home.error.description')}
-            icon={<ZSymbol name="warning" label={t('groups.membersLoadFailed')} size={24} color={colors.primary} />}
+            icon={<ZSymbol name="warning" label={t('groups.membersLoadFailed')} size={24} color={color('accent')} />}
           >
             <ZButton
               testID={`members-retry-${kind}`}
@@ -153,7 +153,7 @@ function MemberSection({
         </View>
       ) : (
         <View className="mt-5">
-          <ZEmptyState title={emptyTitle} description={emptyDescription} icon={<ZSymbol name={iconName} label={emptyTitle} size={24} color={colors.primary} />} />
+          <ZEmptyState title={emptyTitle} description={emptyDescription} icon={<ZSymbol name={iconName} label={emptyTitle} size={24} color={color('accent')} />} />
         </View>
       )}
     </ZCard>
@@ -260,7 +260,7 @@ function InviteSection({ groupId }: { groupId: string }) {
     <ZCard testID="group-invite-section">
       {/* Header */}
       <View className="flex-row items-start gap-3">
-        <ZIconTile tone="neutral" icon={<ZSymbol name="qr-code" label={t('groups.inviteDialog.title')} size={20} color={colors.primary} />} />
+        <ZIconTile tone="neutral" icon={<ZSymbol name="qr-code" label={t('groups.inviteDialog.title')} size={20} color={color('accent')} />} />
         <View className="flex-1">
           <Text className="text-[19px] font-extrabold text-z-text">
             {t('groups.inviteDialog.title')}
@@ -291,7 +291,7 @@ function InviteSection({ groupId }: { groupId: string }) {
 
           {/* Email hint */}
           <View className="flex-row items-start gap-2 rounded-md border border-z-border bg-z-bg p-3">
-            <ZSymbol name="mail" label={t('groups.inviteDialog.emailHint')} size={16} color={colors.primary} />
+            <ZSymbol name="mail" label={t('groups.inviteDialog.emailHint')} size={16} color={color('accent')} />
             <Text className="flex-1 text-[15px] leading-6 text-z-muted">
               {t('groups.inviteDialog.emailHint')}
             </Text>
@@ -329,7 +329,7 @@ function InviteSection({ groupId }: { groupId: string }) {
             <View className="items-center justify-center rounded-[12px] border border-z-border bg-z-surface p-4">
               {qrError ? (
                 <View className="items-center p-3">
-                  <ZSymbol name="qr-code" label={t('groups.inviteDialog.qrUnavailable')} size={32} color={colors.muted} />
+                  <ZSymbol name="qr-code" label={t('groups.inviteDialog.qrUnavailable')} size={32} color={color('onSurfaceVariant')} />
                   <Text className="mt-2 text-center text-xs text-z-muted">
                     {t('groups.inviteDialog.qrUnavailable')}
                   </Text>
@@ -348,7 +348,7 @@ function InviteSection({ groupId }: { groupId: string }) {
             {/* Share link */}
             <View>
               <View className="flex-row items-center gap-2">
-                <ZSymbol name="link" label={t('groups.inviteDialog.shareLink')} size={16} color={colors.primary} />
+                <ZSymbol name="link" label={t('groups.inviteDialog.shareLink')} size={16} color={color('accent')} />
                 <Text className="text-sm font-semibold text-z-text">
                   {t('groups.inviteDialog.shareLink')}
                 </Text>
@@ -513,7 +513,7 @@ export default function GroupDetailScreen() {
                     name="settings"
                     label={t('groups.preferences')}
                     size={22}
-                    color={colors.primary}
+                    color={color('accent')}
                   />
                 </Touchable>
               )
@@ -595,7 +595,7 @@ export default function GroupDetailScreen() {
               <ZEmptyState
                 title={t('groups.membersUnavailable')}
                 description={t('groups.membersUnavailableDescription')}
-                icon={<ZSymbol name="warning" label={t('groups.membersUnavailable')} size={24} color={colors.primary} />}
+                icon={<ZSymbol name="warning" label={t('groups.membersUnavailable')} size={24} color={color('accent')} />}
               />
             )}
 

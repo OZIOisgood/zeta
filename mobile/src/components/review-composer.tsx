@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { Send, Sparkles, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { CreateReviewInput, Review } from '../api/queries/reviews';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { ZChip } from './ui/z-chip';
 import { ZIconButton } from './ui/z-icon-button';
 import { ZTextarea } from './ui/z-textarea';
@@ -40,6 +40,7 @@ export function ReviewComposer({
   onEnhance,
 }: ReviewComposerProps) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const [content, setContent] = useState('');
   const [includeTimestamp, setIncludeTimestamp] = useState(false);
   const [capturedTime, setCapturedTime] = useState<number | null>(null);
@@ -117,7 +118,7 @@ export function ReviewComposer({
             testID="review-cancel-reply"
             onPress={onCancelReply}
           >
-            <X color={colors.muted} size={14} />
+            <X color={color('onSurfaceVariant')} size={14} />
           </ZIconButton>
         </View>
       )}
@@ -151,7 +152,7 @@ export function ReviewComposer({
             disabled={!content.trim() || busy || enhancing}
             onPress={() => void handleEnhance()}
           >
-            <Sparkles color={colors.muted} size={16} />
+            <Sparkles color={color('onSurfaceVariant')} size={16} />
           </ZIconButton>
         ) : null}
         <ZIconButton
@@ -162,7 +163,7 @@ export function ReviewComposer({
           disabled={!content.trim() || busy}
           onPress={() => void handleSend()}
         >
-          <Send color={colors.onPrimary} size={16} />
+          <Send color={color('onAccent')} size={16} />
         </ZIconButton>
       </View>
     </View>

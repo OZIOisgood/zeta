@@ -19,7 +19,7 @@ import { showToast } from '../../../components/ui/z-toast';
 import { authStore, useAuth } from '../../../auth/auth-store';
 import type { Me } from '../../../auth/auth-store';
 import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
-import { colors } from '../../../theme/colors';
+import { useRoleColors } from '../../../theme/native';
 
 // Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
 // iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
@@ -78,6 +78,7 @@ function LoadingState() {
  */
 function ProfileOverview({ user }: { user: Me }) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -204,11 +205,11 @@ function ProfileOverview({ user }: { user: Me }) {
                   leading={
                     <ZIconTile
                       tone="neutral"
-                      icon={<ZSymbol name={row.icon} label={row.label} size={20} color={colors.primary} />}
+                      icon={<ZSymbol name={row.icon} label={row.label} size={20} color={color('accent')} />}
                     />
                   }
                   title={row.label}
-                  trailing={<ZSymbol name="chevron-right" label={row.label} size={18} color={colors.muted} />}
+                  trailing={<ZSymbol name="chevron-right" label={row.label} size={18} color={color('onSurfaceVariant')} />}
                   onPress={() => router.push(row.route as never)}
                 />
               </View>
@@ -218,7 +219,7 @@ function ProfileOverview({ user }: { user: Me }) {
               leading={
                 <ZIconTile
                   tone="neutral"
-                  icon={<ZSymbol name="mail" label={t('preferences.emailNotifications')} size={20} color={colors.primary} />}
+                  icon={<ZSymbol name="mail" label={t('preferences.emailNotifications')} size={20} color={color('accent')} />}
                 />
               }
               title={t('preferences.emailNotifications')}
@@ -237,7 +238,7 @@ function ProfileOverview({ user }: { user: Me }) {
             label={t('common.actions.signOut')}
             variant="secondary"
             fullWidth
-            icon={<ZSymbol name="logout" label={t('common.actions.signOut')} size={16} color={colors.text} />}
+            icon={<ZSymbol name="logout" label={t('common.actions.signOut')} size={16} color={color('onSurface')} />}
             onPress={() => void authStore.getState().signOut()}
           />
         </View>

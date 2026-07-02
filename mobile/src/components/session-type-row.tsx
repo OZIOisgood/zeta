@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from 'lucide-react-native';
 import type { SessionType } from '../api/queries/coaching';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { ZBadge } from './ui/z-badge';
 import { ZIconButton } from './ui/z-icon-button';
 import { ZListItem } from './ui/z-list-item';
@@ -30,6 +30,7 @@ export function SessionTypeRow({
   onDelete: () => void;
   testID?: string;
 }) {
+  const { color } = useRoleColors();
   return (
     <ZListItem
       // Non-interactive: the row surfaces its own edit/delete controls.
@@ -40,10 +41,10 @@ export function SessionTypeRow({
       trailing={
         <>
           <ZIconButton label={editLabel} variant="secondary" size="sm" onPress={onEdit}>
-            <Pencil color={colors.text} size={16} />
+            <Pencil color={color('onSurface')} size={16} />
           </ZIconButton>
           <ZIconButton label={deleteLabel} variant="secondary" size="sm" onPress={onDelete}>
-            <Trash2 color={colors.danger} size={16} />
+            <Trash2 color={color('danger')} size={16} />
           </ZIconButton>
         </>
       }

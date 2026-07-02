@@ -1,6 +1,6 @@
 import { CircleAlert } from 'lucide-react-native';
 import { Text, View } from 'react-native';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 /**
  * Validation error text under a field. Mobile counterpart of the web
@@ -13,13 +13,14 @@ export function ZFieldError({
   message: string;
   testID?: string;
 }) {
+  const { color } = useRoleColors();
   return (
     <View
       testID={testID}
       accessibilityRole="alert"
       className="mt-1 flex-row items-start gap-1.5"
     >
-      <CircleAlert color={colors.danger} size={14} />
+      <CircleAlert color={color('danger')} size={14} />
       <Text className="flex-1 text-xs font-medium text-z-danger">{message}</Text>
     </View>
   );

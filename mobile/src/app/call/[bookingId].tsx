@@ -27,7 +27,7 @@ import { ZEmptyState } from '../../components/ui/z-empty-state';
 import { ZIconButton } from '../../components/ui/z-icon-button';
 import { ZSkeleton } from '../../components/ui/z-skeleton';
 import { ZSymbol } from '../../components/ui/z-symbol';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 // Maps a stable store error code to a localized message key. The raw provider
 // message never reaches the UI (it may carry connection details).
@@ -41,6 +41,7 @@ export default function CallScreen() {
   const { bookingId, groupId } = useLocalSearchParams<{ bookingId: string; groupId: string }>();
   const router = useRouter();
   const { t } = useTranslation();
+  const { color } = useRoleColors();
 
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
@@ -92,7 +93,7 @@ export default function CallScreen() {
       <ZScreen edges={['top', 'bottom']}>
         <View testID="call-error" className="flex-1 items-center justify-center px-8">
           <ZEmptyState
-            icon={<ZSymbol name="warning" label={t('sessions.call.couldNotJoin')} size={24} color={colors.danger} />}
+            icon={<ZSymbol name="warning" label={t('sessions.call.couldNotJoin')} size={24} color={color('danger')} />}
             title={t('sessions.call.couldNotJoin')}
             description={t('sessions.call.missingBooking')}
           >
@@ -114,7 +115,7 @@ export default function CallScreen() {
       <ZScreen edges={['top', 'bottom']}>
         <View testID="call-permission-denied" className="flex-1 items-center justify-center px-8">
           <ZEmptyState
-            icon={<ZSymbol name="camera-off" label={t('sessions.call.permissionHeading')} size={24} color={colors.danger} />}
+            icon={<ZSymbol name="camera-off" label={t('sessions.call.permissionHeading')} size={24} color={color('danger')} />}
             title={t('sessions.call.permissionHeading')}
             description={t('sessions.call.permissionBody')}
           >
@@ -166,7 +167,7 @@ export default function CallScreen() {
       <ZScreen edges={['top', 'bottom']}>
         <View testID="call-error" className="flex-1 items-center justify-center px-8">
           <ZEmptyState
-            icon={<ZSymbol name="warning" label={t('sessions.call.couldNotJoin')} size={24} color={colors.danger} />}
+            icon={<ZSymbol name="warning" label={t('sessions.call.couldNotJoin')} size={24} color={color('danger')} />}
             title={t('sessions.call.couldNotJoin')}
             description={t(messageKey)}
           >
@@ -236,9 +237,9 @@ export default function CallScreen() {
           onPress={() => callStore.getState().toggleMic()}
         >
           {micMuted ? (
-            <ZSymbol name="mic-off" label={t('common.aria.toggleMicrophone')} size={24} color={colors.danger} />
+            <ZSymbol name="mic-off" label={t('common.aria.toggleMicrophone')} size={24} color={color('danger')} />
           ) : (
-            <ZSymbol name="mic" label={t('common.aria.toggleMicrophone')} size={24} color={colors.onPrimary} />
+            <ZSymbol name="mic" label={t('common.aria.toggleMicrophone')} size={24} color={color('onAccent')} />
           )}
         </ZIconButton>
 
@@ -251,9 +252,9 @@ export default function CallScreen() {
           onPress={() => callStore.getState().toggleCamera()}
         >
           {cameraEnabled ? (
-            <ZSymbol name="video" label={t('common.aria.toggleCamera')} size={24} color={colors.onPrimary} />
+            <ZSymbol name="video" label={t('common.aria.toggleCamera')} size={24} color={color('onAccent')} />
           ) : (
-            <ZSymbol name="video-off" label={t('common.aria.toggleCamera')} size={24} color={colors.danger} />
+            <ZSymbol name="video-off" label={t('common.aria.toggleCamera')} size={24} color={color('danger')} />
           )}
         </ZIconButton>
 
@@ -265,7 +266,7 @@ export default function CallScreen() {
           shape="circle"
           onPress={() => callStore.getState().switchCamera()}
         >
-          <ZSymbol name="camera-switch" label={t('sessions.call.switchCamera')} size={24} color={colors.onPrimary} />
+          <ZSymbol name="camera-switch" label={t('sessions.call.switchCamera')} size={24} color={color('onAccent')} />
         </ZIconButton>
 
         <ZIconButton
@@ -276,7 +277,7 @@ export default function CallScreen() {
           shape="circle"
           onPress={handleLeave}
         >
-          <ZSymbol name="phone-off" label={t('common.aria.leaveCall')} size={24} color={colors.onPrimary} />
+          <ZSymbol name="phone-off" label={t('common.aria.leaveCall')} size={24} color={color('onAccent')} />
         </ZIconButton>
       </View>
     </ZScreen>

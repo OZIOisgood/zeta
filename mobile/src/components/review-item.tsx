@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { Review } from '../api/queries/reviews';
 import { initialsFromName } from '../lib/avatar';
 import { formatRelativeTime } from '../lib/datetime';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { Touchable } from './ui/touchable';
 import { ZAvatar } from './ui/z-avatar';
 import { ZButton } from './ui/z-button';
@@ -49,6 +49,7 @@ export function ReviewItem({
   deleting = false,
 }: ReviewItemProps) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const authorName = review.author?.name ?? t('videos.unknownAuthor');
   const showReplyButton = Boolean(onReply) && !isReply;
   const hasTimestamp =
@@ -150,7 +151,7 @@ export function ReviewItem({
                   testID="review-edit-enhance"
                   loading={enhancing}
                   disabled={!draft.trim() || savingEdit}
-                  icon={<ZSymbol name="sparkles" label="" size={16} color={colors.text} />}
+                  icon={<ZSymbol name="sparkles" label="" size={16} color={color('onSurface')} />}
                   onPress={() => void handleEnhance()}
                 />
               ) : (
@@ -191,7 +192,7 @@ export function ReviewItem({
                 onPress={() => onReply!(review)}
                 className="flex-row items-center gap-1"
               >
-                <ZSymbol name="reply" label="" size={14} color={colors.muted} />
+                <ZSymbol name="reply" label="" size={14} color={color('onSurfaceVariant')} />
                 <Text className="text-xs font-bold text-z-muted">{t('videos.reply')}</Text>
               </Touchable>
             )}
@@ -204,7 +205,7 @@ export function ReviewItem({
                 disabled={deleting}
                 onPress={startEdit}
               >
-                <ZSymbol name="edit" label="" size={14} color={colors.muted} />
+                <ZSymbol name="edit" label="" size={14} color={color('onSurfaceVariant')} />
               </ZIconButton>
             )}
 
@@ -216,7 +217,7 @@ export function ReviewItem({
                 disabled={deleting}
                 onPress={() => onDelete(review)}
               >
-                <ZSymbol name="trash" label="" size={14} color={colors.danger} />
+                <ZSymbol name="trash" label="" size={14} color={color('danger')} />
               </ZIconButton>
             )}
           </View>

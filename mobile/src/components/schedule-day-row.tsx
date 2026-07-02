@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from 'lucide-react-native';
 import type { CoachingAvailability } from '../api/queries/coaching';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { ZIconButton } from './ui/z-icon-button';
 import { ZIconTile } from './ui/z-icon-tile';
 import { ZListItem } from './ui/z-list-item';
@@ -32,6 +32,7 @@ export function ScheduleDayRow({
   onDelete: () => void;
   testID?: string;
 }) {
+  const { color } = useRoleColors();
   return (
     <ZListItem
       // Non-interactive: the row surfaces its own edit/delete controls.
@@ -40,7 +41,7 @@ export function ScheduleDayRow({
         <ZIconTile
           tone="neutral"
           size="sm"
-          icon={<ZSymbol name="calendar" label={dayName} size={18} color={colors.primaryStrong} />}
+          icon={<ZSymbol name="calendar" label={dayName} size={18} color={color('accentStrong')} />}
         />
       }
       title={dayName}
@@ -48,10 +49,10 @@ export function ScheduleDayRow({
       trailing={
         <>
           <ZIconButton label={editLabel} variant="secondary" size="sm" onPress={onEdit}>
-            <Pencil color={colors.text} size={16} />
+            <Pencil color={color('onSurface')} size={16} />
           </ZIconButton>
           <ZIconButton label={deleteLabel} variant="secondary" size="sm" onPress={onDelete}>
-            <Trash2 color={colors.danger} size={16} />
+            <Trash2 color={color('danger')} size={16} />
           </ZIconButton>
         </>
       }

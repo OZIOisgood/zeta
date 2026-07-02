@@ -20,7 +20,7 @@
 
 import { useState } from 'react';
 import { TextInput } from 'react-native';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 import type { ZTextInputProps } from './z-text-input.types';
 
 export type { ZTextInputProps } from './z-text-input.types';
@@ -44,6 +44,7 @@ export function ZTextInput({
   // padding gives the extra dp back — no layout shift. `invalid` keeps the
   // danger color even while focused (M3 error precedence).
   const [focused, setFocused] = useState(false);
+  const { color } = useRoleColors();
   return (
     <TextInput
       testID={testID}
@@ -52,7 +53,7 @@ export function ZTextInput({
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
-      placeholderTextColor={colors.muted}
+      placeholderTextColor={color('onSurfaceVariant')}
       editable={!disabled}
       autoCapitalize={autoCapitalize}
       autoCorrect={autoCorrect}

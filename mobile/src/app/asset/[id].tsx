@@ -30,7 +30,7 @@ import { showToast } from '../../components/ui/z-toast';
 import { ZSymbol } from '../../components/ui/z-symbol';
 import { ZVideoPartRail } from '../../components/ui/z-video-part-rail';
 import { Touchable } from '../../components/ui/touchable';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 type AssetVideo = components['schemas']['AssetVideo'];
 type AssetGroup = NonNullable<components['schemas']['Asset']['group']>;
@@ -116,6 +116,7 @@ function MetaCard({
   onPressFinalize: () => void;
 }) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const [desc, dispatchDesc] = useReducer(descReducer, { expanded: false, overflows: false });
 
   // Reset the clamp state when the description changes, so a stale
@@ -203,7 +204,7 @@ function MetaCard({
         <ZButton
           label={t('videos.markReviewed')}
           testID="asset-finalize"
-          icon={<ZSymbol name="check" label={t('videos.markReviewed')} size={16} color={colors.onPrimary} />}
+          icon={<ZSymbol name="check" label={t('videos.markReviewed')} size={16} color={color('onAccent')} />}
           onPress={onPressFinalize}
         />
       ) : null}
@@ -234,6 +235,7 @@ type ReviewsSectionProps = {
 
 function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, canDelete }: ReviewsSectionProps) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const [replyingTo, setReplyingTo] = useState<Review | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
@@ -321,7 +323,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
           Count = ALL comments incl. replies: the asset-card comment badge counts
           the full thread, so "2" on the card must not become "1" here. */}
       <View className="mb-3 flex-row items-center gap-2">
-        <ZSymbol name="message" label={t('videos.comments')} size={20} color={colors.primary} />
+        <ZSymbol name="message" label={t('videos.comments')} size={20} color={color('accent')} />
         <Text className="text-[19px] font-extrabold text-z-text">{t('videos.comments')}</Text>
         <ZBadge label={String((data ?? []).length)} />
       </View>
@@ -408,6 +410,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
 
 export default function AssetDetailScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data, isPending, isError, refetch } = useAssetQuery(id ?? '');
@@ -517,7 +520,7 @@ export default function AssetDetailScreen() {
             <Player key={active.id} video={active} onPlayer={handlePlayer} />
           ) : (
             <View className="items-center gap-2">
-              <ZSymbol name="clock" label={t('videos.processingUnavailable')} size={28} color={colors.bg} />
+              <ZSymbol name="clock" label={t('videos.processingUnavailable')} size={28} color={color('background')} />
               <Text className="text-z-bg">{t('videos.processingUnavailable')}</Text>
             </View>
           )}

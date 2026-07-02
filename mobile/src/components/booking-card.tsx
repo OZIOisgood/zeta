@@ -8,7 +8,7 @@ import { ZButton } from './ui/z-button';
 import { ZCard } from './ui/z-card';
 import { ZSwipeable } from './ui/z-swipeable';
 import { ZSymbol } from './ui/z-symbol';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 
 /**
  * Resolve the status display label for a booking from the server-provided
@@ -103,6 +103,7 @@ export function BookingCard({
   onJoin,
 }: BookingCardProps) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
 
   // Swipe-to-cancel is invisible to VoiceOver/TalkBack: RNGH renders the
   // trailing action only during the gesture, so it never exists in the a11y
@@ -181,7 +182,7 @@ export function BookingCard({
         {/* Decorative: the clock renders for done/cancelled bookings too, so a
             status label ('upcoming') would mis-announce. The adjacent date/time
             text conveys the info, so the glyph is not announced (label=""). */}
-        <ZSymbol name="clock" label="" size={14} color={colors.muted} />
+        <ZSymbol name="clock" label="" size={14} color={color('onSurfaceVariant')} />
         <Text className="text-xs font-medium text-z-muted">
           {dateText} · {t('common.labels.minutesShort', { count: booking.duration_minutes })}
         </Text>
@@ -220,7 +221,7 @@ export function BookingCard({
               testID="booking-join"
               label={t('common.actions.join')}
               variant="primary"
-              icon={<ZSymbol name="phone" label={t('common.actions.join')} size={16} color={colors.onPrimary} />}
+              icon={<ZSymbol name="phone" label={t('common.actions.join')} size={16} color={color('onAccent')} />}
               onPress={onJoin}
             />
           ) : null}
@@ -229,7 +230,7 @@ export function BookingCard({
               testID="booking-recording"
               label={t('common.status.recordingReady')}
               variant="tonal"
-              icon={<ZSymbol name="video" label={t('common.status.recordingReady')} size={16} color={colors.text} />}
+              icon={<ZSymbol name="video" label={t('common.status.recordingReady')} size={16} color={color('onSurface')} />}
               onPress={() => onOpenRecording(booking.recording!.asset_id!)}
             />
           ) : null}
@@ -249,7 +250,7 @@ export function BookingCard({
         <ZSwipeable
           testID="booking-cancel-swipe"
           actionLabel={t('sessions.cancel.title')}
-          actionIcon={<ZSymbol name="ban" label="" size={20} color={colors.onPrimary} />}
+          actionIcon={<ZSymbol name="ban" label="" size={20} color={color('onAccent')} />}
           onAction={onCancel}
         >
           {card}

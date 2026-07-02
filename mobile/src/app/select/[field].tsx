@@ -7,7 +7,7 @@ import { ZScreen } from '../../components/ui/z-screen';
 import { ZTextInput } from '../../components/ui/z-text-input';
 import { ZSymbol } from '../../components/ui/z-symbol';
 import { Touchable } from '../../components/ui/touchable';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 /**
  * Pushed searchable selection screen for ZCombobox.
@@ -31,6 +31,7 @@ import { colors } from '../../theme/colors';
  */
 export default function SelectFieldScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
   // field param is present in the URL; actual data comes from the store.
   useLocalSearchParams<{ field: string }>();
@@ -82,7 +83,7 @@ export default function SelectFieldScreen() {
                 name="back"
                 label={t('common.actions.back')}
                 size={22}
-                color={colors.primary}
+                color={color('accent')}
               />
             </Touchable>
           ),
@@ -130,7 +131,7 @@ export default function SelectFieldScreen() {
                   {opt.label}
                 </Text>
                 {isSelected ? (
-                  <ZSymbol name="check" label={opt.label} size={18} color={colors.primary} />
+                  <ZSymbol name="check" label={opt.label} size={18} color={color('accent')} />
                 ) : null}
               </View>
             </Touchable>

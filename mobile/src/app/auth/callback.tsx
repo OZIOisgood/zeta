@@ -4,7 +4,7 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 import { completeLogin } from '../../auth/login';
 import { useAuth } from '../../auth/auth-store';
 import { ZScreen } from '../../components/ui/z-screen';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 
 /**
  * Landing route for the AuthKit redirect (zeta://auth/callback resp.
@@ -16,6 +16,7 @@ import { colors } from '../../theme/colors';
  */
 export default function AuthCallback() {
   const { code } = useLocalSearchParams<{ code?: string }>();
+  const { color } = useRoleColors();
   const status = useAuth((s) => s.status);
   const [exchanging, setExchanging] = useState(() => typeof code === 'string' && code.length > 0);
   const [failed, setFailed] = useState(false);
@@ -43,7 +44,7 @@ export default function AuthCallback() {
 
   return (
     <ZScreen className="items-center justify-center">
-      <ActivityIndicator size="large" color={colors.primary} />
+      <ActivityIndicator size="large" color={color('accent')} />
     </ZScreen>
   );
 }

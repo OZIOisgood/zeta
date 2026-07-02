@@ -45,7 +45,7 @@ import { Alert, Button, Host, Text as SwiftText } from '@expo/ui/swift-ui';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 import { ZButton } from './z-button';
 import { ZDialogPanel } from './z-dialog-panel';
 import type { ZConfirmDialogProps, ZConfirmDialogTone } from './z-confirm-dialog.types';
@@ -64,11 +64,12 @@ const toneIconClasses: Record<ZConfirmDialogTone, string> = {
   danger: 'bg-rose-50',
 };
 
-const toneIconColors: Record<ZConfirmDialogTone, string> = {
-  info: colors.primary,
-  warning: colors.warning,
-  danger: colors.danger,
-};
+// Role NAMES at module scope — resolved per render so dark mode flips them.
+const toneIconRoles = {
+  info: 'accent',
+  warning: 'warning',
+  danger: 'danger',
+} as const;
 
 export function ZConfirmDialog({
   visible,
@@ -84,6 +85,7 @@ export function ZConfirmDialog({
   children,
   testID,
 }: ZConfirmDialogProps) {
+  const { color } = useRoleColors();
   // --- BRANCH: children present → native BottomSheet ---
   if (children != null) {
     const Icon = toneIcon[tone];
@@ -94,7 +96,7 @@ export function ZConfirmDialog({
           <View
             className={`h-10 w-10 items-center justify-center rounded-md ${toneIconClasses[tone]}`}
           >
-            <Icon color={toneIconColors[tone]} size={20} />
+            <Icon color={color(toneIconRoles[tone])} size={20} />
           </View>
           <View className="min-w-0 flex-1">
             <Text className="text-base font-semibold leading-6 text-z-text">{title}</Text>

@@ -19,7 +19,7 @@ import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZSymbol } from '../../../components/ui/z-symbol';
 import { ZTabs } from '../../../components/ui/z-tabs';
-import { colors } from '../../../theme/colors';
+import { useRoleColors } from '../../../theme/native';
 
 type SessionTab = 'upcoming' | 'past' | 'cancelled';
 
@@ -52,6 +52,7 @@ const ANDROID_TAB_BAR_HEIGHT = 56;
 
 export default function CoachingScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -80,6 +81,9 @@ export default function CoachingScreen() {
   // Multiple headerRight items are composed in a flex row (HIG allows multiple
   // bar button items on the trailing side; availability + book + bell stays
   // within a sane trailing-cluster width).
+  // Hoisted hex (stable string dep): `color` is a fresh closure every render —
+  // depending on it directly would re-run setOptions each render.
+  const accent = color('accent');
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -91,7 +95,7 @@ export default function CoachingScreen() {
               onPress={() => router.push('/availability' as never)}
               haptic
             >
-              <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={24} color={colors.primary} />
+              <ZSymbol name="calendar-cog" label={t('common.actions.preferences')} size={24} color={accent} />
             </Touchable>
           ) : null}
           {Platform.OS === 'ios' && canBook ? (
@@ -101,14 +105,14 @@ export default function CoachingScreen() {
               onPress={() => router.push('/book')}
               haptic
             >
-              <ZSymbol name="plus" label={t('common.actions.bookSession')} size={24} color={colors.primary} />
+              <ZSymbol name="plus" label={t('common.actions.bookSession')} size={24} color={accent} />
             </Touchable>
           ) : null}
           <NotificationBell unreadCount={unreadCount} onPress={() => router.push('/notifications')} />
         </View>
       ),
     });
-  }, [navigation, canManageAvailability, canBook, unreadCount, t, router]);
+  }, [navigation, canManageAvailability, canBook, unreadCount, t, router, accent]);
 
   // Defensive self-guard: if the user somehow navigates here without the tab
   // permission (e.g. via a deep-link or stat-card tap before permissions resolve),
@@ -121,7 +125,7 @@ export default function CoachingScreen() {
           <ZEmptyState
             title={t('sessions.availability.noPermission')}
             description={t('sessions.availability.noPermissionDescription')}
-            icon={<ZSymbol name="calendar" label={t('sessions.availability.noPermission')} size={24} color={colors.primary} />}
+            icon={<ZSymbol name="calendar" label={t('sessions.availability.noPermission')} size={24} color={color('accent')} />}
           />
         </View>
       </ZScreen>
@@ -158,7 +162,7 @@ export default function CoachingScreen() {
     <ZEmptyState
       title={t(`sessions.empty.${activeTab}Heading`)}
       description={t(`sessions.empty.${activeTab}Description`)}
-      icon={<ZSymbol name="calendar" label={t(`sessions.empty.${activeTab}Heading`)} size={24} color={colors.primary} />}
+      icon={<ZSymbol name="calendar" label={t(`sessions.empty.${activeTab}Heading`)} size={24} color={color('accent')} />}
     />
   );
 
@@ -245,7 +249,7 @@ export default function CoachingScreen() {
         <ZFab
           testID="coaching-book"
           label={t('common.actions.bookSession')}
-          icon={<ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={colors.onPrimary} />}
+          icon={<ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={color('onAccent')} />}
           onPress={() => router.push('/book')}
           className="absolute right-6"
           style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}

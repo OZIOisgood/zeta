@@ -22,7 +22,7 @@ import { ZSymbol } from '../../../components/ui/z-symbol';
 import { ZTabs } from '../../../components/ui/z-tabs';
 import { Touchable } from '../../../components/ui/touchable';
 import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
-import { colors } from '../../../theme/colors';
+import { useRoleColors } from '../../../theme/native';
 
 type VideoFilter = 'all' | 'toReview' | 'reviewed';
 
@@ -73,6 +73,7 @@ const ANDROID_TAB_BAR_HEIGHT = 56;
 
 export default function VideosScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -98,6 +99,9 @@ export default function VideosScreen() {
   //    FAB); Android surfaces create via the Material FAB rendered below in JSX.
   // headerRight is therefore always set (the bell is unconditional); on iOS it
   // composes the create "+" before the bell in a trailing flex row.
+  // Hoisted hex (stable string dep): `color` is a fresh closure every render —
+  // depending on it directly would re-run setOptions each render.
+  const accent = color('accent');
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -109,14 +113,14 @@ export default function VideosScreen() {
               onPress={() => router.push('/upload')}
               haptic
             >
-              <ZSymbol name="upload" label={t('common.actions.uploadVideo')} size={24} color={colors.primary} />
+              <ZSymbol name="upload" label={t('common.actions.uploadVideo')} size={24} color={accent} />
             </Touchable>
           ) : null}
           <NotificationBell unreadCount={unreadCount} onPress={() => router.push('/notifications')} />
         </View>
       ),
     });
-  }, [navigation, canCreate, unreadCount, t, router]);
+  }, [navigation, canCreate, unreadCount, t, router, accent]);
 
   const [activeFilter, setActiveFilter] = useState<VideoFilter>('all');
 
@@ -198,7 +202,7 @@ export default function VideosScreen() {
                 description={
                   noVideosAtAll ? t('videos.uploadFirstDescription') : t('videos.noVideosForStatuses')
                 }
-                icon={<ZSymbol name="video" label={t('videos.title')} size={24} color={colors.primary} />}
+                icon={<ZSymbol name="video" label={t('videos.title')} size={24} color={color('accent')} />}
               >
                 {canCreate ? (
                   <ZButton label={t('videos.uploadFirst')} onPress={() => router.push('/upload')} />
@@ -229,7 +233,7 @@ export default function VideosScreen() {
           // content as a compact pill at the bottom-right (never full-width — the
           // content-hug lives in z-fab.android.tsx).
           label={t('common.actions.uploadVideo')}
-          icon={<ZSymbol name="upload" label={t('common.actions.uploadVideo')} size={24} color={colors.onPrimary} />}
+          icon={<ZSymbol name="upload" label={t('common.actions.uploadVideo')} size={24} color={color('onAccent')} />}
           onPress={() => router.push('/upload')}
           className="absolute right-6"
           style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}

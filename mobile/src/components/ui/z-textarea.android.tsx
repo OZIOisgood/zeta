@@ -22,7 +22,7 @@
 
 import { useState } from 'react';
 import { TextInput } from 'react-native';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 import type { ZTextareaProps } from './z-textarea.types';
 
 export type { ZTextareaProps } from './z-textarea.types';
@@ -40,6 +40,7 @@ export function ZTextarea({
   // Handoff: 2dp accent focus border (see z-text-input.android.tsx — same
   // border/padding compensation so the text does not shift on focus).
   const [focused, setFocused] = useState(false);
+  const { color } = useRoleColors();
   return (
     <TextInput
       testID={testID}
@@ -48,7 +49,7 @@ export function ZTextarea({
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
-      placeholderTextColor={colors.muted}
+      placeholderTextColor={color('onSurfaceVariant')}
       editable={!disabled}
       multiline
       numberOfLines={rows}

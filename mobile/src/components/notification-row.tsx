@@ -17,7 +17,7 @@ import {
   type NotificationIcon,
 } from '../lib/notification-presenter';
 import { formatRelativeTime } from '../lib/datetime';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { ZButton } from './ui/z-button';
 import { ZIconTile, type ZIconTileTone } from './ui/z-icon-tile';
 import { ZListItem } from './ui/z-list-item';
@@ -52,30 +52,33 @@ const ICON_TONE: Record<NotificationIcon, ZIconTileTone> = {
   invite: 'neutral',
 };
 
-// ZIconTile maps tone→foreground; pass the matching glyph color so the lucide
-// stroke matches the tile's foreground token. For neutral tiles the web uses
-// --z-primary-strong (not --z-primary), so we follow suit.
-const ICON_COLOR: Record<NotificationIcon, string> = {
-  member: colors.success,
-  review: colors.success,
-  booking: colors.warning,
-  upload: colors.primaryStrong,
-  invite: colors.primaryStrong,
+// ZIconTile maps tone→foreground; pass the matching glyph ROLE so the lucide
+// stroke matches the tile's foreground token per scheme. For neutral tiles the
+// web uses --z-primary-strong (not --z-primary), so we follow suit. Role names
+// (not resolved hexes) at module scope — the hex is resolved per render inside
+// TypeGlyph so dark mode flips it.
+const ICON_ROLE: Record<NotificationIcon, 'success' | 'warning' | 'accentStrong'> = {
+  member: 'success',
+  review: 'success',
+  booking: 'warning',
+  upload: 'accentStrong',
+  invite: 'accentStrong',
 };
 
 function TypeGlyph({ icon }: { icon: NotificationIcon }) {
-  const color = ICON_COLOR[icon];
+  const { color } = useRoleColors();
+  const glyphColor = color(ICON_ROLE[icon]);
   switch (icon) {
     case 'member':
-      return <UserRound color={color} size={18} />;
+      return <UserRound color={glyphColor} size={18} />;
     case 'review':
-      return <CircleCheck color={color} size={18} />;
+      return <CircleCheck color={glyphColor} size={18} />;
     case 'upload':
-      return <FileVideo color={color} size={18} />;
+      return <FileVideo color={glyphColor} size={18} />;
     case 'booking':
-      return <CalendarDays color={color} size={18} />;
+      return <CalendarDays color={glyphColor} size={18} />;
     default:
-      return <Users color={color} size={18} />;
+      return <Users color={glyphColor} size={18} />;
   }
 }
 
@@ -96,6 +99,7 @@ export function NotificationRow({
   inviteBusy?: boolean;
 }) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const view = presentNotification(item);
   const unread = !item.read;
   const resolved = resolvedInvite(item);
@@ -126,7 +130,7 @@ export function NotificationRow({
   } else if (resolved === 'accepted') {
     footer = (
       <View className="mt-2 flex-row items-center gap-1.5">
-        <Check color={colors.success} size={14} />
+        <Check color={color('success')} size={14} />
         <Text className="text-xs font-semibold text-z-success">
           {t('notifications.invite.accepted', { group: item.payload.group_name })}
         </Text>
@@ -135,7 +139,7 @@ export function NotificationRow({
   } else if (resolved === 'declined') {
     footer = (
       <View className="mt-2 flex-row items-center gap-1.5">
-        <X color={colors.muted} size={14} />
+        <X color={color('onSurfaceVariant')} size={14} />
         <Text className="text-xs font-semibold text-z-muted">
           {t('notifications.invite.declined')}
         </Text>

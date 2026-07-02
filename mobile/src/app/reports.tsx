@@ -29,7 +29,7 @@ import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
 import { ZTabs, type ZTab } from '../components/ui/z-tabs';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 
 const GRANULARITIES: readonly Granularity[] = ['month', 'quarter', 'year'] as const;
 
@@ -60,6 +60,7 @@ function Skeletons() {
 
 export default function ReportsScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const { data, isPending, isError, isRefetching, refetch } = useReportEventsQuery();
 
   const [gran, setGran] = useState<Granularity>('month');
@@ -147,7 +148,7 @@ export default function ReportsScreen() {
                   label={t('reports.period.prev')}
                   onPress={() => setCursor((c) => stepCursor(gran, c, -1))}
                 >
-                  <ZSymbol name="chevron-left" label={t('reports.period.prev')} size={20} color={colors.muted} />
+                  <ZSymbol name="chevron-left" label={t('reports.period.prev')} size={20} color={color('onSurfaceVariant')} />
                 </ZIconButton>
                 <Text className="text-sm font-semibold text-z-text">{periodLabel}</Text>
                 <ZIconButton
@@ -155,7 +156,7 @@ export default function ReportsScreen() {
                   disabled={!forwardEnabled}
                   onPress={() => setCursor((c) => stepCursor(gran, c, 1))}
                 >
-                  <ZSymbol name="chevron-right" label={t('reports.period.next')} size={20} color={forwardEnabled ? colors.muted : colors.border} />
+                  <ZSymbol name="chevron-right" label={t('reports.period.next')} size={20} color={forwardEnabled ? color('onSurfaceVariant') : color('outline')} />
                 </ZIconButton>
               </View>
               {!atCurrent ? (
@@ -175,7 +176,7 @@ export default function ReportsScreen() {
                 testID="reports-stat-videos"
                 label={t('reports.stats.videos')}
                 count={report.totals.videoCount}
-                icon={<ZSymbol name="film" label={t('reports.stats.videos')} size={20} color={colors.primary} />}
+                icon={<ZSymbol name="film" label={t('reports.stats.videos')} size={20} color={color('accent')} />}
                 footer={
                   <ZBadge tone="neutral" label={fmtDuration(report.totals.videoSec, t)} />
                 }
@@ -185,7 +186,7 @@ export default function ReportsScreen() {
                 testID="reports-stat-live"
                 label={t('reports.stats.live')}
                 count={report.totals.liveCount}
-                icon={<ZSymbol name="video" label={t('reports.stats.live')} size={20} color={colors.success} />}
+                icon={<ZSymbol name="video" label={t('reports.stats.live')} size={20} color={color('success')} />}
                 footer={
                   <ZBadge tone="success" label={fmtDuration(report.totals.liveSec, t)} />
                 }
@@ -197,9 +198,9 @@ export default function ReportsScreen() {
                 count={report.leafCount}
                 icon={
                   isExpert ? (
-                    <ZSymbol name="users" label={t('reports.stats.students')} size={20} color={colors.primary} />
+                    <ZSymbol name="users" label={t('reports.stats.students')} size={20} color={color('accent')} />
                   ) : (
-                    <ZSymbol name="person" label={t('reports.stats.experts')} size={20} color={colors.primary} />
+                    <ZSymbol name="person" label={t('reports.stats.experts')} size={20} color={color('accent')} />
                   )
                 }
                 footer={
@@ -239,9 +240,9 @@ export default function ReportsScreen() {
               tone={item.kind === 'video' ? 'neutral' : 'success'}
               icon={
                 item.kind === 'video' ? (
-                  <ZSymbol name="film" label={t('reports.event.videoUploaded')} size={18} color={colors.primary} />
+                  <ZSymbol name="film" label={t('reports.event.videoUploaded')} size={18} color={color('accent')} />
                 ) : (
-                  <ZSymbol name="video" label={t('reports.event.liveCoaching')} size={18} color={colors.success} />
+                  <ZSymbol name="video" label={t('reports.event.liveCoaching')} size={18} color={color('success')} />
                 )
               }
             />

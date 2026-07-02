@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 import { RotateCcw, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { UploadJob } from '../upload/upload-store';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { ZIconButton } from './ui/z-icon-button';
 
 export function UploadProgressCard({
@@ -15,6 +15,7 @@ export function UploadProgressCard({
   onDismiss: (jobId: string) => void;
 }) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const doneCount = job.files.filter((f) => f.status === 'done').length;
   const overall =
     job.files.length > 0
@@ -34,7 +35,7 @@ export function UploadProgressCard({
             size="sm"
             onPress={() => onDismiss(job.id)}
           >
-            <X color={colors.muted} size={16} />
+            <X color={color('onSurfaceVariant')} size={16} />
           </ZIconButton>
         )}
 
@@ -45,7 +46,7 @@ export function UploadProgressCard({
             size="sm"
             onPress={() => onRetry(job.id, firstFailed.videoId)}
           >
-            <RotateCcw color={colors.muted} size={16} />
+            <RotateCcw color={color('onSurfaceVariant')} size={16} />
           </ZIconButton>
         )}
       </View>

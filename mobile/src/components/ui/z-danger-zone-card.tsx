@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { AlertTriangle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { colors } from '../../theme/colors';
+import { useRoleColors } from '../../theme/native';
 import { ZButton } from './z-button';
 import { ZCard } from './z-card';
 import { ZConfirmDialog } from './z-confirm-dialog';
@@ -39,12 +39,13 @@ export function ZDangerZoneCard({
   testID?: string;
 }) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const [confirmVisible, setConfirmVisible] = useState(false);
 
   return (
     <ZCard testID={testID}>
       <View className="flex-row items-start gap-3">
-        <ZIconTile tone="danger" icon={<AlertTriangle color={colors.danger} size={20} />} />
+        <ZIconTile tone="danger" icon={<AlertTriangle color={color('danger')} size={20} />} />
         <View className="min-w-0 flex-1">
           <Text className="text-base font-semibold text-z-text">{title}</Text>
           <Text className="mt-1 text-sm leading-6 text-z-muted">{description}</Text>

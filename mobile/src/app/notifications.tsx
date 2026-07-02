@@ -24,7 +24,7 @@ import { ZTabs, type ZTab } from '../components/ui/z-tabs';
 import { showToast } from '../components/ui/z-toast';
 import { groupByDay } from '../lib/notification-groups';
 import { presentNotification, resolvedInvite } from '../lib/notification-presenter';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 
 type NotificationFilter = 'all' | 'unread';
 
@@ -46,6 +46,7 @@ function ListSkeleton() {
 
 export default function NotificationsScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
   const { data, isPending, isError, refetch, isRefetching } = useNotificationsQuery();
   const markRead = useMarkNotificationReadMutation();
@@ -134,7 +135,7 @@ export default function NotificationsScreen() {
         <ZEmptyState
           title={emptyTitle}
           description={emptyDescription}
-          icon={<ZSymbol name="bell" label={t('notifications.title')} size={24} color={colors.primary} />}
+          icon={<ZSymbol name="bell" label={t('notifications.title')} size={24} color={color('accent')} />}
         />
       </View>
     );
@@ -194,7 +195,7 @@ export default function NotificationsScreen() {
                     name="check-all"
                     label={t('notifications.markAllRead')}
                     size={22}
-                    color={colors.primary}
+                    color={color('accent')}
                   />
                 </Touchable>
               )

@@ -23,7 +23,7 @@ import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZSymbol } from '../../../components/ui/z-symbol';
 import { isJoinable } from '../../../lib/connect-window';
-import { colors } from '../../../theme/colors';
+import { useRoleColors } from '../../../theme/native';
 
 const LATEST_VIDEOS_LIMIT = 4;
 const ANDROID_TAB_BAR_HEIGHT = 56;
@@ -60,6 +60,7 @@ function RowSkeleton() {
 
 export default function HomeScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -192,7 +193,7 @@ export default function HomeScreen() {
       <ZEmptyState
         title={t('videos.noVideosYet')}
         description={t('videos.uploadFirstDescription')}
-        icon={<ZSymbol name="video" label={t('videos.title')} size={24} color={colors.primary} />}
+        icon={<ZSymbol name="video" label={t('videos.title')} size={24} color={color('accent')} />}
       >
         {canCreate ? (
           <ZButton

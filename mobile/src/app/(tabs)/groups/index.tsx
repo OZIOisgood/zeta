@@ -16,7 +16,7 @@ import { ZQueryError } from '../../../components/ui/z-query-error';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZSymbol } from '../../../components/ui/z-symbol';
-import { colors } from '../../../theme/colors';
+import { useRoleColors } from '../../../theme/native';
 
 function ListSkeleton() {
   return (
@@ -44,6 +44,7 @@ const ANDROID_TAB_BAR_HEIGHT = 56;
 
 export default function GroupsScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -66,6 +67,9 @@ export default function GroupsScreen() {
   //      Student (no groups:create) → QR-code icon to join a group.
   //    Android surfaces that same action via the Material FAB (rendered in JSX
   //    below), so on Android only the bell sits in the header.
+  // Hoisted hex (stable string dep): `color` is a fresh closure every render —
+  // depending on it directly would re-run setOptions each render.
+  const accent = color('accent');
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -78,7 +82,7 @@ export default function GroupsScreen() {
                 onPress={() => router.push('/group/create')}
                 haptic
               >
-                <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.primary} />
+                <ZSymbol name="plus" label={t('common.actions.add')} size={24} color={accent} />
               </Touchable>
             ) : (
               <Touchable
@@ -87,7 +91,7 @@ export default function GroupsScreen() {
                 onPress={() => router.push('/invite')}
                 haptic
               >
-                <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.primary} />
+                <ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={accent} />
               </Touchable>
             )
           ) : null}
@@ -95,7 +99,7 @@ export default function GroupsScreen() {
         </View>
       ),
     });
-  }, [navigation, canCreate, unreadCount, t, router]);
+  }, [navigation, canCreate, unreadCount, t, router, accent]);
 
   // Defensive self-guard: if the user somehow navigates here without the tab
   // permission (e.g. via a deep-link before permissions resolve), render a
@@ -108,7 +112,7 @@ export default function GroupsScreen() {
           <ZEmptyState
             title={t('groups.membersUnavailable')}
             description={t('groups.membersUnavailableDescription')}
-            icon={<ZSymbol name="users" label={t('groups.membersUnavailable')} size={24} color={colors.primary} />}
+            icon={<ZSymbol name="users" label={t('groups.membersUnavailable')} size={24} color={color('accent')} />}
           />
         </View>
       </ZScreen>
@@ -152,7 +156,7 @@ export default function GroupsScreen() {
               <ZEmptyState
                 title={t('groups.noGroupsYet')}
                 description={t(canCreate ? 'groups.createFirstDescription' : 'groups.noGroupsJoined')}
-                icon={<ZSymbol name="users" label={t('groups.myGroups')} size={24} color={colors.primary} />}
+                icon={<ZSymbol name="users" label={t('groups.myGroups')} size={24} color={color('accent')} />}
               />
             </View>
           }
@@ -178,7 +182,7 @@ export default function GroupsScreen() {
           <ZFab
             testID="groups-create-fab"
             label={t('groups.create')}
-            icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={colors.onPrimary} />}
+            icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={color('onAccent')} />}
             onPress={() => router.push('/group/create')}
             className="absolute right-6"
             style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
@@ -187,7 +191,7 @@ export default function GroupsScreen() {
           <ZFab
             testID="groups-join-fab"
             label={t('groups.invitationDialog.joinGroup')}
-            icon={<ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={colors.onPrimary} />}
+            icon={<ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={color('onAccent')} />}
             onPress={() => router.push('/invite')}
             className="absolute right-6"
             style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}

@@ -36,7 +36,7 @@ import { ZSymbol } from '../components/ui/z-symbol';
 import { ZTextarea } from '../components/ui/z-textarea';
 import { ZTimeGrid } from '../components/ui/z-time-grid';
 import type { ZTimeGridSlot } from '../components/ui/z-time-grid';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 
 type StageId = 'group' | 'expert' | 'type' | 'time' | 'confirm';
 
@@ -82,6 +82,7 @@ function ConfirmRow({
  */
 export default function BookScreen() {
   const { t, i18n } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
 
   // ── selection + flow state ──────────────────────────────────────────────────
@@ -380,7 +381,7 @@ export default function BookScreen() {
                   leading={
                     <ZIconTile
                       tone={sessionTypeId === st.id ? 'primary' : 'neutral'}
-                      icon={<ZSymbol name="video" label={st.name} size={20} color={colors.primary} />}
+                      icon={<ZSymbol name="video" label={st.name} size={20} color={color('accent')} />}
                     />
                   }
                   title={st.name}
@@ -449,7 +450,7 @@ export default function BookScreen() {
                     leading={
                       <ZIconTile
                         size="sm"
-                        icon={<ZSymbol name="video" label={t('sessions.book.sessionType')} size={18} color={colors.primary} />}
+                        icon={<ZSymbol name="video" label={t('sessions.book.sessionType')} size={18} color={color('accent')} />}
                       />
                     }
                     label={t('sessions.book.sessionType')}
@@ -476,7 +477,7 @@ export default function BookScreen() {
                     leading={
                       <ZIconTile
                         size="sm"
-                        icon={<ZSymbol name="calendar" label={t('sessions.book.dateTime')} size={18} color={colors.primary} />}
+                        icon={<ZSymbol name="calendar" label={t('sessions.book.dateTime')} size={18} color={color('accent')} />}
                       />
                     }
                     label={t('sessions.book.dateTime')}
@@ -535,7 +536,7 @@ export default function BookScreen() {
               className="items-center justify-center bg-z-success-soft"
               style={{ width: 64, height: 64, borderRadius: 20 }}
             >
-              <ZSymbol name="check" label={t('sessions.book.bookedHeading')} size={30} color={colors.success} />
+              <ZSymbol name="check" label={t('sessions.book.bookedHeading')} size={30} color={color('success')} />
             </View>
             <Text className="text-center text-[22px] font-extrabold tracking-tight text-z-text">
               {t('sessions.book.bookedHeading')}

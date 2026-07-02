@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import type { Booking } from '../api/queries/coaching';
 import { formatBookingDateTime, formatRelativeFuture } from '../api/queries/coaching';
 import { bookingCounterpart } from './booking-card';
-import { colors } from '../theme/colors';
 import { useRoleColors } from '../theme/native';
 import { Touchable } from './ui/touchable';
 import { ZButton } from './ui/z-button';
@@ -60,7 +59,7 @@ export function NextSessionCard({
             testID="next-session-book"
             label={t('common.actions.bookSession')}
             variant="primary"
-            icon={<ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={18} color={colors.onPrimary} />}
+            icon={<ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={18} color={roleColor('onAccent')} />}
             onPress={onBook}
           />
         </View>
@@ -103,7 +102,7 @@ export function NextSessionCard({
             testID="next-session-join"
             label={t('common.actions.join')}
             variant="primary"
-            icon={<ZSymbol name="video" label={t('common.actions.join')} size={18} color={colors.onPrimary} />}
+            icon={<ZSymbol name="video" label={t('common.actions.join')} size={18} color={roleColor('onAccent')} />}
             onPress={onJoin}
           />
         ) : null}

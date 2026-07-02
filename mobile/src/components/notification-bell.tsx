@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { colors } from '../theme/colors';
+import { useRoleColors } from '../theme/native';
 import { Touchable } from './ui/touchable';
 import { ZSymbol } from './ui/z-symbol';
 
@@ -23,6 +23,7 @@ export function NotificationBell({
   onPress: () => void;
 }) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   // Mirror the web badge computed: > 9 → '9+', otherwise the exact count string.
   const badge = unreadCount > 9 ? '9+' : String(unreadCount);
   return (
@@ -33,7 +34,7 @@ export function NotificationBell({
       haptic
       className="h-11 w-11 items-center justify-center rounded-full bg-z-surface-warm"
     >
-      <ZSymbol name="bell" label={t('notifications.open')} size={22} color={colors.text} />
+      <ZSymbol name="bell" label={t('notifications.open')} size={22} color={color('onSurface')} />
       {unreadCount > 0 ? (
         <View
           testID="notification-bell-badge"
@@ -46,7 +47,7 @@ export function NotificationBell({
               `z-on-primary` NativeWind class in tailwind.config.js, so the token
               flows in via `style` (theme/colors.ts is the sanctioned non-class
               color source per mobile/AGENTS.md). */}
-          <Text className="text-[10px] font-bold" style={{ color: colors.onPrimary }}>
+          <Text className="text-[10px] font-bold" style={{ color: color('onAccent') }}>
             {badge}
           </Text>
         </View>

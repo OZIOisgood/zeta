@@ -21,7 +21,6 @@ import { ZTextInput } from '../components/ui/z-text-input';
 import { ZTextarea } from '../components/ui/z-textarea';
 import { SheetHeader } from '../components/sheet-header';
 import { Touchable } from '../components/ui/touchable';
-import { colors } from '../theme/colors';
 import { useRoleColors } from '../theme/native';
 
 type UploadStep = 'files' | 'details' | 'review';
@@ -174,7 +173,7 @@ export default function UploadScreen() {
                   name="cloud-upload"
                   label={t('upload.selectVideo')}
                   size={30}
-                  color={colors.muted}
+                  color={color('onSurfaceVariant')}
                 />
                 <Text className="text-base font-bold text-z-text">{t('upload.selectVideo')}</Text>
                 <Text className="text-center text-[15px] text-z-muted">
@@ -189,7 +188,7 @@ export default function UploadScreen() {
                       key={`${file.localUri}-${index}`}
                       className="flex-row items-center rounded-lg border border-z-border bg-z-surface px-3 py-2"
                     >
-                      <ZSymbol name="file-video" label={file.filename} size={18} color={colors.primary} />
+                      <ZSymbol name="file-video" label={file.filename} size={18} color={color('accent')} />
                       <Text className="ml-2 flex-1 text-base font-bold text-z-text" numberOfLines={1}>
                         {file.filename}
                       </Text>
@@ -199,7 +198,7 @@ export default function UploadScreen() {
                         onPress={() => handleRemovePicked(index)}
                         className="ml-2"
                       >
-                        <ZSymbol name="close" label={t('common.actions.remove')} size={16} color={colors.muted} />
+                        <ZSymbol name="close" label={t('common.actions.remove')} size={16} color={color('onSurfaceVariant')} />
                       </ZIconButton>
                     </View>
                   ))}
