@@ -1,0 +1,41 @@
+/* Strido typography tokens
+ *
+ * One typeface — Nunito Sans — across the whole product. Rounded humanist
+ * sans; friendly but legible at small sizes on a phone. Scale mirrors the
+ * NativeWind/Tailwind defaults the app uses (text-xs … text-3xl) so a static
+ * recreation matches the device pixel-for-pixel.
+ */
+
+:root {
+  /* Family */
+  --font-sans: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-body: var(--font-sans);
+
+  /* Weights — the app uses 400 / 500 / 600 / 700; 800 for the wordmark. */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;  /* the workhorse weight: titles, labels, buttons */
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* Font sizes (px) — Tailwind text-* scale as shipped in the app */
+  --text-xs: 12px;     /* timestamps, captions, badge text */
+  --text-sm: 14px;     /* body copy, secondary text, button labels */
+  --text-base: 16px;   /* card titles, primary list rows */
+  --text-lg: 18px;     /* screen subheads */
+  --text-xl: 20px;     /* asset / detail headings */
+  --text-2xl: 24px;    /* screen titles */
+  --text-3xl: 30px;    /* stat numbers, big counts */
+
+  /* Line heights */
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;   /* leading-6 on text-sm */
+  --leading-relaxed: 1.65;
+
+  /* Letter spacing */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;   /* uppercase eyebrows / section labels */
+}

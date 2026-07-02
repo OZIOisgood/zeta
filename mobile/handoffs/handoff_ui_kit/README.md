@@ -470,6 +470,20 @@ component deltas above apply uniformly across all of them.
 - `design-references/screens*.jsx` — prototype screens (reference only).
 - `design-references/data.js` — sample equestrian data.
 - `design-references/UI-KIT-README.md` — the kit's own notes.
+- `styles.css`, `tokens/`, `assets/fonts/`, `_ds_bundle.js` — the design
+  system the prototype loads (relative paths). **Keep the folder intact.**
 - The authoritative component contracts are the design system's `.d.ts` files
   (`components/<group>/*.d.ts`) and this README; the app's `z-*` files are what
   you edit to conform.
+
+## ⚠️ Self-contained — do not split this folder
+The prototype loads `../styles.css` / `../_ds_bundle.js` from THIS bundle.
+`tokens/fonts.css` carries the **Nunito Sans** `@font-face` (local woff2 +
+Google-Fonts import for 500/600/800). If `design-references/` is copied
+anywhere without its sibling files, no font loads and the mock silently falls
+back to the system font — any typography comparison against the app is then
+meaningless (that is exactly how "the mock doesn't render Nunito Sans"
+misdiagnoses happen). The product typeface is **Nunito Sans** everywhere
+(`tokens/typography.css`); the app's `_layout.tsx` sets it correctly. The
+type scale mirrors the app's NativeWind defaults (`text-xs`…`text-3xl`) —
+px sizes in mock and app are meant to be identical.

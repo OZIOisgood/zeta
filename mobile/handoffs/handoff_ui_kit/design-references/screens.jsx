@@ -348,10 +348,16 @@ function ReviewBlock({ r, isReply }) {
     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
       <Avatar fallback={r.initials} alt={r.author} size={isReply ? 28 : 36} shape="circle" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: T.strong }}>{r.author}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: T.strong }}>{r.author}</span>
+          {r.ts ? (
+            <button aria-label={`Zu ${r.ts} springen`} style={{ all: 'unset', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, height: 24, padding: '0 9px 0 7px', borderRadius: 12, background: 'var(--role-accent-container)', color: 'var(--role-on-accent-container)', fontSize: 12.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+              <Icon n="play" size={11} color="var(--role-on-accent-container)" sw={2.6} style={{ marginLeft: 0 }} />{r.ts}
+            </button>
+          ) : null}
+        </div>
         <div style={{ marginTop: 2, fontSize: 14, lineHeight: 1.55, color: T.strong }}>{r.body}</div>
-        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {r.ts ? <Chip label={r.ts} showCheck={false} /> : null}
+        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 12, color: T.muted }}>{r.when}</span>
           {!isReply ? (
             <button style={{ all: 'unset', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, color: T.muted }}>
@@ -368,9 +374,18 @@ function AssetDetail({ id, onBack }) {
   const v = D.videos.find((x) => x.id === id) || D.videos[0];
   const [draft, setDraft] = React.useState('');
   const [atTime, setAtTime] = React.useState(false);
+  const parts = v.parts || [];
+  const hasParts = parts.length > 1;
+  const manyParts = parts.length > 5;
+  const firstReady = Math.max(0, parts.findIndex((p) => p.status !== 'processing'));
+  const [activePart, setActivePart] = React.useState(hasParts ? firstReady : 0);
+  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [descOpen, setDescOpen] = React.useState(false);
+  const descLong = (v.desc || '').length > 90;
+  const cur = hasParts ? parts[activePart] : null;
   const s = videoStatus(v.status);
   return (
-    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: T.bg, color: T.strong }}>
+    <div style={{ flex: 1, minHeight: 0, position: 'relative', display: 'flex', flexDirection: 'column', background: T.bg, color: T.strong }}>
       <NavHeader title={dv(v.title)} onBack={onBack} />
       <div className="m-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {/* Player */}
@@ -381,19 +396,51 @@ function AssetDetail({ id, onBack }) {
           <div style={{ position: 'absolute', left: 14, right: 14, bottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 11, color: '#fff' }}>0:12</span>
             <div style={{ flex: 1 }}><ProgressBar value={0.28} height={4} /></div>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,.7)' }}>{v.duration}</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,.7)' }}>{cur ? cur.duration : v.duration}</span>
           </div>
         </div>
 
+        {/* Part switcher — subtle for a few clips; collapses to a sheet trigger when many */}
+        {hasParts && !manyParts ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px 0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <span style={{ flex: 'none', fontSize: 12, fontWeight: 700, color: T.muted }}>Teile</span>
+            {parts.map((p, i) => {
+              const active = i === activePart;
+              const proc = p.status === 'processing';
+              return (
+                <button key={p.id} onClick={() => { if (!proc) setActivePart(i); }} aria-label={`Teil ${i + 1}${proc ? ', wird verarbeitet' : ', ' + p.duration}`} style={{ all: 'unset', flex: 'none', cursor: proc ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', borderRadius: 15, fontSize: 12.5, fontVariantNumeric: 'tabular-nums', fontWeight: active ? 700 : 600, color: proc ? T.muted : (active ? 'var(--role-on-secondary-container)' : T.strong), background: active ? 'var(--role-secondary-container)' : 'transparent', border: active ? '1px solid transparent' : '1px solid var(--role-outline)', opacity: proc ? 0.7 : 1 }}>
+                  {proc ? <Icon n="loader" size={12} color={T.muted} /> : null}
+                  Teil {i + 1}{proc ? null : <span style={{ opacity: 0.7 }}> · {p.duration}</span>}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {hasParts && manyParts ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px 0' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: T.muted }}>Teile</span>
+            <button onClick={() => setSheetOpen(true)} aria-label={`Teil ${activePart + 1} von ${parts.length} — alle Teile anzeigen`} style={{ all: 'unset', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 6px 0 12px', borderRadius: 16, border: '1px solid var(--role-outline)', color: T.strong, fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ fontWeight: 700 }}>Teil {activePart + 1}</span> von {parts.length}
+              <Icon n="chevron-down" size={16} color={T.muted} />
+            </button>
+          </div>
+        ) : null}
+
         <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Card tone="surface" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Badge tone={s.tone} label={s.label} />
-            <div style={{ fontSize: 20, fontWeight: 800, color: T.strong, letterSpacing: '-0.01em' }}>{dv(v.title)}</div>
+          <Card tone="surface" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Avatar fallback={v.gi} alt={v.group} size={32} />
-              <span style={{ fontSize: 14, fontWeight: 700, color: T.primaryStrong }}>{v.group}</span>
+              <Avatar fallback={v.gi} alt={v.group} size={24} shape="circle" />
+              <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 700, color: T.strong, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.group}</span>
+              <Badge tone={s.tone} label={s.label} />
             </div>
-            <div style={{ fontSize: 14, color: T.muted, lineHeight: 1.5 }}>{v.desc || 'Für dieses Video wurde keine Beschreibung hinzugefügt.'}</div>
+            {v.desc ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                <div style={descOpen || !descLong ? { fontSize: 14, color: T.muted, lineHeight: 1.5 } : { fontSize: 14, color: T.muted, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{v.desc}</div>
+                {descLong ? (
+                  <button onClick={() => setDescOpen((o) => !o)} style={{ all: 'unset', cursor: 'pointer', fontSize: 13, fontWeight: 700, color: T.primaryStrong }}>{descOpen ? 'Weniger anzeigen' : 'Mehr anzeigen'}</button>
+                ) : null}
+              </div>
+            ) : null}
           </Card>
 
           <Card tone="surface" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -420,6 +467,42 @@ function AssetDetail({ id, onBack }) {
           </Card>
         </div>
       </div>
+
+      {/* Bottom sheet — full part list when there are many clips */}
+      {sheetOpen ? (
+        <div onClick={() => setSheetOpen(false)} style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxHeight: '72%', background: 'var(--role-surface-1)', borderRadius: '28px 28px 0 0', display: 'flex', flexDirection: 'column', paddingBottom: 8, boxShadow: '0 -8px 30px rgba(0,0,0,.18)' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--role-outline)' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 16px 10px' }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: T.strong }}>Teile</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: T.muted }}>{parts.length}</span>
+            </div>
+            <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {parts.map((p, i) => {
+                const active = i === activePart;
+                const proc = p.status === 'processing';
+                return (
+                  <button key={p.id} onClick={() => { if (!proc) { setActivePart(i); setSheetOpen(false); } }} style={{ all: 'unset', cursor: proc ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: active ? 'var(--role-secondary-container)' : 'transparent', opacity: proc ? 0.6 : 1 }}>
+                    <span style={{ width: 22, display: 'inline-flex', justifyContent: 'center' }}>
+                      {active ? <Icon n="check" size={18} color="var(--role-on-secondary-container)" sw={2.6} /> : <span style={{ fontSize: 13, fontWeight: 700, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>}
+                    </span>
+                    <span style={{ flex: 1, fontSize: 15, fontWeight: active ? 700 : 600, color: active ? 'var(--role-on-secondary-container)' : T.strong }}>Teil {i + 1}</span>
+                    {proc ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: T.muted }}>
+                        <Icon n="loader" size={13} color={T.muted} />Wird verarbeitet
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 13, fontWeight: 600, color: active ? 'var(--role-on-secondary-container)' : T.muted, fontVariantNumeric: 'tabular-nums' }}>{p.duration}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

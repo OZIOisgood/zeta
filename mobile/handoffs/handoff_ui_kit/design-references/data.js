@@ -11,11 +11,26 @@ window.StridoData = {
 
   videos: [
     { id: 'v1', title: 'Combination line — take 2', group: 'Nord Eventing Academy', gi: 'NE',
-      status: 'pending', reviews: 3, duration: '0:48', desc: 'Two strides in, felt rushed to the oxer.' },
+      status: 'pending', reviews: 3, duration: '0:48', desc: 'Two strides in, felt rushed to the oxer. Coach asked me to upload the warm-up and the second attempt too so we can compare the canter rhythm across all three before the lesson on Friday.',
+      parts: [
+        { id: 'p1', label: 'Aufwärmen', duration: '1:12', status: 'ready' },
+        { id: 'p2', label: 'Versuch 1', duration: '0:48', status: 'ready' },
+        { id: 'p3', label: 'Versuch 2', duration: '0:51', status: 'processing' },
+      ] },
     { id: 'v2', title: 'Sitting trot — long side', group: 'Trail & Dressage Club', gi: 'TD',
       status: 'completed', reviews: 6, duration: '1:22', desc: 'Working on a steadier contact.' },
     { id: 'v3', title: 'Warm-up canter transitions', group: 'Nord Eventing Academy', gi: 'NE',
-      status: 'pending', reviews: 1, duration: '2:05', desc: 'Left lead pickup is sticky.' },
+      status: 'pending', reviews: 1, duration: '2:05', desc: 'Left lead pickup is sticky.',
+      parts: [
+        { id: 'q1', label: 'Schritt', duration: '0:54', status: 'ready' },
+        { id: 'q2', label: 'Trab links', duration: '1:08', status: 'ready' },
+        { id: 'q3', label: 'Trab rechts', duration: '1:02', status: 'ready' },
+        { id: 'q4', label: 'Galopp links', duration: '0:47', status: 'ready' },
+        { id: 'q5', label: 'Galopp rechts', duration: '0:51', status: 'ready' },
+        { id: 'q6', label: 'Übergänge', duration: '1:15', status: 'ready' },
+        { id: 'q7', label: 'Cool-down', duration: '0:39', status: 'ready' },
+        { id: 'q8', label: 'Nachbereitung', duration: '0:28', status: 'processing' },
+      ] },
     { id: 'v4', title: 'Grid work — bounce to one', group: 'Nord Eventing Academy', gi: 'NE',
       status: 'waiting_upload', reviews: 0, duration: '0:36', desc: '' },
   ],
@@ -109,18 +124,33 @@ window.StridoData = {
 
   // Coaching booking flow data.
   coaching: {
-    experts: [
-      { id: 'e1', name: 'Coach Petra', initials: 'CP' },
-      { id: 'e2', name: 'Coach Lars', initials: 'CL' },
-    ],
+    // Session types lead the flow ("Was?"): each carries duration + price so the
+    // running summary bar can show cost from the first choice onward.
     sessionTypes: [
-      { id: 'st1', name: 'Video-Review', mins: 30, desc: 'Detailliertes Feedback zu einem hochgeladenen Video.' },
-      { id: 'st2', name: 'Live-Coaching', mins: 45, desc: 'Eins-zu-eins-Session in Echtzeit per Video.' },
+      { id: 'st1', name: 'Video-Review', mins: 30, price: 39, icon: 'play-circle', desc: 'Detailliertes Feedback zu einem hochgeladenen Video.' },
+      { id: 'st2', name: 'Live-Coaching', mins: 45, price: 69, icon: 'video', desc: 'Eins-zu-eins-Session in Echtzeit per Video.' },
+      { id: 'st3', name: 'Trainingsplan', mins: 20, price: 29, icon: 'clipboard-list', desc: 'Wochenplanung mit Zielen und passenden Übungen.' },
     ],
-    slotsByDay: [
-      { day: 'Di 18 Jun', times: ['16:00 – 16:30', '16:45 – 17:15', '17:30 – 18:00'] },
-      { day: 'Mi 19 Jun', times: ['09:00 – 09:30', '10:15 – 10:45'] },
-      { day: 'Fr 21 Jun', times: ['14:00 – 14:30', '15:00 – 15:30', '16:30 – 17:00'] },
+    experts: [
+      { id: 'e1', name: 'Petra Nilsson', initials: 'PN', role: 'Cheftrainerin', specialty: 'Vielseitigkeit & Springen', rating: 4.9, reviews: 128 },
+      { id: 'e2', name: 'Lars Moen', initials: 'LM', role: 'Dressurtrainer', specialty: 'Dressur & Grundausbildung', rating: 4.8, reviews: 94 },
+      { id: 'e3', name: 'Jonas Berg', initials: 'JB', role: 'Geländetrainer', specialty: 'Cross & Kondition', rating: 4.7, reviews: 61 },
     ],
+    // Date rail ("Wann?"). isToday drives the "Heute"-label.
+    days: [
+      { id: 'd0', dow: 'Di', date: '18', month: 'Jun', isToday: true },
+      { id: 'd1', dow: 'Mi', date: '19', month: 'Jun' },
+      { id: 'd2', dow: 'Do', date: '20', month: 'Jun' },
+      { id: 'd3', dow: 'Fr', date: '21', month: 'Jun' },
+      { id: 'd4', dow: 'Sa', date: '22', month: 'Jun' },
+      { id: 'd5', dow: 'So', date: '23', month: 'Jun' },
+    ],
+    // Availability is per expert and per day — start times only (the session
+    // duration fills in the end). Missing day = no free slots that day.
+    availability: {
+      e1: { d0: ['16:00', '16:45', '17:30'], d1: ['09:00', '10:15'], d3: ['14:00', '15:00', '16:30'] },
+      e2: { d1: ['08:30', '09:15', '11:00'], d2: ['13:00', '14:30'], d4: ['10:00', '11:30'] },
+      e3: { d0: ['18:00'], d2: ['16:00', '17:00'], d3: ['09:30', '10:30', '12:00'], d5: ['11:00', '14:00'] },
+    },
   },
 };
