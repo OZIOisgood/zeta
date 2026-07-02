@@ -40,3 +40,4 @@ coverage/
 
 # Log files
 log*.txt
+.playwright-mcp/
