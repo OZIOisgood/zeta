@@ -27,6 +27,10 @@ CLAUDE.local.md
 # Design handoff notes (local only)
 docs/handoffs/
 
+# Internal business documents (never commit to the public repo)
+docs/businessplan.md
+docs/businessplan.pdf
+
 # Tools and temporary files
 /tools/
 tmp/
