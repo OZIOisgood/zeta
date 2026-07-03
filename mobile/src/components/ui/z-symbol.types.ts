@@ -83,6 +83,7 @@ export type ZSymbolName =
   | 'back'
   | 'chevron-left'
   | 'chevron-down'
+  | 'chevron-up'
   | 'chevron-right'
   | 'close'
   // Entities

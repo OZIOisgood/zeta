@@ -29,6 +29,7 @@ import {
   CheckCheck,
   CheckCircle2,
   ChevronDown,
+  ChevronUp,
   ChevronLeft,
   ChevronRight,
   Circle,
@@ -97,6 +98,11 @@ export const SYMBOL_MAP: Record<ZSymbolName, ZSymbolEntry> = {
     sf: 'chevron.down',
     android: 'expand_more',
     lucide: ChevronDown,
+  },
+  'chevron-up': {
+    sf: 'chevron.up',
+    android: 'expand_less',
+    lucide: ChevronUp,
   },
   'chevron-right': {
     sf: 'chevron.right',

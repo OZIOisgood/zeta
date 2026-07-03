@@ -49,8 +49,10 @@ import {
   menuAnchor,
   testID as testIDModifier,
 } from '@expo/ui/jetpack-compose/modifiers';
+import { View } from 'react-native';
 
 import { useRoleColors } from '../../theme/native';
+import { ZSymbol } from './z-symbol';
 import type { ZSelectProps } from './z-select.types';
 
 export type { ZSelectOption, ZSelectProps } from './z-select.types';
@@ -96,8 +98,17 @@ export function ZSelect({
           isError={invalid}
           modifiers={[menuAnchor(), fillMaxWidth()]}
           colors={{
-            focusedIndicatorColor: color('accent'),
+            // The readOnly anchor KEEPS focus after the menu closes — a static
+            // accent focus border would stick forever and read as a broken
+            // input. Accent only while the menu is actually open.
+            focusedIndicatorColor: expanded ? color('accent') : color('outline'),
             unfocusedIndicatorColor: color('outline'),
+            // Same for the floating label — and without an explicit color the
+            // focused label falls back to the M3 default primary (blue).
+            focusedLabelColor: expanded ? color('accent') : color('onSurfaceVariant'),
+            unfocusedLabelColor: color('onSurfaceVariant'),
+            focusedTrailingIconColor: color('onSurfaceVariant'),
+            unfocusedTrailingIconColor: color('onSurfaceVariant'),
             errorIndicatorColor: color('danger'),
             errorLabelColor: color('danger'),
             errorTextColor: color('onSurface'),
@@ -120,6 +131,22 @@ export function ZSelect({
               <Text color={color('onSurfaceVariant')} style={{ fontFamily: 'NunitoSans_400Regular' }}>{accessibilityLabel}</Text>
             </OutlinedTextField.Placeholder>
           ) : null}
+          <OutlinedTextField.TrailingIcon>
+            {/* M3 exposed-dropdown affordance: without the chevron the field is
+                indistinguishable from a text input. pointerEvents="none": RN
+                interop children inside Compose swallow taps on their area.
+                FIXED width/height: an unsized interop view reports an unbounded
+                intrinsic width and the field overflows its parent (Host-width
+                measurement trap). */}
+            <View pointerEvents="none" style={{ width: 22, height: 22 }}>
+              <ZSymbol
+                name={expanded ? 'chevron-up' : 'chevron-down'}
+                label=""
+                size={22}
+                color={color('onSurfaceVariant')}
+              />
+            </View>
+          </OutlinedTextField.TrailingIcon>
         </OutlinedTextField>
 
         <ExposedDropdownMenu
