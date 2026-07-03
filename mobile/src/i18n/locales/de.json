@@ -562,7 +562,7 @@
       "failed": "Termin konnte nicht abgesagt werden."
     },
     "availability": {
-      "savedSessionType": "Session-Art gespeichert",
+      "savedSessionType": "Terminart gespeichert",
       "savedAvailability": "Verfügbarkeit gespeichert",
       "savedBlockTime": "Blockierte Zeit gespeichert",
       "deletedEntry": "Eintrag gelöscht",

@@ -21,6 +21,7 @@
 
 import { FilterChip, Host, Text } from '@expo/ui/jetpack-compose';
 import { testID as testIDModifier } from '@expo/ui/jetpack-compose/modifiers';
+import { View } from 'react-native';
 
 import { useRoleColors } from '../../theme/native';
 import { ZSymbol } from './z-symbol';
@@ -59,13 +60,18 @@ export function ZChip({
       >
         {showLeadingCheck ? (
           <FilterChip.LeadingIcon>
-            <ZSymbol
-              name="check"
-              label=""
-              size={18}
-              color={color('onSecondaryContainer')}
-              testID={testID ? `${testID}-check` : undefined}
-            />
+            {/* pointerEvents="none": RN interop children inside Compose
+                controls swallow taps on their area (dead zone on the chip) —
+                same fix as z-icon-button.android. */}
+            <View pointerEvents="none">
+              <ZSymbol
+                name="check"
+                label=""
+                size={18}
+                color={color('onSecondaryContainer')}
+                testID={testID ? `${testID}-check` : undefined}
+              />
+            </View>
           </FilterChip.LeadingIcon>
         ) : null}
         <FilterChip.Label>

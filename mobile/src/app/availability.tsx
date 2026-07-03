@@ -71,6 +71,11 @@ function timeOptions(): ZSelectOption[] {
 }
 const TIME_OPTIONS = timeOptions();
 
+// NOT precomputed at module scope: formatDate() reads the app language at
+// call time, and at import time the profile language (applied on login) is
+// not loaded yet — the labels froze in the boot locale (showed 7/3/2026 in
+// the German app). "today" would also go stale across midnight. Callers
+// memoize per language instead.
 function dateOptions(): ZSelectOption[] {
   const out: ZSelectOption[] = [];
   const today = new Date();
@@ -85,7 +90,6 @@ function dateOptions(): ZSelectOption[] {
   }
   return out;
 }
-const DATE_OPTIONS = dateOptions();
 
 // ── Session-type sheet (add / edit) ──────────────────────────────────────────
 
@@ -328,7 +332,7 @@ function BlockedSheet({
   groupId: string;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const today = localDateKey(new Date());
   const [date, setDate] = useState(today);
   const [start, setStart] = useState('');
@@ -340,6 +344,9 @@ function BlockedSheet({
 
   const fullDayOption: ZSelectOption = { value: '', label: t('common.labels.fullDay') };
   const timeOptionsWithEmpty: ZSelectOption[] = [fullDayOption, ...TIME_OPTIONS];
+  // Per language, not module scope — see dateOptions().
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- language drives formatDate() inside
+  const dateOpts = useMemo(() => dateOptions(), [i18n.language]);
 
   async function handleSave() {
     // Pre-submit validation (mirrors handler 400 at blocked_slots.go:134-139)
@@ -385,7 +392,7 @@ function BlockedSheet({
             <ZFieldLabel label={t('common.fields.date')} />
             <ZSelect
               value={date}
-              options={DATE_OPTIONS}
+              options={dateOpts}
               placeholder={t('sessions.availability.selectDatePlaceholder')}
               accessibilityLabel={t('common.fields.date')}
               onValueChange={setDate}
