@@ -48,7 +48,7 @@ func (q *Queries) GetUserEmailPreferences(ctx context.Context, userID string) (G
 }
 
 const getUserPreferences = `-- name: GetUserPreferences :one
-SELECT user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name FROM user_preferences WHERE user_id = $1
+SELECT user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name, push_notifications_enabled, push_asset_uploads_enabled, push_asset_reviews_enabled, push_invitation_updates_enabled, push_group_membership_updates_enabled, push_coaching_booking_updates_enabled FROM user_preferences WHERE user_id = $1
 `
 
 func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPreference, error) {
@@ -70,6 +70,12 @@ func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPr
 		&i.EmailCoachingRemindersEnabled,
 		&i.FirstName,
 		&i.LastName,
+		&i.PushNotificationsEnabled,
+		&i.PushAssetUploadsEnabled,
+		&i.PushAssetReviewsEnabled,
+		&i.PushInvitationUpdatesEnabled,
+		&i.PushGroupMembershipUpdatesEnabled,
+		&i.PushCoachingBookingUpdatesEnabled,
 	)
 	return i, err
 }
@@ -77,7 +83,7 @@ func (q *Queries) GetUserPreferences(ctx context.Context, userID string) (UserPr
 const seedUserPreferences = `-- name: SeedUserPreferences :one
 INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name, push_notifications_enabled, push_asset_uploads_enabled, push_asset_reviews_enabled, push_invitation_updates_enabled, push_group_membership_updates_enabled, push_coaching_booking_updates_enabled
 `
 
 type SeedUserPreferencesParams struct {
@@ -113,6 +119,12 @@ func (q *Queries) SeedUserPreferences(ctx context.Context, arg SeedUserPreferenc
 		&i.EmailCoachingRemindersEnabled,
 		&i.FirstName,
 		&i.LastName,
+		&i.PushNotificationsEnabled,
+		&i.PushAssetUploadsEnabled,
+		&i.PushAssetReviewsEnabled,
+		&i.PushInvitationUpdatesEnabled,
+		&i.PushGroupMembershipUpdatesEnabled,
+		&i.PushCoachingBookingUpdatesEnabled,
 	)
 	return i, err
 }
@@ -120,7 +132,7 @@ func (q *Queries) SeedUserPreferences(ctx context.Context, arg SeedUserPreferenc
 const seedUserPreferencesWithAvatar = `-- name: SeedUserPreferencesWithAvatar :one
 INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, avatar)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name, push_notifications_enabled, push_asset_uploads_enabled, push_asset_reviews_enabled, push_invitation_updates_enabled, push_group_membership_updates_enabled, push_coaching_booking_updates_enabled
 `
 
 type SeedUserPreferencesWithAvatarParams struct {
@@ -158,6 +170,12 @@ func (q *Queries) SeedUserPreferencesWithAvatar(ctx context.Context, arg SeedUse
 		&i.EmailCoachingRemindersEnabled,
 		&i.FirstName,
 		&i.LastName,
+		&i.PushNotificationsEnabled,
+		&i.PushAssetUploadsEnabled,
+		&i.PushAssetReviewsEnabled,
+		&i.PushInvitationUpdatesEnabled,
+		&i.PushGroupMembershipUpdatesEnabled,
+		&i.PushCoachingBookingUpdatesEnabled,
 	)
 	return i, err
 }
@@ -167,7 +185,7 @@ UPDATE user_preferences
 SET avatar     = $2,
     updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name, push_notifications_enabled, push_asset_uploads_enabled, push_asset_reviews_enabled, push_invitation_updates_enabled, push_group_membership_updates_enabled, push_coaching_booking_updates_enabled
 `
 
 type UpdateUserAvatarParams struct {
@@ -194,6 +212,12 @@ func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarPara
 		&i.EmailCoachingRemindersEnabled,
 		&i.FirstName,
 		&i.LastName,
+		&i.PushNotificationsEnabled,
+		&i.PushAssetUploadsEnabled,
+		&i.PushAssetReviewsEnabled,
+		&i.PushInvitationUpdatesEnabled,
+		&i.PushGroupMembershipUpdatesEnabled,
+		&i.PushCoachingBookingUpdatesEnabled,
 	)
 	return i, err
 }
@@ -209,7 +233,7 @@ SET email_notifications_enabled = $2,
     email_coaching_reminders_enabled = $8,
     updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name, push_notifications_enabled, push_asset_uploads_enabled, push_asset_reviews_enabled, push_invitation_updates_enabled, push_group_membership_updates_enabled, push_coaching_booking_updates_enabled
 `
 
 type UpdateUserEmailPreferencesParams struct {
@@ -251,6 +275,12 @@ func (q *Queries) UpdateUserEmailPreferences(ctx context.Context, arg UpdateUser
 		&i.EmailCoachingRemindersEnabled,
 		&i.FirstName,
 		&i.LastName,
+		&i.PushNotificationsEnabled,
+		&i.PushAssetUploadsEnabled,
+		&i.PushAssetReviewsEnabled,
+		&i.PushInvitationUpdatesEnabled,
+		&i.PushGroupMembershipUpdatesEnabled,
+		&i.PushCoachingBookingUpdatesEnabled,
 	)
 	return i, err
 }
@@ -263,7 +293,7 @@ SET language   = $2,
     last_name  = $5,
     updated_at = NOW()
 WHERE user_id = $1
-RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name, push_notifications_enabled, push_asset_uploads_enabled, push_asset_reviews_enabled, push_invitation_updates_enabled, push_group_membership_updates_enabled, push_coaching_booking_updates_enabled
 `
 
 type UpdateUserProfilePreferencesParams struct {
@@ -299,6 +329,12 @@ func (q *Queries) UpdateUserProfilePreferences(ctx context.Context, arg UpdateUs
 		&i.EmailCoachingRemindersEnabled,
 		&i.FirstName,
 		&i.LastName,
+		&i.PushNotificationsEnabled,
+		&i.PushAssetUploadsEnabled,
+		&i.PushAssetReviewsEnabled,
+		&i.PushInvitationUpdatesEnabled,
+		&i.PushGroupMembershipUpdatesEnabled,
+		&i.PushCoachingBookingUpdatesEnabled,
 	)
 	return i, err
 }

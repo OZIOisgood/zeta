@@ -47,6 +47,8 @@ type Querier interface {
 	DeactivateSessionType(ctx context.Context, arg DeactivateSessionTypeParams) (int64, error)
 	DeleteAvailability(ctx context.Context, arg DeleteAvailabilityParams) (int64, error)
 	DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotParams) (int64, error)
+	DeleteDevice(ctx context.Context, arg DeleteDeviceParams) error
+	DeleteDeviceByToken(ctx context.Context, expoPushToken string) error
 	DeleteGroup(ctx context.Context, arg DeleteGroupParams) error
 	DeleteVideoReview(ctx context.Context, arg DeleteVideoReviewParams) error
 	EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error)
@@ -68,6 +70,7 @@ type Querier interface {
 	GetUserAccess(ctx context.Context, userID string) (UserAccess, error)
 	GetUserEmailPreferences(ctx context.Context, userID string) (GetUserEmailPreferencesRow, error)
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
+	GetUserPushPreferences(ctx context.Context, userID string) (GetUserPushPreferencesRow, error)
 	// === Timezone ===
 	GetUserTimezone(ctx context.Context, userID string) (string, error)
 	GetVideoReview(ctx context.Context, id pgtype.UUID) (GetVideoReviewRow, error)
@@ -82,6 +85,7 @@ type Querier interface {
 	ListBlockedSlots(ctx context.Context, arg ListBlockedSlotsParams) ([]CoachingBlockedSlot, error)
 	// === Bookings ===
 	ListBookingsByExpertInRange(ctx context.Context, arg ListBookingsByExpertInRangeParams) ([]CoachingBooking, error)
+	ListDevicesForUser(ctx context.Context, userID string) ([]UserDevice, error)
 	ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error)
 	ListGroupInvitations(ctx context.Context, groupID pgtype.UUID) ([]GroupInvitation, error)
 	ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error)
@@ -155,10 +159,12 @@ type Querier interface {
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error)
 	UpdateUserEmailPreferences(ctx context.Context, arg UpdateUserEmailPreferencesParams) (UserPreference, error)
 	UpdateUserProfilePreferences(ctx context.Context, arg UpdateUserProfilePreferencesParams) (UserPreference, error)
+	UpdateUserPushPreferences(ctx context.Context, arg UpdateUserPushPreferencesParams) (UserPreference, error)
 	UpdateVideoMuxAssetID(ctx context.Context, arg UpdateVideoMuxAssetIDParams) error
 	UpdateVideoReview(ctx context.Context, arg UpdateVideoReviewParams) (VideoReview, error)
 	UpdateVideoStatus(ctx context.Context, arg UpdateVideoStatusParams) error
 	UpdateVideoStatusByUploadID(ctx context.Context, arg UpdateVideoStatusByUploadIDParams) error
+	UpsertDevice(ctx context.Context, arg UpsertDeviceParams) (UserDevice, error)
 	UpsertInboundEmail(ctx context.Context, arg UpsertInboundEmailParams) (InboundEmail, error)
 }
 

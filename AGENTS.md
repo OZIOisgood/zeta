@@ -5,6 +5,7 @@
 - Zeta is a pre-release digital video coaching platform. Data can be ephemeral, but do not discard user work or local changes.
 - Backend: Go API, PostgreSQL, sqlc, WorkOS auth, Mux video, Agora live coaching, Resend email.
 - Frontend: Angular dashboard in `web/dashboard-next` using Tailwind CSS, Angular Primitives (`ng-primitives`), Transloco, NgRx Signal Store, Storybook, and lucide-angular.
+- Mobile app: Expo/React Native in `mobile/` using expo-router, NativeWind (Zeta design tokens), i18next (synced Transloco JSONs), and a typed openapi-fetch client generated from `docs/openapi.yaml`.
 - Start with `README.md`, `Makefile`, and nearby code before changing behavior.
 
 ## Commands
@@ -16,6 +17,7 @@
 - Frontend build: `make web-next:build`
 - Frontend tests: `make web-next:test`
 - Storybook build when shared UI changes: `make web-next:storybook:build`
+- Mobile lint: `make mobile:lint`; tests: `make mobile:test`; typecheck: `make mobile:typecheck`
 - Local infra is commonly restarted with `make infra:restart`.
 
 ## Durable Workflow
@@ -65,6 +67,7 @@
 - Check permission changes against `internal/permissions/permissions.go`.
 - For every new or renamed permission, use the WorkOS Authorization API with `WORKOS_API_KEY` from the target environment's `.env` to create/update its name and description, add it to the intended roles, and verify the live role assignments. Prefer additive role-permission calls; never use the replace-all endpoint unless intentionally reconciling the complete role permission set.
 - For UI reviews, check responsive layout, accessible primitives, keyboard behavior, loading/empty/error states, and copy terminology.
+- Mobile UI changes must include an emulator screenshot of the affected screens in the PR description.
 - For logging reviews, treat sensitive data in logs as high severity.
 
 ## Subagents
