@@ -17,7 +17,6 @@ test('SessionTypeRow shows name, duration badge, and description', async () => {
     <SessionTypeRow
       sessionType={TYPE}
       durationLabel="60 min"
-      editLabel="Edit"
       deleteLabel="Delete"
       onEdit={() => {}}
       onDelete={() => {}}

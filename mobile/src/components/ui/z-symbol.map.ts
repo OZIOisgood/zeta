@@ -24,6 +24,7 @@ import {
   CalendarDays,
   CalendarOff,
   CalendarPlus,
+  Camera,
   CameraOff,
   Check,
   CheckCheck,
@@ -264,6 +265,12 @@ export const SYMBOL_MAP: Record<ZSymbolName, ZSymbolEntry> = {
     sf: 'pencil',
     android: 'edit',
     lucide: Pencil,
+  },
+  camera: {
+    // Photo capture/pick affordance (avatar-picker empty state).
+    sf: 'camera',
+    android: 'photo_camera',
+    lucide: Camera,
   },
   reply: {
     // Reply: reply to a review/comment.

@@ -1,24 +1,23 @@
-import { Pencil, Trash2 } from 'lucide-react-native';
 import type { CoachingAvailability } from '../api/queries/coaching';
+import { useScreenReader } from '../lib/use-screen-reader';
 import { useRoleColors } from '../theme/native';
 import { ZIconButton } from './ui/z-icon-button';
 import { ZIconTile } from './ui/z-icon-tile';
 import { ZListItem } from './ui/z-list-item';
+import { ZSwipeable } from './ui/z-swipeable';
 import { ZSymbol } from './ui/z-symbol';
 
 /**
- * One weekly-schedule row. Mobile counterpart of the web manage-availability
- * schedule <article> (pages/manage-availability, @case('schedule')): a leading
- * calendar IconTile + weekday name + "start – end", with edit/delete
- * icon-buttons.
+ * One weekly-schedule row: leading calendar IconTile + weekday + "start – end".
  *
- * The screen groups these rows inside a single ZCard with hairline ZDividers
- * (the inset-grouped pattern), matching the Material handoff (screens3.jsx).
+ * Interaction is the platform list idiom (deliberate SOTA override of the
+ * handoff mock's pencil/trash icon buttons): TAP the row to edit, SWIPE to
+ * reveal delete; explicit delete button under a screen reader (see
+ * session-type-row / booking-card).
  */
 export function ScheduleDayRow({
   availability,
   dayName,
-  editLabel,
   deleteLabel,
   onEdit,
   onDelete,
@@ -26,16 +25,16 @@ export function ScheduleDayRow({
 }: {
   availability: CoachingAvailability;
   dayName: string;
-  editLabel: string;
   deleteLabel: string;
   onEdit: () => void;
   onDelete: () => void;
   testID?: string;
 }) {
   const { color } = useRoleColors();
-  return (
+  const screenReaderOn = useScreenReader();
+
+  const row = (
     <ZListItem
-      // Non-interactive: the row surfaces its own edit/delete controls.
       testID={testID}
       leading={
         <ZIconTile
@@ -46,16 +45,28 @@ export function ScheduleDayRow({
       }
       title={dayName}
       subtitle={`${availability.start_time} – ${availability.end_time}`}
+      onPress={onEdit}
       trailing={
-        <>
-          <ZIconButton label={editLabel} variant="secondary" size="sm" onPress={onEdit}>
-            <Pencil color={color('onSurface')} size={16} />
-          </ZIconButton>
+        screenReaderOn ? (
           <ZIconButton label={deleteLabel} variant="secondary" size="sm" onPress={onDelete}>
-            <Trash2 color={color('danger')} size={16} />
+            <ZSymbol name="trash" label={deleteLabel} size={16} color={color('danger')} />
           </ZIconButton>
-        </>
+        ) : (
+          <ZSymbol name="chevron-right" label="" size={18} color={color('onSurfaceVariant')} />
+        )
       }
     />
+  );
+
+  if (screenReaderOn) return row;
+  return (
+    <ZSwipeable
+      testID={testID ? `${testID}-swipe` : undefined}
+      actionLabel={deleteLabel}
+      actionIcon={<ZSymbol name="trash" label="" size={20} color={color('onAccent')} />}
+      onAction={onDelete}
+    >
+      {row}
+    </ZSwipeable>
   );
 }

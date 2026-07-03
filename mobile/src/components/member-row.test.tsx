@@ -49,13 +49,14 @@ test('shows no remove button when onRemove is omitted', async () => {
   expect(screen.queryByTestId('member-remove')).toBeNull();
 });
 
-test('renders the remove button and fires onRemove when provided', async () => {
+test('exposes the remove action and fires onRemove when provided', async () => {
+  // Removal is a swipe action (SOTA list idiom); the bare ZSwipeable fallback
+  // renders it as a persistent accessible control, so it stays testable here.
   const onRemove = jest.fn();
   await render(<MemberRow member={MEMBER} onRemove={onRemove} />);
-  const button = screen.getByTestId('member-remove');
-  expect(button).toBeOnTheScreen();
   // i18n: groups.users.removeUser → "Remove user"
-  expect(screen.getByLabelText('Remove user')).toBeOnTheScreen();
-  fireEvent.press(button);
+  const action = screen.getByLabelText('Remove user');
+  expect(action).toBeOnTheScreen();
+  fireEvent.press(action);
   expect(onRemove).toHaveBeenCalledTimes(1);
 });

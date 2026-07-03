@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../api/queries/coaching';
 import { formatBookingDateTime } from '../api/queries/coaching';
+import { useScreenReader } from '../lib/use-screen-reader';
 import { ZBadge, type ZBadgeTone } from './ui/z-badge';
 import { ZButton } from './ui/z-button';
 import { ZCard } from './ui/z-card';
@@ -109,18 +109,7 @@ export function BookingCard({
   // trailing action only during the gesture, so it never exists in the a11y
   // tree. When a screen reader is active, surface cancel as an explicit
   // footer button instead of the (unperformable) swipe.
-  const [screenReaderOn, setScreenReaderOn] = useState(false);
-  useEffect(() => {
-    let mounted = true;
-    void AccessibilityInfo.isScreenReaderEnabled().then((enabled) => {
-      if (mounted) setScreenReaderOn(enabled);
-    });
-    const sub = AccessibilityInfo.addEventListener('screenReaderChanged', setScreenReaderOn);
-    return () => {
-      mounted = false;
-      sub.remove();
-    };
-  }, []);
+  const screenReaderOn = useScreenReader();
   const showCancelButton = canCancel && screenReaderOn;
 
   const sessionTypeName = booking.session_type_name ?? t('sessions.sessionFallback');

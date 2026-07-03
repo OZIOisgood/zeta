@@ -10,7 +10,7 @@ const meta = {
   args: {
     availability: mockAvailability,
     dayName: 'Monday',
-    editLabel: 'Edit availability',
+    
     deleteLabel: 'Delete availability',
     onEdit: () => {},
     onDelete: () => {},

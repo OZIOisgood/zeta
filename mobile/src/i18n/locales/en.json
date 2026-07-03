@@ -75,7 +75,8 @@
       "reason": "Reason: {{reason}}",
       "student": "Student",
       "user": "User",
-      "yourLocalTime": "your local time"
+      "yourLocalTime": "your local time",
+      "optional": "Optional"
     },
     "nav": {
       "groups": "Groups",
@@ -494,7 +495,8 @@
     "titleRequired": "Video title is required.",
     "groupRequired": "Please choose a group.",
     "titlePlaceholder": "e.g. Jump line take 2",
-    "descriptionPlaceholder": "Add context, goals, or notes for the reviewer."
+    "descriptionPlaceholder": "Add context, goals, or notes for the reviewer.",
+    "files": "Files"
   },
   "sessions": {
     "title": "Sessions",

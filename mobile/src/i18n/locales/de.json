@@ -75,7 +75,8 @@
       "reason": "Grund: {{reason}}",
       "student": "Schüler",
       "user": "Benutzer",
-      "yourLocalTime": "deine lokale Zeit"
+      "yourLocalTime": "deine lokale Zeit",
+      "optional": "Optional"
     },
     "nav": {
       "groups": "Gruppen",
@@ -494,7 +495,8 @@
     "titleRequired": "Ein Videotitel ist erforderlich.",
     "groupRequired": "Bitte wähle eine Gruppe aus.",
     "titlePlaceholder": "z. B. Sprunglinie Versuch 2",
-    "descriptionPlaceholder": "Füge Kontext, Ziele oder Hinweise für die Prüfung hinzu."
+    "descriptionPlaceholder": "Füge Kontext, Ziele oder Hinweise für die Prüfung hinzu.",
+    "files": "Dateien"
   },
   "sessions": {
     "title": "Termine",

@@ -15,6 +15,7 @@ import {
 import { useGroupsQuery } from '../api/queries/groups';
 import { useAuth } from '../auth/auth-store';
 import { formatDate } from '../lib/datetime';
+import { useScreenReader } from '../lib/use-screen-reader';
 import { ScheduleDayRow } from '../components/schedule-day-row';
 import { SessionTypeRow } from '../components/session-type-row';
 import { ZButton } from '../components/ui/z-button';
@@ -31,6 +32,7 @@ import { ZQueryError } from '../components/ui/z-query-error';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSelect } from '../components/ui/z-select';
 import { ZSkeleton } from '../components/ui/z-skeleton';
+import { ZSwipeable } from '../components/ui/z-swipeable';
 import { ZTabs } from '../components/ui/z-tabs';
 import { showToast } from '../components/ui/z-toast';
 import { Touchable } from '../components/ui/touchable';
@@ -45,6 +47,7 @@ export default function AvailabilityScreen() {
   const { color } = useRoleColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const screenReaderOn = useScreenReader();
   const listPaddingBottom = Platform.OS === 'android' ? 96 : 24;
   const permissions = useAuth((s) => (s as { user?: { permissions?: string[] } }).user?.permissions ?? null);
   const canManage = permissions !== null && permissions.includes('coaching:availability:manage');
@@ -236,7 +239,6 @@ export default function AvailabilityScreen() {
           <SessionTypeRow
             sessionType={item}
             durationLabel={t('common.labels.minutesShort', { count: item.duration_minutes })}
-            editLabel={t('common.actions.edit')}
             deleteLabel={t('common.actions.delete')}
             onEdit={() =>
               router.push({
@@ -299,7 +301,6 @@ export default function AvailabilityScreen() {
           <ScheduleDayRow
             availability={item}
             dayName={t(`weekdays.${item.day_of_week}`)}
-            editLabel={t('common.actions.edit')}
             deleteLabel={t('common.actions.delete')}
             onEdit={() =>
               router.push({
@@ -366,9 +367,11 @@ export default function AvailabilityScreen() {
               ? `${item.start_time} – ${item.end_time}`
               : t('common.labels.fullDay');
           const subtitle = item.reason ? `${timeline}\n${item.reason}` : timeline;
-          return (
+          // No edit for blocked slots (backend has none) → the row is not
+          // tappable; delete is the swipe action (SOTA list idiom; explicit
+          // button under a screen reader — see session-type-row).
+          const row = (
             <ZListItem
-              // Non-interactive: the row surfaces its own delete control.
               leading={
                 <ZIconTile
                   icon={<ZSymbol name="calendar-off" label={t('sessions.availability.blockedDates')} size={18} color={color('onSurface')} />}
@@ -379,16 +382,28 @@ export default function AvailabilityScreen() {
               title={formatDate(item.blocked_date)}
               subtitle={subtitle}
               trailing={
-                <ZIconButton
-                  label={t('common.actions.delete')}
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
-                >
-                  <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={color('danger')} />
-                </ZIconButton>
+                screenReaderOn ? (
+                  <ZIconButton
+                    label={t('common.actions.delete')}
+                    variant="secondary"
+                    size="sm"
+                    onPress={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
+                  >
+                    <ZSymbol name="trash" label={t('common.actions.delete')} size={16} color={color('danger')} />
+                  </ZIconButton>
+                ) : undefined
               }
             />
+          );
+          if (screenReaderOn) return row;
+          return (
+            <ZSwipeable
+              actionLabel={t('common.actions.delete')}
+              actionIcon={<ZSymbol name="trash" label="" size={20} color={color('onAccent')} />}
+              onAction={() => setDeleteTarget({ kind: 'blocked', id: item.id })}
+            >
+              {row}
+            </ZSwipeable>
           );
         }}
       />

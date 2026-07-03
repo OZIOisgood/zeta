@@ -15,6 +15,7 @@ import { ZFab } from '../../../components/ui/z-fab';
 import { ZQueryError } from '../../../components/ui/z-query-error';
 import { ZScreen } from '../../../components/ui/z-screen';
 import { ZSkeleton } from '../../../components/ui/z-skeleton';
+import { ZDivider } from '../../../components/ui/z-divider';
 import { ZSymbol } from '../../../components/ui/z-symbol';
 import { useRoleColors } from '../../../theme/native';
 
@@ -151,6 +152,14 @@ export default function GroupsScreen() {
             flexGrow: 1,
           }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
+          // Mock grouping per platform: Android = stacked tonal tiles with a
+          // 6dp gap; iOS = ONE inset-grouped card (hairline dividers, corners
+          // clipped on the first/last cell — ZListItem's iOS cell contract).
+          ItemSeparatorComponent={
+            Platform.OS === 'ios'
+              ? () => <ZDivider inset={73} />
+              : () => <View className="h-1.5" />
+          }
           ListEmptyComponent={
             <View testID="groups-empty" className="flex-1 justify-center">
               <ZEmptyState
@@ -160,9 +169,20 @@ export default function GroupsScreen() {
               />
             </View>
           }
-          renderItem={({ item }) => (
-            <GroupCard group={item} onPress={() => router.push(`/group/${item.id}`)} />
-          )}
+          renderItem={({ item, index }) => {
+            const count = data?.length ?? 0;
+            const iosCorners =
+              Platform.OS === 'ios'
+                ? `overflow-hidden ${index === 0 ? 'rounded-t-2xl' : ''} ${index === count - 1 ? 'rounded-b-2xl' : ''}`.trim()
+                : undefined;
+            return (
+              <GroupCard
+                group={item}
+                className={iosCorners}
+                onPress={() => router.push(`/group/${item.id}`)}
+              />
+            );
+          }}
         />
       </View>
     );

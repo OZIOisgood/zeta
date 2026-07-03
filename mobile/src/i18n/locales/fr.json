@@ -75,7 +75,8 @@
       "reason": "Motif : {{reason}}",
       "student": "Étudiant",
       "user": "Utilisateur",
-      "yourLocalTime": "votre heure locale"
+      "yourLocalTime": "votre heure locale",
+      "optional": "Facultatif"
     },
     "nav": {
       "groups": "Groupes",
@@ -494,7 +495,8 @@
     "titleRequired": "Le titre de la vidéo est obligatoire.",
     "groupRequired": "Veuillez sélectionner un groupe.",
     "titlePlaceholder": "p. ex. Ligne de saut prise 2",
-    "descriptionPlaceholder": "Ajoutez le contexte, les objectifs ou des notes pour la revue."
+    "descriptionPlaceholder": "Ajoutez le contexte, les objectifs ou des notes pour la revue.",
+    "files": "Fichiers"
   },
   "sessions": {
     "title": "Séances",

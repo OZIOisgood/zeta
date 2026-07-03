@@ -145,14 +145,14 @@ test('remove-member button visible for users with groups:user-list:delete', asyn
   mockPermissions = ['groups:user-list:read', 'groups:user-list:delete'];
   mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [STUDENT], refetch: jest.fn() });
   await render(<Providers><GroupDetailScreen /></Providers>);
-  expect(screen.getByTestId('member-remove')).toBeOnTheScreen();
+  expect(screen.getByLabelText('Remove user')).toBeOnTheScreen();
 });
 
 test('remove-member button hidden without groups:user-list:delete', async () => {
   mockPermissions = ['groups:user-list:read'];
   mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [STUDENT], refetch: jest.fn() });
   await render(<Providers><GroupDetailScreen /></Providers>);
-  expect(screen.queryByTestId('member-remove')).toBeNull();
+  expect(screen.queryByLabelText('Remove user')).toBeNull();
 });
 
 test('remove-member flow: press remove → confirm dialog → mutation called', async () => {
@@ -161,7 +161,7 @@ test('remove-member flow: press remove → confirm dialog → mutation called', 
   mockPermissions = ['groups:user-list:read', 'groups:user-list:delete'];
   mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [STUDENT], refetch: jest.fn() });
   await render(<Providers><GroupDetailScreen /></Providers>);
-  fireEvent.press(screen.getByTestId('member-remove'));
+  fireEvent.press(screen.getByLabelText('Remove user'));
   // Wait for confirm dialog to open
   await waitFor(() => expect(screen.getAllByText('Remove').length).toBeGreaterThan(0));
   // Press the confirm button (last "Remove" in tree, in dialog)
@@ -182,7 +182,7 @@ test('remove button is hidden on the current user\'s own row even when canRemove
   await render(<Providers><GroupDetailScreen /></Providers>);
   // The student row renders (name visible) but the remove button must be absent.
   expect(screen.getByText('Bob Jones')).toBeOnTheScreen();
-  expect(screen.queryByTestId('member-remove')).toBeNull();
+  expect(screen.queryByLabelText('Remove user')).toBeNull();
 });
 
 test('remove button is visible for OTHER members when current user has the permission', async () => {
@@ -192,5 +192,5 @@ test('remove button is visible for OTHER members when current user has the permi
   mockPermissions = ['groups:user-list:read', 'groups:user-list:delete'];
   mockUseGroupStudentsQuery.mockReturnValue({ isPending: false, isError: false, data: [OTHER], refetch: jest.fn() });
   await render(<Providers><GroupDetailScreen /></Providers>);
-  expect(screen.getByTestId('member-remove')).toBeOnTheScreen();
+  expect(screen.getByLabelText('Remove user')).toBeOnTheScreen();
 });

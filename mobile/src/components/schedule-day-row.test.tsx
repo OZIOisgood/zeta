@@ -17,7 +17,6 @@ test('ScheduleDayRow shows the weekday name and time range', async () => {
     <ScheduleDayRow
       availability={ITEM}
       dayName="Monday"
-      editLabel="Edit"
       deleteLabel="Delete"
       onEdit={() => {}}
       onDelete={() => {}}

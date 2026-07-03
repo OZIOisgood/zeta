@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 jest.mock('expo-secure-store', () => ({
@@ -79,25 +79,19 @@ test('renders name input, avatar input, description textarea', async () => {
 
 // ── validation ────────────────────────────────────────────────────────────────
 
-test('submit without name shows name-required error, does not call mutate', async () => {
+test('submit stays disabled until name and avatar are provided (mock gating)', async () => {
   const { Providers } = setup();
   await render(<Providers><CreateGroupScreen /></Providers>);
-  // Wrap all events in a single act to properly flush async state updates (React 19)
-  await act(async () => { fireEvent.press(screen.getByTestId('create-group-submit')); });
-  expect(screen.getByText('Group name is required')).toBeOnTheScreen();
-  expect(mockMutateAsync).not.toHaveBeenCalled();
-});
-
-test('submit without avatar shows avatar-required error, does not call mutate', async () => {
-  const { Providers } = setup();
-  await render(<Providers><CreateGroupScreen /></Providers>);
-  // All events in one act so state updates from changeText + press are fully flushed
+  expect(screen.getByTestId('create-group-submit').props.accessibilityState?.disabled).toBe(true);
   await act(async () => {
-    fireEvent.changeText(screen.getByTestId('create-group-name'), 'My Group');
-    fireEvent.press(screen.getByTestId('create-group-submit'));
+    fireEvent.changeText(screen.getByTestId('create-group-name'), 'Dojo');
   });
-  expect(screen.getByText('Group avatar is required.')).toBeOnTheScreen();
-  expect(mockMutateAsync).not.toHaveBeenCalled();
+  expect(screen.getByTestId('create-group-submit').props.accessibilityState?.disabled).toBe(true);
+  await act(async () => {
+    fireEvent.press(screen.getByTestId('create-group-avatar'));
+  });
+  expect(screen.getByTestId('create-group-submit').props.accessibilityState?.disabled).toBe(false);
+  cleanup();
 });
 
 // ── success path ──────────────────────────────────────────────────────────────

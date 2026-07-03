@@ -22,8 +22,12 @@ import { ZTextarea } from '../../../components/ui/z-textarea';
 import { ZAvatarInput } from '../../../components/ui/z-avatar-input';
 import { ZButton } from '../../../components/ui/z-button';
 import { ZConfirmDialog } from '../../../components/ui/z-confirm-dialog';
-import { ZDangerZoneCard } from '../../../components/ui/z-danger-zone-card';
+import { ZDivider } from '../../../components/ui/z-divider';
+import { ZIconTile } from '../../../components/ui/z-icon-tile';
+import { ZSymbol } from '../../../components/ui/z-symbol';
 import { showToast } from '../../../components/ui/z-toast';
+import { Touchable } from '../../../components/ui/touchable';
+import { useRoleColors } from '../../../theme/native';
 
 /** All editable form fields + the server baseline in one state slice.
  *  Storing them together lets the hydration useEffect call a single dispatch
@@ -70,6 +74,7 @@ function formReducer(state: FormState, action: FormAction): FormState {
 
 export default function GroupPreferencesScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const groupId = id ?? '';
@@ -123,6 +128,7 @@ export default function GroupPreferencesScreen() {
   const { mutateAsync: leaveGroup, isPending: leaving } = useLeaveGroupMutation(groupId);
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { name, description, avatar, baseline } = form;
 
@@ -169,6 +175,7 @@ export default function GroupPreferencesScreen() {
   }
 
   async function handleConfirmDelete() {
+    setShowDeleteConfirm(false);
     try {
       await deleteGroup();
       showToast(t('toast.successTitle'), t('groups.deleted'), 'success');
@@ -176,6 +183,34 @@ export default function GroupPreferencesScreen() {
     } catch {
       showToast(t('toast.errorTitle'), t('groups.deleteFailed'), 'error');
     }
+  }
+
+  /** One danger-zone action row (mock: list rows inside a danger-bordered
+   *  card — leave and delete side by side, each confirmed via dialog). */
+  function dangerRow(opts: {
+    testID: string;
+    icon: 'logout' | 'trash';
+    title: string;
+    subtitle: string;
+    onPress: () => void;
+  }) {
+    return (
+      <Touchable testID={opts.testID} accessibilityLabel={opts.title} onPress={opts.onPress}>
+        <View className="flex-row items-center gap-3 px-3 py-3">
+          <ZIconTile
+            tone="danger"
+            size="sm"
+            icon={<ZSymbol name={opts.icon} label="" size={18} color={color('danger')} />}
+          />
+          <View className="min-w-0 flex-1">
+            <Text className="text-[16px] font-bold text-z-danger">{opts.title}</Text>
+            <Text className="mt-0.5 text-[12px] leading-4 text-z-muted" numberOfLines={2}>
+              {opts.subtitle}
+            </Text>
+          </View>
+        </View>
+      </Touchable>
+    );
   }
 
   if (isPending) {
@@ -203,121 +238,113 @@ export default function GroupPreferencesScreen() {
 
   return (
     <ZScreen edges={['bottom']}>
-      <Stack.Screen options={{ title: t('groups.preferences') }} />
+      {/* Native header carries the Save action (mock: header text button,
+          disabled until dirty — same convention as preferences.tsx). */}
+      <Stack.Screen
+        options={{
+          title: t('groups.preferences'),
+          headerRight: canEdit
+            ? () => (
+                <ZButton
+                  testID="group-save"
+                  variant="link"
+                  label={t('common.actions.save')}
+                  disabled={saveDisabled}
+                  loading={saving}
+                  onPress={() => void handleSave()}
+                />
+              )
+            : undefined,
+        }}
+      />
       <ZKeyboardAvoidingView>
         <ScrollView
           className="flex-1 bg-z-bg"
           contentContainerStyle={{ paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Form summary */}
-          <View className="px-4 pb-4">
-            <Text className="mt-1 text-[15px] leading-6 text-z-muted">
-              {t('groups.phase4.preferencesSummary')}
-            </Text>
-          </View>
-
           {canEdit ? (
-            <View className="px-4">
-              <ZCard>
-                <View className="gap-4">
-                  <View className="gap-2">
-                    <ZFieldLabel label={t('groups.groupName')} />
-                    <ZTextInput
-                      testID="group-name-input"
-                      accessibilityLabel={t('groups.groupName')}
-                      value={name}
-                      onChangeText={(v) => dispatch({ type: 'setName', value: v })}
-                      placeholder={t('groups.namePlaceholder')}
-                      invalid={nameInvalid}
-                    />
-                    {nameInvalid ? <ZFieldError message={t('groups.groupNameRequired')} /> : null}
-                  </View>
-
-                  <View className="gap-2">
-                    <ZFieldLabel label={t('groups.avatarTitle')} />
-                    <ZAvatarInput
-                      value={avatar}
-                      onChange={(v) => dispatch({ type: 'setAvatar', value: v })}
-                      fallback={initialsFromName(name)}
-                      alt={name}
-                      label={t('avatar.selectImage')}
-                      helperText={t('avatar.requirement')}
-                      disabled={saving}
-                    />
-                  </View>
-
-                  <View className="gap-2">
-                    <ZFieldLabel label={t('common.fields.description')} />
-                    <ZTextarea
-                      accessibilityLabel={t('common.fields.description')}
-                      value={description}
-                      onChangeText={(v) => dispatch({ type: 'setDescription', value: v })}
-                      placeholder={t('groups.descriptionPlaceholder')}
-                    />
-                  </View>
-
-                  {/* Form-save failure → inline banner using the standard danger tokens. */}
-                  {formError ? (
-                    <View className="rounded-md border border-z-danger bg-z-danger/10 p-3">
-                      <Text className="text-sm text-z-danger">{formError}</Text>
+            <>
+              {/* Avatar standalone above the card, centered + directly tappable
+                  (mock; no intro paragraph, no labeled avatar field in the card). */}
+              <View className="items-center px-4 pb-5 pt-3">
+                <ZAvatarInput
+                  centered
+                  value={avatar}
+                  onChange={(v) => dispatch({ type: 'setAvatar', value: v })}
+                  fallback={initialsFromName(name)}
+                  alt={name}
+                  label={t('avatar.selectImage')}
+                  disabled={saving}
+                />
+              </View>
+              <View className="px-4">
+                <ZCard>
+                  <View className="gap-4">
+                    <View className="gap-2">
+                      <ZFieldLabel label={t('groups.groupName')} />
+                      <ZTextInput
+                        testID="group-name-input"
+                        accessibilityLabel={t('groups.groupName')}
+                        value={name}
+                        onChangeText={(v) => dispatch({ type: 'setName', value: v })}
+                        placeholder={t('groups.namePlaceholder')}
+                        invalid={nameInvalid}
+                      />
+                      {nameInvalid ? <ZFieldError message={t('groups.groupNameRequired')} /> : null}
                     </View>
-                  ) : null}
 
-                  <ZButton
-                    testID="group-save"
-                    label={t('common.actions.save')}
-                    onPress={() => void handleSave()}
-                    disabled={saveDisabled}
-                  />
-                </View>
-              </ZCard>
-            </View>
+                    <View className="gap-2">
+                      <ZFieldLabel label={t('common.fields.description')} />
+                      <ZTextarea
+                        accessibilityLabel={t('common.fields.description')}
+                        value={description}
+                        onChangeText={(v) => dispatch({ type: 'setDescription', value: v })}
+                        placeholder={t('groups.descriptionPlaceholder')}
+                        rows={3}
+                      />
+                    </View>
+
+                    {/* Form-save failure → inline banner using the standard danger tokens. */}
+                    {formError ? (
+                      <View className="rounded-md border border-z-danger bg-z-danger/10 p-3">
+                        <Text className="text-sm text-z-danger">{formError}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </ZCard>
+              </View>
+            </>
           ) : null}
 
-          {/* Danger zone — owner-only delete via the shared ZDangerZoneCard (WP-UI0). */}
-          {canDelete ? (
+          {/* Danger zone — one danger-bordered card with action ROWS (mock),
+              showing every action the member may perform. */}
+          {canLeave || canDelete ? (
             <View className="px-4 pt-6">
               <Text className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.06em] text-role-danger">
                 {t('groups.dangerZone')}
               </Text>
-              <ZDangerZoneCard
-                testID="group-delete"
-                title={t('groups.deleteThisGroup')}
-                description={t('groups.deleteSummary')}
-                actionLabel={t('groups.deleteGroup')}
-                onAction={() => void handleConfirmDelete()}
-                loading={deleting}
-                confirmTitle={t('groups.deleteGroup')}
-                confirmMessage={t('groups.deleteConfirm')}
-                confirmLabel={t('groups.deleteGroup')}
-              />
-            </View>
-          ) : canLeave ? (
-            // Non-owner with leave permission — mirrors the web "leave group" danger surface.
-            <View className="px-4 pt-6">
-              <Text className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.06em] text-role-danger">
-                {t('groups.dangerZone')}
-              </Text>
-              <ZButton
-                testID="preferences-leave-btn"
-                label={t('groups.leave.action')}
-                variant="danger"
-                loading={leaving}
-                onPress={() => setShowLeaveConfirm(true)}
-              />
-              <ZConfirmDialog
-                testID="preferences-leave-dialog"
-                visible={showLeaveConfirm}
-                tone="danger"
-                title={t('groups.leave.title')}
-                description={t('groups.leave.confirm', { group: data.name })}
-                confirmLabel={t('groups.leave.action')}
-                cancelLabel={t('common.actions.cancel')}
-                confirmDisabled={leaving}
-                onConfirm={() => void handleConfirmLeave()}
-                onCancel={() => setShowLeaveConfirm(false)}
-              />
+              <View className="overflow-hidden rounded-2xl border border-z-danger/40 bg-z-surface">
+                {canLeave
+                  ? dangerRow({
+                      testID: 'preferences-leave-btn',
+                      icon: 'logout',
+                      title: t('groups.leave.action'),
+                      subtitle: t('groups.leave.summary'),
+                      onPress: () => setShowLeaveConfirm(true),
+                    })
+                  : null}
+                {canLeave && canDelete ? <ZDivider inset={58} /> : null}
+                {canDelete
+                  ? dangerRow({
+                      testID: 'group-delete',
+                      icon: 'trash',
+                      title: t('groups.deleteThisGroup'),
+                      subtitle: t('groups.deleteSummary'),
+                      onPress: () => setShowDeleteConfirm(true),
+                    })
+                  : null}
+              </View>
             </View>
           ) : (
             // Neither owner (can delete) nor a member who can leave: explain why.
@@ -327,6 +354,31 @@ export default function GroupPreferencesScreen() {
               </Text>
             </View>
           )}
+
+          <ZConfirmDialog
+            testID="preferences-leave-dialog"
+            visible={showLeaveConfirm}
+            tone="danger"
+            title={t('groups.leave.title')}
+            description={t('groups.leave.confirm', { group: data.name })}
+            confirmLabel={t('groups.leave.action')}
+            cancelLabel={t('common.actions.cancel')}
+            confirmDisabled={leaving}
+            onConfirm={() => void handleConfirmLeave()}
+            onCancel={() => setShowLeaveConfirm(false)}
+          />
+          <ZConfirmDialog
+            testID="preferences-delete-dialog"
+            visible={showDeleteConfirm}
+            tone="danger"
+            title={t('groups.deleteGroup')}
+            description={t('groups.deleteConfirm')}
+            confirmLabel={t('groups.deleteGroup')}
+            cancelLabel={t('common.actions.cancel')}
+            confirmDisabled={deleting}
+            onConfirm={() => void handleConfirmDelete()}
+            onCancel={() => setShowDeleteConfirm(false)}
+          />
         </ScrollView>
       </ZKeyboardAvoidingView>
     </ZScreen>

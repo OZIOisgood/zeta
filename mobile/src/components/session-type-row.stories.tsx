@@ -30,7 +30,7 @@ const meta = {
   args: {
     sessionType: mockSessionType,
     durationLabel: '45 min',
-    editLabel: 'Edit',
+    
     deleteLabel: 'Delete',
     onEdit: () => {},
     onDelete: () => {},
@@ -49,7 +49,6 @@ export const States: Story = {
       <SessionTypeRow
         sessionType={mockSessionType}
         durationLabel="45 min"
-        editLabel="Edit"
         deleteLabel="Delete"
         onEdit={() => {}}
         onDelete={() => {}}
@@ -58,7 +57,6 @@ export const States: Story = {
       <SessionTypeRow
         sessionType={sessionTypeNoDescription}
         durationLabel="15 min"
-        editLabel="Edit"
         deleteLabel="Delete"
         onEdit={() => {}}
         onDelete={() => {}}
@@ -67,7 +65,6 @@ export const States: Story = {
       <SessionTypeRow
         sessionType={sessionTypeLong}
         durationLabel="1 h 30 min"
-        editLabel="Edit"
         deleteLabel="Delete"
         onEdit={() => {}}
         onDelete={() => {}}

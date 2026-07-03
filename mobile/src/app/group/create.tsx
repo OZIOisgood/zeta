@@ -66,14 +66,15 @@ export default function CreateGroupScreen() {
           {/* No in-content header card — the native header (title set above)
               carries the title; the avatar is the first element (handoff). */}
 
-          {/* Avatar — standalone, centered above the form card (handoff). */}
+          {/* Avatar — standalone, centered above the form card, directly
+              tappable with the empty-state picker (handoff). */}
           <View className="mb-4 items-center">
             <ZAvatarInput
               testID="create-group-avatar"
+              centered
               value={avatar ?? undefined}
               onChange={(b64) => setAvatar(b64)}
               label={t('avatar.selectImage')}
-              helperText={t('avatar.requirement')}
               disabled={isPending}
             />
             {touched && avatarMissing && (
@@ -83,9 +84,10 @@ export default function CreateGroupScreen() {
 
           {/* Form card */}
           <ZCard className="gap-4">
-            {/* Name */}
+            {/* Name — required-ness is enforced by validation; the handoff
+                marks OPTIONAL fields via hint instead of starring required ones. */}
             <View>
-              <ZFieldLabel label={t('groups.groupName')} required />
+              <ZFieldLabel label={t('groups.groupName')} />
               <ZTextInput
                 testID="create-group-name"
                 accessibilityLabel={t('groups.groupName')}
@@ -101,14 +103,14 @@ export default function CreateGroupScreen() {
 
             {/* Description */}
             <View>
-              <ZFieldLabel label={t('common.fields.description')} />
+              <ZFieldLabel label={t('common.fields.description')} hint={t('common.labels.optional')} />
               <ZTextarea
                 testID="create-group-description"
                 accessibilityLabel={t('common.fields.description')}
                 value={description}
                 onChangeText={setDescription}
                 placeholder={t('groups.descriptionPlaceholder')}
-                rows={4}
+                rows={3}
               />
             </View>
 
@@ -123,12 +125,13 @@ export default function CreateGroupScreen() {
             )}
           </ZCard>
 
-          {/* Single full-width submit (cancel is the native header back). */}
+          {/* Single full-width submit (cancel is the native header back).
+              Disabled until valid (mock gating: nameEmpty || !avatar). */}
           <View className="mt-4">
             <ZButton
               testID="create-group-submit"
               label={isPending ? t('groups.creating') : t('common.actions.create')}
-              disabled={isPending}
+              disabled={isPending || nameEmpty || avatarMissing}
               onPress={() => void handleSubmit()}
             />
           </View>

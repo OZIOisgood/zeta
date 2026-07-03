@@ -12,7 +12,12 @@ const mockRouterBack = jest.fn();
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'g1' }),
   useRouter: () => ({ replace: mockRouterReplace, back: mockRouterBack }),
-  Stack: { Screen: () => null },
+  // The real native-stack header is not mounted by RNTL, so render the
+  // header-right node (the Save action) inline to keep it testable.
+  Stack: {
+    Screen: ({ options }: { options?: { headerRight?: () => unknown } }) =>
+      options?.headerRight ? options.headerRight() : null,
+  },
 }));
 
 const mockUseGroupQuery = jest.fn();
@@ -89,9 +94,9 @@ test('owner with groups:delete sees the delete button and confirms deletion', as
   const deleteMutate = jest.fn(async () => undefined);
   mockUseDeleteGroupMutation.mockReturnValue({ mutateAsync: deleteMutate, isPending: false });
   const { getByTestId, getAllByText } = await render(<GroupPreferencesScreen />);
-  // ZDangerZoneCard action button testID is `{testID}-action`
-  expect(getByTestId('group-delete-action')).toBeTruthy();
-  fireEvent.press(getByTestId('group-delete-action'));
+  // Danger-zone delete ROW (mock anatomy) carries testID group-delete.
+  expect(getByTestId('group-delete')).toBeTruthy();
+  fireEvent.press(getByTestId('group-delete'));
   // After pressing the action button, wait for the ZConfirmDialog (Modal) to
   // appear. The dialog is lazy-mounted so we must flush the state update first.
   // Once open, the tree contains 3 elements with text 'Delete group':

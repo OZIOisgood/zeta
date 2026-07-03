@@ -62,11 +62,37 @@ export function ZAvatarInput({
   // classes mis-render on Android. Colors via useRoleColors so the badge flips
   // with the scheme (static light colors froze it orange-on-cream in dark mode).
   if (centered) {
+    // Empty state (handoff create-group picker): dashed outline circle with a
+    // camera glyph and a PLUS badge until an image is picked; filled state
+    // shows the avatar (or initials) with the pencil edit-badge.
+    const empty = !value && (fallback ?? '').trim() === '';
     return (
       <View testID={testID} style={{ alignItems: 'center', gap: 8 }}>
-        <Touchable accessibilityLabel={label} disabled={disabled} onPress={() => void handlePick()}>
+        <Touchable
+          testID={testID ? `${testID}-pick` : undefined}
+          accessibilityLabel={label}
+          disabled={disabled}
+          onPress={() => void handlePick()}
+        >
           <View style={{ position: 'relative' }}>
-            <ZAvatar image={value} fallback={fallback} alt={alt} size={88} />
+            {empty ? (
+              <View
+                style={{
+                  width: 88,
+                  height: 88,
+                  borderRadius: 999,
+                  borderWidth: 2,
+                  borderStyle: 'dashed',
+                  borderColor: color('outline'),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ZSymbol name="camera" label="" size={26} color={color('onSurfaceVariant')} />
+              </View>
+            ) : (
+              <ZAvatar image={value} fallback={fallback} alt={alt} size={88} />
+            )}
             <View
               style={{
                 position: 'absolute',
@@ -82,7 +108,7 @@ export function ZAvatarInput({
                 justifyContent: 'center',
               }}
             >
-              <ZSymbol name="edit" label="" size={15} color={color('onAccent')} />
+              <ZSymbol name={empty ? 'plus' : 'edit'} label="" size={15} color={color('onAccent')} />
             </View>
           </View>
         </Touchable>

@@ -26,6 +26,7 @@ import type {
   CalendarDays,
   CalendarOff,
   CalendarPlus,
+  Camera,
   CameraOff,
   Check,
   CheckCheck,
@@ -113,6 +114,7 @@ export type ZSymbolName =
   | 'search'
   | 'trash'
   | 'edit'
+  | 'camera'
   | 'reply'
   | 'send'
   | 'share'
@@ -174,6 +176,7 @@ export type LucideIcon =
   | typeof CalendarDays
   | typeof CalendarOff
   | typeof CalendarPlus
+  | typeof Camera
   | typeof CameraOff
   | typeof Check
   | typeof CheckCheck

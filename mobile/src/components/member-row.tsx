@@ -1,10 +1,12 @@
-import { Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import type { GroupUser } from '../api/queries/groups';
+import { useScreenReader } from '../lib/use-screen-reader';
+import { useRoleColors } from '../theme/native';
 import { ZAvatar } from './ui/z-avatar';
 import { ZIconButton } from './ui/z-icon-button';
 import { ZListItem } from './ui/z-list-item';
-import { colors } from '../theme/colors';
+import { ZSwipeable } from './ui/z-swipeable';
+import { ZSymbol } from './ui/z-symbol';
 
 function initials(member: GroupUser): string {
   const first = member.first_name.charAt(0).toUpperCase();
@@ -12,6 +14,12 @@ function initials(member: GroupUser): string {
   return `${first}${last}`;
 }
 
+/**
+ * One group-member row. Removal (perm-gated) follows the platform list idiom:
+ * SWIPE to reveal the remove action; explicit button under a screen reader
+ * (see session-type-row / booking-card). The row itself is non-interactive —
+ * there is no member detail screen.
+ */
 export function MemberRow({
   member,
   onRemove,
@@ -21,11 +29,12 @@ export function MemberRow({
   onRemove?: () => void;
 }) {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
+  const screenReaderOn = useScreenReader();
   const fullName = `${member.first_name} ${member.last_name}`.trim();
-  return (
+
+  const row = (
     <ZListItem
-      // Non-interactive: the row surfaces its own remove control, so it must not
-      // pose as a button — omit onPress.
       leading={
         <ZAvatar
           image={member.avatar}
@@ -39,7 +48,7 @@ export function MemberRow({
       title={fullName}
       subtitle={member.email}
       trailing={
-        onRemove ? (
+        onRemove && screenReaderOn ? (
           <ZIconButton
             testID="member-remove"
             label={t('groups.users.removeUser')}
@@ -47,10 +56,22 @@ export function MemberRow({
             size="sm"
             onPress={onRemove}
           >
-            <Trash2 color={colors.danger} size={18} />
+            <ZSymbol name="trash" label={t('groups.users.removeUser')} size={18} color={color('danger')} />
           </ZIconButton>
         ) : undefined
       }
     />
+  );
+
+  if (!onRemove || screenReaderOn) return row;
+  return (
+    <ZSwipeable
+      testID="member-remove-swipe"
+      actionLabel={t('groups.users.removeUser')}
+      actionIcon={<ZSymbol name="trash" label="" size={20} color={color('onAccent')} />}
+      onAction={onRemove}
+    >
+      {row}
+    </ZSwipeable>
   );
 }
