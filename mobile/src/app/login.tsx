@@ -24,7 +24,8 @@ export default function LoginScreen() {
   // `error` arrives from auth/callback when its token exchange threw — the
   // callback route can't render the message itself (it always redirects here).
   const { error } = useLocalSearchParams<{ error?: string }>();
-  const [busy, setBusy] = useState(false);
+  // Which flow is in flight — drives the spinner on the tapped button only.
+  const [busy, setBusy] = useState<'signIn' | 'signUp' | null>(null);
   const [failed, setFailed] = useState(error === 'exchange');
 
   const [request, , promptAsync] = useAuthRequest(
@@ -56,9 +57,10 @@ export default function LoginScreen() {
   async function runAuthFlow(
     req: typeof request,
     prompt: typeof promptAsync,
+    flow: 'signIn' | 'signUp',
   ) {
     if (!req) return;
-    setBusy(true);
+    setBusy(flow);
     setFailed(false);
     try {
       // Stash the verifier first: in Expo Go the redirect may reload the
@@ -74,12 +76,12 @@ export default function LoginScreen() {
     } catch {
       setFailed(true);
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
-  const signIn = () => runAuthFlow(request, promptAsync);
-  const signUp = () => runAuthFlow(signUpRequest, promptSignUpAsync);
+  const signIn = () => runAuthFlow(request, promptAsync, 'signIn');
+  const signUp = () => runAuthFlow(signUpRequest, promptSignUpAsync, 'signUp');
 
   return (
     <ZScreen className="items-center justify-center px-6">
@@ -107,8 +109,8 @@ export default function LoginScreen() {
             <ZButton
               label={t('auth.login.signIn')}
               onPress={() => void signIn()}
-              loading={busy}
-              disabled={!request}
+              loading={busy === 'signIn'}
+              disabled={!request || busy !== null}
               fullWidth
               testID="login-submit"
             />
@@ -116,7 +118,8 @@ export default function LoginScreen() {
               label={t('auth.login.createAccount')}
               variant="tonal"
               onPress={() => void signUp()}
-              disabled={!signUpRequest || busy}
+              loading={busy === 'signUp'}
+              disabled={!signUpRequest || busy !== null}
               fullWidth
               testID="login-signup"
             />

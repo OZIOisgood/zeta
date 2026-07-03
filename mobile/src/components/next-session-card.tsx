@@ -103,6 +103,7 @@ export function NextSessionCard({
             label={t('common.actions.join')}
             variant="primary"
             className="flex-1"
+            fullWidth
             icon={<ZSymbol name="video" label={t('common.actions.join')} size={18} color={roleColor('onAccent')} />}
             onPress={onJoin}
           />

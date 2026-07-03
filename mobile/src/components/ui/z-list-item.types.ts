@@ -103,9 +103,11 @@ export type ZListItemProps = {
    */
   onPress?: () => void;
   /**
-   * Selected state — applies the tonal secondary-container fill (Material) and
-   * announces `accessibilityState.selected`. iOS keeps the system look (no
-   * tonal fill) but still announces selection.
+   * Selected state — Material applies the tonal secondary-container fill plus
+   * the mock's accent ring (constant 2dp border, so toggling never shifts
+   * layout); iOS keeps the plain grouped-cell fill and shows a HIG-style
+   * trailing accent checkmark instead. Both announce
+   * `accessibilityState.selected`.
    * @default false
    */
   selected?: boolean;

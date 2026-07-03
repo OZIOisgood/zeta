@@ -145,6 +145,7 @@ export default function InviteScreen() {
                   </View>
                   <View pointerEvents="none" className="absolute inset-x-0 bottom-3 items-center">
                     <View className="flex-row items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5">
+                      {/* eslint-disable-next-line no-restricted-syntax -- static white on the camera preview: theme-independent media surface, matching the text-white caption beside it */}
                       <ZSymbol name="qr-code" label="" size={14} color="#ffffff" />
                       <Text className="text-[12px] font-semibold text-white">
                         {t('groups.invite.cameraHint')}

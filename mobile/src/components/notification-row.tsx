@@ -40,13 +40,13 @@ import { ZListItem } from './ui/z-list-item';
  */
 
 // Mock (screens2 NotifRow): the 40dp tile signals the READ STATE, not the
-// notification type — accent-container tile + accent glyph while unread,
+// notification type — accent-container tile + on-accent-container glyph while unread,
 // neutral surface tile + muted glyph once read. Only the GLYPH varies by type
 // (mock NOTIF_ICON: review→message-circle, invite→user-plus,
 // booking→calendar-check, upload→check-circle-2; member→users).
 function TypeGlyph({ icon, unread }: { icon: NotificationIcon; unread: boolean }) {
   const { color } = useRoleColors();
-  const glyphColor = unread ? color('accentStrong') : color('onSurfaceVariant');
+  const glyphColor = unread ? color('onAccentContainer') : color('onSurfaceVariant');
   switch (icon) {
     case 'member':
       return <Users color={glyphColor} size={18} />;
@@ -56,8 +56,13 @@ function TypeGlyph({ icon, unread }: { icon: NotificationIcon; unread: boolean }
       return <CheckCircle2 color={glyphColor} size={18} />;
     case 'booking':
       return <CalendarCheck color={glyphColor} size={18} />;
-    default:
+    case 'invite':
       return <UserPlus color={glyphColor} size={18} />;
+    default: {
+      // Exhaustiveness guard — a new NotificationIcon member must pick a glyph.
+      const exhausted: never = icon;
+      return exhausted;
+    }
   }
 }
 

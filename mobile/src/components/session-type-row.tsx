@@ -58,7 +58,7 @@ export function SessionTypeRow({
     <ZSwipeable
       testID={testID ? `${testID}-swipe` : undefined}
       actionLabel={deleteLabel}
-      actionIcon={<ZSymbol name="trash" label="" size={20} color={color('onAccent')} />}
+      actionIcon={<ZSymbol name="trash" label="" size={20} color={color('onDanger')} />}
       onAction={onDelete}
     >
       {row}

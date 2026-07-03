@@ -84,6 +84,7 @@ export function ZAvatarInput({
                   borderWidth: 2,
                   borderStyle: 'dashed',
                   borderColor: color('outline'),
+                  backgroundColor: color('surface2'),
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}

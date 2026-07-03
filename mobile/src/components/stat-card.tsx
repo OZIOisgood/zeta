@@ -37,10 +37,10 @@ export function StatCard({
     <>
       <ZIconTile tone={tone} size="sm" icon={icon} />
       <Text className="mt-2 text-[26px] font-extrabold leading-7 text-z-text">{count}</Text>
-      <Text numberOfLines={1} className="mt-1 text-xs font-bold text-z-muted">
+      <Text numberOfLines={1} className="mt-2 text-xs font-bold text-z-muted">
         {label}
       </Text>
-      {footer ? <View className="mt-1.5">{footer}</View> : null}
+      {footer ? <View className="mt-2.5">{footer}</View> : null}
     </>
   );
 

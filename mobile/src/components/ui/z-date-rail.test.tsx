@@ -24,3 +24,14 @@ test('marks the selected day as selected for a11y', async () => {
   await render(<ZDateRail days={DAYS} selectedKey="Tue Jun 18 2026" onSelect={() => {}} testID="rail" />);
   expect(screen.getByTestId('rail-0').props.accessibilityState).toMatchObject({ selected: true });
 });
+
+test('disabled day blocks press and is announced disabled', async () => {
+  const onSelect = jest.fn();
+  const days: ZDateRailDay[] = [
+    { key: 'Thu Jun 18 2026', label: 'Thu', day: '18', month: 'Jun', disabled: true },
+  ];
+  await render(<ZDateRail days={days} selectedKey="" onSelect={onSelect} testID="rail" />);
+  fireEvent.press(screen.getByTestId('rail-0'));
+  expect(onSelect).not.toHaveBeenCalled();
+  expect(screen.getByTestId('rail-0').props.accessibilityState).toMatchObject({ disabled: true });
+});

@@ -325,7 +325,7 @@ export default function UploadScreen() {
                   icon={
                     <ZSymbol
                       name="upload"
-                      label={t('upload.startUpload')}
+                      label=""
                       size={16}
                       color={color('onAccent')}
                     />

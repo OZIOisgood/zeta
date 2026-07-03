@@ -151,11 +151,10 @@ export default function BookScreen() {
   if (slotsByDay.size > 0) {
     const slotTimes = Array.from(slotsByDay.keys()).map((k) => new Date(k).getTime());
     const start = new Date(Math.min(today.getTime(), ...slotTimes));
-    const end = Math.max(...slotTimes);
+    const endKey = new Date(Math.max(...slotTimes)).toDateString();
     for (let i = 0; i < 60; i += 1) {
       const d = new Date(start.getTime());
       d.setDate(start.getDate() + i);
-      if (d.getTime() > end + 24 * 3600 * 1000) break;
       const key = d.toDateString();
       railDays.push({
         key,
@@ -165,6 +164,9 @@ export default function BookScreen() {
         isToday: key === todayKey,
         disabled: !slotsByDay.has(key),
       });
+      // Day-key comparison (not a millisecond bound) so a DST transition in
+      // the window cannot cut the rail short or append a phantom day.
+      if (key === endKey) break;
     }
   }
 
@@ -246,6 +248,9 @@ export default function BookScreen() {
   function handleSelectDay(key: string) {
     setDayKey(key);
     setSlot(null);
+    // Clamp like the other selection handlers: a new day invalidates the slot,
+    // so Confirm must not stay reachable via the stepper with slot=null.
+    setReached(stageIndex('time'));
   }
   function handleSelectSlot(startsAt: string) {
     setSlot(daySlots.find((s) => s.starts_at === startsAt) ?? null);

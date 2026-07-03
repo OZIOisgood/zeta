@@ -43,6 +43,16 @@ function ListSkeleton() {
 // iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
 const ANDROID_TAB_BAR_HEIGHT = 56;
 
+// Mock grouping per platform: Android = stacked tonal tiles with a 6dp gap;
+// iOS = ONE inset-grouped card (hairline dividers, corners clipped on the
+// first/last cell — ZListItem's iOS cell contract). Platform is static, so the
+// separator lives at module scope — an inline closure would be a NEW component
+// type each render and make FlatList remount every separator.
+const GroupSeparator =
+  Platform.OS === 'ios'
+    ? () => <ZDivider inset={73} />
+    : () => <View className="h-1.5" />;
+
 export default function GroupsScreen() {
   const { t } = useTranslation();
   const { color } = useRoleColors();
@@ -152,14 +162,7 @@ export default function GroupsScreen() {
             flexGrow: 1,
           }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
-          // Mock grouping per platform: Android = stacked tonal tiles with a
-          // 6dp gap; iOS = ONE inset-grouped card (hairline dividers, corners
-          // clipped on the first/last cell — ZListItem's iOS cell contract).
-          ItemSeparatorComponent={
-            Platform.OS === 'ios'
-              ? () => <ZDivider inset={73} />
-              : () => <View className="h-1.5" />
-          }
+          ItemSeparatorComponent={GroupSeparator}
           ListEmptyComponent={
             <View testID="groups-empty" className="flex-1 justify-center">
               <ZEmptyState

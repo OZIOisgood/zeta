@@ -6,7 +6,6 @@ import { useCreateGroupMutation } from '../../api/queries/groups';
 import { ZAvatarInput } from '../../components/ui/z-avatar-input';
 import { ZButton } from '../../components/ui/z-button';
 import { ZCard } from '../../components/ui/z-card';
-import { ZFieldError } from '../../components/ui/z-field-error';
 import { ZFieldLabel } from '../../components/ui/z-field-label';
 import { ZKeyboardAvoidingView } from '../../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../../components/ui/z-screen';
@@ -27,7 +26,6 @@ export default function CreateGroupScreen() {
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState<string | null>(null);
   const [description, setDescription] = useState('');
-  const [touched, setTouched] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   const { mutateAsync, isPending } = useCreateGroupMutation();
@@ -36,7 +34,8 @@ export default function CreateGroupScreen() {
   const avatarMissing = avatar === null;
 
   async function handleSubmit() {
-    setTouched(true);
+    // The submit button is disabled until valid; keep the guard as a belt
+    // against programmatic calls.
     if (nameEmpty || avatarMissing) return;
 
     setErrorBanner(null);
@@ -77,9 +76,6 @@ export default function CreateGroupScreen() {
               label={t('avatar.selectImage')}
               disabled={isPending}
             />
-            {touched && avatarMissing && (
-              <ZFieldError message={t('groups.avatarRequired')} />
-            )}
           </View>
 
           {/* Form card */}
@@ -94,11 +90,7 @@ export default function CreateGroupScreen() {
                 value={name}
                 onChangeText={setName}
                 placeholder={t('groups.namePlaceholder')}
-                invalid={touched && nameEmpty}
               />
-              {touched && nameEmpty && (
-                <ZFieldError message={t('groups.groupNameRequired')} />
-              )}
             </View>
 
             {/* Description */}

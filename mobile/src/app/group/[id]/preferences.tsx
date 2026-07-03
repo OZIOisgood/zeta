@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -88,9 +88,13 @@ export default function GroupPreferencesScreen() {
     (permissions?.includes('groups:delete') ?? false) &&
     data !== undefined &&
     data.owner_id === userId;
-  // Non-owners who can leave see the leave card on the detail screen; the
-  // deleteUnavailable copy is shown only when neither delete nor leave applies.
-  const canLeave = permissions?.includes('groups:membership:leave') ?? false;
+  // Owners cannot leave their own group (the backend rejects it with 400
+  // AFTER the permission check; web hides the action via owner_id !== user.id
+  // the same way) — owners get delete instead.
+  const canLeave =
+    (permissions?.includes('groups:membership:leave') ?? false) &&
+    data !== undefined &&
+    data.owner_id !== userId;
 
   // Form state starts empty; the hydration effect below populates it once data
   // arrives. We cannot use lazy-init (useState(() => data?.name ?? '')) because
@@ -193,9 +197,18 @@ export default function GroupPreferencesScreen() {
     title: string;
     subtitle: string;
     onPress: () => void;
+    /** Shows a trailing spinner while this row's mutation is in flight. */
+    busy?: boolean;
+    /** Blocks presses while ANY danger mutation is in flight. */
+    disabled?: boolean;
   }) {
     return (
-      <Touchable testID={opts.testID} accessibilityLabel={opts.title} onPress={opts.onPress}>
+      <Touchable
+        testID={opts.testID}
+        accessibilityLabel={opts.title}
+        onPress={opts.onPress}
+        disabled={opts.disabled}
+      >
         <View className="flex-row items-center gap-3 px-3 py-3">
           <ZIconTile
             tone="danger"
@@ -208,6 +221,7 @@ export default function GroupPreferencesScreen() {
               {opts.subtitle}
             </Text>
           </View>
+          {opts.busy ? <ActivityIndicator size="small" color={color('danger')} /> : null}
         </View>
       </Touchable>
     );
@@ -332,6 +346,8 @@ export default function GroupPreferencesScreen() {
                       title: t('groups.leave.action'),
                       subtitle: t('groups.leave.summary'),
                       onPress: () => setShowLeaveConfirm(true),
+                      busy: leaving,
+                      disabled: leaving || deleting,
                     })
                   : null}
                 {canLeave && canDelete ? <ZDivider inset={58} /> : null}
@@ -342,6 +358,8 @@ export default function GroupPreferencesScreen() {
                       title: t('groups.deleteThisGroup'),
                       subtitle: t('groups.deleteSummary'),
                       onPress: () => setShowDeleteConfirm(true),
+                      busy: deleting,
+                      disabled: leaving || deleting,
                     })
                   : null}
               </View>

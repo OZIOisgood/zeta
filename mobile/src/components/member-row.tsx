@@ -68,7 +68,7 @@ export function MemberRow({
     <ZSwipeable
       testID="member-remove-swipe"
       actionLabel={t('groups.users.removeUser')}
-      actionIcon={<ZSymbol name="trash" label="" size={20} color={color('onAccent')} />}
+      actionIcon={<ZSymbol name="trash" label="" size={20} color={color('onDanger')} />}
       onAction={onRemove}
     >
       {row}

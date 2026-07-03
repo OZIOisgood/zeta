@@ -4,7 +4,17 @@ import { initI18n } from '../i18n';
 import { MemberRow } from './member-row';
 import type { GroupUser } from '../api/queries/groups';
 
+// Controls the useScreenReader hook so both interaction modes are testable
+// (swipe affordance by default vs. the explicit button screen readers need).
+let mockScreenReaderOn = false;
+jest.mock('../lib/use-screen-reader', () => ({
+  useScreenReader: () => mockScreenReaderOn,
+}));
+
 beforeAll(() => initI18n('en'));
+afterEach(() => {
+  mockScreenReaderOn = false;
+});
 
 const MEMBER: GroupUser = {
   id: 'u1',
@@ -58,5 +68,15 @@ test('exposes the remove action and fires onRemove when provided', async () => {
   const action = screen.getByLabelText('Remove user');
   expect(action).toBeOnTheScreen();
   fireEvent.press(action);
+  expect(onRemove).toHaveBeenCalledTimes(1);
+});
+
+test('screen-reader mode swaps the swipe affordance for an explicit remove button', async () => {
+  mockScreenReaderOn = true;
+  const onRemove = jest.fn();
+  await render(<MemberRow member={MEMBER} onRemove={onRemove} />);
+  const btn = screen.getByTestId('member-remove');
+  expect(btn).toBeOnTheScreen();
+  fireEvent.press(btn);
   expect(onRemove).toHaveBeenCalledTimes(1);
 });

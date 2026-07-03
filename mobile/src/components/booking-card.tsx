@@ -239,7 +239,7 @@ export function BookingCard({
         <ZSwipeable
           testID="booking-cancel-swipe"
           actionLabel={t('sessions.cancel.title')}
-          actionIcon={<ZSymbol name="ban" label="" size={20} color={color('onAccent')} />}
+          actionIcon={<ZSymbol name="ban" label="" size={20} color={color('onDanger')} />}
           onAction={onCancel}
         >
           {card}

@@ -3,7 +3,9 @@
  *
  * Grouped inset table-cell look per the HIG. Unlike the Material variant this is
  * a SQUARE cell (the enclosing inset-grouped ZCard/Section clips the group's
- * corners) with NO tonal fill — selection and press use the system look only:
+ * corners) with NO tonal fill — press uses the system look; `selected` shows a
+ * HIG-style trailing accent checkmark (table-view selection accessory) plus
+ * `accessibilityState.selected`:
  *   - title 17 / regular (onSurface), subtitle 15 / secondary (onSurfaceVariant)
  *   - taller padding (16pt vertical / 16pt horizontal)
  *   - system pressed-dim from Touchable (iOS pressed-opacity); no ripple, no
@@ -25,8 +27,10 @@
 
 import { Text, View } from 'react-native';
 
+import { useRoleColors } from '../../theme/native';
 import { Touchable } from './touchable';
 import type { ZListItemProps } from './z-list-item.types';
+import { ZSymbol } from './z-symbol';
 
 export type { ZListItemProps } from './z-list-item.types';
 
@@ -45,6 +49,7 @@ export function ZListItem({
   style,
   testID,
 }: ZListItemProps) {
+  const { color } = useRoleColors();
   const dim = disabled ? 'opacity-50' : '';
 
   // iOS grouped cell: square (the enclosing inset-grouped card clips the
@@ -77,8 +82,13 @@ export function ZListItem({
           </Text>
         ) : null}
       </View>
-      {trailing ? (
-        <View className="shrink-0 flex-row items-center gap-2">{trailing}</View>
+      {trailing || selected ? (
+        <View className="shrink-0 flex-row items-center gap-2">
+          {trailing}
+          {/* HIG selection accessory — without it a selected grouped cell is
+              visually indistinguishable (no tonal fill on iOS). */}
+          {selected ? <ZSymbol name="check" label="" size={18} color={color('accent')} /> : null}
+        </View>
       ) : null}
     </>
   );
