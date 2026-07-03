@@ -304,7 +304,7 @@ export default function UploadScreen() {
                   {selectedGroupName}
                 </Text>
                 <Text className="text-[15px] text-z-text">
-                  <Text className="font-semibold">{t('upload.selectVideo')}: </Text>
+                  <Text className="font-semibold">{t('upload.files')}: </Text>
                   {picked.length}
                 </Text>
               </View>
@@ -322,6 +322,14 @@ export default function UploadScreen() {
                 <ZButton
                   testID="upload-submit"
                   label={t('upload.startUpload')}
+                  icon={
+                    <ZSymbol
+                      name="upload"
+                      label={t('upload.startUpload')}
+                      size={16}
+                      color={color('onAccent')}
+                    />
+                  }
                   onPress={() => void handleSubmit()}
                   disabled={!canSubmit}
                 />

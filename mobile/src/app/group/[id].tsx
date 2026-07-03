@@ -325,7 +325,11 @@ function InviteSection({ groupId }: { groupId: string }) {
           <View className="gap-4 rounded-lg border border-z-border bg-z-bg p-4">
             {/* QR code — centered on a solid surface tile with handoff's 12dp
                 rounding. The QR itself stays at 160px so it remains scannable
-                (the handoff's 76px is a prototype placeholder, not adopted). */}
+                (the handoff's 76px tile is a dashed ICON placeholder, not a real
+                QR, so neither its size nor its side-by-side tile+buttons row is
+                adopted — a real code squeezed beside the button column would
+                drop below scan size, and the invite scanner reads this screen
+                directly). */}
             <View className="items-center justify-center rounded-[12px] border border-z-border bg-z-surface p-4">
               {qrError ? (
                 <View className="items-center p-3">
@@ -375,8 +379,8 @@ function InviteSection({ groupId }: { groupId: string }) {
               <ZButton
                 testID="group-invite-share-qr-btn"
                 label={t('common.actions.downloadQr')}
-                variant="tonal"
-                icon={<ZSymbol name="share" label={t('common.actions.downloadQr')} size={16} color={color('onSecondaryContainer')} />}
+                variant="secondary"
+                icon={<ZSymbol name="share" label={t('common.actions.downloadQr')} size={16} color={color('onSurface')} />}
                 onPress={() => void handleShareQr()}
               />
             )}

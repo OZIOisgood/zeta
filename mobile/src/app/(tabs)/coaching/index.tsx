@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Platform, RefreshControl, Text, View } from 'react-native';
+import { FlatList, Platform, RefreshControl, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';

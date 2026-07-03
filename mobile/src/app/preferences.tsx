@@ -6,6 +6,7 @@ import { ZAvatarInput } from '../components/ui/z-avatar-input';
 import { ZButton } from '../components/ui/z-button';
 import { ZCard } from '../components/ui/z-card';
 import { ZCombobox, type ZComboboxOption } from '../components/ui/z-combobox';
+import { ZSelect, type ZSelectOption } from '../components/ui/z-select';
 import { ZDivider } from '../components/ui/z-divider';
 import { ZFieldError } from '../components/ui/z-field-error';
 import { ZFieldLabel } from '../components/ui/z-field-label';
@@ -175,7 +176,7 @@ function PreferencesForm({ user }: { user: Me }) {
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
 
-  const languageOptions = useMemo<ZComboboxOption[]>(
+  const languageOptions = useMemo<ZSelectOption[]>(
     () => LANGUAGES.map((value) => ({ value, label: t(`preferences.languages.${value}`) })),
     [t],
   );
@@ -346,7 +347,7 @@ function PreferencesForm({ user }: { user: Me }) {
             {/* Personal data — one surface card of labeled fields. */}
             <ZCard tone="surface" className="gap-4">
               <View className="gap-2">
-                <ZFieldLabel label={t('preferences.firstName')} required />
+                <ZFieldLabel label={t('preferences.firstName')} />
                 <ZTextInput
                   value={firstName}
                   onChangeText={setFirstName}
@@ -361,7 +362,7 @@ function PreferencesForm({ user }: { user: Me }) {
               </View>
 
               <View className="gap-2">
-                <ZFieldLabel label={t('preferences.lastName')} required />
+                <ZFieldLabel label={t('preferences.lastName')} />
                 <ZTextInput
                   value={lastName}
                   onChangeText={setLastName}
@@ -388,19 +389,18 @@ function PreferencesForm({ user }: { user: Me }) {
               </View>
 
               <View className="gap-2">
-                <ZFieldLabel label={t('common.fields.language')} required />
-                <ZCombobox
+                <ZFieldLabel label={t('common.fields.language')} />
+                <ZSelect
                   value={language}
                   options={languageOptions}
                   placeholder={t('preferences.selectLanguage')}
-                  searchPlaceholder={t('preferences.searchLanguages')}
                   accessibilityLabel={t('common.fields.language')}
                   onValueChange={(value) => setLanguage(value as Language)}
                 />
               </View>
 
               <View className="gap-2">
-                <ZFieldLabel label={t('common.fields.timezone')} required />
+                <ZFieldLabel label={t('common.fields.timezone')} />
                 <ZCombobox
                   value={timezone || undefined}
                   options={timezoneOptions}

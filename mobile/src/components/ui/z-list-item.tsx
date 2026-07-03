@@ -47,8 +47,11 @@ export function ZListItem({
   testID,
 }: ZListItemProps) {
   // Material rows are tonal rounded tiles: secondary-container fill when
-  // selected, surface otherwise.
-  const fill = selected ? 'bg-secondary-container' : 'bg-surface';
+  // selected, surface otherwise. Selection additionally draws the mock's
+  // accent ring (constant border width so toggling never shifts layout).
+  const fill = selected
+    ? 'bg-secondary-container border-2 border-z-accent'
+    : 'bg-surface border-2 border-transparent';
   const dim = disabled ? 'opacity-50' : '';
 
   const containerClasses = [

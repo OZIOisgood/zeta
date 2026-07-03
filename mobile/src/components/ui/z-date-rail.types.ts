@@ -18,6 +18,11 @@ export type ZDateRailDay = {
   month: string;
   /** Whether this is today (drives emphasis only; label is caller-controlled). */
   isToday?: boolean;
+  /**
+   * Day without any selectable content (mock: 0.4 opacity, not pressable).
+   * Keeps the calendar sequence readable instead of hiding empty days.
+   */
+  disabled?: boolean;
 };
 
 export type ZDateRailProps = {
@@ -27,6 +32,12 @@ export type ZDateRailProps = {
   onSelect: (key: string) => void;
   className?: string;
   style?: StyleProp<ViewStyle>;
+  /**
+   * Horizontal padding INSIDE the scrolling content — pair with a negative
+   * outer margin for the full-bleed rail (mock: pills scroll to the screen
+   * edge while the first/last pill still aligns with the content column).
+   */
+  contentPadding?: number;
   /** Rail container testID; each pill gets `${testID}-${index}`. */
   testID?: string;
 };

@@ -200,7 +200,7 @@ test('hero shows a book prompt when there is no booking and the user can book', 
   expect(screen.getByTestId('next-session-book')).toBeOnTheScreen();
 });
 
-test('latest videos preview is bounded to four and View all navigates to the Videos tab', async () => {
+test('latest videos preview is bounded to two and View all navigates to the Videos tab', async () => {
   const user = userEvent.setup();
   const many = Array.from({ length: 8 }, (_, i) =>
     asset(`a${i}`, 'pending', `Kata ${i}`),
@@ -213,10 +213,10 @@ test('latest videos preview is bounded to four and View all navigates to the Vid
     </Providers>,
   );
 
-  // First four render, the fifth+ do not.
+  // Mock shows two teasers before "Alle ansehen"; the third+ do not render.
   expect(screen.getByText('Kata 0')).toBeOnTheScreen();
-  expect(screen.getByText('Kata 3')).toBeOnTheScreen();
-  expect(screen.queryByText('Kata 4')).toBeNull();
+  expect(screen.getByText('Kata 1')).toBeOnTheScreen();
+  expect(screen.queryByText('Kata 2')).toBeNull();
   expect(screen.queryByText('Kata 7')).toBeNull();
 
   await user.press(screen.getByTestId('latest-videos-view-all'));

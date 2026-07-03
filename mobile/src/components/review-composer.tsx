@@ -139,6 +139,7 @@ export function ReviewComposer({
           <ZChip
             label={timestampLabel}
             selected={includeTimestamp}
+            showCheck={false}
             onPress={handleToggleTimestamp}
             testID="review-at-time"
           />

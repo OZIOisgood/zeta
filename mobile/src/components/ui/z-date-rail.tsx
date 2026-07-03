@@ -14,6 +14,7 @@ export function ZDateRail({
   onSelect,
   className,
   style,
+  contentPadding = 0,
   testID,
 }: ZDateRailProps) {
   return (
@@ -23,7 +24,12 @@ export function ZDateRail({
       testID={testID}
       className={className}
       style={style}
-      contentContainerStyle={{ flexDirection: 'row', gap: 8, paddingVertical: 2 }}
+      contentContainerStyle={{
+        flexDirection: 'row',
+        gap: 8,
+        paddingVertical: 2,
+        paddingHorizontal: contentPadding,
+      }}
     >
       {days.map((d, index) => {
         const selected = d.key === selectedKey;
@@ -33,10 +39,11 @@ export function ZDateRail({
             testID={testID ? `${testID}-${index}` : undefined}
             accessibilityLabel={`${d.label} ${d.day} ${d.month}`}
             selected={selected}
+            disabled={d.disabled}
             onPress={() => onSelect(d.key)}
             className={`w-[54px] items-center rounded-2xl py-2.5 ${
               selected ? 'bg-accent' : 'bg-surface-1'
-            }`}
+            } ${d.disabled ? 'opacity-40' : ''}`}
           >
             <Text
               className={`text-xs font-bold uppercase ${

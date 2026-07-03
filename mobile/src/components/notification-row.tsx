@@ -1,11 +1,11 @@
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
-  CalendarDays,
+  CalendarCheck,
   Check,
-  CircleCheck,
-  FileVideo,
-  UserRound,
+  CheckCircle2,
+  MessageCircle,
+  UserPlus,
   Users,
   X,
 } from 'lucide-react-native';
@@ -19,7 +19,7 @@ import {
 import { formatRelativeTime } from '../lib/datetime';
 import { useRoleColors } from '../theme/native';
 import { ZButton } from './ui/z-button';
-import { ZIconTile, type ZIconTileTone } from './ui/z-icon-tile';
+import { ZIconTile } from './ui/z-icon-tile';
 import { ZListItem } from './ui/z-list-item';
 
 /**
@@ -39,46 +39,25 @@ import { ZListItem } from './ui/z-list-item';
  * component is presentational.
  */
 
-// Per-type icon glyph + ZIconTile tone (WP-UI0 tone→z-token map — never raw
-// bg-green-50/amber-50 or text-white).
-const ICON_TONE: Record<NotificationIcon, ZIconTileTone> = {
-  member: 'success',
-  review: 'success',
-  booking: 'warning',
-  // Web uses the default case (bg-z-surface-warm / text-z-primary-strong) for
-  // both upload and invite — align to 'neutral' tone (see notification-list.component.ts
-  // iconClasses: default → bg-[var(--z-surface-warm)] text-[var(--z-primary-strong)]).
-  upload: 'neutral',
-  invite: 'neutral',
-};
-
-// ZIconTile maps tone→foreground; pass the matching glyph ROLE so the lucide
-// stroke matches the tile's foreground token per scheme. For neutral tiles the
-// web uses --z-primary-strong (not --z-primary), so we follow suit. Role names
-// (not resolved hexes) at module scope — the hex is resolved per render inside
-// TypeGlyph so dark mode flips it.
-const ICON_ROLE: Record<NotificationIcon, 'success' | 'warning' | 'accentStrong'> = {
-  member: 'success',
-  review: 'success',
-  booking: 'warning',
-  upload: 'accentStrong',
-  invite: 'accentStrong',
-};
-
-function TypeGlyph({ icon }: { icon: NotificationIcon }) {
+// Mock (screens2 NotifRow): the 40dp tile signals the READ STATE, not the
+// notification type — accent-container tile + accent glyph while unread,
+// neutral surface tile + muted glyph once read. Only the GLYPH varies by type
+// (mock NOTIF_ICON: review→message-circle, invite→user-plus,
+// booking→calendar-check, upload→check-circle-2; member→users).
+function TypeGlyph({ icon, unread }: { icon: NotificationIcon; unread: boolean }) {
   const { color } = useRoleColors();
-  const glyphColor = color(ICON_ROLE[icon]);
+  const glyphColor = unread ? color('accentStrong') : color('onSurfaceVariant');
   switch (icon) {
     case 'member':
-      return <UserRound color={glyphColor} size={18} />;
-    case 'review':
-      return <CircleCheck color={glyphColor} size={18} />;
-    case 'upload':
-      return <FileVideo color={glyphColor} size={18} />;
-    case 'booking':
-      return <CalendarDays color={glyphColor} size={18} />;
-    default:
       return <Users color={glyphColor} size={18} />;
+    case 'review':
+      return <MessageCircle color={glyphColor} size={18} />;
+    case 'upload':
+      return <CheckCircle2 color={glyphColor} size={18} />;
+    case 'booking':
+      return <CalendarCheck color={glyphColor} size={18} />;
+    default:
+      return <UserPlus color={glyphColor} size={18} />;
   }
 }
 
@@ -170,9 +149,9 @@ export function NotificationRow({
         className="bg-transparent"
         leading={
           <ZIconTile
-            tone={ICON_TONE[view.icon]}
+            tone={unread ? 'primary' : 'neutral'}
             size="md"
-            icon={<TypeGlyph icon={view.icon} />}
+            icon={<TypeGlyph icon={view.icon} unread={unread} />}
           />
         }
         title={t(view.messageKey, view.params)}

@@ -79,6 +79,14 @@ function ConfirmRow({
  * Schema reality (no price/icon on SessionType; no rating on CoachingExpert):
  * the summary headline is the session DURATION, type rows use one generic glyph,
  * and expert rows show avatar + name only.
+ *
+ * Deliberate mock deviations, both schema-forced:
+ *   - Step order is Experte → Art (mock: Art → Experte): session types are
+ *     expert-bound in the schema (filtered by st.expert_id), so no type list
+ *     exists before an expert is chosen.
+ *   - The mock's "Erste*r verfügbare*r" auto-assign expert option is deferred:
+ *     the slots API requires a concrete expertId — a union query needs backend
+ *     support first.
  */
 export default function BookScreen() {
   const { t, i18n } = useTranslation();
@@ -133,17 +141,32 @@ export default function BookScreen() {
     return acc;
   }, new Map());
 
-  const todayKey = new Date().toDateString();
-  const railDays: ZDateRailDay[] = Array.from(slotsByDay.keys()).map((key) => {
-    const d = new Date(key);
-    return {
-      key,
-      label: key === todayKey ? t('common.labels.today') : d.toLocaleDateString(i18n.language, { weekday: 'short' }),
-      day: String(d.getDate()),
-      month: d.toLocaleDateString(i18n.language, { month: 'short' }),
-      isToday: key === todayKey,
-    };
-  });
+  const today = new Date();
+  const todayKey = today.toDateString();
+  // Mock: the rail renders the CONTINUOUS day sequence (today → last day with
+  // slots); days without free slots stay visible but disabled — the calendar
+  // remains readable instead of silently jumping Tue→Fri. Hard cap keeps the
+  // loop bounded whatever the API returns.
+  const railDays: ZDateRailDay[] = [];
+  if (slotsByDay.size > 0) {
+    const slotTimes = Array.from(slotsByDay.keys()).map((k) => new Date(k).getTime());
+    const start = new Date(Math.min(today.getTime(), ...slotTimes));
+    const end = Math.max(...slotTimes);
+    for (let i = 0; i < 60; i += 1) {
+      const d = new Date(start.getTime());
+      d.setDate(start.getDate() + i);
+      if (d.getTime() > end + 24 * 3600 * 1000) break;
+      const key = d.toDateString();
+      railDays.push({
+        key,
+        label: key === todayKey ? t('common.labels.today') : d.toLocaleDateString(i18n.language, { weekday: 'short' }),
+        day: String(d.getDate()),
+        month: d.toLocaleDateString(i18n.language, { month: 'short' }),
+        isToday: key === todayKey,
+        disabled: !slotsByDay.has(key),
+      });
+    }
+  }
 
   // Preselect the first available day — the "select a date" placeholder cost
   // every booking one extra tap without a real decision. Derived (not an
@@ -413,7 +436,16 @@ export default function BookScreen() {
               <ZEmptyState title={t('sessions.book.noTimes')} description={t('sessions.book.noTimesDescription')} />
             ) : (
               <>
-                <ZDateRail days={railDays} selectedKey={effectiveDayKey} onSelect={handleSelectDay} testID="book-daterail" />
+                {/* Full-bleed rail (mock): breaks out of the content padding
+                    so the pills scroll to the screen edge. */}
+                <ZDateRail
+                  days={railDays}
+                  selectedKey={effectiveDayKey}
+                  onSelect={handleSelectDay}
+                  style={{ marginHorizontal: -16 }}
+                  contentPadding={16}
+                  testID="book-daterail"
+                />
                 {effectiveDayKey === '' ? (
                   <Text className="text-[15px] text-z-muted">{t('sessions.book.selectDate')}</Text>
                 ) : (
@@ -576,6 +608,7 @@ export default function BookScreen() {
                   testID="book-add-calendar"
                   variant="secondary"
                   fullWidth
+                  icon={<ZSymbol name="calendar-plus" label="" size={18} color={color('accent')} />}
                   label={t('sessions.book.addToCalendar')}
                   onPress={() =>
                     void addSessionToCalendar({
@@ -612,12 +645,16 @@ export default function BookScreen() {
         </View>
       ) : (
         <>
+          {/* Stepper pinned between header and scroll body (mock): the tappable
+              progress stays visible while long stages (time grid) scroll. */}
+          <View className="px-4 pb-1 pt-4">
+            <ZStepper steps={stepperSteps} reached={reached} onStepPress={onStepPress} testID="book-stepper" />
+          </View>
           <ScrollView
             className="flex-1"
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ padding: 16, gap: 20 }}
+            contentContainerStyle={{ padding: 16, paddingTop: 8, gap: 20 }}
           >
-            <ZStepper steps={stepperSteps} reached={reached} onStepPress={onStepPress} testID="book-stepper" />
             {renderStage()}
             {submitError !== null ? (
               <Text testID="book-error" className="text-sm text-z-danger">

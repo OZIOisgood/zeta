@@ -70,7 +70,8 @@ export default function NotificationsScreen() {
   const sections = groupByDay(filteredItems);
 
   const tabs: ZTab[] = [
-    { id: 'all', label: t('notifications.page.tabs.all'), count: items.length },
+    // Mock: only the unread segment carries a counter.
+    { id: 'all', label: t('notifications.page.tabs.all') },
     { id: 'unread', label: t('notifications.page.tabs.unread'), count: unreadCount },
   ];
 

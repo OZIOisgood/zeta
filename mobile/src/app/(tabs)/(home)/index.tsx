@@ -25,7 +25,8 @@ import { ZSymbol } from '../../../components/ui/z-symbol';
 import { isJoinable } from '../../../lib/connect-window';
 import { useRoleColors } from '../../../theme/native';
 
-const LATEST_VIDEOS_LIMIT = 4;
+// Mock shows two teasers before "Alle ansehen".
+const LATEST_VIDEOS_LIMIT = 2;
 const ANDROID_TAB_BAR_HEIGHT = 56;
 
 type HomeStep = {
