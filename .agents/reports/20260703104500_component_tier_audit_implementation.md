@@ -28,3 +28,7 @@ Fazit: Tier-Modell ist gesund; Abweichungen sind empirisch, nicht stilistisch.
 
 - Bei @expo/ui-Upgrade (SDK 57+): die fünf Defekte gezielt re-testen (Suchanker: „Compose retreat", AGENTS.md-Sektion).
 - iOS-Smoke-Test der neuen Routen zusammen mit dem ausstehenden iOS-Gate.
+
+## Nachtrag: Mock-Abgleich der Formulare (9c4ec81)
+
+User-Review gegen den Handoff (screens3-Dialoge) deckte auf, dass die Formulare nie mit dem Mock abgeglichen waren. Angepasst: Feldreihenfolge Name→Dauer→Beschreibung, Selects volle Breite (ZSelect-Host matchContents nur vertikal — behebt die ~60%-Breite app-weit), M3-Textbuttons (ghost/link, rechtsbündig), Dauer-Default 30, Blocked-Formular mit Ganztägig-SWITCH + bedingten Von/Bis-Feldern nebeneinander + einzeiligem Grund. Terminologie bleibt Web-geführt (Terminart). Gerät-verifiziert inkl. Switch-Toggle.
