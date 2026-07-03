@@ -63,3 +63,18 @@ Der Mock zeigt auf Listenzeilen Pencil-/Trash-Icon-Buttons (Web-Muster). Auf Mob
 17. `default:`-Fall im Notification-Glyph-Switch schluckte künftige `NotificationIcon`-Member stumm → expliziter `invite`-Case + `never`-Exhaustiveness-Guard.
 
 Ohne Befund laut Reviewern: i18n-Vollständigkeit aller neuen Keys (6 Dateien), Query-/Mutationszustände, Permission-Gates (außer 1.), sensible Logs, typed routes/formSheet, Compose-Defekt-Regeln, Self-Import-Ban, `use-screen-reader`-Subscription, Zeitzonen-Konsistenz der Rail-Keys.
+
+## Addendum: ZTabs-Haken links (Compose-Defekt #6)
+
+Nutzerbefund nach der Runde: Im Android-Segment klebt das M3-Häkchen am linken
+Rand statt bei der Beschriftung. Ursache: @expo/ui hostet das SegmentedButton-
+Label als RN-SlotView, die Compose die VOLLE Segmentbreite meldet — die interne
+M3-Zeile [Check][8dp][Label] hat keinen Spielraum, der (nicht abschaltbare)
+Default-Check pinnt links, das Label zentriert separat; dasselbe Mis-Measurement
+clippte im gewählten Segment auch den Zähler („(1)" fehlte) und verursachte die
+früheren Label-Umbrüche. Fix: ZTabs Android als RN-Implementierung im
+Kit-Material-Look (Pill-Reihe, Hairline-Trenner, Check+Label als Gruppe
+zentriert; iOS-SwiftUI-Variante unverändert); als Defekt #6 in mobile/AGENTS.md
+dokumentiert, SegmentedButtonRow aus der Works-Liste entfernt. Emulator
+verifiziert („✓ Bevorstehend (1)" gruppiert zentriert), tsc/Lint/Jest grün
+(819 — ein dynamischer Compose-Guard-Testfall entfällt mit der Compose-Datei).

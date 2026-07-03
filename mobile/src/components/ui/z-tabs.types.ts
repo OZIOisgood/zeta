@@ -4,7 +4,8 @@
  * In-page segmented filter (NOT bottom navigation). Platform variants:
  *   - z-tabs.tsx          — NativeWind fallback (web / Storybook / jest)
  *   - z-tabs.ios.tsx      — SwiftUI Picker with pickerStyle('segmented')
- *   - z-tabs.android.tsx  — @expo/ui/jetpack-compose SingleChoiceSegmentedButtonRow
+ *   - z-tabs.android.tsx  — RN kit-Material pill row (Compose retreat: @expo/ui
+ *                            SegmentedButton label-slot mis-measurement, defect #6)
  *
  * Count-badge note: native segmented controls have no badge slot.
  * When `count` is defined the label is formatted as "Label (N)" so the

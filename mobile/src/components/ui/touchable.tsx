@@ -52,7 +52,7 @@ export interface TouchableProps {
  * at low opacity (no raw hex: the token value is `#ead2b8`; we use the
  * closest available neutral with transparency acceptable for a ripple).
  */
-const ANDROID_RIPPLE_COLOR = 'rgba(234, 210, 184, 0.4)';
+export const ANDROID_RIPPLE_COLOR = 'rgba(234, 210, 184, 0.4)';
 
 export function Touchable({
   children,

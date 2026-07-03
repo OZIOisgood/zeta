@@ -35,12 +35,11 @@ Every `z-*` primitive belongs to exactly one tier. Declare it at the top of the 
 ### @expo/ui Compose status (device-verified, ~56.0.17, 2026-07-03)
 
 The Native tier remains the goal, but @expo/ui's Jetpack Compose bindings have
-FIVE device-verified structural defects. Consult this list BEFORE building or
+SIX device-verified structural defects. Consult this list BEFORE building or
 "fixing back" an Android primitive; re-test only on an @expo/ui upgrade.
 
 **Works on device (keep Compose):** TextField/OutlinedTextField (ZTextInput,
-ZTextarea, ZSelect anchor), ExposedDropdownMenu (ZSelect), SegmentedButtonRow
-(ZTabs), FilterChip (ZChip), Checkbox, AlertDialog (ZConfirmDialog without
+ZTextarea, ZSelect anchor), ExposedDropdownMenu (ZSelect), FilterChip (ZChip), Checkbox, AlertDialog (ZConfirmDialog without
 children), Snackbar (ZToast), Button — filled label-only (ZButton's Compose
 path).
 
@@ -59,6 +58,11 @@ path).
    children a FIXED width/height (see ZSelect's TrailingIcon).
 5. Host/flex mis-layout: Hosts stretch full-width or collapse flex-1 children
    (ZFab/ZCard history) — keep flex-heavy content in NativeWind Views.
+6. SegmentedButton label slot mis-measurement: the label is hosted as an RN
+   SlotView that reports the FULL segment width, so the non-removable M3
+   default check (no icon override exposed) pins to the segment start while
+   the label centers separately; long labels also wrapped — ZTabs is RN on
+   Android (kit-Material pill row).
 
 Rules of thumb: readOnly Compose TextFields keep focus after popups close —
 drive "focused" colors from your own open/expanded state, never from the

@@ -1,25 +1,34 @@
 /**
- * ZTabs — Android implementation (Jetpack Compose via @expo/ui/jetpack-compose).
+ * ZTabs — Android implementation (Tier: Native, RN retreat).
  *
- * Renders a Material 3 `SingleChoiceSegmentedButtonRow` where each tab is a
- * `SegmentedButton`. The selected button uses the warm `secondaryContainer` fill
- * (matching the Chip / nav-pill selection language) with an `accent` border;
- * unselected buttons match the screen `background` (per the handoff: the inactive
- * fields are the same color as the page), defined only by their `outline`.
+ * Compose retreat (@expo/ui ~56.0.17 defect #6, see mobile/AGENTS.md):
+ * `SegmentedButton` hosts its label as an RN SlotView that reports the FULL
+ * segment width to Compose instead of the text's width. Compose's internal
+ * selected-segment row `[check][8dp][label]` then has no slack — the M3
+ * default check (not overridable through @expo/ui; no `icon` prop is exposed)
+ * pins to the segment's left edge while the label centers separately in its
+ * oversized slot. The same mis-measurement made long labels wrap (previously
+ * papered over with maxLines=1).
  *
- * Count-badge: `SingleChoiceSegmentedButtonRow` has no badge slot. When `count`
- * is defined the label is formatted as "Label (N)" so the count remains visible.
+ * This RN composition renders the UI-kit's Material SegmentedButton instead
+ * (_ds_bundle.js components/navigation/SegmentedButton.jsx): a 40dp
+ * full-width pill row with hairline dividers; the selected segment fills with
+ * secondary-container and shows check + label CENTERED AS ONE GROUP — which
+ * is also stock M3 behavior.
  *
- * Colors come exclusively from theme/native.ts role tokens via useRoleColors().
+ * Count-badge: no badge slot in the segmented idiom — `count` is appended to
+ * the label ("Label (N)"), matching the kit screens and the iOS variant.
  *
- * @expo/ui version: ~56.0.17
+ * Colors via role tokens only (NativeWind classes / useRoleColors).
  * Material 3 reference: https://m3.material.io/components/segmented-buttons/overview
  */
 
-import { Host, SegmentedButton, SingleChoiceSegmentedButtonRow, Text } from '@expo/ui/jetpack-compose';
-import { View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+
 import { useRoleColors } from '../../theme/native';
+import { ANDROID_RIPPLE_COLOR } from './touchable';
 import type { ZTabsProps } from './z-tabs.types';
+import { ZSymbol } from './z-symbol';
 
 export type { ZTab, ZTabsProps } from './z-tabs.types';
 
@@ -27,50 +36,42 @@ export function ZTabs({ tabs, activeId, onChange, testID }: ZTabsProps) {
   const { color } = useRoleColors();
 
   return (
-    // Wrap in an RN View to carry testID; Android Host's PrimitiveBaseProps
-    // does not include a testID field (unlike iOS Host).
-    <View testID={testID}>
-      <Host matchContents={{ vertical: true }}>
-      <SingleChoiceSegmentedButtonRow>
-        {tabs.map((tab) => {
-          const selected = tab.id === activeId;
-          const label = tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label;
-          return (
-            <SegmentedButton
-              key={tab.id}
-              selected={selected}
-              onClick={() => onChange(tab.id)}
-              colors={{
-                // Warm secondary-container "on" state — matches the Chip / nav-pill
-                // selection language. onSecondaryContainer is AA-contrast on
-                // secondaryContainer; selection also reads via the accent border + check icon.
-                activeContainerColor: color('secondaryContainer'),
-                activeContentColor: color('onSecondaryContainer'),
-                activeBorderColor: color('accent'),
-                // Unselected segments match the SCREEN BACKGROUND, not a darker
-                // surface: the handoff shows the inactive fields as the same color
-                // as the page, defined only by their outline. `surface`/`surfaceVariant`
-                // both render visibly DARKER than `background` (#fff8f4) on this screen
-                // (which read as wrong); M3's own default inactive container is
-                // transparent, and `background` is the token-equivalent here.
-                inactiveContainerColor: color('background'),
-                inactiveContentColor: color('onSurface'),
-                inactiveBorderColor: color('outline'),
-              }}
+    <View
+      testID={testID}
+      accessibilityRole="tablist"
+      className="h-10 flex-row overflow-hidden rounded-full border border-z-border"
+    >
+      {tabs.map((tab, index) => {
+        const selected = tab.id === activeId;
+        const label = tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label;
+        return (
+          <Pressable
+            key={tab.id}
+            accessibilityRole="tab"
+            accessibilityLabel={label}
+            accessibilityState={{ selected }}
+            onPress={() => onChange(tab.id)}
+            android_ripple={{ color: ANDROID_RIPPLE_COLOR }}
+            className={`flex-1 flex-row items-center justify-center px-3 ${
+              selected ? 'bg-secondary-container' : 'bg-transparent'
+            } ${index > 0 ? 'border-l border-z-border' : ''}`}
+            // The check + label center as ONE group (kit: gap 5).
+            style={{ columnGap: 5 }}
+          >
+            {selected ? (
+              <ZSymbol name="check" label="" size={15} color={color('onSecondaryContainer')} />
+            ) : null}
+            <Text
+              numberOfLines={1}
+              className={`text-sm font-semibold ${
+                selected ? 'text-on-secondary-container' : 'text-on-surface-variant'
+              }`}
             >
-              <SegmentedButton.Label>
-                {/* M3 medium (600) — segment labels use the medium weight.
-                    Compose <Text> needs the loaded face named explicitly (the
-                    RN Text.render brand-font patch does not reach Compose).
-                    maxLines=1: long labels (DE "Bevorstehend (1)" + check icon)
-                    otherwise wrap and break the row into mismatched heights. */}
-                <Text maxLines={1} style={{ fontWeight: '600', fontFamily: 'NunitoSans_600SemiBold' }}>{label}</Text>
-              </SegmentedButton.Label>
-            </SegmentedButton>
-          );
-        })}
-      </SingleChoiceSegmentedButtonRow>
-      </Host>
+              {label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
