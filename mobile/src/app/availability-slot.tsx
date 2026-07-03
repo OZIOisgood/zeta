@@ -96,39 +96,44 @@ export default function AvailabilitySlotScreen() {
               onValueChange={setDay}
             />
           </View>
-          <View>
-            <ZFieldLabel label={t('common.fields.startTime')} />
-            <ZSelect
-              testID="slot-start"
-              value={start}
-              options={TIME_OPTIONS}
-              placeholder={t('sessions.availability.selectTimePlaceholder')}
-              accessibilityLabel={t('common.fields.startTime')}
-              onValueChange={setStart}
-            />
-          </View>
-          <View>
-            <ZFieldLabel label={t('common.fields.endTime')} />
-            <ZSelect
-              testID="slot-end"
-              value={end}
-              options={TIME_OPTIONS}
-              placeholder={t('sessions.availability.selectTimePlaceholder')}
-              accessibilityLabel={t('common.fields.endTime')}
-              onValueChange={setEnd}
-            />
+          {/* Von/Bis side by side per the handoff mock (Zeitfenster dialog). */}
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <ZFieldLabel label={t('common.fields.startTime')} />
+              <ZSelect
+                testID="slot-start"
+                value={start}
+                options={TIME_OPTIONS}
+                placeholder={t('sessions.availability.selectTimePlaceholder')}
+                accessibilityLabel={t('common.fields.startTime')}
+                onValueChange={setStart}
+              />
+            </View>
+            <View className="flex-1">
+              <ZFieldLabel label={t('common.fields.endTime')} />
+              <ZSelect
+                testID="slot-end"
+                value={end}
+                options={TIME_OPTIONS}
+                placeholder={t('sessions.availability.selectTimePlaceholder')}
+                accessibilityLabel={t('common.fields.endTime')}
+                onValueChange={setEnd}
+              />
+            </View>
           </View>
         </View>
         {formError ? <Text className="mt-3 text-sm text-z-danger">{formError}</Text> : null}
-        <View className="mt-6 flex-row justify-end gap-2">
+        {/* M3 dialog footer per the handoff: right-aligned TEXT buttons. */}
+        <View className="mt-6 flex-row items-center justify-end gap-4">
           <ZButton
             label={t('common.actions.cancel')}
-            variant="secondary"
+            variant="ghost"
             onPress={() => router.back()}
           />
           <ZButton
             testID="slot-save"
             label={t('common.actions.save')}
+            variant="link"
             loading={isPending}
             onPress={() => void handleSave()}
           />

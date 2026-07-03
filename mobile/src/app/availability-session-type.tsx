@@ -44,7 +44,8 @@ export default function AvailabilitySessionTypeScreen() {
 
   const [name, setName] = useState(editing?.name ?? '');
   const [description, setDescription] = useState(editing?.description ?? '');
-  const [duration, setDuration] = useState(String(editing?.duration_minutes ?? 45));
+  // Default 30 minutes per the handoff mock (screens3 Session-Typ dialog).
+  const [duration, setDuration] = useState(String(editing?.duration_minutes ?? 30));
   const [nameTouched, setNameTouched] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -120,17 +121,8 @@ export default function AvailabilitySessionTypeScreen() {
               <ZFieldError message={t('sessions.availability.nameRequired')} />
             ) : null}
           </View>
-          <View>
-            <ZFieldLabel label={t('common.fields.description')} />
-            <ZTextarea
-              testID="session-type-description"
-              value={description}
-              onChangeText={setDescription}
-              accessibilityLabel={t('common.fields.description')}
-              placeholder={t('sessions.availability.descriptionPlaceholder')}
-              rows={3}
-            />
-          </View>
+          {/* Field order per the handoff mock: Name → Dauer → Beschreibung
+              (short inputs before the long one). */}
           <View>
             <ZFieldLabel label={t('common.fields.duration')} />
             <ZSelect
@@ -141,17 +133,30 @@ export default function AvailabilitySessionTypeScreen() {
               onValueChange={setDuration}
             />
           </View>
+          <View>
+            <ZFieldLabel label={t('common.fields.description')} />
+            <ZTextarea
+              testID="session-type-description"
+              value={description}
+              onChangeText={setDescription}
+              accessibilityLabel={t('common.fields.description')}
+              placeholder={t('sessions.availability.descriptionPlaceholder')}
+              rows={2}
+            />
+          </View>
         </View>
         {formError ? <Text className="mt-3 text-sm text-z-danger">{formError}</Text> : null}
-        <View className="mt-6 flex-row justify-end gap-2">
+        {/* M3 dialog footer per the handoff: right-aligned TEXT buttons. */}
+        <View className="mt-6 flex-row items-center justify-end gap-4">
           <ZButton
             label={t('common.actions.cancel')}
-            variant="secondary"
+            variant="ghost"
             onPress={() => router.back()}
           />
           <ZButton
             testID="session-type-save"
             label={t('common.actions.save')}
+            variant="link"
             loading={isPending}
             onPress={() => void handleSave()}
           />

@@ -83,7 +83,11 @@ export function ZSelect({
   const hostModifiers = testID ? [testIDModifier(testID)] : [];
 
   return (
-    <Host matchContents style={{ alignSelf: 'stretch' }} modifiers={hostModifiers}>
+    // matchContents VERTICAL ONLY: with both axes the Host sizes to the
+    // Compose intrinsic width and the field renders ~60% wide; the handoff
+    // wants form fields full width, which alignSelf:'stretch' provides once
+    // the horizontal axis follows RN layout.
+    <Host matchContents={{ vertical: true }} style={{ alignSelf: 'stretch' }} modifiers={hostModifiers}>
       <ExposedDropdownMenuBox
         expanded={expanded && !isDisabled}
         onExpandedChange={(next) => {
