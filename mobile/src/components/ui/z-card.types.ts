@@ -1,10 +1,12 @@
 /**
- * ZCard — shared public API types (Tier: Native)
+ * ZCard — shared public API types (Tier: Native, Android via RN retreat)
  *
  * Platform variants:
  *   - z-card.tsx          — NativeWind fallback (web / Storybook / jest)
  *   - z-card.ios.tsx      — role-token-styled RN View (inset-grouped feel)
- *   - z-card.android.tsx  — @expo/ui/jetpack-compose Card (Material 3 surface)
+ *   - z-card.android.tsx  — role-token-styled RN View (Compose retreat: the
+ *     @expo/ui Card paints BLANK when its Host mounts in a non-initial commit
+ *     — see mobile/AGENTS.md "@expo/ui Compose status")
  *
  * iOS note: SwiftUI `Section` only works inside a List/Form, so iOS uses a
  * role-token-styled RN View (surface background, ~12px corner radius, subtle

@@ -10,10 +10,11 @@ import type { ZDialogPanelProps } from './z-dialog-panel.types';
  * (web/dashboard-next/src/app/shared/ui/dialog/). Tapping the backdrop closes;
  * tapping the panel does not. Consumers provide the panel content as children.
  *
- * The panel is wrapped in a `KeyboardAvoidingView` (padding behavior on iOS, where
- * the keyboard overlaps content) so dialogs that hold text inputs — e.g. the
- * availability session-type/blocked-date sheets — keep their fields and Save
- * button above the keyboard. (Android already resizes the window.)
+ * The panel is wrapped in a `KeyboardAvoidingView` (padding behavior on iOS,
+ * where the keyboard overlaps content) so dialogs that hold text inputs keep
+ * their fields and buttons above the keyboard. (Android resizes the window.)
+ * Consumers: ZConfirmDialog's children branch and ZVideoPartRail — form input
+ * belongs in formSheet ROUTES instead (the availability sheets moved there).
  *
  * Consumed by BOTH the bare entry (web / Storybook / jest) and the Android
  * entry — see z-dialog-panel.android.tsx for why Android retreats from Compose.

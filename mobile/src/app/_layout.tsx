@@ -186,6 +186,28 @@ export default function RootLayout() {
               sheetCornerRadius: 28,
             }}
           />
+          {/* Availability management forms — native formSheets (the platform
+              path for form input per the SOTA table; replaces the inline
+              ZDialogPanel sheets). Full-height single detent like upload/book:
+              Android lays sheet content out at full height, so a half detent
+              would hide the Save row below the fold. */}
+          {['availability-session-type', 'availability-slot', 'availability-blocked'].map(
+            (name) => (
+              <Stack.Screen
+                key={name}
+                name={name}
+                options={{
+                  presentation: 'formSheet',
+                  headerShown: true,
+                  headerBackButtonDisplayMode: 'minimal' as const,
+                  ...headerChrome,
+                  sheetAllowedDetents: [1.0],
+                  sheetGrabberVisible: true,
+                  sheetCornerRadius: 28,
+                }}
+              />
+            ),
+          )}
           {/* Full-screen live call — keeps its own chrome, no nav header. */}
           <Stack.Screen name="call/[bookingId]" options={{ presentation: 'fullScreenModal', headerShown: false }} />
         </Stack.Protected>

@@ -8,8 +8,9 @@
  * unwrapped it logs "must be rendered as a direct child of a <Host>"). Same
  * precedent as z-card.android.
  *
- * Follow-up option: convert the availability sheets to native formSheet routes
- * (the pattern upload/book/cancel already use) instead of a component-level sheet.
+ * The availability sheets moved to native formSheet ROUTES
+ * (availability-session-type / availability-slot / availability-blocked);
+ * this panel remains for the small component-level dialogs only.
  */
 export { ZDialogPanelShared as ZDialogPanel } from './z-dialog-panel.shared';
 export type { ZDialogPanelProps } from './z-dialog-panel.types';

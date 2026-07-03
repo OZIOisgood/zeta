@@ -32,6 +32,39 @@ Every `z-*` primitive belongs to exactly one tier. Declare it at the top of the 
 
 **Infra/plumbing** — `ZScreen`, `ZKeyboardAvoidingView`, `ZFieldLabel`/`ZFieldError`.
 
+### @expo/ui Compose status (device-verified, ~56.0.17, 2026-07-03)
+
+The Native tier remains the goal, but @expo/ui's Jetpack Compose bindings have
+FIVE device-verified structural defects. Consult this list BEFORE building or
+"fixing back" an Android primitive; re-test only on an @expo/ui upgrade.
+
+**Works on device (keep Compose):** TextField/OutlinedTextField (ZTextInput,
+ZTextarea, ZSelect anchor), ExposedDropdownMenu (ZSelect), SegmentedButtonRow
+(ZTabs), FilterChip (ZChip), Checkbox, AlertDialog (ZConfirmDialog without
+children), Snackbar (ZToast), Button — filled label-only (ZButton's Compose
+path).
+
+**Broken — do NOT use from RN (retreat to the shared RN implementation):**
+1. `ModalBottomSheet` never renders its window from RN hosting (any wrapping) —
+   ZDialogPanel is RN on Android; sheets that capture input are formSheet
+   ROUTES (react-native-screens) instead.
+2. First-paint blank: Compose Hosts that mount in a NON-INITIAL commit (list
+   row added after a refetch, tab-switch remount, pending→data swap) paint
+   empty and never recover — killed Compose ZCard and ZIconButton.
+3. Touch-swallow: RN interop children inside Compose controls eat taps on
+   their own bounds (icon = dead center). If an interop child is unavoidable,
+   wrap it in `<View pointerEvents="none">`.
+4. Unbounded interop measurement: an unsized RN child in a Compose slot
+   reports unbounded intrinsic width and overflows the parent — give interop
+   children a FIXED width/height (see ZSelect's TrailingIcon).
+5. Host/flex mis-layout: Hosts stretch full-width or collapse flex-1 children
+   (ZFab/ZCard history) — keep flex-heavy content in NativeWind Views.
+
+Rules of thumb: readOnly Compose TextFields keep focus after popups close —
+drive "focused" colors from your own open/expanded state, never from the
+field's focus. Overlays initiated from RN belong in native-stack routes
+(formSheet/modal), not in Compose overlay components.
+
 ### Public-API invariant
 Screens import `z-*` only. Each `z-*` keeps a **complete, working bare `.tsx` fallback** (web/Storybook/jest — `@expo/ui` is native-only, so the fallback is the NativeWind implementation). Native internals live only in `.ios.tsx`/`.android.tsx`. The bare `.tsx` must render correctly in react-native-web-vite Storybook and pass jest; it is the contract doc and test surface. Never let the fallback rot.
 

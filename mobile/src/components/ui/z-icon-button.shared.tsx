@@ -38,6 +38,10 @@ export function ZIconButtonShared({
   className = '',
   testID,
 }: ZIconButtonProps) {
+  // The documented FAB combination renders the Material 3 FAB geometry
+  // (56dp rounded square, 16dp corners) instead of a plain circle.
+  const isFab = variant === 'primary' && size === 'lg' && shape === 'circle';
+  const radiusClass = isFab ? 'rounded-2xl' : shape === 'circle' ? 'rounded-full' : 'rounded-md';
   return (
     <Pressable
       testID={testID}
@@ -46,9 +50,7 @@ export function ZIconButtonShared({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      className={`items-center justify-center ${
-        shape === 'circle' ? 'rounded-full' : 'rounded-md'
-      } ${sizeClasses[size]} ${containerClasses[variant]} ${disabled ? 'opacity-50' : ''} ${className}`}
+      className={`items-center justify-center ${radiusClass} ${sizeClasses[size]} ${containerClasses[variant]} ${disabled ? 'opacity-50' : ''} ${className}`}
     >
       {children}
     </Pressable>

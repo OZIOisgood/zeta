@@ -1,16 +1,18 @@
 /**
- * ZIconButton — shared public API types (Tier: Native)
+ * ZIconButton — shared public API types (Tier: Native, Android via RN retreat)
  *
  * Platform variants:
- *   - z-icon-button.tsx         — NativeWind fallback (web / Storybook / jest)
+ *   - z-icon-button.tsx         — shared RN implementation (web / Storybook / jest)
  *   - z-icon-button.ios.tsx     — SwiftUI borderless/bordered Button via @expo/ui/swift-ui
- *   - z-icon-button.android.tsx — Jetpack Compose IconButton / FAB via @expo/ui/jetpack-compose
+ *   - z-icon-button.android.tsx — shared RN implementation (Compose retreat:
+ *     interop icons swallowed center taps AND buttons in list rows painted
+ *     blank after remounts — see mobile/AGENTS.md "@expo/ui Compose status")
  *
- * Size/variant → native mapping:
+ * Size/variant mapping:
  *   iOS:     ghost/secondary/primary → buttonStyle('borderless'/'bordered'/'borderedProminent')
  *            lg+circle variant stays a standard icon button; iOS FAB = nav-bar button (handled in navigation).
- *   Android: ghost → IconButton; secondary → OutlinedIconButton; primary → FilledIconButton
- *            lg+circle variant → FloatingActionButton (Material 3 standard FAB)
+ *   Android/shared: role-token Pressable; primary+lg+circle renders the M3 FAB
+ *            geometry (56dp rounded square, 16dp corners).
  */
 
 import type { ReactNode } from 'react';
