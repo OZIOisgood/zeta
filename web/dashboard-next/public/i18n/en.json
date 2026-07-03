@@ -819,7 +819,8 @@
       "heading": "Sign in to continue",
       "subtitle": "Digital video coaching — sign in to review and record sessions.",
       "signIn": "Sign in",
-      "failed": "Sign-in failed. Please try again."
+      "failed": "Sign-in failed. Please try again.",
+      "createAccount": "Create account"
     }
   },
   "feedback": {

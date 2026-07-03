@@ -38,16 +38,33 @@ export default function LoginScreen() {
     },
     workosDiscovery,
   );
+  // Separate request for "Konto erstellen": AuthKit opens on the sign-up
+  // screen via screen_hint (same PKCE flow; new users land waitlisted per the
+  // invite-code soft launch and redeem a code afterwards).
+  const [signUpRequest, , promptSignUpAsync] = useAuthRequest(
+    {
+      clientId: workosClientId(),
+      redirectUri,
+      responseType: ResponseType.Code,
+      usePKCE: true,
+      scopes: [],
+      extraParams: { provider: 'authkit', screen_hint: 'sign-up' },
+    },
+    workosDiscovery,
+  );
 
-  async function signIn() {
-    if (!request) return;
+  async function runAuthFlow(
+    req: typeof request,
+    prompt: typeof promptAsync,
+  ) {
+    if (!req) return;
     setBusy(true);
     setFailed(false);
     try {
       // Stash the verifier first: in Expo Go the redirect may reload the
       // project, in which case the auth/callback route finishes the login.
-      if (request.codeVerifier) await stashCodeVerifier(request.codeVerifier);
-      const result = await promptAsync();
+      if (req.codeVerifier) await stashCodeVerifier(req.codeVerifier);
+      const result = await prompt();
       if (result.type !== 'success' || !result.params.code) {
         if (result.type !== 'cancel' && result.type !== 'dismiss') setFailed(true);
         return;
@@ -61,35 +78,47 @@ export default function LoginScreen() {
     }
   }
 
+  const signIn = () => runAuthFlow(request, promptAsync);
+  const signUp = () => runAuthFlow(signUpRequest, promptSignUpAsync);
+
   return (
     <ZScreen className="items-center justify-center px-6">
       <View className="w-full max-w-sm">
-        <View className="rounded-[20px] bg-surface p-8">
-          {/* Brand mark — text only; the web card pairs this with a logo image
-              asset that does not yet exist in mobile assets (see follow-up). */}
-          <View className="flex-row items-center gap-3">
-            <View className="size-11 shrink-0 items-center justify-center rounded-lg bg-z-primary-soft">
-              <Text className="text-lg font-bold text-z-primary-strong">{t('app.brand')[0]}</Text>
-            </View>
-            <View>
-              <Text className="text-sm font-semibold text-z-text">{t('app.brand')}</Text>
-              <Text className="text-xs text-z-muted">{t('app.tagline')}</Text>
-            </View>
+        {/* Brand block ABOVE the card (mock: centered column — logo tile 64,
+            wordmark, tagline). Text-mark tile until a logo image asset exists. */}
+        <View className="mb-7 items-center gap-2">
+          <View className="size-16 items-center justify-center rounded-[20px] bg-z-primary-soft">
+            <Text className="text-2xl font-extrabold text-z-primary-strong">{t('app.brand')[0]}</Text>
           </View>
+          <Text className="text-lg font-extrabold text-z-text">{t('app.brand')}</Text>
+          <Text className="text-xs text-z-muted">{t('app.tagline')}</Text>
+        </View>
 
+        <View className="rounded-[20px] bg-surface p-8">
           {/* Heading + description. */}
-          <Text className="mt-7 text-xl font-semibold text-z-text">{t('auth.login.heading')}</Text>
+          <Text className="text-xl font-semibold text-z-text">{t('auth.login.heading')}</Text>
           <Text className="mt-2 text-sm leading-6 text-z-muted">
             {t('auth.login.subtitle')}
           </Text>
 
-          <View className="mt-7">
+          {/* Two full-width CTAs (mock): sign in (primary) + create account
+              (tonal, AuthKit sign-up screen via screen_hint). */}
+          <View className="mt-7 gap-3">
             <ZButton
               label={t('auth.login.signIn')}
-              onPress={signIn}
+              onPress={() => void signIn()}
               loading={busy}
               disabled={!request}
+              fullWidth
               testID="login-submit"
+            />
+            <ZButton
+              label={t('auth.login.createAccount')}
+              variant="tonal"
+              onPress={() => void signUp()}
+              disabled={!signUpRequest || busy}
+              fullWidth
+              testID="login-signup"
             />
           </View>
 

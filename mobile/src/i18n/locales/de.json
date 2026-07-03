@@ -774,7 +774,8 @@
       "heading": "Anmelden und loslegen",
       "subtitle": "Digitales Video-Coaching — melde dich an, um Aufnahmen zu überprüfen und aufzuzeichnen.",
       "signIn": "Anmelden",
-      "failed": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
+      "failed": "Anmeldung fehlgeschlagen. Bitte versuche es erneut.",
+      "createAccount": "Konto erstellen"
     }
   }
 }

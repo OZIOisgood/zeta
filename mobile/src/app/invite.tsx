@@ -18,13 +18,16 @@ import { ZFieldLabel } from '../components/ui/z-field-label';
 import { ZKeyboardAvoidingView } from '../components/ui/z-keyboard-avoiding-view';
 import { ZScreen } from '../components/ui/z-screen';
 import { ZSkeleton } from '../components/ui/z-skeleton';
+import { ZSymbol } from '../components/ui/z-symbol';
 import { ZTextInput } from '../components/ui/z-text-input';
 import { showToast } from '../components/ui/z-toast';
 import { initialsFromName } from '../lib/avatar';
 import { parseInviteCode } from '../lib/invite-code';
+import { useRoleColors } from '../theme/native';
 
 export default function InviteScreen() {
   const { t } = useTranslation();
+  const { color } = useRoleColors();
   const router = useRouter();
   const params = useLocalSearchParams<{ code?: string }>();
   const [permission, requestPermission] = useCameraPermissions();
@@ -116,17 +119,38 @@ export default function InviteScreen() {
             <>
               {/* Camera or permission prompt */}
               {permission?.granted ? (
+                // Square viewport with the scan-frame overlay + caption (mock:
+                // 1:1 aspect, 168px white frame, hint with qr-code glyph).
                 <View
                   accessible
                   accessibilityLabel={`${t('common.labels.camera')}. ${t('groups.invite.cameraHint')}`}
                   className="mb-4 overflow-hidden"
-                  style={{ height: 280, borderRadius: 20 }}
+                  style={{ aspectRatio: 1, borderRadius: 20 }}
                 >
                   <CameraView
                     style={{ flex: 1 }}
                     barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
                     onBarcodeScanned={handleBarcodeScanned}
                   />
+                  <View pointerEvents="none" className="absolute inset-0 items-center justify-center">
+                    <View
+                      style={{
+                        width: 168,
+                        height: 168,
+                        borderRadius: 24,
+                        borderWidth: 3,
+                        borderColor: 'rgba(255,255,255,0.92)',
+                      }}
+                    />
+                  </View>
+                  <View pointerEvents="none" className="absolute inset-x-0 bottom-3 items-center">
+                    <View className="flex-row items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5">
+                      <ZSymbol name="qr-code" label="" size={14} color="#ffffff" />
+                      <Text className="text-[12px] font-semibold text-white">
+                        {t('groups.invite.cameraHint')}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               ) : (
                 // Inner View holds the centering/gap — ZCard's className lands on
@@ -240,27 +264,24 @@ export default function InviteScreen() {
 
               {info && (
                 <View className="gap-4">
-                  {/* Invitation headline */}
-                  <Text className="text-center text-[15px] text-z-muted">
-                    {t('groups.invitationDialog.invited', { group: info.group_name })}
-                  </Text>
-
-                  {/* Group card */}
-                  <ZCard>
-                    <View className="flex-row items-center gap-3">
-                      <ZAvatar
-                        image={info.group_avatar || undefined}
-                        fallback={initialsFromName(info.group_name, 'G')}
-                        size={48}
-                        alt={info.group_name}
-                      />
-                      <View className="flex-1">
-                        <Text className="text-base font-bold text-z-text">
-                          {info.group_name}
-                        </Text>
-                      </View>
-                    </View>
-                  </ZCard>
+                  {/* Centered hero (mock): avatar 72 → group name 21/800 →
+                      meta line. Member count / inviter / description are not
+                      in InvitationInfo (API-gated) — the invited-headline
+                      stands in as the meta line. */}
+                  <View className="items-center gap-2 pt-2">
+                    <ZAvatar
+                      image={info.group_avatar || undefined}
+                      fallback={initialsFromName(info.group_name, 'G')}
+                      size={72}
+                      alt={info.group_name}
+                    />
+                    <Text className="text-center text-[21px] font-extrabold text-z-text">
+                      {info.group_name}
+                    </Text>
+                    <Text className="text-center text-[14px] text-z-muted">
+                      {t('groups.invitationDialog.invited', { group: info.group_name })}
+                    </Text>
+                  </View>
 
                   {/* Mutation error */}
                   {(acceptMutation.isError || declineMutation.isError) && (
@@ -284,6 +305,7 @@ export default function InviteScreen() {
                       <ZButton
                         testID="invite-accept"
                         label={t('groups.invitationDialog.joinGroup')}
+                        icon={<ZSymbol name="check" label="" size={18} color={color('onAccent')} />}
                         fullWidth
                         disabled={acceptMutation.isPending || declineMutation.isPending}
                         onPress={() => void handleAccept()}
@@ -291,7 +313,7 @@ export default function InviteScreen() {
                       <ZButton
                         testID="invite-decline"
                         label={t('common.actions.decline')}
-                        variant="ghost"
+                        variant="secondary"
                         fullWidth
                         disabled={acceptMutation.isPending || declineMutation.isPending}
                         onPress={() => void handleDecline()}

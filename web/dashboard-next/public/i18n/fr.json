@@ -819,7 +819,8 @@
       "heading": "Connectez-vous pour continuer",
       "subtitle": "Coaching vidéo numérique — connectez-vous pour consulter et enregistrer vos séances.",
       "signIn": "Se connecter",
-      "failed": "Connexion échouée. Veuillez réessayer."
+      "failed": "Connexion échouée. Veuillez réessayer.",
+      "createAccount": "Créer un compte"
     }
   },
   "feedback": {
