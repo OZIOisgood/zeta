@@ -61,8 +61,10 @@ export function ZTabs({ tabs, activeId, onChange, testID }: ZTabsProps) {
               <SegmentedButton.Label>
                 {/* M3 medium (600) — segment labels use the medium weight.
                     Compose <Text> needs the loaded face named explicitly (the
-                    RN Text.render brand-font patch does not reach Compose). */}
-                <Text style={{ fontWeight: '600', fontFamily: 'NunitoSans_600SemiBold' }}>{label}</Text>
+                    RN Text.render brand-font patch does not reach Compose).
+                    maxLines=1: long labels (DE "Bevorstehend (1)" + check icon)
+                    otherwise wrap and break the row into mismatched heights. */}
+                <Text maxLines={1} style={{ fontWeight: '600', fontFamily: 'NunitoSans_600SemiBold' }}>{label}</Text>
               </SegmentedButton.Label>
             </SegmentedButton>
           );

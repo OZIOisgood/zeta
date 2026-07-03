@@ -80,7 +80,11 @@ export function ZIconButton({
             modifiers={modifiers}
           >
             <FABComponent.Icon>
-              <View accessibilityLabel={label}>{children}</View>
+              {/* pointerEvents="none": the RN interop view sits ON TOP of the
+                  Compose button and swallows taps on the icon area otherwise —
+                  the button then has a dead center exactly where users tap
+                  (verified on device: center taps never fired onClick). */}
+              <View accessibilityLabel={label} pointerEvents="none">{children}</View>
             </FABComponent.Icon>
           </FABComponent>
         </Host>
@@ -89,8 +93,10 @@ export function ZIconButton({
   }
 
   // Standard icon button path.
+  // pointerEvents="none": see FAB path — without it the RN interop view
+  // swallows taps on the icon area and the button has a dead center.
   const iconContent = (
-    <View accessibilityLabel={label}>{children}</View>
+    <View accessibilityLabel={label} pointerEvents="none">{children}</View>
   );
 
   if (variant === 'secondary') {
