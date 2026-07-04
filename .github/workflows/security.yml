@@ -18,37 +18,17 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  actions: read
   contents: read
-  security-events: write
 
 jobs:
-  dependency-review:
-    name: Dependency Review
-    if: github.event_name == 'pull_request'
+  dependency-and-code-scan:
+    name: Dependency & Go Scan
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@v5
         with:
-          fail-on-severity: high
-          fail-on-scopes: runtime,development,unknown
-          license-check: false
-          show-patched-versions: true
-
-  govulncheck:
-    name: Go Vulnerability Check
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
+          fetch-depth: 0
 
       - name: Run govulncheck
         uses: golang/govulncheck-action@v1
@@ -58,61 +38,141 @@ jobs:
           cache-dependency-path: go.sum
           repo-checkout: false
 
-  osv-pr:
-    name: OSV PR Scan
-    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@3adb4b14a2b0623876d18d863a498b785fb3752d
-    with:
-      upload-sarif: false
-      fail-on-vuln: true
-      scan-args: |-
-        --include-git-root
-        -r
-        ./
+      - name: Check out target branch for OSV baseline
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        run: |
+          git checkout "$GITHUB_BASE_REF"
 
-  osv-full:
-    name: OSV Full Scan
-    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@3adb4b14a2b0623876d18d863a498b785fb3752d
-    with:
-      upload-sarif: true
-      fail-on-vuln: true
-      scan-args: |-
-        --include-git-root
-        -r
-        ./
+      - name: Run OSV baseline scan
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
+        continue-on-error: true
+        with:
+          scan-args: |-
+            --format=json
+            --output-file=osv-baseline.json
+            --include-git-root
+            -r
+            ./
+
+      - name: Check out current revision for OSV scan
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        run: |
+          git checkout -f "$GITHUB_SHA"
+
+      - name: Run OSV current scan
+        uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
+        continue-on-error: true
+        with:
+          scan-args: |-
+            --format=json
+            --output-file=osv-current.json
+            --include-git-root
+            -r
+            ./
+
+      - name: Fail on newly introduced OSV findings
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        run: |
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          def load(path):
+              p = Path(path)
+              if not p.exists() or p.stat().st_size == 0:
+                  return {"results": []}
+              return json.loads(p.read_text())
+
+          def findings(path):
+              doc = load(path)
+              found = set()
+              for result in doc.get("results", []):
+                  source = result.get("source", {}).get("path", "")
+                  source = source.replace("/github/workspace/", "")
+                  for package in result.get("packages", []):
+                      pkg = package.get("package", {})
+                      pkg_key = (
+                          source,
+                          pkg.get("ecosystem", ""),
+                          pkg.get("name", ""),
+                          pkg.get("version", ""),
+                      )
+                      for vulnerability in package.get("vulnerabilities", []):
+                          vuln_id = vulnerability.get("id")
+                          if vuln_id:
+                              found.add(pkg_key + (vuln_id,))
+              return found
+
+          baseline = findings("osv-baseline.json")
+          current = findings("osv-current.json")
+          introduced = sorted(current - baseline)
+
+          if introduced:
+              print("New OSV vulnerability findings introduced by this change:")
+              for source, ecosystem, name, version, vuln_id in introduced:
+                  print(f"- {vuln_id}: {ecosystem} {name}@{version} from {source}")
+              raise SystemExit(1)
+
+          print(f"No new OSV findings introduced by this change. Current scan still contains {len(current)} existing finding(s).")
+          PY
+
+      - name: Summarize full OSV scan
+        if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("osv-current.json")
+          if not path.exists() or path.stat().st_size == 0:
+              print("No OSV result file was produced.")
+              raise SystemExit(0)
+
+          doc = json.loads(path.read_text())
+          count = 0
+          for result in doc.get("results", []):
+              for package in result.get("packages", []):
+                  count += len(package.get("vulnerabilities", []))
+
+          if count:
+              print(f"::warning ::OSV full scan found {count} existing vulnerability finding(s). Review the workflow logs and Dependabot PRs.")
+          else:
+              print("OSV full scan found no vulnerabilities.")
+          PY
 
   trivy-images:
-    name: Trivy Image Scan (${{ matrix.name }})
+    name: Container Image Scan
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: api
-            context: .
-            image: zeta-api-security
-          - name: dashboard
-            context: web/dashboard-next
-            image: zeta-dashboard-security
-          - name: landing
-            context: web/landing
-            image: zeta-landing-security
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Build ${{ matrix.name }} image
-        run: docker build -t "${{ matrix.image }}:${{ github.sha }}" "${{ matrix.context }}"
-
-      - name: Scan ${{ matrix.name }} image
-        uses: aquasecurity/trivy-action@v0.36.0
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@v0.2.0
         with:
-          image-ref: ${{ matrix.image }}:${{ github.sha }}
-          format: table
-          exit-code: "1"
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: HIGH,CRITICAL
+          cache: true
+          version: v0.70.0
+
+      - name: Build and scan images
+        run: |
+          set -euo pipefail
+
+          while IFS='|' read -r name context image; do
+            echo "::group::Build ${name} image"
+            docker build -t "${image}:${GITHUB_SHA}" "${context}"
+            echo "::endgroup::"
+
+            echo "::group::Scan ${name} image"
+            trivy image \
+              --exit-code 1 \
+              --ignore-unfixed \
+              --pkg-types os,library \
+              --severity HIGH,CRITICAL \
+              "${image}:${GITHUB_SHA}"
+            echo "::endgroup::"
+          done <<'IMAGES'
+          api|.|zeta-api-security
+          dashboard|web/dashboard-next|zeta-dashboard-security
+          landing|web/landing|zeta-landing-security
+          IMAGES

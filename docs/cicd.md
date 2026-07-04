@@ -50,12 +50,12 @@ Zeta uses GitHub-native dependency automation plus explicit scanner workflows:
 | Surface | Tool | Trigger | Behavior |
 | --- | --- | --- | --- |
 | Go modules | Dependabot, `govulncheck` | Weekly update PRs; PR/push/nightly scan | Dependabot opens update PRs. `govulncheck` fails when reachable Go vulnerabilities are found. |
-| Dashboard dependencies | Dependabot, OSV-Scanner, Dependency Review | Weekly update PRs; PR/push/nightly scan | Dependabot updates `web/dashboard-next/pnpm-lock.yaml`. OSV blocks new PR vulnerabilities and reports nightly findings. |
-| Landing dependencies | Dependabot, OSV-Scanner, Dependency Review | Weekly update PRs; PR/push/nightly scan | Dependabot updates `web/landing/package-lock.json`. OSV blocks new PR vulnerabilities and reports nightly findings. |
+| Dashboard dependencies | Dependabot, OSV-Scanner | Weekly update PRs; PR/push/nightly scan | Dependabot updates `web/dashboard-next/pnpm-lock.yaml`. OSV blocks vulnerabilities newly introduced by PRs and reports existing findings on push/nightly runs. |
+| Landing dependencies | Dependabot, OSV-Scanner | Weekly update PRs; PR/push/nightly scan | Dependabot updates `web/landing/package-lock.json`. OSV blocks vulnerabilities newly introduced by PRs and reports existing findings on push/nightly runs. |
 | Docker images | Dependabot, Trivy | Weekly base-image PRs; PR/push/nightly scan | Dependabot updates Dockerfile base images. Trivy builds API, dashboard, and landing images and fails on fixed `HIGH` or `CRITICAL` vulnerabilities. |
 | GitHub Actions | Dependabot | Weekly update PRs | Dependabot updates pinned workflow actions. |
 
-Dependabot configuration lives in `.github/dependabot.yml`. Repository settings must keep Dependency graph, Dependabot alerts, and Dependabot security updates enabled. If this repository is private and does not have GitHub Advanced Security, the Dependency Review job may not be available; OSV-Scanner still provides the PR and nightly dependency CVE gate.
+Dependabot configuration lives in `.github/dependabot.yml`. Repository settings must keep Dependency graph, Dependabot alerts, and Dependabot security updates enabled. Dependency Review can be added later after Dependency graph is enabled for the repository; OSV-Scanner provides the PR dependency CVE gate in this workflow.
 
 The security workflow intentionally opens or blocks pull requests rather than pushing fixes directly to `main`. This keeps remediation inside the normal review and CI path. Auto-merge can be enabled later for low-risk Dependabot security PRs, but major version updates, Docker base image changes, and GitHub Actions changes should remain manual until the pipeline has run cleanly for a few weeks.
 
