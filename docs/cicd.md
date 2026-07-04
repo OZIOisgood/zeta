@@ -35,12 +35,39 @@ Resend inbound webhook endpoints are environment-specific:
 | Workflow | Trigger | Purpose |
 | --- | --- | --- |
 | `.github/workflows/ci.yml` | Pull request to `main` | Build/test API and dashboard; build landing image |
+| `.github/workflows/security.yml` | Pull request to `main`, merge queue, push to `main`, nightly, or manual | Dependency, Go, OSV, and container CVE scanning |
 | `.github/workflows/deploy-dev.yml` | Push to `main` | Migrate and deploy dev API/dashboard |
 | `.github/workflows/deploy-prod.yml` | Push of `v*` tag | Migrate and deploy prod API/dashboard |
 | `.github/workflows/deploy-landing.yml` | Landing change on `main`, or manual | Build and deploy production landing only |
 | `.github/workflows/infra.yml` | Manual | Terraform plan or apply for dev/prod |
 
 All workflows authenticate through Workload Identity Federation. GitHub stores no long-lived GCP service-account JSON key.
+
+## Security Scanning
+
+Zeta uses GitHub-native dependency automation plus explicit scanner workflows:
+
+| Surface | Tool | Trigger | Behavior |
+| --- | --- | --- | --- |
+| Go modules | Dependabot, `govulncheck` | Weekly update PRs; PR/push/nightly scan | Dependabot opens update PRs. `govulncheck` fails when reachable Go vulnerabilities are found. |
+| Dashboard dependencies | Dependabot, OSV-Scanner | Weekly update PRs; PR/push/nightly scan | Dependabot updates `web/dashboard-next/pnpm-lock.yaml`. OSV blocks vulnerabilities newly introduced by PRs and reports existing findings on push/nightly runs. |
+| Landing dependencies | Dependabot, OSV-Scanner | Weekly update PRs; PR/push/nightly scan | Dependabot updates `web/landing/package-lock.json`. OSV blocks vulnerabilities newly introduced by PRs and reports existing findings on push/nightly runs. |
+| Docker images | Dependabot, Trivy | Weekly base-image PRs; PR/push/nightly scan | Dependabot updates Dockerfile base images. Trivy builds API, dashboard, and landing images and fails on fixed `HIGH` or `CRITICAL` vulnerabilities. |
+| GitHub Actions | Dependabot | Weekly update PRs | Dependabot updates pinned workflow actions. |
+
+Dependabot configuration lives in `.github/dependabot.yml`. Repository settings must keep Dependency graph, Dependabot alerts, and Dependabot security updates enabled. Dependency Review can be added later after Dependency graph is enabled for the repository; OSV-Scanner provides the PR dependency CVE gate in this workflow.
+
+The security workflow intentionally opens or blocks pull requests rather than pushing fixes directly to `main`. This keeps remediation inside the normal review and CI path. Auto-merge can be enabled later for low-risk Dependabot security PRs, but major version updates, Docker base image changes, and GitHub Actions changes should remain manual until the pipeline has run cleanly for a few weeks.
+
+When a nightly or PR scan reports a vulnerability:
+
+1. Check whether Dependabot opened a PR. If it did, review the advisory, wait for CI/security checks, and merge if the update is safe.
+2. If OSV, `govulncheck`, or Trivy failed without a Dependabot PR, use the workflow output to identify the package/image and fixed version.
+3. For Go, run `go get module@patched-version && go mod tidy`, then `make test:unit`.
+4. For dashboard dependencies, update in `web/dashboard-next`, then run `make web-next:lint` and `make web-next:build`.
+5. For landing dependencies, update in `web/landing`, then run the landing build/tests.
+6. For Docker findings, update the base image tag or rebuild after a fixed package reaches the existing floating tag.
+7. If no fix exists or the finding is not exploitable, add a temporary scanner ignore only with a clear reason, expiry date, and follow-up issue.
 
 ## Configuration Ownership
 

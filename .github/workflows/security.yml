@@ -1,0 +1,186 @@
+name: Security
+
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    types:
+      - checks_requested
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-and-code-scan:
+    name: Dependency & Go Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime,development,unknown
+          license-check: false
+          show-patched-versions: true
+
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: go.mod
+          go-package: ./...
+          repo-checkout: false
+
+      - name: Check out target branch for OSV baseline
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        run: |
+          git checkout "$GITHUB_BASE_REF"
+
+      - name: Run OSV baseline scan
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
+        continue-on-error: true
+        with:
+          scan-args: |-
+            --format=json
+            --output-file=osv-baseline.json
+            --include-git-root
+            -r
+            ./
+
+      - name: Check out current revision for OSV scan
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        run: |
+          git checkout -f "$GITHUB_SHA"
+
+      - name: Run OSV current scan
+        uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
+        continue-on-error: true
+        with:
+          scan-args: |-
+            --format=json
+            --output-file=osv-current.json
+            --include-git-root
+            -r
+            ./
+
+      - name: Fail on newly introduced OSV findings
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        run: |
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          def load(path):
+              p = Path(path)
+              if not p.exists() or p.stat().st_size == 0:
+                  return {"results": []}
+              return json.loads(p.read_text())
+
+          def findings(path):
+              doc = load(path)
+              found = set()
+              for result in doc.get("results", []):
+                  source = result.get("source", {}).get("path", "")
+                  source = source.replace("/github/workspace/", "")
+                  for package in result.get("packages", []):
+                      pkg = package.get("package", {})
+                      pkg_key = (
+                          source,
+                          pkg.get("ecosystem", ""),
+                          pkg.get("name", ""),
+                          pkg.get("version", ""),
+                      )
+                      for vulnerability in package.get("vulnerabilities", []):
+                          vuln_id = vulnerability.get("id")
+                          if vuln_id:
+                              found.add(pkg_key + (vuln_id,))
+              return found
+
+          baseline = findings("osv-baseline.json")
+          current = findings("osv-current.json")
+          introduced = sorted(current - baseline)
+
+          if introduced:
+              print("New OSV vulnerability findings introduced by this change:")
+              for source, ecosystem, name, version, vuln_id in introduced:
+                  print(f"- {vuln_id}: {ecosystem} {name}@{version} from {source}")
+              raise SystemExit(1)
+
+          print(f"No new OSV findings introduced by this change. Current scan still contains {len(current)} existing finding(s).")
+          PY
+
+      - name: Summarize full OSV scan
+        if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("osv-current.json")
+          if not path.exists() or path.stat().st_size == 0:
+              print("No OSV result file was produced.")
+              raise SystemExit(0)
+
+          doc = json.loads(path.read_text())
+          count = 0
+          for result in doc.get("results", []):
+              for package in result.get("packages", []):
+                  count += len(package.get("vulnerabilities", []))
+
+          if count:
+              print(f"::warning ::OSV full scan found {count} existing vulnerability finding(s). Review the workflow logs and Dependabot PRs.")
+          else:
+              print("OSV full scan found no vulnerabilities.")
+          PY
+
+  trivy-images:
+    name: Container Image Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@v0.3.1
+        with:
+          cache: true
+          version: v0.70.0
+
+      - name: Build and scan images
+        run: |
+          set -euo pipefail
+
+          while IFS='|' read -r name context image; do
+            echo "::group::Build ${name} image"
+            docker build -t "${image}:${GITHUB_SHA}" "${context}"
+            echo "::endgroup::"
+
+            echo "::group::Scan ${name} image"
+            trivy image \
+              --exit-code 1 \
+              --ignore-unfixed \
+              --pkg-types os,library \
+              --severity HIGH,CRITICAL \
+              "${image}:${GITHUB_SHA}"
+            echo "::endgroup::"
+          done <<'IMAGES'
+          api|.|zeta-api-security
+          dashboard|web/dashboard-next|zeta-dashboard-security
+          landing|web/landing|zeta-landing-security
+          IMAGES
