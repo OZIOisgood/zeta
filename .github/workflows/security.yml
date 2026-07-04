@@ -1,0 +1,118 @@
+name: Security
+
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    types:
+      - checks_requested
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime,development,unknown
+          license-check: false
+          show-patched-versions: true
+
+  govulncheck:
+    name: Go Vulnerability Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: go.mod
+          go-package: ./...
+          cache-dependency-path: go.sum
+          repo-checkout: false
+
+  osv-pr:
+    name: OSV PR Scan
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@3adb4b14a2b0623876d18d863a498b785fb3752d
+    with:
+      upload-sarif: false
+      fail-on-vuln: true
+      scan-args: |-
+        --include-git-root
+        -r
+        ./
+
+  osv-full:
+    name: OSV Full Scan
+    if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@3adb4b14a2b0623876d18d863a498b785fb3752d
+    with:
+      upload-sarif: true
+      fail-on-vuln: true
+      scan-args: |-
+        --include-git-root
+        -r
+        ./
+
+  trivy-images:
+    name: Trivy Image Scan (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            context: .
+            image: zeta-api-security
+          - name: dashboard
+            context: web/dashboard-next
+            image: zeta-dashboard-security
+          - name: landing
+            context: web/landing
+            image: zeta-landing-security
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build ${{ matrix.name }} image
+        run: docker build -t "${{ matrix.image }}:${{ github.sha }}" "${{ matrix.context }}"
+
+      - name: Scan ${{ matrix.name }} image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.image }}:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL

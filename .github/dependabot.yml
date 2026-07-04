@@ -1,0 +1,86 @@
+version: 2
+
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - security
+
+  - package-ecosystem: npm
+    directory: /web/dashboard-next
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:20"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - security
+
+  - package-ecosystem: npm
+    directory: /web/landing
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:40"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - security
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - security
+
+  - package-ecosystem: docker
+    directory: /web/dashboard-next
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:20"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - security
+
+  - package-ecosystem: docker
+    directory: /web/landing
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:40"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - security
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - security
