@@ -148,8 +148,9 @@ printf '%s' "$WORKOS_API_KEY" | gcloud secrets versions add zeta-dev-workos-api-
 
 Do not put public URLs, sender email addresses, flags, or limits in Secret Manager merely for consistency. Do not access secret payloads for routine inventory.
 
-Discord feedback forum IDs, application ID, and public key are plain runtime
-configuration in deploy workflows. Only the bot token belongs in Secret Manager:
+Discord feedback and moderation report forum IDs, application ID, and public key
+are plain runtime configuration in deploy workflows. Only the bot token belongs
+in Secret Manager:
 
 ```bash
 printf '%s' "$DISCORD_BOT_TOKEN" | gcloud secrets versions add zeta-dev-discord-bot-token \

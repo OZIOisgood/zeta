@@ -25,6 +25,7 @@
       "next": "Weiter",
       "preferences": "Einstellungen",
       "remove": "Entfernen",
+      "report": "Melden",
       "review": "Überprüfen",
       "save": "Speichern",
       "signOut": "Abmelden",
@@ -81,6 +82,7 @@
       "terms": "Nutzungsbedingungen"
     },
     "nav": {
+      "admin": "Admin",
       "groups": "Gruppen",
       "home": "Start",
       "inviteCodes": "Experteneinladungen",
@@ -132,6 +134,82 @@
       "successMessage": "Danke. Wir schauen es uns an.",
       "errorTitle": "Feedback konnte nicht gesendet werden",
       "errorMessage": "Bitte versuche es erneut."
+    }
+  },
+  "moderation": {
+    "report": {
+      "dialog": {
+        "title": "Melden",
+        "description": "Melde einen Kommentar oder die Person, die ihn geschrieben hat. Ziel: {{name}}."
+      },
+      "subject": {
+        "reviewComment": "Kommentar",
+        "user": "Benutzer"
+      },
+      "reason": {
+        "harassment": "Belästigung",
+        "spam": "Spam",
+        "inappropriateContent": "Unangemessener Inhalt",
+        "other": "Sonstiges"
+      },
+      "fields": {
+        "subject": "Was möchtest du melden?",
+        "reason": "Grund",
+        "details": "Details (optional)",
+        "detailsPlaceholder": "Ergänze Kontext für das Moderationsteam."
+      },
+      "actions": {
+        "send": "Meldung senden"
+      },
+      "toast": {
+        "successTitle": "Meldung gesendet",
+        "successMessage": "Danke. Das Moderationsteam prüft sie.",
+        "errorTitle": "Meldung konnte nicht gesendet werden",
+        "errorMessage": "Bitte versuche es erneut."
+      }
+    },
+    "admin": {
+      "title": "Report-Inbox",
+      "description": "Prüfe Kommentar- und Benutzer-Meldungen aus dem Dashboard.",
+      "filters": {
+        "status": "Status",
+        "subject": "Betreff",
+        "allStatuses": "Alle Status",
+        "allSubjects": "Alle Betreffe"
+      },
+      "statuses": {
+        "open": "Offen",
+        "resolved": "Gelöst",
+        "rejected": "Abgelehnt"
+      },
+      "dashboard": {
+        "title": "Neueste Meldungen",
+        "description": "Aktuelle Moderationsmeldungen zu Kommentaren und Benutzern.",
+        "openReports": "Offene Meldungen",
+        "viewReports": "Inbox öffnen",
+        "emptyTitle": "Noch keine Meldungen",
+        "emptyDescription": "Meldungen erscheinen hier, sobald Nutzer sie senden."
+      },
+      "reporter": "Gemeldet von",
+      "target": "Ziel",
+      "videoId": "Video-ID",
+      "commentId": "Kommentar-ID",
+      "reportedComment": "Gemeldeter Kommentar",
+      "reporterDetails": "Details des Meldenden",
+      "noReportedComment": "Kein gemeldeter Kommentar gespeichert.",
+      "noDetails": "Keine weiteren Details angegeben.",
+      "unknown": "Unbekannt",
+      "status": "Status",
+      "emptyTitle": "Keine Meldungen",
+      "emptyDescription": "Meldungen passend zu den aktuellen Filtern erscheinen hier.",
+      "errorTitle": "Meldungen konnten nicht geladen werden",
+      "errorDescription": "Aktualisiere die Seite oder versuche es gleich erneut.",
+      "toast": {
+        "savedTitle": "Meldung aktualisiert",
+        "savedMessage": "Der Moderationsstatus wurde gespeichert.",
+        "errorTitle": "Meldung konnte nicht aktualisiert werden",
+        "errorMessage": "Bitte versuche es erneut."
+      }
     }
   },
   "reports": {

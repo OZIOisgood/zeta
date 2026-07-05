@@ -43,6 +43,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 }
 
 type ReviewAuthor struct {
+	ID     string `json:"id,omitempty"`
 	Name   string `json:"name"`
 	Avatar string `json:"avatar,omitempty"`
 }
@@ -126,6 +127,9 @@ func (h *Handler) ListReviews(w http.ResponseWriter, r *http.Request) {
 			name := strings.TrimSpace(row.AuthorFirstName.String + " " + row.AuthorLastName.String)
 			if name != "" {
 				author = &ReviewAuthor{Name: name}
+				if row.AuthorID.Valid {
+					author.ID = row.AuthorID.String
+				}
 				if row.AuthorAvatar.Valid && row.AuthorAvatar.String != "" {
 					author.Avatar = row.AuthorAvatar.String
 				}
@@ -317,7 +321,7 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		responseData["parent_id"] = pgutil.UUIDToString(review.ParentID)
 	}
 	if authorName != "" {
-		author := map[string]interface{}{"name": authorName}
+		author := map[string]interface{}{"id": userInfo.ID, "name": authorName}
 		if authorPrefs.Avatar != "" {
 			author["avatar"] = authorPrefs.Avatar
 		}

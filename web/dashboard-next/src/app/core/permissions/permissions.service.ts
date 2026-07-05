@@ -25,7 +25,10 @@ export type Permission =
   | 'coaching:bookings:read'
   | 'coaching:bookings:manage'
   | 'coaching:video:connect'
-  | 'reports:read';
+  | 'reports:read'
+  | 'moderation:reports:create'
+  | 'moderation:reports:read'
+  | 'moderation:reports:update';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {

@@ -76,9 +76,10 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - `CANCELLATION_NOTICE` — minimum notice to cancel (default: `1h`)
    - `CONNECT_WINDOW` — how early participants can join a call (default: `15m`)
 
-8. **Discord Feedback Inbox**:
+8. **Discord Feedback And Report Inboxes**:
    - Create a Discord bot token and store it in `DISCORD_BOT_TOKEN`.
    - Set `DISCORD_FEEDBACK_FORUM_CHANNEL_ID` to the target forum channel.
+   - Set `DISCORD_MODERATION_REPORTS_FORUM_CHANNEL_ID` to the moderation reports forum channel.
    - `DISCORD_APPLICATION_ID` and `DISCORD_PUBLIC_KEY` are public bot metadata reserved for future Discord interactions.
 
 ### Custom Domains
@@ -479,6 +480,9 @@ erDiagram
     assets ||--|{ videos : contains
     videos ||--o{ video_reviews : has
     video_reviews ||--o{ video_reviews : "has replies"
+    users ||--o{ moderation_reports : creates
+    videos ||--o{ moderation_reports : "reported context"
+    video_reviews ||--o{ moderation_reports : "reported comment"
 
     users["User Identity (WorkOS)"] {
         string id PK "WorkOS User ID"
@@ -586,6 +590,22 @@ erDiagram
         string author_id "WorkOS User ID ref"
         string content
         integer timestamp_seconds
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    moderation_reports {
+        uuid id PK
+        string reporter_user_id FK "WorkOS User ID ref"
+        enum subject_type "review_comment, user"
+        uuid target_review_id FK
+        uuid target_video_id FK
+        string target_user_id "WorkOS User ID ref"
+        string target_review_content
+        enum reason "harassment, spam, inappropriate_content, other"
+        enum status "open, resolved, rejected"
+        string discord_status
+        string discord_thread_id
         timestamp created_at
         timestamp updated_at
     }

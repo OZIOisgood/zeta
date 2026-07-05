@@ -25,6 +25,7 @@
       "next": "Suivant",
       "preferences": "Préférences",
       "remove": "Retirer",
+      "report": "Signaler",
       "review": "Réviser",
       "save": "Enregistrer",
       "signOut": "Se déconnecter",
@@ -81,6 +82,7 @@
       "terms": "Conditions d'utilisation"
     },
     "nav": {
+      "admin": "Admin",
       "groups": "Groupes",
       "home": "Accueil",
       "inviteCodes": "Invitations d’experts",
@@ -132,6 +134,82 @@
       "successMessage": "Merci. Nous allons y jeter un œil.",
       "errorTitle": "Impossible d'envoyer le feedback",
       "errorMessage": "Réessaie, s'il te plaît."
+    }
+  },
+  "moderation": {
+    "report": {
+      "dialog": {
+        "title": "Signaler",
+        "description": "Signale un commentaire ou la personne qui l'a écrit. Cible : {{name}}."
+      },
+      "subject": {
+        "reviewComment": "Commentaire",
+        "user": "Utilisateur"
+      },
+      "reason": {
+        "harassment": "Harcèlement",
+        "spam": "Spam",
+        "inappropriateContent": "Contenu inapproprié",
+        "other": "Autre"
+      },
+      "fields": {
+        "subject": "Que veux-tu signaler ?",
+        "reason": "Motif",
+        "details": "Détails (optionnel)",
+        "detailsPlaceholder": "Ajoute du contexte pour l'équipe de modération."
+      },
+      "actions": {
+        "send": "Envoyer le signalement"
+      },
+      "toast": {
+        "successTitle": "Signalement envoyé",
+        "successMessage": "Merci. L'équipe de modération va l'examiner.",
+        "errorTitle": "Impossible d'envoyer le signalement",
+        "errorMessage": "Réessaie, s'il te plaît."
+      }
+    },
+    "admin": {
+      "title": "Boîte de signalements",
+      "description": "Passe en revue les signalements de commentaires et d'utilisateurs.",
+      "filters": {
+        "status": "Statut",
+        "subject": "Sujet",
+        "allStatuses": "Tous les statuts",
+        "allSubjects": "Tous les sujets"
+      },
+      "statuses": {
+        "open": "Ouvert",
+        "resolved": "Résolu",
+        "rejected": "Rejeté"
+      },
+      "dashboard": {
+        "title": "Derniers signalements",
+        "description": "Signalements de modération récents pour commentaires et utilisateurs.",
+        "openReports": "Signalements ouverts",
+        "viewReports": "Voir la boîte",
+        "emptyTitle": "Aucun signalement pour l'instant",
+        "emptyDescription": "Les signalements apparaîtront ici après leur envoi."
+      },
+      "reporter": "Auteur du signalement",
+      "target": "Cible",
+      "videoId": "ID vidéo",
+      "commentId": "ID commentaire",
+      "reportedComment": "Commentaire signalé",
+      "reporterDetails": "Détails du signalement",
+      "noReportedComment": "Aucun commentaire signalé enregistré.",
+      "noDetails": "Aucun détail supplémentaire.",
+      "unknown": "Inconnu",
+      "status": "Statut",
+      "emptyTitle": "Aucun signalement",
+      "emptyDescription": "Les signalements correspondant aux filtres apparaîtront ici.",
+      "errorTitle": "Impossible de charger les signalements",
+      "errorDescription": "Actualise la page ou réessaie dans un instant.",
+      "toast": {
+        "savedTitle": "Signalement mis à jour",
+        "savedMessage": "Le statut de modération a été enregistré.",
+        "errorTitle": "Impossible de mettre à jour le signalement",
+        "errorMessage": "Réessaie, s'il te plaît."
+      }
     }
   },
   "reports": {

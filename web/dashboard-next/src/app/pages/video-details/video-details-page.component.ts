@@ -3,6 +3,8 @@ import {
   Component,
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
+  TemplateRef,
+  ViewContainerRef,
   afterNextRender,
   computed,
   effect,
@@ -11,9 +13,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NgpDialogTrigger } from 'ng-primitives/dialog';
+import { NgpDialogContext, NgpDialogManager, NgpDialogTrigger } from 'ng-primitives/dialog';
 import {
   LucideCheck,
   LucideChevronDown,
@@ -26,6 +29,12 @@ import {
   LucideVideo,
 } from '@lucide/angular';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
+import {
+  ModerationReportReason,
+  ModerationReportSubjectType,
+  ModerationReportsApiClient,
+} from '../../core/http/moderation-reports-api.service';
 import { AppShellStore } from '../../core/state/app-shell.store';
 import { DashboardDateTimeService } from '../../core/i18n/dashboard-date-time.service';
 import { RelativeTimePipe } from '../../core/i18n/relative-time.pipe';
@@ -36,15 +45,23 @@ import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZCommentActionsComponent } from '../../shared/ui/comment-actions/z-comment-actions.component';
+import { ZActionDialogComponent } from '../../shared/ui/dialog/z-action-dialog.component';
 import { ZConfirmDialogComponent } from '../../shared/ui/dialog/z-confirm-dialog.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
+import { SelectOption, ZSelectComponent } from '../../shared/ui/select/z-select.component';
 import { ZSkeletonComponent } from '../../shared/ui/skeleton/z-skeleton.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
+
+type ReportTarget = {
+  reviewId: string;
+  authorName: string;
+};
 
 @Component({
   selector: 'app-video-details-page',
   imports: [
     NgClass,
+    FormsModule,
     ReactiveFormsModule,
     NgpDialogTrigger,
     RouterLink,
@@ -55,8 +72,10 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
     ZBreadcrumbsComponent,
     ZButtonComponent,
     ZCommentActionsComponent,
+    ZActionDialogComponent,
     ZConfirmDialogComponent,
     ZEmptyStateComponent,
+    ZSelectComponent,
     ZSkeletonComponent,
     ZTextareaComponent,
     LucideCheck,
@@ -282,13 +301,21 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                             }
                           }
                         </div>
-                        @if (canEditReviews() || canDeleteReviews()) {
+                        @if (
+                          canEditReviews() ||
+                          canDeleteReviews() ||
+                          canReportComment(thread.root.author?.id)
+                        ) {
                           <z-comment-actions
                             class="-mt-1"
                             [canEdit]="canEditReviews()"
                             [canDelete]="canDeleteReviews()"
+                            [canReport]="canReportComment(thread.root.author?.id)"
                             (edit)="startEditing(thread.root.id, thread.root.content)"
                             (delete)="doDeleteReview(thread.root.id)"
+                            (report)="
+                              openReport(reportDialog, thread.root.id, thread.root.author?.name)
+                            "
                           />
                         }
                       </div>
@@ -419,13 +446,21 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
                                     }
                                   }
                                 </div>
-                                @if (canEditReviews() || canDeleteReviews()) {
+                                @if (
+                                  canEditReviews() ||
+                                  canDeleteReviews() ||
+                                  canReportComment(reply.author?.id)
+                                ) {
                                   <z-comment-actions
                                     class="-mt-1"
                                     [canEdit]="canEditReviews()"
                                     [canDelete]="canDeleteReviews()"
+                                    [canReport]="canReportComment(reply.author?.id)"
                                     (edit)="startEditing(reply.id, reply.content)"
                                     (delete)="doDeleteReview(reply.id)"
+                                    (report)="
+                                      openReport(reportDialog, reply.id, reply.author?.name)
+                                    "
                                   />
                                 }
                               </div>
@@ -624,6 +659,64 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
           </form>
         }
       }
+
+      <ng-template #reportDialog let-close="close">
+        <z-action-dialog
+          [title]="'moderation.report.dialog.title' | transloco"
+          [description]="
+            'moderation.report.dialog.description'
+              | transloco
+                : { name: reportTarget()?.authorName || ('videos.unknownAuthor' | transloco) }
+          "
+          tone="warning"
+          [confirmLabel]="'moderation.report.actions.send' | transloco"
+          [cancelLabel]="'common.actions.cancel' | transloco"
+          [confirmCloses]="false"
+          [confirmDisabled]="reportSubmitDisabled()"
+          [cancelDisabled]="reportSubmitting()"
+          [close]="close"
+          (confirmed)="submitReport(close)"
+        >
+          <div class="mt-4 grid gap-4">
+            <label class="grid gap-1.5">
+              <span class="text-sm font-semibold">{{
+                'moderation.report.fields.subject' | transloco
+              }}</span>
+              <z-select
+                [value]="reportSubjectType()"
+                [options]="reportSubjectOptions()"
+                [disabled]="reportSubmitting()"
+                (valueChange)="setReportSubject($event)"
+              />
+            </label>
+
+            <label class="grid gap-1.5">
+              <span class="text-sm font-semibold">{{
+                'moderation.report.fields.reason' | transloco
+              }}</span>
+              <z-select
+                [value]="reportReason()"
+                [options]="reportReasonOptions()"
+                [disabled]="reportSubmitting()"
+                (valueChange)="setReportReason($event)"
+              />
+            </label>
+
+            <label class="grid gap-1.5">
+              <span class="text-sm font-semibold">
+                {{ 'moderation.report.fields.details' | transloco }}
+              </span>
+              <z-textarea
+                [ngModel]="reportDetails()"
+                (ngModelChange)="reportDetails.set($event)"
+                [placeholder]="'moderation.report.fields.detailsPlaceholder' | transloco"
+                [disabled]="reportSubmitting()"
+                [rows]="4"
+              />
+            </label>
+          </div>
+        </z-action-dialog>
+      </ng-template>
     </div>
   `,
 })
@@ -635,6 +728,9 @@ export class VideoDetailsPageComponent {
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly dateTime = inject(DashboardDateTimeService);
+  private readonly moderationApi = inject(ModerationReportsApiClient);
+  private readonly dialogManager = inject(NgpDialogManager);
+  private readonly viewContainerRef = inject(ViewContainerRef);
   private readonly muxPlayer = viewChild<ElementRef<HTMLElement>>('muxPlayer');
 
   protected readonly currentTimestamp = signal(0);
@@ -645,6 +741,11 @@ export class VideoDetailsPageComponent {
   protected readonly collapsedThreads = signal<Set<string>>(new Set());
   protected readonly openReplyFor = signal<string | null>(null);
   protected readonly replyControl = new FormControl('', { nonNullable: true });
+  protected readonly reportTarget = signal<ReportTarget | null>(null);
+  protected readonly reportSubjectType = signal<ModerationReportSubjectType>('review_comment');
+  protected readonly reportReason = signal<ModerationReportReason>('harassment');
+  protected readonly reportDetails = signal('');
+  protected readonly reportSubmitting = signal(false);
   private readonly replyTextareaEl = viewChild('replyTextarea', { read: ElementRef });
 
   protected readonly selectedVideo = computed(() => {
@@ -661,6 +762,25 @@ export class VideoDetailsPageComponent {
   protected readonly showCommentBar = computed(
     () => !!this.selectedVideo() && this.canAddReviews() && !this.isFinalized(),
   );
+  protected readonly reportSubmitDisabled = computed(
+    () => this.reportSubmitting() || !this.reportTarget() || !this.reportReason(),
+  );
+  protected readonly reportSubjectOptions = computed<SelectOption[]>(() => [
+    {
+      value: 'review_comment',
+      label: this.transloco.translate('moderation.report.subject.reviewComment'),
+    },
+    { value: 'user', label: this.transloco.translate('moderation.report.subject.user') },
+  ]);
+  protected readonly reportReasonOptions = computed<SelectOption[]>(() => [
+    { value: 'harassment', label: this.transloco.translate('moderation.report.reason.harassment') },
+    { value: 'spam', label: this.transloco.translate('moderation.report.reason.spam') },
+    {
+      value: 'inappropriate_content',
+      label: this.transloco.translate('moderation.report.reason.inappropriateContent'),
+    },
+    { value: 'other', label: this.transloco.translate('moderation.report.reason.other') },
+  ]);
 
   constructor() {
     afterNextRender(() => {
@@ -727,6 +847,14 @@ export class VideoDetailsPageComponent {
 
   protected canDeleteReviews(): boolean {
     return this.session.hasPermission('reviews:delete') && !this.isFinalized();
+  }
+
+  protected canReportComment(authorId?: string): boolean {
+    return (
+      this.session.hasPermission('moderation:reports:create') &&
+      !!authorId &&
+      authorId !== this.session.user()?.id
+    );
   }
 
   protected canFinalize(): boolean {
@@ -804,6 +932,76 @@ export class VideoDetailsPageComponent {
     const video = this.selectedVideo();
     if (!video || this.isFinalized()) return;
     await this.store.deleteReview(video.id, reviewId);
+  }
+
+  protected openReport(
+    template: TemplateRef<NgpDialogContext<void, boolean>>,
+    reviewId: string,
+    authorName?: string,
+  ): void {
+    this.reportTarget.set({
+      reviewId,
+      authorName: authorName?.trim() || this.transloco.translate('videos.unknownAuthor'),
+    });
+    this.reportSubjectType.set('review_comment');
+    this.reportReason.set('harassment');
+    this.reportDetails.set('');
+    this.dialogManager.open<void, boolean>(template, {
+      viewContainerRef: this.viewContainerRef,
+      closeOnEscape: () => !this.reportSubmitting(),
+      closeOnOutsideClick: () => !this.reportSubmitting(),
+    });
+  }
+
+  protected setReportSubject(value: string): void {
+    if (value === 'review_comment' || value === 'user') {
+      this.reportSubjectType.set(value);
+    }
+  }
+
+  protected setReportReason(value: string): void {
+    if (
+      value === 'harassment' ||
+      value === 'spam' ||
+      value === 'inappropriate_content' ||
+      value === 'other'
+    ) {
+      this.reportReason.set(value);
+    }
+  }
+
+  protected async submitReport(close: (result?: unknown) => void): Promise<void> {
+    const video = this.selectedVideo();
+    const target = this.reportTarget();
+    if (!video || !target || this.reportSubmitting()) return;
+
+    this.reportSubmitting.set(true);
+    try {
+      await firstValueFrom(
+        this.moderationApi.create({
+          subject_type: this.reportSubjectType(),
+          video_id: video.id,
+          review_id: target.reviewId,
+          reason: this.reportReason(),
+          details: this.reportDetails().trim(),
+          page_url: window.location.href,
+        }),
+      );
+      close(true);
+      this.shell.showToast(
+        this.transloco.translate('moderation.report.toast.successTitle'),
+        this.transloco.translate('moderation.report.toast.successMessage'),
+        'success',
+      );
+    } catch {
+      this.shell.showToast(
+        this.transloco.translate('moderation.report.toast.errorTitle'),
+        this.transloco.translate('moderation.report.toast.errorMessage'),
+        'error',
+      );
+    } finally {
+      this.reportSubmitting.set(false);
+    }
   }
 
   protected confirmFinalizeVideo(result: unknown): void {

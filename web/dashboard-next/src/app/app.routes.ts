@@ -3,6 +3,8 @@ import { accessActiveGuard, waitlistedOnlyGuard } from './core/guards/access-act
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { ShellComponent } from './core/shell/shell.component';
+import { AdminPageComponent } from './pages/admin/admin-page.component';
+import { AdminReportsPageComponent } from './pages/admin-reports/admin-reports-page.component';
 import { CreateGroupPageComponent } from './pages/create-group/create-group-page.component';
 import { GroupDetailsPageComponent } from './pages/group-details/group-details-page.component';
 import { GroupPreferencesPageComponent } from './pages/group-preferences/group-preferences-page.component';
@@ -40,6 +42,20 @@ export const routes: Routes = [
     canActivate: [authGuard, accessActiveGuard],
     children: [
       { path: '', component: HomePageComponent, title: 'Strido' },
+      {
+        path: 'admin',
+        component: AdminPageComponent,
+        canActivate: [permissionGuard],
+        data: { permission: 'moderation:reports:read' },
+        title: 'Admin',
+      },
+      {
+        path: 'admin/reports',
+        component: AdminReportsPageComponent,
+        canActivate: [permissionGuard],
+        data: { permission: 'moderation:reports:read' },
+        title: 'Admin reports',
+      },
       { path: 'videos', component: VideosPageComponent, title: 'Strido Videos' },
       { path: 'reports', redirectTo: 'reports/experts', pathMatch: 'full' },
       {

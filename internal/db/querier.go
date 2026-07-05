@@ -37,6 +37,7 @@ type Querier interface {
 	CreateGroupInvitation(ctx context.Context, arg CreateGroupInvitationParams) (GroupInvitation, error)
 	CreateLandingContactSubmission(ctx context.Context, arg CreateLandingContactSubmissionParams) (LandingContactSubmission, error)
 	CreateMissingRecordingImports(ctx context.Context) (int64, error)
+	CreateModerationReport(ctx context.Context, arg CreateModerationReportParams) (ModerationReport, error)
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	// === Session Types ===
 	CreateSessionType(ctx context.Context, arg CreateSessionTypeParams) (CoachingSessionType, error)
@@ -63,7 +64,9 @@ type Querier interface {
 	GetGroupInvitationByCode(ctx context.Context, code string) (GroupInvitation, error)
 	GetGroupInvitationByID(ctx context.Context, arg GetGroupInvitationByIDParams) (GroupInvitation, error)
 	GetGroupInvitationsByCodes(ctx context.Context, dollar_1 []string) ([]GroupInvitation, error)
+	GetModerationReport(ctx context.Context, id pgtype.UUID) (ModerationReport, error)
 	GetNotification(ctx context.Context, id pgtype.UUID) (Notification, error)
+	GetReviewModerationTarget(ctx context.Context, id pgtype.UUID) (GetReviewModerationTargetRow, error)
 	GetSessionType(ctx context.Context, arg GetSessionTypeParams) (CoachingSessionType, error)
 	GetUserAccess(ctx context.Context, userID string) (UserAccess, error)
 	GetUserEmailPreferences(ctx context.Context, userID string) (GetUserEmailPreferencesRow, error)
@@ -85,6 +88,7 @@ type Querier interface {
 	ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error)
 	ListGroupInvitations(ctx context.Context, groupID pgtype.UUID) ([]GroupInvitation, error)
 	ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error)
+	ListModerationReports(ctx context.Context, arg ListModerationReportsParams) ([]ModerationReport, error)
 	ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error)
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
 	ListPendingRecordingImports(ctx context.Context, limit int32) ([]ListPendingRecordingImportsRow, error)
@@ -115,6 +119,9 @@ type Querier interface {
 	MarkInboundEmailForwardingSkipped(ctx context.Context, arg MarkInboundEmailForwardingSkippedParams) error
 	MarkLandingContactEmailFailed(ctx context.Context, arg MarkLandingContactEmailFailedParams) error
 	MarkLandingContactEmailSent(ctx context.Context, arg MarkLandingContactEmailSentParams) error
+	MarkModerationReportDiscordFailed(ctx context.Context, arg MarkModerationReportDiscordFailedParams) error
+	MarkModerationReportDiscordPosted(ctx context.Context, arg MarkModerationReportDiscordPostedParams) error
+	MarkModerationReportDiscordSkipped(ctx context.Context, arg MarkModerationReportDiscordSkippedParams) error
 	MarkNotificationRead(ctx context.Context, arg MarkNotificationReadParams) error
 	MarkNotificationReadByInviteCode(ctx context.Context, arg MarkNotificationReadByInviteCodeParams) error
 	MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error
@@ -151,6 +158,7 @@ type Querier interface {
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateGroupInvitationStatus(ctx context.Context, arg UpdateGroupInvitationStatusParams) error
 	UpdateInboundEmailContent(ctx context.Context, arg UpdateInboundEmailContentParams) error
+	UpdateModerationReportStatus(ctx context.Context, arg UpdateModerationReportStatusParams) (ModerationReport, error)
 	UpdateSessionType(ctx context.Context, arg UpdateSessionTypeParams) (CoachingSessionType, error)
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error)
 	UpdateUserEmailPreferences(ctx context.Context, arg UpdateUserEmailPreferencesParams) (UserPreference, error)
