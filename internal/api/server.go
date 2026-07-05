@@ -25,6 +25,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/invitations"
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/moderation"
 	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/reports"
 	"github.com/OZIOisgood/zeta/internal/reviews"
@@ -116,6 +117,12 @@ func (s *Server) routes(ctx context.Context) {
 		discordPoster,
 		s.Logger,
 		feedback.HandlerConfig{DiscordChannelID: os.Getenv("DISCORD_FEEDBACK_FORUM_CHANNEL_ID")},
+	)
+	moderationHandler := moderation.NewHandler(
+		queries,
+		discordPoster,
+		s.Logger,
+		moderation.HandlerConfig{DiscordChannelID: os.Getenv("DISCORD_MODERATION_REPORTS_FORUM_CHANNEL_ID")},
 	)
 	inboundEmailHandler := inboundemail.NewHandler(
 		queries,
@@ -263,6 +270,7 @@ func (s *Server) routes(ctx context.Context) {
 			})
 			r.Route("/notifications", notificationsHandler.RegisterRoutes)
 			r.Route("/feedback", feedbackHandler.RegisterRoutes)
+			r.Route("/moderation", moderationHandler.RegisterRoutes)
 			reportsHandler.RegisterRoutes(r)
 			coachingHandler.RegisterRoutes(r)
 		})

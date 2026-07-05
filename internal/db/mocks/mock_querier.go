@@ -384,6 +384,21 @@ func (mr *MockQuerierMockRecorder) CreateMissingRecordingImports(ctx any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMissingRecordingImports", reflect.TypeOf((*MockQuerier)(nil).CreateMissingRecordingImports), ctx)
 }
 
+// CreateModerationReport mocks base method.
+func (m *MockQuerier) CreateModerationReport(ctx context.Context, arg db.CreateModerationReportParams) (db.ModerationReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateModerationReport", ctx, arg)
+	ret0, _ := ret[0].(db.ModerationReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateModerationReport indicates an expected call of CreateModerationReport.
+func (mr *MockQuerierMockRecorder) CreateModerationReport(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateModerationReport", reflect.TypeOf((*MockQuerier)(nil).CreateModerationReport), ctx, arg)
+}
+
 // CreateNotification mocks base method.
 func (m *MockQuerier) CreateNotification(ctx context.Context, arg db.CreateNotificationParams) (db.Notification, error) {
 	m.ctrl.T.Helper()
@@ -757,6 +772,21 @@ func (mr *MockQuerierMockRecorder) GetGroupInvitationsByCodes(ctx, dollar_1 any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupInvitationsByCodes", reflect.TypeOf((*MockQuerier)(nil).GetGroupInvitationsByCodes), ctx, dollar_1)
 }
 
+// GetModerationReport mocks base method.
+func (m *MockQuerier) GetModerationReport(ctx context.Context, id pgtype.UUID) (db.ModerationReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetModerationReport", ctx, id)
+	ret0, _ := ret[0].(db.ModerationReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetModerationReport indicates an expected call of GetModerationReport.
+func (mr *MockQuerierMockRecorder) GetModerationReport(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetModerationReport", reflect.TypeOf((*MockQuerier)(nil).GetModerationReport), ctx, id)
+}
+
 // GetNotification mocks base method.
 func (m *MockQuerier) GetNotification(ctx context.Context, id pgtype.UUID) (db.Notification, error) {
 	m.ctrl.T.Helper()
@@ -770,6 +800,21 @@ func (m *MockQuerier) GetNotification(ctx context.Context, id pgtype.UUID) (db.N
 func (mr *MockQuerierMockRecorder) GetNotification(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNotification", reflect.TypeOf((*MockQuerier)(nil).GetNotification), ctx, id)
+}
+
+// GetReviewModerationTarget mocks base method.
+func (m *MockQuerier) GetReviewModerationTarget(ctx context.Context, id pgtype.UUID) (db.GetReviewModerationTargetRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReviewModerationTarget", ctx, id)
+	ret0, _ := ret[0].(db.GetReviewModerationTargetRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReviewModerationTarget indicates an expected call of GetReviewModerationTarget.
+func (mr *MockQuerierMockRecorder) GetReviewModerationTarget(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReviewModerationTarget", reflect.TypeOf((*MockQuerier)(nil).GetReviewModerationTarget), ctx, id)
 }
 
 // GetSessionType mocks base method.
@@ -1055,6 +1100,21 @@ func (m *MockQuerier) ListGroupMembers(ctx context.Context, groupID pgtype.UUID)
 func (mr *MockQuerierMockRecorder) ListGroupMembers(ctx, groupID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembers", reflect.TypeOf((*MockQuerier)(nil).ListGroupMembers), ctx, groupID)
+}
+
+// ListModerationReports mocks base method.
+func (m *MockQuerier) ListModerationReports(ctx context.Context, arg db.ListModerationReportsParams) ([]db.ModerationReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListModerationReports", ctx, arg)
+	ret0, _ := ret[0].([]db.ModerationReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListModerationReports indicates an expected call of ListModerationReports.
+func (mr *MockQuerierMockRecorder) ListModerationReports(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListModerationReports", reflect.TypeOf((*MockQuerier)(nil).ListModerationReports), ctx, arg)
 }
 
 // ListMyBookings mocks base method.
@@ -1464,6 +1524,48 @@ func (mr *MockQuerierMockRecorder) MarkLandingContactEmailSent(ctx, arg any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkLandingContactEmailSent", reflect.TypeOf((*MockQuerier)(nil).MarkLandingContactEmailSent), ctx, arg)
 }
 
+// MarkModerationReportDiscordFailed mocks base method.
+func (m *MockQuerier) MarkModerationReportDiscordFailed(ctx context.Context, arg db.MarkModerationReportDiscordFailedParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkModerationReportDiscordFailed", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkModerationReportDiscordFailed indicates an expected call of MarkModerationReportDiscordFailed.
+func (mr *MockQuerierMockRecorder) MarkModerationReportDiscordFailed(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkModerationReportDiscordFailed", reflect.TypeOf((*MockQuerier)(nil).MarkModerationReportDiscordFailed), ctx, arg)
+}
+
+// MarkModerationReportDiscordPosted mocks base method.
+func (m *MockQuerier) MarkModerationReportDiscordPosted(ctx context.Context, arg db.MarkModerationReportDiscordPostedParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkModerationReportDiscordPosted", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkModerationReportDiscordPosted indicates an expected call of MarkModerationReportDiscordPosted.
+func (mr *MockQuerierMockRecorder) MarkModerationReportDiscordPosted(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkModerationReportDiscordPosted", reflect.TypeOf((*MockQuerier)(nil).MarkModerationReportDiscordPosted), ctx, arg)
+}
+
+// MarkModerationReportDiscordSkipped mocks base method.
+func (m *MockQuerier) MarkModerationReportDiscordSkipped(ctx context.Context, arg db.MarkModerationReportDiscordSkippedParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkModerationReportDiscordSkipped", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkModerationReportDiscordSkipped indicates an expected call of MarkModerationReportDiscordSkipped.
+func (mr *MockQuerierMockRecorder) MarkModerationReportDiscordSkipped(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkModerationReportDiscordSkipped", reflect.TypeOf((*MockQuerier)(nil).MarkModerationReportDiscordSkipped), ctx, arg)
+}
+
 // MarkNotificationRead mocks base method.
 func (m *MockQuerier) MarkNotificationRead(ctx context.Context, arg db.MarkNotificationReadParams) error {
 	m.ctrl.T.Helper()
@@ -1810,6 +1912,21 @@ func (m *MockQuerier) UpdateInboundEmailContent(ctx context.Context, arg db.Upda
 func (mr *MockQuerierMockRecorder) UpdateInboundEmailContent(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInboundEmailContent", reflect.TypeOf((*MockQuerier)(nil).UpdateInboundEmailContent), ctx, arg)
+}
+
+// UpdateModerationReportStatus mocks base method.
+func (m *MockQuerier) UpdateModerationReportStatus(ctx context.Context, arg db.UpdateModerationReportStatusParams) (db.ModerationReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateModerationReportStatus", ctx, arg)
+	ret0, _ := ret[0].(db.ModerationReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateModerationReportStatus indicates an expected call of UpdateModerationReportStatus.
+func (mr *MockQuerierMockRecorder) UpdateModerationReportStatus(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateModerationReportStatus", reflect.TypeOf((*MockQuerier)(nil).UpdateModerationReportStatus), ctx, arg)
 }
 
 // UpdateSessionType mocks base method.

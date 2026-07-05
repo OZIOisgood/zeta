@@ -29,6 +29,10 @@ const (
 
 	ReportsRead = "reports:read"
 
+	ModerationReportsCreate = "moderation:reports:create"
+	ModerationReportsRead   = "moderation:reports:read"
+	ModerationReportsUpdate = "moderation:reports:update"
+
 	AccessInviteCodesRead = "access:invite-codes:read"
 )
 

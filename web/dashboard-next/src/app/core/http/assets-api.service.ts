@@ -44,6 +44,7 @@ export type Asset = {
 };
 
 export type ReviewAuthor = {
+  id?: string;
   name: string;
   avatar?: string;
 };

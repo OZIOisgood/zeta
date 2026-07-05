@@ -33,6 +33,7 @@ describe('AppShellStore', () => {
       'sessions',
       'reports-expert',
       'reports-student',
+      'admin',
     ]);
     expect(store.openWorkCount()).toBe(3);
   });
@@ -67,6 +68,9 @@ describe('AppShellStore', () => {
 
     store.selectSectionForUrl('/upload-video');
     expect(store.activeSection()).toBe('videos');
+
+    store.selectSectionForUrl('/admin/reports');
+    expect(store.activeSection()).toBe('admin');
 
     store.selectSectionForUrl('/create-group');
     expect(store.activeSection()).toBe('groups');

@@ -603,6 +603,32 @@ type LandingContactSubmission struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ModerationReport struct {
+	ID                  pgtype.UUID        `json:"id"`
+	ReporterUserID      string             `json:"reporter_user_id"`
+	ReporterDisplayName string             `json:"reporter_display_name"`
+	SubjectType         string             `json:"subject_type"`
+	TargetReviewID      pgtype.UUID        `json:"target_review_id"`
+	TargetVideoID       pgtype.UUID        `json:"target_video_id"`
+	TargetUserID        string             `json:"target_user_id"`
+	TargetDisplayName   string             `json:"target_display_name"`
+	TargetReviewContent string             `json:"target_review_content"`
+	Reason              string             `json:"reason"`
+	Details             string             `json:"details"`
+	PageUrl             string             `json:"page_url"`
+	UserAgent           string             `json:"user_agent"`
+	Status              string             `json:"status"`
+	ResolvedByUserID    string             `json:"resolved_by_user_id"`
+	ResolvedAt          pgtype.Timestamptz `json:"resolved_at"`
+	DiscordStatus       string             `json:"discord_status"`
+	DiscordChannelID    string             `json:"discord_channel_id"`
+	DiscordThreadID     string             `json:"discord_thread_id"`
+	DiscordMessageID    string             `json:"discord_message_id"`
+	DiscordError        string             `json:"discord_error"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Notification struct {
 	ID          pgtype.UUID        `json:"id"`
 	RecipientID string             `json:"recipient_id"`

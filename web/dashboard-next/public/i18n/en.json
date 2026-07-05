@@ -25,6 +25,7 @@
       "next": "Next",
       "preferences": "Preferences",
       "remove": "Remove",
+      "report": "Report",
       "review": "Review",
       "save": "Save",
       "signOut": "Sign out",
@@ -81,6 +82,7 @@
       "terms": "Terms of Use"
     },
     "nav": {
+      "admin": "Admin",
       "groups": "Groups",
       "home": "Home",
       "inviteCodes": "Expert invitations",
@@ -132,6 +134,82 @@
       "successMessage": "Thanks. We will take a look.",
       "errorTitle": "Could not send feedback",
       "errorMessage": "Please try again."
+    }
+  },
+  "moderation": {
+    "report": {
+      "dialog": {
+        "title": "Report",
+        "description": "Report a comment or the person who wrote it. Target: {{name}}."
+      },
+      "subject": {
+        "reviewComment": "Comment",
+        "user": "User"
+      },
+      "reason": {
+        "harassment": "Harassment",
+        "spam": "Spam",
+        "inappropriateContent": "Inappropriate content",
+        "other": "Other"
+      },
+      "fields": {
+        "subject": "What are you reporting?",
+        "reason": "Reason",
+        "details": "Details (optional)",
+        "detailsPlaceholder": "Add context for the moderation team."
+      },
+      "actions": {
+        "send": "Send report"
+      },
+      "toast": {
+        "successTitle": "Report sent",
+        "successMessage": "Thanks. The moderation team will review it.",
+        "errorTitle": "Could not send report",
+        "errorMessage": "Please try again."
+      }
+    },
+    "admin": {
+      "title": "Report inbox",
+      "description": "Review comment and user reports from the dashboard.",
+      "filters": {
+        "status": "Status",
+        "subject": "Subject",
+        "allStatuses": "All statuses",
+        "allSubjects": "All subjects"
+      },
+      "statuses": {
+        "open": "Open",
+        "resolved": "Resolved",
+        "rejected": "Rejected"
+      },
+      "dashboard": {
+        "title": "Latest reports",
+        "description": "Newest moderation reports across comments and users.",
+        "openReports": "Open reports",
+        "viewReports": "View inbox",
+        "emptyTitle": "No reports yet",
+        "emptyDescription": "Reports will appear here after users submit them."
+      },
+      "reporter": "Reporter",
+      "target": "Target",
+      "videoId": "Video ID",
+      "commentId": "Comment ID",
+      "reportedComment": "Reported comment",
+      "reporterDetails": "Reporter details",
+      "noReportedComment": "No reported comment captured.",
+      "noDetails": "No extra details provided.",
+      "unknown": "Unknown",
+      "status": "Status",
+      "emptyTitle": "No reports",
+      "emptyDescription": "Reports that match the current filters will appear here.",
+      "errorTitle": "Could not load reports",
+      "errorDescription": "Refresh the page or try again in a moment.",
+      "toast": {
+        "savedTitle": "Report updated",
+        "savedMessage": "The moderation status was saved.",
+        "errorTitle": "Could not update report",
+        "errorMessage": "Please try again."
+      }
     }
   },
   "reports": {
