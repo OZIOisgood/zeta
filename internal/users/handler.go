@@ -22,12 +22,11 @@ import (
 
 // groupUser is the JSON shape returned to the frontend.
 type groupUser struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Avatar    string `json:"avatar,omitempty"`
-	Role      string `json:"role"`
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+	FullName    string `json:"full_name,omitempty"`
+	Avatar      string `json:"avatar,omitempty"`
+	Role        string `json:"role"`
 }
 
 type Handler struct {
@@ -49,16 +48,16 @@ func NewHandler(logger *slog.Logger, q db.Querier, emailService email.Sender, wo
 func (h *Handler) ListGroupUsers(w http.ResponseWriter, r *http.Request) {
 	h.listGroupMembers(w, r, permissions.GroupsUserListRead, func(role string) bool {
 		return role == permissions.RoleStudent
-	})
+	}, true)
 }
 
 func (h *Handler) ListGroupExperts(w http.ResponseWriter, r *http.Request) {
 	h.listGroupMembers(w, r, permissions.GroupsExpertListRead, func(role string) bool {
 		return role == permissions.RoleExpert || role == permissions.RoleAdmin
-	})
+	}, false)
 }
 
-func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requiredPermission string, includeRole func(string) bool) {
+func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requiredPermission string, includeRole func(string) bool, includeFullName bool) {
 	ctx := r.Context()
 	user := auth.GetUser(ctx)
 	if user == nil {
@@ -140,8 +139,8 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 		return
 	}
 
-	// Fetch user details in parallel. Local preferences are the source of
-	// truth for display profile fields; WorkOS supplies delivery email.
+	// Fetch user details in parallel. Local preferences are the source of truth
+	// for profile display fields; group member list responses never expose email.
 	type result struct {
 		user groupUser
 		err  error
@@ -162,22 +161,21 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 				results[idx] = result{err: err}
 				return
 			}
-
-			u, err := h.workos.GetUser(ctx, usermanagement.GetUserOpts{
-				User: userID,
-			})
-			if err != nil {
-				results[idx] = result{err: err}
-				return
+			fullName := ""
+			if includeFullName && canViewFullMemberNames(user.Role) {
+				fullName = preferences.DisplayName(prefs)
+			}
+			displayName := preferences.PublicDisplayName(prefs)
+			if roleByUserID[userID] == permissions.RoleExpert || roleByUserID[userID] == permissions.RoleAdmin {
+				displayName = preferences.DisplayName(prefs)
 			}
 			results[idx] = result{
 				user: groupUser{
-					ID:        userID,
-					Email:     u.Email,
-					FirstName: prefs.FirstName,
-					LastName:  prefs.LastName,
-					Avatar:    prefs.Avatar,
-					Role:      roleByUserID[userID],
+					ID:          userID,
+					DisplayName: displayName,
+					FullName:    fullName,
+					Avatar:      prefs.Avatar,
+					Role:        roleByUserID[userID],
 				},
 			}
 		}(i, uid)
@@ -201,6 +199,10 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"data": users,
 	})
+}
+
+func canViewFullMemberNames(role string) bool {
+	return role == permissions.RoleExpert || role == permissions.RoleAdmin
 }
 
 func (h *Handler) RemoveGroupUser(w http.ResponseWriter, r *http.Request) {

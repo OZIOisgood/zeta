@@ -40,6 +40,10 @@ body {
   box-sizing: border-box;
 }
 
+[ngpTooltip] {
+  position: absolute;
+}
+
 @keyframes z-shimmer {
   100% {
     transform: translateX(100%);

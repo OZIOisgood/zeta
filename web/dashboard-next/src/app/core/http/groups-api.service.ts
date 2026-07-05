@@ -18,9 +18,8 @@ export type GroupMembersListKind = 'students' | 'experts';
 
 export type GroupMember = {
   id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
+  display_name: string;
+  full_name?: string;
   avatar?: string;
   role?: 'admin' | 'expert' | 'student' | string;
   name: string;
@@ -98,7 +97,7 @@ export class GroupsApiClient {
       map((response) =>
         response.data.map((member) => ({
           ...member,
-          name: `${member.first_name} ${member.last_name}`.trim() || member.email,
+          name: member.display_name,
         })),
       ),
     );

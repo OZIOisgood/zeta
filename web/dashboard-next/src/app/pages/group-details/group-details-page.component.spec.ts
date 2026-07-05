@@ -40,20 +40,17 @@ describe('GroupDetailsPageComponent', () => {
             ? [
                 {
                   id: 'student-1',
-                  email: 'student@example.com',
-                  first_name: 'Student',
-                  last_name: 'One',
+                  display_name: 'Student O.',
+                  full_name: 'Student One',
                   avatar: '',
                   role: 'student',
-                  name: 'Student One',
+                  name: 'Student O.',
                 },
               ]
             : [
                 {
                   id: 'expert-1',
-                  email: 'expert@example.com',
-                  first_name: 'Expert',
-                  last_name: 'One',
+                  display_name: 'Expert One',
                   avatar: '',
                   role: 'expert',
                   name: 'Expert One',
@@ -168,8 +165,11 @@ describe('GroupDetailsPageComponent', () => {
 
     expect(groupsApi.listGroupMembers).toHaveBeenCalledWith(group.id, 'students');
     expect(groupsApi.listGroupMembers).toHaveBeenCalledWith(group.id, 'experts');
+    expect(fixture.nativeElement.textContent).toContain('Student O.');
     expect(fixture.nativeElement.textContent).toContain('Student One');
     expect(fixture.nativeElement.textContent).toContain('Expert One');
+    expect(fixture.nativeElement.textContent).not.toContain('student@example.com');
+    expect(fixture.nativeElement.textContent).not.toContain('expert@example.com');
     expect(groupsApi.listGroupInvitations).toHaveBeenCalledWith(group.id);
     expect(fixture.nativeElement.textContent).toContain('Group invitations');
   });

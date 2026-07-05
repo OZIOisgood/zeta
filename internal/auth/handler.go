@@ -652,20 +652,22 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 
 			if avatar != "" {
 				prefs, err = h.q.SeedUserPreferencesWithAvatar(ctx, db.SeedUserPreferencesWithAvatarParams{
-					UserID:    user.ID,
-					Language:  db.LanguageCode(lang),
-					Timezone:  tz,
-					FirstName: user.FirstName,
-					LastName:  user.LastName,
-					Avatar:    avatar,
+					UserID:      user.ID,
+					Language:    db.LanguageCode(lang),
+					Timezone:    tz,
+					FirstName:   user.FirstName,
+					LastName:    user.LastName,
+					DisplayName: preferences.DefaultDisplayName(user.FirstName, user.LastName),
+					Avatar:      avatar,
 				})
 			} else {
 				prefs, err = h.q.SeedUserPreferences(ctx, db.SeedUserPreferencesParams{
-					UserID:    user.ID,
-					Language:  db.LanguageCode(lang),
-					Timezone:  tz,
-					FirstName: user.FirstName,
-					LastName:  user.LastName,
+					UserID:      user.ID,
+					Language:    db.LanguageCode(lang),
+					Timezone:    tz,
+					FirstName:   user.FirstName,
+					LastName:    user.LastName,
+					DisplayName: preferences.DefaultDisplayName(user.FirstName, user.LastName),
 				})
 			}
 			if err != nil {
@@ -706,6 +708,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		"id":                user.ID,
 		"first_name":        prefs.FirstName,
 		"last_name":         prefs.LastName,
+		"display_name":      preferences.PublicDisplayName(prefs),
 		"email":             user.Email,
 		"language":          prefs.Language,
 		"avatar":            prefs.Avatar,
@@ -723,6 +726,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 type UpdateUserRequest struct {
 	FirstName        string                        `json:"first_name"`
 	LastName         string                        `json:"last_name"`
+	DisplayName      string                        `json:"display_name"`
 	Language         string                        `json:"language"`
 	Avatar           *string                       `json:"avatar"`
 	Timezone         string                        `json:"timezone"`
@@ -752,12 +756,20 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	displayName := preferences.DefaultDisplayName(req.FirstName, req.LastName)
+	if user.Role == permissions.RoleStudent {
+		if requestedDisplayName := strings.TrimSpace(req.DisplayName); requestedDisplayName != "" {
+			displayName = requestedDisplayName
+		}
+	}
+
 	prefs, err := h.q.UpdateUserProfilePreferences(ctx, db.UpdateUserProfilePreferencesParams{
-		UserID:    user.ID,
-		Language:  db.LanguageCode(req.Language),
-		Timezone:  req.Timezone,
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
+		UserID:      user.ID,
+		Language:    db.LanguageCode(req.Language),
+		Timezone:    req.Timezone,
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		DisplayName: displayName,
 	})
 	if err != nil {
 		h.logger.ErrorContext(ctx, "auth_update_profile_preferences_failed",
@@ -845,6 +857,7 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		"id":                user.ID,
 		"first_name":        prefs.FirstName,
 		"last_name":         prefs.LastName,
+		"display_name":      preferences.PublicDisplayName(prefs),
 		"email":             user.Email,
 		"language":          prefs.Language,
 		"avatar":            prefs.Avatar,

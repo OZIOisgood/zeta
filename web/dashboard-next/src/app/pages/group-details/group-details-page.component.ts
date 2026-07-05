@@ -180,7 +180,11 @@ import { GroupInvitationsSectionComponent } from './group-invitations-section.co
                               </z-badge>
                             }
                           </div>
-                          <p class="truncate text-sm text-[var(--z-muted)]">{{ member.email }}</p>
+                          @if (member.full_name) {
+                            <p class="truncate text-sm text-[var(--z-muted)]">
+                              {{ member.full_name }}
+                            </p>
+                          }
                         </div>
 
                         @if (canRemoveUsers() && !isCurrentUser(member.id)) {
@@ -310,7 +314,7 @@ export class GroupDetailsPageComponent {
         .slice(0, 2)
         .map((part) => part.charAt(0))
         .join('')
-        .toUpperCase() || member.email.charAt(0).toUpperCase()
+        .toUpperCase() || 'U'
     );
   }
 

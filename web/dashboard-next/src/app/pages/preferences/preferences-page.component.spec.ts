@@ -89,6 +89,9 @@ describe('PreferencesPageComponent', () => {
                 },
                 emailPreferences: 'Email preferences',
                 emailSummary: 'Choose email notifications.',
+                displayName: 'Display name',
+                displayNameHelp: 'Shown to other students instead of your real name.',
+                displayNameRequired: 'Display name is required.',
                 firstName: 'First Name',
                 firstNameRequired: 'First name is required.',
                 languages: { de: 'German', en: 'English', fr: 'French' },
@@ -184,6 +187,57 @@ describe('PreferencesPageComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('z-combobox')).toHaveLength(2);
     expect(fixture.nativeElement.querySelectorAll('z-combobox input')).toHaveLength(0);
     expect(fixture.nativeElement.querySelector('z-select')).toBeNull();
+  });
+
+  it('shows display name editing only for students', async () => {
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+
+    await fixture.whenStable();
+    fixture.componentInstance['activeTab'].set('personal-data');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Display name');
+
+    session.user.set({
+      ...user,
+      role: 'student',
+      display_name: 'Ada C.',
+      permissions: user.permissions.filter(
+        (permission) => permission !== 'access:invite-codes:read',
+      ),
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Display name');
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Shown to other students instead of your real name.',
+    );
+    expect(
+      fixture.nativeElement.querySelector('z-field-label button[aria-label="Display name"]'),
+    ).not.toBeNull();
+  });
+
+  it('saves a student display name through the session store', async () => {
+    session.user.set({
+      ...user,
+      role: 'student',
+      display_name: 'Ada C.',
+      permissions: user.permissions.filter(
+        (permission) => permission !== 'access:invite-codes:read',
+      ),
+    });
+    const fixture = TestBed.createComponent(PreferencesPageComponent);
+    const component = fixture.componentInstance;
+
+    await fixture.whenStable();
+    component['form'].controls.display_name.setValue('Rider 42');
+    component['form'].controls.display_name.markAsDirty();
+    await component['save']();
+
+    expect(session.updateCurrentUser).toHaveBeenCalledWith(
+      expect.objectContaining({ display_name: 'Rider 42' }),
+    );
   });
 
   it('enables save only while profile values differ from the saved user', async () => {

@@ -25,7 +25,7 @@ func withTestUser(ctx context.Context, user *auth.UserContext) context.Context {
 	return context.WithValue(ctx, auth.UserKey, user)
 }
 
-func TestListGroupUsersUsesPreferenceAvatar(t *testing.T) {
+func TestListGroupUsersReturnsDisplayNameAndFullNameWithoutEmail(t *testing.T) {
 	t.Setenv("DEFAULT_ORG_ID", "org_test")
 
 	ctrl := gomock.NewController(t)
@@ -48,22 +48,13 @@ func TestListGroupUsersUsesPreferenceAvatar(t *testing.T) {
 		},
 		nil,
 	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "user-2"}).Return(
-		usermanagement.User{
-			ID:                "user-2",
-			Email:             "expert@example.com",
-			FirstName:         "Example",
-			LastName:          "Expert",
-			ProfilePictureURL: "https://workos.example/avatar.png",
-		},
-		nil,
-	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "user-2").Return(
 		db.UserPreference{
-			UserID:    "user-2",
-			FirstName: "Local",
-			LastName:  "Expert",
-			Avatar:    "local-base64-avatar",
+			UserID:      "user-2",
+			FirstName:   "Local",
+			LastName:    "Expert",
+			DisplayName: "Stable Rider",
+			Avatar:      "local-base64-avatar",
 		},
 		nil,
 	)
@@ -73,6 +64,7 @@ func TestListGroupUsersUsesPreferenceAvatar(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/groups/"+groupID+"/users", nil)
 	req = req.WithContext(withTestUser(req.Context(), &auth.UserContext{
 		ID:          "user-1",
+		Role:        permissions.RoleExpert,
 		Permissions: []string{permissions.GroupsUserListRead},
 	}))
 	rec := httptest.NewRecorder()
@@ -95,8 +87,20 @@ func TestListGroupUsersUsesPreferenceAvatar(t *testing.T) {
 	if got := body.Data[0]["avatar"]; got != "local-base64-avatar" {
 		t.Fatalf("got avatar %v, want local-base64-avatar", got)
 	}
-	if got := body.Data[0]["first_name"]; got != "Local" {
-		t.Fatalf("got first_name %v, want Local", got)
+	if got := body.Data[0]["display_name"]; got != "Stable Rider" {
+		t.Fatalf("got display_name %v, want Stable Rider", got)
+	}
+	if got := body.Data[0]["full_name"]; got != "Local Expert" {
+		t.Fatalf("got full_name %v, want Local Expert", got)
+	}
+	if _, ok := body.Data[0]["email"]; ok {
+		t.Fatalf("response must not expose email: %#v", body.Data[0])
+	}
+	if _, ok := body.Data[0]["first_name"]; ok {
+		t.Fatalf("response must not expose first_name: %#v", body.Data[0])
+	}
+	if _, ok := body.Data[0]["last_name"]; ok {
+		t.Fatalf("response must not expose last_name: %#v", body.Data[0])
 	}
 	if _, ok := body.Data[0]["profile_picture_url"]; ok {
 		t.Fatalf("response must not expose WorkOS profile_picture_url: %#v", body.Data[0])
@@ -169,12 +173,13 @@ func TestListGroupUsersFiltersStudents(t *testing.T) {
 		},
 		nil,
 	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "student-1"}).Return(
-		usermanagement.User{ID: "student-1", Email: "student@example.com", FirstName: "Example", LastName: "Student"},
-		nil,
-	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "student-1").Return(
-		db.UserPreference{UserID: "student-1", FirstName: "Local", LastName: "Student"},
+		db.UserPreference{
+			UserID:      "student-1",
+			FirstName:   "Local",
+			LastName:    "Student",
+			DisplayName: "Student Alias",
+		},
 		nil,
 	)
 
@@ -183,6 +188,7 @@ func TestListGroupUsersFiltersStudents(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/groups/"+groupID+"/users", nil)
 	req = req.WithContext(withTestUser(req.Context(), &auth.UserContext{
 		ID:          "viewer-1",
+		Role:        permissions.RoleExpert,
 		Permissions: []string{permissions.GroupsUserListRead},
 	}))
 	rec := httptest.NewRecorder()
@@ -205,9 +211,78 @@ func TestListGroupUsersFiltersStudents(t *testing.T) {
 	if got := body.Data[0]["id"]; got != "student-1" {
 		t.Fatalf("got user id %v, want student-1", got)
 	}
+	if got := body.Data[0]["display_name"]; got != "Student Alias" {
+		t.Fatalf("got display_name %v, want Student Alias", got)
+	}
 }
 
-func TestListGroupExpertsFiltersExpertsAndAdmins(t *testing.T) {
+func TestListGroupUsersStudentRoleDoesNotReceiveFullName(t *testing.T) {
+	t.Setenv("DEFAULT_ORG_ID", "org_test")
+
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	h := NewHandler(slog.Default(), q, nil, workos)
+
+	groupID := "11111111-1111-1111-1111-111111111111"
+	var pgGroupID pgtype.UUID
+	if err := pgGroupID.Scan(groupID); err != nil {
+		t.Fatalf("scan group id: %v", err)
+	}
+
+	q.EXPECT().ListGroupMembers(gomock.Any(), pgGroupID).Return([]string{"student-2"}, nil)
+	workos.EXPECT().ListOrganizationMemberships(gomock.Any(), gomock.Any()).Return(
+		usermanagement.ListOrganizationMembershipsResponse{
+			Data: []usermanagement.OrganizationMembership{
+				{UserID: "student-2", Role: common.RoleResponse{Slug: "student"}},
+			},
+		},
+		nil,
+	)
+	q.EXPECT().GetUserPreferences(gomock.Any(), "student-2").Return(
+		db.UserPreference{
+			UserID:      "student-2",
+			FirstName:   "Private",
+			LastName:    "Student",
+			DisplayName: "Private S.",
+		},
+		nil,
+	)
+
+	router := chi.NewRouter()
+	router.Get("/groups/{groupID}/users", h.ListGroupUsers)
+	req := httptest.NewRequest(http.MethodGet, "/groups/"+groupID+"/users", nil)
+	req = req.WithContext(withTestUser(req.Context(), &auth.UserContext{
+		ID:          "student-1",
+		Role:        permissions.RoleStudent,
+		Permissions: []string{permissions.GroupsUserListRead},
+	}))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got status %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	var body struct {
+		Data []map[string]any `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 {
+		t.Fatalf("got %d users, want 1", len(body.Data))
+	}
+	if got := body.Data[0]["display_name"]; got != "Private S." {
+		t.Fatalf("got display_name %v, want Private S.", got)
+	}
+	if _, ok := body.Data[0]["full_name"]; ok {
+		t.Fatalf("student role must not receive full_name: %#v", body.Data[0])
+	}
+}
+
+func TestListGroupExpertsFiltersExpertsAndAdminsWithoutFullNamesOrEmails(t *testing.T) {
 	t.Setenv("DEFAULT_ORG_ID", "org_test")
 
 	ctrl := gomock.NewController(t)
@@ -232,20 +307,22 @@ func TestListGroupExpertsFiltersExpertsAndAdmins(t *testing.T) {
 		},
 		nil,
 	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "expert-1"}).Return(
-		usermanagement.User{ID: "expert-1", Email: "expert@example.com", FirstName: "Example", LastName: "Expert"},
-		nil,
-	)
-	workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: "admin-1"}).Return(
-		usermanagement.User{ID: "admin-1", Email: "admin@example.com", FirstName: "Example", LastName: "Admin"},
-		nil,
-	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "expert-1").Return(
-		db.UserPreference{UserID: "expert-1", FirstName: "Local", LastName: "Expert"},
+		db.UserPreference{
+			UserID:      "expert-1",
+			FirstName:   "Local",
+			LastName:    "Expert",
+			DisplayName: "Coach Alias",
+		},
 		nil,
 	)
 	q.EXPECT().GetUserPreferences(gomock.Any(), "admin-1").Return(
-		db.UserPreference{UserID: "admin-1", FirstName: "Local", LastName: "Admin"},
+		db.UserPreference{
+			UserID:      "admin-1",
+			FirstName:   "Local",
+			LastName:    "Admin",
+			DisplayName: "Admin Alias",
+		},
 		nil,
 	)
 
@@ -284,6 +361,27 @@ func TestListGroupExpertsFiltersExpertsAndAdmins(t *testing.T) {
 	}
 	if gotIDs["student-1"] {
 		t.Fatalf("experts list must not include students: %#v", body.Data)
+	}
+	for _, item := range body.Data {
+		id := item["id"].(string)
+		if id == "expert-1" && item["display_name"] != "Local Expert" {
+			t.Fatalf("expert display_name = %v, want Local Expert", item["display_name"])
+		}
+		if id == "admin-1" && item["display_name"] != "Local Admin" {
+			t.Fatalf("admin display_name = %v, want Local Admin", item["display_name"])
+		}
+		if _, ok := item["email"]; ok {
+			t.Fatalf("experts response must not expose email: %#v", body.Data)
+		}
+		if _, ok := item["full_name"]; ok {
+			t.Fatalf("experts response must not expose full_name: %#v", body.Data)
+		}
+		if _, ok := item["first_name"]; ok {
+			t.Fatalf("experts response must not expose first_name: %#v", body.Data)
+		}
+		if _, ok := item["last_name"]; ok {
+			t.Fatalf("experts response must not expose last_name: %#v", body.Data)
+		}
 	}
 }
 
