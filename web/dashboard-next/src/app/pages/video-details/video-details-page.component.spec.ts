@@ -21,6 +21,8 @@ const user: User = {
     'reviews:create',
     'reviews:delete',
     'reviews:edit',
+    'reviews:reply',
+    'reviews:reply-before-ready',
     'reviews:read',
   ],
   access_status: 'active',
@@ -79,6 +81,7 @@ describe('VideoDetailsPageComponent', () => {
                 noComments: 'No comments yet',
                 processingUnavailable: 'Video is processing or not available.',
                 reviewerNoComments: 'No comments from your reviewer.',
+                reply: 'Reply',
                 aiEnhancing: 'AI is enhancing your text...',
                 enhanceText: 'Enhance text with AI',
                 enhancing: 'Enhancing...',
@@ -220,5 +223,74 @@ describe('VideoDetailsPageComponent', () => {
 
     expect(component['editReviewControl'].value).toBe('Keep a steadier rhythm.');
     expect(shell.showToast).toHaveBeenCalledWith('Success', 'Text enhanced successfully');
+  });
+
+  it('keeps reply permission independent from the top-level composer gate', async () => {
+    const fixture = TestBed.createComponent(VideoDetailsPageComponent);
+    const component = fixture.componentInstance;
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component['canAddReviews']()).toBe(true);
+    expect(component['canReplyToReviews']()).toBe(true);
+  });
+
+  it('allows replies on reviewed videos with reply permission only', async () => {
+    const reviewedUser = {
+      ...user,
+      permissions: ['reviews:read', 'reviews:reply'],
+    };
+    TestBed.overrideProvider(AuthApiClient, {
+      useValue: {
+        getCurrentUser: () => of(reviewedUser),
+      },
+    });
+    TestBed.overrideProvider(AssetsApiClient, {
+      useValue: {
+        getAsset: () =>
+          of({
+            id: 'asset-1',
+            title: 'Jump line',
+            description: 'Arena line',
+            owner_id: 'student-1',
+            status: 'completed',
+            review_count: 1,
+            group: {
+              id: 'group-1',
+              name: 'Arena Academy',
+              avatar: 'group-avatar',
+            },
+            videos: [
+              {
+                id: 'video-1',
+                playback_id: 'playback-1',
+                status: 'ready',
+                review_count: 1,
+              },
+            ],
+          }),
+        listReviews: () =>
+          of([
+            {
+              id: 'review-1',
+              content: 'Great rhythm.',
+              timestamp_seconds: 12,
+              created_at: '2026-05-17T10:00:00Z',
+            },
+          ]),
+        enhanceReviewText: () => of({ enhanced_text: 'Keep a steadier rhythm.' }),
+      },
+    });
+
+    const fixture = TestBed.createComponent(VideoDetailsPageComponent);
+    const component = fixture.componentInstance;
+
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component['canAddReviews']()).toBe(false);
+    expect(component['canReplyToReviews']()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Reply');
   });
 });

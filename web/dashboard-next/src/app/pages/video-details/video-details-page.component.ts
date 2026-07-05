@@ -290,7 +290,7 @@ type ReportTarget = {
                             <p class="mt-1 whitespace-pre-wrap text-sm leading-6">
                               {{ thread.root.content }}
                             </p>
-                            @if (canAddReviews()) {
+                            @if (canReplyToReviews()) {
                               <button
                                 type="button"
                                 class="mt-1 text-xs font-semibold text-[var(--z-muted)] transition hover:text-[var(--z-primary-strong)]"
@@ -435,7 +435,7 @@ type ReportTarget = {
                                     <p class="mt-1 whitespace-pre-wrap text-sm leading-6">
                                       {{ reply.content }}
                                     </p>
-                                    @if (canAddReviews()) {
+                                    @if (canReplyToReviews()) {
                                       <button
                                         type="button"
                                         class="mt-1 text-xs font-semibold text-[var(--z-muted)] transition hover:text-[var(--z-primary-strong)]"
@@ -760,7 +760,7 @@ export class VideoDetailsPageComponent {
     () => this.store.activeAsset()?.videos?.some((video) => video.review_count === 0) ?? false,
   );
   protected readonly showCommentBar = computed(
-    () => !!this.selectedVideo() && this.canAddReviews() && !this.isFinalized(),
+    () => !!this.selectedVideo() && this.canAddReviews(),
   );
   protected readonly reportSubmitDisabled = computed(
     () => this.reportSubmitting() || !this.reportTarget() || !this.reportReason(),
@@ -839,6 +839,11 @@ export class VideoDetailsPageComponent {
 
   protected canAddReviews(): boolean {
     return this.session.hasPermission('reviews:create') && !this.isFinalized();
+  }
+
+  protected canReplyToReviews(): boolean {
+    if (!this.session.hasPermission('reviews:reply')) return false;
+    return this.isFinalized() || this.session.hasPermission('reviews:reply-before-ready');
   }
 
   protected canEditReviews(): boolean {
@@ -1079,7 +1084,7 @@ export class VideoDetailsPageComponent {
   protected async submitReply(rootId: string): Promise<void> {
     const video = this.selectedVideo();
     const content = this.replyControl.value.trim();
-    if (!video || !content || this.isFinalized()) return;
+    if (!video || !content || !this.canReplyToReviews()) return;
     await this.store.createReview(video.id, content, undefined, rootId);
     if (this.store.reviewStatus() === 'success') {
       this.cancelReply();

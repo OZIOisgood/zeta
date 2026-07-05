@@ -168,7 +168,8 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !permissions.HasPermission(userInfo.Permissions, permissions.ReviewsCreate) {
+	if !permissions.HasPermission(userInfo.Permissions, permissions.ReviewsCreate) &&
+		!permissions.HasPermission(userInfo.Permissions, permissions.ReviewsReply) {
 		http.Error(w, "Permission denied", http.StatusForbidden)
 		return
 	}
@@ -181,23 +182,6 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !h.ensureVideoVisible(w, r, log, userInfo, videoID, idStr) {
-		return
-	}
-
-	// Check if asset is completed
-	assetStatus, err := h.q.GetAssetStatusByVideoID(ctx, videoID)
-	if err != nil {
-		log.ErrorContext(ctx, "get_asset_status_failed",
-			slog.String("component", "reviews"),
-			slog.String("video_id", idStr),
-			slog.Any("err", err),
-		)
-		http.Error(w, "Failed to check video status", http.StatusInternalServerError)
-		return
-	}
-
-	if assetStatus == db.AssetStatusCompleted {
-		http.Error(w, "Cannot add reviews to a completed video", http.StatusForbidden)
 		return
 	}
 
@@ -214,7 +198,9 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 
 	// Resolve parent_id: validate, enforce single-level, strip timestamp for replies.
 	var parentID pgtype.UUID
+	isReply := false
 	if req.ParentID != nil {
+		isReply = true
 		var rawParentID pgtype.UUID
 		if err := rawParentID.Scan(*req.ParentID); err != nil {
 			http.Error(w, "Invalid parent_id", http.StatusBadRequest)
@@ -255,6 +241,26 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		}
 		// Replies never carry a video timestamp.
 		req.TimestampSeconds = nil
+	}
+
+	assetStatus, err := h.q.GetAssetStatusByVideoID(ctx, videoID)
+	if err != nil {
+		log.ErrorContext(ctx, "get_asset_status_failed",
+			slog.String("component", "reviews"),
+			slog.String("video_id", idStr),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to check video status", http.StatusInternalServerError)
+		return
+	}
+
+	if !canCreateReviewForAssetState(userInfo, assetStatus, isReply) {
+		if isReply {
+			http.Error(w, "Cannot reply before the video is ready", http.StatusForbidden)
+			return
+		}
+		http.Error(w, "Cannot add reviews to a completed video", http.StatusForbidden)
+		return
 	}
 
 	authorPrefs, err := h.q.GetUserPreferences(ctx, userInfo.ID)
@@ -353,6 +359,18 @@ func (h *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 				ReviewerName: reviewerName,
 			})
 	}(videoID, userInfo.ID, authorName)
+}
+
+func canCreateReviewForAssetState(user *auth.UserContext, assetStatus db.AssetStatus, isReply bool) bool {
+	if isReply {
+		if !permissions.HasPermission(user.Permissions, permissions.ReviewsReply) {
+			return false
+		}
+		return assetStatus == db.AssetStatusCompleted ||
+			permissions.HasPermission(user.Permissions, permissions.ReviewsReplyBeforeReady)
+	}
+	return assetStatus != db.AssetStatusCompleted &&
+		permissions.HasPermission(user.Permissions, permissions.ReviewsCreate)
 }
 
 func (h *Handler) UpdateReview(w http.ResponseWriter, r *http.Request) {

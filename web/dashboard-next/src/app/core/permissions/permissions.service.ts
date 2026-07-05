@@ -6,6 +6,8 @@ export type Permission =
   | 'groups:create'
   | 'groups:read'
   | 'reviews:create'
+  | 'reviews:reply'
+  | 'reviews:reply-before-ready'
   | 'reviews:read'
   | 'reviews:edit'
   | 'reviews:delete'
