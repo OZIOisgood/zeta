@@ -18,6 +18,8 @@ import (
 
 const recordingSignedURLTTL = 2 * time.Hour
 
+var ErrRecordingMP4NotFound = errors.New("recording mp4 not found")
+
 type RecordingObject struct {
 	Name    string
 	Size    int64
@@ -76,7 +78,7 @@ func (s *gcsRecordingObjectStore) FindMP4(ctx context.Context, prefix []string) 
 	}
 
 	if selected.Name == "" {
-		return RecordingObject{}, fmt.Errorf("no mp4 recording found under prefix %q", objectPrefix)
+		return RecordingObject{}, fmt.Errorf("%w under prefix %q", ErrRecordingMP4NotFound, objectPrefix)
 	}
 	return selected, nil
 }

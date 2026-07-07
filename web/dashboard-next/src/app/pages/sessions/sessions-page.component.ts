@@ -211,7 +211,33 @@ export class SessionsPageComponent {
   private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly _translationEvents = toSignal(this.transloco.events$, { initialValue: null });
+  private readonly tabLabels = toSignal(
+    this.transloco.selectTranslateObject<Record<SessionTab, string>>('sessions.tabs'),
+    { initialValue: { upcoming: '', past: '', cancelled: '' } },
+  );
+  private readonly emptyLabels = toSignal(
+    this.transloco.selectTranslateObject<
+      Record<
+        | 'upcomingHeading'
+        | 'upcomingDescription'
+        | 'pastHeading'
+        | 'pastDescription'
+        | 'cancelledHeading'
+        | 'cancelledDescription',
+        string
+      >
+    >('sessions.empty'),
+    {
+      initialValue: {
+        upcomingHeading: '',
+        upcomingDescription: '',
+        pastHeading: '',
+        pastDescription: '',
+        cancelledHeading: '',
+        cancelledDescription: '',
+      },
+    },
+  );
 
   protected readonly cancelReasonControl = new FormControl('', { nonNullable: true });
   protected readonly activeTab = signal<SessionTab>('upcoming');
@@ -220,21 +246,21 @@ export class SessionsPageComponent {
     this.session.hasPermission('coaching:availability:manage'),
   );
   protected readonly tabOptions = computed(() => {
-    this._translationEvents();
+    const labels = this.tabLabels();
     return [
       {
         value: 'upcoming',
-        label: this.transloco.translate('sessions.tabs.upcoming'),
+        label: labels.upcoming,
         badge: this.store.upcomingBookings().length,
       },
       {
         value: 'past',
-        label: this.transloco.translate('sessions.tabs.past'),
+        label: labels.past,
         badge: this.store.completedBookings().length,
       },
       {
         value: 'cancelled',
-        label: this.transloco.translate('sessions.tabs.cancelled'),
+        label: labels.cancelled,
         badge: this.store.cancelledBookings().length,
       },
     ];
@@ -250,12 +276,10 @@ export class SessionsPageComponent {
     }
   });
   protected readonly emptyTitle = computed(() => {
-    this._translationEvents();
-    return this.transloco.translate(`sessions.empty.${this.activeTab()}Heading`);
+    return this.emptyLabels()[`${this.activeTab()}Heading`];
   });
   protected readonly emptyDescription = computed(() => {
-    this._translationEvents();
-    return this.transloco.translate(`sessions.empty.${this.activeTab()}Description`);
+    return this.emptyLabels()[`${this.activeTab()}Description`];
   });
 
   constructor() {

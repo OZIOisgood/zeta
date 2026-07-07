@@ -690,7 +690,9 @@
       "joinFailed": "Videoanruf konnte nicht gestartet werden",
       "connectFailed": "Verbindung zum Termin fehlgeschlagen",
       "microphoneFallback": "Mikrofon {{index}}",
-      "cameraFallback": "Kamera {{index}}"
+      "cameraFallback": "Kamera {{index}}",
+      "noMicrophone": "Kein Mikrofon verfügbar",
+      "noCamera": "Keine Kamera verfügbar"
     }
   },
   "preferences": {

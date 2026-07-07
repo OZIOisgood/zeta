@@ -44,6 +44,11 @@ body {
   position: absolute;
 }
 
+[ngpSelectDropdown],
+[ngpMenu] {
+  position: absolute;
+}
+
 @keyframes z-shimmer {
   100% {
     transform: translateX(100%);

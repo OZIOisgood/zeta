@@ -1,6 +1,8 @@
 package coaching
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -10,6 +12,13 @@ func TestRecordingObjectPrefix(t *testing.T) {
 	want := "liveCoachingRecordings/abc123/"
 	if got != want {
 		t.Fatalf("recordingObjectPrefix() = %q, want %q", got, want)
+	}
+}
+
+func TestRecordingMP4NotFoundErrorIsDetectable(t *testing.T) {
+	err := fmt.Errorf("%w under prefix %q", ErrRecordingMP4NotFound, "prefix")
+	if !errors.Is(err, ErrRecordingMP4NotFound) {
+		t.Fatal("recording mp4 not found error should be detectable")
 	}
 }
 

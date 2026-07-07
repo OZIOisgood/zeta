@@ -97,6 +97,8 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
                     <z-select
                       [value]="agora.selectedAudioDeviceId()"
                       [options]="audioOptions()"
+                      [placeholder]="'sessions.call.noMicrophone' | transloco"
+                      [disabled]="!agora.localAudioTrack()"
                       (valueChange)="setAudioDevice($event)"
                     />
                   </label>
@@ -105,6 +107,8 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
                     <z-select
                       [value]="agora.selectedVideoDeviceId()"
                       [options]="videoOptions()"
+                      [placeholder]="'sessions.call.noCamera' | transloco"
+                      [disabled]="!agora.localVideoTrack()"
                       (valueChange)="setVideoDevice($event)"
                     />
                   </label>
@@ -118,8 +122,10 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
           >
             <button
               type="button"
-              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
-              [ngClass]="agora.audioEnabled() ? '' : 'bg-rose-700 text-white'"
+              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)] transition disabled:cursor-not-allowed disabled:opacity-60"
+              [ngClass]="agora.audioEnabled() ? '' : '!bg-rose-700 !text-white'"
+              [disabled]="!agora.localAudioTrack()"
+              [attr.aria-label]="'common.aria.toggleMicrophone' | transloco"
               (click)="toggleAudio()"
             >
               @if (agora.audioEnabled()) {
@@ -130,8 +136,10 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
             </button>
             <button
               type="button"
-              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
-              [ngClass]="agora.videoEnabled() ? '' : 'bg-rose-700 text-white'"
+              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)] transition disabled:cursor-not-allowed disabled:opacity-60"
+              [ngClass]="agora.videoEnabled() ? '' : '!bg-rose-700 !text-white'"
+              [disabled]="!agora.localVideoTrack()"
+              [attr.aria-label]="'common.aria.toggleCamera' | transloco"
               (click)="toggleVideo()"
             >
               @if (agora.videoEnabled()) {
@@ -144,6 +152,7 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
               #settingsButton
               type="button"
               class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
+              [attr.aria-label]="'common.aria.deviceSettings' | transloco"
               (click)="toggleDevicePanel()"
             >
               <svg lucideSettings class="size-5" aria-hidden="true"></svg>

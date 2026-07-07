@@ -690,7 +690,9 @@
       "joinFailed": "Échec du démarrage de l'appel vidéo",
       "connectFailed": "Échec de la connexion à la séance",
       "microphoneFallback": "Microphone {{index}}",
-      "cameraFallback": "Caméra {{index}}"
+      "cameraFallback": "Caméra {{index}}",
+      "noMicrophone": "Aucun microphone disponible",
+      "noCamera": "Aucune caméra disponible"
     }
   },
   "preferences": {

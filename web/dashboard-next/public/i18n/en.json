@@ -690,7 +690,9 @@
       "joinFailed": "Failed to join video call",
       "connectFailed": "Failed to connect to session",
       "microphoneFallback": "Microphone {{index}}",
-      "cameraFallback": "Camera {{index}}"
+      "cameraFallback": "Camera {{index}}",
+      "noMicrophone": "No microphone available",
+      "noCamera": "No camera available"
     }
   },
   "preferences": {

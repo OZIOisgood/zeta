@@ -53,15 +53,24 @@ export class AgoraService {
 
     await client.join(appId, channel, token, uid);
 
-    const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-    await client.publish([audioTrack, videoTrack]);
+    await this.loadDevices();
+
+    const [audioResult, videoResult] = await Promise.allSettled([
+      AgoraRTC.createMicrophoneAudioTrack(),
+      AgoraRTC.createCameraVideoTrack(),
+    ]);
+    const audioTrack = audioResult.status === 'fulfilled' ? audioResult.value : null;
+    const videoTrack = videoResult.status === 'fulfilled' ? videoResult.value : null;
+    if (audioTrack) await client.publish(audioTrack);
+    if (videoTrack) await client.publish(videoTrack);
 
     this.localAudioTrack.set(audioTrack);
     this.localVideoTrack.set(videoTrack);
+    this.audioEnabled.set(!!audioTrack);
+    this.videoEnabled.set(!!videoTrack);
 
-    await this.loadDevices();
-    const audioDeviceId = audioTrack.getMediaStreamTrack().getSettings().deviceId;
-    const videoDeviceId = videoTrack.getMediaStreamTrack().getSettings().deviceId;
+    const audioDeviceId = audioTrack?.getMediaStreamTrack().getSettings().deviceId;
+    const videoDeviceId = videoTrack?.getMediaStreamTrack().getSettings().deviceId;
     if (audioDeviceId) this.selectedAudioDeviceId.set(audioDeviceId);
     if (videoDeviceId) this.selectedVideoDeviceId.set(videoDeviceId);
   }

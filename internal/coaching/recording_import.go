@@ -119,6 +119,18 @@ func (h *Handler) processRecordingImport(ctx context.Context, pending db.ListPen
 	if object.Name == "" {
 		object, err = h.recordingStore.FindMP4(ctx, pending.FilePrefix)
 		if err != nil {
+			if errors.Is(err, ErrRecordingMP4NotFound) {
+				_, requeueErr := h.q.EnsureRecordingImportPending(ctx, pending.BookingID)
+				if requeueErr != nil {
+					return false, false, requeueErr
+				}
+				log.InfoContext(ctx, "recording_import_mp4_lookup_deferred",
+					slog.String("component", "coaching"),
+					slog.String("booking_id", bookingID),
+					slog.Any("err", err),
+				)
+				return false, true, nil
+			}
 			h.markRecordingImportFailed(ctx, pending.BookingID, err)
 			log.ErrorContext(ctx, "recording_import_mp4_lookup_failed",
 				slog.String("component", "coaching"),
