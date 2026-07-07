@@ -7,7 +7,7 @@
     "extract-dict": "node scripts/extract-dict.mjs"
   },
   "dependencies": {
-    "cheerio": "1.0.0",
-    "markdown-it": "14.2.0"
+    "cheerio": "1.2.0",
+    "markdown-it": "14.3.0"
   }
 }
