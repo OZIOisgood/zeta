@@ -24,7 +24,7 @@
     "@jsverse/transloco": "^8.3.0",
     "@lucide/angular": "^1.16.0",
     "@mux/mux-player": "^3.13.0",
-    "@ngrx/signals": "^21.1.0",
+    "@ngrx/signals": "^21.1.1",
     "agora-rtc-sdk-ng": "^4.24.3",
     "ng-primitives": "^0.120.2",
     "pdfmake": "^0.2.23",
