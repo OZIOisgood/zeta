@@ -18,9 +18,9 @@
     "@angular/common": "^21.2.17",
     "@angular/compiler": "^21.2.17",
     "@angular/core": "^21.2.17",
-    "@angular/forms": "^21.2.0",
-    "@angular/platform-browser": "^21.2.0",
-    "@angular/router": "^21.2.0",
+    "@angular/forms": "^21.2.17",
+    "@angular/platform-browser": "^21.2.17",
+    "@angular/router": "^21.2.17",
     "@jsverse/transloco": "^8.3.0",
     "@lucide/angular": "^1.16.0",
     "@mux/mux-player": "^3.13.0",
@@ -37,8 +37,8 @@
     "@angular-devkit/core": "^21.2.0",
     "@angular/build": "^21.2.11",
     "@angular/cli": "^21.2.18",
-    "@angular/compiler-cli": "^21.2.0",
-    "@angular/platform-browser-dynamic": "^21.2.0",
+    "@angular/compiler-cli": "^21.2.17",
+    "@angular/platform-browser-dynamic": "^21.2.17",
     "@storybook/addon-a11y": "^10.4.0",
     "@storybook/addon-docs": "^10.4.0",
     "@storybook/angular": "^10.4.0",
@@ -51,6 +51,6 @@
     "storybook": "^10.4.0",
     "tailwindcss": "^4.3.0",
     "typescript": "~5.9.2",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   }
 }
