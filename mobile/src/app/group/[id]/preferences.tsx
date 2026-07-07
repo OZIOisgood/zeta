@@ -211,7 +211,7 @@ export default function GroupPreferencesScreen() {
       >
         <View className="flex-row items-center gap-3 px-3 py-3">
           <ZIconTile
-            tone="danger"
+            tone="neutral"
             size="sm"
             icon={<ZSymbol name={opts.icon} label="" size={18} color={color('danger')} />}
           />
@@ -338,7 +338,11 @@ export default function GroupPreferencesScreen() {
               <Text className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-[0.06em] text-role-danger">
                 {t('groups.dangerZone')}
               </Text>
-              <View className="overflow-hidden rounded-2xl border border-z-danger/40 bg-z-surface">
+              {/* Mock (screens3 Gefahrenzone): a CALM surface card like every other
+                  card on the screen — hairline danger-container border, red
+                  confined to glyphs + titles. The confirm dialogs carry the
+                  alarm weight, not the card. */}
+              <View className="overflow-hidden rounded-2xl border border-danger-container bg-z-surface">
                 {canLeave
                   ? dangerRow({
                       testID: 'preferences-leave-btn',
