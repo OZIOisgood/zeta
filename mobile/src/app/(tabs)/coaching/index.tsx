@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Platform, RefreshControl, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../../api/queries/coaching';
 import { useMyBookingsQuery } from '../../../api/queries/coaching';
@@ -20,6 +19,7 @@ import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZSymbol } from '../../../components/ui/z-symbol';
 import { ZTabs } from '../../../components/ui/z-tabs';
 import { useRoleColors } from '../../../theme/native';
+import { ANDROID_FAB_LIST_CLEARANCE } from '../../../lib/android-fab-clearance';
 
 type SessionTab = 'upcoming' | 'past' | 'cancelled';
 
@@ -46,16 +46,11 @@ function ListSkeleton() {
   );
 }
 
-// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
-// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
-const ANDROID_TAB_BAR_HEIGHT = 56;
-
 export default function CoachingScreen() {
   const { t } = useTranslation();
   const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useMyBookingsQuery();
   const notifications = useNotificationsQuery();
   const unreadCount = notifications.data?.unread_count ?? 0;
@@ -211,7 +206,8 @@ export default function CoachingScreen() {
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
           padding: 16,
-          paddingBottom: 16 + (Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0),
+          // Android: clear only the FAB — NativeTabs already lays content above the bar.
+          paddingBottom: 16 + (Platform.OS === 'android' ? ANDROID_FAB_LIST_CLEARANCE : 0),
           flexGrow: 1,
         }}
         ListEmptyComponent={
@@ -251,8 +247,7 @@ export default function CoachingScreen() {
           label={t('common.actions.bookSession')}
           icon={<ZSymbol name="calendar-plus" label={t('common.actions.bookSession')} size={24} color={color('onAccent')} />}
           onPress={() => router.push('/book')}
-          className="absolute right-6"
-          style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
+          className="absolute bottom-4 right-6"
         />
       ) : null}
     </ZScreen>

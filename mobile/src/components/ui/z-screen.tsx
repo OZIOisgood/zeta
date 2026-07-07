@@ -24,11 +24,13 @@ export type ZScreenEdge = 'top' | 'bottom';
  *  - `contentInsetAdjustmentBehavior="automatic"` on the root ScrollView/FlatList
  *    lets iOS auto-inset content for both the large-title header collapse and the
  *    UITabBar.
- *  - Android bottom inset is handled by the **inner list's** `contentContainerStyle`
- *    `paddingBottom`: `useSafeAreaInsets().bottom + ANDROID_TAB_BAR_HEIGHT (56dp)`.
- *    NativeTabs does not report its own height to the React layout engine, so the
- *    tab screens must add this clearance themselves. FABs use `style.bottom` with
- *    the same formula to float above the bar.
+ *  - Android needs NO bar/inset clearance: the NativeTabs host
+ *    (react-native-screens) lays tab content ABOVE the M3 NavigationBar and
+ *    the bar absorbs the system gesture inset (uiautomator-verified: content
+ *    bottom == bar top). Screens with a FAB add ANDROID_FAB_LIST_CLEARANCE
+ *    (src/lib/android-fab-clearance.ts) to the inner list's paddingBottom so
+ *    the last row scrolls clear of the FAB; FABs anchor at
+ *    `className="absolute bottom-4 right-6"`.
  *
  * **Detail/form screens** pass `edges={['bottom']}` because the native stack
  * header owns the top safe-area; only the home-indicator/gesture area needs

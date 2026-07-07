@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Platform, ScrollView, Text, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useNotificationsQuery } from '../../../api/queries/notifications';
 import { NotificationBell } from '../../../components/notification-bell';
@@ -21,10 +20,6 @@ import type { Me } from '../../../auth/auth-store';
 import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { useRoleColors } from '../../../theme/native';
 
-// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
-// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
-const ANDROID_TAB_BAR_HEIGHT = 56;
-
 /** Roles with a localized label under `groups.roles.*`; others render no subtitle role. */
 const KNOWN_ROLES: readonly string[] = ['admin', 'expert', 'student'] as const;
 
@@ -40,13 +35,11 @@ function fullName(user: Me): string {
 }
 
 function LoadingState() {
-  const insets = useSafeAreaInsets();
-  const androidPaddingBottom = Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
   return (
     <ZScreen edges={[]}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
+        contentContainerStyle={{ paddingBottom: 16 }}
       >
         <View className="gap-4 p-4">
           {/* Hero skeleton — a View (not ZCard) to match the loaded hero, which
@@ -81,8 +74,6 @@ function ProfileOverview({ user }: { user: Me }) {
   const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
-  const androidPaddingBottom = Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
 
   const notifications = useNotificationsQuery();
   const unreadCount = notifications.data?.unread_count ?? 0;
@@ -166,7 +157,7 @@ function ProfileOverview({ user }: { user: Me }) {
         onScroll={onHeaderScroll}
         scrollEventThrottle={16}
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ paddingBottom: androidPaddingBottom }}
+        contentContainerStyle={{ paddingBottom: 16 }}
       >
         <View className="gap-4 p-4">
           {/* Hero — accent feature surface with avatar + name + role/identity.

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Platform, RefreshControl, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { Asset } from '../../../api/queries/assets';
 import { useAssetsQuery } from '../../../api/queries/assets';
@@ -23,6 +22,7 @@ import { ZTabs } from '../../../components/ui/z-tabs';
 import { Touchable } from '../../../components/ui/touchable';
 import { useHeaderScrollEdge } from '../../../lib/use-header-scroll-edge';
 import { useRoleColors } from '../../../theme/native';
+import { ANDROID_FAB_LIST_CLEARANCE } from '../../../lib/android-fab-clearance';
 
 type VideoFilter = 'all' | 'toReview' | 'reviewed';
 
@@ -67,16 +67,11 @@ function JobCards({ jobs }: { jobs: UploadJob[] }) {
   );
 }
 
-// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
-// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
-const ANDROID_TAB_BAR_HEIGHT = 56;
-
 export default function VideosScreen() {
   const { t } = useTranslation();
   const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useAssetsQuery();
   const notifications = useNotificationsQuery();
   const unreadCount = notifications.data?.unread_count ?? 0;
@@ -87,11 +82,11 @@ export default function VideosScreen() {
   // (Android only; iOS large-title header owns its native hairline).
   const onHeaderScroll = useHeaderScrollEdge();
 
-  // Bottom padding for Android lists: clears the opaque NativeTabs NavigationBar
-  // (height constant) plus the system gesture/home-indicator inset.
+  // Android list clearance: only the FAB — NativeTabs lays content above the
+  // bar and absorbs the system inset (see ANDROID_FAB_LIST_CLEARANCE).
   // iOS uses contentInsetAdjustmentBehavior='automatic' which auto-insets for UITabBar.
   const androidListPaddingBottom =
-    Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0;
+    Platform.OS === 'android' ? ANDROID_FAB_LIST_CLEARANCE : 0;
 
   // Header-right actions (mirror the handoff TopBar):
   //  - The notification bell is present on EVERY tab screen, both platforms.
@@ -235,8 +230,7 @@ export default function VideosScreen() {
           label={t('common.actions.uploadVideo')}
           icon={<ZSymbol name="upload" label={t('common.actions.uploadVideo')} size={24} color={color('onAccent')} />}
           onPress={() => router.push('/upload')}
-          className="absolute right-6"
-          style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
+          className="absolute bottom-4 right-6"
         />
       )}
     </ZScreen>

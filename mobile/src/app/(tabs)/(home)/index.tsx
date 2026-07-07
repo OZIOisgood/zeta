@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAssetsQuery } from '../../../api/queries/assets';
 import { useGroupsQuery } from '../../../api/queries/groups';
@@ -27,7 +26,6 @@ import { useRoleColors } from '../../../theme/native';
 
 // Mock shows two teasers before "Alle ansehen".
 const LATEST_VIDEOS_LIMIT = 2;
-const ANDROID_TAB_BAR_HEIGHT = 56;
 
 type HomeStep = {
   completed: boolean;
@@ -64,7 +62,6 @@ export default function HomeScreen() {
   const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
 
   const user = useAuth((s) => s.user);
   const permissions = user?.permissions ?? null;
@@ -244,7 +241,8 @@ export default function HomeScreen() {
         className="flex-1"
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{
-          paddingBottom: 16 + (Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0),
+          // NativeTabs lays content above the Android bar — no extra clearance.
+          paddingBottom: 16,
           gap: 22,
         }}
         // Home was the only index screen without pull-to-refresh; one pull

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { FlatList, Platform, RefreshControl, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useGroupsQuery } from '../../../api/queries/groups';
 import { useNotificationsQuery } from '../../../api/queries/notifications';
@@ -18,6 +17,7 @@ import { ZSkeleton } from '../../../components/ui/z-skeleton';
 import { ZDivider } from '../../../components/ui/z-divider';
 import { ZSymbol } from '../../../components/ui/z-symbol';
 import { useRoleColors } from '../../../theme/native';
+import { ANDROID_FAB_LIST_CLEARANCE } from '../../../lib/android-fab-clearance';
 
 function ListSkeleton() {
   return (
@@ -39,10 +39,6 @@ function ListSkeleton() {
   );
 }
 
-// Height of the NativeTabs navigation bar on Android (Material 3 NavigationBar).
-// iOS auto-insets via contentInsetAdjustmentBehavior; this constant is Android-only.
-const ANDROID_TAB_BAR_HEIGHT = 56;
-
 // Mock grouping per platform: Android = stacked tonal tiles with a 6dp gap;
 // iOS = ONE inset-grouped card (hairline dividers, corners clipped on the
 // first/last cell — ZListItem's iOS cell contract). Platform is static, so the
@@ -58,7 +54,6 @@ export default function GroupsScreen() {
   const { color } = useRoleColors();
   const router = useRouter();
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
   const { data, isPending, isError, refetch, isRefetching } = useGroupsQuery();
   const notifications = useNotificationsQuery();
   const unreadCount = notifications.data?.unread_count ?? 0;
@@ -158,7 +153,8 @@ export default function GroupsScreen() {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{
             padding: 16,
-            paddingBottom: 16 + (Platform.OS === 'android' ? insets.bottom + ANDROID_TAB_BAR_HEIGHT : 0),
+            // Android: clear only the FAB — NativeTabs already lays content above the bar.
+            paddingBottom: 16 + (Platform.OS === 'android' ? ANDROID_FAB_LIST_CLEARANCE : 0),
             flexGrow: 1,
           }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
@@ -207,8 +203,7 @@ export default function GroupsScreen() {
             label={t('groups.create')}
             icon={<ZSymbol name="plus" label={t('common.actions.add')} size={24} color={color('onAccent')} />}
             onPress={() => router.push('/group/create')}
-            className="absolute right-6"
-            style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
+            className="absolute bottom-4 right-6"
           />
         ) : (
           <ZFab
@@ -216,8 +211,7 @@ export default function GroupsScreen() {
             label={t('groups.invitationDialog.joinGroup')}
             icon={<ZSymbol name="qr-code" label={t('common.actions.join')} size={24} color={color('onAccent')} />}
             onPress={() => router.push('/invite')}
-            className="absolute right-6"
-            style={{ bottom: insets.bottom + ANDROID_TAB_BAR_HEIGHT + 16 }}
+            className="absolute bottom-4 right-6"
           />
         )
       ) : null}
