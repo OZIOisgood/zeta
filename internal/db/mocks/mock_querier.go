@@ -1178,18 +1178,18 @@ func (mr *MockQuerierMockRecorder) ListPendingReminders(ctx any) *gomock.Call {
 }
 
 // ListRecordingsPastEnd mocks base method.
-func (m *MockQuerier) ListRecordingsPastEnd(ctx context.Context, limit int32) ([]db.CoachingBookingRecording, error) {
+func (m *MockQuerier) ListRecordingsPastEnd(ctx context.Context, arg db.ListRecordingsPastEndParams) ([]db.CoachingBookingRecording, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRecordingsPastEnd", ctx, limit)
+	ret := m.ctrl.Call(m, "ListRecordingsPastEnd", ctx, arg)
 	ret0, _ := ret[0].([]db.CoachingBookingRecording)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListRecordingsPastEnd indicates an expected call of ListRecordingsPastEnd.
-func (mr *MockQuerierMockRecorder) ListRecordingsPastEnd(ctx, limit any) *gomock.Call {
+func (mr *MockQuerierMockRecorder) ListRecordingsPastEnd(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRecordingsPastEnd", reflect.TypeOf((*MockQuerier)(nil).ListRecordingsPastEnd), ctx, limit)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRecordingsPastEnd", reflect.TypeOf((*MockQuerier)(nil).ListRecordingsPastEnd), ctx, arg)
 }
 
 // ListSessionTypesByExpertGroup mocks base method.

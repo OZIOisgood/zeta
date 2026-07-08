@@ -93,7 +93,7 @@ type Querier interface {
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
 	ListPendingRecordingImports(ctx context.Context, limit int32) ([]ListPendingRecordingImportsRow, error)
 	ListPendingReminders(ctx context.Context) ([]ListPendingRemindersRow, error)
-	ListRecordingsPastEnd(ctx context.Context, limit int32) ([]CoachingBookingRecording, error)
+	ListRecordingsPastEnd(ctx context.Context, arg ListRecordingsPastEndParams) ([]CoachingBookingRecording, error)
 	ListSessionTypesByExpertGroup(ctx context.Context, arg ListSessionTypesByExpertGroupParams) ([]CoachingSessionType, error)
 	ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UUID) ([]CoachingSessionType, error)
 	ListSignupCodesByOwner(ctx context.Context, ownerUserID string) ([]SignupCode, error)

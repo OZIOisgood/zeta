@@ -28,6 +28,7 @@ const (
 	expertParticipantUID  = "2"
 	recordingBotUID       = "3"
 	recordingBotUIDNum    = uint32(3)
+	recordingCleanupGrace = 2 * time.Minute
 )
 
 // RecordingClient abstracts Agora Cloud Recording for tests and for keeping
@@ -460,6 +461,16 @@ func (h *Handler) StopBookingRecording(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !recordingShouldStopOnParticipantLeave(booking, time.Now()) {
+		log := logger.From(ctx, h.logger)
+		log.InfoContext(ctx, "booking_recording_stop_deferred",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(booking.ID)),
+		)
+		writeJSON(w, http.StatusOK, map[string]string{"status": "deferred"})
+		return
+	}
+
 	if err := h.stopRecordingForBooking(ctx, booking.ID); err != nil {
 		log := logger.From(ctx, h.logger)
 		log.ErrorContext(ctx, "booking_recording_stop_failed",
@@ -477,7 +488,10 @@ func (h *Handler) CleanupFinishedRecordings(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
 
-	bookings, err := h.q.ListRecordingsPastEnd(ctx, 100)
+	bookings, err := h.q.ListRecordingsPastEnd(ctx, db.ListRecordingsPastEndParams{
+		GraceSeconds: int32(recordingCleanupGrace / time.Second),
+		LimitCount:   100,
+	})
 	if err != nil {
 		log.ErrorContext(ctx, "list_finished_recordings_failed",
 			slog.String("component", "coaching"),
@@ -578,6 +592,14 @@ func recordingCanStop(recording db.CoachingBookingRecording) bool {
 	return recording.Status == db.CoachingRecordingStatusStarted ||
 		recording.Status == db.CoachingRecordingStatusStarting ||
 		recording.Status == db.CoachingRecordingStatusStopping
+}
+
+func recordingShouldStopOnParticipantLeave(booking db.CoachingBooking, now time.Time) bool {
+	return !now.Before(recordingBookingEnd(booking))
+}
+
+func recordingBookingEnd(booking db.CoachingBooking) time.Time {
+	return booking.ScheduledAt.Time.Add(time.Duration(booking.DurationMinutes) * time.Minute)
 }
 
 func participantUIDForBooking(userID string, booking db.CoachingBooking) uint32 {

@@ -25,7 +25,6 @@ import { firstValueFrom } from 'rxjs';
 import { AgoraService } from '../../core/calls/agora.service';
 import { CoachingApiClient } from '../../core/http/coaching-api.service';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
-import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
 
 @Component({
   selector: 'app-video-call-page',
@@ -33,7 +32,6 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
     NgClass,
     TranslocoPipe,
     ZButtonComponent,
-    ZSelectComponent,
     LucideCamera,
     LucideCameraOff,
     LucideMic,
@@ -42,9 +40,9 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
     LucideSettings,
   ],
   template: `
-    <main class="min-h-dvh bg-stone-950 p-3 text-white sm:p-4">
+    <main class="h-dvh overflow-hidden bg-stone-950 p-2 text-white sm:p-3">
       @if (connecting()) {
-        <div class="grid min-h-[calc(100dvh-2rem)] place-items-center">
+        <div class="grid h-full place-items-center">
           <div class="text-center">
             <div
               class="mx-auto size-12 animate-spin rounded-full border-2 border-white/20 border-t-[var(--z-primary)]"
@@ -53,7 +51,7 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
           </div>
         </div>
       } @else if (error()) {
-        <div class="grid min-h-[calc(100dvh-2rem)] place-items-center">
+        <div class="grid h-full place-items-center">
           <section
             class="max-w-md rounded-lg border border-white/10 bg-white p-6 text-center text-[var(--z-text)] shadow-2xl"
           >
@@ -65,12 +63,10 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
           </section>
         </div>
       } @else {
-        <section
-          class="grid min-h-[calc(100dvh-1.5rem)] grid-rows-[minmax(0,1fr)_auto] gap-3 sm:min-h-[calc(100dvh-2rem)]"
-        >
-          <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
-            <div class="relative overflow-hidden rounded-lg bg-stone-900">
-              <div #remoteVideo class="h-full min-h-[60dvh] w-full"></div>
+        <section class="relative grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-2 sm:gap-3">
+          <div class="relative grid min-h-0 gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
+            <div class="relative min-h-0 overflow-hidden rounded-lg bg-stone-900">
+              <div #remoteVideo class="h-full min-h-0 w-full"></div>
               @if (!remoteJoined()) {
                 <div class="absolute inset-0 grid place-items-center bg-stone-900">
                   <p class="px-6 text-center text-sm font-semibold text-white/70">
@@ -80,50 +76,66 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
               }
             </div>
 
-            <div class="grid gap-3 content-start">
-              <div class="overflow-hidden rounded-lg bg-stone-900">
+            <div
+              class="absolute right-3 top-3 z-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-stone-900 shadow-2xl sm:w-44 lg:static lg:z-auto lg:w-auto lg:shadow-none"
+            >
+              <div class="overflow-hidden bg-stone-900">
                 <div #localVideo class="aspect-video w-full"></div>
               </div>
-
-              @if (showDevicePanel()) {
-                <section
-                  #devicePanel
-                  animate.enter="z-device-panel-enter"
-                  animate.leave="z-device-panel-leave"
-                  class="rounded-lg border border-white/10 bg-white p-3 text-[var(--z-text)] shadow-xl"
-                >
-                  <label class="grid gap-1 text-xs font-semibold">
-                    <span>{{ 'common.labels.microphone' | transloco }}</span>
-                    <z-select
-                      [value]="agora.selectedAudioDeviceId()"
-                      [options]="audioOptions()"
-                      [placeholder]="'sessions.call.noMicrophone' | transloco"
-                      [disabled]="!agora.localAudioTrack()"
-                      (valueChange)="setAudioDevice($event)"
-                    />
-                  </label>
-                  <label class="mt-3 grid gap-1 text-xs font-semibold">
-                    <span>{{ 'common.labels.camera' | transloco }}</span>
-                    <z-select
-                      [value]="agora.selectedVideoDeviceId()"
-                      [options]="videoOptions()"
-                      [placeholder]="'sessions.call.noCamera' | transloco"
-                      [disabled]="!agora.localVideoTrack()"
-                      (valueChange)="setVideoDevice($event)"
-                    />
-                  </label>
-                </section>
-              }
             </div>
           </div>
 
+          @if (showDevicePanel()) {
+            <section
+              #devicePanel
+              animate.enter="z-device-panel-enter"
+              animate.leave="z-device-panel-leave"
+              class="fixed inset-x-3 bottom-[5.75rem] z-50 mx-auto grid max-h-[min(22rem,calc(100dvh-7rem))] w-auto max-w-md gap-4 overflow-auto rounded-lg border border-zinc-700 bg-zinc-950 p-4 text-white shadow-2xl shadow-black/50 sm:bottom-24 sm:w-[24rem]"
+            >
+              <label class="grid gap-2 text-xs font-semibold">
+                <span>{{ 'common.labels.microphone' | transloco }}</span>
+                <select
+                  class="min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm font-semibold text-white outline-none transition focus:border-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  [value]="agora.selectedAudioDeviceId()"
+                  [disabled]="!agora.localAudioTrack()"
+                  (change)="setAudioDevice(selectEventValue($event))"
+                >
+                  @if (!agora.localAudioTrack()) {
+                    <option value="">{{ 'sessions.call.noMicrophone' | transloco }}</option>
+                  }
+                  @for (option of audioOptions(); track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+              </label>
+              <label class="grid gap-2 text-xs font-semibold">
+                <span>{{ 'common.labels.camera' | transloco }}</span>
+                <select
+                  class="min-h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm font-semibold text-white outline-none transition focus:border-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  [value]="agora.selectedVideoDeviceId()"
+                  [disabled]="!agora.localVideoTrack()"
+                  (change)="setVideoDevice(selectEventValue($event))"
+                >
+                  @if (!agora.localVideoTrack()) {
+                    <option value="">{{ 'sessions.call.noCamera' | transloco }}</option>
+                  }
+                  @for (option of videoOptions(); track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }
+                </select>
+              </label>
+            </section>
+          }
+
           <footer
-            class="flex flex-wrap items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/10 p-3 backdrop-blur"
+            class="mx-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/95 p-2 shadow-2xl shadow-black/30 backdrop-blur sm:gap-3 sm:p-3"
           >
             <button
               type="button"
-              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)] transition disabled:cursor-not-allowed disabled:opacity-60"
-              [ngClass]="agora.audioEnabled() ? '' : '!bg-rose-700 !text-white'"
+              class="grid size-11 place-items-center rounded-md border border-zinc-700 bg-zinc-800 text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 sm:size-12"
+              [ngClass]="
+                agora.audioEnabled() ? '' : '!border-red-950/70 !bg-red-950/50 !text-red-400'
+              "
               [disabled]="!agora.localAudioTrack()"
               [attr.aria-label]="'common.aria.toggleMicrophone' | transloco"
               (click)="toggleAudio()"
@@ -136,8 +148,10 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
             </button>
             <button
               type="button"
-              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)] transition disabled:cursor-not-allowed disabled:opacity-60"
-              [ngClass]="agora.videoEnabled() ? '' : '!bg-rose-700 !text-white'"
+              class="grid size-11 place-items-center rounded-md border border-zinc-700 bg-zinc-800 text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 sm:size-12"
+              [ngClass]="
+                agora.videoEnabled() ? '' : '!border-red-950/70 !bg-red-950/50 !text-red-400'
+              "
               [disabled]="!agora.localVideoTrack()"
               [attr.aria-label]="'common.aria.toggleCamera' | transloco"
               (click)="toggleVideo()"
@@ -151,7 +165,7 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
             <button
               #settingsButton
               type="button"
-              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
+              class="grid size-11 place-items-center rounded-md border border-zinc-700 bg-zinc-800 text-white transition hover:bg-zinc-700 sm:size-12"
               [attr.aria-label]="'common.aria.deviceSettings' | transloco"
               (click)="toggleDevicePanel()"
             >
@@ -159,7 +173,7 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
             </button>
             <button
               type="button"
-              class="inline-flex min-h-11 items-center gap-2 rounded-md border border-rose-700 bg-rose-700 px-4 text-sm font-semibold text-white"
+              class="inline-flex min-h-11 items-center gap-2 rounded-md border border-rose-600 bg-rose-600 px-4 text-sm font-semibold text-white transition hover:bg-rose-700 sm:min-h-12 sm:px-5"
               (click)="leave()"
             >
               <svg lucidePhoneOff class="size-5" aria-hidden="true"></svg>
@@ -283,7 +297,6 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.stopRecording();
     void this.agora.leave();
   }
 
@@ -301,6 +314,10 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
 
   protected setVideoDevice(deviceId: string): void {
     void this.agora.setVideoDevice(deviceId);
+  }
+
+  protected selectEventValue(event: Event): string {
+    return (event.target as HTMLSelectElement | null)?.value ?? '';
   }
 
   protected toggleDevicePanel(): void {

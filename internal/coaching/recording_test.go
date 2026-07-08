@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -140,6 +141,22 @@ func TestRecordingCanStopRequiresIdentifiersInCaller(t *testing.T) {
 	}
 	if !recordingCanStop(recording) {
 		t.Fatal("recordingCanStop() = false, want true")
+	}
+}
+
+func TestRecordingShouldStopOnParticipantLeaveAfterScheduledEnd(t *testing.T) {
+	now := time.Date(2026, 7, 7, 20, 0, 0, 0, time.UTC)
+	booking := db.CoachingBooking{
+		ScheduledAt:     pgtype.Timestamptz{Time: now.Add(-29 * time.Minute), Valid: true},
+		DurationMinutes: 30,
+	}
+	if recordingShouldStopOnParticipantLeave(booking, now) {
+		t.Fatal("recording should keep running when a participant leaves before scheduled end")
+	}
+
+	booking.ScheduledAt = pgtype.Timestamptz{Time: now.Add(-30 * time.Minute), Valid: true}
+	if !recordingShouldStopOnParticipantLeave(booking, now) {
+		t.Fatal("recording should stop when a participant leaves at or after scheduled end")
 	}
 }
 

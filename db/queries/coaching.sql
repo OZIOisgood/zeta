@@ -258,9 +258,9 @@ SELECT r.*
 FROM coaching_booking_recordings r
 JOIN coaching_bookings b ON b.id = r.booking_id
 WHERE r.status IN ('starting', 'started', 'stopping')
-  AND b.scheduled_at + (b.duration_minutes * interval '1 minute') <= NOW()
+  AND b.scheduled_at + (b.duration_minutes * interval '1 minute') + (sqlc.arg(grace_seconds)::int * interval '1 second') <= NOW()
 ORDER BY b.scheduled_at
-LIMIT $1;
+LIMIT sqlc.arg(limit_count);
 
 -- name: ListMyBookings :many
 SELECT cb.*, cst.name AS session_type_name,

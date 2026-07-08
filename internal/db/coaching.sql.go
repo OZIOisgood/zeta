@@ -1104,13 +1104,18 @@ SELECT r.booking_id, r.status, r.resource_id, r.sid, r.uid, r.file_prefix, r.sta
 FROM coaching_booking_recordings r
 JOIN coaching_bookings b ON b.id = r.booking_id
 WHERE r.status IN ('starting', 'started', 'stopping')
-  AND b.scheduled_at + (b.duration_minutes * interval '1 minute') <= NOW()
+  AND b.scheduled_at + (b.duration_minutes * interval '1 minute') + ($1::int * interval '1 second') <= NOW()
 ORDER BY b.scheduled_at
-LIMIT $1
+LIMIT $2
 `
 
-func (q *Queries) ListRecordingsPastEnd(ctx context.Context, limit int32) ([]CoachingBookingRecording, error) {
-	rows, err := q.db.Query(ctx, listRecordingsPastEnd, limit)
+type ListRecordingsPastEndParams struct {
+	GraceSeconds int32 `json:"grace_seconds"`
+	LimitCount   int32 `json:"limit_count"`
+}
+
+func (q *Queries) ListRecordingsPastEnd(ctx context.Context, arg ListRecordingsPastEndParams) ([]CoachingBookingRecording, error) {
+	rows, err := q.db.Query(ctx, listRecordingsPastEnd, arg.GraceSeconds, arg.LimitCount)
 	if err != nil {
 		return nil, err
 	}
