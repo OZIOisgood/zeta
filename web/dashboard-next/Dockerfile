@@ -12,6 +12,8 @@ RUN pnpm run build
 # Stage 2: Serve the application with Nginx
 FROM nginx:alpine
 
+RUN apk upgrade --no-cache
+
 COPY --from=build /app/dist/dashboard-next/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
