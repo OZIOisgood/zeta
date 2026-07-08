@@ -91,7 +91,7 @@ func NewAgoraCloudRecordingClient(logger *slog.Logger, cfg AgoraCloudRecordingCo
 		cfg.Mode = "mix"
 	}
 	if cfg.MaxIdleTime == 0 {
-		cfg.MaxIdleTime = 30
+		cfg.MaxIdleTime = 120
 	}
 	if cfg.TranscodingWidth == 0 {
 		cfg.TranscodingWidth = 640
