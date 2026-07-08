@@ -79,6 +79,16 @@ resource "google_project_iam_member" "cloudscheduler_admin" {
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
+# Allow the deploy SA to manage Monitoring dashboards, uptime checks, alert
+# policies, and notification channels via Terraform.
+resource "google_project_iam_member" "monitoring_editor" {
+  count = var.grant_monitoring_editor ? 1 : 0
+
+  project = var.project_id
+  role    = "roles/monitoring.editor"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
 # Allow the deploy SA to manage IAM on service accounts via Terraform.
 resource "google_project_iam_member" "sa_admin" {
   project = var.project_id

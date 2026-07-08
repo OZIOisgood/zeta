@@ -126,9 +126,10 @@ module "cloud_run_dashboard_dev" {
 module "github_wif" {
   source = "../../modules/github-wif"
 
-  project_id  = var.project_id
-  github_repo = "OZIOisgood/zeta"
-  environment = "dev"
+  project_id              = var.project_id
+  github_repo             = "OZIOisgood/zeta"
+  environment             = "dev"
+  grant_monitoring_editor = true
 }
 
 module "cloud_sql" {
