@@ -171,9 +171,7 @@ export class VideosPageComponent {
   });
 
   constructor() {
-    if (this.store.status() === 'idle') {
-      void this.store.loadVideos();
-    }
+    void this.store.loadVideos();
   }
 
   protected countFor(filter: VideoFilter): number {

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -288,11 +288,7 @@ export class SessionsPageComponent {
       this.activeTab.set(tab === 'past' || tab === 'cancelled' ? tab : 'upcoming');
     });
 
-    effect(() => {
-      if (this.store.status() === 'idle') {
-        void this.store.loadBookings();
-      }
-    });
+    void this.store.loadBookings();
   }
 
   protected setTab(value: string): void {

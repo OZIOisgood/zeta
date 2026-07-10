@@ -53,6 +53,15 @@ export const SessionsOverviewStore = signalStore(
     ),
   })),
   withMethods((store, api = inject(CoachingApiClient)) => ({
+    upsertBooking(booking: CoachingBooking): void {
+      patchState(store, {
+        bookings: [
+          booking,
+          ...store.bookings().filter((currentBooking) => currentBooking.id !== booking.id),
+        ],
+      });
+    },
+
     async loadBookings(): Promise<void> {
       patchState(store, loadingAsyncSlice());
 

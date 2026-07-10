@@ -76,6 +76,27 @@ describe('VideosStore', () => {
     expect(store.videoCount()).toBe(0);
   });
 
+  it('adds a newly uploaded video to the shared list', async () => {
+    const uploaded = { ...assets[0], id: 'asset-3', title: 'New upload' };
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: AssetsApiClient,
+          useValue: {
+            listAssets: () => of(assets),
+            getAsset: () => of(uploaded),
+          },
+        },
+      ],
+    });
+
+    const store = TestBed.inject(VideosStore);
+    await store.loadVideos();
+    await store.refreshVideo(uploaded.id);
+
+    expect(store.assets().map((asset) => asset.id)).toEqual(['asset-3', 'asset-1', 'asset-2']);
+  });
+
   it('loads and creates reviews for the active video part', async () => {
     TestBed.configureTestingModule({
       providers: [

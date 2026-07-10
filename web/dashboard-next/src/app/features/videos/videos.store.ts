@@ -93,6 +93,19 @@ export const VideosStore = signalStore(
     }),
   })),
   withMethods((store, api = inject(AssetsApiClient)) => ({
+    async refreshVideo(assetId: string): Promise<void> {
+      try {
+        const asset = await firstValueFrom(api.getAsset(assetId));
+        patchState(store, {
+          ...successAsyncSlice(),
+          activeAsset: store.activeAsset()?.id === asset.id ? asset : store.activeAsset(),
+          assets: [asset, ...store.assets().filter((currentAsset) => currentAsset.id !== asset.id)],
+        });
+      } catch {
+        // The upload succeeded, so retain any existing list data; page entry will revalidate it.
+      }
+    },
+
     async loadVideos(): Promise<void> {
       patchState(store, loadingAsyncSlice());
 

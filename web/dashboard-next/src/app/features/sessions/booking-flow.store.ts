@@ -16,6 +16,7 @@ import {
   loadingAsyncSlice,
   successAsyncSlice,
 } from '../../core/state/async-state';
+import { SessionsOverviewStore } from './sessions-overview.store';
 
 type BookingFlowState = AsyncSlice & {
   mutationError: string | null;
@@ -77,7 +78,12 @@ export const BookingFlowStore = signalStore(
     ),
   })),
   withMethods(
-    (store, coachingApi = inject(CoachingApiClient), groupsApi = inject(GroupsApiClient)) => ({
+    (
+      store,
+      coachingApi = inject(CoachingApiClient),
+      groupsApi = inject(GroupsApiClient),
+      sessionsOverview = inject(SessionsOverviewStore),
+    ) => ({
       resetBooking(): void {
         patchState(store, {
           mutationError: null,
@@ -193,6 +199,7 @@ export const BookingFlowStore = signalStore(
             mutationStatus: 'success',
             booking,
           });
+          sessionsOverview.upsertBooking(booking);
           return booking;
         } catch (error) {
           const errorState = errorAsyncSlice(error);
