@@ -24,6 +24,10 @@ const initialState: SessionsOverviewState = {
 };
 
 const startsAt = (booking: CoachingBooking): number => new Date(booking.scheduled_at).getTime();
+const endsAt = (booking: CoachingBooking): number =>
+  startsAt(booking) + booking.duration_minutes * 60 * 1000;
+const isInProgress = (booking: CoachingBooking, now: number): boolean =>
+  startsAt(booking) <= now && now < endsAt(booking);
 
 export const SessionsOverviewStore = signalStore(
   { providedIn: 'root' },
@@ -34,15 +38,24 @@ export const SessionsOverviewStore = signalStore(
 
       return store
         .bookings()
-        .filter((booking) => booking.status !== 'cancelled' && startsAt(booking) > now)
-        .sort((a, b) => startsAt(a) - startsAt(b));
+        .filter(
+          (booking) =>
+            booking.status !== 'cancelled' &&
+            (isInProgress(booking, now) || startsAt(booking) > now),
+        )
+        .sort((a, b) => {
+          const aIsInProgress = isInProgress(a, now);
+          const bIsInProgress = isInProgress(b, now);
+          if (aIsInProgress !== bIsInProgress) return aIsInProgress ? -1 : 1;
+          return startsAt(a) - startsAt(b);
+        });
     }),
     completedBookings: computed(() => {
       const now = Date.now();
 
       return store
         .bookings()
-        .filter((booking) => booking.status !== 'cancelled' && startsAt(booking) <= now)
+        .filter((booking) => booking.status !== 'cancelled' && endsAt(booking) <= now)
         .sort((a, b) => startsAt(b) - startsAt(a));
     }),
     cancelledBookings: computed(() =>

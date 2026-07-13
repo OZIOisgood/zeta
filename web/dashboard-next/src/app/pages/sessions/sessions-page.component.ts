@@ -346,7 +346,8 @@ export class SessionsPageComponent {
 
   protected statusLabel(booking: CoachingBooking): string {
     if (booking.status === 'cancelled') return this.transloco.translate('common.status.cancelled');
-    return new Date(booking.scheduled_at).getTime() > Date.now()
+    const endsAt = new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60 * 1000;
+    return endsAt > Date.now()
       ? this.transloco.translate('common.status.upcoming')
       : this.transloco.translate('common.status.done');
   }
