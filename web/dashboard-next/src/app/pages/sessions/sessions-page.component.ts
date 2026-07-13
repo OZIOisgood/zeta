@@ -103,17 +103,44 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
           @if (visibleBookings().length === 0) {
             <z-empty-state [title]="emptyTitle()" [description]="emptyDescription()" />
           } @else {
-            <div class="grid gap-3">
-              @for (booking of visibleBookings(); track booking.id) {
-                <article class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-                  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div
+              class="overflow-hidden rounded-lg border border-[var(--z-border)] bg-white shadow-sm"
+            >
+              <div
+                class="hidden border-b border-[var(--z-border)] bg-[var(--z-surface-warm)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--z-muted)] md:grid md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:gap-4"
+                aria-hidden="true"
+              >
+                <span>{{ 'sessions.columns.session' | transloco }}</span>
+                <span>{{ 'sessions.columns.participant' | transloco }}</span>
+                <span>{{ 'sessions.columns.status' | transloco }}</span>
+                <span>{{ 'sessions.columns.actions' | transloco }}</span>
+              </div>
+              <div class="divide-y divide-[var(--z-border)]">
+                @for (booking of visibleBookings(); track booking.id) {
+                  <article
+                    class="grid gap-3 p-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center md:gap-4"
+                  >
+                    <div class="min-w-0">
+                      <h2 class="truncate text-base font-semibold">
+                        {{ booking.session_type_name || ('sessions.book.sessionType' | transloco) }}
+                      </h2>
+                      <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
+                        {{ formatDateTime(booking.scheduled_at) }}
+                        · {{ booking.duration_minutes }} min
+                      </p>
+                    </div>
+
+                    <div class="min-w-0">
+                      <p class="text-xs font-medium text-[var(--z-muted)] md:hidden">
+                        {{ otherPartyRole(booking) }}
+                      </p>
+                      <p class="truncate text-sm text-[var(--z-text)]">
+                        {{ otherParty(booking) }}
+                      </p>
+                    </div>
+
                     <div class="min-w-0">
                       <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-base font-semibold">
-                          {{
-                            booking.session_type_name || ('sessions.book.sessionType' | transloco)
-                          }}
-                        </h2>
                         <z-badge [tone]="booking.status === 'cancelled' ? 'danger' : 'primary'">
                           {{ statusLabel(booking) }}
                         </z-badge>
@@ -125,15 +152,8 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                           </z-badge>
                         }
                       </div>
-                      <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
-                        {{ formatDateTime(booking.scheduled_at) }}
-                        · {{ booking.duration_minutes }} min
-                      </p>
-                      <p class="mt-1 text-sm leading-6 text-[var(--z-muted)]">
-                        {{ otherPartyRole(booking) }}: {{ otherParty(booking) }}
-                      </p>
                       @if (booking.cancellation_reason) {
-                        <p class="mt-2 text-sm leading-6 text-rose-700">
+                        <p class="mt-1 text-xs leading-5 text-rose-700">
                           {{
                             'common.labels.reason'
                               | transloco: { reason: booking.cancellation_reason }
@@ -142,7 +162,7 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                       }
                     </div>
 
-                    <div class="flex flex-wrap gap-2 lg:justify-end">
+                    <div class="flex flex-wrap gap-2 md:justify-end">
                       @if (canJoin(booking)) {
                         <a
                           [routerLink]="['/sessions', booking.group_id, booking.id, 'call']"
@@ -194,9 +214,9 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                         </z-button>
                       }
                     </div>
-                  </div>
-                </article>
-              }
+                  </article>
+                }
+              </div>
             </div>
           }
         }

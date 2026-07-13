@@ -587,6 +587,12 @@
       "past": "Vergangen",
       "cancelled": "Abgesagt"
     },
+    "columns": {
+      "session": "Termin",
+      "participant": "Teilnehmer",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
     "empty": {
       "upcomingAlt": "Keine bevorstehenden Termine",
       "upcomingHeading": "Keine bevorstehenden Termine",

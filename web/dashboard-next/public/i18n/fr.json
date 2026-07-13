@@ -587,6 +587,12 @@
       "past": "Passées",
       "cancelled": "Annulées"
     },
+    "columns": {
+      "session": "Séance",
+      "participant": "Participant",
+      "status": "Statut",
+      "actions": "Actions"
+    },
     "empty": {
       "upcomingAlt": "Aucune séance à venir",
       "upcomingHeading": "Aucune séance à venir",
