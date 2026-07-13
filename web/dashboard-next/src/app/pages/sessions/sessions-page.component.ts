@@ -107,20 +107,20 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
               class="overflow-hidden rounded-lg border border-[var(--z-border)] bg-white shadow-sm"
             >
               <div
-                class="hidden border-b border-[var(--z-border)] bg-[var(--z-surface-warm)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--z-muted)] md:grid md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:gap-4"
+                class="hidden border-b border-[var(--z-border)] bg-[var(--z-surface-warm)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--z-muted)] md:grid md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_7rem] md:gap-4"
                 aria-hidden="true"
               >
                 <span>{{ 'sessions.columns.session' | transloco }}</span>
                 <span>{{ 'sessions.columns.participant' | transloco }}</span>
                 <span>{{ 'sessions.columns.status' | transloco }}</span>
-                <span>{{ 'sessions.columns.actions' | transloco }}</span>
+                <span class="text-right">{{ 'sessions.columns.actions' | transloco }}</span>
               </div>
               <div class="divide-y divide-[var(--z-border)]">
                 @for (booking of visibleBookings(); track booking.id) {
                   <article
-                    class="grid gap-3 p-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center md:gap-4"
+                    class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-3 p-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_7rem] md:items-center md:gap-4"
                   >
-                    <div class="min-w-0">
+                    <div class="col-span-2 min-w-0 md:col-span-1">
                       <h2 class="truncate text-base font-semibold">
                         {{ booking.session_type_name || ('sessions.book.sessionType' | transloco) }}
                       </h2>
@@ -130,11 +130,11 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                       </p>
                     </div>
 
-                    <div class="min-w-0">
-                      <p class="text-xs font-medium text-[var(--z-muted)] md:hidden">
-                        {{ otherPartyRole(booking) }}
-                      </p>
+                    <div class="col-span-2 min-w-0 md:col-span-1">
                       <p class="truncate text-sm text-[var(--z-text)]">
+                        <span class="font-medium text-[var(--z-muted)] md:hidden"
+                          >{{ otherPartyRole(booking) }}:&nbsp;</span
+                        >
                         {{ otherParty(booking) }}
                       </p>
                     </div>
@@ -166,7 +166,7 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                       @if (canJoin(booking)) {
                         <a
                           [routerLink]="['/sessions', booking.group_id, booking.id, 'call']"
-                          class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
+                          class="inline-flex min-h-10 w-24 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
                         >
                           <svg lucideVideo class="size-4" aria-hidden="true"></svg>
                           <span>{{ 'common.actions.join' | transloco }}</span>
@@ -203,14 +203,16 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                           </z-action-dialog>
                         </ng-template>
                         <z-button
+                          class="inline-block w-24 [&_button]:min-h-10"
                           size="sm"
                           variant="secondary"
+                          [fullWidth]="true"
                           [ngpDialogTrigger]="cancelDialog"
                           (pressed)="cancelReasonControl.reset('')"
                           (ngpDialogTriggerClosed)="confirmCancel($event, booking)"
                         >
                           <svg lucideX class="size-4" aria-hidden="true"></svg>
-                          <span>{{ 'sessions.cancel.title' | transloco }}</span>
+                          <span>{{ 'common.actions.cancel' | transloco }}</span>
                         </z-button>
                       }
                     </div>
