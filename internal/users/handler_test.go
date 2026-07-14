@@ -148,6 +148,68 @@ func TestListGroupUsersMissingPreferencesIsError(t *testing.T) {
 	}
 }
 
+func TestListGroupUsersMemberWithBlankNameDegradesInsteadOf500(t *testing.T) {
+	t.Setenv("DEFAULT_ORG_ID", "org_test")
+
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	h := NewHandler(slog.Default(), q, nil, workos)
+
+	groupID := "11111111-1111-1111-1111-111111111111"
+	var pgGroupID pgtype.UUID
+	if err := pgGroupID.Scan(groupID); err != nil {
+		t.Fatalf("scan group id: %v", err)
+	}
+
+	q.EXPECT().ListGroupMembers(gomock.Any(), pgGroupID).Return([]string{"user-2"}, nil)
+	workos.EXPECT().ListOrganizationMemberships(gomock.Any(), gomock.Any()).Return(
+		usermanagement.ListOrganizationMembershipsResponse{
+			Data: []usermanagement.OrganizationMembership{
+				{UserID: "user-2", Role: common.RoleResponse{Slug: "student"}},
+			},
+		},
+		nil,
+	)
+	// Preferences row exists but the member never set a name (un-onboarded).
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user-2").Return(
+		db.UserPreference{UserID: "user-2"},
+		nil,
+	)
+
+	router := chi.NewRouter()
+	router.Get("/groups/{groupID}/users", h.ListGroupUsers)
+	req := httptest.NewRequest(http.MethodGet, "/groups/"+groupID+"/users", nil)
+	req = req.WithContext(withTestUser(req.Context(), &auth.UserContext{
+		ID:          "user-1",
+		Role:        permissions.RoleExpert,
+		Permissions: []string{permissions.GroupsUserListRead},
+	}))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got status %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	var body struct {
+		Data []map[string]any `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if len(body.Data) != 1 {
+		t.Fatalf("got %d users, want 1", len(body.Data))
+	}
+	if got := body.Data[0]["id"]; got != "user-2" {
+		t.Fatalf("got user id %v, want user-2", got)
+	}
+	if got := body.Data[0]["display_name"]; got != "User" {
+		t.Fatalf("got display_name %v, want fallback \"User\"", got)
+	}
+}
+
 func TestListGroupUsersFiltersStudents(t *testing.T) {
 	t.Setenv("DEFAULT_ORG_ID", "org_test")
 

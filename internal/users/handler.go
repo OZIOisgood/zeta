@@ -157,17 +157,18 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 				results[idx] = result{err: err}
 				return
 			}
-			if _, err := preferences.RequireDisplayName(prefs); err != nil {
-				results[idx] = result{err: err}
-				return
-			}
+			// A member whose preferences row exists but carries no name yet
+			// (e.g. never completed onboarding) must not fail the whole list.
+			// PublicDisplayName degrades gracefully to a non-PII fallback.
 			fullName := ""
 			if includeFullName && canViewFullMemberNames(user.Role) {
 				fullName = preferences.DisplayName(prefs)
 			}
 			displayName := preferences.PublicDisplayName(prefs)
 			if roleByUserID[userID] == permissions.RoleExpert || roleByUserID[userID] == permissions.RoleAdmin {
-				displayName = preferences.DisplayName(prefs)
+				if fullDisplayName := preferences.DisplayName(prefs); fullDisplayName != "" {
+					displayName = fullDisplayName
+				}
 			}
 			results[idx] = result{
 				user: groupUser{
