@@ -5,7 +5,7 @@ go 1.25.11
 require (
 	github.com/fatih/color v1.19.0
 	github.com/go-chi/chi/v5 v5.3.0
-	github.com/jackc/pgx/v5 v5.9.2
+	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
 )
 
