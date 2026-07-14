@@ -133,6 +133,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(auth.RequirePermission(permissions.CoachingVideoConnect))
 			r.Get("/bookings/{bookingID}/connect", h.ConnectToBooking)
+			r.Post("/bookings/{bookingID}/end", h.EndBooking)
 			r.Post("/bookings/{bookingID}/recording/stop", h.StopBookingRecording)
 		})
 	})

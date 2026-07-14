@@ -78,6 +78,7 @@ export type CoachingBooking = {
   cancelled_by?: string;
   notes?: string;
   recording?: CoachingBookingRecording;
+  ended_at?: string;
   created_at: string;
 };
 
@@ -93,6 +94,9 @@ export type ConnectResponse = {
   channel: string;
   token: string;
   uid: number;
+  scheduled_at: string;
+  duration_minutes: number;
+  can_end_session: boolean;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -241,6 +245,13 @@ export class CoachingApiClient {
   connectToBooking(groupId: string, bookingId: string): Observable<ConnectResponse> {
     return this.http.get<ConnectResponse>(
       `${this.apiUrl}/groups/${groupId}/coaching/bookings/${bookingId}/connect`,
+    );
+  }
+
+  endBooking(groupId: string, bookingId: string): Observable<{ status: 'ended' }> {
+    return this.http.post<{ status: 'ended' }>(
+      `${this.apiUrl}/groups/${groupId}/coaching/bookings/${bookingId}/end`,
+      {},
     );
   }
 

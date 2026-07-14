@@ -562,6 +562,21 @@ func (mr *MockQuerierMockRecorder) DeleteVideoReview(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVideoReview", reflect.TypeOf((*MockQuerier)(nil).DeleteVideoReview), ctx, arg)
 }
 
+// EndBooking mocks base method.
+func (m *MockQuerier) EndBooking(ctx context.Context, arg db.EndBookingParams) (db.CoachingBooking, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EndBooking", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingBooking)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EndBooking indicates an expected call of EndBooking.
+func (mr *MockQuerierMockRecorder) EndBooking(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EndBooking", reflect.TypeOf((*MockQuerier)(nil).EndBooking), ctx, arg)
+}
+
 // EnsureRecordingImportPending mocks base method.
 func (m *MockQuerier) EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (db.CoachingRecordingImport, error) {
 	m.ctrl.T.Helper()

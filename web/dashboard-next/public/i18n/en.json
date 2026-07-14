@@ -645,6 +645,12 @@
       "tooLate": "Cancellations must be made at least 1 hour before the session.",
       "failed": "Failed to cancel booking."
     },
+    "end": {
+      "title": "End session?",
+      "description": "This ends the session for both participants. Neither person will be able to reconnect, and any active recording will stop now.",
+      "confirm": "End session",
+      "failed": "The session could not be ended. Please try again."
+    },
     "availability": {
       "title": "Manage Availability",
       "titleForGroup": "Manage Availability for {{group}}",

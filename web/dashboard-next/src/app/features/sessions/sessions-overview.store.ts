@@ -41,6 +41,7 @@ export const SessionsOverviewStore = signalStore(
         .filter(
           (booking) =>
             booking.status !== 'cancelled' &&
+            !booking.ended_at &&
             (isInProgress(booking, now) || startsAt(booking) > now),
         )
         .sort((a, b) => {
@@ -55,7 +56,10 @@ export const SessionsOverviewStore = signalStore(
 
       return store
         .bookings()
-        .filter((booking) => booking.status !== 'cancelled' && endsAt(booking) <= now)
+        .filter(
+          (booking) =>
+            booking.status !== 'cancelled' && (booking.ended_at || endsAt(booking) <= now),
+        )
         .sort((a, b) => startsAt(b) - startsAt(a));
     }),
     cancelledBookings: computed(() =>

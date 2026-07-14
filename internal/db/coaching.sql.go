@@ -18,7 +18,7 @@ SET is_cancelled = true,
     cancelled_by = $3,
     updated_at = NOW()
 WHERE id = $1 AND (expert_id = $4 OR student_id = $4)
-RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, ended_at, ended_by
 `
 
 type CancelBookingParams struct {
@@ -50,6 +50,8 @@ func (q *Queries) CancelBooking(ctx context.Context, arg CancelBookingParams) (C
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EndedAt,
+		&i.EndedBy,
 	)
 	return i, err
 }
@@ -154,7 +156,7 @@ func (q *Queries) CreateBlockedSlot(ctx context.Context, arg CreateBlockedSlotPa
 const createBooking = `-- name: CreateBooking :one
 INSERT INTO coaching_bookings (expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, notes)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, ended_at, ended_by
 `
 
 type CreateBookingParams struct {
@@ -192,6 +194,8 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (C
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EndedAt,
+		&i.EndedBy,
 	)
 	return i, err
 }
@@ -323,6 +327,46 @@ func (q *Queries) DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotPa
 	return result.RowsAffected(), nil
 }
 
+const endBooking = `-- name: EndBooking :one
+UPDATE coaching_bookings
+SET ended_at = NOW(),
+    ended_by = $2,
+    updated_at = NOW()
+WHERE id = $1
+  AND expert_id = $2
+  AND is_cancelled = false
+  AND ended_at IS NULL
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, ended_at, ended_by
+`
+
+type EndBookingParams struct {
+	ID      pgtype.UUID `json:"id"`
+	EndedBy pgtype.Text `json:"ended_by"`
+}
+
+func (q *Queries) EndBooking(ctx context.Context, arg EndBookingParams) (CoachingBooking, error) {
+	row := q.db.QueryRow(ctx, endBooking, arg.ID, arg.EndedBy)
+	var i CoachingBooking
+	err := row.Scan(
+		&i.ID,
+		&i.ExpertID,
+		&i.StudentID,
+		&i.GroupID,
+		&i.SessionTypeID,
+		&i.ScheduledAt,
+		&i.DurationMinutes,
+		&i.IsCancelled,
+		&i.CancellationReason,
+		&i.CancelledBy,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EndedAt,
+		&i.EndedBy,
+	)
+	return i, err
+}
+
 const ensureRecordingImportPending = `-- name: EnsureRecordingImportPending :one
 INSERT INTO coaching_recording_imports (booking_id, status, error)
 VALUES ($1, 'pending', NULL)
@@ -358,7 +402,7 @@ func (q *Queries) EnsureRecordingImportPending(ctx context.Context, bookingID pg
 }
 
 const getBooking = `-- name: GetBooking :one
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, ended_at, ended_by FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
 `
 
 type GetBookingParams struct {
@@ -383,12 +427,14 @@ func (q *Queries) GetBooking(ctx context.Context, arg GetBookingParams) (Coachin
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EndedAt,
+		&i.EndedBy,
 	)
 	return i, err
 }
 
 const getBookingForRecordingUpdate = `-- name: GetBookingForRecordingUpdate :one
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, ended_at, ended_by FROM coaching_bookings
 WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
 FOR UPDATE
 `
@@ -415,6 +461,8 @@ func (q *Queries) GetBookingForRecordingUpdate(ctx context.Context, arg GetBooki
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EndedAt,
+		&i.EndedBy,
 	)
 	return i, err
 }
@@ -533,7 +581,7 @@ func (q *Queries) ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.U
 }
 
 const listAllMyBookings = `-- name: ListAllMyBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cb.ended_at, cb.ended_by, cst.name AS session_type_name,
        COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
        ri.asset_id AS recording_asset_id,
        ri.video_id AS recording_video_id
@@ -559,6 +607,8 @@ type ListAllMyBookingsRow struct {
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	EndedAt            pgtype.Timestamptz `json:"ended_at"`
+	EndedBy            pgtype.Text        `json:"ended_by"`
 	SessionTypeName    string             `json:"session_type_name"`
 	RecordingStatus    string             `json:"recording_status"`
 	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
@@ -588,6 +638,8 @@ func (q *Queries) ListAllMyBookings(ctx context.Context, expertID string) ([]Lis
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EndedAt,
+			&i.EndedBy,
 			&i.SessionTypeName,
 			&i.RecordingStatus,
 			&i.RecordingAssetID,
@@ -764,7 +816,7 @@ func (q *Queries) ListBlockedSlots(ctx context.Context, arg ListBlockedSlotsPara
 
 const listBookingsByExpertInRange = `-- name: ListBookingsByExpertInRange :many
 
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, ended_at, ended_by FROM coaching_bookings
 WHERE expert_id = $1
   AND scheduled_at >= $2
   AND scheduled_at < $3
@@ -802,6 +854,8 @@ func (q *Queries) ListBookingsByExpertInRange(ctx context.Context, arg ListBooki
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EndedAt,
+			&i.EndedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -814,7 +868,7 @@ func (q *Queries) ListBookingsByExpertInRange(ctx context.Context, arg ListBooki
 }
 
 const listGroupBookings = `-- name: ListGroupBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cb.ended_at, cb.ended_by, cst.name AS session_type_name,
        COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
        ri.asset_id AS recording_asset_id,
        ri.video_id AS recording_video_id
@@ -840,6 +894,8 @@ type ListGroupBookingsRow struct {
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	EndedAt            pgtype.Timestamptz `json:"ended_at"`
+	EndedBy            pgtype.Text        `json:"ended_by"`
 	SessionTypeName    string             `json:"session_type_name"`
 	RecordingStatus    string             `json:"recording_status"`
 	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
@@ -869,6 +925,8 @@ func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EndedAt,
+			&i.EndedBy,
 			&i.SessionTypeName,
 			&i.RecordingStatus,
 			&i.RecordingAssetID,
@@ -885,7 +943,7 @@ func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([
 }
 
 const listMyBookings = `-- name: ListMyBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cb.ended_at, cb.ended_by, cst.name AS session_type_name,
        COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
        ri.asset_id AS recording_asset_id,
        ri.video_id AS recording_video_id
@@ -916,6 +974,8 @@ type ListMyBookingsRow struct {
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	EndedAt            pgtype.Timestamptz `json:"ended_at"`
+	EndedBy            pgtype.Text        `json:"ended_by"`
 	SessionTypeName    string             `json:"session_type_name"`
 	RecordingStatus    string             `json:"recording_status"`
 	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
@@ -945,6 +1005,8 @@ func (q *Queries) ListMyBookings(ctx context.Context, arg ListMyBookingsParams) 
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EndedAt,
+			&i.EndedBy,
 			&i.SessionTypeName,
 			&i.RecordingStatus,
 			&i.RecordingAssetID,

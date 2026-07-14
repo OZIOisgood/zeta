@@ -50,6 +50,7 @@ type Querier interface {
 	DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotParams) (int64, error)
 	DeleteGroup(ctx context.Context, arg DeleteGroupParams) error
 	DeleteVideoReview(ctx context.Context, arg DeleteVideoReviewParams) error
+	EndBooking(ctx context.Context, arg EndBookingParams) (CoachingBooking, error)
 	EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error)
 	EnsureUserAccess(ctx context.Context, userID string) (UserAccess, error)
 	GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error)

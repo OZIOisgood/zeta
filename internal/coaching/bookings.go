@@ -30,6 +30,7 @@ type bookingResponse struct {
 	ScheduledAt        time.Time                 `json:"scheduled_at"`
 	DurationMinutes    int32                     `json:"duration_minutes"`
 	Status             string                    `json:"status"` // "pending" | "done" | "cancelled"
+	EndedAt            *time.Time                `json:"ended_at,omitempty"`
 	CancellationReason *string                   `json:"cancellation_reason,omitempty"`
 	CancelledBy        *string                   `json:"cancelled_by,omitempty"`
 	Notes              *string                   `json:"notes,omitempty"`
@@ -44,10 +45,13 @@ type bookingRecordingResponse struct {
 }
 
 // bookingStatus derives the logical status from stored data.
-// No status field is persisted — only is_cancelled is stored.
-func bookingStatus(scheduledAt time.Time, isCancelled bool) string {
+// No status field is persisted — cancellation and early-end state are stored.
+func bookingStatus(scheduledAt time.Time, isCancelled bool, endedAt pgtype.Timestamptz) string {
 	if isCancelled {
 		return "cancelled"
+	}
+	if endedAt.Valid {
+		return "done"
 	}
 	if time.Now().After(scheduledAt) {
 		return "done"
@@ -66,6 +70,7 @@ func buildBookingResponse(
 	scheduledAt pgtype.Timestamptz,
 	durationMinutes int32,
 	isCancelled bool,
+	endedAt pgtype.Timestamptz,
 	cancellationReason, cancelledBy, notes pgtype.Text,
 	createdAt pgtype.Timestamptz,
 	users map[string]userInfo,
@@ -86,8 +91,12 @@ func buildBookingResponse(
 		SessionTypeName: sessionTypeName,
 		ScheduledAt:     scheduledAt.Time,
 		DurationMinutes: durationMinutes,
-		Status:          bookingStatus(scheduledAt.Time, isCancelled),
+		Status:          bookingStatus(scheduledAt.Time, isCancelled, endedAt),
 		CreatedAt:       createdAt.Time,
+	}
+	if endedAt.Valid {
+		endedAtValue := endedAt.Time
+		resp.EndedAt = &endedAtValue
 	}
 	if cancellationReason.Valid {
 		resp.CancellationReason = &cancellationReason.String
@@ -108,7 +117,7 @@ func toBookingResponse(b db.CoachingBooking, users map[string]userInfo, sessionT
 	return buildBookingResponse(
 		b.ID, b.ExpertID, b.StudentID,
 		b.GroupID, b.SessionTypeID, sessionTypeName,
-		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
+		b.ScheduledAt, b.DurationMinutes, b.IsCancelled, b.EndedAt,
 		b.CancellationReason, b.CancelledBy, b.Notes,
 		b.CreatedAt, users,
 		"", pgtype.UUID{}, pgtype.UUID{},
@@ -119,7 +128,7 @@ func toBookingResponseFromRow(b db.ListMyBookingsRow, users map[string]userInfo)
 	return buildBookingResponse(
 		b.ID, b.ExpertID, b.StudentID,
 		b.GroupID, b.SessionTypeID, b.SessionTypeName,
-		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
+		b.ScheduledAt, b.DurationMinutes, b.IsCancelled, b.EndedAt,
 		b.CancellationReason, b.CancelledBy, b.Notes,
 		b.CreatedAt, users,
 		b.RecordingStatus, b.RecordingAssetID, b.RecordingVideoID,
@@ -130,7 +139,7 @@ func toBookingResponseFromAllRow(b db.ListAllMyBookingsRow, users map[string]use
 	return buildBookingResponse(
 		b.ID, b.ExpertID, b.StudentID,
 		b.GroupID, b.SessionTypeID, b.SessionTypeName,
-		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
+		b.ScheduledAt, b.DurationMinutes, b.IsCancelled, b.EndedAt,
 		b.CancellationReason, b.CancelledBy, b.Notes,
 		b.CreatedAt, users,
 		b.RecordingStatus, b.RecordingAssetID, b.RecordingVideoID,
@@ -141,7 +150,7 @@ func toBookingResponseFromGroupRow(b db.ListGroupBookingsRow, users map[string]u
 	return buildBookingResponse(
 		b.ID, b.ExpertID, b.StudentID,
 		b.GroupID, b.SessionTypeID, b.SessionTypeName,
-		b.ScheduledAt, b.DurationMinutes, b.IsCancelled,
+		b.ScheduledAt, b.DurationMinutes, b.IsCancelled, b.EndedAt,
 		b.CancellationReason, b.CancelledBy, b.Notes,
 		b.CreatedAt, users,
 		b.RecordingStatus, b.RecordingAssetID, b.RecordingVideoID,

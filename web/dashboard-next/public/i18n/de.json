@@ -645,6 +645,12 @@
       "tooLate": "Absagen müssen mindestens 1 Stunde vor dem Termin erfolgen.",
       "failed": "Termin konnte nicht abgesagt werden."
     },
+    "end": {
+      "title": "Termin beenden?",
+      "description": "Dies beendet den Termin für beide Teilnehmenden. Niemand kann sich erneut verbinden und eine aktive Aufzeichnung wird sofort gestoppt.",
+      "confirm": "Termin beenden",
+      "failed": "Der Termin konnte nicht beendet werden. Bitte versuche es erneut."
+    },
     "availability": {
       "title": "Verfügbarkeit verwalten",
       "titleForGroup": "Verfügbarkeit für {{group}} verwalten",

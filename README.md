@@ -219,8 +219,9 @@ GitHub Environment variable; there is no separate Zeta observability password. S
 6. Clicking Join calls the connect endpoint, which validates the booking and generates an **Agora RTC token**.
 7. If enabled, the API starts **Agora Cloud Recording** for the booking before returning join data.
 8. The Angular app joins the Agora channel and renders a **full-screen video call** page.
-9. Leaving the call asks the API to stop the active recording; an internal cleanup endpoint can also stop recordings after their scheduled end.
-10. Stopped recordings are queued for post-processing. The API locates the final MP4 in GCS, gives Mux a short-lived signed URL, creates a normal reviewable asset/video, and links it back to the booking.
+9. The expert can end an in-progress session from the call controls. This blocks reconnects for both participants and immediately stops any active recording; leaving without ending still defers recording shutdown until the scheduled end.
+10. An internal cleanup endpoint can also stop recordings after their scheduled end.
+11. Stopped recordings are queued for post-processing. The API locates the final MP4 in GCS, gives Mux a short-lived signed URL, creates a normal reviewable asset/video, and links it back to the booking.
 
 ### Notification Preferences Flow
 

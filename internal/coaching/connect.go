@@ -1,6 +1,7 @@
 package coaching
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
@@ -18,10 +21,13 @@ const (
 )
 
 type connectResponse struct {
-	AppID   string `json:"app_id"`
-	Channel string `json:"channel"`
-	Token   string `json:"token"`
-	UID     uint32 `json:"uid"`
+	AppID           string    `json:"app_id"`
+	Channel         string    `json:"channel"`
+	Token           string    `json:"token"`
+	UID             uint32    `json:"uid"`
+	ScheduledAt     time.Time `json:"scheduled_at"`
+	DurationMinutes int32     `json:"duration_minutes"`
+	CanEndSession   bool      `json:"can_end_session"`
 }
 
 // ConnectToBooking generates an Agora RTC token for an existing booking.
@@ -54,6 +60,10 @@ func (h *Handler) ConnectToBooking(w http.ResponseWriter, r *http.Request) {
 
 	if booking.IsCancelled {
 		http.Error(w, "Booking is cancelled", http.StatusBadRequest)
+		return
+	}
+	if booking.EndedAt.Valid {
+		http.Error(w, "Session has ended", http.StatusBadRequest)
 		return
 	}
 
@@ -116,9 +126,91 @@ func (h *Handler) ConnectToBooking(w http.ResponseWriter, r *http.Request) {
 	)
 
 	writeJSON(w, http.StatusOK, connectResponse{
-		AppID:   h.agoraAppID,
-		Channel: channelName,
-		Token:   token,
-		UID:     uid,
+		AppID:           h.agoraAppID,
+		Channel:         channelName,
+		Token:           token,
+		UID:             uid,
+		ScheduledAt:     booking.ScheduledAt.Time,
+		DurationMinutes: booking.DurationMinutes,
+		CanEndSession:   booking.ExpertID == user.ID,
 	})
+}
+
+// EndBooking ends an in-progress session at the expert's request. Ending a
+// session blocks future connection attempts and immediately stops its active
+// recording before the end state is persisted.
+func (h *Handler) EndBooking(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.From(ctx, h.logger)
+	user := auth.GetUser(ctx)
+	if user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	bookingID, err := parseUUID(chi.URLParam(r, "bookingID"))
+	if err != nil {
+		http.Error(w, "Invalid booking ID", http.StatusBadRequest)
+		return
+	}
+
+	booking, err := h.q.GetBooking(ctx, db.GetBookingParams{ID: bookingID, ExpertID: user.ID})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Booking not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to fetch booking", http.StatusInternalServerError)
+		return
+	}
+	if booking.ExpertID != user.ID {
+		http.Error(w, "Only the session expert can end the session", http.StatusForbidden)
+		return
+	}
+	if booking.IsCancelled || booking.EndedAt.Valid {
+		http.Error(w, "Session is no longer active", http.StatusConflict)
+		return
+	}
+	if !bookingInProgress(booking, time.Now()) {
+		http.Error(w, "Session is not in progress", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.stopRecordingForBooking(ctx, booking.ID); err != nil {
+		log.ErrorContext(ctx, "end_booking_recording_stop_failed",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(booking.ID)),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to stop session recording", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = h.q.EndBooking(ctx, db.EndBookingParams{
+		ID:      booking.ID,
+		EndedBy: pgtype.Text{String: user.ID, Valid: true},
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "Session is no longer active", http.StatusConflict)
+			return
+		}
+		log.ErrorContext(ctx, "end_booking_failed",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(booking.ID)),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Failed to end session", http.StatusInternalServerError)
+		return
+	}
+
+	log.InfoContext(ctx, "booking_ended",
+		slog.String("component", "coaching"),
+		slog.String("booking_id", uuidToString(booking.ID)),
+	)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ended"})
+}
+
+func bookingInProgress(booking db.CoachingBooking, now time.Time) bool {
+	return !now.Before(booking.ScheduledAt.Time) && now.Before(recordingBookingEnd(booking))
 }

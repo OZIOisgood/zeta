@@ -331,11 +331,11 @@ export class SessionsPageComponent {
 
   protected canCancel(booking: CoachingBooking): boolean {
     const msTillSession = new Date(booking.scheduled_at).getTime() - Date.now();
-    return booking.status !== 'cancelled' && msTillSession > 60 * 60 * 1000;
+    return !booking.ended_at && booking.status !== 'cancelled' && msTillSession > 60 * 60 * 1000;
   }
 
   protected canJoin(booking: CoachingBooking): boolean {
-    if (booking.status === 'cancelled') return false;
+    if (booking.status === 'cancelled' || booking.ended_at) return false;
     const startsAt = new Date(booking.scheduled_at).getTime();
     const endsAt = startsAt + booking.duration_minutes * 60 * 1000;
 
@@ -348,6 +348,7 @@ export class SessionsPageComponent {
 
   protected statusLabel(booking: CoachingBooking): string {
     if (booking.status === 'cancelled') return this.transloco.translate('common.status.cancelled');
+    if (booking.ended_at) return this.transloco.translate('common.status.done');
     const endsAt = new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60 * 1000;
     return endsAt > Date.now()
       ? this.transloco.translate('common.status.upcoming')

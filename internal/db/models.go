@@ -465,6 +465,8 @@ type CoachingBooking struct {
 	Notes              pgtype.Text        `json:"notes"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	EndedAt            pgtype.Timestamptz `json:"ended_at"`
+	EndedBy            pgtype.Text        `json:"ended_by"`
 }
 
 type CoachingBookingRecording struct {

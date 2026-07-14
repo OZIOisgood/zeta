@@ -12,16 +12,18 @@ func TestBookingStatus(t *testing.T) {
 		name        string
 		scheduledAt time.Time
 		isCancelled bool
+		endedAt     pgtype.Timestamptz
 		want        string
 	}{
-		{"cancelled", time.Now().Add(time.Hour), true, "cancelled"},
-		{"done", time.Now().Add(-time.Hour), false, "done"},
-		{"pending", time.Now().Add(time.Hour), false, "pending"},
+		{"cancelled", time.Now().Add(time.Hour), true, pgtype.Timestamptz{}, "cancelled"},
+		{"ended", time.Now().Add(time.Hour), false, pgtype.Timestamptz{Time: time.Now(), Valid: true}, "done"},
+		{"done", time.Now().Add(-time.Hour), false, pgtype.Timestamptz{}, "done"},
+		{"pending", time.Now().Add(time.Hour), false, pgtype.Timestamptz{}, "pending"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := bookingStatus(tt.scheduledAt, tt.isCancelled); got != tt.want {
+			if got := bookingStatus(tt.scheduledAt, tt.isCancelled, tt.endedAt); got != tt.want {
 				t.Errorf("got %q, want %q", got, tt.want)
 			}
 		})
@@ -55,7 +57,7 @@ func TestBuildBookingResponse(t *testing.T) {
 	t.Run("names concatenated correctly", func(t *testing.T) {
 		resp := buildBookingResponse(
 			id, expertID, studentID, groupID, sessionTypeID, "Quick Call",
-			scheduledAt, 60, false,
+			scheduledAt, 60, false, pgtype.Timestamptz{},
 			pgtype.Text{}, pgtype.Text{}, pgtype.Text{},
 			createdAt, users, "", pgtype.UUID{}, pgtype.UUID{},
 		)
@@ -70,7 +72,7 @@ func TestBuildBookingResponse(t *testing.T) {
 	t.Run("optional fields nil when not set", func(t *testing.T) {
 		resp := buildBookingResponse(
 			id, expertID, studentID, groupID, sessionTypeID, "",
-			scheduledAt, 60, false,
+			scheduledAt, 60, false, pgtype.Timestamptz{},
 			pgtype.Text{}, pgtype.Text{}, pgtype.Text{},
 			createdAt, users, "", pgtype.UUID{}, pgtype.UUID{},
 		)
@@ -92,7 +94,7 @@ func TestBuildBookingResponse(t *testing.T) {
 
 		resp := buildBookingResponse(
 			id, expertID, studentID, groupID, sessionTypeID, "",
-			scheduledAt, 60, true,
+			scheduledAt, 60, true, pgtype.Timestamptz{},
 			reason, by, notes,
 			createdAt, users, "", pgtype.UUID{}, pgtype.UUID{},
 		)

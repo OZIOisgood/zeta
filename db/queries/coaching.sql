@@ -307,6 +307,17 @@ SET is_cancelled = true,
 WHERE id = $1 AND (expert_id = $4 OR student_id = $4)
 RETURNING *;
 
+-- name: EndBooking :one
+UPDATE coaching_bookings
+SET ended_at = NOW(),
+    ended_by = $2,
+    updated_at = NOW()
+WHERE id = $1
+  AND expert_id = $2
+  AND is_cancelled = false
+  AND ended_at IS NULL
+RETURNING *;
+
 -- name: CountConflictingBookings :one
 SELECT COUNT(*) FROM coaching_bookings
 WHERE expert_id = $1

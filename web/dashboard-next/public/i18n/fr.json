@@ -645,6 +645,12 @@
       "tooLate": "Les annulations doivent être effectuées au moins 1 heure avant la séance.",
       "failed": "Échec de l'annulation de la réservation."
     },
+    "end": {
+      "title": "Terminer la séance ?",
+      "description": "Cela termine la séance pour les deux participants. Personne ne pourra se reconnecter et tout enregistrement actif sera arrêté immédiatement.",
+      "confirm": "Terminer la séance",
+      "failed": "La séance n'a pas pu être terminée. Veuillez réessayer."
+    },
     "availability": {
       "title": "Gérer les disponibilités",
       "titleForGroup": "Gérer les disponibilités pour {{group}}",

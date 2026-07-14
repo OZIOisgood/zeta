@@ -16,24 +16,31 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   LucideCamera,
   LucideCameraOff,
+  LucideCircleStop,
   LucideMic,
   LucideMicOff,
   LucidePhoneOff,
   LucideSettings,
 } from '@lucide/angular';
+import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import { firstValueFrom } from 'rxjs';
 import { AgoraService } from '../../core/calls/agora.service';
 import { CoachingApiClient } from '../../core/http/coaching-api.service';
+import { AppShellStore } from '../../core/state/app-shell.store';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZConfirmDialogComponent } from '../../shared/ui/dialog/z-confirm-dialog.component';
 
 @Component({
   selector: 'app-video-call-page',
   imports: [
     NgClass,
     TranslocoPipe,
+    NgpDialogTrigger,
     ZButtonComponent,
+    ZConfirmDialogComponent,
     LucideCamera,
     LucideCameraOff,
+    LucideCircleStop,
     LucideMic,
     LucideMicOff,
     LucidePhoneOff,
@@ -171,6 +178,29 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
             >
               <svg lucideSettings class="size-5" aria-hidden="true"></svg>
             </button>
+            @if (canEndSession()) {
+              <ng-template #endSessionDialog let-close="close">
+                <z-confirm-dialog
+                  [title]="'sessions.end.title' | transloco"
+                  [description]="'sessions.end.description' | transloco"
+                  tone="danger"
+                  confirmVariant="danger"
+                  [confirmLabel]="'sessions.end.confirm' | transloco"
+                  [cancelLabel]="'common.actions.cancel' | transloco"
+                  [confirmDisabled]="endingSession()"
+                  [close]="close"
+                />
+              </ng-template>
+              <z-button
+                variant="danger"
+                [disabled]="endingSession()"
+                [ngpDialogTrigger]="endSessionDialog"
+                (ngpDialogTriggerClosed)="endSession($event)"
+              >
+                <svg lucideCircleStop class="size-5" aria-hidden="true"></svg>
+                <span>{{ 'sessions.end.confirm' | transloco }}</span>
+              </z-button>
+            }
             <button
               type="button"
               class="inline-flex min-h-11 items-center gap-2 rounded-md border border-rose-600 bg-rose-600 px-4 text-sm font-semibold text-white transition hover:bg-rose-700 sm:min-h-12 sm:px-5"
@@ -217,6 +247,7 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(CoachingApiClient);
+  private readonly shell = inject(AppShellStore);
   protected readonly agora = inject(AgoraService);
   private readonly transloco = inject(TranslocoService);
 
@@ -227,10 +258,16 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   private groupId: string | null = null;
   private bookingId: string | null = null;
   private recordingStopRequested = false;
+  private endSessionTimer: ReturnType<typeof setInterval> | null = null;
+  private sessionStartsAt = 0;
+  private sessionDurationMinutes = 0;
+  private canEndSessionRole = false;
 
   protected readonly connecting = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly showDevicePanel = signal(false);
+  protected readonly canEndSession = signal(false);
+  protected readonly endingSession = signal(false);
   protected readonly remoteJoined = computed(
     () => !!(this.agora.remoteAudioTrack() || this.agora.remoteVideoTrack()),
   );
@@ -285,6 +322,11 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
         credentials.token,
         credentials.uid,
       );
+      this.sessionStartsAt = new Date(credentials.scheduled_at).getTime();
+      this.sessionDurationMinutes = credentials.duration_minutes;
+      this.canEndSessionRole = credentials.can_end_session;
+      this.refreshEndSessionAvailability();
+      this.endSessionTimer = setInterval(() => this.refreshEndSessionAvailability(), 15_000);
     } catch (error) {
       this.error.set(
         error instanceof Error
@@ -297,6 +339,7 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.endSessionTimer !== null) clearInterval(this.endSessionTimer);
     void this.agora.leave();
   }
 
@@ -329,6 +372,24 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
     void this.agora.leave().then(() => this.backToSessions());
   }
 
+  protected async endSession(result: unknown): Promise<void> {
+    if (result !== true || !this.groupId || !this.bookingId || this.endingSession()) return;
+
+    this.endingSession.set(true);
+    try {
+      await firstValueFrom(this.api.endBooking(this.groupId, this.bookingId));
+      await this.agora.leave();
+      this.backToSessions();
+    } catch {
+      this.endingSession.set(false);
+      this.shell.showToast(
+        this.transloco.translate('toast.errorTitle'),
+        this.transloco.translate('sessions.end.failed'),
+        'error',
+      );
+    }
+  }
+
   protected backToSessions(): void {
     void this.router.navigate(['/sessions', 'upcoming']);
   }
@@ -341,6 +402,12 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
         this.recordingStopRequested = false;
       },
     });
+  }
+
+  private refreshEndSessionAvailability(): void {
+    const endsAt = this.sessionStartsAt + this.sessionDurationMinutes * 60 * 1000;
+    const now = Date.now();
+    this.canEndSession.set(this.canEndSessionRole && this.sessionStartsAt <= now && now < endsAt);
   }
 
   @HostListener('document:click', ['$event'])

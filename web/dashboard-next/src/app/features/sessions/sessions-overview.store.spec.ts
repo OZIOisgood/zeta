@@ -79,6 +79,30 @@ describe('SessionsOverviewStore', () => {
     expect(store.completedBookings().map((current) => current.id)).toEqual(['completed']);
   });
 
+  it('moves an early-ended booking out of upcoming sessions', async () => {
+    const ended = booking('ended', 'done');
+    ended.scheduled_at = '2099-05-16T12:00:00Z';
+    ended.ended_at = '2026-07-13T20:00:00Z';
+
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: CoachingApiClient,
+          useValue: {
+            listAllMyBookings: () => of([ended]),
+          },
+        },
+      ],
+    });
+
+    const store = TestBed.inject(SessionsOverviewStore);
+
+    await store.loadBookings();
+
+    expect(store.upcomingBookings()).toHaveLength(0);
+    expect(store.completedBookings().map((current) => current.id)).toEqual(['ended']);
+  });
+
   it('updates a booking after cancellation', async () => {
     const future = booking('booking-1', 'pending');
     future.scheduled_at = '2099-05-16T12:00:00Z';
