@@ -22,6 +22,8 @@ export type GroupMember = {
   full_name?: string;
   avatar?: string;
   role?: 'admin' | 'expert' | 'student' | string;
+  /** True when the member has no name yet (never completed onboarding). */
+  name_pending?: boolean;
   name: string;
 };
 

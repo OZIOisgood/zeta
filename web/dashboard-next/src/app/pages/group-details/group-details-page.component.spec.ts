@@ -19,7 +19,17 @@ const group = {
 };
 
 describe('GroupDetailsPageComponent', () => {
-  function configure(permissions: string[]) {
+  function configure(permissions: string[], overrides?: { students?: unknown[] }) {
+    const defaultStudents = [
+      {
+        id: 'student-1',
+        display_name: 'Student O.',
+        full_name: 'Student One',
+        avatar: '',
+        role: 'student',
+        name: 'Student O.',
+      },
+    ];
     const groupsApi = {
       getGroup: vi.fn(() => of(group)),
       listGroupInvitations: vi.fn(() => of([])),
@@ -37,16 +47,7 @@ describe('GroupDetailsPageComponent', () => {
       listGroupMembers: vi.fn((_groupId: string, kind: 'students' | 'experts') =>
         of(
           kind === 'students'
-            ? [
-                {
-                  id: 'student-1',
-                  display_name: 'Student O.',
-                  full_name: 'Student One',
-                  avatar: '',
-                  role: 'student',
-                  name: 'Student O.',
-                },
-              ]
+            ? (overrides?.students ?? defaultStudents)
             : [
                 {
                   id: 'expert-1',
@@ -107,6 +108,7 @@ describe('GroupDetailsPageComponent', () => {
                   removed: '{{name}} removed',
                   removeFailed: 'Failed to remove user',
                   removeUser: 'Remove User',
+                  namePending: 'No name yet',
                 },
                 phase4: { noDescription: 'No description.' },
               },
@@ -172,6 +174,28 @@ describe('GroupDetailsPageComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('expert@example.com');
     expect(groupsApi.listGroupInvitations).toHaveBeenCalledWith(group.id);
     expect(fixture.nativeElement.textContent).toContain('Group invitations');
+  });
+
+  it('renders a localized placeholder for a member without a name', async () => {
+    configure(['groups:user-list:read'], {
+      students: [
+        {
+          id: 'student-pending',
+          display_name: 'User',
+          avatar: '',
+          role: 'student',
+          name: 'User',
+          name_pending: true,
+        },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(GroupDetailsPageComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('No name yet');
+    expect(fixture.nativeElement.textContent).not.toContain('User');
   });
 
   it('hides member lists without granular member permissions', async () => {

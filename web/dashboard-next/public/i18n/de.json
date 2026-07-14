@@ -535,7 +535,8 @@
       "removeUser": "Benutzer entfernen",
       "confirmRemove": "Möchtest du {{name}} wirklich aus dieser Gruppe entfernen?",
       "removed": "{{name}} wurde aus der Gruppe entfernt",
-      "removeFailed": "Benutzer konnte nicht entfernt werden"
+      "removeFailed": "Benutzer konnte nicht entfernt werden",
+      "namePending": "Noch ohne Namen"
     },
     "phase4": {
       "summary": "Durchsuche Coaching-Gruppen, öffne Gruppenseiten und bereite Einladungen vor.",

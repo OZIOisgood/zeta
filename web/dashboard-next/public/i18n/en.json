@@ -535,7 +535,8 @@
       "removeUser": "Remove User",
       "confirmRemove": "Are you sure you want to remove {{name}} from this group?",
       "removed": "{{name}} has been removed from the group",
-      "removeFailed": "Failed to remove user"
+      "removeFailed": "Failed to remove user",
+      "namePending": "No name yet"
     },
     "phase4": {
       "summary": "Browse coaching groups, open group pages, and prepare invitations.",

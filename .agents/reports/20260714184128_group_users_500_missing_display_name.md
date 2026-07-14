@@ -29,18 +29,41 @@ errors (incl. `pgx.ErrNoRows` for a missing row) still return 500 — that invar
 and its existing test is preserved. `RequireDisplayName` stays in force where a name is truly
 required (coaching emails, assets, invitations).
 
+### Name-pending placeholder (UX follow-through)
+
+The un-onboarded member would otherwise render as the hardcoded English `"User"` in an
+otherwise-localized UI. Instead of string-matching that fallback in the client, the API now emits
+an explicit `name_pending` boolean (true when a member has no alias and no first/last name).
+`display_name` is unchanged as a graceful fallback for any non-flag-aware consumer. The dashboard
+reads the flag and renders a localized placeholder ("Noch ohne Namen" / "No name yet" / "Sans nom
+pour le moment") in muted italic, with a neutral `?` avatar initial. On `main` the web dashboard
+is the only consumer of this endpoint (mobile is not yet merged).
+
 ## Files touched
 
 - `internal/users/handler.go` — remove per-member `RequireDisplayName` gate; guard expert/admin
-  full-name fallback.
-- `internal/users/handler_test.go` — add `TestListGroupUsersMemberWithBlankNameDegradesInsteadOf500`
-  (reproduces the exact prod error; asserts 200 + `display_name == "User"`).
+  full-name fallback; add `name_pending` to the member payload.
+- `internal/preferences/profile.go` — add `IsNamePending` (no alias and no first/last name).
+- `internal/preferences/profile_test.go` — table test for `IsNamePending`.
+- `internal/users/handler_test.go` — `TestListGroupUsersMemberWithBlankNameDegradesInsteadOf500`
+  (reproduces the exact prod error; asserts 200 + `display_name == "User"` + `name_pending`);
+  named-member assertion that the flag is absent.
+- `web/dashboard-next/src/app/core/http/groups-api.service.ts` — `name_pending?: boolean` on
+  `GroupMember`.
+- `web/dashboard-next/src/app/pages/group-details/group-details-page.component.ts` — localized
+  placeholder + muted style, `?` avatar initial, `memberLabel` used for alt/remove-dialog/toast.
+- `web/dashboard-next/src/app/pages/group-details/group-details-page.component.spec.ts` — render
+  test for the placeholder.
+- `web/dashboard-next/public/i18n/{en,de,fr}.json` — `groups.users.namePending`.
 
 ## Verification
 
-- New test RED first (status 500, `err="user display name is missing"`), GREEN after fix.
-- `go test ./internal/users/ ./internal/preferences/` — pass; existing ErrNoRows→500 test still green.
-- `go build ./...`, `go vet ./internal/users/`, `gofmt -l` — clean.
+- Backend test RED first (status 500, `err="user display name is missing"`), GREEN after fix;
+  `name_pending` assertion RED then GREEN.
+- Frontend placeholder spec RED (rendered `UUser`) then GREEN.
+- `go test ./internal/users/ ./internal/preferences/` — pass; existing ErrNoRows→500 test green.
+- `go build ./...`, `go vet`, `gofmt -l` — clean.
+- Dashboard: `ng build` ok, `ng test` 148/148 pass, `prettier --check` clean.
 
 ## Follow-ups
 

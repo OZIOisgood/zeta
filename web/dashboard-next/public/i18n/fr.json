@@ -535,7 +535,8 @@
       "removeUser": "Retirer l'utilisateur",
       "confirmRemove": "Êtes-vous sûr de vouloir retirer {{name}} de ce groupe ?",
       "removed": "{{name}} a été retiré du groupe",
-      "removeFailed": "Échec du retrait de l'utilisateur"
+      "removeFailed": "Échec du retrait de l'utilisateur",
+      "namePending": "Sans nom pour le moment"
     },
     "phase4": {
       "summary": "Parcourez les groupes de coaching, ouvrez les pages de groupe et préparez les invitations.",

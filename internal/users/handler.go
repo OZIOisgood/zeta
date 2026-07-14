@@ -27,6 +27,10 @@ type groupUser struct {
 	FullName    string `json:"full_name,omitempty"`
 	Avatar      string `json:"avatar,omitempty"`
 	Role        string `json:"role"`
+	// NamePending is true when the member has no name yet (never completed
+	// onboarding); clients render a localized placeholder instead of the
+	// derived DisplayName fallback.
+	NamePending bool `json:"name_pending,omitempty"`
 }
 
 type Handler struct {
@@ -177,6 +181,7 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 					FullName:    fullName,
 					Avatar:      prefs.Avatar,
 					Role:        roleByUserID[userID],
+					NamePending: preferences.IsNamePending(prefs),
 				},
 			}
 		}(i, uid)

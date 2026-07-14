@@ -208,6 +208,9 @@ func TestListGroupUsersMemberWithBlankNameDegradesInsteadOf500(t *testing.T) {
 	if got := body.Data[0]["display_name"]; got != "User" {
 		t.Fatalf("got display_name %v, want fallback \"User\"", got)
 	}
+	if got := body.Data[0]["name_pending"]; got != true {
+		t.Fatalf("got name_pending %v, want true for a member without a name", got)
+	}
 }
 
 func TestListGroupUsersFiltersStudents(t *testing.T) {
@@ -275,6 +278,9 @@ func TestListGroupUsersFiltersStudents(t *testing.T) {
 	}
 	if got := body.Data[0]["display_name"]; got != "Student Alias" {
 		t.Fatalf("got display_name %v, want Student Alias", got)
+	}
+	if _, ok := body.Data[0]["name_pending"]; ok {
+		t.Fatalf("named member must not be flagged name_pending: %#v", body.Data[0])
 	}
 }
 

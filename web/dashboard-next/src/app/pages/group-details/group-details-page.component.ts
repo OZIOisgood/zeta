@@ -169,11 +169,19 @@ import { GroupInvitationsSectionComponent } from './group-invitations-section.co
                           class="size-11"
                           [image]="member.avatar"
                           [fallback]="memberInitials(member)"
-                          [alt]="member.name"
+                          [alt]="memberLabel(member)"
                         />
                         <div class="min-w-0 flex-1">
                           <div class="flex flex-wrap items-center gap-2">
-                            <p class="truncate text-sm font-semibold">{{ member.name }}</p>
+                            @if (member.name_pending) {
+                              <p
+                                class="truncate text-sm font-semibold italic text-[var(--z-muted)]"
+                              >
+                                {{ 'groups.users.namePending' | transloco }}
+                              </p>
+                            } @else {
+                              <p class="truncate text-sm font-semibold">{{ member.name }}</p>
+                            }
                             @if (member.role) {
                               <z-badge tone="primary">
                                 {{ 'groups.roles.' + member.role | transloco }}
@@ -192,7 +200,8 @@ import { GroupInvitationsSectionComponent } from './group-invitations-section.co
                             <z-confirm-dialog
                               [title]="'groups.users.removeUser' | transloco"
                               [description]="
-                                'groups.users.confirmRemove' | transloco: { name: member.name }
+                                'groups.users.confirmRemove'
+                                  | transloco: { name: memberLabel(member) }
                               "
                               tone="danger"
                               [confirmLabel]="'common.actions.remove' | transloco"
@@ -307,6 +316,9 @@ export class GroupDetailsPageComponent {
   }
 
   protected memberInitials(member: GroupMember): string {
+    if (member.name_pending) {
+      return '?';
+    }
     return (
       member.name
         .split(/\s+/)
@@ -316,6 +328,12 @@ export class GroupDetailsPageComponent {
         .join('')
         .toUpperCase() || 'U'
     );
+  }
+
+  /** Display label for a member, falling back to a localized placeholder when
+   *  the member has not entered a name yet. */
+  protected memberLabel(member: GroupMember): string {
+    return member.name_pending ? this.transloco.translate('groups.users.namePending') : member.name;
   }
 
   protected isCurrentUser(userId: string): boolean {
@@ -339,7 +357,7 @@ export class GroupDetailsPageComponent {
     if (removed) {
       this.shell.showToast(
         this.transloco.translate('toast.successTitle'),
-        this.transloco.translate('groups.users.removed', { name: member.name }),
+        this.transloco.translate('groups.users.removed', { name: this.memberLabel(member) }),
         'success',
       );
       return;
