@@ -44,6 +44,14 @@ func firstRuneUpper(value string) string {
 	return ""
 }
 
+// IsNamePending reports whether the member has provided no display name at all —
+// no alias and no first or last name. Such a member (e.g. one who never completed
+// onboarding) is surfaced with a localized placeholder rather than a derived
+// fallback, so callers can render an "onboarding pending" state.
+func IsNamePending(prefs db.UserPreference) bool {
+	return strings.TrimSpace(prefs.DisplayName) == "" && DisplayName(prefs) == ""
+}
+
 func RequireDisplayName(prefs db.UserPreference) (string, error) {
 	name := DisplayName(prefs)
 	if name == "" {

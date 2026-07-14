@@ -27,6 +27,10 @@ type groupUser struct {
 	FullName    string `json:"full_name,omitempty"`
 	Avatar      string `json:"avatar,omitempty"`
 	Role        string `json:"role"`
+	// NamePending is true when the member has no name yet (never completed
+	// onboarding); clients render a localized placeholder instead of the
+	// derived DisplayName fallback.
+	NamePending bool `json:"name_pending,omitempty"`
 }
 
 type Handler struct {
@@ -157,17 +161,18 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 				results[idx] = result{err: err}
 				return
 			}
-			if _, err := preferences.RequireDisplayName(prefs); err != nil {
-				results[idx] = result{err: err}
-				return
-			}
+			// A member whose preferences row exists but carries no name yet
+			// (e.g. never completed onboarding) must not fail the whole list.
+			// PublicDisplayName degrades gracefully to a non-PII fallback.
 			fullName := ""
 			if includeFullName && canViewFullMemberNames(user.Role) {
 				fullName = preferences.DisplayName(prefs)
 			}
 			displayName := preferences.PublicDisplayName(prefs)
 			if roleByUserID[userID] == permissions.RoleExpert || roleByUserID[userID] == permissions.RoleAdmin {
-				displayName = preferences.DisplayName(prefs)
+				if fullDisplayName := preferences.DisplayName(prefs); fullDisplayName != "" {
+					displayName = fullDisplayName
+				}
 			}
 			results[idx] = result{
 				user: groupUser{
@@ -176,6 +181,7 @@ func (h *Handler) listGroupMembers(w http.ResponseWriter, r *http.Request, requi
 					FullName:    fullName,
 					Avatar:      prefs.Avatar,
 					Role:        roleByUserID[userID],
+					NamePending: preferences.IsNamePending(prefs),
 				},
 			}
 		}(i, uid)
