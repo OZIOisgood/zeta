@@ -699,7 +699,21 @@
       "microphoneFallback": "Mikrofon {{index}}",
       "cameraFallback": "Kamera {{index}}",
       "noMicrophone": "Kein Mikrofon verfügbar",
-      "noCamera": "Keine Kamera verfügbar"
+      "noCamera": "Keine Kamera verfügbar",
+      "devicesOptional": "Du bist im Anruf. Kamera und Mikrofon sind optional.",
+      "enableDevices": "Kamera und Mikrofon aktivieren",
+      "permissionDenied": "Der Browserzugriff wurde abgelehnt. Erlaube Kamera oder Mikrofon in den Browsereinstellungen und versuche es erneut.",
+      "deviceMissing": "Keine Kamera und kein Mikrofon gefunden.",
+      "deviceBusy": "Eine andere App verwendet die Kamera oder das Mikrofon.",
+      "unsupported": "Dieser Browser kann Kamera oder Mikrofon hier nicht verwenden.",
+      "publishFailed": "Das Gerät wurde geöffnet, konnte aber nicht in den Anruf übertragen werden. Versuche es erneut.",
+      "mediaFailed": "Kamera oder Mikrofon konnten nicht gestartet werden. Versuche es erneut.",
+      "endsIn": "Endet in {{time}}",
+      "overtime": "Überzeit +{{time}}",
+      "reconnecting": "Verbindung wird wiederhergestellt…",
+      "cameraOff": "Kamera ausgeschaltet",
+      "participantLeft": "Hat den Termin verlassen",
+      "waitingShort": "Warten auf Beitritt…"
     }
   },
   "preferences": {

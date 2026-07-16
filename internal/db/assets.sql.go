@@ -43,8 +43,44 @@ func (q *Queries) CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset
 	return i, err
 }
 
+const createOrderedVideoFromMuxAsset = `-- name: CreateOrderedVideoFromMuxAsset :one
+INSERT INTO videos (asset_id, mux_upload_id, mux_asset_id, playback_id, status, sort_order)
+VALUES ($1, '', $2, $3, 'ready', $4)
+RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at, duration_seconds, sort_order
+`
+
+type CreateOrderedVideoFromMuxAssetParams struct {
+	AssetID    pgtype.UUID `json:"asset_id"`
+	MuxAssetID pgtype.Text `json:"mux_asset_id"`
+	PlaybackID pgtype.Text `json:"playback_id"`
+	SortOrder  pgtype.Int4 `json:"sort_order"`
+}
+
+func (q *Queries) CreateOrderedVideoFromMuxAsset(ctx context.Context, arg CreateOrderedVideoFromMuxAssetParams) (Video, error) {
+	row := q.db.QueryRow(ctx, createOrderedVideoFromMuxAsset,
+		arg.AssetID,
+		arg.MuxAssetID,
+		arg.PlaybackID,
+		arg.SortOrder,
+	)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.AssetID,
+		&i.MuxUploadID,
+		&i.MuxAssetID,
+		&i.PlaybackID,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DurationSeconds,
+		&i.SortOrder,
+	)
+	return i, err
+}
+
 const createVideo = `-- name: CreateVideo :one
-INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at, duration_seconds
+INSERT INTO videos (asset_id, mux_upload_id, status) VALUES ($1, $2, $3) RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at, duration_seconds, sort_order
 `
 
 type CreateVideoParams struct {
@@ -66,6 +102,7 @@ func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DurationSeconds,
+		&i.SortOrder,
 	)
 	return i, err
 }
@@ -73,7 +110,7 @@ func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video
 const createVideoFromMuxAsset = `-- name: CreateVideoFromMuxAsset :one
 INSERT INTO videos (asset_id, mux_upload_id, mux_asset_id, playback_id, status)
 VALUES ($1, '', $2, $3, 'ready')
-RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at, duration_seconds
+RETURNING id, asset_id, mux_upload_id, mux_asset_id, playback_id, status, created_at, updated_at, duration_seconds, sort_order
 `
 
 type CreateVideoFromMuxAssetParams struct {
@@ -95,12 +132,13 @@ func (q *Queries) CreateVideoFromMuxAsset(ctx context.Context, arg CreateVideoFr
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DurationSeconds,
+		&i.SortOrder,
 	)
 	return i, err
 }
 
 const getAsset = `-- name: GetAsset :one
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true LEFT JOIN groups g ON g.id = a.group_id WHERE a.id = $1
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY sort_order ASC NULLS LAST, created_at ASC, id ASC LIMIT 1) v ON true LEFT JOIN groups g ON g.id = a.group_id WHERE a.id = $1
 `
 
 type GetAssetRow struct {
@@ -146,7 +184,7 @@ FROM videos v
 LEFT JOIN video_reviews r ON v.id = r.video_id
 WHERE v.asset_id = $1
 GROUP BY v.id
-ORDER BY v.created_at ASC
+ORDER BY v.sort_order ASC NULLS LAST, v.created_at ASC, v.id ASC
 `
 
 type GetAssetVideosRow struct {
@@ -196,7 +234,7 @@ LEFT JOIN LATERAL (
     SELECT playback_id, mux_upload_id, mux_asset_id
     FROM videos
     WHERE asset_id = a.id
-    ORDER BY created_at ASC
+    ORDER BY sort_order ASC NULLS LAST, created_at ASC, id ASC
     LIMIT 1
 ) v ON true
 LEFT JOIN groups g ON g.id = a.group_id
@@ -258,6 +296,36 @@ func (q *Queries) GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams
 	return i, err
 }
 
+const isRecordingAssetStillOpen = `-- name: IsRecordingAssetStillOpen :one
+SELECT EXISTS (
+    SELECT 1
+    FROM coaching_bookings booking
+    WHERE booking.recording_asset_id = $1
+      AND (
+          booking.scheduled_at + (booking.duration_minutes * interval '1 minute')
+              + interval '15 minutes' > NOW()
+          OR EXISTS (
+              SELECT 1
+              FROM coaching_booking_recordings recording
+              LEFT JOIN coaching_recording_imports recording_import
+                ON recording_import.recording_id = recording.id
+              WHERE recording.booking_id = booking.id
+                AND (
+                    recording.status IN ('starting', 'started', 'stopping')
+                    OR recording_import.status IN ('pending', 'importing', 'processing', 'failed')
+                )
+          )
+      )
+)
+`
+
+func (q *Queries) IsRecordingAssetStillOpen(ctx context.Context, recordingAssetID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, isRecordingAssetStillOpen, recordingAssetID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const listVideosMissingDuration = `-- name: ListVideosMissingDuration :many
 SELECT id, mux_asset_id, mux_upload_id
 FROM videos
@@ -314,7 +382,7 @@ LEFT JOIN LATERAL (
     SELECT playback_id, mux_upload_id, mux_asset_id
     FROM videos
     WHERE asset_id = a.id
-    ORDER BY created_at ASC
+    ORDER BY sort_order ASC NULLS LAST, created_at ASC, id ASC
     LIMIT 1
 ) v ON true
 LEFT JOIN LATERAL (

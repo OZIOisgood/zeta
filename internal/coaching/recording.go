@@ -14,12 +14,9 @@ import (
 	"strings"
 	"time"
 
-	rtctokenbuilder "github.com/AgoraIO-Community/go-tokenbuilder/rtctokenbuilder2"
-	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/logger"
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -28,7 +25,6 @@ const (
 	expertParticipantUID  = "2"
 	recordingBotUID       = "3"
 	recordingBotUIDNum    = uint32(3)
-	recordingCleanupGrace = 2 * time.Minute
 )
 
 // RecordingClient abstracts Agora Cloud Recording for tests and for keeping
@@ -42,6 +38,9 @@ type StartRecordingRequest struct {
 	ChannelName string
 	Token       string
 	BookingID   string
+	AttemptID   string
+	UID         string
+	RendererURL string
 }
 
 type StartedRecording struct {
@@ -83,6 +82,16 @@ type agoraCloudRecordingClient struct {
 	cfg        AgoraCloudRecordingConfig
 }
 
+// Agora recommends checking Page Recording after receiving the SID because a
+// successful Start response does not prove that the renderer page loaded.
+var agoraWebQueryBackoff = []time.Duration{
+	5 * time.Second,
+	10 * time.Second,
+	15 * time.Second,
+	30 * time.Second,
+	30 * time.Second,
+}
+
 func NewAgoraCloudRecordingClient(logger *slog.Logger, cfg AgoraCloudRecordingConfig) RecordingClient {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = "https://api.sd-rtn.com"
@@ -117,12 +126,23 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 		return StartedRecording{}, err
 	}
 
-	prefix := c.fileNamePrefix(req.BookingID)
+	recordingUID := req.UID
+	if recordingUID == "" {
+		recordingUID = recordingBotUID
+	}
+	prefix := c.fileNamePrefix(req.BookingID, req.AttemptID)
+	scene := 0
+	if c.cfg.Mode == "web" {
+		scene = 1
+		if strings.TrimSpace(req.RendererURL) == "" {
+			return StartedRecording{}, errors.New("web page recording requires a renderer URL")
+		}
+	}
 	acquireReq := acquireRecordingRequest{
 		CName: req.ChannelName,
-		UID:   recordingBotUID,
+		UID:   recordingUID,
 		ClientRequest: acquireClientRequest{
-			Scene:               0,
+			Scene:               scene,
 			ResourceExpiredHour: 24,
 		},
 	}
@@ -143,29 +163,9 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 	)
 	startReq := startRecordingRequest{
 		CName: req.ChannelName,
-		UID:   recordingBotUID,
+		UID:   recordingUID,
 		ClientRequest: startClientRequest{
 			Token: req.Token,
-			RecordingConfig: recordingConfig{
-				ChannelType:        0,
-				MaxIdleTime:        c.cfg.MaxIdleTime,
-				StreamTypes:        2,
-				VideoStreamType:    0,
-				SubscribeAudioUIDs: []string{"#allstream#"},
-				SubscribeVideoUIDs: []string{studentParticipantUID, expertParticipantUID},
-				AudioProfile:       1,
-				TranscodingConfig: transcodingConfig{
-					Width:            c.cfg.TranscodingWidth,
-					Height:           c.cfg.TranscodingHeight,
-					Bitrate:          c.cfg.TranscodingBitrate,
-					FPS:              c.cfg.TranscodingFPS,
-					MixedVideoLayout: 1,
-					BackgroundColor:  "#000000",
-				},
-			},
-			RecordingFileConfig: recordingFileConfig{
-				AVFileType: []string{"hls", "mp4"},
-			},
 			StorageConfig: storageConfig{
 				Vendor:         c.cfg.StorageVendor,
 				Region:         c.cfg.StorageRegion,
@@ -176,6 +176,51 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 			},
 		},
 	}
+	if c.cfg.Mode == "web" {
+		startReq.ClientRequest.RecordingFileConfig = &recordingFileConfig{AVFileType: []string{"hls", "mp4"}}
+		startReq.ClientRequest.ExtensionServiceConfig = &extensionServiceConfig{
+			ErrorHandlePolicy: "error_abort",
+			ExtensionServices: []extensionService{
+				{
+					ServiceName:       "web_recorder_service",
+					ErrorHandlePolicy: "error_abort",
+					ServiceParam: webRecorderServiceParam{
+						URL:              req.RendererURL,
+						AudioProfile:     1,
+						VideoWidth:       c.cfg.TranscodingWidth,
+						VideoHeight:      c.cfg.TranscodingHeight,
+						VideoBitrate:     c.cfg.TranscodingBitrate,
+						VideoFPS:         c.cfg.TranscodingFPS,
+						MaxRecordingHour: 4,
+						ReadyTimeout:     60,
+						// Agora measures this value in minutes. Zeta sessions are at most 120 minutes.
+						MaxVideoDuration: 240,
+					},
+				},
+			},
+		}
+	} else {
+		startReq.ClientRequest.RecordingConfig = &recordingConfig{
+			ChannelType:        0,
+			MaxIdleTime:        c.cfg.MaxIdleTime,
+			StreamTypes:        2,
+			VideoStreamType:    0,
+			SubscribeAudioUIDs: []string{"#allstream#"},
+			SubscribeVideoUIDs: []string{studentParticipantUID, expertParticipantUID},
+			AudioProfile:       1,
+			TranscodingConfig: transcodingConfig{
+				Width:            c.cfg.TranscodingWidth,
+				Height:           c.cfg.TranscodingHeight,
+				Bitrate:          c.cfg.TranscodingBitrate,
+				FPS:              c.cfg.TranscodingFPS,
+				MixedVideoLayout: 1,
+				BackgroundColor:  "#000000",
+			},
+		}
+		startReq.ClientRequest.RecordingFileConfig = &recordingFileConfig{
+			AVFileType: []string{"hls", "mp4"},
+		}
+	}
 
 	var startResp startRecordingResponse
 	if err := c.doJSON(ctx, http.MethodPost, startPath, startReq, &startResp); err != nil {
@@ -184,13 +229,48 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 	if startResp.SID == "" {
 		return StartedRecording{}, errors.New("start agora recording: empty sid")
 	}
+	if c.cfg.Mode == "web" {
+		if err := c.waitForWebRecording(ctx, req.ChannelName, recordingUID, acquireResp.ResourceID, startResp.SID); err != nil {
+			_ = c.Stop(context.WithoutCancel(ctx), StopRecordingRequest{
+				ChannelName: req.ChannelName, ResourceID: acquireResp.ResourceID, SID: startResp.SID, UID: recordingUID,
+			})
+			return StartedRecording{}, err
+		}
+	}
 
 	return StartedRecording{
 		ResourceID:     startResp.ResourceID,
 		SID:            startResp.SID,
-		UID:            recordingBotUID,
+		UID:            recordingUID,
 		FileNamePrefix: prefix,
 	}, nil
+}
+
+func (c *agoraCloudRecordingClient) waitForWebRecording(ctx context.Context, channelName, uid, resourceID, sid string) error {
+	queryPath := fmt.Sprintf(
+		"/v1/apps/%s/cloud_recording/resourceid/%s/sid/%s/mode/web/query",
+		url.PathEscape(c.cfg.AppID), url.PathEscape(resourceID), url.PathEscape(sid),
+	)
+	for _, delay := range agoraWebQueryBackoff {
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+		}
+		var queryResp queryRecordingResponse
+		if err := c.doJSON(ctx, http.MethodGet, queryPath, nil, &queryResp); err != nil {
+			continue
+		}
+		if queryResp.ServerResponse.Status == 4 || queryResp.ServerResponse.Status == 5 {
+			return nil
+		}
+		if queryResp.ServerResponse.Status == 20 {
+			return errors.New("agora page recording exited unexpectedly")
+		}
+	}
+	return fmt.Errorf("agora page recording did not become ready for channel %s", channelName)
 }
 
 func (c *agoraCloudRecordingClient) Stop(ctx context.Context, req StopRecordingRequest) error {
@@ -233,24 +313,35 @@ func (c *agoraCloudRecordingClient) validate() error {
 	return nil
 }
 
-func (c *agoraCloudRecordingClient) fileNamePrefix(bookingID string) []string {
+func (c *agoraCloudRecordingClient) fileNamePrefix(bookingID, attemptID string) []string {
 	prefix := append([]string{}, c.cfg.FileNamePrefix...)
 	prefix = append(prefix, sanitizeAgoraPathPart(bookingID))
+	if attemptID != "" {
+		prefix = append(prefix, sanitizeAgoraPathPart(attemptID))
+	}
 	return prefix
 }
 
 func (c *agoraCloudRecordingClient) doJSON(ctx context.Context, method, path string, body any, out any) error {
 	base := strings.TrimRight(c.cfg.BaseURL, "/")
-	payload, err := json.Marshal(body)
-	if err != nil {
-		return err
+	var payload []byte
+	var bodyReader io.Reader
+	if body != nil {
+		var err error
+		payload, err = json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		bodyReader = bytes.NewReader(payload)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, method, base+path, bytes.NewReader(payload))
+	httpReq, err := http.NewRequestWithContext(ctx, method, base+path, bodyReader)
 	if err != nil {
 		return err
 	}
-	httpReq.Header.Set("Content-Type", "application/json;charset=utf-8")
+	if body != nil {
+		httpReq.Header.Set("Content-Type", "application/json;charset=utf-8")
+	}
 	credential := base64.StdEncoding.EncodeToString([]byte(c.cfg.CustomerID + ":" + c.cfg.CustomerSecret))
 	httpReq.Header.Set("Authorization", "Basic "+credential)
 
@@ -311,10 +402,34 @@ type startRecordingRequest struct {
 }
 
 type startClientRequest struct {
-	Token               string              `json:"token,omitempty"`
-	StorageConfig       storageConfig       `json:"storageConfig"`
-	RecordingConfig     recordingConfig     `json:"recordingConfig"`
-	RecordingFileConfig recordingFileConfig `json:"recordingFileConfig"`
+	Token                  string                  `json:"token,omitempty"`
+	StorageConfig          storageConfig           `json:"storageConfig"`
+	RecordingConfig        *recordingConfig        `json:"recordingConfig,omitempty"`
+	RecordingFileConfig    *recordingFileConfig    `json:"recordingFileConfig,omitempty"`
+	ExtensionServiceConfig *extensionServiceConfig `json:"extensionServiceConfig,omitempty"`
+}
+
+type extensionServiceConfig struct {
+	ErrorHandlePolicy string             `json:"errorHandlePolicy"`
+	ExtensionServices []extensionService `json:"extensionServices"`
+}
+
+type extensionService struct {
+	ServiceName       string                  `json:"serviceName"`
+	ErrorHandlePolicy string                  `json:"errorHandlePolicy"`
+	ServiceParam      webRecorderServiceParam `json:"serviceParam"`
+}
+
+type webRecorderServiceParam struct {
+	URL              string `json:"url"`
+	AudioProfile     int    `json:"audioProfile"`
+	VideoWidth       int    `json:"videoWidth"`
+	VideoHeight      int    `json:"videoHeight"`
+	VideoBitrate     int    `json:"videoBitrate"`
+	VideoFPS         int    `json:"videoFps"`
+	MaxRecordingHour int    `json:"maxRecordingHour"`
+	ReadyTimeout     int    `json:"readyTimeout"`
+	MaxVideoDuration int    `json:"maxVideoDuration"`
 }
 
 type recordingConfig struct {
@@ -355,6 +470,12 @@ type startRecordingResponse struct {
 	SID        string `json:"sid"`
 }
 
+type queryRecordingResponse struct {
+	ServerResponse struct {
+		Status int `json:"status"`
+	} `json:"serverResponse"`
+}
+
 type stopRecordingRequest struct {
 	CName         string            `json:"cname"`
 	UID           string            `json:"uid"`
@@ -365,150 +486,30 @@ type stopClientRequest struct {
 	AsyncStop bool `json:"async_stop"`
 }
 
-func (h *Handler) ensureRecordingStarted(ctx context.Context, booking db.CoachingBooking, userID, channelName string) error {
-	if !h.recordingEnabled {
-		return nil
-	}
-	if h.recordingClient == nil {
-		return errors.New("recording is enabled but no recording client is configured")
-	}
-	if h.pool == nil {
-		return errors.New("recording requires a database pool")
-	}
-
-	recordingToken, err := rtctokenbuilder.BuildTokenWithUid(
-		h.agoraAppID,
-		h.agoraAppCertificate,
-		channelName,
-		recordingBotUIDNum,
-		rtctokenbuilder.RolePublisher,
-		TokenExpiration,
-		TokenExpiration,
-	)
-	if err != nil {
-		return fmt.Errorf("build recording token: %w", err)
-	}
-
-	tx, err := h.pool.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx) //nolint:errcheck
-
-	qtx := db.New(tx)
-	lockedBooking, err := qtx.GetBookingForRecordingUpdate(ctx, db.GetBookingForRecordingUpdateParams{
-		ID:       booking.ID,
-		ExpertID: userID,
-	})
-	if err != nil {
-		return err
-	}
-	existingRecording, err := qtx.GetBookingRecordingForUpdate(ctx, lockedBooking.ID)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return err
-	}
-	if err == nil && recordingAlreadyStarted(existingRecording) {
-		return tx.Commit(ctx)
-	}
-
-	started, err := h.recordingClient.Start(ctx, StartRecordingRequest{
-		ChannelName: channelName,
-		Token:       recordingToken,
-		BookingID:   uuidToString(booking.ID),
-	})
-	if err != nil {
-		_ = qtx.MarkBookingRecordingFailed(ctx, db.MarkBookingRecordingFailedParams{
-			BookingID: booking.ID,
-			Error:     pgtype.Text{String: truncateRecordingError(err.Error()), Valid: true},
-		})
-		_ = tx.Commit(ctx)
-		return err
-	}
-
-	_, err = qtx.MarkBookingRecordingStarted(ctx, db.MarkBookingRecordingStartedParams{
-		BookingID:  booking.ID,
-		ResourceID: pgtype.Text{String: started.ResourceID, Valid: true},
-		Sid:        pgtype.Text{String: started.SID, Valid: true},
-		Uid:        pgtype.Text{String: started.UID, Valid: true},
-		FilePrefix: started.FileNamePrefix,
-	})
-	if err != nil {
-		return err
-	}
-	return tx.Commit(ctx)
-}
-
-func (h *Handler) StopBookingRecording(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	user := auth.GetUser(ctx)
-	if user == nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	bookingID, err := parseUUIDFromRequest(r)
-	if err != nil {
-		http.Error(w, "Invalid booking ID", http.StatusBadRequest)
-		return
-	}
-
-	booking, err := h.q.GetBooking(ctx, db.GetBookingParams{
-		ID:       bookingID,
-		ExpertID: user.ID,
-	})
-	if err != nil {
-		http.Error(w, "Booking not found", http.StatusNotFound)
-		return
-	}
-
-	if !recordingShouldStopOnParticipantLeave(booking, time.Now()) {
-		log := logger.From(ctx, h.logger)
-		log.InfoContext(ctx, "booking_recording_stop_deferred",
-			slog.String("component", "coaching"),
-			slog.String("booking_id", uuidToString(booking.ID)),
-		)
-		writeJSON(w, http.StatusOK, map[string]string{"status": "deferred"})
-		return
-	}
-
-	if err := h.stopRecordingForBooking(ctx, booking.ID); err != nil {
-		log := logger.From(ctx, h.logger)
-		log.ErrorContext(ctx, "booking_recording_stop_failed",
-			slog.String("component", "coaching"),
-			slog.String("booking_id", uuidToString(booking.ID)),
-			slog.Any("err", err),
-		)
-		http.Error(w, "Failed to stop recording", http.StatusInternalServerError)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-}
-
 func (h *Handler) CleanupFinishedRecordings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
-
-	bookings, err := h.q.ListRecordingsPastEnd(ctx, db.ListRecordingsPastEndParams{
-		GraceSeconds: int32(recordingCleanupGrace / time.Second),
-		LimitCount:   100,
-	})
-	if err != nil {
-		log.ErrorContext(ctx, "list_finished_recordings_failed",
-			slog.String("component", "coaching"),
-			slog.Any("err", err),
-		)
-		http.Error(w, "Failed to list recordings", http.StatusInternalServerError)
-		return
+	if _, err := h.q.MarkEmptyRecordingPartsWithoutFreshHumans(ctx, int32(h.recordingPresenceTTL/time.Second)); err != nil {
+		log.ErrorContext(ctx, "mark_empty_recording_parts_failed",
+			slog.String("component", "coaching"), slog.Any("err", err))
 	}
 
+	parts, err := h.q.ListRecordingPartsReadyToStop(ctx, db.ListRecordingPartsReadyToStopParams{
+		EmptyGraceSeconds: int32(h.recordingEmptyGrace / time.Second),
+		EndGraceSeconds:   int32(h.recordingEndGrace / time.Second),
+		LimitCount:        100,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "list_recording_parts_ready_to_stop_failed",
+			slog.String("component", "coaching"), slog.Any("err", err))
+		http.Error(w, "Failed to list recording parts", http.StatusInternalServerError)
+		return
+	}
 	stopped := 0
-	for _, booking := range bookings {
-		if err := h.stopRecordingForBooking(ctx, booking.BookingID); err != nil {
-			log.ErrorContext(ctx, "finished_recording_cleanup_failed",
-				slog.String("component", "coaching"),
-				slog.String("booking_id", uuidToString(booking.BookingID)),
-				slog.Any("err", err),
-			)
+	for _, part := range parts {
+		if err := h.stopRecordingPart(ctx, part); err != nil {
+			log.ErrorContext(ctx, "recording_part_cleanup_failed",
+				slog.String("component", "coaching"), slog.String("recording_id", uuidToString(part.ID)), slog.Any("err", err))
 			continue
 		}
 		stopped++
@@ -525,77 +526,13 @@ func (h *Handler) CleanupFinishedRecordings(w http.ResponseWriter, r *http.Reque
 	}
 
 	writeJSON(w, http.StatusOK, map[string]int{
-		"processed":        len(bookings),
-		"stopped":          stopped,
+		"parts_processed":  len(parts),
+		"parts_stopped":    stopped,
 		"imports":          imports.Processed,
 		"imports_ready":    imports.Ready,
 		"imports_deferred": imports.Deferred,
 		"imports_failed":   imports.Failed,
 	})
-}
-
-func (h *Handler) stopRecordingForBooking(ctx context.Context, bookingID pgtype.UUID) error {
-	if !h.recordingEnabled || h.recordingClient == nil {
-		return nil
-	}
-
-	stopping, err := h.q.MarkBookingRecordingStopping(ctx, bookingID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil
-		}
-		return err
-	}
-	if !recordingCanStop(stopping) {
-		return nil
-	}
-	if !stopping.ResourceID.Valid || !stopping.Sid.Valid {
-		return nil
-	}
-
-	recordingUID := recordingBotUID
-	if stopping.Uid.Valid && stopping.Uid.String != "" {
-		recordingUID = stopping.Uid.String
-	}
-	err = h.recordingClient.Stop(ctx, StopRecordingRequest{
-		ChannelName: "coaching_" + uuidToString(stopping.BookingID),
-		ResourceID:  stopping.ResourceID.String,
-		SID:         stopping.Sid.String,
-		UID:         recordingUID,
-	})
-	if err != nil {
-		_ = h.q.MarkBookingRecordingFailed(ctx, db.MarkBookingRecordingFailedParams{
-			BookingID: stopping.BookingID,
-			Error:     pgtype.Text{String: truncateRecordingError(err.Error()), Valid: true},
-		})
-		return err
-	}
-
-	_, err = h.q.MarkBookingRecordingStopped(ctx, stopping.BookingID)
-	if err != nil {
-		return err
-	}
-	if err := h.enqueueRecordingImport(ctx, stopping.BookingID); err != nil {
-		return err
-	}
-	h.kickRecordingImportProcessing(ctx)
-	return nil
-}
-
-func recordingAlreadyStarted(recording db.CoachingBookingRecording) bool {
-	return recording.Status == db.CoachingRecordingStatusStarted ||
-		recording.Status == db.CoachingRecordingStatusStopping ||
-		recording.Status == db.CoachingRecordingStatusStopped
-}
-
-func recordingCanStop(recording db.CoachingBookingRecording) bool {
-	return recording.Status == db.CoachingRecordingStatusStarted ||
-		recording.Status == db.CoachingRecordingStatusStarting ||
-		recording.Status == db.CoachingRecordingStatusStopping
-}
-
-func recordingShouldStopOnParticipantLeave(booking db.CoachingBooking, now time.Time) bool {
-	return !now.Before(recordingBookingEnd(booking))
 }
 
 func recordingBookingEnd(booking db.CoachingBooking) time.Time {

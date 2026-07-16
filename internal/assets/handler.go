@@ -774,6 +774,20 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	recordingStillOpen, err := h.q.IsRecordingAssetStillOpen(ctx, assetID)
+	if err != nil {
+		log.ErrorContext(ctx, "finalize_asset_recording_state_failed",
+			slog.String("component", "assets"), slog.String("asset_id", idStr), slog.Any("err", err))
+		http.Error(w, "Failed to check recording state", http.StatusInternalServerError)
+		return
+	}
+	if recordingStillOpen {
+		log.WarnContext(ctx, "finalize_asset_rejected_recording_open",
+			slog.String("component", "assets"), slog.String("asset_id", idStr))
+		http.Error(w, "Cannot mark video as reviewed while recording parts are still being prepared", http.StatusConflict)
+		return
+	}
+
 	// Check if all videos have at least one review
 	hasUnreviewed, err := h.q.HasVideosWithoutReviews(ctx, assetID)
 	if err != nil {

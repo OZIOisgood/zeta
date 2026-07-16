@@ -11,6 +11,41 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const assignBookingRecordingAsset = `-- name: AssignBookingRecordingAsset :one
+UPDATE coaching_bookings
+SET recording_asset_id = COALESCE(recording_asset_id, $2), updated_at = NOW()
+WHERE id = $1
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, recording_asset_id, next_recording_part_number
+`
+
+type AssignBookingRecordingAssetParams struct {
+	ID               pgtype.UUID `json:"id"`
+	RecordingAssetID pgtype.UUID `json:"recording_asset_id"`
+}
+
+func (q *Queries) AssignBookingRecordingAsset(ctx context.Context, arg AssignBookingRecordingAssetParams) (CoachingBooking, error) {
+	row := q.db.QueryRow(ctx, assignBookingRecordingAsset, arg.ID, arg.RecordingAssetID)
+	var i CoachingBooking
+	err := row.Scan(
+		&i.ID,
+		&i.ExpertID,
+		&i.StudentID,
+		&i.GroupID,
+		&i.SessionTypeID,
+		&i.ScheduledAt,
+		&i.DurationMinutes,
+		&i.IsCancelled,
+		&i.CancellationReason,
+		&i.CancelledBy,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RecordingAssetID,
+		&i.NextRecordingPartNumber,
+	)
+	return i, err
+}
+
 const cancelBooking = `-- name: CancelBooking :one
 UPDATE coaching_bookings
 SET is_cancelled = true,
@@ -18,7 +53,7 @@ SET is_cancelled = true,
     cancelled_by = $3,
     updated_at = NOW()
 WHERE id = $1 AND (expert_id = $4 OR student_id = $4)
-RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, recording_asset_id, next_recording_part_number
 `
 
 type CancelBookingParams struct {
@@ -50,8 +85,191 @@ func (q *Queries) CancelBooking(ctx context.Context, arg CancelBookingParams) (C
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RecordingAssetID,
+		&i.NextRecordingPartNumber,
 	)
 	return i, err
+}
+
+const claimNextRecordingPart = `-- name: ClaimNextRecordingPart :one
+
+WITH claimed_booking AS (
+    UPDATE coaching_bookings booking
+    SET next_recording_part_number = next_recording_part_number + 1,
+        updated_at = NOW()
+    WHERE booking.id = $5
+      AND NOT EXISTS (
+          SELECT 1 FROM coaching_booking_recordings recording
+          WHERE recording.booking_id = booking.id
+            AND recording.status IN ('starting', 'started', 'stopping')
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM coaching_booking_recordings failed
+          WHERE failed.booking_id = booking.id
+            AND failed.status = 'failed'
+            AND failed.updated_at > NOW() - interval '30 seconds'
+      )
+    RETURNING booking.id, booking.next_recording_part_number - 1 AS part_number
+)
+INSERT INTO coaching_booking_recordings (
+    booking_id, part_number, provider, provider_uid,
+    renderer_token_hash, renderer_token_expires_at
+)
+SELECT id, part_number, $1, $2,
+       $3, $4
+FROM claimed_booking
+RETURNING booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at
+`
+
+type ClaimNextRecordingPartParams struct {
+	Provider               string             `json:"provider"`
+	ProviderUid            pgtype.Text        `json:"provider_uid"`
+	RendererTokenHash      []byte             `json:"renderer_token_hash"`
+	RendererTokenExpiresAt pgtype.Timestamptz `json:"renderer_token_expires_at"`
+	BookingID              pgtype.UUID        `json:"booking_id"`
+}
+
+// === Simple recording parts ===
+func (q *Queries) ClaimNextRecordingPart(ctx context.Context, arg ClaimNextRecordingPartParams) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, claimNextRecordingPart,
+		arg.Provider,
+		arg.ProviderUid,
+		arg.RendererTokenHash,
+		arg.RendererTokenExpiresAt,
+		arg.BookingID,
+	)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ProviderResourceID,
+		&i.ProviderRecordingID,
+		&i.ProviderUid,
+		&i.OutputPrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.PartNumber,
+		&i.Provider,
+		&i.RendererTokenHash,
+		&i.RendererTokenExpiresAt,
+		&i.EmptySinceAt,
+	)
+	return i, err
+}
+
+const claimPendingRecordingPartImports = `-- name: ClaimPendingRecordingPartImports :many
+WITH candidates AS (
+    SELECT recording_import.id
+    FROM coaching_recording_imports recording_import
+    WHERE recording_import.status IN ('pending', 'importing', 'processing', 'failed')
+      AND recording_import.attempts < 5
+      AND (
+          recording_import.last_attempt_at IS NULL
+          OR (recording_import.status = 'importing' AND recording_import.last_attempt_at <= NOW() - interval '5 minutes')
+          OR (recording_import.status <> 'importing' AND recording_import.last_attempt_at <= NOW() - interval '1 minute')
+      )
+    ORDER BY recording_import.created_at
+    FOR UPDATE SKIP LOCKED
+    LIMIT $1
+), claimed AS (
+    UPDATE coaching_recording_imports recording_import
+    SET status = 'importing', attempts = attempts + 1, last_attempt_at = NOW(),
+        error = NULL, updated_at = NOW()
+    FROM candidates
+    WHERE recording_import.id = candidates.id
+    RETURNING recording_import.status, recording_import.gcs_object_name, recording_import.mux_asset_id, recording_import.mux_playback_id, recording_import.video_id, recording_import.attempts, recording_import.last_attempt_at, recording_import.imported_at, recording_import.error, recording_import.created_at, recording_import.updated_at, recording_import.id, recording_import.recording_id, recording_import.file_index
+)
+SELECT claimed.status, claimed.gcs_object_name, claimed.mux_asset_id, claimed.mux_playback_id, claimed.video_id, claimed.attempts, claimed.last_attempt_at, claimed.imported_at, claimed.error, claimed.created_at, claimed.updated_at, claimed.id, claimed.recording_id, claimed.file_index, recording.booking_id, recording.part_number, booking.recording_asset_id,
+       booking.student_id, booking.group_id, booking.scheduled_at,
+       booking.duration_minutes, session_type.name AS session_type_name
+FROM claimed
+JOIN coaching_booking_recordings recording ON recording.id = claimed.recording_id
+JOIN coaching_bookings booking ON booking.id = recording.booking_id
+JOIN coaching_session_types session_type ON session_type.id = booking.session_type_id
+ORDER BY recording.booking_id, recording.part_number, claimed.file_index
+`
+
+type ClaimPendingRecordingPartImportsRow struct {
+	Status           CoachingRecordingImportStatus `json:"status"`
+	GcsObjectName    pgtype.Text                   `json:"gcs_object_name"`
+	MuxAssetID       pgtype.Text                   `json:"mux_asset_id"`
+	MuxPlaybackID    pgtype.Text                   `json:"mux_playback_id"`
+	VideoID          pgtype.UUID                   `json:"video_id"`
+	Attempts         int32                         `json:"attempts"`
+	LastAttemptAt    pgtype.Timestamptz            `json:"last_attempt_at"`
+	ImportedAt       pgtype.Timestamptz            `json:"imported_at"`
+	Error            pgtype.Text                   `json:"error"`
+	CreatedAt        pgtype.Timestamptz            `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz            `json:"updated_at"`
+	ID               pgtype.UUID                   `json:"id"`
+	RecordingID      pgtype.UUID                   `json:"recording_id"`
+	FileIndex        int32                         `json:"file_index"`
+	BookingID        pgtype.UUID                   `json:"booking_id"`
+	PartNumber       int32                         `json:"part_number"`
+	RecordingAssetID pgtype.UUID                   `json:"recording_asset_id"`
+	StudentID        string                        `json:"student_id"`
+	GroupID          pgtype.UUID                   `json:"group_id"`
+	ScheduledAt      pgtype.Timestamptz            `json:"scheduled_at"`
+	DurationMinutes  int32                         `json:"duration_minutes"`
+	SessionTypeName  string                        `json:"session_type_name"`
+}
+
+func (q *Queries) ClaimPendingRecordingPartImports(ctx context.Context, limit int32) ([]ClaimPendingRecordingPartImportsRow, error) {
+	rows, err := q.db.Query(ctx, claimPendingRecordingPartImports, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ClaimPendingRecordingPartImportsRow
+	for rows.Next() {
+		var i ClaimPendingRecordingPartImportsRow
+		if err := rows.Scan(
+			&i.Status,
+			&i.GcsObjectName,
+			&i.MuxAssetID,
+			&i.MuxPlaybackID,
+			&i.VideoID,
+			&i.Attempts,
+			&i.LastAttemptAt,
+			&i.ImportedAt,
+			&i.Error,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ID,
+			&i.RecordingID,
+			&i.FileIndex,
+			&i.BookingID,
+			&i.PartNumber,
+			&i.RecordingAssetID,
+			&i.StudentID,
+			&i.GroupID,
+			&i.ScheduledAt,
+			&i.DurationMinutes,
+			&i.SessionTypeName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const clearRecordingPartEmptySince = `-- name: ClearRecordingPartEmptySince :exec
+UPDATE coaching_booking_recordings
+SET empty_since_at = NULL, updated_at = NOW()
+WHERE booking_id = $1 AND status IN ('starting', 'started')
+`
+
+func (q *Queries) ClearRecordingPartEmptySince(ctx context.Context, bookingID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, clearRecordingPartEmptySince, bookingID)
+	return err
 }
 
 const countConflictingBookings = `-- name: CountConflictingBookings :one
@@ -70,6 +288,24 @@ type CountConflictingBookingsParams struct {
 
 func (q *Queries) CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countConflictingBookings, arg.ExpertID, arg.ScheduledAt, arg.ScheduledAt_2)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countFreshBookingParticipants = `-- name: CountFreshBookingParticipants :one
+SELECT COUNT(*) FROM coaching_booking_presence
+WHERE booking_id = $1
+  AND last_seen_at >= NOW() - ($2::int * interval '1 second')
+`
+
+type CountFreshBookingParticipantsParams struct {
+	BookingID    pgtype.UUID `json:"booking_id"`
+	FreshSeconds int32       `json:"fresh_seconds"`
+}
+
+func (q *Queries) CountFreshBookingParticipants(ctx context.Context, arg CountFreshBookingParticipantsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countFreshBookingParticipants, arg.BookingID, arg.FreshSeconds)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -154,7 +390,7 @@ func (q *Queries) CreateBlockedSlot(ctx context.Context, arg CreateBlockedSlotPa
 const createBooking = `-- name: CreateBooking :one
 INSERT INTO coaching_bookings (expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, notes)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at
+RETURNING id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, recording_asset_id, next_recording_part_number
 `
 
 type CreateBookingParams struct {
@@ -192,6 +428,8 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (C
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RecordingAssetID,
+		&i.NextRecordingPartNumber,
 	)
 	return i, err
 }
@@ -211,24 +449,6 @@ type CreateBookingReminderParams struct {
 func (q *Queries) CreateBookingReminder(ctx context.Context, arg CreateBookingReminderParams) error {
 	_, err := q.db.Exec(ctx, createBookingReminder, arg.BookingID, arg.RemindAt)
 	return err
-}
-
-const createMissingRecordingImports = `-- name: CreateMissingRecordingImports :execrows
-INSERT INTO coaching_recording_imports (booking_id, status)
-SELECT r.booking_id, 'pending'
-FROM coaching_booking_recordings r
-LEFT JOIN coaching_recording_imports ri ON ri.booking_id = r.booking_id
-WHERE r.status = 'stopped'
-  AND ri.booking_id IS NULL
-ON CONFLICT (booking_id) DO NOTHING
-`
-
-func (q *Queries) CreateMissingRecordingImports(ctx context.Context) (int64, error) {
-	result, err := q.db.Exec(ctx, createMissingRecordingImports)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
 }
 
 const createSessionType = `-- name: CreateSessionType :one
@@ -323,29 +543,32 @@ func (q *Queries) DeleteBlockedSlot(ctx context.Context, arg DeleteBlockedSlotPa
 	return result.RowsAffected(), nil
 }
 
-const ensureRecordingImportPending = `-- name: EnsureRecordingImportPending :one
-INSERT INTO coaching_recording_imports (booking_id, status, error)
-VALUES ($1, 'pending', NULL)
-ON CONFLICT (booking_id) DO UPDATE SET
-    status = CASE
-        WHEN coaching_recording_imports.status = 'ready' THEN coaching_recording_imports.status
-        ELSE 'pending'
-    END,
+const ensureRecordingPartImport = `-- name: EnsureRecordingPartImport :one
+INSERT INTO coaching_recording_imports (recording_id, file_index, gcs_object_name, status, error)
+VALUES ($1, $2, $3, 'pending', NULL)
+ON CONFLICT (recording_id, file_index) DO UPDATE SET
+    gcs_object_name = EXCLUDED.gcs_object_name,
+    status = CASE WHEN coaching_recording_imports.status = 'ready'
+                  THEN coaching_recording_imports.status ELSE 'pending' END,
     error = NULL,
     updated_at = NOW()
-RETURNING booking_id, status, gcs_object_name, mux_asset_id, mux_playback_id, asset_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at
+RETURNING status, gcs_object_name, mux_asset_id, mux_playback_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at, id, recording_id, file_index
 `
 
-func (q *Queries) EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error) {
-	row := q.db.QueryRow(ctx, ensureRecordingImportPending, bookingID)
+type EnsureRecordingPartImportParams struct {
+	RecordingID   pgtype.UUID `json:"recording_id"`
+	FileIndex     int32       `json:"file_index"`
+	GcsObjectName pgtype.Text `json:"gcs_object_name"`
+}
+
+func (q *Queries) EnsureRecordingPartImport(ctx context.Context, arg EnsureRecordingPartImportParams) (CoachingRecordingImport, error) {
+	row := q.db.QueryRow(ctx, ensureRecordingPartImport, arg.RecordingID, arg.FileIndex, arg.GcsObjectName)
 	var i CoachingRecordingImport
 	err := row.Scan(
-		&i.BookingID,
 		&i.Status,
 		&i.GcsObjectName,
 		&i.MuxAssetID,
 		&i.MuxPlaybackID,
-		&i.AssetID,
 		&i.VideoID,
 		&i.Attempts,
 		&i.LastAttemptAt,
@@ -353,12 +576,88 @@ func (q *Queries) EnsureRecordingImportPending(ctx context.Context, bookingID pg
 		&i.Error,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ID,
+		&i.RecordingID,
+		&i.FileIndex,
+	)
+	return i, err
+}
+
+const exchangeRecordingRendererCapability = `-- name: ExchangeRecordingRendererCapability :one
+SELECT
+    recording.id AS recording_id,
+    recording.booking_id,
+    recording.provider_uid,
+    booking.student_id,
+    booking.expert_id,
+    booking.scheduled_at,
+    booking.duration_minutes
+FROM coaching_booking_recordings recording
+JOIN coaching_bookings booking ON booking.id = recording.booking_id
+WHERE recording.renderer_token_hash = $1
+  AND recording.renderer_token_expires_at > NOW()
+  AND recording.status IN ('starting', 'started')
+`
+
+type ExchangeRecordingRendererCapabilityRow struct {
+	RecordingID     pgtype.UUID        `json:"recording_id"`
+	BookingID       pgtype.UUID        `json:"booking_id"`
+	ProviderUid     pgtype.Text        `json:"provider_uid"`
+	StudentID       string             `json:"student_id"`
+	ExpertID        string             `json:"expert_id"`
+	ScheduledAt     pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes int32              `json:"duration_minutes"`
+}
+
+func (q *Queries) ExchangeRecordingRendererCapability(ctx context.Context, rendererTokenHash []byte) (ExchangeRecordingRendererCapabilityRow, error) {
+	row := q.db.QueryRow(ctx, exchangeRecordingRendererCapability, rendererTokenHash)
+	var i ExchangeRecordingRendererCapabilityRow
+	err := row.Scan(
+		&i.RecordingID,
+		&i.BookingID,
+		&i.ProviderUid,
+		&i.StudentID,
+		&i.ExpertID,
+		&i.ScheduledAt,
+		&i.DurationMinutes,
+	)
+	return i, err
+}
+
+const getActiveRecordingPart = `-- name: GetActiveRecordingPart :one
+SELECT booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at FROM coaching_booking_recordings
+WHERE booking_id = $1 AND status IN ('starting', 'started', 'stopping')
+ORDER BY part_number DESC
+LIMIT 1
+`
+
+func (q *Queries) GetActiveRecordingPart(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, getActiveRecordingPart, bookingID)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ProviderResourceID,
+		&i.ProviderRecordingID,
+		&i.ProviderUid,
+		&i.OutputPrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.PartNumber,
+		&i.Provider,
+		&i.RendererTokenHash,
+		&i.RendererTokenExpiresAt,
+		&i.EmptySinceAt,
 	)
 	return i, err
 }
 
 const getBooking = `-- name: GetBooking :one
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, recording_asset_id, next_recording_part_number FROM coaching_bookings WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
 `
 
 type GetBookingParams struct {
@@ -383,23 +682,18 @@ func (q *Queries) GetBooking(ctx context.Context, arg GetBookingParams) (Coachin
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RecordingAssetID,
+		&i.NextRecordingPartNumber,
 	)
 	return i, err
 }
 
-const getBookingForRecordingUpdate = `-- name: GetBookingForRecordingUpdate :one
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings
-WHERE id = $1 AND (expert_id = $2 OR student_id = $2)
-FOR UPDATE
+const getBookingForRecordingAssetUpdate = `-- name: GetBookingForRecordingAssetUpdate :one
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, recording_asset_id, next_recording_part_number FROM coaching_bookings WHERE id = $1 FOR UPDATE
 `
 
-type GetBookingForRecordingUpdateParams struct {
-	ID       pgtype.UUID `json:"id"`
-	ExpertID string      `json:"expert_id"`
-}
-
-func (q *Queries) GetBookingForRecordingUpdate(ctx context.Context, arg GetBookingForRecordingUpdateParams) (CoachingBooking, error) {
-	row := q.db.QueryRow(ctx, getBookingForRecordingUpdate, arg.ID, arg.ExpertID)
+func (q *Queries) GetBookingForRecordingAssetUpdate(ctx context.Context, id pgtype.UUID) (CoachingBooking, error) {
+	row := q.db.QueryRow(ctx, getBookingForRecordingAssetUpdate, id)
 	var i CoachingBooking
 	err := row.Scan(
 		&i.ID,
@@ -415,55 +709,8 @@ func (q *Queries) GetBookingForRecordingUpdate(ctx context.Context, arg GetBooki
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getBookingRecording = `-- name: GetBookingRecording :one
-SELECT booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at FROM coaching_booking_recordings
-WHERE booking_id = $1
-`
-
-func (q *Queries) GetBookingRecording(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
-	row := q.db.QueryRow(ctx, getBookingRecording, bookingID)
-	var i CoachingBookingRecording
-	err := row.Scan(
-		&i.BookingID,
-		&i.Status,
-		&i.ResourceID,
-		&i.Sid,
-		&i.Uid,
-		&i.FilePrefix,
-		&i.StartedAt,
-		&i.StoppedAt,
-		&i.Error,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getBookingRecordingForUpdate = `-- name: GetBookingRecordingForUpdate :one
-SELECT booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at FROM coaching_booking_recordings
-WHERE booking_id = $1
-FOR UPDATE
-`
-
-func (q *Queries) GetBookingRecordingForUpdate(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
-	row := q.db.QueryRow(ctx, getBookingRecordingForUpdate, bookingID)
-	var i CoachingBookingRecording
-	err := row.Scan(
-		&i.BookingID,
-		&i.Status,
-		&i.ResourceID,
-		&i.Sid,
-		&i.Uid,
-		&i.FilePrefix,
-		&i.StartedAt,
-		&i.StoppedAt,
-		&i.Error,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.RecordingAssetID,
+		&i.NextRecordingPartNumber,
 	)
 	return i, err
 }
@@ -533,36 +780,43 @@ func (q *Queries) ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.U
 }
 
 const listAllMyBookings = `-- name: ListAllMyBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
-       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
-       ri.asset_id AS recording_asset_id,
-       ri.video_id AS recording_video_id
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cb.recording_asset_id, cb.next_recording_part_number, cst.name AS session_type_name,
+       COALESCE(latest.recording_status, '')::varchar AS recording_status,
+       latest.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
-LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
-LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
+LEFT JOIN LATERAL (
+    SELECT COALESCE(recording_import.status::text, recording.status::text) AS recording_status,
+           recording_import.video_id
+    FROM coaching_booking_recordings recording
+    LEFT JOIN coaching_recording_imports recording_import ON recording_import.recording_id = recording.id
+    WHERE recording.booking_id = cb.id
+    ORDER BY recording.part_number DESC, recording_import.file_index DESC NULLS LAST
+    LIMIT 1
+) latest ON true
 WHERE cb.expert_id = $1 OR cb.student_id = $1
 ORDER BY cb.scheduled_at ASC
 `
 
 type ListAllMyBookingsRow struct {
-	ID                 pgtype.UUID        `json:"id"`
-	ExpertID           string             `json:"expert_id"`
-	StudentID          string             `json:"student_id"`
-	GroupID            pgtype.UUID        `json:"group_id"`
-	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
-	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
-	DurationMinutes    int32              `json:"duration_minutes"`
-	IsCancelled        bool               `json:"is_cancelled"`
-	CancellationReason pgtype.Text        `json:"cancellation_reason"`
-	CancelledBy        pgtype.Text        `json:"cancelled_by"`
-	Notes              pgtype.Text        `json:"notes"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	SessionTypeName    string             `json:"session_type_name"`
-	RecordingStatus    string             `json:"recording_status"`
-	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
-	RecordingVideoID   pgtype.UUID        `json:"recording_video_id"`
+	ID                      pgtype.UUID        `json:"id"`
+	ExpertID                string             `json:"expert_id"`
+	StudentID               string             `json:"student_id"`
+	GroupID                 pgtype.UUID        `json:"group_id"`
+	SessionTypeID           pgtype.UUID        `json:"session_type_id"`
+	ScheduledAt             pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes         int32              `json:"duration_minutes"`
+	IsCancelled             bool               `json:"is_cancelled"`
+	CancellationReason      pgtype.Text        `json:"cancellation_reason"`
+	CancelledBy             pgtype.Text        `json:"cancelled_by"`
+	Notes                   pgtype.Text        `json:"notes"`
+	CreatedAt               pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `json:"updated_at"`
+	RecordingAssetID        pgtype.UUID        `json:"recording_asset_id"`
+	NextRecordingPartNumber int32              `json:"next_recording_part_number"`
+	SessionTypeName         string             `json:"session_type_name"`
+	RecordingStatus         string             `json:"recording_status"`
+	RecordingVideoID        pgtype.UUID        `json:"recording_video_id"`
 }
 
 func (q *Queries) ListAllMyBookings(ctx context.Context, expertID string) ([]ListAllMyBookingsRow, error) {
@@ -588,9 +842,10 @@ func (q *Queries) ListAllMyBookings(ctx context.Context, expertID string) ([]Lis
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RecordingAssetID,
+			&i.NextRecordingPartNumber,
 			&i.SessionTypeName,
 			&i.RecordingStatus,
-			&i.RecordingAssetID,
 			&i.RecordingVideoID,
 		); err != nil {
 			return nil, err
@@ -764,7 +1019,7 @@ func (q *Queries) ListBlockedSlots(ctx context.Context, arg ListBlockedSlotsPara
 
 const listBookingsByExpertInRange = `-- name: ListBookingsByExpertInRange :many
 
-SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at FROM coaching_bookings
+SELECT id, expert_id, student_id, group_id, session_type_id, scheduled_at, duration_minutes, is_cancelled, cancellation_reason, cancelled_by, notes, created_at, updated_at, recording_asset_id, next_recording_part_number FROM coaching_bookings
 WHERE expert_id = $1
   AND scheduled_at >= $2
   AND scheduled_at < $3
@@ -802,6 +1057,8 @@ func (q *Queries) ListBookingsByExpertInRange(ctx context.Context, arg ListBooki
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RecordingAssetID,
+			&i.NextRecordingPartNumber,
 		); err != nil {
 			return nil, err
 		}
@@ -814,36 +1071,43 @@ func (q *Queries) ListBookingsByExpertInRange(ctx context.Context, arg ListBooki
 }
 
 const listGroupBookings = `-- name: ListGroupBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
-       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
-       ri.asset_id AS recording_asset_id,
-       ri.video_id AS recording_video_id
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cb.recording_asset_id, cb.next_recording_part_number, cst.name AS session_type_name,
+       COALESCE(latest.recording_status, '')::varchar AS recording_status,
+       latest.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
-LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
-LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
+LEFT JOIN LATERAL (
+    SELECT COALESCE(recording_import.status::text, recording.status::text) AS recording_status,
+           recording_import.video_id
+    FROM coaching_booking_recordings recording
+    LEFT JOIN coaching_recording_imports recording_import ON recording_import.recording_id = recording.id
+    WHERE recording.booking_id = cb.id
+    ORDER BY recording.part_number DESC, recording_import.file_index DESC NULLS LAST
+    LIMIT 1
+) latest ON true
 WHERE cb.group_id = $1
 ORDER BY cb.scheduled_at
 `
 
 type ListGroupBookingsRow struct {
-	ID                 pgtype.UUID        `json:"id"`
-	ExpertID           string             `json:"expert_id"`
-	StudentID          string             `json:"student_id"`
-	GroupID            pgtype.UUID        `json:"group_id"`
-	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
-	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
-	DurationMinutes    int32              `json:"duration_minutes"`
-	IsCancelled        bool               `json:"is_cancelled"`
-	CancellationReason pgtype.Text        `json:"cancellation_reason"`
-	CancelledBy        pgtype.Text        `json:"cancelled_by"`
-	Notes              pgtype.Text        `json:"notes"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	SessionTypeName    string             `json:"session_type_name"`
-	RecordingStatus    string             `json:"recording_status"`
-	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
-	RecordingVideoID   pgtype.UUID        `json:"recording_video_id"`
+	ID                      pgtype.UUID        `json:"id"`
+	ExpertID                string             `json:"expert_id"`
+	StudentID               string             `json:"student_id"`
+	GroupID                 pgtype.UUID        `json:"group_id"`
+	SessionTypeID           pgtype.UUID        `json:"session_type_id"`
+	ScheduledAt             pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes         int32              `json:"duration_minutes"`
+	IsCancelled             bool               `json:"is_cancelled"`
+	CancellationReason      pgtype.Text        `json:"cancellation_reason"`
+	CancelledBy             pgtype.Text        `json:"cancelled_by"`
+	Notes                   pgtype.Text        `json:"notes"`
+	CreatedAt               pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `json:"updated_at"`
+	RecordingAssetID        pgtype.UUID        `json:"recording_asset_id"`
+	NextRecordingPartNumber int32              `json:"next_recording_part_number"`
+	SessionTypeName         string             `json:"session_type_name"`
+	RecordingStatus         string             `json:"recording_status"`
+	RecordingVideoID        pgtype.UUID        `json:"recording_video_id"`
 }
 
 func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error) {
@@ -869,9 +1133,10 @@ func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RecordingAssetID,
+			&i.NextRecordingPartNumber,
 			&i.SessionTypeName,
 			&i.RecordingStatus,
-			&i.RecordingAssetID,
 			&i.RecordingVideoID,
 		); err != nil {
 			return nil, err
@@ -885,14 +1150,20 @@ func (q *Queries) ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([
 }
 
 const listMyBookings = `-- name: ListMyBookings :many
-SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cst.name AS session_type_name,
-       COALESCE(ri.status::text, r.status::text, '')::varchar AS recording_status,
-       ri.asset_id AS recording_asset_id,
-       ri.video_id AS recording_video_id
+SELECT cb.id, cb.expert_id, cb.student_id, cb.group_id, cb.session_type_id, cb.scheduled_at, cb.duration_minutes, cb.is_cancelled, cb.cancellation_reason, cb.cancelled_by, cb.notes, cb.created_at, cb.updated_at, cb.recording_asset_id, cb.next_recording_part_number, cst.name AS session_type_name,
+       COALESCE(latest.recording_status, '')::varchar AS recording_status,
+       latest.video_id AS recording_video_id
 FROM coaching_bookings cb
 JOIN coaching_session_types cst ON cst.id = cb.session_type_id
-LEFT JOIN coaching_booking_recordings r ON r.booking_id = cb.id
-LEFT JOIN coaching_recording_imports ri ON ri.booking_id = cb.id
+LEFT JOIN LATERAL (
+    SELECT COALESCE(recording_import.status::text, recording.status::text) AS recording_status,
+           recording_import.video_id
+    FROM coaching_booking_recordings recording
+    LEFT JOIN coaching_recording_imports recording_import ON recording_import.recording_id = recording.id
+    WHERE recording.booking_id = cb.id
+    ORDER BY recording.part_number DESC, recording_import.file_index DESC NULLS LAST
+    LIMIT 1
+) latest ON true
 WHERE (cb.expert_id = $1 OR cb.student_id = $1) AND cb.group_id = $2
 ORDER BY cb.scheduled_at DESC
 `
@@ -903,23 +1174,24 @@ type ListMyBookingsParams struct {
 }
 
 type ListMyBookingsRow struct {
-	ID                 pgtype.UUID        `json:"id"`
-	ExpertID           string             `json:"expert_id"`
-	StudentID          string             `json:"student_id"`
-	GroupID            pgtype.UUID        `json:"group_id"`
-	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
-	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
-	DurationMinutes    int32              `json:"duration_minutes"`
-	IsCancelled        bool               `json:"is_cancelled"`
-	CancellationReason pgtype.Text        `json:"cancellation_reason"`
-	CancelledBy        pgtype.Text        `json:"cancelled_by"`
-	Notes              pgtype.Text        `json:"notes"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	SessionTypeName    string             `json:"session_type_name"`
-	RecordingStatus    string             `json:"recording_status"`
-	RecordingAssetID   pgtype.UUID        `json:"recording_asset_id"`
-	RecordingVideoID   pgtype.UUID        `json:"recording_video_id"`
+	ID                      pgtype.UUID        `json:"id"`
+	ExpertID                string             `json:"expert_id"`
+	StudentID               string             `json:"student_id"`
+	GroupID                 pgtype.UUID        `json:"group_id"`
+	SessionTypeID           pgtype.UUID        `json:"session_type_id"`
+	ScheduledAt             pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes         int32              `json:"duration_minutes"`
+	IsCancelled             bool               `json:"is_cancelled"`
+	CancellationReason      pgtype.Text        `json:"cancellation_reason"`
+	CancelledBy             pgtype.Text        `json:"cancelled_by"`
+	Notes                   pgtype.Text        `json:"notes"`
+	CreatedAt               pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `json:"updated_at"`
+	RecordingAssetID        pgtype.UUID        `json:"recording_asset_id"`
+	NextRecordingPartNumber int32              `json:"next_recording_part_number"`
+	SessionTypeName         string             `json:"session_type_name"`
+	RecordingStatus         string             `json:"recording_status"`
+	RecordingVideoID        pgtype.UUID        `json:"recording_video_id"`
 }
 
 func (q *Queries) ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error) {
@@ -945,96 +1217,11 @@ func (q *Queries) ListMyBookings(ctx context.Context, arg ListMyBookingsParams) 
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RecordingAssetID,
+			&i.NextRecordingPartNumber,
 			&i.SessionTypeName,
 			&i.RecordingStatus,
-			&i.RecordingAssetID,
 			&i.RecordingVideoID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listPendingRecordingImports = `-- name: ListPendingRecordingImports :many
-SELECT
-    ri.booking_id, ri.status, ri.gcs_object_name, ri.mux_asset_id, ri.mux_playback_id, ri.asset_id, ri.video_id, ri.attempts, ri.last_attempt_at, ri.imported_at, ri.error, ri.created_at, ri.updated_at,
-    r.file_prefix,
-    b.student_id,
-    b.group_id,
-    b.scheduled_at,
-    b.duration_minutes,
-    cst.name AS session_type_name
-FROM coaching_recording_imports ri
-JOIN coaching_booking_recordings r ON r.booking_id = ri.booking_id
-JOIN coaching_bookings b ON b.id = ri.booking_id
-JOIN coaching_session_types cst ON cst.id = b.session_type_id
-WHERE r.status = 'stopped'
-  AND ri.status IN ('pending', 'processing', 'failed')
-  AND ri.attempts < 5
-  AND (
-    ri.last_attempt_at IS NULL
-    OR ri.last_attempt_at <= NOW() - interval '1 minute'
-  )
-ORDER BY ri.created_at
-LIMIT $1
-`
-
-type ListPendingRecordingImportsRow struct {
-	BookingID       pgtype.UUID                   `json:"booking_id"`
-	Status          CoachingRecordingImportStatus `json:"status"`
-	GcsObjectName   pgtype.Text                   `json:"gcs_object_name"`
-	MuxAssetID      pgtype.Text                   `json:"mux_asset_id"`
-	MuxPlaybackID   pgtype.Text                   `json:"mux_playback_id"`
-	AssetID         pgtype.UUID                   `json:"asset_id"`
-	VideoID         pgtype.UUID                   `json:"video_id"`
-	Attempts        int32                         `json:"attempts"`
-	LastAttemptAt   pgtype.Timestamptz            `json:"last_attempt_at"`
-	ImportedAt      pgtype.Timestamptz            `json:"imported_at"`
-	Error           pgtype.Text                   `json:"error"`
-	CreatedAt       pgtype.Timestamptz            `json:"created_at"`
-	UpdatedAt       pgtype.Timestamptz            `json:"updated_at"`
-	FilePrefix      []string                      `json:"file_prefix"`
-	StudentID       string                        `json:"student_id"`
-	GroupID         pgtype.UUID                   `json:"group_id"`
-	ScheduledAt     pgtype.Timestamptz            `json:"scheduled_at"`
-	DurationMinutes int32                         `json:"duration_minutes"`
-	SessionTypeName string                        `json:"session_type_name"`
-}
-
-func (q *Queries) ListPendingRecordingImports(ctx context.Context, limit int32) ([]ListPendingRecordingImportsRow, error) {
-	rows, err := q.db.Query(ctx, listPendingRecordingImports, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListPendingRecordingImportsRow
-	for rows.Next() {
-		var i ListPendingRecordingImportsRow
-		if err := rows.Scan(
-			&i.BookingID,
-			&i.Status,
-			&i.GcsObjectName,
-			&i.MuxAssetID,
-			&i.MuxPlaybackID,
-			&i.AssetID,
-			&i.VideoID,
-			&i.Attempts,
-			&i.LastAttemptAt,
-			&i.ImportedAt,
-			&i.Error,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.FilePrefix,
-			&i.StudentID,
-			&i.GroupID,
-			&i.ScheduledAt,
-			&i.DurationMinutes,
-			&i.SessionTypeName,
 		); err != nil {
 			return nil, err
 		}
@@ -1099,23 +1286,29 @@ func (q *Queries) ListPendingReminders(ctx context.Context) ([]ListPendingRemind
 	return items, nil
 }
 
-const listRecordingsPastEnd = `-- name: ListRecordingsPastEnd :many
-SELECT r.booking_id, r.status, r.resource_id, r.sid, r.uid, r.file_prefix, r.started_at, r.stopped_at, r.error, r.created_at, r.updated_at
-FROM coaching_booking_recordings r
-JOIN coaching_bookings b ON b.id = r.booking_id
-WHERE r.status IN ('starting', 'started', 'stopping')
-  AND b.scheduled_at + (b.duration_minutes * interval '1 minute') + ($1::int * interval '1 second') <= NOW()
-ORDER BY b.scheduled_at
-LIMIT $2
+const listRecordingPartsReadyToStop = `-- name: ListRecordingPartsReadyToStop :many
+SELECT recording.booking_id, recording.status, recording.provider_resource_id, recording.provider_recording_id, recording.provider_uid, recording.output_prefix, recording.started_at, recording.stopped_at, recording.error, recording.created_at, recording.updated_at, recording.id, recording.part_number, recording.provider, recording.renderer_token_hash, recording.renderer_token_expires_at, recording.empty_since_at
+FROM coaching_booking_recordings recording
+JOIN coaching_bookings booking ON booking.id = recording.booking_id
+WHERE recording.status IN ('starting', 'started', 'stopping')
+  AND (
+      recording.empty_since_at <= NOW() - ($1::int * interval '1 second')
+      OR booking.scheduled_at + (booking.duration_minutes * interval '1 minute')
+         + ($2::int * interval '1 second') <= NOW()
+      OR (recording.status = 'starting' AND recording.updated_at <= NOW() - interval '1 minute')
+  )
+ORDER BY recording.updated_at
+LIMIT $3
 `
 
-type ListRecordingsPastEndParams struct {
-	GraceSeconds int32 `json:"grace_seconds"`
-	LimitCount   int32 `json:"limit_count"`
+type ListRecordingPartsReadyToStopParams struct {
+	EmptyGraceSeconds int32 `json:"empty_grace_seconds"`
+	EndGraceSeconds   int32 `json:"end_grace_seconds"`
+	LimitCount        int32 `json:"limit_count"`
 }
 
-func (q *Queries) ListRecordingsPastEnd(ctx context.Context, arg ListRecordingsPastEndParams) ([]CoachingBookingRecording, error) {
-	rows, err := q.db.Query(ctx, listRecordingsPastEnd, arg.GraceSeconds, arg.LimitCount)
+func (q *Queries) ListRecordingPartsReadyToStop(ctx context.Context, arg ListRecordingPartsReadyToStopParams) ([]CoachingBookingRecording, error) {
+	rows, err := q.db.Query(ctx, listRecordingPartsReadyToStop, arg.EmptyGraceSeconds, arg.EndGraceSeconds, arg.LimitCount)
 	if err != nil {
 		return nil, err
 	}
@@ -1126,15 +1319,21 @@ func (q *Queries) ListRecordingsPastEnd(ctx context.Context, arg ListRecordingsP
 		if err := rows.Scan(
 			&i.BookingID,
 			&i.Status,
-			&i.ResourceID,
-			&i.Sid,
-			&i.Uid,
-			&i.FilePrefix,
+			&i.ProviderResourceID,
+			&i.ProviderRecordingID,
+			&i.ProviderUid,
+			&i.OutputPrefix,
 			&i.StartedAt,
 			&i.StoppedAt,
 			&i.Error,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ID,
+			&i.PartNumber,
+			&i.Provider,
+			&i.RendererTokenHash,
+			&i.RendererTokenExpiresAt,
+			&i.EmptySinceAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1223,181 +1422,126 @@ func (q *Queries) ListSessionTypesByGroup(ctx context.Context, groupID pgtype.UU
 	return items, nil
 }
 
-const markBookingRecordingFailed = `-- name: MarkBookingRecordingFailed :exec
-INSERT INTO coaching_booking_recordings (booking_id, status, error)
-VALUES ($1, 'failed', $2)
-ON CONFLICT (booking_id) DO UPDATE SET
-    status = 'failed',
-    error = EXCLUDED.error,
-    updated_at = NOW()
+const listStoppedRecordingPartsForDiscovery = `-- name: ListStoppedRecordingPartsForDiscovery :many
+SELECT booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at FROM coaching_booking_recordings
+WHERE status = 'stopped'
+  AND stopped_at >= NOW() - interval '7 days'
+ORDER BY stopped_at DESC
+LIMIT $1
 `
 
-type MarkBookingRecordingFailedParams struct {
-	BookingID pgtype.UUID `json:"booking_id"`
-	Error     pgtype.Text `json:"error"`
+func (q *Queries) ListStoppedRecordingPartsForDiscovery(ctx context.Context, limit int32) ([]CoachingBookingRecording, error) {
+	rows, err := q.db.Query(ctx, listStoppedRecordingPartsForDiscovery, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CoachingBookingRecording
+	for rows.Next() {
+		var i CoachingBookingRecording
+		if err := rows.Scan(
+			&i.BookingID,
+			&i.Status,
+			&i.ProviderResourceID,
+			&i.ProviderRecordingID,
+			&i.ProviderUid,
+			&i.OutputPrefix,
+			&i.StartedAt,
+			&i.StoppedAt,
+			&i.Error,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ID,
+			&i.PartNumber,
+			&i.Provider,
+			&i.RendererTokenHash,
+			&i.RendererTokenExpiresAt,
+			&i.EmptySinceAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-func (q *Queries) MarkBookingRecordingFailed(ctx context.Context, arg MarkBookingRecordingFailedParams) error {
-	_, err := q.db.Exec(ctx, markBookingRecordingFailed, arg.BookingID, arg.Error)
+const markEmptyRecordingPartsWithoutFreshHumans = `-- name: MarkEmptyRecordingPartsWithoutFreshHumans :execrows
+UPDATE coaching_booking_recordings recording
+SET empty_since_at = COALESCE(empty_since_at, NOW()), updated_at = NOW()
+WHERE recording.status = 'started'
+  AND NOT EXISTS (
+      SELECT 1 FROM coaching_booking_presence presence
+      WHERE presence.booking_id = recording.booking_id
+        AND presence.last_seen_at >= NOW() - ($1::int * interval '1 second')
+  )
+`
+
+func (q *Queries) MarkEmptyRecordingPartsWithoutFreshHumans(ctx context.Context, freshSeconds int32) (int64, error) {
+	result, err := q.db.Exec(ctx, markEmptyRecordingPartsWithoutFreshHumans, freshSeconds)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const markRecordingPartFailed = `-- name: MarkRecordingPartFailed :exec
+UPDATE coaching_booking_recordings
+SET status = 'failed', stopped_at = NOW(), renderer_token_hash = NULL,
+    renderer_token_expires_at = NULL, error = $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type MarkRecordingPartFailedParams struct {
+	ID    pgtype.UUID `json:"id"`
+	Error pgtype.Text `json:"error"`
+}
+
+func (q *Queries) MarkRecordingPartFailed(ctx context.Context, arg MarkRecordingPartFailedParams) error {
+	_, err := q.db.Exec(ctx, markRecordingPartFailed, arg.ID, arg.Error)
 	return err
 }
 
-const markBookingRecordingStarted = `-- name: MarkBookingRecordingStarted :one
-INSERT INTO coaching_booking_recordings (
-    booking_id,
-    status,
-    resource_id,
-    sid,
-    uid,
-    file_prefix,
-    started_at,
-    stopped_at,
-    error
-)
-VALUES ($1, 'started', $2, $3, $4, $5, NOW(), NULL, NULL)
-ON CONFLICT (booking_id) DO UPDATE SET
-    status = 'started',
-    resource_id = EXCLUDED.resource_id,
-    sid = EXCLUDED.sid,
-    uid = EXCLUDED.uid,
-    file_prefix = EXCLUDED.file_prefix,
-    started_at = NOW(),
-    stopped_at = NULL,
-    error = NULL,
-    updated_at = NOW()
-RETURNING booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at
-`
-
-type MarkBookingRecordingStartedParams struct {
-	BookingID  pgtype.UUID `json:"booking_id"`
-	ResourceID pgtype.Text `json:"resource_id"`
-	Sid        pgtype.Text `json:"sid"`
-	Uid        pgtype.Text `json:"uid"`
-	FilePrefix []string    `json:"file_prefix"`
-}
-
-func (q *Queries) MarkBookingRecordingStarted(ctx context.Context, arg MarkBookingRecordingStartedParams) (CoachingBookingRecording, error) {
-	row := q.db.QueryRow(ctx, markBookingRecordingStarted,
-		arg.BookingID,
-		arg.ResourceID,
-		arg.Sid,
-		arg.Uid,
-		arg.FilePrefix,
-	)
-	var i CoachingBookingRecording
-	err := row.Scan(
-		&i.BookingID,
-		&i.Status,
-		&i.ResourceID,
-		&i.Sid,
-		&i.Uid,
-		&i.FilePrefix,
-		&i.StartedAt,
-		&i.StoppedAt,
-		&i.Error,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const markBookingRecordingStopped = `-- name: MarkBookingRecordingStopped :one
-UPDATE coaching_booking_recordings
-SET status = 'stopped',
-    stopped_at = NOW(),
-    error = NULL,
-    updated_at = NOW()
-WHERE booking_id = $1
-RETURNING booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at
-`
-
-func (q *Queries) MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
-	row := q.db.QueryRow(ctx, markBookingRecordingStopped, bookingID)
-	var i CoachingBookingRecording
-	err := row.Scan(
-		&i.BookingID,
-		&i.Status,
-		&i.ResourceID,
-		&i.Sid,
-		&i.Uid,
-		&i.FilePrefix,
-		&i.StartedAt,
-		&i.StoppedAt,
-		&i.Error,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const markBookingRecordingStopping = `-- name: MarkBookingRecordingStopping :one
-UPDATE coaching_booking_recordings
-SET status = 'stopping',
-    updated_at = NOW()
-WHERE booking_id = $1
-  AND status IN ('starting', 'started')
-RETURNING booking_id, status, resource_id, sid, uid, file_prefix, started_at, stopped_at, error, created_at, updated_at
-`
-
-func (q *Queries) MarkBookingRecordingStopping(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error) {
-	row := q.db.QueryRow(ctx, markBookingRecordingStopping, bookingID)
-	var i CoachingBookingRecording
-	err := row.Scan(
-		&i.BookingID,
-		&i.Status,
-		&i.ResourceID,
-		&i.Sid,
-		&i.Uid,
-		&i.FilePrefix,
-		&i.StartedAt,
-		&i.StoppedAt,
-		&i.Error,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const markRecordingImportFailed = `-- name: MarkRecordingImportFailed :exec
+const markRecordingPartImportFailed = `-- name: MarkRecordingPartImportFailed :exec
 UPDATE coaching_recording_imports
-SET status = 'failed',
-    error = $2,
-    updated_at = NOW()
-WHERE booking_id = $1
+SET status = 'failed', error = $2, updated_at = NOW()
+WHERE id = $1
 `
 
-type MarkRecordingImportFailedParams struct {
-	BookingID pgtype.UUID `json:"booking_id"`
-	Error     pgtype.Text `json:"error"`
+type MarkRecordingPartImportFailedParams struct {
+	ID    pgtype.UUID `json:"id"`
+	Error pgtype.Text `json:"error"`
 }
 
-func (q *Queries) MarkRecordingImportFailed(ctx context.Context, arg MarkRecordingImportFailedParams) error {
-	_, err := q.db.Exec(ctx, markRecordingImportFailed, arg.BookingID, arg.Error)
+func (q *Queries) MarkRecordingPartImportFailed(ctx context.Context, arg MarkRecordingPartImportFailedParams) error {
+	_, err := q.db.Exec(ctx, markRecordingPartImportFailed, arg.ID, arg.Error)
 	return err
 }
 
-const markRecordingImportImporting = `-- name: MarkRecordingImportImporting :one
+const markRecordingPartImportMuxCreated = `-- name: MarkRecordingPartImportMuxCreated :one
 UPDATE coaching_recording_imports
-SET status = 'importing',
-    attempts = attempts + 1,
-    last_attempt_at = NOW(),
-    error = NULL,
-    updated_at = NOW()
-WHERE booking_id = $1
-  AND status IN ('pending', 'processing', 'failed')
-RETURNING booking_id, status, gcs_object_name, mux_asset_id, mux_playback_id, asset_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at
+SET status = 'processing', mux_asset_id = $2, mux_playback_id = $3,
+    error = NULL, updated_at = NOW()
+WHERE id = $1
+RETURNING status, gcs_object_name, mux_asset_id, mux_playback_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at, id, recording_id, file_index
 `
 
-func (q *Queries) MarkRecordingImportImporting(ctx context.Context, bookingID pgtype.UUID) (CoachingRecordingImport, error) {
-	row := q.db.QueryRow(ctx, markRecordingImportImporting, bookingID)
+type MarkRecordingPartImportMuxCreatedParams struct {
+	ID            pgtype.UUID `json:"id"`
+	MuxAssetID    pgtype.Text `json:"mux_asset_id"`
+	MuxPlaybackID pgtype.Text `json:"mux_playback_id"`
+}
+
+func (q *Queries) MarkRecordingPartImportMuxCreated(ctx context.Context, arg MarkRecordingPartImportMuxCreatedParams) (CoachingRecordingImport, error) {
+	row := q.db.QueryRow(ctx, markRecordingPartImportMuxCreated, arg.ID, arg.MuxAssetID, arg.MuxPlaybackID)
 	var i CoachingRecordingImport
 	err := row.Scan(
-		&i.BookingID,
 		&i.Status,
 		&i.GcsObjectName,
 		&i.MuxAssetID,
 		&i.MuxPlaybackID,
-		&i.AssetID,
 		&i.VideoID,
 		&i.Attempts,
 		&i.LastAttemptAt,
@@ -1405,96 +1549,41 @@ func (q *Queries) MarkRecordingImportImporting(ctx context.Context, bookingID pg
 		&i.Error,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ID,
+		&i.RecordingID,
+		&i.FileIndex,
 	)
 	return i, err
 }
 
-const markRecordingImportMuxCreated = `-- name: MarkRecordingImportMuxCreated :one
+const markRecordingPartImportReady = `-- name: MarkRecordingPartImportReady :one
 UPDATE coaching_recording_imports
-SET status = 'processing',
-    gcs_object_name = $2,
-    mux_asset_id = $3,
-    mux_playback_id = $4,
-    error = NULL,
-    updated_at = NOW()
-WHERE booking_id = $1
-RETURNING booking_id, status, gcs_object_name, mux_asset_id, mux_playback_id, asset_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at
+SET status = 'ready', mux_asset_id = $2, mux_playback_id = $3,
+    video_id = $4, imported_at = NOW(), error = NULL, updated_at = NOW()
+WHERE id = $1
+RETURNING status, gcs_object_name, mux_asset_id, mux_playback_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at, id, recording_id, file_index
 `
 
-type MarkRecordingImportMuxCreatedParams struct {
-	BookingID     pgtype.UUID `json:"booking_id"`
-	GcsObjectName pgtype.Text `json:"gcs_object_name"`
+type MarkRecordingPartImportReadyParams struct {
+	ID            pgtype.UUID `json:"id"`
 	MuxAssetID    pgtype.Text `json:"mux_asset_id"`
 	MuxPlaybackID pgtype.Text `json:"mux_playback_id"`
-}
-
-func (q *Queries) MarkRecordingImportMuxCreated(ctx context.Context, arg MarkRecordingImportMuxCreatedParams) (CoachingRecordingImport, error) {
-	row := q.db.QueryRow(ctx, markRecordingImportMuxCreated,
-		arg.BookingID,
-		arg.GcsObjectName,
-		arg.MuxAssetID,
-		arg.MuxPlaybackID,
-	)
-	var i CoachingRecordingImport
-	err := row.Scan(
-		&i.BookingID,
-		&i.Status,
-		&i.GcsObjectName,
-		&i.MuxAssetID,
-		&i.MuxPlaybackID,
-		&i.AssetID,
-		&i.VideoID,
-		&i.Attempts,
-		&i.LastAttemptAt,
-		&i.ImportedAt,
-		&i.Error,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const markRecordingImportReady = `-- name: MarkRecordingImportReady :one
-UPDATE coaching_recording_imports
-SET status = 'ready',
-    gcs_object_name = $2,
-    mux_asset_id = $3,
-    mux_playback_id = $4,
-    asset_id = $5,
-    video_id = $6,
-    imported_at = NOW(),
-    error = NULL,
-    updated_at = NOW()
-WHERE booking_id = $1
-RETURNING booking_id, status, gcs_object_name, mux_asset_id, mux_playback_id, asset_id, video_id, attempts, last_attempt_at, imported_at, error, created_at, updated_at
-`
-
-type MarkRecordingImportReadyParams struct {
-	BookingID     pgtype.UUID `json:"booking_id"`
-	GcsObjectName pgtype.Text `json:"gcs_object_name"`
-	MuxAssetID    pgtype.Text `json:"mux_asset_id"`
-	MuxPlaybackID pgtype.Text `json:"mux_playback_id"`
-	AssetID       pgtype.UUID `json:"asset_id"`
 	VideoID       pgtype.UUID `json:"video_id"`
 }
 
-func (q *Queries) MarkRecordingImportReady(ctx context.Context, arg MarkRecordingImportReadyParams) (CoachingRecordingImport, error) {
-	row := q.db.QueryRow(ctx, markRecordingImportReady,
-		arg.BookingID,
-		arg.GcsObjectName,
+func (q *Queries) MarkRecordingPartImportReady(ctx context.Context, arg MarkRecordingPartImportReadyParams) (CoachingRecordingImport, error) {
+	row := q.db.QueryRow(ctx, markRecordingPartImportReady,
+		arg.ID,
 		arg.MuxAssetID,
 		arg.MuxPlaybackID,
-		arg.AssetID,
 		arg.VideoID,
 	)
 	var i CoachingRecordingImport
 	err := row.Scan(
-		&i.BookingID,
 		&i.Status,
 		&i.GcsObjectName,
 		&i.MuxAssetID,
 		&i.MuxPlaybackID,
-		&i.AssetID,
 		&i.VideoID,
 		&i.Attempts,
 		&i.LastAttemptAt,
@@ -1502,6 +1591,129 @@ func (q *Queries) MarkRecordingImportReady(ctx context.Context, arg MarkRecordin
 		&i.Error,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ID,
+		&i.RecordingID,
+		&i.FileIndex,
+	)
+	return i, err
+}
+
+const markRecordingPartStarted = `-- name: MarkRecordingPartStarted :one
+UPDATE coaching_booking_recordings
+SET status = 'started',
+    provider_resource_id = $2,
+    provider_recording_id = $3,
+    provider_uid = $4,
+    output_prefix = $5,
+    started_at = NOW(),
+    empty_since_at = NULL,
+    error = NULL,
+    updated_at = NOW()
+WHERE id = $1 AND status = 'starting'
+RETURNING booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at
+`
+
+type MarkRecordingPartStartedParams struct {
+	ID                  pgtype.UUID `json:"id"`
+	ProviderResourceID  pgtype.Text `json:"provider_resource_id"`
+	ProviderRecordingID pgtype.Text `json:"provider_recording_id"`
+	ProviderUid         pgtype.Text `json:"provider_uid"`
+	OutputPrefix        []string    `json:"output_prefix"`
+}
+
+func (q *Queries) MarkRecordingPartStarted(ctx context.Context, arg MarkRecordingPartStartedParams) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, markRecordingPartStarted,
+		arg.ID,
+		arg.ProviderResourceID,
+		arg.ProviderRecordingID,
+		arg.ProviderUid,
+		arg.OutputPrefix,
+	)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ProviderResourceID,
+		&i.ProviderRecordingID,
+		&i.ProviderUid,
+		&i.OutputPrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.PartNumber,
+		&i.Provider,
+		&i.RendererTokenHash,
+		&i.RendererTokenExpiresAt,
+		&i.EmptySinceAt,
+	)
+	return i, err
+}
+
+const markRecordingPartStopped = `-- name: MarkRecordingPartStopped :one
+UPDATE coaching_booking_recordings
+SET status = 'stopped', stopped_at = NOW(), empty_since_at = NULL,
+    renderer_token_hash = NULL, renderer_token_expires_at = NULL,
+    error = NULL, updated_at = NOW()
+WHERE id = $1
+RETURNING booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at
+`
+
+func (q *Queries) MarkRecordingPartStopped(ctx context.Context, id pgtype.UUID) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, markRecordingPartStopped, id)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ProviderResourceID,
+		&i.ProviderRecordingID,
+		&i.ProviderUid,
+		&i.OutputPrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.PartNumber,
+		&i.Provider,
+		&i.RendererTokenHash,
+		&i.RendererTokenExpiresAt,
+		&i.EmptySinceAt,
+	)
+	return i, err
+}
+
+const markRecordingPartStopping = `-- name: MarkRecordingPartStopping :one
+UPDATE coaching_booking_recordings
+SET status = 'stopping', updated_at = NOW()
+WHERE id = $1 AND status IN ('starting', 'started', 'stopping')
+RETURNING booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at
+`
+
+func (q *Queries) MarkRecordingPartStopping(ctx context.Context, id pgtype.UUID) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, markRecordingPartStopping, id)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ProviderResourceID,
+		&i.ProviderRecordingID,
+		&i.ProviderUid,
+		&i.OutputPrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.PartNumber,
+		&i.Provider,
+		&i.RendererTokenHash,
+		&i.RendererTokenExpiresAt,
+		&i.EmptySinceAt,
 	)
 	return i, err
 }
@@ -1513,6 +1725,50 @@ UPDATE coaching_booking_reminders SET sent_at = NOW() WHERE id = $1
 func (q *Queries) MarkReminderSent(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, markReminderSent, id)
 	return err
+}
+
+const refreshBookingPresence = `-- name: RefreshBookingPresence :one
+UPDATE coaching_booking_presence
+SET last_seen_at = NOW()
+WHERE booking_id = $1 AND participant_role = $2 AND connection_id = $3
+RETURNING booking_id, participant_role, connection_id, last_seen_at
+`
+
+type RefreshBookingPresenceParams struct {
+	BookingID       pgtype.UUID `json:"booking_id"`
+	ParticipantRole string      `json:"participant_role"`
+	ConnectionID    pgtype.UUID `json:"connection_id"`
+}
+
+func (q *Queries) RefreshBookingPresence(ctx context.Context, arg RefreshBookingPresenceParams) (CoachingBookingPresence, error) {
+	row := q.db.QueryRow(ctx, refreshBookingPresence, arg.BookingID, arg.ParticipantRole, arg.ConnectionID)
+	var i CoachingBookingPresence
+	err := row.Scan(
+		&i.BookingID,
+		&i.ParticipantRole,
+		&i.ConnectionID,
+		&i.LastSeenAt,
+	)
+	return i, err
+}
+
+const removeBookingPresence = `-- name: RemoveBookingPresence :execrows
+DELETE FROM coaching_booking_presence
+WHERE booking_id = $1 AND participant_role = $2 AND connection_id = $3
+`
+
+type RemoveBookingPresenceParams struct {
+	BookingID       pgtype.UUID `json:"booking_id"`
+	ParticipantRole string      `json:"participant_role"`
+	ConnectionID    pgtype.UUID `json:"connection_id"`
+}
+
+func (q *Queries) RemoveBookingPresence(ctx context.Context, arg RemoveBookingPresenceParams) (int64, error) {
+	result, err := q.db.Exec(ctx, removeBookingPresence, arg.BookingID, arg.ParticipantRole, arg.ConnectionID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const updateAvailability = `-- name: UpdateAvailability :one
@@ -1591,6 +1847,33 @@ func (q *Queries) UpdateSessionType(ctx context.Context, arg UpdateSessionTypePa
 		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertBookingPresence = `-- name: UpsertBookingPresence :one
+INSERT INTO coaching_booking_presence (booking_id, participant_role, connection_id, last_seen_at)
+VALUES ($1, $2, $3, NOW())
+ON CONFLICT (booking_id, participant_role) DO UPDATE SET
+    connection_id = EXCLUDED.connection_id,
+    last_seen_at = NOW()
+RETURNING booking_id, participant_role, connection_id, last_seen_at
+`
+
+type UpsertBookingPresenceParams struct {
+	BookingID       pgtype.UUID `json:"booking_id"`
+	ParticipantRole string      `json:"participant_role"`
+	ConnectionID    pgtype.UUID `json:"connection_id"`
+}
+
+func (q *Queries) UpsertBookingPresence(ctx context.Context, arg UpsertBookingPresenceParams) (CoachingBookingPresence, error) {
+	row := q.db.QueryRow(ctx, upsertBookingPresence, arg.BookingID, arg.ParticipantRole, arg.ConnectionID)
+	var i CoachingBookingPresence
+	err := row.Scan(
+		&i.BookingID,
+		&i.ParticipantRole,
+		&i.ConnectionID,
+		&i.LastSeenAt,
 	)
 	return i, err
 }

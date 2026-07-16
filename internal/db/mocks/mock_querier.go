@@ -71,6 +71,21 @@ func (mr *MockQuerierMockRecorder) AddUserToGroup(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToGroup", reflect.TypeOf((*MockQuerier)(nil).AddUserToGroup), ctx, arg)
 }
 
+// AssignBookingRecordingAsset mocks base method.
+func (m *MockQuerier) AssignBookingRecordingAsset(ctx context.Context, arg db.AssignBookingRecordingAssetParams) (db.CoachingBooking, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AssignBookingRecordingAsset", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingBooking)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AssignBookingRecordingAsset indicates an expected call of AssignBookingRecordingAsset.
+func (mr *MockQuerierMockRecorder) AssignBookingRecordingAsset(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignBookingRecordingAsset", reflect.TypeOf((*MockQuerier)(nil).AssignBookingRecordingAsset), ctx, arg)
+}
+
 // CancelBooking mocks base method.
 func (m *MockQuerier) CancelBooking(ctx context.Context, arg db.CancelBookingParams) (db.CoachingBooking, error) {
 	m.ctrl.T.Helper()
@@ -131,6 +146,21 @@ func (mr *MockQuerierMockRecorder) ClaimInboundEmailByResendID(ctx, resendEmailI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClaimInboundEmailByResendID", reflect.TypeOf((*MockQuerier)(nil).ClaimInboundEmailByResendID), ctx, resendEmailID)
 }
 
+// ClaimNextRecordingPart mocks base method.
+func (m *MockQuerier) ClaimNextRecordingPart(ctx context.Context, arg db.ClaimNextRecordingPartParams) (db.CoachingBookingRecording, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClaimNextRecordingPart", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingBookingRecording)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ClaimNextRecordingPart indicates an expected call of ClaimNextRecordingPart.
+func (mr *MockQuerierMockRecorder) ClaimNextRecordingPart(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClaimNextRecordingPart", reflect.TypeOf((*MockQuerier)(nil).ClaimNextRecordingPart), ctx, arg)
+}
+
 // ClaimPendingInboundEmails mocks base method.
 func (m *MockQuerier) ClaimPendingInboundEmails(ctx context.Context, limit int32) ([]db.InboundEmail, error) {
 	m.ctrl.T.Helper()
@@ -144,6 +174,35 @@ func (m *MockQuerier) ClaimPendingInboundEmails(ctx context.Context, limit int32
 func (mr *MockQuerierMockRecorder) ClaimPendingInboundEmails(ctx, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClaimPendingInboundEmails", reflect.TypeOf((*MockQuerier)(nil).ClaimPendingInboundEmails), ctx, limit)
+}
+
+// ClaimPendingRecordingPartImports mocks base method.
+func (m *MockQuerier) ClaimPendingRecordingPartImports(ctx context.Context, limit int32) ([]db.ClaimPendingRecordingPartImportsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClaimPendingRecordingPartImports", ctx, limit)
+	ret0, _ := ret[0].([]db.ClaimPendingRecordingPartImportsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ClaimPendingRecordingPartImports indicates an expected call of ClaimPendingRecordingPartImports.
+func (mr *MockQuerierMockRecorder) ClaimPendingRecordingPartImports(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClaimPendingRecordingPartImports", reflect.TypeOf((*MockQuerier)(nil).ClaimPendingRecordingPartImports), ctx, limit)
+}
+
+// ClearRecordingPartEmptySince mocks base method.
+func (m *MockQuerier) ClearRecordingPartEmptySince(ctx context.Context, bookingID pgtype.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClearRecordingPartEmptySince", ctx, bookingID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ClearRecordingPartEmptySince indicates an expected call of ClearRecordingPartEmptySince.
+func (mr *MockQuerierMockRecorder) ClearRecordingPartEmptySince(ctx, bookingID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearRecordingPartEmptySince", reflect.TypeOf((*MockQuerier)(nil).ClearRecordingPartEmptySince), ctx, bookingID)
 }
 
 // ConsumeSignupCode mocks base method.
@@ -174,6 +233,21 @@ func (m *MockQuerier) CountConflictingBookings(ctx context.Context, arg db.Count
 func (mr *MockQuerierMockRecorder) CountConflictingBookings(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountConflictingBookings", reflect.TypeOf((*MockQuerier)(nil).CountConflictingBookings), ctx, arg)
+}
+
+// CountFreshBookingParticipants mocks base method.
+func (m *MockQuerier) CountFreshBookingParticipants(ctx context.Context, arg db.CountFreshBookingParticipantsParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountFreshBookingParticipants", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountFreshBookingParticipants indicates an expected call of CountFreshBookingParticipants.
+func (mr *MockQuerierMockRecorder) CountFreshBookingParticipants(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountFreshBookingParticipants", reflect.TypeOf((*MockQuerier)(nil).CountFreshBookingParticipants), ctx, arg)
 }
 
 // CountSignupCodesByOwner mocks base method.
@@ -369,21 +443,6 @@ func (mr *MockQuerierMockRecorder) CreateLandingContactSubmission(ctx, arg any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLandingContactSubmission", reflect.TypeOf((*MockQuerier)(nil).CreateLandingContactSubmission), ctx, arg)
 }
 
-// CreateMissingRecordingImports mocks base method.
-func (m *MockQuerier) CreateMissingRecordingImports(ctx context.Context) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateMissingRecordingImports", ctx)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateMissingRecordingImports indicates an expected call of CreateMissingRecordingImports.
-func (mr *MockQuerierMockRecorder) CreateMissingRecordingImports(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMissingRecordingImports", reflect.TypeOf((*MockQuerier)(nil).CreateMissingRecordingImports), ctx)
-}
-
 // CreateModerationReport mocks base method.
 func (m *MockQuerier) CreateModerationReport(ctx context.Context, arg db.CreateModerationReportParams) (db.ModerationReport, error) {
 	m.ctrl.T.Helper()
@@ -412,6 +471,21 @@ func (m *MockQuerier) CreateNotification(ctx context.Context, arg db.CreateNotif
 func (mr *MockQuerierMockRecorder) CreateNotification(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotification", reflect.TypeOf((*MockQuerier)(nil).CreateNotification), ctx, arg)
+}
+
+// CreateOrderedVideoFromMuxAsset mocks base method.
+func (m *MockQuerier) CreateOrderedVideoFromMuxAsset(ctx context.Context, arg db.CreateOrderedVideoFromMuxAssetParams) (db.Video, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateOrderedVideoFromMuxAsset", ctx, arg)
+	ret0, _ := ret[0].(db.Video)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateOrderedVideoFromMuxAsset indicates an expected call of CreateOrderedVideoFromMuxAsset.
+func (mr *MockQuerierMockRecorder) CreateOrderedVideoFromMuxAsset(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrderedVideoFromMuxAsset", reflect.TypeOf((*MockQuerier)(nil).CreateOrderedVideoFromMuxAsset), ctx, arg)
 }
 
 // CreateSessionType mocks base method.
@@ -562,19 +636,19 @@ func (mr *MockQuerierMockRecorder) DeleteVideoReview(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVideoReview", reflect.TypeOf((*MockQuerier)(nil).DeleteVideoReview), ctx, arg)
 }
 
-// EnsureRecordingImportPending mocks base method.
-func (m *MockQuerier) EnsureRecordingImportPending(ctx context.Context, bookingID pgtype.UUID) (db.CoachingRecordingImport, error) {
+// EnsureRecordingPartImport mocks base method.
+func (m *MockQuerier) EnsureRecordingPartImport(ctx context.Context, arg db.EnsureRecordingPartImportParams) (db.CoachingRecordingImport, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EnsureRecordingImportPending", ctx, bookingID)
+	ret := m.ctrl.Call(m, "EnsureRecordingPartImport", ctx, arg)
 	ret0, _ := ret[0].(db.CoachingRecordingImport)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// EnsureRecordingImportPending indicates an expected call of EnsureRecordingImportPending.
-func (mr *MockQuerierMockRecorder) EnsureRecordingImportPending(ctx, bookingID any) *gomock.Call {
+// EnsureRecordingPartImport indicates an expected call of EnsureRecordingPartImport.
+func (mr *MockQuerierMockRecorder) EnsureRecordingPartImport(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureRecordingImportPending", reflect.TypeOf((*MockQuerier)(nil).EnsureRecordingImportPending), ctx, bookingID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureRecordingPartImport", reflect.TypeOf((*MockQuerier)(nil).EnsureRecordingPartImport), ctx, arg)
 }
 
 // EnsureUserAccess mocks base method.
@@ -590,6 +664,36 @@ func (m *MockQuerier) EnsureUserAccess(ctx context.Context, userID string) (db.U
 func (mr *MockQuerierMockRecorder) EnsureUserAccess(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnsureUserAccess", reflect.TypeOf((*MockQuerier)(nil).EnsureUserAccess), ctx, userID)
+}
+
+// ExchangeRecordingRendererCapability mocks base method.
+func (m *MockQuerier) ExchangeRecordingRendererCapability(ctx context.Context, rendererTokenHash []byte) (db.ExchangeRecordingRendererCapabilityRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExchangeRecordingRendererCapability", ctx, rendererTokenHash)
+	ret0, _ := ret[0].(db.ExchangeRecordingRendererCapabilityRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExchangeRecordingRendererCapability indicates an expected call of ExchangeRecordingRendererCapability.
+func (mr *MockQuerierMockRecorder) ExchangeRecordingRendererCapability(ctx, rendererTokenHash any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExchangeRecordingRendererCapability", reflect.TypeOf((*MockQuerier)(nil).ExchangeRecordingRendererCapability), ctx, rendererTokenHash)
+}
+
+// GetActiveRecordingPart mocks base method.
+func (m *MockQuerier) GetActiveRecordingPart(ctx context.Context, bookingID pgtype.UUID) (db.CoachingBookingRecording, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActiveRecordingPart", ctx, bookingID)
+	ret0, _ := ret[0].(db.CoachingBookingRecording)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActiveRecordingPart indicates an expected call of GetActiveRecordingPart.
+func (mr *MockQuerierMockRecorder) GetActiveRecordingPart(ctx, bookingID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveRecordingPart", reflect.TypeOf((*MockQuerier)(nil).GetActiveRecordingPart), ctx, bookingID)
 }
 
 // GetAsset mocks base method.
@@ -667,49 +771,19 @@ func (mr *MockQuerierMockRecorder) GetBooking(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBooking", reflect.TypeOf((*MockQuerier)(nil).GetBooking), ctx, arg)
 }
 
-// GetBookingForRecordingUpdate mocks base method.
-func (m *MockQuerier) GetBookingForRecordingUpdate(ctx context.Context, arg db.GetBookingForRecordingUpdateParams) (db.CoachingBooking, error) {
+// GetBookingForRecordingAssetUpdate mocks base method.
+func (m *MockQuerier) GetBookingForRecordingAssetUpdate(ctx context.Context, id pgtype.UUID) (db.CoachingBooking, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBookingForRecordingUpdate", ctx, arg)
+	ret := m.ctrl.Call(m, "GetBookingForRecordingAssetUpdate", ctx, id)
 	ret0, _ := ret[0].(db.CoachingBooking)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetBookingForRecordingUpdate indicates an expected call of GetBookingForRecordingUpdate.
-func (mr *MockQuerierMockRecorder) GetBookingForRecordingUpdate(ctx, arg any) *gomock.Call {
+// GetBookingForRecordingAssetUpdate indicates an expected call of GetBookingForRecordingAssetUpdate.
+func (mr *MockQuerierMockRecorder) GetBookingForRecordingAssetUpdate(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookingForRecordingUpdate", reflect.TypeOf((*MockQuerier)(nil).GetBookingForRecordingUpdate), ctx, arg)
-}
-
-// GetBookingRecording mocks base method.
-func (m *MockQuerier) GetBookingRecording(ctx context.Context, bookingID pgtype.UUID) (db.CoachingBookingRecording, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBookingRecording", ctx, bookingID)
-	ret0, _ := ret[0].(db.CoachingBookingRecording)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBookingRecording indicates an expected call of GetBookingRecording.
-func (mr *MockQuerierMockRecorder) GetBookingRecording(ctx, bookingID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookingRecording", reflect.TypeOf((*MockQuerier)(nil).GetBookingRecording), ctx, bookingID)
-}
-
-// GetBookingRecordingForUpdate mocks base method.
-func (m *MockQuerier) GetBookingRecordingForUpdate(ctx context.Context, bookingID pgtype.UUID) (db.CoachingBookingRecording, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBookingRecordingForUpdate", ctx, bookingID)
-	ret0, _ := ret[0].(db.CoachingBookingRecording)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBookingRecordingForUpdate indicates an expected call of GetBookingRecordingForUpdate.
-func (mr *MockQuerierMockRecorder) GetBookingRecordingForUpdate(ctx, bookingID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookingRecordingForUpdate", reflect.TypeOf((*MockQuerier)(nil).GetBookingRecordingForUpdate), ctx, bookingID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBookingForRecordingAssetUpdate", reflect.TypeOf((*MockQuerier)(nil).GetBookingForRecordingAssetUpdate), ctx, id)
 }
 
 // GetGroup mocks base method.
@@ -937,6 +1011,21 @@ func (mr *MockQuerierMockRecorder) HasVideosWithoutReviews(ctx, assetID any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasVideosWithoutReviews", reflect.TypeOf((*MockQuerier)(nil).HasVideosWithoutReviews), ctx, assetID)
 }
 
+// IsRecordingAssetStillOpen mocks base method.
+func (m *MockQuerier) IsRecordingAssetStillOpen(ctx context.Context, recordingAssetID pgtype.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsRecordingAssetStillOpen", ctx, recordingAssetID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsRecordingAssetStillOpen indicates an expected call of IsRecordingAssetStillOpen.
+func (mr *MockQuerierMockRecorder) IsRecordingAssetStillOpen(ctx, recordingAssetID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRecordingAssetStillOpen", reflect.TypeOf((*MockQuerier)(nil).IsRecordingAssetStillOpen), ctx, recordingAssetID)
+}
+
 // LeaveGroupIfNotLastMember mocks base method.
 func (m *MockQuerier) LeaveGroupIfNotLastMember(ctx context.Context, arg db.LeaveGroupIfNotLastMemberParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -1147,21 +1236,6 @@ func (mr *MockQuerierMockRecorder) ListNotifications(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListNotifications", reflect.TypeOf((*MockQuerier)(nil).ListNotifications), ctx, arg)
 }
 
-// ListPendingRecordingImports mocks base method.
-func (m *MockQuerier) ListPendingRecordingImports(ctx context.Context, limit int32) ([]db.ListPendingRecordingImportsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListPendingRecordingImports", ctx, limit)
-	ret0, _ := ret[0].([]db.ListPendingRecordingImportsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListPendingRecordingImports indicates an expected call of ListPendingRecordingImports.
-func (mr *MockQuerierMockRecorder) ListPendingRecordingImports(ctx, limit any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPendingRecordingImports", reflect.TypeOf((*MockQuerier)(nil).ListPendingRecordingImports), ctx, limit)
-}
-
 // ListPendingReminders mocks base method.
 func (m *MockQuerier) ListPendingReminders(ctx context.Context) ([]db.ListPendingRemindersRow, error) {
 	m.ctrl.T.Helper()
@@ -1177,19 +1251,19 @@ func (mr *MockQuerierMockRecorder) ListPendingReminders(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPendingReminders", reflect.TypeOf((*MockQuerier)(nil).ListPendingReminders), ctx)
 }
 
-// ListRecordingsPastEnd mocks base method.
-func (m *MockQuerier) ListRecordingsPastEnd(ctx context.Context, arg db.ListRecordingsPastEndParams) ([]db.CoachingBookingRecording, error) {
+// ListRecordingPartsReadyToStop mocks base method.
+func (m *MockQuerier) ListRecordingPartsReadyToStop(ctx context.Context, arg db.ListRecordingPartsReadyToStopParams) ([]db.CoachingBookingRecording, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRecordingsPastEnd", ctx, arg)
+	ret := m.ctrl.Call(m, "ListRecordingPartsReadyToStop", ctx, arg)
 	ret0, _ := ret[0].([]db.CoachingBookingRecording)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListRecordingsPastEnd indicates an expected call of ListRecordingsPastEnd.
-func (mr *MockQuerierMockRecorder) ListRecordingsPastEnd(ctx, arg any) *gomock.Call {
+// ListRecordingPartsReadyToStop indicates an expected call of ListRecordingPartsReadyToStop.
+func (mr *MockQuerierMockRecorder) ListRecordingPartsReadyToStop(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRecordingsPastEnd", reflect.TypeOf((*MockQuerier)(nil).ListRecordingsPastEnd), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRecordingPartsReadyToStop", reflect.TypeOf((*MockQuerier)(nil).ListRecordingPartsReadyToStop), ctx, arg)
 }
 
 // ListSessionTypesByExpertGroup mocks base method.
@@ -1235,6 +1309,21 @@ func (m *MockQuerier) ListSignupCodesByOwner(ctx context.Context, ownerUserID st
 func (mr *MockQuerierMockRecorder) ListSignupCodesByOwner(ctx, ownerUserID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSignupCodesByOwner", reflect.TypeOf((*MockQuerier)(nil).ListSignupCodesByOwner), ctx, ownerUserID)
+}
+
+// ListStoppedRecordingPartsForDiscovery mocks base method.
+func (m *MockQuerier) ListStoppedRecordingPartsForDiscovery(ctx context.Context, limit int32) ([]db.CoachingBookingRecording, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListStoppedRecordingPartsForDiscovery", ctx, limit)
+	ret0, _ := ret[0].([]db.CoachingBookingRecording)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListStoppedRecordingPartsForDiscovery indicates an expected call of ListStoppedRecordingPartsForDiscovery.
+func (mr *MockQuerierMockRecorder) ListStoppedRecordingPartsForDiscovery(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListStoppedRecordingPartsForDiscovery", reflect.TypeOf((*MockQuerier)(nil).ListStoppedRecordingPartsForDiscovery), ctx, limit)
 }
 
 // ListUserGroups mocks base method.
@@ -1311,63 +1400,19 @@ func (mr *MockQuerierMockRecorder) MarkAllNotificationsRead(ctx, recipientID any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkAllNotificationsRead", reflect.TypeOf((*MockQuerier)(nil).MarkAllNotificationsRead), ctx, recipientID)
 }
 
-// MarkBookingRecordingFailed mocks base method.
-func (m *MockQuerier) MarkBookingRecordingFailed(ctx context.Context, arg db.MarkBookingRecordingFailedParams) error {
+// MarkEmptyRecordingPartsWithoutFreshHumans mocks base method.
+func (m *MockQuerier) MarkEmptyRecordingPartsWithoutFreshHumans(ctx context.Context, freshSeconds int32) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkBookingRecordingFailed", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// MarkBookingRecordingFailed indicates an expected call of MarkBookingRecordingFailed.
-func (mr *MockQuerierMockRecorder) MarkBookingRecordingFailed(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkBookingRecordingFailed", reflect.TypeOf((*MockQuerier)(nil).MarkBookingRecordingFailed), ctx, arg)
-}
-
-// MarkBookingRecordingStarted mocks base method.
-func (m *MockQuerier) MarkBookingRecordingStarted(ctx context.Context, arg db.MarkBookingRecordingStartedParams) (db.CoachingBookingRecording, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkBookingRecordingStarted", ctx, arg)
-	ret0, _ := ret[0].(db.CoachingBookingRecording)
+	ret := m.ctrl.Call(m, "MarkEmptyRecordingPartsWithoutFreshHumans", ctx, freshSeconds)
+	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// MarkBookingRecordingStarted indicates an expected call of MarkBookingRecordingStarted.
-func (mr *MockQuerierMockRecorder) MarkBookingRecordingStarted(ctx, arg any) *gomock.Call {
+// MarkEmptyRecordingPartsWithoutFreshHumans indicates an expected call of MarkEmptyRecordingPartsWithoutFreshHumans.
+func (mr *MockQuerierMockRecorder) MarkEmptyRecordingPartsWithoutFreshHumans(ctx, freshSeconds any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkBookingRecordingStarted", reflect.TypeOf((*MockQuerier)(nil).MarkBookingRecordingStarted), ctx, arg)
-}
-
-// MarkBookingRecordingStopped mocks base method.
-func (m *MockQuerier) MarkBookingRecordingStopped(ctx context.Context, bookingID pgtype.UUID) (db.CoachingBookingRecording, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkBookingRecordingStopped", ctx, bookingID)
-	ret0, _ := ret[0].(db.CoachingBookingRecording)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// MarkBookingRecordingStopped indicates an expected call of MarkBookingRecordingStopped.
-func (mr *MockQuerierMockRecorder) MarkBookingRecordingStopped(ctx, bookingID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkBookingRecordingStopped", reflect.TypeOf((*MockQuerier)(nil).MarkBookingRecordingStopped), ctx, bookingID)
-}
-
-// MarkBookingRecordingStopping mocks base method.
-func (m *MockQuerier) MarkBookingRecordingStopping(ctx context.Context, bookingID pgtype.UUID) (db.CoachingBookingRecording, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkBookingRecordingStopping", ctx, bookingID)
-	ret0, _ := ret[0].(db.CoachingBookingRecording)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// MarkBookingRecordingStopping indicates an expected call of MarkBookingRecordingStopping.
-func (mr *MockQuerierMockRecorder) MarkBookingRecordingStopping(ctx, bookingID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkBookingRecordingStopping", reflect.TypeOf((*MockQuerier)(nil).MarkBookingRecordingStopping), ctx, bookingID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkEmptyRecordingPartsWithoutFreshHumans", reflect.TypeOf((*MockQuerier)(nil).MarkEmptyRecordingPartsWithoutFreshHumans), ctx, freshSeconds)
 }
 
 // MarkFeedbackDiscordFailed mocks base method.
@@ -1594,63 +1639,107 @@ func (mr *MockQuerierMockRecorder) MarkNotificationReadByInviteCode(ctx, arg any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkNotificationReadByInviteCode", reflect.TypeOf((*MockQuerier)(nil).MarkNotificationReadByInviteCode), ctx, arg)
 }
 
-// MarkRecordingImportFailed mocks base method.
-func (m *MockQuerier) MarkRecordingImportFailed(ctx context.Context, arg db.MarkRecordingImportFailedParams) error {
+// MarkRecordingPartFailed mocks base method.
+func (m *MockQuerier) MarkRecordingPartFailed(ctx context.Context, arg db.MarkRecordingPartFailedParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkRecordingImportFailed", ctx, arg)
+	ret := m.ctrl.Call(m, "MarkRecordingPartFailed", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// MarkRecordingImportFailed indicates an expected call of MarkRecordingImportFailed.
-func (mr *MockQuerierMockRecorder) MarkRecordingImportFailed(ctx, arg any) *gomock.Call {
+// MarkRecordingPartFailed indicates an expected call of MarkRecordingPartFailed.
+func (mr *MockQuerierMockRecorder) MarkRecordingPartFailed(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingImportFailed", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingImportFailed), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingPartFailed", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingPartFailed), ctx, arg)
 }
 
-// MarkRecordingImportImporting mocks base method.
-func (m *MockQuerier) MarkRecordingImportImporting(ctx context.Context, bookingID pgtype.UUID) (db.CoachingRecordingImport, error) {
+// MarkRecordingPartImportFailed mocks base method.
+func (m *MockQuerier) MarkRecordingPartImportFailed(ctx context.Context, arg db.MarkRecordingPartImportFailedParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkRecordingImportImporting", ctx, bookingID)
+	ret := m.ctrl.Call(m, "MarkRecordingPartImportFailed", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkRecordingPartImportFailed indicates an expected call of MarkRecordingPartImportFailed.
+func (mr *MockQuerierMockRecorder) MarkRecordingPartImportFailed(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingPartImportFailed", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingPartImportFailed), ctx, arg)
+}
+
+// MarkRecordingPartImportMuxCreated mocks base method.
+func (m *MockQuerier) MarkRecordingPartImportMuxCreated(ctx context.Context, arg db.MarkRecordingPartImportMuxCreatedParams) (db.CoachingRecordingImport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRecordingPartImportMuxCreated", ctx, arg)
 	ret0, _ := ret[0].(db.CoachingRecordingImport)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// MarkRecordingImportImporting indicates an expected call of MarkRecordingImportImporting.
-func (mr *MockQuerierMockRecorder) MarkRecordingImportImporting(ctx, bookingID any) *gomock.Call {
+// MarkRecordingPartImportMuxCreated indicates an expected call of MarkRecordingPartImportMuxCreated.
+func (mr *MockQuerierMockRecorder) MarkRecordingPartImportMuxCreated(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingImportImporting", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingImportImporting), ctx, bookingID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingPartImportMuxCreated", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingPartImportMuxCreated), ctx, arg)
 }
 
-// MarkRecordingImportMuxCreated mocks base method.
-func (m *MockQuerier) MarkRecordingImportMuxCreated(ctx context.Context, arg db.MarkRecordingImportMuxCreatedParams) (db.CoachingRecordingImport, error) {
+// MarkRecordingPartImportReady mocks base method.
+func (m *MockQuerier) MarkRecordingPartImportReady(ctx context.Context, arg db.MarkRecordingPartImportReadyParams) (db.CoachingRecordingImport, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkRecordingImportMuxCreated", ctx, arg)
+	ret := m.ctrl.Call(m, "MarkRecordingPartImportReady", ctx, arg)
 	ret0, _ := ret[0].(db.CoachingRecordingImport)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// MarkRecordingImportMuxCreated indicates an expected call of MarkRecordingImportMuxCreated.
-func (mr *MockQuerierMockRecorder) MarkRecordingImportMuxCreated(ctx, arg any) *gomock.Call {
+// MarkRecordingPartImportReady indicates an expected call of MarkRecordingPartImportReady.
+func (mr *MockQuerierMockRecorder) MarkRecordingPartImportReady(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingImportMuxCreated", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingImportMuxCreated), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingPartImportReady", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingPartImportReady), ctx, arg)
 }
 
-// MarkRecordingImportReady mocks base method.
-func (m *MockQuerier) MarkRecordingImportReady(ctx context.Context, arg db.MarkRecordingImportReadyParams) (db.CoachingRecordingImport, error) {
+// MarkRecordingPartStarted mocks base method.
+func (m *MockQuerier) MarkRecordingPartStarted(ctx context.Context, arg db.MarkRecordingPartStartedParams) (db.CoachingBookingRecording, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkRecordingImportReady", ctx, arg)
-	ret0, _ := ret[0].(db.CoachingRecordingImport)
+	ret := m.ctrl.Call(m, "MarkRecordingPartStarted", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingBookingRecording)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// MarkRecordingImportReady indicates an expected call of MarkRecordingImportReady.
-func (mr *MockQuerierMockRecorder) MarkRecordingImportReady(ctx, arg any) *gomock.Call {
+// MarkRecordingPartStarted indicates an expected call of MarkRecordingPartStarted.
+func (mr *MockQuerierMockRecorder) MarkRecordingPartStarted(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingImportReady", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingImportReady), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingPartStarted", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingPartStarted), ctx, arg)
+}
+
+// MarkRecordingPartStopped mocks base method.
+func (m *MockQuerier) MarkRecordingPartStopped(ctx context.Context, id pgtype.UUID) (db.CoachingBookingRecording, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRecordingPartStopped", ctx, id)
+	ret0, _ := ret[0].(db.CoachingBookingRecording)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkRecordingPartStopped indicates an expected call of MarkRecordingPartStopped.
+func (mr *MockQuerierMockRecorder) MarkRecordingPartStopped(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingPartStopped", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingPartStopped), ctx, id)
+}
+
+// MarkRecordingPartStopping mocks base method.
+func (m *MockQuerier) MarkRecordingPartStopping(ctx context.Context, id pgtype.UUID) (db.CoachingBookingRecording, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRecordingPartStopping", ctx, id)
+	ret0, _ := ret[0].(db.CoachingBookingRecording)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkRecordingPartStopping indicates an expected call of MarkRecordingPartStopping.
+func (mr *MockQuerierMockRecorder) MarkRecordingPartStopping(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRecordingPartStopping", reflect.TypeOf((*MockQuerier)(nil).MarkRecordingPartStopping), ctx, id)
 }
 
 // MarkReminderSent mocks base method.
@@ -1665,6 +1754,21 @@ func (m *MockQuerier) MarkReminderSent(ctx context.Context, id pgtype.UUID) erro
 func (mr *MockQuerierMockRecorder) MarkReminderSent(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkReminderSent", reflect.TypeOf((*MockQuerier)(nil).MarkReminderSent), ctx, id)
+}
+
+// RefreshBookingPresence mocks base method.
+func (m *MockQuerier) RefreshBookingPresence(ctx context.Context, arg db.RefreshBookingPresenceParams) (db.CoachingBookingPresence, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RefreshBookingPresence", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingBookingPresence)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RefreshBookingPresence indicates an expected call of RefreshBookingPresence.
+func (mr *MockQuerierMockRecorder) RefreshBookingPresence(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshBookingPresence", reflect.TypeOf((*MockQuerier)(nil).RefreshBookingPresence), ctx, arg)
 }
 
 // ReleaseInboundEmailClaim mocks base method.
@@ -1693,6 +1797,21 @@ func (m *MockQuerier) ReleaseSignupCode(ctx context.Context, id pgtype.UUID) err
 func (mr *MockQuerierMockRecorder) ReleaseSignupCode(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseSignupCode", reflect.TypeOf((*MockQuerier)(nil).ReleaseSignupCode), ctx, id)
+}
+
+// RemoveBookingPresence mocks base method.
+func (m *MockQuerier) RemoveBookingPresence(ctx context.Context, arg db.RemoveBookingPresenceParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveBookingPresence", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveBookingPresence indicates an expected call of RemoveBookingPresence.
+func (mr *MockQuerierMockRecorder) RemoveBookingPresence(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveBookingPresence", reflect.TypeOf((*MockQuerier)(nil).RemoveBookingPresence), ctx, arg)
 }
 
 // RemoveUserFromGroup mocks base method.
@@ -2044,6 +2163,21 @@ func (m *MockQuerier) UpdateVideoStatusByUploadID(ctx context.Context, arg db.Up
 func (mr *MockQuerierMockRecorder) UpdateVideoStatusByUploadID(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateVideoStatusByUploadID", reflect.TypeOf((*MockQuerier)(nil).UpdateVideoStatusByUploadID), ctx, arg)
+}
+
+// UpsertBookingPresence mocks base method.
+func (m *MockQuerier) UpsertBookingPresence(ctx context.Context, arg db.UpsertBookingPresenceParams) (db.CoachingBookingPresence, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertBookingPresence", ctx, arg)
+	ret0, _ := ret[0].(db.CoachingBookingPresence)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertBookingPresence indicates an expected call of UpsertBookingPresence.
+func (mr *MockQuerierMockRecorder) UpsertBookingPresence(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertBookingPresence", reflect.TypeOf((*MockQuerier)(nil).UpsertBookingPresence), ctx, arg)
 }
 
 // UpsertInboundEmail mocks base method.

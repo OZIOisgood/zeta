@@ -699,7 +699,21 @@
       "microphoneFallback": "Microphone {{index}}",
       "cameraFallback": "Caméra {{index}}",
       "noMicrophone": "Aucun microphone disponible",
-      "noCamera": "Aucune caméra disponible"
+      "noCamera": "Aucune caméra disponible",
+      "devicesOptional": "Vous êtes dans l’appel. La caméra et le microphone sont facultatifs.",
+      "enableDevices": "Activer la caméra et le microphone",
+      "permissionDenied": "L’accès du navigateur a été refusé. Autorisez la caméra ou le microphone dans les réglages puis réessayez.",
+      "deviceMissing": "Aucune caméra ni aucun microphone n’a été trouvé.",
+      "deviceBusy": "Une autre application utilise la caméra ou le microphone.",
+      "unsupported": "Ce navigateur ne peut pas utiliser la caméra ou le microphone ici.",
+      "publishFailed": "L’appareil a été ouvert mais n’a pas pu être envoyé dans l’appel. Réessayez.",
+      "mediaFailed": "La caméra ou le microphone n’a pas pu démarrer. Réessayez.",
+      "endsIn": "Se termine dans {{time}}",
+      "overtime": "Temps supplémentaire +{{time}}",
+      "reconnecting": "Reconnexion…",
+      "cameraOff": "Caméra désactivée",
+      "participantLeft": "A quitté la session",
+      "waitingShort": "En attente…"
     }
   },
   "preferences": {
