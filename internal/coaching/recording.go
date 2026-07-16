@@ -540,10 +540,17 @@ func recordingBookingEnd(booking db.CoachingBooking) time.Time {
 }
 
 func participantUIDForBooking(userID string, booking db.CoachingBooking) uint32 {
-	if userID == booking.StudentID {
-		return 1
+	if userID == booking.ExpertID {
+		return 2
 	}
-	return 2
+	return 1
+}
+
+func participantRoleForBooking(userID string, booking db.CoachingBooking) string {
+	if userID == booking.ExpertID {
+		return "expert"
+	}
+	return "student"
 }
 
 func sanitizeAgoraPathPart(value string) string {

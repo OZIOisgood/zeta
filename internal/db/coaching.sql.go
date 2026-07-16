@@ -1598,60 +1598,6 @@ func (q *Queries) MarkRecordingPartImportReady(ctx context.Context, arg MarkReco
 	return i, err
 }
 
-const markRecordingPartStarted = `-- name: MarkRecordingPartStarted :one
-UPDATE coaching_booking_recordings
-SET status = 'started',
-    provider_resource_id = $2,
-    provider_recording_id = $3,
-    provider_uid = $4,
-    output_prefix = $5,
-    started_at = NOW(),
-    empty_since_at = NULL,
-    error = NULL,
-    updated_at = NOW()
-WHERE id = $1 AND status = 'starting'
-RETURNING booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at
-`
-
-type MarkRecordingPartStartedParams struct {
-	ID                  pgtype.UUID `json:"id"`
-	ProviderResourceID  pgtype.Text `json:"provider_resource_id"`
-	ProviderRecordingID pgtype.Text `json:"provider_recording_id"`
-	ProviderUid         pgtype.Text `json:"provider_uid"`
-	OutputPrefix        []string    `json:"output_prefix"`
-}
-
-func (q *Queries) MarkRecordingPartStarted(ctx context.Context, arg MarkRecordingPartStartedParams) (CoachingBookingRecording, error) {
-	row := q.db.QueryRow(ctx, markRecordingPartStarted,
-		arg.ID,
-		arg.ProviderResourceID,
-		arg.ProviderRecordingID,
-		arg.ProviderUid,
-		arg.OutputPrefix,
-	)
-	var i CoachingBookingRecording
-	err := row.Scan(
-		&i.BookingID,
-		&i.Status,
-		&i.ProviderResourceID,
-		&i.ProviderRecordingID,
-		&i.ProviderUid,
-		&i.OutputPrefix,
-		&i.StartedAt,
-		&i.StoppedAt,
-		&i.Error,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.ID,
-		&i.PartNumber,
-		&i.Provider,
-		&i.RendererTokenHash,
-		&i.RendererTokenExpiresAt,
-		&i.EmptySinceAt,
-	)
-	return i, err
-}
-
 const markRecordingPartStopped = `-- name: MarkRecordingPartStopped :one
 UPDATE coaching_booking_recordings
 SET status = 'stopped', stopped_at = NOW(), empty_since_at = NULL,
@@ -1689,7 +1635,7 @@ func (q *Queries) MarkRecordingPartStopped(ctx context.Context, id pgtype.UUID) 
 const markRecordingPartStopping = `-- name: MarkRecordingPartStopping :one
 UPDATE coaching_booking_recordings
 SET status = 'stopping', updated_at = NOW()
-WHERE id = $1 AND status IN ('starting', 'started', 'stopping')
+WHERE id = $1 AND status IN ('started', 'stopping')
 RETURNING booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at
 `
 
@@ -1716,6 +1662,22 @@ func (q *Queries) MarkRecordingPartStopping(ctx context.Context, id pgtype.UUID)
 		&i.EmptySinceAt,
 	)
 	return i, err
+}
+
+const markRecordingRendererReady = `-- name: MarkRecordingRendererReady :one
+UPDATE coaching_booking_recordings
+SET status = 'started', updated_at = NOW()
+WHERE renderer_token_hash = $1
+  AND renderer_token_expires_at > NOW()
+  AND status IN ('starting', 'started')
+RETURNING id
+`
+
+func (q *Queries) MarkRecordingRendererReady(ctx context.Context, rendererTokenHash []byte) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, markRecordingRendererReady, rendererTokenHash)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const markReminderSent = `-- name: MarkReminderSent :exec
@@ -1769,6 +1731,59 @@ func (q *Queries) RemoveBookingPresence(ctx context.Context, arg RemoveBookingPr
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const setRecordingPartProviderStarted = `-- name: SetRecordingPartProviderStarted :one
+UPDATE coaching_booking_recordings
+SET provider_resource_id = $2,
+    provider_recording_id = $3,
+    provider_uid = $4,
+    output_prefix = $5,
+    started_at = COALESCE(started_at, NOW()),
+    empty_since_at = NULL,
+    error = NULL,
+    updated_at = NOW()
+WHERE id = $1 AND status IN ('starting', 'started')
+RETURNING booking_id, status, provider_resource_id, provider_recording_id, provider_uid, output_prefix, started_at, stopped_at, error, created_at, updated_at, id, part_number, provider, renderer_token_hash, renderer_token_expires_at, empty_since_at
+`
+
+type SetRecordingPartProviderStartedParams struct {
+	ID                  pgtype.UUID `json:"id"`
+	ProviderResourceID  pgtype.Text `json:"provider_resource_id"`
+	ProviderRecordingID pgtype.Text `json:"provider_recording_id"`
+	ProviderUid         pgtype.Text `json:"provider_uid"`
+	OutputPrefix        []string    `json:"output_prefix"`
+}
+
+func (q *Queries) SetRecordingPartProviderStarted(ctx context.Context, arg SetRecordingPartProviderStartedParams) (CoachingBookingRecording, error) {
+	row := q.db.QueryRow(ctx, setRecordingPartProviderStarted,
+		arg.ID,
+		arg.ProviderResourceID,
+		arg.ProviderRecordingID,
+		arg.ProviderUid,
+		arg.OutputPrefix,
+	)
+	var i CoachingBookingRecording
+	err := row.Scan(
+		&i.BookingID,
+		&i.Status,
+		&i.ProviderResourceID,
+		&i.ProviderRecordingID,
+		&i.ProviderUid,
+		&i.OutputPrefix,
+		&i.StartedAt,
+		&i.StoppedAt,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ID,
+		&i.PartNumber,
+		&i.Provider,
+		&i.RendererTokenHash,
+		&i.RendererTokenExpiresAt,
+		&i.EmptySinceAt,
+	)
+	return i, err
 }
 
 const updateAvailability = `-- name: UpdateAvailability :one

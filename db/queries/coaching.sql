@@ -138,24 +138,23 @@ WHERE booking_id = $1 AND status IN ('starting', 'started', 'stopping')
 ORDER BY part_number DESC
 LIMIT 1;
 
--- name: MarkRecordingPartStarted :one
+-- name: SetRecordingPartProviderStarted :one
 UPDATE coaching_booking_recordings
-SET status = 'started',
-    provider_resource_id = $2,
+SET provider_resource_id = $2,
     provider_recording_id = $3,
     provider_uid = $4,
     output_prefix = $5,
-    started_at = NOW(),
+    started_at = COALESCE(started_at, NOW()),
     empty_since_at = NULL,
     error = NULL,
     updated_at = NOW()
-WHERE id = $1 AND status = 'starting'
+WHERE id = $1 AND status IN ('starting', 'started')
 RETURNING *;
 
 -- name: MarkRecordingPartStopping :one
 UPDATE coaching_booking_recordings
 SET status = 'stopping', updated_at = NOW()
-WHERE id = $1 AND status IN ('starting', 'started', 'stopping')
+WHERE id = $1 AND status IN ('started', 'stopping')
 RETURNING *;
 
 -- name: MarkRecordingPartStopped :one
@@ -238,6 +237,14 @@ JOIN coaching_bookings booking ON booking.id = recording.booking_id
 WHERE recording.renderer_token_hash = $1
   AND recording.renderer_token_expires_at > NOW()
   AND recording.status IN ('starting', 'started');
+
+-- name: MarkRecordingRendererReady :one
+UPDATE coaching_booking_recordings
+SET status = 'started', updated_at = NOW()
+WHERE renderer_token_hash = $1
+  AND renderer_token_expires_at > NOW()
+  AND status IN ('starting', 'started')
+RETURNING id;
 
 -- name: ListStoppedRecordingPartsForDiscovery :many
 SELECT * FROM coaching_booking_recordings

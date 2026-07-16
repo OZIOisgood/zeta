@@ -33,6 +33,11 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
+              },
+              {
+                "glob": "AgoraRTC_N-production.js",
+                "input": "node_modules/agora-rtc-sdk-ng",
+                "output": "recording-assets"
               }
             ],
             "styles": ["src/tailwind.css", "src/styles.scss"]

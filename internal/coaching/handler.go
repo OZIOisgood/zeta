@@ -14,11 +14,11 @@ import (
 
 // Booking business-rule constants.
 const (
-	SlotLookaheadDays      = 28
-	BlockedSlotRangeMonths = 3
-	MinSessionDuration     = int32(15)
-	MaxSessionDuration     = int32(120)
-	SessionDurationStep    = int32(5)
+	SlotLookaheadDays          = 28
+	BlockedSlotRangeMonths     = 3
+	DefaultMinSessionDuration  = int32(15)
+	MaxSessionDuration         = int32(120)
+	DefaultSessionDurationStep = int32(5)
 )
 
 type Handler struct {
@@ -40,6 +40,8 @@ type Handler struct {
 	minBookingNotice     time.Duration
 	cancellationNotice   time.Duration
 	connectWindow        time.Duration
+	minSessionDuration   int32
+	sessionDurationStep  int32
 }
 
 // HandlerConfig holds configurable time constraints for coaching bookings.
@@ -57,6 +59,8 @@ type HandlerConfig struct {
 	MinBookingNotice     time.Duration // default: 2h
 	CancellationNotice   time.Duration // default: 1h
 	ConnectWindow        time.Duration // default: 15m — how early before a session participants may join
+	MinSessionDuration   int32         // default: 15 minutes; dev may lower this for smoke tests
+	SessionDurationStep  int32         // default: 5 minutes; dev may use one-minute increments
 }
 
 func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, workos auth.UserManagement, logger *slog.Logger, cfg HandlerConfig) *Handler {
@@ -68,6 +72,12 @@ func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, wor
 	}
 	if cfg.RecordingEndGrace <= 0 {
 		cfg.RecordingEndGrace = 15 * time.Minute
+	}
+	if cfg.MinSessionDuration <= 0 {
+		cfg.MinSessionDuration = DefaultMinSessionDuration
+	}
+	if cfg.SessionDurationStep <= 0 {
+		cfg.SessionDurationStep = DefaultSessionDurationStep
 	}
 	return &Handler{
 		q:                    q,
@@ -88,6 +98,8 @@ func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, wor
 		minBookingNotice:     cfg.MinBookingNotice,
 		cancellationNotice:   cfg.CancellationNotice,
 		connectWindow:        cfg.ConnectWindow,
+		minSessionDuration:   cfg.MinSessionDuration,
+		sessionDurationStep:  cfg.SessionDurationStep,
 	}
 }
 

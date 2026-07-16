@@ -127,10 +127,7 @@ func (h *Handler) ConnectToBooking(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to prepare session", http.StatusInternalServerError)
 		return
 	}
-	callerRole := "expert"
-	if user.ID == booking.StudentID {
-		callerRole = "student"
-	}
+	callerRole := participantRoleForBooking(user.ID, booking)
 
 	log.InfoContext(ctx, "agora_token_issued",
 		slog.String("component", "coaching"),

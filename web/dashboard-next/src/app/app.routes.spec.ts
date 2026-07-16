@@ -1,27 +1,22 @@
 import { routes } from './app.routes';
 
 describe('app routes', () => {
-  it('exposes the capability-only recording view before guarded routes', () => {
-    expect(routes[0].path).toBe('recording-view');
-    expect(routes[0].canActivate).toBeUndefined();
-  });
-
   it('matches the full-screen coaching call route before the shell wildcard', () => {
-    expect(routes[1].path).toBe('sessions/:groupId/:bookingId/call');
+    expect(routes[0].path).toBe('sessions/:groupId/:bookingId/call');
   });
 
   it('exposes the waitlist redeem route ahead of the shell', () => {
-    expect(routes[2].path).toBe('welcome');
+    expect(routes[1].path).toBe('welcome');
   });
 
   it('exposes the authenticated personal preferences route', () => {
-    expect(routes[3].children).toEqual(
+    expect(routes[2].children).toEqual(
       expect.arrayContaining([expect.objectContaining({ path: 'preferences/:tab' })]),
     );
   });
 
   it('protects permission-gated feature routes like the old dashboard', () => {
-    const shellRoutes = routes[3].children ?? [];
+    const shellRoutes = routes[2].children ?? [];
 
     expect(shellRoutes).toEqual(
       expect.arrayContaining([
@@ -55,7 +50,7 @@ describe('app routes', () => {
         }),
       ]),
     );
-    expect(routes[1]).toEqual(
+    expect(routes[0]).toEqual(
       expect.objectContaining({
         path: 'sessions/:groupId/:bookingId/call',
         data: { permission: 'coaching:video:connect' },

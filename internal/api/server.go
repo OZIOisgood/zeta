@@ -207,6 +207,8 @@ func (s *Server) routes(ctx context.Context) {
 		MinBookingNotice:     parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
 		CancellationNotice:   parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
 		ConnectWindow:        parseDurationOrDefault(os.Getenv("CONNECT_WINDOW"), 15*time.Minute),
+		MinSessionDuration:   int32(parseIntOrDefault(os.Getenv("MIN_SESSION_DURATION_MINUTES"), 15)),
+		SessionDurationStep:  int32(parseIntOrDefault(os.Getenv("SESSION_DURATION_STEP_MINUTES"), 5)),
 	})
 
 	// Global Middleware
@@ -220,6 +222,7 @@ func (s *Server) routes(ctx context.Context) {
 	})
 	s.Router.Post("/webhooks/resend", inboundEmailHandler.Webhook)
 	s.Router.Post("/public/coaching/recording-renderer/exchange", coachingHandler.ExchangeRecordingRendererCapability)
+	s.Router.Post("/public/coaching/recording-renderer/ready", coachingHandler.MarkRecordingRendererReady)
 	s.Router.Route("/contact", contactHandler.RegisterRoutes)
 
 	// Auth Routes

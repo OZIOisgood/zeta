@@ -75,6 +75,8 @@ Inspired by the need for efficient remote coaching, Zeta bridges the gap between
    - `MIN_BOOKING_NOTICE` — minimum lead time for new bookings (default: `2h`)
    - `CANCELLATION_NOTICE` — minimum notice to cancel (default: `1h`)
    - `CONNECT_WINDOW` — how early participants can join a call (default: `15m`)
+   - `MIN_SESSION_DURATION_MINUTES` — shortest session type (default: `15`; dev deployment uses `1`)
+   - `SESSION_DURATION_STEP_MINUTES` — allowed duration increment (default: `5`; dev deployment uses `1`)
 
 8. **Discord Feedback And Report Inboxes**:
    - Create a Discord bot token and store it in `DISCORD_BOT_TOKEN`.
@@ -211,14 +213,14 @@ GitHub Environment variable; there is no separate Zeta observability password. S
 
 ### Live Coaching Flow
 
-1. An expert creates **session types** (name, duration 15–120 min in 5-minute increments) for a group and sets **weekly availability**.
+1. An expert creates **session types** (production default: 15–120 min in 5-minute increments) for a group and sets **weekly availability**. Dev is configured for 1-minute increments so recording smoke tests can finish quickly.
 2. A student browses available experts, picks a session type, and books a free slot.
 3. Both participants receive a **booking confirmation email** via Resend.
 4. Automated **reminders** are sent at 24 h, 1 h, and 15 min before the session (driven by GCP Cloud Scheduler polling every 5 min).
 5. Within the connect window (default 15 min before start), a **Join** button appears on the dashboard.
 6. Clicking Join calls the connect endpoint, which validates the booking and generates an **Agora RTC token**.
 7. The Angular app joins the Agora channel without requesting media permissions. After the confirmed join it reports authenticated presence; camera and microphone remain optional.
-8. The first fresh human presence starts an Agora **Web Page Recording** part. The protected renderer shows the student as the main view and the expert as a small picture-in-picture, including avatar and mute placeholders.
+8. The first fresh human presence starts an Agora **Web Page Recording** part. Agora opens a small, standalone renderer that is compatible with its embedded Chrome 103 browser. The renderer shows the student as the main view and the expert as a small picture-in-picture, including avatar and mute placeholders. A part is marked started only after that renderer has joined the channel and acknowledged readiness.
 9. Human presence is refreshed every 10 seconds. When no student or expert remains for 60 seconds, the API stops that part. Returning later creates the next part instead of overwriting the first.
 10. Every provider MP4 is imported as an ordered video part. All parts from one booking share one reviewable asset, which becomes visible as soon as its first video is ready.
 
@@ -334,6 +336,7 @@ graph TD
 sequenceDiagram
     participant U as Student/Expert
     participant W as Angular App
+    participant R as Static Recorder Page
     participant A as Go API
     participant D as PostgreSQL
     participant AG as Agora
@@ -349,10 +352,12 @@ sequenceDiagram
     opt Recording enabled
         A->>D: Store capability hash on part N
         A->>AG: Acquire + start web page recording
-        AG->>W: Open /recording-view#cap=…
-        W->>A: Exchange capability for receive-only RTC token
-        W->>AG: Renderer joins as non-human UID
-        W->>AG: notifyReady after renderer joins
+        AG->>R: Open /recording-view.html#cap=…
+        R->>A: Exchange capability for receive-only RTC token
+        R->>AG: Renderer joins as non-human UID 4
+        R->>AG: notifyReady
+        R->>A: Acknowledge renderer readiness
+        A->>D: Mark part started
         A->>AG: Query with backoff until status 4/5
     end
     Note over U,AG: 1-on-1 Video Call
@@ -362,6 +367,7 @@ sequenceDiagram
     Note over A,D: A returning human clears empty_since and keeps part N
     A->>AG: Stop cloud recording
     A->>D: Stop part N and discover its MP4 files
+    Note over A,D: A renderer that never becomes ready is failed and its blank timeout artifact is not imported
 ```
 
 ### Recording Post-Processing

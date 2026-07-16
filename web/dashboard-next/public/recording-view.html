@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Strido Recording</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+      }
+
+      .stage {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #0c0a09;
+      }
+
+      .tile {
+        position: relative;
+        overflow: hidden;
+        background: #1c1917;
+        color: #fff;
+      }
+
+      .tile--student {
+        width: 100%;
+        height: 100%;
+      }
+
+      .tile--expert {
+        position: absolute;
+        right: 3%;
+        bottom: 4%;
+        z-index: 10;
+        width: 24%;
+        max-width: 28%;
+        aspect-ratio: 16 / 9;
+        border: 1px solid rgb(255 255 255 / 20%);
+        border-radius: 12px;
+        box-shadow: 0 24px 60px rgb(0 0 0 / 55%);
+      }
+
+      .media,
+      .media > div,
+      .media video {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .tile--student .media video {
+        object-fit: contain !important;
+      }
+
+      .tile--expert .media video {
+        object-fit: cover !important;
+      }
+
+      .placeholder {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 14px;
+        padding: 24px;
+        text-align: center;
+        background: radial-gradient(circle at 50% 35%, #292524 0, #0c0a09 72%);
+      }
+
+      .avatar {
+        display: grid;
+        width: clamp(72px, 12vw, 160px);
+        aspect-ratio: 1;
+        place-items: center;
+        overflow: hidden;
+        border: 2px solid rgb(255 255 255 / 18%);
+        border-radius: 999px;
+        background: #431407;
+        color: #fed7aa;
+        font-size: clamp(24px, 4vw, 54px);
+        font-weight: 700;
+      }
+
+      .tile--expert .avatar {
+        width: clamp(44px, 6vw, 80px);
+        font-size: clamp(16px, 2vw, 28px);
+      }
+
+      .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .name {
+        font-size: clamp(18px, 2.4vw, 34px);
+        font-weight: 650;
+        text-shadow: 0 2px 10px rgb(0 0 0 / 70%);
+      }
+
+      .tile--expert .name {
+        font-size: clamp(12px, 1.3vw, 20px);
+      }
+
+      .waiting {
+        color: #d6d3d1;
+        font-size: clamp(13px, 1.5vw, 20px);
+      }
+
+      .tile--expert .waiting {
+        display: none;
+      }
+
+      .mic-muted {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        z-index: 4;
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 999px;
+        background: rgb(12 10 9 / 80%);
+        color: #fff;
+      }
+
+      .tile--expert .mic-muted {
+        top: 9px;
+        right: 9px;
+        width: 30px;
+        height: 30px;
+      }
+
+      .mic-muted svg {
+        width: 56%;
+        height: 56%;
+      }
+
+      .brand {
+        position: absolute;
+        bottom: 4%;
+        left: 3%;
+        z-index: 20;
+        min-height: 32px;
+        height: 7%;
+        opacity: 0.9;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+    <script src="/env.js" defer></script>
+    <script src="/recording-assets/AgoraRTC_N-production.js" defer></script>
+    <script src="/recording-view.js" defer></script>
+  </head>
+  <body>
+    <main class="stage" aria-label="Strido session recording">
+      <section class="tile tile--student" data-participant="student">
+        <div class="media" data-media></div>
+        <div class="placeholder" data-placeholder>
+          <div class="avatar" data-avatar><span data-initials>S</span></div>
+          <div class="name" data-name>Student</div>
+          <div class="waiting" data-waiting>Student will connect soon</div>
+        </div>
+        <div class="mic-muted" data-mic-muted aria-label="Microphone muted">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m2 2 20 20" />
+            <path d="M18.9 18.9A8.4 8.4 0 0 1 12 22a8 8 0 0 1-8-8v-2" />
+            <path d="M19 10v2a7.7 7.7 0 0 1-.6 3" />
+            <path d="M12 19v3" />
+            <path d="M8 22h8" />
+            <path d="M9 9v3a3 3 0 0 0 5.1 2.1" />
+            <path d="M15 9.3V5a3 3 0 0 0-5.6-1.5" />
+          </svg>
+        </div>
+      </section>
+
+      <section class="tile tile--expert" data-participant="expert">
+        <div class="media" data-media></div>
+        <div class="placeholder" data-placeholder>
+          <div class="avatar" data-avatar><span data-initials>E</span></div>
+          <div class="name" data-name>Expert</div>
+          <div class="waiting" data-waiting>Expert will connect soon</div>
+        </div>
+        <div class="mic-muted" data-mic-muted aria-label="Microphone muted">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m2 2 20 20" />
+            <path d="M18.9 18.9A8.4 8.4 0 0 1 12 22a8 8 0 0 1-8-8v-2" />
+            <path d="M19 10v2a7.7 7.7 0 0 1-.6 3" />
+            <path d="M12 19v3" />
+            <path d="M8 22h8" />
+            <path d="M9 9v3a3 3 0 0 0 5.1 2.1" />
+            <path d="M15 9.3V5a3 3 0 0 0-5.6-1.5" />
+          </svg>
+        </div>
+      </section>
+
+      <img class="brand" src="/assets/brand/strido/strido-horse-mark-light.svg" alt="Strido" />
+    </main>
+  </body>
+</html>

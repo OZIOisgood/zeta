@@ -3,6 +3,7 @@ package coaching
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -48,10 +49,19 @@ func toSessionTypeResponse(st db.CoachingSessionType) sessionTypeResponse {
 	}
 }
 
-func isValidSessionDuration(durationMinutes int32) bool {
-	return durationMinutes >= MinSessionDuration &&
+func (h *Handler) isValidSessionDuration(durationMinutes int32) bool {
+	return durationMinutes >= h.minSessionDuration &&
 		durationMinutes <= MaxSessionDuration &&
-		durationMinutes%SessionDurationStep == 0
+		durationMinutes%h.sessionDurationStep == 0
+}
+
+func (h *Handler) sessionDurationValidationMessage() string {
+	return fmt.Sprintf(
+		"duration_minutes must be between %d and %d in %d-minute increments",
+		h.minSessionDuration,
+		MaxSessionDuration,
+		h.sessionDurationStep,
+	)
 }
 
 // ListSessionTypes lists session types.
@@ -130,8 +140,8 @@ func (h *Handler) CreateSessionType(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "name is required", http.StatusBadRequest)
 		return
 	}
-	if !isValidSessionDuration(req.DurationMinutes) {
-		http.Error(w, "duration_minutes must be between 15 and 120 in 5-minute increments", http.StatusBadRequest)
+	if !h.isValidSessionDuration(req.DurationMinutes) {
+		http.Error(w, h.sessionDurationValidationMessage(), http.StatusBadRequest)
 		return
 	}
 
@@ -186,8 +196,8 @@ func (h *Handler) UpdateSessionType(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "name is required", http.StatusBadRequest)
 		return
 	}
-	if !isValidSessionDuration(req.DurationMinutes) {
-		http.Error(w, "duration_minutes must be between 15 and 120 in 5-minute increments", http.StatusBadRequest)
+	if !h.isValidSessionDuration(req.DurationMinutes) {
+		http.Error(w, h.sessionDurationValidationMessage(), http.StatusBadRequest)
 		return
 	}
 

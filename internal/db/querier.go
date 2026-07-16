@@ -132,9 +132,9 @@ type Querier interface {
 	MarkRecordingPartImportFailed(ctx context.Context, arg MarkRecordingPartImportFailedParams) error
 	MarkRecordingPartImportMuxCreated(ctx context.Context, arg MarkRecordingPartImportMuxCreatedParams) (CoachingRecordingImport, error)
 	MarkRecordingPartImportReady(ctx context.Context, arg MarkRecordingPartImportReadyParams) (CoachingRecordingImport, error)
-	MarkRecordingPartStarted(ctx context.Context, arg MarkRecordingPartStartedParams) (CoachingBookingRecording, error)
 	MarkRecordingPartStopped(ctx context.Context, id pgtype.UUID) (CoachingBookingRecording, error)
 	MarkRecordingPartStopping(ctx context.Context, id pgtype.UUID) (CoachingBookingRecording, error)
+	MarkRecordingRendererReady(ctx context.Context, rendererTokenHash []byte) (pgtype.UUID, error)
 	MarkReminderSent(ctx context.Context, id pgtype.UUID) error
 	RefreshBookingPresence(ctx context.Context, arg RefreshBookingPresenceParams) (CoachingBookingPresence, error)
 	ReleaseInboundEmailClaim(ctx context.Context, id pgtype.UUID) error
@@ -160,6 +160,7 @@ type Querier interface {
 	RevokeGroupInvitation(ctx context.Context, arg RevokeGroupInvitationParams) (GroupInvitation, error)
 	SeedUserPreferences(ctx context.Context, arg SeedUserPreferencesParams) (UserPreference, error)
 	SeedUserPreferencesWithAvatar(ctx context.Context, arg SeedUserPreferencesWithAvatarParams) (UserPreference, error)
+	SetRecordingPartProviderStarted(ctx context.Context, arg SetRecordingPartProviderStartedParams) (CoachingBookingRecording, error)
 	SetVideoDurationByID(ctx context.Context, arg SetVideoDurationByIDParams) error
 	SetVideoDurationByUploadID(ctx context.Context, arg SetVideoDurationByUploadIDParams) error
 	UpdateAssetStatus(ctx context.Context, arg UpdateAssetStatusParams) error

@@ -13,6 +13,9 @@ import (
 	"time"
 
 	"github.com/OZIOisgood/zeta/internal/db"
+	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
+	"github.com/jackc/pgx/v5/pgtype"
+	"go.uber.org/mock/gomock"
 )
 
 func TestParticipantUIDForBooking(t *testing.T) {
@@ -26,6 +29,14 @@ func TestParticipantUIDForBooking(t *testing.T) {
 	}
 	if got := participantUIDForBooking("expert-1", booking); got != 2 {
 		t.Fatalf("expert uid = %d, want 2", got)
+	}
+
+	selfBooking := db.CoachingBooking{StudentID: "admin-1", ExpertID: "admin-1"}
+	if got := participantUIDForBooking("admin-1", selfBooking); got != 2 {
+		t.Fatalf("self-booking admin uid = %d, want expert uid 2", got)
+	}
+	if got := participantRoleForBooking("admin-1", selfBooking); got != "expert" {
+		t.Fatalf("self-booking admin role = %q, want expert", got)
 	}
 }
 
@@ -126,7 +137,7 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 	started, err := client.Start(context.Background(), StartRecordingRequest{
 		ChannelName: "coaching_booking", Token: "provider-token", BookingID: "booking-1",
 		AttemptID: "attempt-2", UID: recordingBotUID,
-		RendererURL: "https://app.example/recording-view#cap=secret",
+		RendererURL: "https://app.example/recording-view.html#cap=secret",
 	})
 	if err != nil {
 		t.Fatalf("Start() error = %v", err)
@@ -145,7 +156,7 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 		t.Fatalf("extensionServiceConfig = %#v, want one web recorder service", extensions)
 	}
 	service := extensions.ExtensionServices[0]
-	if service.ServiceParam.URL != "https://app.example/recording-view#cap=secret" {
+	if service.ServiceParam.URL != "https://app.example/recording-view.html#cap=secret" {
 		t.Fatalf("renderer URL = %q", service.ServiceParam.URL)
 	}
 	if service.ServiceParam.VideoWidth != 1280 || service.ServiceParam.VideoHeight != 720 {
@@ -178,6 +189,25 @@ func TestNewRendererCapabilityStoresOnlyHash(t *testing.T) {
 	}
 	if strings.Contains(string(hash), plaintext) {
 		t.Fatal("hash unexpectedly contains plaintext capability")
+	}
+}
+
+func TestMarkRecordingRendererReady(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	capability := strings.Repeat("r", 43)
+	digest := sha256.Sum256([]byte(capability))
+	q.EXPECT().MarkRecordingRendererReady(gomock.Any(), digest[:]).Return(pgtype.UUID{Valid: true}, nil)
+
+	h := &Handler{q: q}
+	req := httptest.NewRequest(http.MethodPost, "/public/coaching/recording-renderer/ready",
+		strings.NewReader(`{"capability":"`+capability+`"}`))
+	res := httptest.NewRecorder()
+
+	h.MarkRecordingRendererReady(res, req)
+
+	if res.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d; body = %q", res.Code, http.StatusNoContent, res.Body.String())
 	}
 }
 

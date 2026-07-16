@@ -72,10 +72,7 @@ func (h *Handler) UpdateBookingPresence(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Invalid connection ID", http.StatusBadRequest)
 		return
 	}
-	role := "expert"
-	if user.ID == booking.StudentID {
-		role = "student"
-	}
+	role := participantRoleForBooking(user.ID, booking)
 
 	if req.State == "left" {
 		if _, err := h.q.RemoveBookingPresence(ctx, db.RemoveBookingPresenceParams{
@@ -168,7 +165,7 @@ func (h *Handler) startRecordingPart(ctx context.Context, booking db.CoachingBoo
 		_ = h.q.MarkRecordingPartFailed(ctx, db.MarkRecordingPartFailedParams{ID: part.ID, Error: nullableText(err.Error())})
 		return err
 	}
-	rendererURL := strings.TrimRight(h.appBaseURL, "/") + "/recording-view#cap=" + capability
+	rendererURL := strings.TrimRight(h.appBaseURL, "/") + "/recording-view.html#cap=" + capability
 	started, err := h.recordingClient.Start(ctx, StartRecordingRequest{
 		ChannelName: channelName, Token: recordingToken, BookingID: uuidToString(booking.ID),
 		AttemptID: uuidToString(part.ID), UID: recordingBotUID, RendererURL: rendererURL,
@@ -177,7 +174,7 @@ func (h *Handler) startRecordingPart(ctx context.Context, booking db.CoachingBoo
 		_ = h.q.MarkRecordingPartFailed(ctx, db.MarkRecordingPartFailedParams{ID: part.ID, Error: nullableText(truncateRecordingError(err.Error()))})
 		return err
 	}
-	_, err = h.q.MarkRecordingPartStarted(ctx, db.MarkRecordingPartStartedParams{
+	_, err = h.q.SetRecordingPartProviderStarted(ctx, db.SetRecordingPartProviderStartedParams{
 		ID: part.ID, ProviderResourceID: nullableText(started.ResourceID),
 		ProviderRecordingID: nullableText(started.SID), ProviderUid: nullableText(started.UID),
 		OutputPrefix: started.FileNamePrefix,
@@ -225,6 +222,9 @@ func (h *Handler) reconcileRecordingAfterGrace(ctx context.Context, bookingID pg
 }
 
 func (h *Handler) stopRecordingPart(ctx context.Context, part db.CoachingBookingRecording) error {
+	if part.Status == db.CoachingRecordingStatusStarting {
+		return h.failUnreadyRecordingPart(ctx, part)
+	}
 	stopping, err := h.q.MarkRecordingPartStopping(ctx, part.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -258,6 +258,26 @@ func (h *Handler) stopRecordingPart(ctx context.Context, part db.CoachingBooking
 	}
 	h.kickRecordingImportProcessing(ctx)
 	return nil
+}
+
+func (h *Handler) failUnreadyRecordingPart(ctx context.Context, part db.CoachingBookingRecording) error {
+	if part.ProviderResourceID.Valid && part.ProviderRecordingID.Valid {
+		uid := recordingBotUID
+		if part.ProviderUid.Valid && part.ProviderUid.String != "" {
+			uid = part.ProviderUid.String
+		}
+		if err := h.recordingClient.Stop(ctx, StopRecordingRequest{
+			ChannelName: "coaching_" + uuidToString(part.BookingID),
+			ResourceID:  part.ProviderResourceID.String,
+			SID:         part.ProviderRecordingID.String,
+			UID:         uid,
+		}); err != nil {
+			return err
+		}
+	}
+	return h.q.MarkRecordingPartFailed(ctx, db.MarkRecordingPartFailedParams{
+		ID: part.ID, Error: nullableText("recording renderer never became ready"),
+	})
 }
 
 type rendererExchangeRequest struct {
@@ -315,4 +335,26 @@ func (h *Handler) ExchangeRecordingRendererCapability(w http.ResponseWriter, r *
 		AppID: h.agoraAppID, Channel: channelName, Token: token, UID: recordingRendererUID,
 		Student: student, Expert: expert,
 	})
+}
+
+// MarkRecordingRendererReady is called only after the isolated renderer has
+// exchanged its capability and joined the Agora channel. Until this succeeds,
+// the part remains `starting` and any provider timeout artifact is never imported.
+func (h *Handler) MarkRecordingRendererReady(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	r.Body = http.MaxBytesReader(w, r.Body, 1024)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	var req rendererExchangeRequest
+	if err := decoder.Decode(&req); err != nil || len(req.Capability) < 40 {
+		http.Error(w, "Recording view unavailable", http.StatusNotFound)
+		return
+	}
+	digest := sha256.Sum256([]byte(req.Capability))
+	if _, err := h.q.MarkRecordingRendererReady(r.Context(), digest[:]); err != nil {
+		http.Error(w, "Recording view unavailable", http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
