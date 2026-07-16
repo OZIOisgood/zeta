@@ -12,10 +12,10 @@ import { ParticipantTileState } from '../../core/calls/coaching-call.types';
     <div
       #videoTarget
       class="absolute inset-0 h-full w-full"
-      [class.hidden]="!state().videoTrack"
+      [class.hidden]="!state().videoEnabled || !state().videoTrack"
     ></div>
 
-    @if (!state().videoTrack) {
+    @if (!state().videoEnabled || !state().videoTrack) {
       <div class="absolute inset-0 grid place-items-center bg-stone-900 p-4 text-center text-white">
         <div class="grid justify-items-center gap-3">
           <z-avatar
@@ -53,11 +53,13 @@ export class ParticipantTileComponent {
   private readonly videoTarget = viewChild<ElementRef<HTMLDivElement>>('videoTarget');
 
   constructor() {
-    effect(() => {
-      const track = this.state().videoTrack;
+    effect((onCleanup) => {
+      const state = this.state();
+      const track = state.videoEnabled ? state.videoTrack : null;
       const target = this.videoTarget()?.nativeElement;
       if (!track || !target) return;
       track.play(target, { fit: this.videoFit(), mirror: false });
+      onCleanup(() => track.stop());
     });
   }
 

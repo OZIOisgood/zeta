@@ -33,7 +33,6 @@ type Handler struct {
 	recordingClient      RecordingClient
 	recordingStore       RecordingObjectStore
 	recordingMux         RecordingMuxClient
-	recordingMode        string
 	recordingEmptyGrace  time.Duration
 	recordingPresenceTTL time.Duration
 	recordingEndGrace    time.Duration
@@ -51,7 +50,6 @@ type HandlerConfig struct {
 	RecordingClient      RecordingClient
 	RecordingStore       RecordingObjectStore
 	RecordingMux         RecordingMuxClient
-	RecordingMode        string
 	RecordingEmptyGrace  time.Duration
 	RecordingPresenceTTL time.Duration
 	RecordingEndGrace    time.Duration
@@ -62,9 +60,6 @@ type HandlerConfig struct {
 }
 
 func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, workos auth.UserManagement, logger *slog.Logger, cfg HandlerConfig) *Handler {
-	if cfg.RecordingMode == "" {
-		cfg.RecordingMode = "mix"
-	}
 	if cfg.RecordingEmptyGrace <= 0 {
 		cfg.RecordingEmptyGrace = 60 * time.Second
 	}
@@ -86,7 +81,6 @@ func NewHandler(q db.Querier, pool *pgxpool.Pool, emailService email.Sender, wor
 		recordingClient:      cfg.RecordingClient,
 		recordingStore:       cfg.RecordingStore,
 		recordingMux:         cfg.RecordingMux,
-		recordingMode:        cfg.RecordingMode,
 		recordingEmptyGrace:  cfg.RecordingEmptyGrace,
 		recordingPresenceTTL: cfg.RecordingPresenceTTL,
 		recordingEndGrace:    cfg.RecordingEndGrace,
@@ -158,7 +152,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			r.Use(auth.RequirePermission(permissions.CoachingVideoConnect))
 			r.Get("/bookings/{bookingID}/connect", h.ConnectToBooking)
 			r.Post("/bookings/{bookingID}/presence", h.UpdateBookingPresence)
-			r.Post("/bookings/{bookingID}/recording/stop", h.StopBookingRecording)
 		})
 	})
 

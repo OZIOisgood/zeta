@@ -198,7 +198,6 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   private bookingId: string | null = null;
   private heartbeat: ReturnType<typeof setInterval> | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
-  private eventSeq = 0;
 
   protected readonly connecting = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -348,16 +347,10 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   private sendPresence(state: 'joined' | 'reconnecting' | 'left'): void {
     const session = this.credentials();
     if (!session || !this.groupId || !this.bookingId) return;
-    this.eventSeq += 1;
     this.api
       .updateBookingPresence(this.groupId, this.bookingId, {
         connection_id: session.connection_id,
-        event_seq: this.eventSeq,
         state,
-        audio_published: !!this.agora.localAudioTrack(),
-        audio_enabled: this.agora.audioEnabled(),
-        video_published: !!this.agora.localVideoTrack(),
-        video_enabled: this.agora.videoEnabled(),
       })
       .subscribe({ error: () => undefined });
   }

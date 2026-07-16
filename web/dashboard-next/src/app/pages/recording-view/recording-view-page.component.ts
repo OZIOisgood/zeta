@@ -66,19 +66,25 @@ export class RecordingViewPageComponent implements OnInit, OnDestroy {
     const capability = params.get('cap');
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
     if (!capability) return;
-    try {
-      const credentials = await firstValueFrom(this.api.exchange(capability));
-      this.credentials.set(credentials);
-      await this.agora.join(
-        credentials.app_id,
-        credentials.channel,
-        credentials.token,
-        credentials.uid,
-        [credentials.student.uid, credentials.expert.uid],
-      );
-    } catch {
-      this.credentials.set(null);
+    for (const delay of [0, 1_000, 2_000, 4_000]) {
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+      try {
+        const credentials = await firstValueFrom(this.api.exchange(capability));
+        await this.agora.join(
+          credentials.app_id,
+          credentials.channel,
+          credentials.token,
+          credentials.uid,
+          [credentials.student.uid, credentials.expert.uid],
+        );
+        this.credentials.set(credentials);
+        (navigator as Navigator & { notifyReady?: () => void }).notifyReady?.();
+        return;
+      } catch {
+        await this.agora.leave();
+      }
     }
+    this.credentials.set(null);
   }
 
   ngOnDestroy(): void {

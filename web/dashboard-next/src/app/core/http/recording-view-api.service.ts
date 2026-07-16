@@ -5,14 +5,10 @@ import { ParticipantPresentation } from '../calls/coaching-call.types';
 import { EnvService } from './env.service';
 
 export type RecordingViewCredentials = {
-  attempt_id: string;
   app_id: string;
   channel: string;
   token: string;
   uid: number;
-  token_expires_at: string;
-  scheduled_at: string;
-  scheduled_ends_at: string;
   student: ParticipantPresentation;
   expert: ParticipantPresentation;
 };

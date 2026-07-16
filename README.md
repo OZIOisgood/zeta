@@ -218,9 +218,9 @@ GitHub Environment variable; there is no separate Zeta observability password. S
 5. Within the connect window (default 15 min before start), a **Join** button appears on the dashboard.
 6. Clicking Join calls the connect endpoint, which validates the booking and generates an **Agora RTC token**.
 7. The Angular app joins the Agora channel without requesting media permissions. After the confirmed join it reports authenticated presence; camera and microphone remain optional.
-8. The first fresh human presence starts an Agora **Web Page Recording** attempt. The private renderer uses a short-lived capability to show the student as the main view and the expert as a small picture-in-picture, including avatar and mute placeholders.
-9. Human presence is refreshed every 10 seconds. When no student or expert remains for 60 seconds, the API stops that attempt. Returning later creates the next attempt instead of overwriting the first.
-10. Every stopped attempt is imported as an ordered video part. All parts from one booking share one reviewable asset, which becomes visible only after the booking collection is sealed and all imports are ready.
+8. The first fresh human presence starts an Agora **Web Page Recording** part. The protected renderer shows the student as the main view and the expert as a small picture-in-picture, including avatar and mute placeholders.
+9. Human presence is refreshed every 10 seconds. When no student or expert remains for 60 seconds, the API stops that part. Returning later creates the next part instead of overwriting the first.
+10. Every provider MP4 is imported as an ordered video part. All parts from one booking share one reviewable asset, which becomes visible as soon as its first video is ready.
 
 ### Notification Preferences Flow
 
@@ -323,7 +323,7 @@ graph TD
     Mux -->|Pull recording MP4| Storage
     Web -->|Video Call| Agora
     Scheduler[GCP Cloud Scheduler] -->|POST /internal/coaching/reminders| API
-    Scheduler -->|POST /internal/coaching/recordings/cleanup/process| API
+    Scheduler -->|POST /internal/coaching/recordings/cleanup| API
     Scheduler -->|POST /internal/audit/maintenance| API
     Scheduler -->|POST /internal/inbound-email/reconcile| API
 ```
@@ -344,22 +344,24 @@ sequenceDiagram
     A->>AG: Generate RTC Token (go-tokenbuilder)
     A-->>W: RTC credentials + connection ID + participant presentation
     W->>AG: Join Agora Channel (agora-rtc-sdk-ng)
-    W->>A: POST presence {state: joined, media state}
-    A->>D: Activate human presence and claim attempt N
+    W->>A: POST presence {state: joined, connection_id}
+    A->>D: Refresh human presence and claim part N
     opt Recording enabled
-        A->>D: Store SHA-256 renderer capability
+        A->>D: Store capability hash on part N
         A->>AG: Acquire + start web page recording
         AG->>W: Open /recording-view#cap=…
         W->>A: Exchange capability for receive-only RTC token
         W->>AG: Renderer joins as non-human UID
+        W->>AG: notifyReady after renderer joins
+        A->>AG: Query with backoff until status 4/5
     end
     Note over U,AG: 1-on-1 Video Call
     U->>W: Leave call
     W->>A: POST presence {state: left}
     A->>D: Start 60-second empty grace
-    Note over A,D: A returning human clears empty_since and keeps attempt N
+    Note over A,D: A returning human clears empty_since and keeps part N
     A->>AG: Stop cloud recording
-    A->>D: Stop attempt N and enqueue its import
+    A->>D: Stop part N and discover its MP4 files
 ```
 
 ### Recording Post-Processing
@@ -374,15 +376,14 @@ sequenceDiagram
     participant W as Angular App
 
     S->>A: POST /internal/coaching/recordings/cleanup or /process
-    A->>D: Atomically claim stopped attempt imports
-    A->>G: Locate MP4 below the attempt-specific prefix
+    A->>G: Discover every MP4 below the part-specific prefix
+    A->>D: Atomically claim retryable file imports
     A->>G: Sign short-lived GET URL
     A->>M: Create asset from signed URL
     A->>D: Store Mux asset ID and processing state
     S->>A: Retry while Mux prepares
     A->>M: Get asset status and playback ID
-    A->>D: Reuse booking asset and append ordered video part N
-    A->>D: Publish asset after collection is sealed and imports are ready
+    A->>D: Reuse booking asset and append deterministic ordered video parts
     W->>A: List sessions
     A-->>W: Booking includes recording asset link
     W->>A: Open review asset
@@ -665,17 +666,25 @@ erDiagram
         string cancellation_reason
         string cancelled_by
         string notes
+        uuid recording_asset_id FK "single review asset"
+        int next_recording_part_number
         timestamp created_at
         timestamp updated_at
     }
 
     coaching_booking_recordings {
-        uuid booking_id PK, FK
+        uuid id PK
+        uuid booking_id FK
+        int part_number "1, 2, 3..."
+        string provider "agora_page; zeta later"
         enum status "starting, started, stopping, stopped, failed"
-        string resource_id "Agora resourceId"
-        string sid "Agora recording sid"
-        string uid "Agora recording bot UID"
-        string_array file_prefix
+        string provider_resource_id
+        string provider_recording_id
+        string provider_uid
+        string_array output_prefix
+        bytes renderer_token_hash "SHA-256 only"
+        timestamptz renderer_token_expires_at
+        timestamptz empty_since_at
         timestamptz started_at
         timestamptz stopped_at
         string error
@@ -684,12 +693,13 @@ erDiagram
     }
 
     coaching_recording_imports {
-        uuid booking_id PK, FK
+        uuid id PK
+        uuid recording_id FK
+        int file_index
         enum status "pending, importing, processing, ready, failed"
         string gcs_object_name
         string mux_asset_id
         string mux_playback_id
-        uuid asset_id FK
         uuid video_id FK
         int attempts
         timestamptz last_attempt_at
@@ -699,56 +709,11 @@ erDiagram
         timestamp updated_at
     }
 
-    coaching_recording_collections {
-        uuid booking_id PK, FK
-        uuid asset_id FK
-        enum status "open, sealed"
-        int next_attempt_number
-        timestamptz sealed_at
-    }
-
-    coaching_recording_attempts {
-        uuid id PK
-        uuid booking_id FK
-        int attempt_number
-        string mode "mix, web"
-        enum status "starting, started, stopping, stopped, failed"
-        string resource_id
-        string sid
-        string provider_uid
-        string_array file_prefix
-        timestamptz empty_since_at
-        timestamptz started_at
-        timestamptz stopped_at
-    }
-
-    coaching_recording_attempt_imports {
-        uuid attempt_id PK, FK
-        enum status "pending, importing, processing, ready, failed, quarantined"
-        string gcs_object_name
-        string mux_asset_id
-        uuid video_id FK
-        int attempts
-    }
-
-    coaching_booking_participant_state {
+    coaching_booking_presence {
         uuid booking_id PK, FK
         string participant_role PK "student, expert"
-        string user_id
-        int agora_uid "1 or 2"
-        uuid connection_generation
-        bigint last_event_seq
-        string connection_state
+        uuid connection_id
         timestamptz last_seen_at
-    }
-
-    coaching_recording_renderer_capabilities {
-        uuid id PK
-        uuid attempt_id FK
-        bytes token_hash "SHA-256 only"
-        int renderer_uid
-        timestamptz expires_at
-        timestamptz revoked_at
     }
 
     coaching_booking_reminders {
@@ -795,17 +760,11 @@ erDiagram
     users ||--o{ coaching_blocked_slots : creates
     coaching_session_types ||--o{ coaching_bookings : booked_as
     groups ||--o{ coaching_bookings : contains
-    coaching_bookings ||--o| coaching_booking_recordings : records
-    coaching_booking_recordings ||--o| coaching_recording_imports : imports
-    assets ||--o{ coaching_recording_imports : "created by"
+    coaching_bookings ||--o{ coaching_booking_recordings : "ordered recording parts"
+    coaching_booking_recordings ||--o{ coaching_recording_imports : "provider MP4 files"
+    coaching_bookings ||--o{ coaching_booking_presence : "fresh human heartbeat"
+    assets ||--o| coaching_bookings : "recording review asset"
     videos ||--o{ coaching_recording_imports : "created by"
-    coaching_bookings ||--o| coaching_recording_collections : "owns collection"
-    coaching_recording_collections ||--o{ coaching_recording_attempts : "contains attempts"
-    coaching_recording_attempts ||--o| coaching_recording_attempt_imports : "imports part"
-    coaching_recording_attempts ||--o| coaching_recording_renderer_capabilities : "authorizes renderer"
-    coaching_bookings ||--o{ coaching_booking_participant_state : "tracks human presence"
-    assets ||--o| coaching_recording_collections : "review asset"
-    videos ||--o| coaching_recording_attempt_imports : "ordered part"
     coaching_bookings ||--o{ coaching_booking_reminders : has
     users ||--o{ audit_events : "actor in"
 ```

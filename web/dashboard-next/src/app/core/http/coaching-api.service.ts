@@ -104,12 +104,7 @@ export type ConnectResponse = {
 
 export type BookingPresenceRequest = {
   connection_id: string;
-  event_seq: number;
   state: 'joined' | 'reconnecting' | 'left';
-  audio_published: boolean;
-  audio_enabled: boolean;
-  video_published: boolean;
-  video_enabled: boolean;
 };
 
 @Injectable({ providedIn: 'root' })

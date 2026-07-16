@@ -101,19 +101,20 @@ ORDER BY v.sort_order ASC NULLS LAST, v.created_at ASC, v.id ASC;
 -- name: IsRecordingAssetStillOpen :one
 SELECT EXISTS (
     SELECT 1
-    FROM coaching_recording_collections collection
-    WHERE collection.asset_id = $1
+    FROM coaching_bookings booking
+    WHERE booking.recording_asset_id = $1
       AND (
-          collection.status <> 'sealed'
+          booking.scheduled_at + (booking.duration_minutes * interval '1 minute')
+              + interval '15 minutes' > NOW()
           OR EXISTS (
               SELECT 1
-              FROM coaching_recording_attempts attempt
-              LEFT JOIN coaching_recording_attempt_imports attempt_import
-                ON attempt_import.attempt_id = attempt.id
-              WHERE attempt.booking_id = collection.booking_id
+              FROM coaching_booking_recordings recording
+              LEFT JOIN coaching_recording_imports recording_import
+                ON recording_import.recording_id = recording.id
+              WHERE recording.booking_id = booking.id
                 AND (
-                    attempt.status IN ('starting', 'started', 'stopping')
-                    OR attempt_import.status IN ('pending', 'importing', 'processing', 'failed')
+                    recording.status IN ('starting', 'started', 'stopping')
+                    OR recording_import.status IN ('pending', 'importing', 'processing', 'failed')
                 )
           )
       )

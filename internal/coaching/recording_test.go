@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/OZIOisgood/zeta/internal/db"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func TestParticipantUIDForBooking(t *testing.T) {
@@ -27,30 +26,6 @@ func TestParticipantUIDForBooking(t *testing.T) {
 	}
 	if got := participantUIDForBooking("expert-1", booking); got != 2 {
 		t.Fatalf("expert uid = %d, want 2", got)
-	}
-}
-
-func TestRecordingStateHelpers(t *testing.T) {
-	tests := []struct {
-		status         db.CoachingRecordingStatus
-		alreadyStarted bool
-		canStop        bool
-	}{
-		{db.CoachingRecordingStatusStarting, false, true},
-		{db.CoachingRecordingStatusStarted, true, true},
-		{db.CoachingRecordingStatusStopping, true, true},
-		{db.CoachingRecordingStatusStopped, true, false},
-		{db.CoachingRecordingStatusFailed, false, false},
-	}
-
-	for _, tt := range tests {
-		recording := db.CoachingBookingRecording{Status: tt.status}
-		if got := recordingAlreadyStarted(recording); got != tt.alreadyStarted {
-			t.Fatalf("recordingAlreadyStarted(%q) = %v, want %v", tt.status, got, tt.alreadyStarted)
-		}
-		if got := recordingCanStop(recording); got != tt.canStop {
-			t.Fatalf("recordingCanStop(%q) = %v, want %v", tt.status, got, tt.canStop)
-		}
 	}
 }
 
@@ -112,8 +87,13 @@ func TestAgoraStartRecordingSubscribesBothParticipantVideos(t *testing.T) {
 }
 
 func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
+	previousBackoff := agoraWebQueryBackoff
+	agoraWebQueryBackoff = []time.Duration{0}
+	t.Cleanup(func() { agoraWebQueryBackoff = previousBackoff })
+
 	var capturedAcquire acquireRecordingRequest
 	var capturedStart startRecordingRequest
+	queryCalls := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/cloud_recording/acquire"):
@@ -128,6 +108,9 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 				return
 			}
 			writeTestJSON(t, w, startRecordingResponse{ResourceID: "resource-web", SID: "sid-web"})
+		case strings.Contains(r.URL.Path, "/resourceid/resource-web/sid/sid-web/mode/web/query"):
+			queryCalls++
+			writeTestJSON(t, w, map[string]any{"serverResponse": map[string]any{"status": 5}})
 		default:
 			http.NotFound(w, r)
 		}
@@ -151,6 +134,9 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 	if capturedAcquire.ClientRequest.Scene != 1 {
 		t.Fatalf("acquire scene = %d, want 1", capturedAcquire.ClientRequest.Scene)
 	}
+	if queryCalls != 1 {
+		t.Fatalf("query calls = %d, want 1", queryCalls)
+	}
 	if capturedStart.ClientRequest.RecordingConfig != nil {
 		t.Fatal("web recording unexpectedly included composite recordingConfig")
 	}
@@ -164,6 +150,14 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 	}
 	if service.ServiceParam.VideoWidth != 1280 || service.ServiceParam.VideoHeight != 720 {
 		t.Fatalf("renderer size = %dx%d, want 1280x720", service.ServiceParam.VideoWidth, service.ServiceParam.VideoHeight)
+	}
+	if service.ServiceParam.AudioProfile != 1 || service.ServiceParam.ReadyTimeout != 60 {
+		t.Fatalf("web reliability settings = audio %d, ready timeout %d", service.ServiceParam.AudioProfile, service.ServiceParam.ReadyTimeout)
+	}
+	// Agora defines maxVideoDuration in minutes. 240 keeps every supported
+	// Zeta session in one MP4 under the normal duration limit.
+	if service.ServiceParam.MaxVideoDuration != 240 {
+		t.Fatalf("maxVideoDuration = %d, want 240 minutes", service.ServiceParam.MaxVideoDuration)
 	}
 	if !slices.Equal(started.FileNamePrefix, []string{"live", "booking1", "attempt2"}) {
 		t.Fatalf("file prefix = %v", started.FileNamePrefix)
@@ -207,33 +201,6 @@ func TestTruncateRecordingError(t *testing.T) {
 	truncated := truncateRecordingError(string(long))
 	if len(truncated) != 500 {
 		t.Fatalf("truncated error length = %d, want 500", len(truncated))
-	}
-}
-
-func TestRecordingCanStopRequiresIdentifiersInCaller(t *testing.T) {
-	recording := db.CoachingBookingRecording{
-		Status:     db.CoachingRecordingStatusStarted,
-		ResourceID: pgtype.Text{String: "resource", Valid: true},
-		Sid:        pgtype.Text{String: "sid", Valid: true},
-	}
-	if !recordingCanStop(recording) {
-		t.Fatal("recordingCanStop() = false, want true")
-	}
-}
-
-func TestRecordingShouldStopOnParticipantLeaveAfterScheduledEnd(t *testing.T) {
-	now := time.Date(2026, 7, 7, 20, 0, 0, 0, time.UTC)
-	booking := db.CoachingBooking{
-		ScheduledAt:     pgtype.Timestamptz{Time: now.Add(-29 * time.Minute), Valid: true},
-		DurationMinutes: 30,
-	}
-	if recordingShouldStopOnParticipantLeave(booking, now) {
-		t.Fatal("recording should keep running when a participant leaves before scheduled end")
-	}
-
-	booking.ScheduledAt = pgtype.Timestamptz{Time: now.Add(-30 * time.Minute), Valid: true}
-	if !recordingShouldStopOnParticipantLeave(booking, now) {
-		t.Fatal("recording should stop when a participant leaves at or after scheduled end")
 	}
 }
 
