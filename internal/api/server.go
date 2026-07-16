@@ -194,16 +194,20 @@ func (s *Server) routes(ctx context.Context) {
 		}
 	}
 	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, workosClient, s.Logger, coaching.HandlerConfig{
-		AgoraAppID:          os.Getenv("AGORA_APP_ID"),
-		AgoraAppCertificate: os.Getenv("AGORA_APP_CERTIFICATE"),
-		RecordingEnabled:    recordingEnabled,
-		RecordingClient:     recordingClient,
-		RecordingStore:      recordingStore,
-		RecordingMux:        muxClient,
-		AppBaseURL:          frontendBaseURL(),
-		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
-		CancellationNotice:  parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
-		ConnectWindow:       parseDurationOrDefault(os.Getenv("CONNECT_WINDOW"), 15*time.Minute),
+		AgoraAppID:           os.Getenv("AGORA_APP_ID"),
+		AgoraAppCertificate:  os.Getenv("AGORA_APP_CERTIFICATE"),
+		RecordingEnabled:     recordingEnabled,
+		RecordingClient:      recordingClient,
+		RecordingStore:       recordingStore,
+		RecordingMux:         muxClient,
+		RecordingMode:        envOrDefault(os.Getenv("AGORA_RECORDING_MODE"), "mix"),
+		RecordingEmptyGrace:  parseDurationOrDefault(os.Getenv("AGORA_RECORDING_EMPTY_GRACE"), 60*time.Second),
+		RecordingPresenceTTL: parseDurationOrDefault(os.Getenv("AGORA_RECORDING_PRESENCE_TTL"), 30*time.Second),
+		RecordingEndGrace:    parseDurationOrDefault(os.Getenv("AGORA_RECORDING_END_GRACE"), 15*time.Minute),
+		AppBaseURL:           frontendBaseURL(),
+		MinBookingNotice:     parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
+		CancellationNotice:   parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
+		ConnectWindow:        parseDurationOrDefault(os.Getenv("CONNECT_WINDOW"), 15*time.Minute),
 	})
 
 	// Global Middleware
@@ -216,6 +220,7 @@ func (s *Server) routes(ctx context.Context) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 	s.Router.Post("/webhooks/resend", inboundEmailHandler.Webhook)
+	s.Router.Post("/public/coaching/recording-renderer/exchange", coachingHandler.ExchangeRecordingRendererCapability)
 	s.Router.Route("/contact", contactHandler.RegisterRoutes)
 
 	// Auth Routes

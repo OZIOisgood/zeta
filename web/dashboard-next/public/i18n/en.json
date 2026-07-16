@@ -699,7 +699,21 @@
       "microphoneFallback": "Microphone {{index}}",
       "cameraFallback": "Camera {{index}}",
       "noMicrophone": "No microphone available",
-      "noCamera": "No camera available"
+      "noCamera": "No camera available",
+      "devicesOptional": "You are in the call. Camera and microphone are optional.",
+      "enableDevices": "Enable camera and microphone",
+      "permissionDenied": "Browser access was denied. Allow camera or microphone access in the browser settings and try again.",
+      "deviceMissing": "No camera or microphone was found.",
+      "deviceBusy": "Another app is using the camera or microphone.",
+      "unsupported": "This browser cannot use the camera or microphone here.",
+      "publishFailed": "The device opened, but could not be sent to the call. Try again.",
+      "mediaFailed": "The camera or microphone could not be started. Try again.",
+      "endsIn": "Ends in {{time}}",
+      "overtime": "Overtime +{{time}}",
+      "reconnecting": "Reconnecting…",
+      "cameraOff": "Camera off",
+      "participantLeft": "Left the session",
+      "waitingShort": "Waiting to join…"
     }
   },
   "preferences": {

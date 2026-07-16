@@ -9,6 +9,11 @@ INSERT INTO videos (asset_id, mux_upload_id, mux_asset_id, playback_id, status)
 VALUES ($1, '', $2, $3, 'ready')
 RETURNING *;
 
+-- name: CreateOrderedVideoFromMuxAsset :one
+INSERT INTO videos (asset_id, mux_upload_id, mux_asset_id, playback_id, status, sort_order)
+VALUES ($1, '', $2, $3, 'ready', $4)
+RETURNING *;
+
 -- name: UpdateAssetStatus :exec
 UPDATE assets SET status = $2, updated_at = NOW() WHERE id = $1;
 
@@ -33,7 +38,7 @@ LEFT JOIN LATERAL (
     SELECT playback_id, mux_upload_id, mux_asset_id
     FROM videos
     WHERE asset_id = a.id
-    ORDER BY created_at ASC
+    ORDER BY sort_order ASC NULLS LAST, created_at ASC, id ASC
     LIMIT 1
 ) v ON true
 LEFT JOIN LATERAL (
@@ -58,7 +63,7 @@ WHERE a.status != 'waiting_upload'
 ORDER BY a.created_at DESC;
 
 -- name: GetAsset :one
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY created_at ASC LIMIT 1) v ON true LEFT JOIN groups g ON g.id = a.group_id WHERE a.id = $1;
+SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY sort_order ASC NULLS LAST, created_at ASC, id ASC LIMIT 1) v ON true LEFT JOIN groups g ON g.id = a.group_id WHERE a.id = $1;
 
 -- name: GetVisibleAsset :one
 SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar
@@ -67,7 +72,7 @@ LEFT JOIN LATERAL (
     SELECT playback_id, mux_upload_id, mux_asset_id
     FROM videos
     WHERE asset_id = a.id
-    ORDER BY created_at ASC
+    ORDER BY sort_order ASC NULLS LAST, created_at ASC, id ASC
     LIMIT 1
 ) v ON true
 LEFT JOIN groups g ON g.id = a.group_id
@@ -91,7 +96,28 @@ FROM videos v
 LEFT JOIN video_reviews r ON v.id = r.video_id
 WHERE v.asset_id = $1
 GROUP BY v.id
-ORDER BY v.created_at ASC;
+ORDER BY v.sort_order ASC NULLS LAST, v.created_at ASC, v.id ASC;
+
+-- name: IsRecordingAssetStillOpen :one
+SELECT EXISTS (
+    SELECT 1
+    FROM coaching_recording_collections collection
+    WHERE collection.asset_id = $1
+      AND (
+          collection.status <> 'sealed'
+          OR EXISTS (
+              SELECT 1
+              FROM coaching_recording_attempts attempt
+              LEFT JOIN coaching_recording_attempt_imports attempt_import
+                ON attempt_import.attempt_id = attempt.id
+              WHERE attempt.booking_id = collection.booking_id
+                AND (
+                    attempt.status IN ('starting', 'started', 'stopping')
+                    OR attempt_import.status IN ('pending', 'importing', 'processing', 'failed')
+                )
+          )
+      )
+);
 
 -- name: UpdateVideoStatus :exec
 UPDATE videos SET mux_asset_id = $2, playback_id = $3, status = 'ready', updated_at = NOW() WHERE mux_upload_id = $1;

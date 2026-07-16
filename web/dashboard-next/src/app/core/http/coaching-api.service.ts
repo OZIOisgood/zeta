@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { EnvService } from './env.service';
+import { ParticipantPresentation } from '../calls/coaching-call.types';
 
 export type SessionType = {
   id: string;
@@ -93,6 +94,22 @@ export type ConnectResponse = {
   channel: string;
   token: string;
   uid: number;
+  connection_id: string;
+  caller_role: 'student' | 'expert';
+  scheduled_at: string;
+  scheduled_ends_at: string;
+  student: ParticipantPresentation;
+  expert: ParticipantPresentation;
+};
+
+export type BookingPresenceRequest = {
+  connection_id: string;
+  event_seq: number;
+  state: 'joined' | 'reconnecting' | 'left';
+  audio_published: boolean;
+  audio_enabled: boolean;
+  video_published: boolean;
+  video_enabled: boolean;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -248,6 +265,17 @@ export class CoachingApiClient {
     return this.http.post<{ status: string }>(
       `${this.apiUrl}/groups/${groupId}/coaching/bookings/${bookingId}/recording/stop`,
       {},
+    );
+  }
+
+  updateBookingPresence(
+    groupId: string,
+    bookingId: string,
+    data: BookingPresenceRequest,
+  ): Observable<{ status: string; recording_status: string }> {
+    return this.http.post<{ status: string; recording_status: string }>(
+      `${this.apiUrl}/groups/${groupId}/coaching/bookings/${bookingId}/presence`,
+      data,
     );
   }
 }

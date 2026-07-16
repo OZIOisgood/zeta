@@ -79,19 +79,24 @@ func (h *Handler) processPendingRecordingImports(ctx context.Context, limit int3
 	if limit <= 0 {
 		limit = maxRecordingImportsPerRun
 	}
-
-	if _, err := h.q.CreateMissingRecordingImports(ctx); err != nil {
+	if _, err := h.q.AdoptLegacyRecordingCollections(ctx); err != nil {
+		return result, err
+	}
+	if _, err := h.q.AdoptLegacyRecordingAttempts(ctx); err != nil {
+		return result, err
+	}
+	if _, err := h.q.AdoptLegacyRecordingImports(ctx); err != nil {
 		return result, err
 	}
 
-	imports, err := h.q.ListPendingRecordingImports(ctx, limit)
+	imports, err := h.q.ClaimPendingAttemptImports(ctx, limit)
 	if err != nil {
 		return result, err
 	}
 	result.Processed = len(imports)
 
 	for _, pending := range imports {
-		ready, deferred, err := h.processRecordingImport(ctx, pending)
+		ready, deferred, err := h.processAttemptRecordingImport(ctx, pending)
 		switch {
 		case err != nil:
 			result.Failed++
@@ -101,7 +106,165 @@ func (h *Handler) processPendingRecordingImports(ctx context.Context, limit int3
 			result.Deferred++
 		}
 	}
+	if _, err := h.q.PublishSealedRecordingAssets(ctx); err != nil {
+		return result, err
+	}
 	return result, nil
+}
+
+func (h *Handler) processAttemptRecordingImport(ctx context.Context, pending db.ClaimPendingAttemptImportsRow) (ready bool, deferred bool, err error) {
+	log := logger.From(ctx, h.logger)
+	bookingID := uuidToString(pending.BookingID)
+	attemptID := uuidToString(pending.AttemptID)
+
+	object := RecordingObject{Name: textOrEmpty(pending.GcsObjectName)}
+	if object.Name == "" {
+		object, err = h.recordingStore.FindMP4(ctx, pending.FilePrefix)
+		if err != nil {
+			if errors.Is(err, ErrRecordingMP4NotFound) {
+				_, requeueErr := h.q.EnsureAttemptImportPending(ctx, pending.AttemptID)
+				if requeueErr != nil {
+					return false, false, requeueErr
+				}
+				log.InfoContext(ctx, "recording_attempt_import_mp4_lookup_deferred",
+					slog.String("component", "coaching"),
+					slog.String("booking_id", bookingID),
+					slog.String("attempt_id", attemptID),
+				)
+				return false, true, nil
+			}
+			h.markAttemptImportFailed(ctx, pending.AttemptID, err)
+			return false, false, err
+		}
+	}
+
+	muxAssetID := textOrEmpty(pending.MuxAssetID)
+	playbackID := textOrEmpty(pending.MuxPlaybackID)
+	if muxAssetID == "" {
+		signedURL, err := h.recordingStore.SignedURL(ctx, object.Name, recordingSignedURLTTL)
+		if err != nil {
+			h.markAttemptImportFailed(ctx, pending.AttemptID, err)
+			return false, false, err
+		}
+		assetResp, err := h.recordingMux.CreateAsset(muxgo.CreateAssetRequest{
+			Input:          []muxgo.InputSettings{{Url: signedURL}},
+			PlaybackPolicy: []muxgo.PlaybackPolicy{muxgo.PUBLIC},
+			Passthrough:    "coaching_recording_attempt:" + attemptID,
+		})
+		if err != nil {
+			h.markAttemptImportFailed(ctx, pending.AttemptID, err)
+			return false, false, err
+		}
+		muxAssetID = assetResp.Data.Id
+		playbackID = publicPlaybackID(assetResp.Data.PlaybackIds)
+		if muxAssetID == "" {
+			err := errors.New("mux create asset response did not include asset id")
+			h.markAttemptImportFailed(ctx, pending.AttemptID, err)
+			return false, false, err
+		}
+		if _, err := h.q.MarkAttemptImportMuxCreated(ctx, db.MarkAttemptImportMuxCreatedParams{
+			AttemptID: pending.AttemptID, GcsObjectName: nullableText(object.Name),
+			MuxAssetID: nullableText(muxAssetID), MuxPlaybackID: nullableText(playbackID),
+		}); err != nil {
+			return false, false, err
+		}
+	}
+
+	assetResp, err := h.recordingMux.GetAsset(muxAssetID)
+	if err != nil {
+		h.markAttemptImportFailed(ctx, pending.AttemptID, err)
+		return false, false, err
+	}
+	if playbackID == "" {
+		playbackID = publicPlaybackID(assetResp.Data.PlaybackIds)
+	}
+	switch strings.ToLower(assetResp.Data.Status) {
+	case "ready":
+		if playbackID == "" {
+			err := errors.New("ready mux asset has no public playback id")
+			h.markAttemptImportFailed(ctx, pending.AttemptID, err)
+			return false, false, err
+		}
+		return h.createReviewableAttemptPart(ctx, pending, object.Name, muxAssetID, playbackID, assetResp.Data.Duration)
+	case "errored":
+		err := fmt.Errorf("mux asset %s errored", muxAssetID)
+		h.markAttemptImportFailed(ctx, pending.AttemptID, err)
+		return false, false, err
+	default:
+		_, err = h.q.MarkAttemptImportMuxCreated(ctx, db.MarkAttemptImportMuxCreatedParams{
+			AttemptID: pending.AttemptID, GcsObjectName: nullableText(object.Name),
+			MuxAssetID: nullableText(muxAssetID), MuxPlaybackID: nullableText(playbackID),
+		})
+		return false, true, err
+	}
+}
+
+func (h *Handler) createReviewableAttemptPart(ctx context.Context, pending db.ClaimPendingAttemptImportsRow, objectName, muxAssetID, playbackID string, duration float64) (bool, bool, error) {
+	if pending.VideoID.Valid {
+		_, err := h.q.MarkAttemptImportReady(ctx, db.MarkAttemptImportReadyParams{
+			AttemptID: pending.AttemptID, GcsObjectName: nullableText(objectName),
+			MuxAssetID: nullableText(muxAssetID), MuxPlaybackID: nullableText(playbackID),
+			MuxDurationSeconds: pgtype.Float8{Float64: duration, Valid: duration > 0}, VideoID: pending.VideoID,
+		})
+		return err == nil, false, err
+	}
+
+	tx, err := h.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return false, false, err
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+	qtx := db.New(tx)
+	collection, err := qtx.GetRecordingCollectionForUpdate(ctx, pending.BookingID)
+	if err != nil {
+		return false, false, err
+	}
+	assetID := collection.AssetID
+	if !assetID.Valid {
+		asset, err := qtx.CreateAsset(ctx, db.CreateAssetParams{
+			Name: recordingAttemptAssetTitle(pending), Description: recordingAttemptAssetDescription(pending),
+			GroupID: pending.GroupID, OwnerID: pending.StudentID,
+		})
+		if err != nil {
+			return false, false, err
+		}
+		collection, err = qtx.AssignRecordingCollectionAsset(ctx, db.AssignRecordingCollectionAssetParams{
+			BookingID: pending.BookingID, AssetID: asset.ID,
+		})
+		if err != nil {
+			return false, false, err
+		}
+		assetID = collection.AssetID
+	}
+	video, err := qtx.CreateOrderedVideoFromMuxAsset(ctx, db.CreateOrderedVideoFromMuxAssetParams{
+		AssetID: assetID, MuxAssetID: nullableText(muxAssetID), PlaybackID: nullableText(playbackID),
+		SortOrder: pgtype.Int4{Int32: pending.AttemptNumber, Valid: true},
+	})
+	if err != nil {
+		return false, false, err
+	}
+	if _, err := qtx.MarkAttemptImportReady(ctx, db.MarkAttemptImportReadyParams{
+		AttemptID: pending.AttemptID, GcsObjectName: nullableText(objectName),
+		MuxAssetID: nullableText(muxAssetID), MuxPlaybackID: nullableText(playbackID),
+		MuxDurationSeconds: pgtype.Float8{Float64: duration, Valid: duration > 0}, VideoID: video.ID,
+	}); err != nil {
+		return false, false, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return false, false, err
+	}
+	h.persistImportDuration(ctx, video.ID, duration)
+	logger.From(ctx, h.logger).InfoContext(ctx, "recording_attempt_import_ready",
+		slog.String("component", "coaching"), slog.String("booking_id", uuidToString(pending.BookingID)),
+		slog.String("attempt_id", uuidToString(pending.AttemptID)), slog.String("asset_id", uuidToString(assetID)),
+		slog.String("video_id", uuidToString(video.ID)), slog.String("mux_asset_id", muxAssetID))
+	return true, false, nil
+}
+
+func (h *Handler) markAttemptImportFailed(ctx context.Context, attemptID pgtype.UUID, cause error) {
+	_ = h.q.MarkAttemptImportFailed(ctx, db.MarkAttemptImportFailedParams{
+		AttemptID: attemptID, Error: nullableText(truncateRecordingError(cause.Error())),
+	})
 }
 
 func (h *Handler) processRecordingImport(ctx context.Context, pending db.ListPendingRecordingImportsRow) (ready bool, deferred bool, err error) {
@@ -336,6 +499,21 @@ func recordingAssetTitle(pending db.ListPendingRecordingImportsRow) string {
 }
 
 func recordingAssetDescription(pending db.ListPendingRecordingImportsRow) string {
+	if !pending.ScheduledAt.Valid {
+		return "Automatically imported from a live coaching session recording."
+	}
+	return "Automatically imported from the live coaching session on " +
+		pending.ScheduledAt.Time.Format(time.RFC1123) + "."
+}
+
+func recordingAttemptAssetTitle(pending db.ClaimPendingAttemptImportsRow) string {
+	if pending.SessionTypeName != "" {
+		return "Live coaching recording: " + pending.SessionTypeName
+	}
+	return "Live coaching recording"
+}
+
+func recordingAttemptAssetDescription(pending db.ClaimPendingAttemptImportsRow) string {
 	if !pending.ScheduledAt.Valid {
 		return "Automatically imported from a live coaching session recording."
 	}

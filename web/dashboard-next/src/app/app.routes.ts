@@ -24,6 +24,14 @@ import { VideosPageComponent } from './pages/videos/videos-page.component';
 
 export const routes: Routes = [
   {
+    path: 'recording-view',
+    loadComponent: () =>
+      import('./pages/recording-view/recording-view-page.component').then(
+        (module) => module.RecordingViewPageComponent,
+      ),
+    title: 'Recording',
+  },
+  {
     path: 'sessions/:groupId/:bookingId/call',
     component: VideoCallPageComponent,
     canActivate: [authGuard, permissionGuard],

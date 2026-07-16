@@ -96,6 +96,94 @@ func (ns NullAssetStatus) Value() (driver.Value, error) {
 	return string(ns.AssetStatus), nil
 }
 
+type CoachingRecordingAttemptImportStatus string
+
+const (
+	CoachingRecordingAttemptImportStatusPending     CoachingRecordingAttemptImportStatus = "pending"
+	CoachingRecordingAttemptImportStatusImporting   CoachingRecordingAttemptImportStatus = "importing"
+	CoachingRecordingAttemptImportStatusProcessing  CoachingRecordingAttemptImportStatus = "processing"
+	CoachingRecordingAttemptImportStatusReady       CoachingRecordingAttemptImportStatus = "ready"
+	CoachingRecordingAttemptImportStatusFailed      CoachingRecordingAttemptImportStatus = "failed"
+	CoachingRecordingAttemptImportStatusQuarantined CoachingRecordingAttemptImportStatus = "quarantined"
+)
+
+func (e *CoachingRecordingAttemptImportStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CoachingRecordingAttemptImportStatus(s)
+	case string:
+		*e = CoachingRecordingAttemptImportStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CoachingRecordingAttemptImportStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCoachingRecordingAttemptImportStatus struct {
+	CoachingRecordingAttemptImportStatus CoachingRecordingAttemptImportStatus `json:"coaching_recording_attempt_import_status"`
+	Valid                                bool                                 `json:"valid"` // Valid is true if CoachingRecordingAttemptImportStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCoachingRecordingAttemptImportStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CoachingRecordingAttemptImportStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CoachingRecordingAttemptImportStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCoachingRecordingAttemptImportStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CoachingRecordingAttemptImportStatus), nil
+}
+
+type CoachingRecordingCollectionStatus string
+
+const (
+	CoachingRecordingCollectionStatusOpen   CoachingRecordingCollectionStatus = "open"
+	CoachingRecordingCollectionStatusSealed CoachingRecordingCollectionStatus = "sealed"
+)
+
+func (e *CoachingRecordingCollectionStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CoachingRecordingCollectionStatus(s)
+	case string:
+		*e = CoachingRecordingCollectionStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CoachingRecordingCollectionStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCoachingRecordingCollectionStatus struct {
+	CoachingRecordingCollectionStatus CoachingRecordingCollectionStatus `json:"coaching_recording_collection_status"`
+	Valid                             bool                              `json:"valid"` // Valid is true if CoachingRecordingCollectionStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCoachingRecordingCollectionStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CoachingRecordingCollectionStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CoachingRecordingCollectionStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCoachingRecordingCollectionStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CoachingRecordingCollectionStatus), nil
+}
+
 type CoachingRecordingImportStatus string
 
 const (
@@ -467,6 +555,25 @@ type CoachingBooking struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type CoachingBookingParticipantState struct {
+	BookingID            pgtype.UUID        `json:"booking_id"`
+	ParticipantRole      string             `json:"participant_role"`
+	UserID               string             `json:"user_id"`
+	AgoraUid             int32              `json:"agora_uid"`
+	ConnectionGeneration pgtype.UUID        `json:"connection_generation"`
+	LastEventSeq         int64              `json:"last_event_seq"`
+	ConnectionState      string             `json:"connection_state"`
+	AudioPublished       bool               `json:"audio_published"`
+	AudioEnabled         bool               `json:"audio_enabled"`
+	VideoPublished       bool               `json:"video_published"`
+	VideoEnabled         bool               `json:"video_enabled"`
+	JoinedAt             pgtype.Timestamptz `json:"joined_at"`
+	LeftAt               pgtype.Timestamptz `json:"left_at"`
+	LastSeenAt           pgtype.Timestamptz `json:"last_seen_at"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}
+
 type CoachingBookingRecording struct {
 	BookingID  pgtype.UUID             `json:"booking_id"`
 	Status     CoachingRecordingStatus `json:"status"`
@@ -489,6 +596,65 @@ type CoachingBookingReminder struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type CoachingRecordingAttempt struct {
+	ID                    pgtype.UUID             `json:"id"`
+	BookingID             pgtype.UUID             `json:"booking_id"`
+	AttemptNumber         int32                   `json:"attempt_number"`
+	Mode                  string                  `json:"mode"`
+	Status                CoachingRecordingStatus `json:"status"`
+	ResourceID            pgtype.Text             `json:"resource_id"`
+	Sid                   pgtype.Text             `json:"sid"`
+	ProviderUid           string                  `json:"provider_uid"`
+	FilePrefix            []string                `json:"file_prefix"`
+	FileManifest          []byte                  `json:"file_manifest"`
+	LastProviderState     pgtype.Text             `json:"last_provider_state"`
+	LastProviderCheckedAt pgtype.Timestamptz      `json:"last_provider_checked_at"`
+	EmptySinceAt          pgtype.Timestamptz      `json:"empty_since_at"`
+	StopRequestedAt       pgtype.Timestamptz      `json:"stop_requested_at"`
+	StartedAt             pgtype.Timestamptz      `json:"started_at"`
+	StoppedAt             pgtype.Timestamptz      `json:"stopped_at"`
+	Error                 pgtype.Text             `json:"error"`
+	CreatedAt             pgtype.Timestamptz      `json:"created_at"`
+	UpdatedAt             pgtype.Timestamptz      `json:"updated_at"`
+}
+
+type CoachingRecordingAttemptFile struct {
+	ID             pgtype.UUID        `json:"id"`
+	AttemptID      pgtype.UUID        `json:"attempt_id"`
+	SequenceNumber int32              `json:"sequence_number"`
+	FileName       string             `json:"file_name"`
+	SliceStartAt   pgtype.Timestamptz `json:"slice_start_at"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
+type CoachingRecordingAttemptImport struct {
+	AttemptID               pgtype.UUID                          `json:"attempt_id"`
+	Status                  CoachingRecordingAttemptImportStatus `json:"status"`
+	GcsObjectName           pgtype.Text                          `json:"gcs_object_name"`
+	GcsObjectSizeBytes      pgtype.Int8                          `json:"gcs_object_size_bytes"`
+	ProviderDurationSeconds pgtype.Float8                        `json:"provider_duration_seconds"`
+	MuxAssetID              pgtype.Text                          `json:"mux_asset_id"`
+	MuxPlaybackID           pgtype.Text                          `json:"mux_playback_id"`
+	MuxDurationSeconds      pgtype.Float8                        `json:"mux_duration_seconds"`
+	VideoID                 pgtype.UUID                          `json:"video_id"`
+	Attempts                int32                                `json:"attempts"`
+	LastAttemptAt           pgtype.Timestamptz                   `json:"last_attempt_at"`
+	ImportedAt              pgtype.Timestamptz                   `json:"imported_at"`
+	Error                   pgtype.Text                          `json:"error"`
+	CreatedAt               pgtype.Timestamptz                   `json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz                   `json:"updated_at"`
+}
+
+type CoachingRecordingCollection struct {
+	BookingID         pgtype.UUID                       `json:"booking_id"`
+	AssetID           pgtype.UUID                       `json:"asset_id"`
+	Status            CoachingRecordingCollectionStatus `json:"status"`
+	NextAttemptNumber int32                             `json:"next_attempt_number"`
+	SealedAt          pgtype.Timestamptz                `json:"sealed_at"`
+	CreatedAt         pgtype.Timestamptz                `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz                `json:"updated_at"`
+}
+
 type CoachingRecordingImport struct {
 	BookingID     pgtype.UUID                   `json:"booking_id"`
 	Status        CoachingRecordingImportStatus `json:"status"`
@@ -503,6 +669,18 @@ type CoachingRecordingImport struct {
 	Error         pgtype.Text                   `json:"error"`
 	CreatedAt     pgtype.Timestamptz            `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz            `json:"updated_at"`
+}
+
+type CoachingRecordingRendererCapability struct {
+	ID              pgtype.UUID        `json:"id"`
+	AttemptID       pgtype.UUID        `json:"attempt_id"`
+	TokenHash       []byte             `json:"token_hash"`
+	RendererUid     int32              `json:"renderer_uid"`
+	ExpiresAt       pgtype.Timestamptz `json:"expires_at"`
+	LastExchangedAt pgtype.Timestamptz `json:"last_exchanged_at"`
+	ExchangeCount   int32              `json:"exchange_count"`
+	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
 type CoachingSessionType struct {
@@ -691,6 +869,7 @@ type Video struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 	DurationSeconds pgtype.Float8      `json:"duration_seconds"`
+	SortOrder       pgtype.Int4        `json:"sort_order"`
 }
 
 type VideoReview struct {

@@ -257,7 +257,7 @@ resource "google_cloud_scheduler_job" "coaching_reminders" {
 resource "google_cloud_scheduler_job" "coaching_recordings_cleanup" {
   name             = "coaching-recordings-cleanup"
   region           = var.region
-  schedule         = "*/5 * * * *"
+  schedule         = "* * * * *"
   time_zone        = "UTC"
   attempt_deadline = "30s"
   depends_on       = [module.github_wif]

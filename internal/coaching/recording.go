@@ -42,6 +42,9 @@ type StartRecordingRequest struct {
 	ChannelName string
 	Token       string
 	BookingID   string
+	AttemptID   string
+	UID         string
+	RendererURL string
 }
 
 type StartedRecording struct {
@@ -117,12 +120,23 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 		return StartedRecording{}, err
 	}
 
-	prefix := c.fileNamePrefix(req.BookingID)
+	recordingUID := req.UID
+	if recordingUID == "" {
+		recordingUID = recordingBotUID
+	}
+	prefix := c.fileNamePrefix(req.BookingID, req.AttemptID)
+	scene := 0
+	if c.cfg.Mode == "web" {
+		scene = 1
+		if strings.TrimSpace(req.RendererURL) == "" {
+			return StartedRecording{}, errors.New("web page recording requires a renderer URL")
+		}
+	}
 	acquireReq := acquireRecordingRequest{
 		CName: req.ChannelName,
-		UID:   recordingBotUID,
+		UID:   recordingUID,
 		ClientRequest: acquireClientRequest{
-			Scene:               0,
+			Scene:               scene,
 			ResourceExpiredHour: 24,
 		},
 	}
@@ -143,29 +157,9 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 	)
 	startReq := startRecordingRequest{
 		CName: req.ChannelName,
-		UID:   recordingBotUID,
+		UID:   recordingUID,
 		ClientRequest: startClientRequest{
 			Token: req.Token,
-			RecordingConfig: recordingConfig{
-				ChannelType:        0,
-				MaxIdleTime:        c.cfg.MaxIdleTime,
-				StreamTypes:        2,
-				VideoStreamType:    0,
-				SubscribeAudioUIDs: []string{"#allstream#"},
-				SubscribeVideoUIDs: []string{studentParticipantUID, expertParticipantUID},
-				AudioProfile:       1,
-				TranscodingConfig: transcodingConfig{
-					Width:            c.cfg.TranscodingWidth,
-					Height:           c.cfg.TranscodingHeight,
-					Bitrate:          c.cfg.TranscodingBitrate,
-					FPS:              c.cfg.TranscodingFPS,
-					MixedVideoLayout: 1,
-					BackgroundColor:  "#000000",
-				},
-			},
-			RecordingFileConfig: recordingFileConfig{
-				AVFileType: []string{"hls", "mp4"},
-			},
 			StorageConfig: storageConfig{
 				Vendor:         c.cfg.StorageVendor,
 				Region:         c.cfg.StorageRegion,
@@ -175,6 +169,47 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 				FileNamePrefix: prefix,
 			},
 		},
+	}
+	if c.cfg.Mode == "web" {
+		startReq.ClientRequest.ExtensionServiceConfig = &extensionServiceConfig{
+			ErrorHandlePolicy: "error_abort",
+			ExtensionServices: []extensionService{
+				{
+					ServiceName:       "web_recorder_service",
+					ErrorHandlePolicy: "error_abort",
+					ServiceParam: webRecorderServiceParam{
+						URL:              req.RendererURL,
+						VideoWidth:       c.cfg.TranscodingWidth,
+						VideoHeight:      c.cfg.TranscodingHeight,
+						VideoBitrate:     c.cfg.TranscodingBitrate,
+						VideoFPS:         c.cfg.TranscodingFPS,
+						MaxRecordingHour: 4,
+						MaxVideoDuration: 240,
+					},
+				},
+			},
+		}
+	} else {
+		startReq.ClientRequest.RecordingConfig = &recordingConfig{
+			ChannelType:        0,
+			MaxIdleTime:        c.cfg.MaxIdleTime,
+			StreamTypes:        2,
+			VideoStreamType:    0,
+			SubscribeAudioUIDs: []string{"#allstream#"},
+			SubscribeVideoUIDs: []string{studentParticipantUID, expertParticipantUID},
+			AudioProfile:       1,
+			TranscodingConfig: transcodingConfig{
+				Width:            c.cfg.TranscodingWidth,
+				Height:           c.cfg.TranscodingHeight,
+				Bitrate:          c.cfg.TranscodingBitrate,
+				FPS:              c.cfg.TranscodingFPS,
+				MixedVideoLayout: 1,
+				BackgroundColor:  "#000000",
+			},
+		}
+		startReq.ClientRequest.RecordingFileConfig = &recordingFileConfig{
+			AVFileType: []string{"hls", "mp4"},
+		}
 	}
 
 	var startResp startRecordingResponse
@@ -188,7 +223,7 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 	return StartedRecording{
 		ResourceID:     startResp.ResourceID,
 		SID:            startResp.SID,
-		UID:            recordingBotUID,
+		UID:            recordingUID,
 		FileNamePrefix: prefix,
 	}, nil
 }
@@ -233,9 +268,12 @@ func (c *agoraCloudRecordingClient) validate() error {
 	return nil
 }
 
-func (c *agoraCloudRecordingClient) fileNamePrefix(bookingID string) []string {
+func (c *agoraCloudRecordingClient) fileNamePrefix(bookingID, attemptID string) []string {
 	prefix := append([]string{}, c.cfg.FileNamePrefix...)
 	prefix = append(prefix, sanitizeAgoraPathPart(bookingID))
+	if attemptID != "" {
+		prefix = append(prefix, sanitizeAgoraPathPart(attemptID))
+	}
 	return prefix
 }
 
@@ -311,10 +349,32 @@ type startRecordingRequest struct {
 }
 
 type startClientRequest struct {
-	Token               string              `json:"token,omitempty"`
-	StorageConfig       storageConfig       `json:"storageConfig"`
-	RecordingConfig     recordingConfig     `json:"recordingConfig"`
-	RecordingFileConfig recordingFileConfig `json:"recordingFileConfig"`
+	Token                  string                  `json:"token,omitempty"`
+	StorageConfig          storageConfig           `json:"storageConfig"`
+	RecordingConfig        *recordingConfig        `json:"recordingConfig,omitempty"`
+	RecordingFileConfig    *recordingFileConfig    `json:"recordingFileConfig,omitempty"`
+	ExtensionServiceConfig *extensionServiceConfig `json:"extensionServiceConfig,omitempty"`
+}
+
+type extensionServiceConfig struct {
+	ErrorHandlePolicy string             `json:"errorHandlePolicy"`
+	ExtensionServices []extensionService `json:"extensionServices"`
+}
+
+type extensionService struct {
+	ServiceName       string                  `json:"serviceName"`
+	ErrorHandlePolicy string                  `json:"errorHandlePolicy"`
+	ServiceParam      webRecorderServiceParam `json:"serviceParam"`
+}
+
+type webRecorderServiceParam struct {
+	URL              string `json:"url"`
+	VideoWidth       int    `json:"videoWidth"`
+	VideoHeight      int    `json:"videoHeight"`
+	VideoBitrate     int    `json:"videoBitrate"`
+	VideoFPS         int    `json:"videoFps"`
+	MaxRecordingHour int    `json:"maxRecordingHour"`
+	MaxVideoDuration int    `json:"maxVideoDuration"`
 }
 
 type recordingConfig struct {
@@ -487,6 +547,35 @@ func (h *Handler) StopBookingRecording(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) CleanupFinishedRecordings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.From(ctx, h.logger)
+	if _, err := h.q.MarkEmptyRecordingAttemptsWithoutFreshHumans(ctx, int32(h.recordingPresenceTTL/time.Second)); err != nil {
+		log.ErrorContext(ctx, "mark_empty_recording_attempts_failed",
+			slog.String("component", "coaching"), slog.Any("err", err))
+	}
+
+	attempts, err := h.q.ListRecordingAttemptsReadyToStop(ctx, db.ListRecordingAttemptsReadyToStopParams{
+		EmptyGraceSeconds: int32(h.recordingEmptyGrace / time.Second),
+		EndGraceSeconds:   int32(h.recordingEndGrace / time.Second),
+		LimitCount:        100,
+	})
+	if err != nil {
+		log.ErrorContext(ctx, "list_recording_attempts_ready_to_stop_failed",
+			slog.String("component", "coaching"), slog.Any("err", err))
+		http.Error(w, "Failed to list recording attempts", http.StatusInternalServerError)
+		return
+	}
+	attemptsStopped := 0
+	for _, attempt := range attempts {
+		if err := h.stopRecordingAttempt(ctx, attempt); err != nil {
+			log.ErrorContext(ctx, "recording_attempt_cleanup_failed",
+				slog.String("component", "coaching"), slog.String("attempt_id", uuidToString(attempt.ID)), slog.Any("err", err))
+			continue
+		}
+		attemptsStopped++
+	}
+	if _, err := h.q.SealFinishedRecordingCollections(ctx, int32(h.recordingEndGrace/time.Second)); err != nil {
+		log.ErrorContext(ctx, "seal_finished_recording_collections_failed",
+			slog.String("component", "coaching"), slog.Any("err", err))
+	}
 
 	bookings, err := h.q.ListRecordingsPastEnd(ctx, db.ListRecordingsPastEndParams{
 		GraceSeconds: int32(recordingCleanupGrace / time.Second),
@@ -525,12 +614,14 @@ func (h *Handler) CleanupFinishedRecordings(w http.ResponseWriter, r *http.Reque
 	}
 
 	writeJSON(w, http.StatusOK, map[string]int{
-		"processed":        len(bookings),
-		"stopped":          stopped,
-		"imports":          imports.Processed,
-		"imports_ready":    imports.Ready,
-		"imports_deferred": imports.Deferred,
-		"imports_failed":   imports.Failed,
+		"processed":          len(bookings),
+		"stopped":            stopped,
+		"attempts_processed": len(attempts),
+		"attempts_stopped":   attemptsStopped,
+		"imports":            imports.Processed,
+		"imports_ready":      imports.Ready,
+		"imports_deferred":   imports.Deferred,
+		"imports_failed":     imports.Failed,
 	})
 }
 

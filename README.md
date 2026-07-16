@@ -217,10 +217,10 @@ GitHub Environment variable; there is no separate Zeta observability password. S
 4. Automated **reminders** are sent at 24 h, 1 h, and 15 min before the session (driven by GCP Cloud Scheduler polling every 5 min).
 5. Within the connect window (default 15 min before start), a **Join** button appears on the dashboard.
 6. Clicking Join calls the connect endpoint, which validates the booking and generates an **Agora RTC token**.
-7. If enabled, the API starts **Agora Cloud Recording** for the booking before returning join data.
-8. The Angular app joins the Agora channel and renders a **full-screen video call** page.
-9. Leaving the call asks the API to stop the active recording; an internal cleanup endpoint can also stop recordings after their scheduled end.
-10. Stopped recordings are queued for post-processing. The API locates the final MP4 in GCS, gives Mux a short-lived signed URL, creates a normal reviewable asset/video, and links it back to the booking.
+7. The Angular app joins the Agora channel without requesting media permissions. After the confirmed join it reports authenticated presence; camera and microphone remain optional.
+8. The first fresh human presence starts an Agora **Web Page Recording** attempt. The private renderer uses a short-lived capability to show the student as the main view and the expert as a small picture-in-picture, including avatar and mute placeholders.
+9. Human presence is refreshed every 10 seconds. When no student or expert remains for 60 seconds, the API stops that attempt. Returning later creates the next attempt instead of overwriting the first.
+10. Every stopped attempt is imported as an ordered video part. All parts from one booking share one reviewable asset, which becomes visible only after the booking collection is sealed and all imports are ready.
 
 ### Notification Preferences Flow
 
@@ -342,18 +342,24 @@ sequenceDiagram
     W->>A: GET /groups/{gid}/coaching/bookings/{id}/connect
     A->>D: Validate booking (participant + time window)
     A->>AG: Generate RTC Token (go-tokenbuilder)
-    opt Recording enabled
-        A->>AG: Acquire recording resource
-        A->>AG: Start cloud recording
-        A->>D: Store resourceId, sid, recording status
-    end
-    A-->>W: { app_id, channel, token, uid }
+    A-->>W: RTC credentials + connection ID + participant presentation
     W->>AG: Join Agora Channel (agora-rtc-sdk-ng)
+    W->>A: POST presence {state: joined, media state}
+    A->>D: Activate human presence and claim attempt N
+    opt Recording enabled
+        A->>D: Store SHA-256 renderer capability
+        A->>AG: Acquire + start web page recording
+        AG->>W: Open /recording-view#cap=…
+        W->>A: Exchange capability for receive-only RTC token
+        W->>AG: Renderer joins as non-human UID
+    end
     Note over U,AG: 1-on-1 Video Call
     U->>W: Leave call
-    W->>A: POST /groups/{gid}/coaching/bookings/{id}/recording/stop
+    W->>A: POST presence {state: left}
+    A->>D: Start 60-second empty grace
+    Note over A,D: A returning human clears empty_since and keeps attempt N
     A->>AG: Stop cloud recording
-    A->>D: Mark recording stopped and import pending
+    A->>D: Stop attempt N and enqueue its import
 ```
 
 ### Recording Post-Processing
@@ -368,14 +374,15 @@ sequenceDiagram
     participant W as Angular App
 
     S->>A: POST /internal/coaching/recordings/cleanup or /process
-    A->>D: Find stopped recordings without ready imports
-    A->>G: Locate final MP4 below Agora file prefix
+    A->>D: Atomically claim stopped attempt imports
+    A->>G: Locate MP4 below the attempt-specific prefix
     A->>G: Sign short-lived GET URL
     A->>M: Create asset from signed URL
     A->>D: Store Mux asset ID and processing state
     S->>A: Retry while Mux prepares
     A->>M: Get asset status and playback ID
-    A->>D: Create asset/video rows and mark import ready
+    A->>D: Reuse booking asset and append ordered video part N
+    A->>D: Publish asset after collection is sealed and imports are ready
     W->>A: List sessions
     A-->>W: Booking includes recording asset link
     W->>A: Open review asset
@@ -692,6 +699,58 @@ erDiagram
         timestamp updated_at
     }
 
+    coaching_recording_collections {
+        uuid booking_id PK, FK
+        uuid asset_id FK
+        enum status "open, sealed"
+        int next_attempt_number
+        timestamptz sealed_at
+    }
+
+    coaching_recording_attempts {
+        uuid id PK
+        uuid booking_id FK
+        int attempt_number
+        string mode "mix, web"
+        enum status "starting, started, stopping, stopped, failed"
+        string resource_id
+        string sid
+        string provider_uid
+        string_array file_prefix
+        timestamptz empty_since_at
+        timestamptz started_at
+        timestamptz stopped_at
+    }
+
+    coaching_recording_attempt_imports {
+        uuid attempt_id PK, FK
+        enum status "pending, importing, processing, ready, failed, quarantined"
+        string gcs_object_name
+        string mux_asset_id
+        uuid video_id FK
+        int attempts
+    }
+
+    coaching_booking_participant_state {
+        uuid booking_id PK, FK
+        string participant_role PK "student, expert"
+        string user_id
+        int agora_uid "1 or 2"
+        uuid connection_generation
+        bigint last_event_seq
+        string connection_state
+        timestamptz last_seen_at
+    }
+
+    coaching_recording_renderer_capabilities {
+        uuid id PK
+        uuid attempt_id FK
+        bytes token_hash "SHA-256 only"
+        int renderer_uid
+        timestamptz expires_at
+        timestamptz revoked_at
+    }
+
     coaching_booking_reminders {
         uuid id PK
         uuid booking_id FK
@@ -740,6 +799,13 @@ erDiagram
     coaching_booking_recordings ||--o| coaching_recording_imports : imports
     assets ||--o{ coaching_recording_imports : "created by"
     videos ||--o{ coaching_recording_imports : "created by"
+    coaching_bookings ||--o| coaching_recording_collections : "owns collection"
+    coaching_recording_collections ||--o{ coaching_recording_attempts : "contains attempts"
+    coaching_recording_attempts ||--o| coaching_recording_attempt_imports : "imports part"
+    coaching_recording_attempts ||--o| coaching_recording_renderer_capabilities : "authorizes renderer"
+    coaching_bookings ||--o{ coaching_booking_participant_state : "tracks human presence"
+    assets ||--o| coaching_recording_collections : "review asset"
+    videos ||--o| coaching_recording_attempt_imports : "ordered part"
     coaching_bookings ||--o{ coaching_booking_reminders : has
     users ||--o{ audit_events : "actor in"
 ```
