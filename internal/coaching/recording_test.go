@@ -104,7 +104,9 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 
 	var capturedAcquire acquireRecordingRequest
 	var capturedStart startRecordingRequest
+	var capturedUpdate updateRecordingRequest
 	queryCalls := 0
+	updateCalls := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/cloud_recording/acquire"):
@@ -122,6 +124,15 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 		case strings.Contains(r.URL.Path, "/resourceid/resource-web/sid/sid-web/mode/web/query"):
 			queryCalls++
 			writeTestJSON(t, w, map[string]any{"serverResponse": map[string]any{"status": 5}})
+		case strings.Contains(r.URL.Path, "/resourceid/resource-web/sid/sid-web/mode/web/update"):
+			updateCalls++
+			if err := json.NewDecoder(r.Body).Decode(&capturedUpdate); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			writeTestJSON(t, w, map[string]any{
+				"resourceId": "resource-web", "sid": "sid-web",
+			})
 		default:
 			http.NotFound(w, r)
 		}
@@ -148,6 +159,9 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 	if queryCalls != 1 {
 		t.Fatalf("query calls = %d, want 1", queryCalls)
 	}
+	if updateCalls != 1 {
+		t.Fatalf("update calls = %d, want 1", updateCalls)
+	}
 	if capturedStart.ClientRequest.RecordingConfig != nil {
 		t.Fatal("web recording unexpectedly included composite recordingConfig")
 	}
@@ -164,6 +178,15 @@ func TestAgoraStartWebRecordingUsesPrivateRendererPage(t *testing.T) {
 	}
 	if service.ServiceParam.AudioProfile != 1 || service.ServiceParam.ReadyTimeout != 60 {
 		t.Fatalf("web reliability settings = audio %d, ready timeout %d", service.ServiceParam.AudioProfile, service.ServiceParam.ReadyTimeout)
+	}
+	if !service.ServiceParam.OnHold {
+		t.Fatal("web recording did not start on hold")
+	}
+	if capturedUpdate.CName != "coaching_booking" || capturedUpdate.UID != recordingBotUID {
+		t.Fatalf("resume identity = cname %q, uid %q", capturedUpdate.CName, capturedUpdate.UID)
+	}
+	if capturedUpdate.ClientRequest.WebRecordingConfig.OnHold {
+		t.Fatal("web recording resume update kept recording on hold")
 	}
 	// Agora defines maxVideoDuration in minutes. 240 keeps every supported
 	// Zeta session in one MP4 under the normal duration limit.

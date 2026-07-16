@@ -19,11 +19,12 @@ import {
   LucideSettings,
 } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { AgoraMediaError, AgoraService } from '../../core/calls/agora.service';
+import { AgoraService } from '../../core/calls/agora.service';
 import { ParticipantTileState } from '../../core/calls/coaching-call.types';
 import { CoachingApiClient, ConnectResponse } from '../../core/http/coaching-api.service';
 import { ParticipantTileComponent } from '../../features/coaching-call/participant-tile.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
+import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
 
 @Component({
   selector: 'app-video-call-page',
@@ -32,6 +33,7 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
     TranslocoPipe,
     ParticipantTileComponent,
     ZButtonComponent,
+    ZSelectComponent,
     LucideCamera,
     LucideCameraOff,
     LucideMic,
@@ -77,28 +79,8 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
             <div
               class="absolute right-3 top-3 z-10 aspect-video w-32 overflow-hidden rounded-lg border border-white/15 shadow-2xl sm:w-48 lg:w-[24%] lg:max-w-72"
             >
-              <app-participant-tile [state]="localTile()" videoFit="cover" />
+              <app-participant-tile [state]="localTile()" videoFit="cover" [compact]="true" />
             </div>
-
-            @if (!agora.localAudioTrack() && !agora.localVideoTrack()) {
-              <div
-                class="absolute inset-x-3 bottom-3 z-20 mx-auto max-w-md rounded-lg border border-white/15 bg-black/75 p-3 text-center backdrop-blur"
-              >
-                <p class="text-sm font-semibold">
-                  {{ 'sessions.call.devicesOptional' | transloco }}
-                </p>
-                @if (mediaErrorMessage()) {
-                  <p class="mt-1 text-xs text-amber-200">{{ mediaErrorMessage() }}</p>
-                }
-                <button
-                  type="button"
-                  class="mt-3 min-h-11 rounded-md bg-white px-4 text-sm font-semibold text-stone-950"
-                  (click)="enableMedia()"
-                >
-                  {{ 'sessions.call.enableDevices' | transloco }}
-                </button>
-              </div>
-            }
           </div>
 
           @if (showDevicePanel()) {
@@ -107,29 +89,25 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
             >
               <label class="grid gap-2 text-xs font-semibold">
                 <span>{{ 'common.labels.microphone' | transloco }}</span>
-                <select
-                  class="min-h-11 rounded-md border border-zinc-700 bg-zinc-900 px-3"
+                <z-select
+                  tone="dark"
+                  [options]="audioOptions()"
+                  [ariaLabel]="'common.labels.microphone' | transloco"
                   [value]="agora.selectedAudioDeviceId()"
                   [disabled]="!agora.localAudioTrack()"
-                  (change)="setAudioDevice(selectEventValue($event))"
-                >
-                  @for (option of audioOptions(); track option.value) {
-                    <option [value]="option.value">{{ option.label }}</option>
-                  }
-                </select>
+                  (valueChange)="setAudioDevice($event)"
+                />
               </label>
               <label class="grid gap-2 text-xs font-semibold">
                 <span>{{ 'common.labels.camera' | transloco }}</span>
-                <select
-                  class="min-h-11 rounded-md border border-zinc-700 bg-zinc-900 px-3"
+                <z-select
+                  tone="dark"
+                  [options]="videoOptions()"
+                  [ariaLabel]="'common.labels.camera' | transloco"
                   [value]="agora.selectedVideoDeviceId()"
                   [disabled]="!agora.localVideoTrack()"
-                  (change)="setVideoDevice(selectEventValue($event))"
-                >
-                  @for (option of videoOptions(); track option.value) {
-                    <option [value]="option.value">{{ option.label }}</option>
-                  }
-                </select>
+                  (valueChange)="setVideoDevice($event)"
+                />
               </label>
             </section>
           }
@@ -143,7 +121,6 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
               [ngClass]="
                 agora.audioEnabled() ? '' : '!border-red-950/70 !bg-red-950/50 !text-red-400'
               "
-              [disabled]="!agora.localAudioTrack()"
               (click)="toggleAudio()"
             >
               @if (agora.audioEnabled()) {
@@ -158,7 +135,6 @@ import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
               [ngClass]="
                 agora.videoEnabled() ? '' : '!border-red-950/70 !bg-red-950/50 !text-red-400'
               "
-              [disabled]="!agora.localVideoTrack()"
               (click)="toggleVideo()"
             >
               @if (agora.videoEnabled()) {
@@ -282,6 +258,13 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
         );
       }, 10_000);
       this.timer = setInterval(() => this.now.set(Date.now()), 1_000);
+      // Media permissions are not a prerequisite for joining. Start devices
+      // best-effort after the RTC connection succeeds and stay receive-only if
+      // the browser denies or cannot provide either device.
+      void this.agora
+        .enableLocalMedia()
+        .then(() => this.sendPresence('joined'))
+        .catch(() => undefined);
     } catch (error) {
       this.error.set(
         error instanceof Error
@@ -299,10 +282,6 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
     void this.agora.leave();
   }
 
-  protected async enableMedia(): Promise<void> {
-    await this.agora.enableLocalMedia();
-    this.sendPresence('joined');
-  }
   protected async toggleAudio(): Promise<void> {
     await this.agora.toggleAudio();
     this.sendPresence('joined');
@@ -317,33 +296,20 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   protected setVideoDevice(deviceId: string): void {
     void this.agora.setVideoDevice(deviceId);
   }
-  protected selectEventValue(event: Event): string {
-    return (event.target as HTMLSelectElement | null)?.value ?? '';
-  }
   protected toggleDevicePanel(): void {
     this.showDevicePanel.update((open) => !open);
   }
   protected leave(): void {
     this.clearIntervals();
     this.sendPresence('left');
-    void this.agora.leave().then(() => this.backToSessions());
+    void this.agora.leave().then(
+      () => this.backToSessions(),
+      () => this.backToSessions(),
+    );
   }
   protected backToSessions(): void {
     void this.router.navigate(['/sessions', 'upcoming']);
   }
-  protected mediaErrorMessage(): string {
-    const key: Record<AgoraMediaError, string> = {
-      permission_denied: 'sessions.call.permissionDenied',
-      device_missing: 'sessions.call.deviceMissing',
-      device_busy: 'sessions.call.deviceBusy',
-      unsupported: 'sessions.call.unsupported',
-      publish_failed: 'sessions.call.publishFailed',
-      network: 'sessions.call.mediaFailed',
-    };
-    const error = this.agora.mediaError();
-    return error ? this.transloco.translate(key[error]) : '';
-  }
-
   private sendPresence(state: 'joined' | 'reconnecting' | 'left'): void {
     const session = this.credentials();
     if (!session || !this.groupId || !this.bookingId) return;

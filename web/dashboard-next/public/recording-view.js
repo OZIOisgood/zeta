@@ -48,10 +48,19 @@
     return document.querySelector('[data-participant="' + role + '"]');
   }
 
+  function avatarSource(avatar) {
+    var value = String(avatar || "");
+    if (!value) return "";
+    return value.indexOf("data:") === 0 ? value : "data:image/jpeg;base64," + value;
+  }
+
   function setIdentity(role, identity) {
     var tile = tileFor(role);
     tile.querySelector("[data-name]").textContent = identity.display_name || role;
-    tile.querySelector("[data-initials]").textContent = initials(identity.display_name, role === "student" ? "S" : "E");
+    tile.querySelector("[data-initials]").textContent = initials(
+      identity.display_name,
+      role === "student" ? "S" : "E",
+    );
     var avatar = tile.querySelector("[data-avatar]");
     var previous = avatar.querySelector("img");
     if (previous) previous.remove();
@@ -59,7 +68,14 @@
       var image = document.createElement("img");
       image.alt = "";
       image.referrerPolicy = "no-referrer";
-      image.src = identity.avatar;
+      image.addEventListener(
+        "error",
+        function () {
+          image.remove();
+        },
+        { once: true },
+      );
+      image.src = avatarSource(identity.avatar);
       avatar.prepend(image);
     }
   }

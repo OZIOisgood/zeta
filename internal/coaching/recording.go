@@ -193,6 +193,9 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 						VideoFPS:         c.cfg.TranscodingFPS,
 						MaxRecordingHour: 4,
 						ReadyTimeout:     60,
+						// Let the renderer load, join Agora, subscribe, and paint its
+						// first usable frame before Agora starts producing video files.
+						OnHold: true,
 						// Agora measures this value in minutes. Zeta sessions are at most 120 minutes.
 						MaxVideoDuration: 240,
 					},
@@ -236,6 +239,12 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 			})
 			return StartedRecording{}, err
 		}
+		if err := c.resumeWebRecording(ctx, req.ChannelName, recordingUID, acquireResp.ResourceID, startResp.SID); err != nil {
+			_ = c.Stop(context.WithoutCancel(ctx), StopRecordingRequest{
+				ChannelName: req.ChannelName, ResourceID: acquireResp.ResourceID, SID: startResp.SID, UID: recordingUID,
+			})
+			return StartedRecording{}, err
+		}
 	}
 
 	return StartedRecording{
@@ -244,6 +253,24 @@ func (c *agoraCloudRecordingClient) Start(ctx context.Context, req StartRecordin
 		UID:            recordingUID,
 		FileNamePrefix: prefix,
 	}, nil
+}
+
+func (c *agoraCloudRecordingClient) resumeWebRecording(ctx context.Context, channelName, uid, resourceID, sid string) error {
+	updatePath := fmt.Sprintf(
+		"/v1/apps/%s/cloud_recording/resourceid/%s/sid/%s/mode/web/update",
+		url.PathEscape(c.cfg.AppID), url.PathEscape(resourceID), url.PathEscape(sid),
+	)
+	updateReq := updateRecordingRequest{
+		CName: channelName,
+		UID:   uid,
+		ClientRequest: updateClientRequest{
+			WebRecordingConfig: webRecordingConfig{OnHold: false},
+		},
+	}
+	if err := c.doJSON(ctx, http.MethodPost, updatePath, updateReq, nil); err != nil {
+		return fmt.Errorf("resume agora page recording: %w", err)
+	}
+	return nil
 }
 
 func (c *agoraCloudRecordingClient) waitForWebRecording(ctx context.Context, channelName, uid, resourceID, sid string) error {
@@ -429,7 +456,22 @@ type webRecorderServiceParam struct {
 	VideoFPS         int    `json:"videoFps"`
 	MaxRecordingHour int    `json:"maxRecordingHour"`
 	ReadyTimeout     int    `json:"readyTimeout"`
+	OnHold           bool   `json:"onhold"`
 	MaxVideoDuration int    `json:"maxVideoDuration"`
+}
+
+type updateRecordingRequest struct {
+	CName         string              `json:"cname"`
+	UID           string              `json:"uid"`
+	ClientRequest updateClientRequest `json:"clientRequest"`
+}
+
+type updateClientRequest struct {
+	WebRecordingConfig webRecordingConfig `json:"webRecordingConfig"`
+}
+
+type webRecordingConfig struct {
+	OnHold bool `json:"onhold"`
 }
 
 type recordingConfig struct {

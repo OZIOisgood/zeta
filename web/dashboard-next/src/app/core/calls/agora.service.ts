@@ -21,6 +21,9 @@ export class AgoraService {
   private client: IAgoraRTCClient | null = null;
   private agoraModule: typeof import('agora-rtc-sdk-ng/esm') | null = null;
   private expectedRemoteUIDs = new Set<number>();
+  private audioEnablePromise: Promise<void> | null = null;
+  private videoEnablePromise: Promise<void> | null = null;
+  private leavePromise: Promise<void> | null = null;
 
   readonly localAudioTrack = signal<IMicrophoneAudioTrack | null>(null);
   readonly localVideoTrack = signal<ICameraVideoTrack | null>(null);
@@ -101,56 +104,24 @@ export class AgoraService {
   }
 
   async enableLocalMedia(): Promise<void> {
-    if (!this.client) throw new Error('network');
-    const AgoraRTC = await this.loadAgora();
     this.mediaError.set(null);
-    const [audioResult, videoResult] = await Promise.allSettled([
-      this.localAudioTrack() ?? AgoraRTC.createMicrophoneAudioTrack(),
-      this.localVideoTrack() ?? AgoraRTC.createCameraVideoTrack(),
-    ]);
+    await Promise.all([this.enableAudio(), this.enableVideo()]);
+  }
 
-    const audioTrack = audioResult.status === 'fulfilled' ? audioResult.value : null;
-    const videoTrack = videoResult.status === 'fulfilled' ? videoResult.value : null;
-    if (!audioTrack && !videoTrack) {
-      const reason = audioResult.status === 'rejected' ? audioResult.reason : videoResult;
-      this.mediaError.set(this.normalizeMediaError(reason));
-      return;
-    }
+  async enableAudio(): Promise<void> {
+    this.mediaError.set(null);
+    this.audioEnablePromise ??= this.createAndPublishAudio().finally(() => {
+      this.audioEnablePromise = null;
+    });
+    await this.audioEnablePromise;
+  }
 
-    if (audioTrack && !this.localAudioTrack()) {
-      try {
-        await this.client.publish(audioTrack);
-        this.localAudioTrack.set(audioTrack);
-        this.audioEnabled.set(true);
-        audioTrack.on('track-ended', () => {
-          this.localAudioTrack.set(null);
-          this.audioEnabled.set(false);
-        });
-      } catch {
-        audioTrack.close();
-        this.mediaError.set('publish_failed');
-      }
-    }
-    if (videoTrack && !this.localVideoTrack()) {
-      try {
-        await this.client.publish(videoTrack);
-        this.localVideoTrack.set(videoTrack);
-        this.videoEnabled.set(true);
-        videoTrack.on('track-ended', () => {
-          this.localVideoTrack.set(null);
-          this.videoEnabled.set(false);
-        });
-      } catch {
-        videoTrack.close();
-        this.mediaError.set('publish_failed');
-      }
-    }
-
-    await this.loadDevices().catch(() => undefined);
-    const audioDeviceId = this.localAudioTrack()?.getMediaStreamTrack().getSettings().deviceId;
-    const videoDeviceId = this.localVideoTrack()?.getMediaStreamTrack().getSettings().deviceId;
-    if (audioDeviceId) this.selectedAudioDeviceId.set(audioDeviceId);
-    if (videoDeviceId) this.selectedVideoDeviceId.set(videoDeviceId);
+  async enableVideo(): Promise<void> {
+    this.mediaError.set(null);
+    this.videoEnablePromise ??= this.createAndPublishVideo().finally(() => {
+      this.videoEnablePromise = null;
+    });
+    await this.videoEnablePromise;
   }
 
   async loadDevices(): Promise<void> {
@@ -176,7 +147,10 @@ export class AgoraService {
 
   async toggleAudio(): Promise<void> {
     const track = this.localAudioTrack();
-    if (!track) return;
+    if (!track) {
+      await this.enableAudio();
+      return;
+    }
     const next = !this.audioEnabled();
     await track.setEnabled(next);
     this.audioEnabled.set(next);
@@ -184,16 +158,21 @@ export class AgoraService {
 
   async toggleVideo(): Promise<void> {
     const track = this.localVideoTrack();
-    if (!track) return;
+    if (!track) {
+      await this.enableVideo();
+      return;
+    }
     const next = !this.videoEnabled();
     await track.setEnabled(next);
     this.videoEnabled.set(next);
   }
 
-  async leave(): Promise<void> {
-    this.localAudioTrack()?.close();
-    this.localVideoTrack()?.close();
-    await this.client?.leave();
+  leave(): Promise<void> {
+    if (this.leavePromise) return this.leavePromise;
+
+    const client = this.client;
+    const audioTrack = this.localAudioTrack();
+    const videoTrack = this.localVideoTrack();
     this.client = null;
     this.localAudioTrack.set(null);
     this.localVideoTrack.set(null);
@@ -202,11 +181,108 @@ export class AgoraService {
     this.videoDevices.set([]);
     this.selectedAudioDeviceId.set('');
     this.selectedVideoDeviceId.set('');
+    this.expectedRemoteUIDs.clear();
     this.audioEnabled.set(false);
     this.videoEnabled.set(false);
     this.localJoined.set(false);
     this.connectionState.set('disconnected');
     this.mediaError.set(null);
+
+    // Release browser capture immediately. Network leave can take longer and
+    // must not keep the camera/microphone indicator or stale UI enabled.
+    audioTrack?.close();
+    videoTrack?.close();
+
+    this.leavePromise = (async () => {
+      try {
+        await client?.leave();
+      } finally {
+        this.leavePromise = null;
+      }
+    })();
+    return this.leavePromise;
+  }
+
+  private async createAndPublishAudio(): Promise<void> {
+    if (this.localAudioTrack()) return;
+    const client = this.client;
+    if (!client) {
+      this.mediaError.set('network');
+      return;
+    }
+    let track: IMicrophoneAudioTrack;
+    try {
+      const AgoraRTC = await this.loadAgora();
+      track = await AgoraRTC.createMicrophoneAudioTrack();
+    } catch (error) {
+      this.mediaError.set(this.normalizeMediaError(error));
+      return;
+    }
+    if (this.client !== client) {
+      track.close();
+      return;
+    }
+    try {
+      await client.publish(track);
+      if (this.client !== client) {
+        track.close();
+        return;
+      }
+      this.localAudioTrack.set(track);
+      this.audioEnabled.set(true);
+      track.on('track-ended', () => {
+        if (this.localAudioTrack() !== track) return;
+        this.localAudioTrack.set(null);
+        this.audioEnabled.set(false);
+      });
+      const deviceId = track.getMediaStreamTrack().getSettings().deviceId;
+      if (deviceId) this.selectedAudioDeviceId.set(deviceId);
+      await this.loadDevices().catch(() => undefined);
+    } catch {
+      track.close();
+      this.mediaError.set('publish_failed');
+    }
+  }
+
+  private async createAndPublishVideo(): Promise<void> {
+    if (this.localVideoTrack()) return;
+    const client = this.client;
+    if (!client) {
+      this.mediaError.set('network');
+      return;
+    }
+    let track: ICameraVideoTrack;
+    try {
+      const AgoraRTC = await this.loadAgora();
+      track = await AgoraRTC.createCameraVideoTrack();
+    } catch (error) {
+      this.mediaError.set(this.normalizeMediaError(error));
+      return;
+    }
+    if (this.client !== client) {
+      track.close();
+      return;
+    }
+    try {
+      await client.publish(track);
+      if (this.client !== client) {
+        track.close();
+        return;
+      }
+      this.localVideoTrack.set(track);
+      this.videoEnabled.set(true);
+      track.on('track-ended', () => {
+        if (this.localVideoTrack() !== track) return;
+        this.localVideoTrack.set(null);
+        this.videoEnabled.set(false);
+      });
+      const deviceId = track.getMediaStreamTrack().getSettings().deviceId;
+      if (deviceId) this.selectedVideoDeviceId.set(deviceId);
+      await this.loadDevices().catch(() => undefined);
+    } catch {
+      track.close();
+      this.mediaError.set('publish_failed');
+    }
   }
 
   private setRemotePresence(

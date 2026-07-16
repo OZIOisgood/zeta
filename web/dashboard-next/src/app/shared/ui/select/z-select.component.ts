@@ -23,12 +23,9 @@ export type SelectOption = { value: string; label: string };
   template: `
     <div
       ngpSelect
-      class="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md border bg-white px-3 text-left text-sm transition hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)] data-[open]:ring-2 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
-      [ngClass]="
-        invalid()
-          ? 'border-rose-300 data-[open]:border-rose-500 data-[open]:ring-rose-100'
-          : 'border-[var(--z-border)] data-[open]:border-[var(--z-primary)] data-[open]:ring-orange-100'
-      "
+      class="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md border px-3 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 data-[open]:ring-2 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50"
+      [ngClass]="triggerClasses()"
+      [attr.aria-label]="ariaLabel() || null"
       [attr.aria-describedby]="ariaDescribedBy() || null"
       [attr.aria-invalid]="invalid() || null"
       [ngpSelectValue]="value()"
@@ -36,28 +33,28 @@ export type SelectOption = { value: string; label: string };
       [ngpSelectDropdownOffset]="4"
       (ngpSelectValueChange)="valueChange.emit($event)"
     >
-      <span
-        class="min-w-0 flex-1 truncate"
-        [ngClass]="selectedLabel() ? 'text-[var(--z-text)]' : 'text-[var(--z-muted)]'"
-      >
+      <span class="min-w-0 flex-1 truncate" [ngClass]="labelClasses()">
         {{ selectedLabel() || placeholder() }}
       </span>
       <svg
         lucideChevronDown
-        class="size-4 shrink-0 text-[var(--z-muted)] transition data-[open]:rotate-180"
+        class="size-4 shrink-0 transition data-[open]:rotate-180"
+        [ngClass]="tone() === 'dark' ? 'text-zinc-400' : 'text-[var(--z-muted)]'"
         aria-hidden="true"
       ></svg>
 
       <div
         *ngpSelectPortal
         ngpSelectDropdown
-        class="z-50 max-h-60 overflow-auto rounded-md border border-[var(--z-border)] bg-white py-1 shadow-lg shadow-orange-950/10"
+        class="z-50 max-h-60 overflow-auto rounded-md border py-1 shadow-lg"
+        [ngClass]="dropdownClasses()"
       >
         @for (option of options(); track option.value) {
           <div
             ngpSelectOption
             [ngpSelectOptionValue]="option.value"
-            class="flex cursor-pointer items-center px-3 py-2 text-sm transition data-[active]:bg-[var(--z-surface-warm)] data-[selected]:font-semibold data-[selected]:text-[var(--z-primary-strong)]"
+            class="flex cursor-pointer items-center px-3 py-2 text-sm transition data-[selected]:font-semibold"
+            [ngClass]="optionClasses()"
           >
             {{ option.label }}
           </div>
@@ -109,12 +106,44 @@ export class ZSelectComponent {
   readonly value = input<string | undefined>(undefined);
   readonly options = input.required<SelectOption[]>();
   readonly placeholder = input('Select an option');
+  readonly ariaLabel = input('');
   readonly ariaDescribedBy = input('');
   readonly invalid = input(false);
   readonly disabled = input(false);
+  readonly tone = input<'light' | 'dark'>('light');
   readonly valueChange = output<string>();
 
   protected readonly selectedLabel = computed(
     () => this.options().find((option) => option.value === this.value())?.label ?? '',
+  );
+  protected readonly triggerClasses = computed(() => {
+    if (this.tone() === 'dark') {
+      return [
+        'border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800 focus-visible:outline-white data-[open]:border-zinc-500 data-[open]:ring-zinc-700',
+        this.invalid()
+          ? 'border-rose-500 data-[open]:border-rose-400 data-[open]:ring-rose-950'
+          : '',
+      ];
+    }
+    return [
+      'bg-white hover:bg-[var(--z-surface-warm)] focus-visible:outline-[var(--z-primary)]',
+      this.invalid()
+        ? 'border-rose-300 data-[open]:border-rose-500 data-[open]:ring-rose-100'
+        : 'border-[var(--z-border)] data-[open]:border-[var(--z-primary)] data-[open]:ring-orange-100',
+    ];
+  });
+  protected readonly labelClasses = computed(() => {
+    if (this.tone() === 'dark') return this.selectedLabel() ? 'text-white' : 'text-zinc-400';
+    return this.selectedLabel() ? 'text-[var(--z-text)]' : 'text-[var(--z-muted)]';
+  });
+  protected readonly dropdownClasses = computed(() =>
+    this.tone() === 'dark'
+      ? 'border-zinc-700 bg-zinc-950 text-white shadow-black/40'
+      : 'border-[var(--z-border)] bg-white shadow-orange-950/10',
+  );
+  protected readonly optionClasses = computed(() =>
+    this.tone() === 'dark'
+      ? 'data-[active]:bg-zinc-800 data-[selected]:text-orange-300'
+      : 'data-[active]:bg-[var(--z-surface-warm)] data-[selected]:text-[var(--z-primary-strong)]',
   );
 }
