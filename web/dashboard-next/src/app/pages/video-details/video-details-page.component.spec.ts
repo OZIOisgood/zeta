@@ -97,6 +97,11 @@ describe('VideoDetailsPageComponent', () => {
                   noVideoParts: 'No video parts.',
                   videoPart: 'Part {{count}}',
                   videoParts: 'Video parts',
+                  status: {
+                    waiting_upload: 'Waiting for upload',
+                    ready: 'Ready',
+                    failed: 'Upload failed',
+                  },
                 },
               },
               toast: { errorTitle: 'Something went wrong', successTitle: 'Success' },
@@ -141,13 +146,19 @@ describe('VideoDetailsPageComponent', () => {
                   {
                     id: 'video-1',
                     playback_id: 'playback-1',
-                    status: 'ready',
+                    status: 'waiting_upload',
                     review_count: 1,
                   },
                   {
                     id: 'video-2',
                     playback_id: 'playback-2',
                     status: 'ready',
+                    review_count: 0,
+                  },
+                  {
+                    id: 'video-3',
+                    playback_id: '',
+                    status: 'failed',
                     review_count: 0,
                   },
                 ],
@@ -194,6 +205,9 @@ describe('VideoDetailsPageComponent', () => {
     expect(fixture.nativeElement.querySelector('mux-player')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Part 1');
     expect(fixture.nativeElement.textContent).toContain('Part 2');
+    expect(fixture.nativeElement.textContent).toContain('Waiting for upload');
+    expect(fixture.nativeElement.textContent).not.toContain('Ready');
+    expect(fixture.nativeElement.textContent).toContain('Upload failed');
     expect(fixture.nativeElement.textContent).toContain('Great rhythm.');
     expect(fixture.nativeElement.textContent).toContain('00:12');
 

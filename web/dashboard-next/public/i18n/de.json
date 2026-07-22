@@ -408,6 +408,11 @@
       "noDescription": "Für dieses Video wurde keine Beschreibung hinzugefügt.",
       "videoParts": "Videoteile",
       "videoPart": "Teil {{count}}",
+      "status": {
+        "waiting_upload": "Wartet auf Upload",
+        "ready": "Bereit",
+        "failed": "Upload fehlgeschlagen"
+      },
       "noVideoParts": "Es sind noch keine Videoteile angehängt.",
       "reviewPlaceholder": "Zeitmarkierte Kommentare, Bearbeitung und Abschluss werden im nächsten Video-Review-Schritt vertieft.",
       "commentsFailed": "Kommentare konnten nicht geladen werden."

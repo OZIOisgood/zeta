@@ -541,7 +541,11 @@ type ReportTarget = {
                       <p class="truncate text-sm font-semibold">
                         {{ 'videos.phase4.videoPart' | transloco: { count: index + 1 } }}
                       </p>
-                      <p class="mt-1 text-xs text-[var(--z-muted)]">{{ video.status }}</p>
+                      @if (video.status !== 'ready') {
+                        <p class="mt-1 text-xs text-[var(--z-muted)]">
+                          {{ 'videos.phase4.status.' + video.status | transloco }}
+                        </p>
+                      }
                     </div>
                     <z-badge>{{ video.review_count }}</z-badge>
                   </button>

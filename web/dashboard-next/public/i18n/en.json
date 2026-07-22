@@ -408,6 +408,11 @@
       "noDescription": "No description was added for this video.",
       "videoParts": "Video parts",
       "videoPart": "Part {{count}}",
+      "status": {
+        "waiting_upload": "Waiting for upload",
+        "ready": "Ready",
+        "failed": "Upload failed"
+      },
       "noVideoParts": "No video parts are attached yet.",
       "reviewPlaceholder": "Timestamped review comments, editing, and finalization controls will be deepened in the next video-review slice.",
       "commentsFailed": "Comments could not be loaded."

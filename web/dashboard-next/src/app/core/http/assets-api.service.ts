@@ -15,11 +15,12 @@ export type CreateAssetResponse = {
 };
 
 export type AssetStatus = 'waiting_upload' | 'pending' | 'completed';
+export type VideoStatus = 'waiting_upload' | 'ready' | 'failed';
 
 export type VideoItem = {
   id: string;
   playback_id: string;
-  status: string;
+  status: VideoStatus;
   review_count: number;
 };
 

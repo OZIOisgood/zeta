@@ -408,6 +408,11 @@
       "noDescription": "Aucune description n’a été ajoutée pour cette vidéo.",
       "videoParts": "Parties de la vidéo",
       "videoPart": "Partie {{count}}",
+      "status": {
+        "waiting_upload": "En attente de l’envoi",
+        "ready": "Prête",
+        "failed": "Échec de l’envoi"
+      },
       "noVideoParts": "Aucune partie vidéo n’est encore attachée.",
       "reviewPlaceholder": "Les commentaires horodatés, l’édition et la finalisation seront approfondis dans la prochaine tranche de révision vidéo.",
       "commentsFailed": "Impossible de charger les commentaires."
