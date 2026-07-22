@@ -178,7 +178,7 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                           class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold text-[var(--z-text)] transition hover:bg-[var(--z-surface-warm)]"
                         >
                           <svg lucideExternalLink class="size-4" aria-hidden="true"></svg>
-                          <span>{{ 'common.status.recordingReady' | transloco }}</span>
+                          <span>{{ 'common.actions.watch' | transloco }}</span>
                         </a>
                       }
                       @if (canCancel(booking)) {
