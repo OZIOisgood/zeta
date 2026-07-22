@@ -121,7 +121,10 @@ export class InviteCodesSectionComponent implements OnInit {
   protected readonly copiedCode = signal<string | null>(null);
 
   ngOnInit(): void {
-    void this.access.loadCodes();
+    const status = this.access.codesSlice().status;
+    if (status === 'idle' || status === 'error') {
+      void this.access.loadCodes();
+    }
   }
 
   protected allowancePercent(): number {

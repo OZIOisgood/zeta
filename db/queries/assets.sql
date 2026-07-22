@@ -66,7 +66,24 @@ ORDER BY a.created_at DESC;
 SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar FROM assets a LEFT JOIN LATERAL (SELECT playback_id, mux_upload_id, mux_asset_id FROM videos WHERE asset_id = a.id ORDER BY sort_order ASC NULLS LAST, created_at ASC, id ASC LIMIT 1) v ON true LEFT JOIN groups g ON g.id = a.group_id WHERE a.id = $1;
 
 -- name: GetVisibleAsset :one
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar
+SELECT
+    a.id,
+    a.name,
+    a.description,
+    a.status,
+    a.created_at,
+    a.updated_at,
+    a.owner_id,
+    a.group_id,
+    COALESCE(v.playback_id, '') as playback_id,
+    COALESCE(v.mux_upload_id, '') as mux_upload_id,
+    COALESCE(v.mux_asset_id, '') as mux_asset_id,
+    g.name as group_name,
+    g.avatar as group_avatar,
+    up.display_name as student_display_name,
+    up.first_name as student_first_name,
+    up.last_name as student_last_name,
+    up.avatar as student_avatar
 FROM assets a
 LEFT JOIN LATERAL (
     SELECT playback_id, mux_upload_id, mux_asset_id
@@ -76,6 +93,7 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) v ON true
 LEFT JOIN groups g ON g.id = a.group_id
+LEFT JOIN user_preferences up ON up.user_id = a.owner_id
 WHERE a.id = sqlc.arg(asset_id)
   AND (
     (sqlc.arg(is_student)::boolean AND a.owner_id = sqlc.arg(user_id))

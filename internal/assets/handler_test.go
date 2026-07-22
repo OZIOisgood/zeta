@@ -149,6 +149,57 @@ func TestGetAsset_NotVisibleReturnsNotFound(t *testing.T) {
 	}
 }
 
+func TestGetAsset_IncludesStudentAndGroupIdentity(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+	h := NewHandler(q, nil, nil, nil, slog.Default())
+
+	user := &auth.UserContext{ID: "expert-1", Role: permissions.RoleExpert}
+	assetID := assetTestUUID()
+	assetIDStr := "01020304-0506-0708-090a-0b0c0d0e0f10"
+	q.EXPECT().GetVisibleAsset(gomock.Any(), db.GetVisibleAssetParams{
+		AssetID:   assetID,
+		UserID:    user.ID,
+		IsStudent: false,
+	}).Return(db.GetVisibleAssetRow{
+		ID:                 assetID,
+		Name:               "Training line",
+		Description:        "Arena session",
+		Status:             db.AssetStatusPending,
+		OwnerID:            "student-1",
+		GroupID:            assetID,
+		PlaybackID:         "playback-1",
+		GroupName:          pgtype.Text{String: "Arena Academy", Valid: true},
+		GroupAvatar:        pgtype.Text{String: "group-avatar", Valid: true},
+		StudentDisplayName: pgtype.Text{String: "Arena Rider", Valid: true},
+		StudentFirstName:   pgtype.Text{String: "Ada", Valid: true},
+		StudentLastName:    pgtype.Text{String: "Student", Valid: true},
+		StudentAvatar:      pgtype.Text{String: "student-avatar", Valid: true},
+	}, nil)
+	q.EXPECT().GetAssetVideos(gomock.Any(), assetID).Return([]db.GetAssetVideosRow{}, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/assets/"+assetIDStr, nil)
+	req = assetWithChiURLParam(req, "id", assetIDStr)
+	req = req.WithContext(assetTestUserCtx(req.Context(), user))
+	rec := httptest.NewRecorder()
+
+	h.GetAsset(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("got %d, want %d; body: %s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	var resp AssetItem
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Student == nil || resp.Student.ID != "student-1" || resp.Student.Name != "Arena Rider" || resp.Student.Avatar != "student-avatar" {
+		t.Fatalf("student = %+v, want uploader identity", resp.Student)
+	}
+	if resp.Group == nil || resp.Group.Name != "Arena Academy" || resp.Group.Avatar != "group-avatar" {
+		t.Fatalf("group = %+v, want group identity", resp.Group)
+	}
+}
+
 func TestFinalizeAsset_NotVisibleReturnsNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)

@@ -23,13 +23,15 @@ type ShellStub = {
 let access: AccessStub;
 let shell: ShellStub;
 
-async function setup(): Promise<ComponentFixture<InviteCodesSectionComponent>> {
+async function setup(
+  initialStatus: AsyncSlice['status'] = 'success',
+): Promise<ComponentFixture<InviteCodesSectionComponent>> {
   access = {
     codes: signal<SignupCode[]>([
       { id: '1', code: 'ALPHA1', status: 'available' },
       { id: '2', code: 'BETA22', status: 'consumed', consumed_at: '2026-06-02T00:00:00Z' },
     ]),
-    codesSlice: signal<AsyncSlice>({ status: 'success', error: null }),
+    codesSlice: signal<AsyncSlice>({ status: initialStatus, error: null }),
     loadCodes: vi.fn(async () => undefined),
     successfulReferrals: signal(1),
     referralLimit: signal(5),
@@ -66,10 +68,16 @@ async function setup(): Promise<ComponentFixture<InviteCodesSectionComponent>> {
 }
 
 describe('InviteCodesSectionComponent', () => {
-  it('loads the codes on init', async () => {
-    await setup();
+  it('loads the codes on init when they are not cached', async () => {
+    await setup('idle');
 
     expect(access.loadCodes).toHaveBeenCalled();
+  });
+
+  it('keeps successfully loaded codes when the tab is reopened', async () => {
+    await setup();
+
+    expect(access.loadCodes).not.toHaveBeenCalled();
   });
 
   it('renders one row per code', async () => {

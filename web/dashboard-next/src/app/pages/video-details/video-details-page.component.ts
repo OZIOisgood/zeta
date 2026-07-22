@@ -564,19 +564,46 @@ type ReportTarget = {
                     }}
                   </z-badge>
                   <h2 class="mt-3 text-xl font-semibold leading-tight">{{ asset.title }}</h2>
-                  @if (asset.group) {
-                    <a
-                      class="mt-3 inline-flex max-w-full items-center gap-2 rounded-md text-sm font-semibold text-[var(--z-primary)] transition hover:text-[var(--z-primary-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
-                      [routerLink]="['/groups', asset.group.id]"
-                    >
-                      <z-avatar
-                        class="size-9"
-                        [image]="asset.group.avatar"
-                        [fallback]="groupInitials(asset.group.name)"
-                        [alt]="asset.group.name"
-                      />
-                      <span class="truncate">{{ asset.group.name }}</span>
-                    </a>
+                  @if (asset.student || asset.group) {
+                    <dl class="mt-4 grid gap-4">
+                      @if (asset.student; as student) {
+                        <div data-testid="video-student">
+                          <dt class="text-xs font-semibold text-[var(--z-muted)]">
+                            {{ 'common.labels.student' | transloco }}
+                          </dt>
+                          <dd class="mt-2 flex min-w-0 items-center gap-2">
+                            <z-avatar
+                              class="size-9"
+                              [image]="student.avatar"
+                              [fallback]="authorInitials(student.name)"
+                              [alt]="student.name"
+                            />
+                            <span class="truncate text-sm font-semibold">{{ student.name }}</span>
+                          </dd>
+                        </div>
+                      }
+                      @if (asset.group; as group) {
+                        <div data-testid="video-group">
+                          <dt class="text-xs font-semibold text-[var(--z-muted)]">
+                            {{ 'common.fields.group' | transloco }}
+                          </dt>
+                          <dd class="mt-2 min-w-0">
+                            <a
+                              class="inline-flex max-w-full items-center gap-2 rounded-md text-sm font-semibold text-[var(--z-primary)] transition hover:text-[var(--z-primary-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                              [routerLink]="['/groups', group.id]"
+                            >
+                              <z-avatar
+                                class="size-9"
+                                [image]="group.avatar"
+                                [fallback]="groupInitials(group.name)"
+                                [alt]="group.name"
+                              />
+                              <span class="truncate">{{ group.name }}</span>
+                            </a>
+                          </dd>
+                        </div>
+                      }
+                    </dl>
                   }
                 </div>
                 @if (canFinalize() && !isFinalized()) {

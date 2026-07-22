@@ -29,6 +29,12 @@ export type AssetGroup = {
   avatar?: string;
 };
 
+export type AssetStudent = {
+  id: string;
+  name: string;
+  avatar?: string;
+};
+
 // Product copy calls this a video, but the backend/API parent entity remains an asset.
 export type Asset = {
   id: string;
@@ -41,6 +47,7 @@ export type Asset = {
   playback_id?: string;
   videos?: VideoItem[];
   group?: AssetGroup;
+  student?: AssetStudent;
 };
 
 export type ReviewAuthor = {

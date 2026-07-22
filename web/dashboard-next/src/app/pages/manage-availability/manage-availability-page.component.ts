@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideCalendarOff, LucidePencil, LucidePlus, LucideTrash } from '@lucide/angular';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
+import { distinctUntilChanged, map } from 'rxjs';
 import { CoachingAvailability, SessionType } from '../../core/http/coaching-api.service';
 import { Group } from '../../core/http/groups-api.service';
 import { DashboardDateTimeService } from '../../core/i18n/dashboard-date-time.service';
@@ -616,13 +617,21 @@ export class ManageAvailabilityPageComponent {
 
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      const groupId = params.get('groupId') ?? undefined;
       const tab = params.get('tab');
       if (tab === 'schedule' || tab === 'blocked' || tab === 'session-types') {
         this.activeTab.set(tab);
       }
-      void this.store.loadGroups(groupId);
     });
+
+    this.route.paramMap
+      .pipe(
+        map((params) => params.get('groupId') ?? undefined),
+        distinctUntilChanged(),
+        takeUntilDestroyed(),
+      )
+      .subscribe((groupId) => {
+        void this.store.loadGroups(groupId);
+      });
   }
 
   protected selectGroup(group: Group): void {

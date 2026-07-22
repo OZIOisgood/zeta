@@ -64,6 +64,8 @@ describe('VideoDetailsPageComponent', () => {
                   save: 'Save',
                   send: 'Send',
                 },
+                fields: { group: 'Group' },
+                labels: { student: 'Student' },
                 status: { inReview: 'In review', reviewed: 'Reviewed' },
               },
               home: { error: { description: 'Fallback error.' } },
@@ -125,6 +127,11 @@ describe('VideoDetailsPageComponent', () => {
                 owner_id: 'user-1',
                 status: 'pending',
                 review_count: 1,
+                student: {
+                  id: 'user-1',
+                  name: 'Ada Rider',
+                  avatar: 'student-avatar',
+                },
                 group: {
                   id: 'group-1',
                   name: 'Arena Academy',
@@ -212,12 +219,17 @@ describe('VideoDetailsPageComponent', () => {
     expect(markReviewedAction.querySelector('button').classList).toContain('w-full');
   });
 
-  it('links the asset group identity and enhances an edited comment', async () => {
+  it('shows the student and group identities and enhances an edited comment', async () => {
     const fixture = TestBed.createComponent(VideoDetailsPageComponent);
     const component = fixture.componentInstance;
 
     await fixture.whenStable();
     fixture.detectChanges();
+
+    const student = fixture.nativeElement.querySelector('[data-testid="video-student"]');
+    expect(student.textContent).toContain('Student');
+    expect(student.textContent).toContain('Ada Rider');
+    expect(student.querySelector('z-avatar')).toBeTruthy();
 
     const groupLink =
       fixture.nativeElement.querySelector('a[href="/groups/group-1"]') ??
@@ -225,6 +237,9 @@ describe('VideoDetailsPageComponent', () => {
         el.textContent?.includes('Arena Academy'),
       );
     expect(groupLink).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="video-group"]').textContent,
+    ).toContain('Group');
     expect(groupLink.textContent).toContain('Arena Academy');
     expect(groupLink.querySelector('z-avatar')).toBeTruthy();
 

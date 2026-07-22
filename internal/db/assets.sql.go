@@ -228,7 +228,24 @@ func (q *Queries) GetAssetVideos(ctx context.Context, assetID pgtype.UUID) ([]Ge
 }
 
 const getVisibleAsset = `-- name: GetVisibleAsset :one
-SELECT a.id, a.name, a.description, a.status, a.created_at, a.updated_at, a.owner_id, a.group_id, COALESCE(v.playback_id, '') as playback_id, COALESCE(v.mux_upload_id, '') as mux_upload_id, COALESCE(v.mux_asset_id, '') as mux_asset_id, g.name as group_name, g.avatar as group_avatar
+SELECT
+    a.id,
+    a.name,
+    a.description,
+    a.status,
+    a.created_at,
+    a.updated_at,
+    a.owner_id,
+    a.group_id,
+    COALESCE(v.playback_id, '') as playback_id,
+    COALESCE(v.mux_upload_id, '') as mux_upload_id,
+    COALESCE(v.mux_asset_id, '') as mux_asset_id,
+    g.name as group_name,
+    g.avatar as group_avatar,
+    up.display_name as student_display_name,
+    up.first_name as student_first_name,
+    up.last_name as student_last_name,
+    up.avatar as student_avatar
 FROM assets a
 LEFT JOIN LATERAL (
     SELECT playback_id, mux_upload_id, mux_asset_id
@@ -238,6 +255,7 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) v ON true
 LEFT JOIN groups g ON g.id = a.group_id
+LEFT JOIN user_preferences up ON up.user_id = a.owner_id
 WHERE a.id = $1
   AND (
     ($2::boolean AND a.owner_id = $3)
@@ -260,19 +278,23 @@ type GetVisibleAssetParams struct {
 }
 
 type GetVisibleAssetRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Status      AssetStatus        `json:"status"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	OwnerID     string             `json:"owner_id"`
-	GroupID     pgtype.UUID        `json:"group_id"`
-	PlaybackID  string             `json:"playback_id"`
-	MuxUploadID string             `json:"mux_upload_id"`
-	MuxAssetID  string             `json:"mux_asset_id"`
-	GroupName   pgtype.Text        `json:"group_name"`
-	GroupAvatar pgtype.Text        `json:"group_avatar"`
+	ID                 pgtype.UUID        `json:"id"`
+	Name               string             `json:"name"`
+	Description        string             `json:"description"`
+	Status             AssetStatus        `json:"status"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	OwnerID            string             `json:"owner_id"`
+	GroupID            pgtype.UUID        `json:"group_id"`
+	PlaybackID         string             `json:"playback_id"`
+	MuxUploadID        string             `json:"mux_upload_id"`
+	MuxAssetID         string             `json:"mux_asset_id"`
+	GroupName          pgtype.Text        `json:"group_name"`
+	GroupAvatar        pgtype.Text        `json:"group_avatar"`
+	StudentDisplayName pgtype.Text        `json:"student_display_name"`
+	StudentFirstName   pgtype.Text        `json:"student_first_name"`
+	StudentLastName    pgtype.Text        `json:"student_last_name"`
+	StudentAvatar      pgtype.Text        `json:"student_avatar"`
 }
 
 func (q *Queries) GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams) (GetVisibleAssetRow, error) {
@@ -292,6 +314,10 @@ func (q *Queries) GetVisibleAsset(ctx context.Context, arg GetVisibleAssetParams
 		&i.MuxAssetID,
 		&i.GroupName,
 		&i.GroupAvatar,
+		&i.StudentDisplayName,
+		&i.StudentFirstName,
+		&i.StudentLastName,
+		&i.StudentAvatar,
 	)
 	return i, err
 }
