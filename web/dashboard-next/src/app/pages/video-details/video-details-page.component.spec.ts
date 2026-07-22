@@ -62,6 +62,7 @@ describe('VideoDetailsPageComponent', () => {
                   done: 'Done',
                   edit: 'Edit',
                   save: 'Save',
+                  send: 'Send',
                 },
                 status: { inReview: 'In review', reviewed: 'Reviewed' },
               },
@@ -192,6 +193,23 @@ describe('VideoDetailsPageComponent', () => {
     const composer = fixture.nativeElement.querySelector('[data-testid="comment-composer"]');
     expect(composer.classList).toContain('fixed');
     expect(composer.classList).toContain('bottom-0');
+
+    const composerControls = fixture.nativeElement.querySelector(
+      '[data-testid="comment-composer-controls"]',
+    );
+    expect(composerControls.classList).toContain('grid-cols-[auto_minmax(0,1fr)_auto]');
+    expect(composerControls.classList).toContain('items-end');
+    expect(composerControls.textContent).not.toContain('Send');
+    expect(composerControls.textContent).not.toContain('Add');
+    const sendButton = composerControls.querySelector('button[type="submit"]');
+    expect(sendButton.getAttribute('aria-label')).toBe('Send');
+    expect(sendButton.classList).toContain('size-11');
+
+    const markReviewedAction = fixture.nativeElement.querySelector(
+      '[data-testid="mark-reviewed-action"]',
+    );
+    expect(markReviewedAction.classList).toContain('w-full');
+    expect(markReviewedAction.querySelector('button').classList).toContain('w-full');
   });
 
   it('links the asset group identity and enhances an edited comment', async () => {

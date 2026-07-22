@@ -580,41 +580,48 @@ type ReportTarget = {
                   }
                 </div>
                 @if (canFinalize() && !isFinalized()) {
-                  @if (hasUnreviewedParts()) {
-                    <ng-template #cannotMarkReviewedDialog let-close="close">
-                      <z-confirm-dialog
-                        [title]="'videos.cannotMarkReviewedTitle' | transloco"
-                        [description]="'videos.cannotMarkReviewed' | transloco"
-                        tone="info"
-                        [confirmOnly]="true"
-                        [confirmLabel]="'common.actions.done' | transloco"
-                        [close]="close"
-                      />
-                    </ng-template>
-                    <z-button size="sm" [ngpDialogTrigger]="cannotMarkReviewedDialog">
-                      <svg lucideCheck class="size-4" aria-hidden="true"></svg>
-                      <span>{{ 'videos.markReviewed' | transloco }}</span>
-                    </z-button>
-                  } @else {
-                    <ng-template #markReviewedDialog let-close="close">
-                      <z-confirm-dialog
-                        [title]="'videos.markVideoReviewed' | transloco"
-                        [description]="'videos.confirmMarkReviewed' | transloco"
-                        tone="warning"
-                        [confirmLabel]="'videos.markReviewed' | transloco"
-                        [cancelLabel]="'common.actions.cancel' | transloco"
-                        [close]="close"
-                      />
-                    </ng-template>
-                    <z-button
-                      size="sm"
-                      [ngpDialogTrigger]="markReviewedDialog"
-                      (ngpDialogTriggerClosed)="confirmFinalizeVideo($event)"
-                    >
-                      <svg lucideCheck class="size-4" aria-hidden="true"></svg>
-                      <span>{{ 'videos.markReviewed' | transloco }}</span>
-                    </z-button>
-                  }
+                  <div class="w-full" data-testid="mark-reviewed-action">
+                    @if (hasUnreviewedParts()) {
+                      <ng-template #cannotMarkReviewedDialog let-close="close">
+                        <z-confirm-dialog
+                          [title]="'videos.cannotMarkReviewedTitle' | transloco"
+                          [description]="'videos.cannotMarkReviewed' | transloco"
+                          tone="info"
+                          [confirmOnly]="true"
+                          [confirmLabel]="'common.actions.done' | transloco"
+                          [close]="close"
+                        />
+                      </ng-template>
+                      <z-button
+                        size="sm"
+                        [fullWidth]="true"
+                        [ngpDialogTrigger]="cannotMarkReviewedDialog"
+                      >
+                        <svg lucideCheck class="size-4" aria-hidden="true"></svg>
+                        <span>{{ 'videos.markReviewed' | transloco }}</span>
+                      </z-button>
+                    } @else {
+                      <ng-template #markReviewedDialog let-close="close">
+                        <z-confirm-dialog
+                          [title]="'videos.markVideoReviewed' | transloco"
+                          [description]="'videos.confirmMarkReviewed' | transloco"
+                          tone="warning"
+                          [confirmLabel]="'videos.markReviewed' | transloco"
+                          [cancelLabel]="'common.actions.cancel' | transloco"
+                          [close]="close"
+                        />
+                      </ng-template>
+                      <z-button
+                        size="sm"
+                        [fullWidth]="true"
+                        [ngpDialogTrigger]="markReviewedDialog"
+                        (ngpDialogTriggerClosed)="confirmFinalizeVideo($event)"
+                      >
+                        <svg lucideCheck class="size-4" aria-hidden="true"></svg>
+                        <span>{{ 'videos.markReviewed' | transloco }}</span>
+                      </z-button>
+                    }
+                  </div>
                 }
               </div>
 
@@ -633,7 +640,8 @@ type ReportTarget = {
             (submit)="postReview($event)"
           >
             <div
-              class="mx-auto grid max-w-6xl gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end"
+              class="mx-auto grid max-w-6xl grid-cols-[auto_minmax(0,1fr)_auto] items-end gap-2 sm:gap-3"
+              data-testid="comment-composer-controls"
             >
               <div
                 class="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-[var(--z-surface-warm)] px-3 text-sm font-semibold text-[var(--z-primary)]"
@@ -642,6 +650,7 @@ type ReportTarget = {
                 <span>{{ formatTimestamp(currentTimestamp()) }}</span>
               </div>
               <z-textarea
+                class="min-w-0"
                 [formControl]="reviewControl"
                 [placeholder]="'videos.addCommentPlaceholder' | transloco"
                 [autoResize]="true"
@@ -650,10 +659,11 @@ type ReportTarget = {
               />
               <z-button
                 type="submit"
+                [iconOnly]="true"
+                [ariaLabel]="'common.actions.send' | transloco"
                 [disabled]="!reviewControl.value.trim() || store.reviewStatus() === 'loading'"
               >
                 <svg lucideSendHorizontal class="size-4" aria-hidden="true"></svg>
-                <span>{{ 'common.actions.add' | transloco }}</span>
               </z-button>
             </div>
           </form>
