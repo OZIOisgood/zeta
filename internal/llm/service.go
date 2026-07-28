@@ -27,8 +27,8 @@ type Service struct {
 }
 
 type OpenRouterRequest struct {
-	Model    string     `json:"model"`
-	Messages []Message  `json:"messages"`
+	Model    string    `json:"model"`
+	Messages []Message `json:"messages"`
 }
 
 type Message struct {
@@ -37,8 +37,8 @@ type Message struct {
 }
 
 type OpenRouterResponse struct {
-	ID      string   `json:"id"`
-	Choices []Choice `json:"choices"`
+	ID      string    `json:"id"`
+	Choices []Choice  `json:"choices"`
 	Error   *APIError `json:"error,omitempty"`
 }
 
@@ -93,6 +93,7 @@ func (s *Service) EnhanceReviewText(ctx context.Context, originalText string) (s
 	if err != nil {
 		return "", err
 	}
+	enhanced = normalizeEnhancedText(enhanced)
 
 	s.logger.InfoContext(ctx, "llm_enhance_success",
 		slog.String("component", "llm"),
@@ -233,7 +234,6 @@ func (s *Service) callAPI(ctx context.Context, messages []Message) (string, erro
 	return response.Choices[0].Message.Content, nil
 }
 
-
 func (s *Service) buildSystemPrompt(lang string) string {
 	return fmt.Sprintf(`You are a professional text editor specializing in educational review content. Your job is to lightly polish feedback written by coaches to students.
 
@@ -251,5 +251,15 @@ EDITING RULES:
 }
 
 func (s *Service) buildEnhancementPrompt(text string) string {
-	return fmt.Sprintf("Please enhance the following coach feedback:\n\n%s", text)
+	return fmt.Sprintf("Rewrite the coach feedback below. Return only the enhanced feedback text. Start immediately with the feedback itself; do not introduce it or label it.\n\n%s", text)
+}
+
+func normalizeEnhancedText(text string) string {
+	const preamble = "Here is the enhanced feedback:"
+
+	normalized := strings.TrimSpace(text)
+	if len(normalized) >= len(preamble) && strings.EqualFold(normalized[:len(preamble)], preamble) {
+		return strings.TrimSpace(normalized[len(preamble):])
+	}
+	return normalized
 }

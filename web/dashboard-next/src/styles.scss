@@ -75,6 +75,10 @@ body {
   animation: z-list-in 220ms ease-out;
 }
 
+.z-comment-composer-enter {
+  animation: z-comment-composer-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 .z-pop-enter {
   animation: z-pop-in 140ms ease-out;
   transform-origin: top right;
@@ -123,6 +127,13 @@ body {
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+
+@keyframes z-comment-composer-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
 }
 

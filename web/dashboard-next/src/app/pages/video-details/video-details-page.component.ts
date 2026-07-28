@@ -150,37 +150,144 @@ type ReportTarget = {
               }
             </div>
 
-            <section class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-              <div
-                class="-mx-4 flex items-center gap-2 border-b border-[var(--z-border)] px-4 pb-3"
-              >
+            <section
+              class="overflow-hidden rounded-lg border border-[var(--z-border)] bg-white shadow-sm"
+            >
+              <div class="flex items-center gap-2 border-b border-[var(--z-border)] px-4 py-3.5">
                 <svg
                   lucideMessageCircle
-                  class="size-4 text-[var(--z-primary)]"
+                  class="size-[18px] text-[var(--z-primary)]"
                   aria-hidden="true"
                 ></svg>
-                <h3 class="text-sm font-semibold">{{ 'videos.comments' | transloco }}</h3>
-                @if (selectedVideo(); as video) {
-                  <z-badge>{{ video.review_count }}</z-badge>
+                <h3 class="text-[15px] font-semibold">{{ 'videos.comments' | transloco }}</h3>
+                @if (selectedVideo()) {
+                  <z-badge class="ml-auto">{{ store.threads().length }}</z-badge>
                 }
               </div>
 
+              @if (showCommentComposer()) {
+                <div class="border-b border-[var(--z-border)] px-4 py-3.5">
+                  @if (!commentComposerExpanded()) {
+                    <div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+                      <z-avatar
+                        class="size-9"
+                        [image]="session.user()?.avatar"
+                        [fallback]="authorInitials(session.displayName())"
+                        [alt]="session.displayName()"
+                      />
+                      <button
+                        type="button"
+                        class="flex min-h-11 min-w-0 items-center justify-between gap-2.5 rounded-md border border-[var(--z-border)] bg-white py-0 pl-3.5 pr-2.5 text-left text-sm transition hover:border-[var(--z-primary)] hover:shadow-[0_0_0_3px_rgba(234,88,12,0.10)] focus-visible:border-[var(--z-primary)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgba(234,88,12,0.12)]"
+                        data-testid="comment-composer"
+                        aria-expanded="false"
+                        (click)="expandCommentComposer()"
+                      >
+                        <span class="min-w-0 truncate text-[#a8927c]">
+                          {{ 'videos.addCommentPlaceholder' | transloco }}
+                        </span>
+                        <span
+                          class="inline-flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-[var(--z-border)] bg-[var(--z-surface-warm)] px-2.5 text-xs font-semibold text-[var(--z-primary-strong)]"
+                        >
+                          <svg lucideClock class="size-3.5" aria-hidden="true"></svg>
+                          {{ formatTimestamp(currentTimestamp()) }}
+                        </span>
+                      </button>
+                    </div>
+                  } @else {
+                    <form
+                      animate.enter="z-comment-composer-enter"
+                      class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3"
+                      data-testid="comment-composer"
+                      (submit)="postReview($event)"
+                    >
+                      <z-avatar
+                        class="size-9"
+                        [image]="session.user()?.avatar"
+                        [fallback]="authorInitials(session.displayName())"
+                        [alt]="session.displayName()"
+                      />
+                      <div class="grid min-w-0 gap-2.5">
+                        <z-textarea
+                          #reviewTextarea
+                          [formControl]="reviewControl"
+                          [placeholder]="'videos.addCommentPlaceholder' | transloco"
+                          [rows]="3"
+                          (keydown)="onReviewKeydown($event)"
+                        />
+                        <div
+                          class="flex flex-wrap items-center justify-between gap-2.5"
+                          data-testid="comment-composer-controls"
+                        >
+                          <div class="flex flex-wrap items-center gap-2">
+                            <span
+                              class="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-[var(--z-primary-soft)] bg-[var(--z-surface-warm)] px-2.5 text-xs font-semibold text-[var(--z-primary-strong)]"
+                              [title]="'videos.commentTimestampHint' | transloco"
+                            >
+                              <svg lucideClock class="size-3.5" aria-hidden="true"></svg>
+                              {{ formatTimestamp(currentTimestamp()) }}
+                            </span>
+                            <z-button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              [disabled]="
+                                !reviewControl.value.trim() ||
+                                store.enhancementStatus() === 'loading'
+                              "
+                              (pressed)="enhanceReview()"
+                            >
+                              <svg lucideSparkles class="size-3.5" aria-hidden="true"></svg>
+                              <span>{{
+                                (store.enhancementStatus() === 'loading'
+                                  ? 'videos.enhancing'
+                                  : 'videos.enhanceText'
+                                ) | transloco
+                              }}</span>
+                            </z-button>
+                          </div>
+                          <div class="ml-auto flex items-center gap-2">
+                            <z-button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              (pressed)="cancelCommentComposer()"
+                            >
+                              {{ 'common.actions.cancel' | transloco }}
+                            </z-button>
+                            <z-button
+                              type="submit"
+                              size="sm"
+                              [disabled]="
+                                !reviewControl.value.trim() || store.reviewStatus() === 'loading'
+                              "
+                            >
+                              <span>{{ 'videos.commentPlaceholder' | transloco }}</span>
+                              <svg lucideSendHorizontal class="size-4" aria-hidden="true"></svg>
+                            </z-button>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  }
+                </div>
+              }
+
               @if (!selectedVideo()) {
-                <p class="mt-3 text-sm leading-6 text-[var(--z-muted)]">
+                <p class="px-4 py-3 text-sm leading-6 text-[var(--z-muted)]">
                   {{ 'videos.phase4.noVideoParts' | transloco }}
                 </p>
               } @else if (store.reviewStatus() === 'loading') {
-                <div class="mt-4 grid gap-3" aria-hidden="true">
+                <div class="grid gap-3 p-4" aria-hidden="true">
                   <z-skeleton class="block h-28 w-full"></z-skeleton>
                   <z-skeleton class="block h-28 w-full"></z-skeleton>
                 </div>
               } @else if (store.reviewStatus() === 'error') {
-                <p class="mt-3 text-sm leading-6 text-rose-700">
+                <p class="p-4 text-sm leading-6 text-rose-700">
                   {{ store.reviewError() || ('videos.phase4.commentsFailed' | transloco) }}
                 </p>
               } @else if (store.reviews().length === 0) {
                 <z-empty-state
-                  class="mt-4 block"
+                  class="block p-4"
                   [title]="'videos.noComments' | transloco"
                   [description]="
                     canAddReviews()
@@ -189,7 +296,7 @@ type ReportTarget = {
                   "
                 />
               } @else {
-                <div class="mt-2">
+                <div class="px-4 pb-2">
                   @for (thread of store.threads(); track thread.root.id) {
                     <article
                       class="group border-t border-[var(--z-border)] py-4 first:border-t-0 first:pt-2"
@@ -293,7 +400,8 @@ type ReportTarget = {
                             @if (canReplyToReviews()) {
                               <button
                                 type="button"
-                                class="mt-1 text-xs font-semibold text-[var(--z-muted)] transition hover:text-[var(--z-primary-strong)]"
+                                class="-ml-2 mt-1 inline-flex min-h-9 items-center rounded-md px-2 text-xs font-semibold text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-primary-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                                data-testid="reply-action"
                                 (click)="openReply(thread.root.id)"
                               >
                                 {{ 'videos.reply' | transloco }}
@@ -438,7 +546,8 @@ type ReportTarget = {
                                     @if (canReplyToReviews()) {
                                       <button
                                         type="button"
-                                        class="mt-1 text-xs font-semibold text-[var(--z-muted)] transition hover:text-[var(--z-primary-strong)]"
+                                        class="-ml-2 mt-1 inline-flex min-h-9 items-center rounded-md px-2 text-xs font-semibold text-[var(--z-muted)] transition hover:bg-[var(--z-surface-warm)] hover:text-[var(--z-primary-strong)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+                                        data-testid="reply-action"
                                         (click)="openReply(thread.root.id)"
                                       >
                                         {{ 'videos.reply' | transloco }}
@@ -662,43 +771,6 @@ type ReportTarget = {
             </section>
           </aside>
         </section>
-
-        @if (showCommentBar()) {
-          <div class="h-24" aria-hidden="true"></div>
-          <form
-            class="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--z-border)] bg-white/95 px-4 py-3 shadow-lg backdrop-blur sm:px-6 lg:left-64 lg:px-8"
-            data-testid="comment-composer"
-            (submit)="postReview($event)"
-          >
-            <div
-              class="mx-auto grid max-w-6xl grid-cols-[auto_minmax(0,1fr)_auto] items-end gap-2 sm:gap-3"
-              data-testid="comment-composer-controls"
-            >
-              <div
-                class="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-[var(--z-surface-warm)] px-3 text-sm font-semibold text-[var(--z-primary)]"
-              >
-                <svg lucideClock class="size-4" aria-hidden="true"></svg>
-                <span>{{ formatTimestamp(currentTimestamp()) }}</span>
-              </div>
-              <z-textarea
-                class="min-w-0"
-                [formControl]="reviewControl"
-                [placeholder]="'videos.addCommentPlaceholder' | transloco"
-                [autoResize]="true"
-                [maxRows]="8"
-                [rows]="1"
-              />
-              <z-button
-                type="submit"
-                [iconOnly]="true"
-                [ariaLabel]="'common.actions.send' | transloco"
-                [disabled]="!reviewControl.value.trim() || store.reviewStatus() === 'loading'"
-              >
-                <svg lucideSendHorizontal class="size-4" aria-hidden="true"></svg>
-              </z-button>
-            </div>
-          </form>
-        }
       }
 
       <ng-template #reportDialog let-close="close">
@@ -775,6 +847,7 @@ export class VideoDetailsPageComponent {
   private readonly muxPlayer = viewChild<ElementRef<HTMLElement>>('muxPlayer');
 
   protected readonly currentTimestamp = signal(0);
+  protected readonly commentComposerExpanded = signal(false);
   protected readonly editingReviewId = signal<string | null>(null);
   protected readonly selectedVideoIndex = signal(0);
   protected readonly reviewControl = new FormControl('', { nonNullable: true });
@@ -787,6 +860,7 @@ export class VideoDetailsPageComponent {
   protected readonly reportReason = signal<ModerationReportReason>('harassment');
   protected readonly reportDetails = signal('');
   protected readonly reportSubmitting = signal(false);
+  private readonly reviewTextareaEl = viewChild('reviewTextarea', { read: ElementRef });
   private readonly replyTextareaEl = viewChild('replyTextarea', { read: ElementRef });
 
   protected readonly selectedVideo = computed(() => {
@@ -800,7 +874,7 @@ export class VideoDetailsPageComponent {
   protected readonly hasUnreviewedParts = computed(
     () => this.store.activeAsset()?.videos?.some((video) => video.review_count === 0) ?? false,
   );
-  protected readonly showCommentBar = computed(
+  protected readonly showCommentComposer = computed(
     () => !!this.selectedVideo() && this.canAddReviews(),
   );
   protected readonly reportSubmitDisabled = computed(
@@ -843,6 +917,7 @@ export class VideoDetailsPageComponent {
       const rawIndex = Number(params.get('video') ?? '0');
       this.selectedVideoIndex.set(Number.isFinite(rawIndex) && rawIndex >= 0 ? rawIndex : 0);
       this.currentTimestamp.set(0);
+      this.cancelCommentComposer();
       this.cancelEditing();
     });
 
@@ -917,17 +992,78 @@ export class VideoDetailsPageComponent {
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
+  protected expandCommentComposer(): void {
+    if (!this.showCommentComposer()) return;
+
+    this.commentComposerExpanded.set(true);
+    setTimeout(() => {
+      const host = this.reviewTextareaEl()?.nativeElement as HTMLElement | undefined;
+      const textarea = host?.querySelector('textarea') ?? host;
+      if (textarea instanceof HTMLElement) textarea.focus();
+    });
+  }
+
+  protected cancelCommentComposer(): void {
+    this.commentComposerExpanded.set(false);
+    this.reviewControl.reset('');
+  }
+
+  protected onReviewKeydown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+      void this.postReview(event);
+    }
+  }
+
   protected async postReview(event: Event): Promise<void> {
     event.preventDefault();
 
     const video = this.selectedVideo();
     const content = this.reviewControl.value.trim();
-    if (!video || !content || this.isFinalized()) return;
+    if (!video || !content || !this.canAddReviews() || this.store.reviewStatus() === 'loading') {
+      return;
+    }
 
     await this.store.createReview(video.id, content, this.currentTimestamp());
     if (this.store.reviewStatus() === 'success') {
-      this.reviewControl.reset('');
+      this.cancelCommentComposer();
+      this.shell.showToast(
+        this.transloco.translate('toast.successTitle'),
+        this.transloco.translate('videos.commentAdded'),
+        'success',
+      );
+      return;
     }
+
+    this.shell.showToast(
+      this.transloco.translate('toast.errorTitle'),
+      this.transloco.translate('videos.commentAddFailed'),
+      'error',
+    );
+  }
+
+  protected async enhanceReview(): Promise<void> {
+    const content = this.reviewControl.value.trim();
+    if (!content || this.store.enhancementStatus() === 'loading') return;
+
+    const enhancedText = await this.store.enhanceReviewText(content);
+    if (!this.commentComposerExpanded()) return;
+
+    if (!enhancedText) {
+      this.shell.showToast(
+        this.transloco.translate('toast.errorTitle'),
+        this.transloco.translate('videos.textEnhanceFailed'),
+        'error',
+      );
+      return;
+    }
+
+    this.reviewControl.setValue(enhancedText);
+    this.shell.showToast(
+      this.transloco.translate('toast.successTitle'),
+      this.transloco.translate('videos.textEnhanced'),
+      'success',
+    );
   }
 
   protected startEditing(reviewId: string, content: string): void {
