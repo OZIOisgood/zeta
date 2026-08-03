@@ -46,7 +46,7 @@
     "@types/node": "^25.8.0",
     "@types/pdfmake": "^0.2.13",
     "jsdom": "^29.1.1",
-    "postcss": "^8.5.16",
+    "postcss": "^8.5.18",
     "prettier": "^3.8.1",
     "storybook": "^10.4.0",
     "tailwindcss": "^4.3.0",
