@@ -6,7 +6,15 @@
       "distribution": "internal",
       "android": { "buildType": "apk" }
     },
-    "preview": { "distribution": "internal", "android": { "buildType": "apk" } },
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.dev.strido.net",
+        "EXPO_PUBLIC_WORKOS_CLIENT_ID": "client_01K7C9B7D6K70RCZK8JFQK12F0",
+        "EXPO_PUBLIC_WEB_BASE_URL": "https://app.dev.strido.net"
+      }
+    },
     "production": { "autoIncrement": true }
   },
   "submit": { "production": {} }
