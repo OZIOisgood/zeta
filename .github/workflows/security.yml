@@ -38,6 +38,20 @@ jobs:
           fail-on-scopes: runtime,development,unknown
           license-check: false
           show-patched-versions: true
+          # image-size DoS advisories (JXL/HEIF and ICNS parser infinite loops).
+          # Exempted deliberately, scoped to these two IDs only:
+          #  - No fixed release exists in the 1.x line: 1.2.1 IS the head of the
+          #    `legacy` tag, and metro@0.84.4 declares `image-size: ^1.0.2`.
+          #  - Forcing 2.0.2 was tried and breaks the build: metro's asset
+          #    pipeline dies on the first PNG ("The 'list' argument must be an
+          #    instance of SharedArrayBuffer, ArrayBuffer or ArrayBufferView").
+          #    jest/tsc/lint stay green through that, only `expo export` catches
+          #    it — so the override is not a safe option.
+          #  - Reachability: image-size runs inside metro, the BUNDLER. It never
+          #    executes in the shipped app; the exposure is a build-time DoS on a
+          #    developer machine or CI runner from a malicious image asset.
+          # Revisit when Expo/metro bumps to image-size 2.x.
+          allow-ghsas: GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr
 
       - name: Run govulncheck
         uses: golang/govulncheck-action@v1
