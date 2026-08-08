@@ -86,6 +86,34 @@ paths:
           description: Refresh token expired or revoked
         "429":
           description: Rate limit exceeded for this client
+  /access/redeem:
+    post:
+      tags: [access]
+      summary: Activate the calling user with an invite code
+      description: >
+        Reachable while waitlisted — it sits OUTSIDE the RequireActiveAccess
+        group so a waitlisted user has a way out. Codes are normalized
+        server-side (uppercase Crockford), so case and spacing do not matter.
+      operationId: redeemAccessCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedeemRequest"
+      responses:
+        "200":
+          description: Resulting access state for the caller
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RedeemResponse"
+        "400":
+          description: Missing code or invalid request body
+        "401":
+          description: Not authenticated
+        "404":
+          description: Code is invalid, already used, or revoked
   /auth/me:
     get:
       tags: [auth]
@@ -1699,6 +1727,37 @@ components:
           type: string
           description: Device platform (e.g. ios, android); omit when unknown
       required: [expo_push_token]
+    RedeemRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Invite code as typed by the user; normalized server-side
+      required: [code]
+    RedeemGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+      required: [id, name]
+    RedeemResponse:
+      type: object
+      properties:
+        access_status:
+          type: string
+          enum: [active, waitlisted]
+        role:
+          type: string
+        role_upgraded:
+          type: boolean
+        group:
+          $ref: "#/components/schemas/RedeemGroup"
+          description: Present when the code was a group invitation
+      required: [access_status, role, role_upgraded]
     Me:
       type: object
       properties:
@@ -1728,6 +1787,14 @@ components:
           type: array
           items:
             type: string
+        access_status:
+          type: string
+          enum: [active, waitlisted]
+          description: >
+            Whether the account is activated. Only GET /auth/me carries it (the
+            PUT response omits it). Waitlisted users are 403'd by every feature
+            route, so clients must gate on this instead of assuming that a
+            successful /auth/me means full access.
       required:
         - id
         - first_name
@@ -1950,21 +2017,42 @@ components:
       required: [status]
     GroupUser:
       type: object
+      description: >
+        Transitional shape. The display-name privacy work on main replaced
+        email/first_name/last_name with display_name/full_name/name_pending;
+        only id and role are guaranteed across both backend versions, so every
+        name field is optional and clients must resolve defensively. Narrow this
+        to display_name/full_name/name_pending once main is merged.
       properties:
         id:
           type: string
+        display_name:
+          type: string
+          description: Privacy-preserving name; always present on current backends
+        full_name:
+          type: string
+          description: Real name; only sent to callers allowed to see it
+        name_pending:
+          type: boolean
+          description: True while the member has not supplied a name yet
         email:
           type: string
+          deprecated: true
+          description: Removed from group member lists by the display-name privacy change
         first_name:
           type: string
+          deprecated: true
+          description: Superseded by display_name/full_name
         last_name:
           type: string
+          deprecated: true
+          description: Superseded by display_name/full_name
         avatar:
           type: string
           description: Base64-encoded avatar; omitted when unset
         role:
           type: string
-      required: [id, email, first_name, last_name, role]
+      required: [id, role]
     GroupUserList:
       type: object
       properties:

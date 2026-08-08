@@ -777,5 +777,43 @@
       "failed": "Connexion échouée. Veuillez réessayer.",
       "createAccount": "Créer un compte"
     }
+  },
+  "access": {
+    "welcome": {
+      "brandHeadline": "Progressez, vidéo après vidéo.",
+      "brandSubline": "Téléversez votre entraînement et recevez des retours précis de vrais experts.",
+      "eyebrowWaitlist": "Accès anticipé",
+      "waitlistTitle": "Vous êtes sur la liste d'attente.",
+      "waitlistBody": "Nous vous préviendrons dès que l'accès sera ouvert. Vous avez déjà un code d'un expert ou d'un coach ? Vous pouvez commencer immédiatement.",
+      "enterCode": "Saisir un code d'invitation",
+      "signOut": "Se déconnecter",
+      "back": "Retour",
+      "eyebrowCode": "Code d'invitation",
+      "codeTitle": "Vous y êtes presque.",
+      "codeBody": "Saisissez le code à 8 caractères de votre invitation pour activer votre compte.",
+      "codeLabel": "Saisissez votre code à 8 caractères",
+      "codeHint": "Les codes comportent 8 caractères — la casse n'a pas d'importance.",
+      "errorIncomplete": "Veuillez saisir le code complet.",
+      "errorInvalid": "Ce code est invalide, indisponible ou a déjà été utilisé.",
+      "activating": "Activation…",
+      "activate": "Activer le compte",
+      "noCode": "Vous n'avez pas reçu de code ?",
+      "groupEyebrow": "Invitation à un groupe",
+      "groupTitle": "Votre coach vous a invité.",
+      "groupBody": "Activez votre compte en tant qu'élève et rejoignez ce groupe.",
+      "groupRole": "Vous rejoindrez le groupe comme élève",
+      "joinGroup": "Activer et rejoindre",
+      "notYou": "Ce n'est pas votre invitation ? Déconnexion",
+      "inviteUnavailableTitle": "Cette invitation n'est pas disponible.",
+      "inviteUnavailableBody": "Elle a peut-être été utilisée, révoquée ou envoyée à une autre adresse e-mail.",
+      "enterAnotherCode": "Saisir un autre code",
+      "eyebrowDone": "Compte activé",
+      "successTitle": "Bienvenue sur Strido.",
+      "successExpert": "Vous avez maintenant un accès expert. Créez un groupe et invitez vos élèves.",
+      "successStudent": "Vous avez rejoint {{group}}. Téléversez votre première vidéo lorsque vous souhaitez recevoir un retour.",
+      "roleExpert": "Rôle : Expert",
+      "roleStudent": "Rôle : Élève",
+      "goToApp": "Accéder à Strido"
+    }
   }
 }

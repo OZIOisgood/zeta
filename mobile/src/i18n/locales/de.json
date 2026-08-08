@@ -777,5 +777,43 @@
       "failed": "Anmeldung fehlgeschlagen. Bitte versuche es erneut.",
       "createAccount": "Konto erstellen"
     }
+  },
+  "access": {
+    "welcome": {
+      "brandHeadline": "Werde besser, Video für Video.",
+      "brandSubline": "Lade dein Training hoch und erhalte präzises Feedback von echten Experten.",
+      "eyebrowWaitlist": "Früher Zugang",
+      "waitlistTitle": "Du stehst auf der Warteliste.",
+      "waitlistBody": "Wir melden uns, sobald der Zugang geöffnet wird. Du hast bereits einen Code von einem Experten oder Coach? Dann kannst du direkt starten.",
+      "enterCode": "Einladungscode eingeben",
+      "signOut": "Abmelden",
+      "back": "Zurück",
+      "eyebrowCode": "Einladungscode",
+      "codeTitle": "Fast geschafft.",
+      "codeBody": "Gib den 8-stelligen Code aus deiner Einladung ein, um dein Konto zu aktivieren.",
+      "codeLabel": "8-stelligen Code eingeben",
+      "codeHint": "Codes haben 8 Zeichen — Groß- und Kleinschreibung ist egal.",
+      "errorIncomplete": "Bitte gib den vollständigen Code ein.",
+      "errorInvalid": "Dieser Code ist ungültig, nicht verfügbar oder wurde bereits verwendet.",
+      "activating": "Wird aktiviert…",
+      "activate": "Konto aktivieren",
+      "noCode": "Keinen Code erhalten?",
+      "groupEyebrow": "Gruppeneinladung",
+      "groupTitle": "Dein Coach hat dich eingeladen.",
+      "groupBody": "Aktiviere dein Konto als Schüler und tritt dieser Gruppe bei.",
+      "groupRole": "Du trittst als Schüler bei",
+      "joinGroup": "Aktivieren und beitreten",
+      "notYou": "Nicht deine Einladung? Abmelden",
+      "inviteUnavailableTitle": "Diese Einladung ist nicht verfügbar.",
+      "inviteUnavailableBody": "Sie wurde möglicherweise verwendet, widerrufen oder an eine andere E-Mail-Adresse gesendet.",
+      "enterAnotherCode": "Anderen Code eingeben",
+      "eyebrowDone": "Konto aktiviert",
+      "successTitle": "Willkommen bei Strido.",
+      "successExpert": "Du hast jetzt Expertenzugang. Erstelle eine Gruppe und lade deine Schüler ein.",
+      "successStudent": "Du bist {{group}} beigetreten. Lade dein erstes Video hoch, wenn du bereit für Feedback bist.",
+      "roleExpert": "Rolle: Experte",
+      "roleStudent": "Rolle: Schüler",
+      "goToApp": "Zu Strido"
+    }
   }
 }

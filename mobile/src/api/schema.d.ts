@@ -58,6 +58,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/access/redeem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Activate the calling user with an invite code
+         * @description Reachable while waitlisted — it sits OUTSIDE the RequireActiveAccess group so a waitlisted user has a way out. Codes are normalized server-side (uppercase Crockford), so case and spacing do not matter.
+         */
+        post: operations["redeemAccessCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/me": {
         parameters: {
             query?: never;
@@ -830,6 +850,23 @@ export interface components {
             /** @description Device platform (e.g. ios, android); omit when unknown */
             platform?: string;
         };
+        RedeemRequest: {
+            /** @description Invite code as typed by the user; normalized server-side */
+            code: string;
+        };
+        RedeemGroup: {
+            id: string;
+            name: string;
+            avatar?: string;
+        };
+        RedeemResponse: {
+            /** @enum {string} */
+            access_status: "active" | "waitlisted";
+            role: string;
+            role_upgraded: boolean;
+            /** @description Present when the code was a group invitation */
+            group?: components["schemas"]["RedeemGroup"];
+        };
         Me: {
             id: string;
             first_name: string;
@@ -844,6 +881,11 @@ export interface components {
             push_preferences: components["schemas"]["PushPreferences"];
             role: string;
             permissions: string[];
+            /**
+             * @description Whether the account is activated. Only GET /auth/me carries it (the PUT response omits it). Waitlisted users are 403'd by every feature route, so clients must gate on this instead of assuming that a successful /auth/me means full access.
+             * @enum {string}
+             */
+            access_status?: "active" | "waitlisted";
         };
         UpdateMeRequest: {
             first_name?: string;
@@ -957,11 +999,30 @@ export interface components {
             /** @enum {string} */
             status: "completed";
         };
+        /** @description Transitional shape. The display-name privacy work on main replaced email/first_name/last_name with display_name/full_name/name_pending; only id and role are guaranteed across both backend versions, so every name field is optional and clients must resolve defensively. Narrow this to display_name/full_name/name_pending once main is merged. */
         GroupUser: {
             id: string;
-            email: string;
-            first_name: string;
-            last_name: string;
+            /** @description Privacy-preserving name; always present on current backends */
+            display_name?: string;
+            /** @description Real name; only sent to callers allowed to see it */
+            full_name?: string;
+            /** @description True while the member has not supplied a name yet */
+            name_pending?: boolean;
+            /**
+             * @deprecated
+             * @description Removed from group member lists by the display-name privacy change
+             */
+            email?: string;
+            /**
+             * @deprecated
+             * @description Superseded by display_name/full_name
+             */
+            first_name?: string;
+            /**
+             * @deprecated
+             * @description Superseded by display_name/full_name
+             */
+            last_name?: string;
             /** @description Base64-encoded avatar; omitted when unset */
             avatar?: string;
             role: string;
@@ -1341,6 +1402,51 @@ export interface operations {
             };
             /** @description Rate limit exceeded for this client */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    redeemAccessCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RedeemRequest"];
+            };
+        };
+        responses: {
+            /** @description Resulting access state for the caller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RedeemResponse"];
+                };
+            };
+            /** @description Missing code or invalid request body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Code is invalid, already used, or revoked */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

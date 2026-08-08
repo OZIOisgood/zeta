@@ -55,11 +55,16 @@ jest.mock('../api/query-client', () => ({ queryClient: {} }));
 
 // Mutable status controlled per-test; useAuth runs the selector against it.
 let mockStatus: 'loading' | 'signedOut' | 'signedIn' = 'loading';
+type MockUser = { access_status?: 'active' | 'waitlisted' } | null;
+let mockUser: MockUser = null;
 const mockRestore = jest.fn(async () => undefined);
+
+type MockAuthState = { status: string; user: MockUser };
 
 jest.mock('../auth/auth-store', () => ({
   authStore: { getState: () => ({ restore: mockRestore }) },
-  useAuth: (selector: (s: { status: string }) => unknown) => selector({ status: mockStatus }),
+  useAuth: (selector: (s: MockAuthState) => unknown) =>
+    selector({ status: mockStatus, user: mockUser }),
 }));
 
 // ── expo-router mock ──────────────────────────────────────────────────────────
@@ -89,6 +94,7 @@ import RootLayout from '../app/_layout';
 beforeEach(() => {
   jest.clearAllMocks();
   mockStatus = 'loading';
+  mockUser = { access_status: 'active' };
 });
 
 test('loading status → spinner, no navigation screens, restore kicked off', async () => {
@@ -125,4 +131,39 @@ test('signedOut status → login is gated in, protected stack is gated out', asy
   expect(screen.getByTestId('screen-login')).toBeOnTheScreen();
   expect(screen.queryByTestId('screen-(tabs)')).toBeNull();
   expect(screen.queryByTestId('screen-call/[bookingId]')).toBeNull();
+});
+
+test('waitlisted user → welcome is gated in, the app stack is gated out', async () => {
+  // Every feature route answers 403 for a waitlisted account, so the tabs must
+  // not be reachable — the redeem screen is the only sensible destination.
+  mockStatus = 'signedIn';
+  mockUser = { access_status: 'waitlisted' };
+
+  await render(<RootLayout />);
+
+  expect(screen.getByTestId('screen-welcome')).toBeOnTheScreen();
+  expect(screen.queryByTestId('screen-(tabs)')).toBeNull();
+  expect(screen.queryByTestId('screen-login')).toBeNull();
+});
+
+test('active user → app stack is gated in, welcome is gated out', async () => {
+  mockStatus = 'signedIn';
+  mockUser = { access_status: 'active' };
+
+  await render(<RootLayout />);
+
+  expect(screen.getByTestId('screen-(tabs)')).toBeOnTheScreen();
+  expect(screen.queryByTestId('screen-welcome')).toBeNull();
+});
+
+test('missing access_status → app stack stays reachable (fail-open)', async () => {
+  // Only GET /auth/me carries the field. Gating on its absence would lock out
+  // every user the moment a response omits it; the server remains the real gate.
+  mockStatus = 'signedIn';
+  mockUser = {};
+
+  await render(<RootLayout />);
+
+  expect(screen.getByTestId('screen-(tabs)')).toBeOnTheScreen();
+  expect(screen.queryByTestId('screen-welcome')).toBeNull();
 });

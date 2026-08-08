@@ -64,7 +64,18 @@ if (typeof PatchableText.render === 'function' && !PatchableText.__zetaFontPatch
 
 export default function RootLayout() {
   const status = useAuth((s) => s.status);
+  const accessStatus = useAuth((s) => s.user?.access_status);
   const { color } = useRoleColors();
+
+  // A new account lands `waitlisted`: /auth/me succeeds, but everything behind
+  // RequireActiveAccess answers 403 — routing such a user into the tabs would
+  // show a shell where every request fails and offer no way out. They get the
+  // welcome/redeem screen instead.
+  //
+  // Deliberately fail-OPEN on a missing value: the field only rides along on
+  // GET /auth/me, and the server is the real gate anyway. Gating on absence
+  // would lock out every user the moment the field is not sent.
+  const isWaitlisted = accessStatus === 'waitlisted';
 
   /** Scheme-aware header chrome. Built per-render from role tokens — the
    *  static light-only `colors` module froze the header bars light in dark
@@ -121,7 +132,7 @@ export default function RootLayout() {
       </View>
     ) : (
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Protected guard={status === 'signedIn'}>
+        <Stack.Protected guard={status === 'signedIn' && !isWaitlisted}>
           <Stack.Screen name="(tabs)" />
           {/* Detail / form screens — native header with back + swipe-back.
               Dynamic titles (asset/[id], group/[id]) are set inside the screen
@@ -210,6 +221,9 @@ export default function RootLayout() {
           )}
           {/* Full-screen live call — keeps its own chrome, no nav header. */}
           <Stack.Screen name="call/[bookingId]" options={{ presentation: 'fullScreenModal', headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={status === 'signedIn' && isWaitlisted}>
+          <Stack.Screen name="welcome" />
         </Stack.Protected>
         <Stack.Protected guard={status !== 'signedIn'}>
           <Stack.Screen name="login" />

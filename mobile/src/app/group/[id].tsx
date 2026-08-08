@@ -17,7 +17,7 @@ import {
 import { useCreateInvitationMutation } from '../../api/queries/invitations';
 import { useAuth } from '../../auth/auth-store';
 import { initialsFromName } from '../../lib/avatar';
-import { MemberRow } from '../../components/member-row';
+import { MemberRow, memberDisplayName } from '../../components/member-row';
 import { Touchable } from '../../components/ui/touchable';
 import { ZAvatar } from '../../components/ui/z-avatar';
 import { ZBadge } from '../../components/ui/z-badge';
@@ -467,7 +467,7 @@ export default function GroupDetailScreen() {
     setMemberToRemove(null);
     try {
       await removeMember({ userId: member.id });
-      const name = `${member.first_name} ${member.last_name}`.trim();
+      const name = memberDisplayName(member);
       showToast(t('toast.successTitle'), t('groups.users.removed', { name }), 'success');
     } catch {
       showToast(t('toast.errorTitle'), t('groups.users.removeFailed'), 'error');
@@ -642,7 +642,7 @@ export default function GroupDetailScreen() {
         description={
           memberToRemove
             ? t('groups.users.confirmRemove', {
-                name: `${memberToRemove.first_name} ${memberToRemove.last_name}`.trim(),
+                name: memberDisplayName(memberToRemove),
               })
             : ''
         }

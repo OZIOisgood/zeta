@@ -777,5 +777,43 @@
       "failed": "Sign-in failed. Please try again.",
       "createAccount": "Create account"
     }
+  },
+  "access": {
+    "welcome": {
+      "brandHeadline": "Get better, video by video.",
+      "brandSubline": "Upload your training and get precise feedback from real experts.",
+      "eyebrowWaitlist": "Early access",
+      "waitlistTitle": "You're on the waitlist.",
+      "waitlistBody": "We'll let you know when access opens up. Already have a code from an expert or coach? You can enter right away.",
+      "enterCode": "Enter invite code",
+      "signOut": "Sign out",
+      "back": "Back",
+      "eyebrowCode": "Invite code",
+      "codeTitle": "Almost there.",
+      "codeBody": "Enter the 8-character code from your invitation to activate your account.",
+      "codeLabel": "Enter your 8-character code",
+      "codeHint": "Codes are 8 characters — letter case doesn't matter.",
+      "errorIncomplete": "Please enter your full code.",
+      "errorInvalid": "This code is invalid, unavailable, or has already been used.",
+      "activating": "Activating…",
+      "activate": "Activate account",
+      "noCode": "Didn't get a code?",
+      "groupEyebrow": "Group invitation",
+      "groupTitle": "Your coach invited you.",
+      "groupBody": "Activate your account as a student and join this group.",
+      "groupRole": "You'll join as a student",
+      "joinGroup": "Activate and join group",
+      "notYou": "Not your invitation? Sign out",
+      "inviteUnavailableTitle": "This invitation isn't available.",
+      "inviteUnavailableBody": "It may have been used, revoked, or sent to another email address.",
+      "enterAnotherCode": "Enter another code",
+      "eyebrowDone": "Account activated",
+      "successTitle": "Welcome to Strido.",
+      "successExpert": "You now have expert access. Create a group and invite your students to start coaching.",
+      "successStudent": "You've joined {{group}}. Upload your first video when you're ready for feedback.",
+      "roleExpert": "Role: Expert",
+      "roleStudent": "Role: Student",
+      "goToApp": "Go to Strido"
+    }
   }
 }

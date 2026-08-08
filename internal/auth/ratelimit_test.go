@@ -58,15 +58,53 @@ func TestRateLimiterUsesForwardedFor(t *testing.T) {
 	l := NewIPRateLimiter(slog.Default(), 10, 1)
 	handler := rateLimitedHandler(l)
 
-	// Same proxy address, different originating clients.
-	if code := doRequest(handler, "10.0.0.1:1234", "198.51.100.1, 10.0.0.1"); code != http.StatusOK {
+	// The proxy appends the real client address on the RIGHT; two different
+	// clients therefore differ in the rightmost entry and get separate buckets.
+	if code := doRequest(handler, "10.0.0.1:1234", "198.51.100.1"); code != http.StatusOK {
 		t.Fatalf("forwarded client A: got %d", code)
 	}
-	if code := doRequest(handler, "10.0.0.1:1234", "198.51.100.2, 10.0.0.1"); code != http.StatusOK {
+	if code := doRequest(handler, "10.0.0.1:1234", "198.51.100.2"); code != http.StatusOK {
 		t.Fatalf("forwarded client B must not share A's bucket, got %d", code)
 	}
-	if code := doRequest(handler, "10.0.0.1:1234", "198.51.100.1, 10.0.0.1"); code != http.StatusTooManyRequests {
+	if code := doRequest(handler, "10.0.0.1:1234", "198.51.100.1"); code != http.StatusTooManyRequests {
 		t.Fatalf("forwarded client A second request: got %d, want 429", code)
+	}
+}
+
+func TestRateLimiterIgnoresSpoofedLeftmostForwardedFor(t *testing.T) {
+	l := NewIPRateLimiter(slog.Default(), 10, 1)
+	handler := rateLimitedHandler(l)
+
+	// One attacker rotating the caller-supplied prefix must stay in ONE bucket:
+	// only the rightmost entry (appended by the proxy) identifies the client.
+	if code := doRequest(handler, "10.0.0.1:1234", "1.2.3.4, 198.51.100.7"); code != http.StatusOK {
+		t.Fatalf("first attempt: got %d", code)
+	}
+	if code := doRequest(handler, "10.0.0.1:1234", "9.9.9.9, 198.51.100.7"); code != http.StatusTooManyRequests {
+		t.Fatalf("rotating the spoofed prefix must not mint a new bucket, got %d, want 429", code)
+	}
+}
+
+func TestRateLimiterFallsBackToRemoteAddrOnUnparseableForwardedFor(t *testing.T) {
+	l := NewIPRateLimiter(slog.Default(), 10, 1)
+	handler := rateLimitedHandler(l)
+
+	// A rightmost entry that is not an IP cannot have come from the proxy; it must
+	// never become a bucket key of its own.
+	if code := doRequest(handler, "203.0.113.9:1234", "not-an-ip"); code != http.StatusOK {
+		t.Fatalf("first attempt: got %d", code)
+	}
+	if code := doRequest(handler, "203.0.113.9:1234", "also-not-an-ip"); code != http.StatusTooManyRequests {
+		t.Fatalf("garbage XFF must fall back to RemoteAddr, got %d, want 429", code)
+	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if _, ok := l.visitors["203.0.113.9"]; !ok {
+		t.Fatal("bucket must be keyed on RemoteAddr")
+	}
+	if len(l.visitors) != 1 {
+		t.Fatalf("garbage XFF values must not create buckets, got %d", len(l.visitors))
 	}
 }
 

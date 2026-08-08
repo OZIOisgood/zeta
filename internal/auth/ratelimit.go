@@ -88,13 +88,25 @@ func (l *IPRateLimiter) allow(ip string) bool {
 	return v.limiter.AllowN(now, 1)
 }
 
-// clientIP extracts the originating client address: the first entry of
-// X-Forwarded-For when present (set by the load balancer in deployed
-// environments), otherwise the connection's remote address.
+// clientIP extracts the originating client address. X-Forwarded-For accumulates
+// hops left-to-right and only the RIGHTMOST entry was appended by our trusted
+// proxy (Cloud Run / Google Front End); everything left of it is caller-supplied
+// and trivially forgeable. Keying the limiter on a forgeable value would let any
+// caller mint a fresh bucket per request — see internal/audit/context.go, which
+// makes the same choice for the forensic trail.
+//
+// Assumes Cloud Run's direct ingress (no external HTTPS load balancer in front —
+// infra/terraform defines domain mappings, no url_map/backend_service). Behind a
+// GCLB the chain becomes <caller-supplied>, <client-ip>, <lb-ip> and the correct
+// entry would be the second-to-last; revisit this when the topology changes.
+//
+// A rightmost entry that is not a valid IP cannot have come from the proxy, so
+// it is discarded rather than used as a map key.
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if first, _, found := strings.Cut(xff, ","); found || first != "" {
-			return strings.TrimSpace(first)
+		parts := strings.Split(xff, ",")
+		if ip := strings.TrimSpace(parts[len(parts)-1]); net.ParseIP(ip) != nil {
+			return ip
 		}
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)

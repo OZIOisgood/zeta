@@ -28,6 +28,14 @@ type AuthState = {
    * web shell.setLanguage). Returns the updated user, or null on failure.
    */
   updateCurrentUser: (body: UpdateMeRequest) => Promise<Me | null>;
+  /**
+   * Re-fetches /auth/me without touching the stored tokens. Needed after
+   * redeeming an invite code: `access_status` flips server-side and the root
+   * layout gates on it, so the app must re-read the profile rather than wait
+   * for the next cold start. A failed refresh keeps the last known user — it
+   * must never sign anybody out.
+   */
+  refreshUser: () => Promise<void>;
 };
 
 export function createAuthStore(client?: AuthenticatedClientLike) {
@@ -123,6 +131,14 @@ export function createAuthStore(client?: AuthenticatedClientLike) {
         await clearTokens();
         queryClient.clear();
         set({ status: 'signedOut', user: null });
+      },
+
+      refreshUser: async () => {
+        try {
+          await loadUser();
+        } catch {
+          // Keep the last known user; the caller decides what to show.
+        }
       },
 
       updateCurrentUser: async (body: UpdateMeRequest) => {

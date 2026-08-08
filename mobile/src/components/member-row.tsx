@@ -8,10 +8,25 @@ import { ZListItem } from './ui/z-list-item';
 import { ZSwipeable } from './ui/z-swipeable';
 import { ZSymbol } from './ui/z-symbol';
 
+/**
+ * Resolves the name to show for a group member across both backend contracts:
+ * the display-name privacy work replaced first_name/last_name with
+ * display_name/full_name, and `full_name` reaches only callers allowed to see
+ * the real name. Every field is optional, so this never assumes one is present
+ * — a member row must not be able to crash the group screen.
+ */
+export function memberDisplayName(member: GroupUser): string {
+  const legacy = [member.first_name, member.last_name].filter(Boolean).join(' ').trim();
+  return member.full_name?.trim() || member.display_name?.trim() || legacy;
+}
+
 function initials(member: GroupUser): string {
-  const first = member.first_name.charAt(0).toUpperCase();
-  const last = member.last_name.charAt(0).toUpperCase();
-  return `${first}${last}`;
+  return memberDisplayName(member)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
 }
 
 /**
@@ -31,7 +46,7 @@ export function MemberRow({
   const { t } = useTranslation();
   const { color } = useRoleColors();
   const screenReaderOn = useScreenReader();
-  const fullName = `${member.first_name} ${member.last_name}`.trim();
+  const fullName = memberDisplayName(member);
 
   const row = (
     <ZListItem
@@ -46,7 +61,6 @@ export function MemberRow({
         />
       }
       title={fullName}
-      subtitle={member.email}
       trailing={
         onRemove && screenReaderOn ? (
           <ZIconButton
