@@ -229,11 +229,20 @@ type ReviewsSectionProps = {
   seekTo: (seconds: number) => void;
   getCurrentTime: () => number;
   canCompose: boolean;
+  canReply: boolean;
   canEdit: boolean;
   canDelete: boolean;
 };
 
-function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, canDelete }: ReviewsSectionProps) {
+function ReviewsSection({
+  videoId,
+  seekTo,
+  getCurrentTime,
+  canCompose,
+  canReply,
+  canEdit,
+  canDelete,
+}: ReviewsSectionProps) {
   const { t } = useTranslation();
   const { color } = useRoleColors();
   const [replyingTo, setReplyingTo] = useState<Review | null>(null);
@@ -351,7 +360,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
             <ReviewItem
               review={review}
               onSeek={seekTo}
-              onReply={(r) => setReplyingTo(r)}
+              onReply={canReply ? (r) => setReplyingTo(r) : undefined}
               onEdit={canEdit ? handleEdit : undefined}
               onDelete={canDelete ? (r) => setPendingDelete(r) : undefined}
               onEnhance={canEdit ? handleEnhance : undefined}
@@ -380,7 +389,7 @@ function ReviewsSection({ videoId, seekTo, getCurrentTime, canCompose, canEdit, 
         </Text>
       ) : null}
 
-      {canCompose && (
+      {(canCompose || (canReply && replyingTo)) && (
         <ReviewComposer
           onSubmit={handleSubmit}
           getCurrentTime={replyingTo ? undefined : getCurrentTime}
@@ -418,6 +427,14 @@ export default function AssetDetailScreen() {
   const permissions = useAuth((s) => s.user?.permissions ?? null);
   const isFinalized = data?.status === 'completed';
   const canCompose = (permissions?.includes('reviews:create') ?? false) && !isFinalized;
+  // Replies follow their OWN server rule (reviews.canCreateReviewForAssetState):
+  // reviews:reply is required, and before the video is completed the caller also
+  // needs reviews:reply-before-ready. Gating replies on canCompose offered a
+  // reply button where the server answers 403, and hid it on completed videos —
+  // exactly the state where replying is the intended action.
+  const canReply =
+    (permissions?.includes('reviews:reply') ?? false) &&
+    (isFinalized || (permissions?.includes('reviews:reply-before-ready') ?? false));
   const canEdit = (permissions?.includes('reviews:edit') ?? false) && !isFinalized;
   const canDelete = (permissions?.includes('reviews:delete') ?? false) && !isFinalized;
   const canFinalize = (permissions?.includes('assets:finalize') ?? false) && !isFinalized;
@@ -552,6 +569,7 @@ export default function AssetDetailScreen() {
               seekTo={seekTo}
               getCurrentTime={getCurrentTime}
               canCompose={canCompose}
+              canReply={canReply}
               canEdit={canEdit}
               canDelete={canDelete}
             />

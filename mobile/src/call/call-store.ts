@@ -95,11 +95,22 @@ export function createCallStore(deps: CallDeps = defaultDeps) {
         return;
       }
 
+      // Whitelist the human peer instead of accepting any remote UID. The same
+      // channel is also joined by recording infrastructure — UID 3 (capture bot)
+      // and UID 4 (page renderer, added with Agora page recording). Treating one
+      // of those as the peer paints a black tile and hides the "waiting for
+      // participant" state, and their leave would clear the real peer's video.
+      // Students are always UID 1 and experts always UID 2 (see the connect
+      // endpoint), so the peer is simply the other one.
+      const peerUid = connectInfo.uid === 1 ? 2 : 1;
+
       const newEngine = deps.createEngine({
         onRemoteUserJoined: (uid) => {
+          if (uid !== peerUid) return;
           set({ remoteUid: uid });
         },
-        onRemoteUserLeft: (_uid) => {
+        onRemoteUserLeft: (uid) => {
+          if (uid !== peerUid) return;
           set({ remoteUid: null });
         },
         onError: (_message) => {

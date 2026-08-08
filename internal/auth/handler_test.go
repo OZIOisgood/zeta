@@ -607,6 +607,12 @@ func TestUpdateMe_PersistsPushPreferences(t *testing.T) {
 	updatedPrefs.PushNotificationsEnabled = false
 	updatedPrefs.PushAssetUploadsEnabled = false
 
+	// The request omits display_name, so the handler reads the stored alias to
+	// avoid resetting it (see TestUpdateMe_OmittedDisplayNameKeepsStoredAlias).
+	q.EXPECT().
+		GetUserPreferences(gomock.Any(), "user-1").
+		Return(basePrefs, nil)
+
 	q.EXPECT().
 		UpdateUserProfilePreferences(gomock.Any(), gomock.Any()).
 		Return(basePrefs, nil)
@@ -654,4 +660,108 @@ func TestUpdateMe_PersistsPushPreferences(t *testing.T) {
 	require.NoError(t, json.Unmarshal(resp["push_preferences"], &pp))
 	assert.False(t, pp.NotificationsEnabled)
 	assert.False(t, pp.AssetUploadsEnabled)
+}
+
+// updateMeDisplayName runs PUT /auth/me for a student with the given raw JSON
+// body and returns the display name the handler persisted.
+func updateMeDisplayName(t *testing.T, storedAlias, rawBody string) string {
+	t.Helper()
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+
+	stored := testUserPrefs()
+	stored.FirstName = "Max"
+	stored.LastName = "Mustermann"
+	stored.DisplayName = storedAlias
+	q.EXPECT().GetUserPreferences(gomock.Any(), "user-1").Return(stored, nil).AnyTimes()
+
+	var persisted string
+	q.EXPECT().
+		UpdateUserProfilePreferences(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, params db.UpdateUserProfilePreferencesParams) (db.UserPreference, error) {
+			persisted = params.DisplayName
+			return stored, nil
+		})
+
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(usermanagement.User{}, nil).AnyTimes()
+
+	h := NewHandler(slog.Default(), q, workos)
+	req := httptest.NewRequest(http.MethodPut, "/auth/me", strings.NewReader(rawBody))
+	req = contextWithUser(req, &UserContext{ID: "user-1", Role: "student", Permissions: []string{}})
+	rec := httptest.NewRecorder()
+
+	h.UpdateMe(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	return persisted
+}
+
+func TestUpdateMe_OmittedDisplayNameKeepsStoredAlias(t *testing.T) {
+	// The mobile app PUTs a partial profile without display_name. Before this
+	// guard the handler re-derived the name and silently wiped an alias the
+	// student had set in the web dashboard.
+	got := updateMeDisplayName(t, "Sunny", `{
+		"timezone": "UTC",
+		"first_name": "Max",
+		"last_name": "Mustermann"
+	}`)
+	assert.Equal(t, "Sunny", got)
+}
+
+func TestUpdateMe_SentDisplayNameWins(t *testing.T) {
+	got := updateMeDisplayName(t, "Sunny", `{
+		"timezone": "UTC",
+		"first_name": "Max",
+		"last_name": "Mustermann",
+		"display_name": "  Rainy  "
+	}`)
+	assert.Equal(t, "Rainy", got)
+}
+
+func TestUpdateMe_EmptyDisplayNameResetsToDerived(t *testing.T) {
+	// Sent-but-empty is a deliberate reset, unlike an omitted field.
+	got := updateMeDisplayName(t, "Sunny", `{
+		"timezone": "UTC",
+		"first_name": "Max",
+		"last_name": "Mustermann",
+		"display_name": ""
+	}`)
+	assert.Equal(t, preferences.DefaultDisplayName("Max", "Mustermann"), got)
+}
+
+func TestUpdateMe_NonStudentIgnoresStoredAlias(t *testing.T) {
+	// Only students carry an alias; for an expert the name stays derived even
+	// when one is somehow stored.
+	ctrl := gomock.NewController(t)
+	q := dbmocks.NewMockQuerier(ctrl)
+
+	stored := testUserPrefs()
+	stored.FirstName = "Max"
+	stored.LastName = "Mustermann"
+	stored.DisplayName = "Sunny"
+
+	var persisted string
+	q.EXPECT().
+		UpdateUserProfilePreferences(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, params db.UpdateUserProfilePreferencesParams) (db.UserPreference, error) {
+			persisted = params.DisplayName
+			return stored, nil
+		})
+
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(usermanagement.User{}, nil).AnyTimes()
+
+	h := NewHandler(slog.Default(), q, workos)
+	req := httptest.NewRequest(http.MethodPut, "/auth/me", strings.NewReader(`{
+		"timezone": "UTC",
+		"first_name": "Max",
+		"last_name": "Mustermann"
+	}`))
+	req = contextWithUser(req, &UserContext{ID: "user-1", Role: "expert", Permissions: []string{}})
+	rec := httptest.NewRecorder()
+
+	h.UpdateMe(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, preferences.DefaultDisplayName("Max", "Mustermann"), persisted)
 }

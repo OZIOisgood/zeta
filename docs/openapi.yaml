@@ -1767,6 +1767,11 @@ components:
           type: string
         last_name:
           type: string
+        display_name:
+          type: string
+          description: >
+            Name shown to other users — a student's alias when set, otherwise
+            derived from first/last.
         email:
           type: string
         language:
@@ -1814,6 +1819,12 @@ components:
           type: string
         last_name:
           type: string
+        display_name:
+          type: string
+          description: >
+            Student alias. OMIT the field to keep the stored value; send it
+            empty to reset to the name derived from first/last. Ignored for
+            non-students, whose display name is always derived.
         language:
           type: string
           enum: [en, de, fr]
@@ -2492,7 +2503,10 @@ components:
           minimum: 0
           description: >
             Participant UID for the Agora channel (uint32). Students always
-            receive UID 1; experts always receive UID 2.
+            receive UID 1; experts always receive UID 2. UIDs 3 (recording
+            capture bot) and 4 (page renderer) belong to recording
+            infrastructure and join the same channel — clients must not treat
+            them as the remote participant.
       required: [app_id, channel, token, uid]
 
     ReportRef:

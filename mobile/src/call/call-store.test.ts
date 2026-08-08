@@ -53,11 +53,14 @@ const FAKE_CONNECT_INFO = {
 function makeDeps(overrides?: {
   fetchConnectResult?: 'resolve' | 'reject';
   joinResult?: 'resolve' | 'reject';
+  /** Own participant UID — 1 for a student, 2 for an expert. */
+  uid?: number;
 }): { deps: CallDeps; fakeEngines: FakeEngine[]; stopRecordingCalls: string[][] } {
   const fakeEngines: FakeEngine[] = [];
   const stopRecordingCalls: string[][] = [];
   const fetchConnectResult = overrides?.fetchConnectResult ?? 'resolve';
   const joinResult = overrides?.joinResult ?? 'resolve';
+  const connectInfo = { ...FAKE_CONNECT_INFO, uid: overrides?.uid ?? FAKE_CONNECT_INFO.uid };
 
   const deps: CallDeps = {
     createEngine: (events) => {
@@ -67,7 +70,7 @@ function makeDeps(overrides?: {
     },
     fetchConnect: async (_groupId, _bookingId) => {
       if (fetchConnectResult === 'reject') throw new Error('Fetch connect failed');
-      return FAKE_CONNECT_INFO;
+      return connectInfo;
     },
     stopRecording: (groupId, bookingId) => {
       stopRecordingCalls.push([groupId, bookingId]);
@@ -104,6 +107,44 @@ describe('call-store', () => {
     // Simulate remote user joining
     fakeEngines[0]._events.onRemoteUserJoined(2);
     expect(store.getState().remoteUid).toBe(2);
+  });
+
+  test('recording infrastructure UIDs are not treated as the remote participant', async () => {
+    // The capture bot (3) and the page renderer (4) join the same channel.
+    // Accepting them would paint a black tile and hide the waiting state.
+    const { deps, fakeEngines } = makeDeps({ uid: 1 });
+    const store = createCallStore(deps);
+
+    await store.getState().join('grp1', 'book1');
+
+    fakeEngines[0]._events.onRemoteUserJoined(3);
+    expect(store.getState().remoteUid).toBeNull();
+
+    fakeEngines[0]._events.onRemoteUserJoined(4);
+    expect(store.getState().remoteUid).toBeNull();
+  });
+
+  test('an infrastructure UID leaving does not clear the real peer', async () => {
+    const { deps, fakeEngines } = makeDeps({ uid: 1 });
+    const store = createCallStore(deps);
+
+    await store.getState().join('grp1', 'book1');
+    fakeEngines[0]._events.onRemoteUserJoined(2);
+    expect(store.getState().remoteUid).toBe(2);
+
+    // A renderer retry leaves the channel mid-call.
+    fakeEngines[0]._events.onRemoteUserLeft(4);
+    expect(store.getState().remoteUid).toBe(2);
+  });
+
+  test('the expert side accepts the student UID as its peer', async () => {
+    const { deps, fakeEngines } = makeDeps({ uid: 2 });
+    const store = createCallStore(deps);
+
+    await store.getState().join('grp1', 'book1');
+
+    fakeEngines[0]._events.onRemoteUserJoined(1);
+    expect(store.getState().remoteUid).toBe(1);
   });
 
   test('remote user leave event clears remoteUid', async () => {

@@ -871,6 +871,8 @@ export interface components {
             id: string;
             first_name: string;
             last_name: string;
+            /** @description Name shown to other users — a student's alias when set, otherwise derived from first/last. */
+            display_name?: string;
             email: string;
             /** @enum {string} */
             language: "en" | "de" | "fr";
@@ -890,6 +892,8 @@ export interface components {
         UpdateMeRequest: {
             first_name?: string;
             last_name?: string;
+            /** @description Student alias. OMIT the field to keep the stored value; send it empty to reset to the name derived from first/last. Ignored for non-students, whose display name is always derived. */
+            display_name?: string;
             /** @enum {string} */
             language?: "en" | "de" | "fr";
             /** @description Base64-encoded avatar image; omit to keep the current one */
@@ -1263,7 +1267,7 @@ export interface components {
             channel: string;
             /** @description Short-lived Agora RTC credential — never log it. Valid for 3600 seconds from issuance. */
             token: string;
-            /** @description Participant UID for the Agora channel (uint32). Students always receive UID 1; experts always receive UID 2. */
+            /** @description Participant UID for the Agora channel (uint32). Students always receive UID 1; experts always receive UID 2. UIDs 3 (recording capture bot) and 4 (page renderer) belong to recording infrastructure and join the same channel — clients must not treat them as the remote participant. */
             uid: number;
         };
         /** @description A display reference to a user or group (id + resolved name). */

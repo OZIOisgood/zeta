@@ -759,9 +759,12 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateUserRequest struct {
-	FirstName        string                        `json:"first_name"`
-	LastName         string                        `json:"last_name"`
-	DisplayName      string                        `json:"display_name"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	// Pointer so an OMITTED field is distinguishable from an empty one: a
+	// partial-update client that never sends display_name must not silently
+	// reset an alias the user set on another surface.
+	DisplayName      *string                       `json:"display_name"`
 	Language         string                        `json:"language"`
 	Avatar           *string                       `json:"avatar"`
 	Timezone         string                        `json:"timezone"`
@@ -792,11 +795,32 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Only students may carry an alias; for everyone else the display name stays
+	// derived from first/last.
 	displayName := preferences.DefaultDisplayName(req.FirstName, req.LastName)
 	if user.Role == permissions.RoleStudent {
-		if requestedDisplayName := strings.TrimSpace(req.DisplayName); requestedDisplayName != "" {
-			displayName = requestedDisplayName
+		switch {
+		case req.DisplayName == nil:
+			// Field omitted → preserve whatever is stored. Without this, any
+			// client that PUTs a partial profile (the mobile app does) wipes the
+			// alias back to the derived name on every save.
+			if current, err := h.q.GetUserPreferences(ctx, user.ID); err == nil {
+				if stored := strings.TrimSpace(current.DisplayName); stored != "" {
+					displayName = stored
+				}
+			} else if err != pgx.ErrNoRows {
+				h.logger.ErrorContext(ctx, "auth_read_display_name_failed",
+					slog.String("component", "auth"),
+					slog.String("user_id", user.ID),
+					slog.Any("err", err),
+				)
+				http.Error(w, "Failed to update user settings", http.StatusInternalServerError)
+				return
+			}
+		case strings.TrimSpace(*req.DisplayName) != "":
+			displayName = strings.TrimSpace(*req.DisplayName)
 		}
+		// Sent but empty → deliberate reset to the derived name; keep the default.
 	}
 
 	prefs, err := h.q.UpdateUserProfilePreferences(ctx, db.UpdateUserProfilePreferencesParams{

@@ -182,6 +182,69 @@ test('composer hidden when asset is completed even with reviews:create', async (
   expect(screen.queryByTestId('review-input')).toBeNull();
 });
 
+// ── Test 6: reply gate follows the server's reply permissions ────────────────
+//
+// The server rule (reviews.canCreateReviewForAssetState) is independent of
+// reviews:create: a reply needs reviews:reply, and before the video is
+// completed also reviews:reply-before-ready.
+
+test('no reply button without reviews:reply, even with reviews:create', async () => {
+  mockPermissions = ['reviews:create'];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.queryByTestId('review-reply')).toBeNull();
+});
+
+test('no reply button before the video is ready without reviews:reply-before-ready', async () => {
+  // Students hold reviews:reply but not reviews:reply-before-ready; the server
+  // would answer 403, so the button must not be offered.
+  mockPermissions = ['reviews:reply'];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.queryByTestId('review-reply')).toBeNull();
+});
+
+test('reply button appears before ready with reviews:reply-before-ready', async () => {
+  mockPermissions = ['reviews:reply', 'reviews:reply-before-ready'];
+  mockUseAssetQuery.mockReturnValue({ isPending: false, isError: false, data: DETAIL, refetch: jest.fn() });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  expect(screen.getAllByTestId('review-reply').length).toBeGreaterThan(0);
+});
+
+test('completed video: reviews:reply alone reaches the reply composer', async () => {
+  // This is the state the reply feature exists for, and the one the old
+  // canCompose-based gate made unreachable on mobile.
+  mockPermissions = ['reviews:reply'];
+  mockUseAssetQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: { ...DETAIL, status: 'completed' as const },
+    refetch: jest.fn(),
+  });
+  mockUseReviewsQuery.mockReturnValue({ isPending: false, isError: false, data: REVIEWS });
+
+  await render(<Providers><AssetDetailScreen /></Providers>);
+
+  // No top-level composer on a completed video …
+  expect(screen.queryByTestId('review-input')).toBeNull();
+
+  // … but tapping reply opens it for the reply itself.
+  const replyButtons = screen.getAllByTestId('review-reply');
+  await act(async () => {
+    fireEvent.press(replyButtons[0]);
+  });
+  expect(screen.getByTestId('review-input')).toBeOnTheScreen();
+});
+
 // ── Existing tests (keep passing) ─────────────────────────────────────────────
 
 test('shows description and group in the meta card; in-card title is gone (header carries it)', async () => {
