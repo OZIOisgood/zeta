@@ -8,6 +8,7 @@ overrides:
   brace-expansion@1: ^1.1.18
   brace-expansion@2: ^2.1.4
   brace-expansion@5: ^5.0.9
+  form-data@4: ^4.0.6
 
 importers:
 
@@ -3765,8 +3766,8 @@ packages:
     resolution: {integrity: sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg==}
     engines: {node: '>= 0.4'}
 
-  form-data@4.0.5:
-    resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
+  form-data@4.0.6:
+    resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
     engines: {node: '>= 6'}
 
   fraction.js@5.3.4:
@@ -10589,7 +10590,7 @@ snapshots:
     dependencies:
       is-callable: 1.2.7
 
-  form-data@4.0.5:
+  form-data@4.0.6:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
@@ -11478,7 +11479,7 @@ snapshots:
       decimal.js: 10.6.0
       domexception: 4.0.0
       escodegen: 2.1.0
-      form-data: 4.0.5
+      form-data: 4.0.6
       html-encoding-sniffer: 3.0.0
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
