@@ -114,7 +114,7 @@ SET push_notifications_enabled            = $2,
     push_coaching_booking_updates_enabled = $7,
     updated_at                            = NOW()
 WHERE user_id = $1
-RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name, push_notifications_enabled, push_asset_uploads_enabled, push_asset_reviews_enabled, push_invitation_updates_enabled, push_group_membership_updates_enabled, push_coaching_booking_updates_enabled
+RETURNING user_id, language, created_at, updated_at, avatar, timezone, email_notifications_enabled, email_asset_uploads_enabled, email_asset_reviews_enabled, email_invitation_updates_enabled, email_group_membership_updates_enabled, email_coaching_booking_updates_enabled, email_coaching_reminders_enabled, first_name, last_name, display_name, push_notifications_enabled, push_asset_uploads_enabled, push_asset_reviews_enabled, push_invitation_updates_enabled, push_group_membership_updates_enabled, push_coaching_booking_updates_enabled
 `
 
 type UpdateUserPushPreferencesParams struct {
@@ -154,6 +154,7 @@ func (q *Queries) UpdateUserPushPreferences(ctx context.Context, arg UpdateUserP
 		&i.EmailCoachingRemindersEnabled,
 		&i.FirstName,
 		&i.LastName,
+		&i.DisplayName,
 		&i.PushNotificationsEnabled,
 		&i.PushAssetUploadsEnabled,
 		&i.PushAssetReviewsEnabled,

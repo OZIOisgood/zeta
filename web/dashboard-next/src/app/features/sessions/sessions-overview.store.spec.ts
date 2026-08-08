@@ -46,6 +46,39 @@ describe('SessionsOverviewStore', () => {
     expect(store.cancelledBookings()).toHaveLength(1);
   });
 
+  it('keeps in-progress bookings with upcoming bookings and lists them first', async () => {
+    const now = Date.now();
+    const inProgress = booking('in-progress', 'done');
+    inProgress.scheduled_at = new Date(now - 15 * 60 * 1000).toISOString();
+    inProgress.duration_minutes = 45;
+    const future = booking('future', 'pending');
+    future.scheduled_at = new Date(now + 30 * 60 * 1000).toISOString();
+    const completed = booking('completed', 'done');
+    completed.scheduled_at = new Date(now - 90 * 60 * 1000).toISOString();
+    completed.duration_minutes = 45;
+
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: CoachingApiClient,
+          useValue: {
+            listAllMyBookings: () => of([future, completed, inProgress]),
+          },
+        },
+      ],
+    });
+
+    const store = TestBed.inject(SessionsOverviewStore);
+
+    await store.loadBookings();
+
+    expect(store.upcomingBookings().map((current) => current.id)).toEqual([
+      'in-progress',
+      'future',
+    ]);
+    expect(store.completedBookings().map((current) => current.id)).toEqual(['completed']);
+  });
+
   it('updates a booking after cancellation', async () => {
     const future = booking('booking-1', 'pending');
     future.scheduled_at = '2099-05-16T12:00:00Z';

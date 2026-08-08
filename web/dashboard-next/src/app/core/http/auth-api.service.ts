@@ -18,6 +18,7 @@ export type User = {
   email: string;
   first_name: string;
   last_name: string;
+  display_name?: string;
   language: string;
   avatar: string;
   timezone: string;
@@ -30,6 +31,7 @@ export type User = {
 export type UpdateUserRequest = {
   first_name: string;
   last_name: string;
+  display_name?: string;
   language: string;
   timezone: string;
   email_preferences: EmailPreferences;

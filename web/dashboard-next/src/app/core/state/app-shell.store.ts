@@ -11,7 +11,7 @@ type NavigationItem = {
   label: string;
   labelKey: string;
   href: string;
-  icon: 'home' | 'videos' | 'groups' | 'sessions' | 'reports-expert' | 'reports-student';
+  icon: 'home' | 'videos' | 'groups' | 'sessions' | 'reports-expert' | 'reports-student' | 'admin';
 };
 
 type WorkQueueItem = {
@@ -91,6 +91,13 @@ const initialState: AppShellState = {
       labelKey: 'common.nav.report',
       href: '/reports/students',
       icon: 'reports-student',
+    },
+    {
+      id: 'admin',
+      label: 'Admin',
+      labelKey: 'common.nav.admin',
+      href: '/admin',
+      icon: 'admin',
     },
   ],
   languages: DASHBOARD_LANGUAGES.map(({ value, label }) => ({ value, label })),
@@ -178,6 +185,7 @@ export const AppShellStore = signalStore(
         const segments = url.split('?')[0].split('/').filter(Boolean);
         const firstSegment = segments[0] ?? 'home';
         const sectionAliases: Record<string, string> = {
+          admin: 'admin',
           asset: 'videos',
           'upload-video': 'videos',
           'create-group': 'groups',

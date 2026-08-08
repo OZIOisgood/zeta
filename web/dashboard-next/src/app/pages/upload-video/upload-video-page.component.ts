@@ -15,6 +15,7 @@ import { tap } from 'rxjs/operators';
 import { AssetsApiClient } from '../../core/http/assets-api.service';
 import { SurgeService } from '../../core/http/surge.service';
 import { GroupsStore } from '../../features/groups/groups.store';
+import { VideosStore } from '../../features/videos/videos.store';
 import { ZBadgeComponent } from '../../shared/ui/badge/z-badge.component';
 import { ZBreadcrumbsComponent } from '../../shared/ui/breadcrumbs/z-breadcrumbs.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
@@ -348,6 +349,7 @@ type UploadPhase = 'idle' | 'uploading' | 'success' | 'error';
 })
 export class UploadVideoPageComponent {
   protected readonly groups = inject(GroupsStore);
+  private readonly videos = inject(VideosStore);
   private readonly assets = inject(AssetsApiClient);
   private readonly surge = inject(SurgeService);
   private readonly router = inject(Router);
@@ -458,7 +460,10 @@ export class UploadVideoPageComponent {
           forkJoin(uploads).subscribe({
             next: () => {
               this.assets.completeUpload(response.asset_id).subscribe({
-                next: () => this.uploadPhase.set('success'),
+                next: () => {
+                  void this.videos.refreshVideo(response.asset_id);
+                  this.uploadPhase.set('success');
+                },
                 error: (err: unknown) => {
                   this.uploadPhase.set('error');
                   this.uploadError.set(this.errorMessage(err));

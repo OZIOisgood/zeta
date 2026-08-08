@@ -266,14 +266,8 @@ export class HomePageComponent {
   });
 
   constructor() {
-    if (this.videos.status() === 'idle') {
-      void this.videos.loadVideos();
-    }
-    if (this.groups.status() === 'idle') {
-      void this.groups.loadGroups();
-    }
-    if (this.sessions.status() === 'idle') {
-      void this.sessions.loadBookings();
-    }
+    void this.videos.loadVideos();
+    void this.groups.loadGroups();
+    void this.sessions.loadBookings();
   }
 }

@@ -14,13 +14,13 @@ FROM user_preferences
 WHERE user_id = $1;
 
 -- name: SeedUserPreferences :one
-INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, display_name)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: SeedUserPreferencesWithAvatar :one
-INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, avatar)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO user_preferences (user_id, language, timezone, first_name, last_name, display_name, avatar)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: UpdateUserProfilePreferences :one
@@ -29,6 +29,7 @@ SET language   = $2,
     timezone   = $3,
     first_name = $4,
     last_name  = $5,
+    display_name = $6,
     updated_at = NOW()
 WHERE user_id = $1
 RETURNING *;

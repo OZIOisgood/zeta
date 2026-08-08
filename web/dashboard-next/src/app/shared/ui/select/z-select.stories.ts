@@ -23,6 +23,7 @@ const meta: Meta<ZSelectComponent> = {
     placeholder: 'Select a group',
     value: undefined,
     disabled: false,
+    tone: 'light',
   },
   render: (args) => ({
     props: args,
@@ -33,6 +34,7 @@ const meta: Meta<ZSelectComponent> = {
           [placeholder]="placeholder"
           [value]="value"
           [disabled]="disabled"
+          [tone]="tone"
         />
       </div>
     `,
@@ -74,4 +76,25 @@ export const Disabled: Story = {
   args: {
     disabled: true,
   },
+};
+
+export const Dark: Story = {
+  args: {
+    value: 'academy',
+    tone: 'dark',
+  },
+  render: (args) => ({
+    props: args,
+    template: `
+      <div class="max-w-sm bg-stone-950 p-6">
+        <z-select
+          [options]="options"
+          [placeholder]="placeholder"
+          [value]="value"
+          [disabled]="disabled"
+          [tone]="tone"
+        />
+      </div>
+    `,
+  }),
 };

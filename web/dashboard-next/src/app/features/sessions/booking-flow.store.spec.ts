@@ -7,6 +7,7 @@ import {
 } from '../../core/http/coaching-api.service';
 import { GroupsApiClient } from '../../core/http/groups-api.service';
 import { BookingFlowStore, localDateKey } from './booking-flow.store';
+import { SessionsOverviewStore } from './sessions-overview.store';
 
 const slot = (startsAt: string): CoachingSlot => ({
   expert_id: 'expert-1',
@@ -84,6 +85,7 @@ describe('BookingFlowStore', () => {
     });
 
     const store = TestBed.inject(BookingFlowStore);
+    const sessionsOverview = TestBed.inject(SessionsOverviewStore);
 
     await store.createBooking('group-1', {
       expert_id: 'expert-1',
@@ -91,6 +93,7 @@ describe('BookingFlowStore', () => {
       scheduled_at: booking.scheduled_at,
     });
     expect(store.booking()).toEqual(booking);
+    expect(sessionsOverview.upcomingBookings()).toEqual([booking]);
 
     store.resetBooking();
 

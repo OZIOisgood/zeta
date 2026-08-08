@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/OZIOisgood/zeta/internal/auth"
 	"github.com/OZIOisgood/zeta/internal/db"
@@ -137,17 +138,24 @@ type GroupInfo struct {
 	Avatar string `json:"avatar,omitempty"`
 }
 
+type StudentInfo struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar,omitempty"`
+}
+
 type AssetItem struct {
-	ID          string      `json:"id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	OwnerID     string      `json:"owner_id"`
-	Status      string      `json:"status"`
-	Thumbnail   string      `json:"thumbnail,omitempty"`
-	PlaybackID  string      `json:"playback_id,omitempty"`
-	ReviewCount int64       `json:"review_count"`
-	Videos      []VideoItem `json:"videos,omitempty"`
-	Group       *GroupInfo  `json:"group,omitempty"`
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	OwnerID     string       `json:"owner_id"`
+	Status      string       `json:"status"`
+	Thumbnail   string       `json:"thumbnail,omitempty"`
+	PlaybackID  string       `json:"playback_id,omitempty"`
+	ReviewCount int64        `json:"review_count"`
+	Videos      []VideoItem  `json:"videos,omitempty"`
+	Group       *GroupInfo   `json:"group,omitempty"`
+	Student     *StudentInfo `json:"student,omitempty"`
 }
 
 type VideoItem struct {
@@ -355,6 +363,23 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	studentName := strings.TrimSpace(asset.StudentDisplayName.String)
+	if studentName == "" {
+		studentName = preferences.DefaultDisplayName(
+			asset.StudentFirstName.String,
+			asset.StudentLastName.String,
+		)
+	}
+	studentAvatar := ""
+	if asset.StudentAvatar.Valid {
+		studentAvatar = asset.StudentAvatar.String
+	}
+	student := &StudentInfo{
+		ID:     asset.OwnerID,
+		Name:   studentName,
+		Avatar: studentAvatar,
+	}
+
 	resp := AssetItem{
 		ID:          pgutil.UUIDToString(asset.ID),
 		Title:       asset.Name,
@@ -365,6 +390,7 @@ func (h *Handler) GetAsset(w http.ResponseWriter, r *http.Request) {
 		PlaybackID:  currentPlaybackID,
 		Videos:      videos,
 		Group:       group,
+		Student:     student,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -804,6 +830,20 @@ func (h *Handler) FinalizeAsset(w http.ResponseWriter, r *http.Request) {
 			slog.Any("err", err),
 		)
 		http.Error(w, "Video not found", http.StatusNotFound)
+		return
+	}
+
+	recordingStillOpen, err := h.q.IsRecordingAssetStillOpen(ctx, assetID)
+	if err != nil {
+		log.ErrorContext(ctx, "finalize_asset_recording_state_failed",
+			slog.String("component", "assets"), slog.String("asset_id", idStr), slog.Any("err", err))
+		http.Error(w, "Failed to check recording state", http.StatusInternalServerError)
+		return
+	}
+	if recordingStillOpen {
+		log.WarnContext(ctx, "finalize_asset_rejected_recording_open",
+			slog.String("component", "assets"), slog.String("asset_id", idStr))
+		http.Error(w, "Cannot mark video as reviewed while recording parts are still being prepared", http.StatusConflict)
 		return
 	}
 

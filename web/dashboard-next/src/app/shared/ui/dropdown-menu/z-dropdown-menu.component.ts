@@ -1,7 +1,7 @@
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import {
-  LucideChevronDown,
+  LucideChevronRight,
   LucideCircleHelp,
   LucideExternalLink,
   LucideFileText,
@@ -30,7 +30,7 @@ export type ZDropdownMenuItem = {
     NgpMenu,
     NgpMenuItem,
     NgpMenuTrigger,
-    LucideChevronDown,
+    LucideChevronRight,
     LucideCircleHelp,
     LucideExternalLink,
     LucideFileText,
@@ -52,7 +52,11 @@ export type ZDropdownMenuItem = {
     >
       <ng-container [ngTemplateOutlet]="triggerIconTemplate" />
       <span class="min-w-0 flex-1 truncate">{{ label() }}</span>
-      <svg lucideChevronDown class="size-4 shrink-0" aria-hidden="true"></svg>
+      <svg
+        lucideChevronRight
+        class="z-dropdown-menu-chevron size-4 shrink-0"
+        aria-hidden="true"
+      ></svg>
     </button>
 
     <ng-template #triggerIconTemplate>
@@ -137,6 +141,14 @@ export type ZDropdownMenuItem = {
     </ng-template>
   `,
   styles: `
+    .z-dropdown-menu-chevron {
+      transition: transform 150ms ease;
+    }
+
+    button[data-open] .z-dropdown-menu-chevron {
+      transform: rotate(90deg);
+    }
+
     [ngpMenu] {
       position: absolute;
       box-sizing: border-box;

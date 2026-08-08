@@ -26,6 +26,7 @@ import (
 	"github.com/OZIOisgood/zeta/internal/invitations"
 	"github.com/OZIOisgood/zeta/internal/llm"
 	"github.com/OZIOisgood/zeta/internal/logger"
+	"github.com/OZIOisgood/zeta/internal/moderation"
 	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/OZIOisgood/zeta/internal/push"
 	"github.com/OZIOisgood/zeta/internal/reports"
@@ -125,6 +126,12 @@ func (s *Server) routes(ctx context.Context) {
 		s.Logger,
 		feedback.HandlerConfig{DiscordChannelID: os.Getenv("DISCORD_FEEDBACK_FORUM_CHANNEL_ID")},
 	)
+	moderationHandler := moderation.NewHandler(
+		queries,
+		discordPoster,
+		s.Logger,
+		moderation.HandlerConfig{DiscordChannelID: os.Getenv("DISCORD_MODERATION_REPORTS_FORUM_CHANNEL_ID")},
+	)
 	inboundEmailHandler := inboundemail.NewHandler(
 		queries,
 		inboundemail.NewResendProvider(os.Getenv("RESEND_API_KEY")),
@@ -168,7 +175,7 @@ func (s *Server) routes(ctx context.Context) {
 			CustomerID:         os.Getenv("AGORA_REST_CUSTOMER_ID"),
 			CustomerSecret:     os.Getenv("AGORA_REST_CUSTOMER_SECRET"),
 			BaseURL:            os.Getenv("AGORA_CLOUD_RECORDING_BASE_URL"),
-			Mode:               envOrDefault(os.Getenv("AGORA_RECORDING_MODE"), "mix"),
+			Mode:               envOrDefault(os.Getenv("AGORA_RECORDING_MODE"), "web"),
 			StorageVendor:      parseIntOrDefault(os.Getenv("AGORA_RECORDING_STORAGE_VENDOR"), 1),
 			StorageRegion:      parseIntOrDefault(os.Getenv("AGORA_RECORDING_STORAGE_REGION"), 0),
 			StorageBucket:      os.Getenv("AGORA_RECORDING_STORAGE_BUCKET"),
@@ -195,16 +202,21 @@ func (s *Server) routes(ctx context.Context) {
 		}
 	}
 	coachingHandler := coaching.NewHandler(queries, s.Pool, emailService, workosClient, s.Logger, coaching.HandlerConfig{
-		AgoraAppID:          os.Getenv("AGORA_APP_ID"),
-		AgoraAppCertificate: os.Getenv("AGORA_APP_CERTIFICATE"),
-		RecordingEnabled:    recordingEnabled,
-		RecordingClient:     recordingClient,
-		RecordingStore:      recordingStore,
-		RecordingMux:        muxClient,
-		AppBaseURL:          frontendBaseURL(),
-		MinBookingNotice:    parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
-		CancellationNotice:  parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
-		ConnectWindow:       parseDurationOrDefault(os.Getenv("CONNECT_WINDOW"), 15*time.Minute),
+		AgoraAppID:           os.Getenv("AGORA_APP_ID"),
+		AgoraAppCertificate:  os.Getenv("AGORA_APP_CERTIFICATE"),
+		RecordingEnabled:     recordingEnabled,
+		RecordingClient:      recordingClient,
+		RecordingStore:       recordingStore,
+		RecordingMux:         muxClient,
+		RecordingEmptyGrace:  parseDurationOrDefault(os.Getenv("AGORA_RECORDING_EMPTY_GRACE"), 60*time.Second),
+		RecordingPresenceTTL: parseDurationOrDefault(os.Getenv("AGORA_RECORDING_PRESENCE_TTL"), 30*time.Second),
+		RecordingEndGrace:    parseDurationOrDefault(os.Getenv("AGORA_RECORDING_END_GRACE"), 15*time.Minute),
+		AppBaseURL:           frontendBaseURL(),
+		MinBookingNotice:     parseDurationOrDefault(os.Getenv("MIN_BOOKING_NOTICE"), 2*time.Hour),
+		CancellationNotice:   parseDurationOrDefault(os.Getenv("CANCELLATION_NOTICE"), 1*time.Hour),
+		ConnectWindow:        parseDurationOrDefault(os.Getenv("CONNECT_WINDOW"), 15*time.Minute),
+		MinSessionDuration:   int32(parseIntOrDefault(os.Getenv("MIN_SESSION_DURATION_MINUTES"), 15)),
+		SessionDurationStep:  int32(parseIntOrDefault(os.Getenv("SESSION_DURATION_STEP_MINUTES"), 5)),
 	})
 
 	// Global Middleware
@@ -217,6 +229,8 @@ func (s *Server) routes(ctx context.Context) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 	s.Router.Post("/webhooks/resend", inboundEmailHandler.Webhook)
+	s.Router.Post("/public/coaching/recording-renderer/exchange", coachingHandler.ExchangeRecordingRendererCapability)
+	s.Router.Post("/public/coaching/recording-renderer/ready", coachingHandler.MarkRecordingRendererReady)
 	s.Router.Route("/contact", contactHandler.RegisterRoutes)
 
 	// Auth Routes
@@ -281,6 +295,7 @@ func (s *Server) routes(ctx context.Context) {
 			})
 			r.Route("/notifications", notificationsHandler.RegisterRoutes)
 			r.Route("/feedback", feedbackHandler.RegisterRoutes)
+			r.Route("/moderation", moderationHandler.RegisterRoutes)
 			reportsHandler.RegisterRoutes(r)
 			coachingHandler.RegisterRoutes(r)
 			devicesHandler.RegisterRoutes(r)

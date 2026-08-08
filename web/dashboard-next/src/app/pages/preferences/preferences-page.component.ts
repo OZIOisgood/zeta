@@ -29,6 +29,7 @@ type PreferencesTab = 'personal-data' | 'email-preferences' | 'expert-access' | 
 type PreferencesFormValue = {
   first_name: string;
   last_name: string;
+  display_name: string;
   language: DashboardLanguage;
   timezone: string;
   avatar: string | null;
@@ -162,6 +163,37 @@ const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
                       />
                     }
                   </label>
+
+                  @if (isStudent()) {
+                    <div class="grid gap-2">
+                      <z-field-label
+                        [label]="'preferences.displayName' | transloco"
+                        [control]="form.controls.display_name"
+                        [hint]="'preferences.displayNameHelp' | transloco"
+                        [hintAriaLabel]="'preferences.displayName' | transloco"
+                      />
+                      <z-text-input
+                        formControlName="display_name"
+                        autocomplete="nickname"
+                        [ariaLabel]="'preferences.displayName' | transloco"
+                        ariaDescribedBy="preferences-display-name-error"
+                        [invalid]="
+                          (form.controls.display_name.dirty ||
+                            form.controls.display_name.touched) &&
+                          form.controls.display_name.invalid
+                        "
+                      />
+                      @if (
+                        (form.controls.display_name.dirty || form.controls.display_name.touched) &&
+                        form.controls.display_name.invalid
+                      ) {
+                        <z-field-error
+                          id="preferences-display-name-error"
+                          [message]="'preferences.displayNameRequired' | transloco"
+                        />
+                      }
+                    </div>
+                  }
 
                   <label class="grid gap-2">
                     <z-field-label
@@ -398,6 +430,10 @@ export class PreferencesPageComponent {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/)],
     }),
+    display_name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(/\S/)],
+    }),
     language: new FormControl<DashboardLanguage>('en', {
       nonNullable: true,
       validators: [Validators.required],
@@ -430,6 +466,7 @@ export class PreferencesPageComponent {
   protected readonly canManageInviteCodes = computed(() => {
     return this.session.hasPermission('access:invite-codes:read');
   });
+  protected readonly isStudent = computed(() => this.session.user()?.role === 'student');
   protected readonly tabOptions = computed(() => {
     this._translationEvents();
 
@@ -499,6 +536,7 @@ export class PreferencesPageComponent {
       const formValue = {
         first_name: user.first_name,
         last_name: user.last_name,
+        display_name: user.display_name || this.defaultDisplayName(user.first_name, user.last_name),
         language: DASHBOARD_LANGUAGES.some((language) => language.value === user.language)
           ? (user.language as DashboardLanguage)
           : 'en',
@@ -564,6 +602,7 @@ export class PreferencesPageComponent {
     const user = await this.session.updateCurrentUser({
       first_name: rawValue.first_name,
       last_name: rawValue.last_name,
+      display_name: rawValue.display_name,
       language: rawValue.language,
       timezone: rawValue.timezone,
       email_preferences: rawValue.email_preferences,
@@ -600,6 +639,7 @@ export class PreferencesPageComponent {
     return {
       first_name: value.first_name.trim(),
       last_name: value.last_name.trim(),
+      display_name: value.display_name.trim(),
       language: value.language,
       timezone: value.timezone,
       avatar: value.avatar ?? null,
@@ -611,6 +651,7 @@ export class PreferencesPageComponent {
     return (
       left.first_name === right.first_name &&
       left.last_name === right.last_name &&
+      left.display_name === right.display_name &&
       left.language === right.language &&
       left.timezone === right.timezone &&
       left.avatar === right.avatar &&
@@ -633,5 +674,14 @@ export class PreferencesPageComponent {
     } catch {
       return timezone;
     }
+  }
+
+  private defaultDisplayName(firstName: string, lastName: string): string {
+    const first = firstName.trim();
+    const last = lastName.trim();
+    if (first && last) {
+      return `${first} ${last.charAt(0).toUpperCase()}.`;
+    }
+    return first || (last ? `${last.charAt(0).toUpperCase()}.` : 'User');
   }
 }

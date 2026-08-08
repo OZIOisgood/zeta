@@ -31,6 +31,7 @@ resource "google_cloud_run_v2_service" "app" {
     # The deploy workflow sets the image, env vars, secrets, volumes, and client
     # metadata via gcloud. Terraform only manages the service skeleton + scaling.
     ignore_changes = [
+      scaling,
       template[0].containers,
       template[0].volumes,
       client,

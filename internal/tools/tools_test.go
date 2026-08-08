@@ -40,4 +40,3 @@ func TestNegotiateLanguage(t *testing.T) {
 		})
 	}
 }
-

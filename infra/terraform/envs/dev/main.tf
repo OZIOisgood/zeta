@@ -126,9 +126,10 @@ module "cloud_run_dashboard_dev" {
 module "github_wif" {
   source = "../../modules/github-wif"
 
-  project_id  = var.project_id
-  github_repo = "OZIOisgood/zeta"
-  environment = "dev"
+  project_id              = var.project_id
+  github_repo             = "OZIOisgood/zeta"
+  environment             = "dev"
+  grant_monitoring_editor = true
 }
 
 module "cloud_sql" {
@@ -256,7 +257,7 @@ resource "google_cloud_scheduler_job" "coaching_reminders" {
 resource "google_cloud_scheduler_job" "coaching_recordings_cleanup" {
   name             = "coaching-recordings-cleanup"
   region           = var.region
-  schedule         = "*/5 * * * *"
+  schedule         = "* * * * *"
   time_zone        = "UTC"
   attempt_deadline = "30s"
   depends_on       = [module.github_wif]

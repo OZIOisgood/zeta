@@ -452,33 +452,48 @@ type CoachingBlockedSlot struct {
 }
 
 type CoachingBooking struct {
-	ID                 pgtype.UUID        `json:"id"`
-	ExpertID           string             `json:"expert_id"`
-	StudentID          string             `json:"student_id"`
-	GroupID            pgtype.UUID        `json:"group_id"`
-	SessionTypeID      pgtype.UUID        `json:"session_type_id"`
-	ScheduledAt        pgtype.Timestamptz `json:"scheduled_at"`
-	DurationMinutes    int32              `json:"duration_minutes"`
-	IsCancelled        bool               `json:"is_cancelled"`
-	CancellationReason pgtype.Text        `json:"cancellation_reason"`
-	CancelledBy        pgtype.Text        `json:"cancelled_by"`
-	Notes              pgtype.Text        `json:"notes"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	ID                      pgtype.UUID        `json:"id"`
+	ExpertID                string             `json:"expert_id"`
+	StudentID               string             `json:"student_id"`
+	GroupID                 pgtype.UUID        `json:"group_id"`
+	SessionTypeID           pgtype.UUID        `json:"session_type_id"`
+	ScheduledAt             pgtype.Timestamptz `json:"scheduled_at"`
+	DurationMinutes         int32              `json:"duration_minutes"`
+	IsCancelled             bool               `json:"is_cancelled"`
+	CancellationReason      pgtype.Text        `json:"cancellation_reason"`
+	CancelledBy             pgtype.Text        `json:"cancelled_by"`
+	Notes                   pgtype.Text        `json:"notes"`
+	CreatedAt               pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt               pgtype.Timestamptz `json:"updated_at"`
+	RecordingAssetID        pgtype.UUID        `json:"recording_asset_id"`
+	NextRecordingPartNumber int32              `json:"next_recording_part_number"`
+}
+
+type CoachingBookingPresence struct {
+	BookingID       pgtype.UUID        `json:"booking_id"`
+	ParticipantRole string             `json:"participant_role"`
+	ConnectionID    pgtype.UUID        `json:"connection_id"`
+	LastSeenAt      pgtype.Timestamptz `json:"last_seen_at"`
 }
 
 type CoachingBookingRecording struct {
-	BookingID  pgtype.UUID             `json:"booking_id"`
-	Status     CoachingRecordingStatus `json:"status"`
-	ResourceID pgtype.Text             `json:"resource_id"`
-	Sid        pgtype.Text             `json:"sid"`
-	Uid        pgtype.Text             `json:"uid"`
-	FilePrefix []string                `json:"file_prefix"`
-	StartedAt  pgtype.Timestamptz      `json:"started_at"`
-	StoppedAt  pgtype.Timestamptz      `json:"stopped_at"`
-	Error      pgtype.Text             `json:"error"`
-	CreatedAt  pgtype.Timestamptz      `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz      `json:"updated_at"`
+	BookingID              pgtype.UUID             `json:"booking_id"`
+	Status                 CoachingRecordingStatus `json:"status"`
+	ProviderResourceID     pgtype.Text             `json:"provider_resource_id"`
+	ProviderRecordingID    pgtype.Text             `json:"provider_recording_id"`
+	ProviderUid            pgtype.Text             `json:"provider_uid"`
+	OutputPrefix           []string                `json:"output_prefix"`
+	StartedAt              pgtype.Timestamptz      `json:"started_at"`
+	StoppedAt              pgtype.Timestamptz      `json:"stopped_at"`
+	Error                  pgtype.Text             `json:"error"`
+	CreatedAt              pgtype.Timestamptz      `json:"created_at"`
+	UpdatedAt              pgtype.Timestamptz      `json:"updated_at"`
+	ID                     pgtype.UUID             `json:"id"`
+	PartNumber             int32                   `json:"part_number"`
+	Provider               string                  `json:"provider"`
+	RendererTokenHash      []byte                  `json:"renderer_token_hash"`
+	RendererTokenExpiresAt pgtype.Timestamptz      `json:"renderer_token_expires_at"`
+	EmptySinceAt           pgtype.Timestamptz      `json:"empty_since_at"`
 }
 
 type CoachingBookingReminder struct {
@@ -490,12 +505,10 @@ type CoachingBookingReminder struct {
 }
 
 type CoachingRecordingImport struct {
-	BookingID     pgtype.UUID                   `json:"booking_id"`
 	Status        CoachingRecordingImportStatus `json:"status"`
 	GcsObjectName pgtype.Text                   `json:"gcs_object_name"`
 	MuxAssetID    pgtype.Text                   `json:"mux_asset_id"`
 	MuxPlaybackID pgtype.Text                   `json:"mux_playback_id"`
-	AssetID       pgtype.UUID                   `json:"asset_id"`
 	VideoID       pgtype.UUID                   `json:"video_id"`
 	Attempts      int32                         `json:"attempts"`
 	LastAttemptAt pgtype.Timestamptz            `json:"last_attempt_at"`
@@ -503,6 +516,9 @@ type CoachingRecordingImport struct {
 	Error         pgtype.Text                   `json:"error"`
 	CreatedAt     pgtype.Timestamptz            `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz            `json:"updated_at"`
+	ID            pgtype.UUID                   `json:"id"`
+	RecordingID   pgtype.UUID                   `json:"recording_id"`
+	FileIndex     int32                         `json:"file_index"`
 }
 
 type CoachingSessionType struct {
@@ -603,6 +619,32 @@ type LandingContactSubmission struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ModerationReport struct {
+	ID                  pgtype.UUID        `json:"id"`
+	ReporterUserID      string             `json:"reporter_user_id"`
+	ReporterDisplayName string             `json:"reporter_display_name"`
+	SubjectType         string             `json:"subject_type"`
+	TargetReviewID      pgtype.UUID        `json:"target_review_id"`
+	TargetVideoID       pgtype.UUID        `json:"target_video_id"`
+	TargetUserID        string             `json:"target_user_id"`
+	TargetDisplayName   string             `json:"target_display_name"`
+	TargetReviewContent string             `json:"target_review_content"`
+	Reason              string             `json:"reason"`
+	Details             string             `json:"details"`
+	PageUrl             string             `json:"page_url"`
+	UserAgent           string             `json:"user_agent"`
+	Status              string             `json:"status"`
+	ResolvedByUserID    string             `json:"resolved_by_user_id"`
+	ResolvedAt          pgtype.Timestamptz `json:"resolved_at"`
+	DiscordStatus       string             `json:"discord_status"`
+	DiscordChannelID    string             `json:"discord_channel_id"`
+	DiscordThreadID     string             `json:"discord_thread_id"`
+	DiscordMessageID    string             `json:"discord_message_id"`
+	DiscordError        string             `json:"discord_error"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Notification struct {
 	ID          pgtype.UUID        `json:"id"`
 	RecipientID string             `json:"recipient_id"`
@@ -661,6 +703,7 @@ type UserPreference struct {
 	EmailCoachingRemindersEnabled      bool             `json:"email_coaching_reminders_enabled"`
 	FirstName                          string           `json:"first_name"`
 	LastName                           string           `json:"last_name"`
+	DisplayName                        string           `json:"display_name"`
 	PushNotificationsEnabled           bool             `json:"push_notifications_enabled"`
 	PushAssetUploadsEnabled            bool             `json:"push_asset_uploads_enabled"`
 	PushAssetReviewsEnabled            bool             `json:"push_asset_reviews_enabled"`
@@ -679,6 +722,7 @@ type Video struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 	DurationSeconds pgtype.Float8      `json:"duration_seconds"`
+	SortOrder       pgtype.Int4        `json:"sort_order"`
 }
 
 type VideoReview struct {

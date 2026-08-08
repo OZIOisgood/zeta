@@ -32,7 +32,10 @@
       "uploadVideo": "Upload video",
       "viewAll": "View all",
       "retry": "Retry",
-      "changePhoto": "Change photo"
+      "changePhoto": "Change photo",
+      "report": "Report",
+      "send": "Send",
+      "watch": "Watch"
     },
     "aria": {
       "appLogo": "App logo",
@@ -85,7 +88,8 @@
       "report": "Report",
       "sessions": "Sessions",
       "videos": "Videos",
-      "inviteCodes": "Expert invitations"
+      "inviteCodes": "Expert invitations",
+      "admin": "Admin"
     },
     "status": {
       "cancelled": "Cancelled",
@@ -356,8 +360,16 @@
       "videoPart": "Part {{count}}",
       "noVideoParts": "No video parts are attached yet.",
       "reviewPlaceholder": "Timestamped review comments, editing, and finalization controls will be deepened in the next video-review slice.",
-      "commentsFailed": "Comments could not be loaded."
-    }
+      "commentsFailed": "Comments could not be loaded.",
+      "status": {
+        "waiting_upload": "Waiting for upload",
+        "ready": "Ready",
+        "failed": "Upload failed"
+      }
+    },
+    "commentTimestampHint": "This comment will be pinned to this moment in the video",
+    "commentAdded": "Comment added",
+    "commentAddFailed": "Comment could not be added. Please try again."
   },
   "groups": {
     "myGroups": "My groups",
@@ -465,7 +477,8 @@
       "removeUser": "Remove user",
       "confirmRemove": "Are you sure you want to remove {{name}} from this group?",
       "removed": "{{name}} has been removed from the group",
-      "removeFailed": "Failed to remove user"
+      "removeFailed": "Failed to remove user",
+      "namePending": "No name yet"
     },
     "phase4": {
       "summary": "Browse coaching groups, open group pages, and prepare invitations.",
@@ -683,7 +696,29 @@
       "permissionBody": "Camera and microphone access are required for live coaching sessions.",
       "grantCamera": "Grant camera access",
       "grantMicrophone": "Grant microphone access",
-      "switchCamera": "Switch camera"
+      "switchCamera": "Switch camera",
+      "noMicrophone": "No microphone available",
+      "noCamera": "No camera available",
+      "devicesOptional": "You are in the call. Camera and microphone are optional.",
+      "enableDevices": "Enable camera and microphone",
+      "permissionDenied": "Browser access was denied. Allow camera or microphone access in the browser settings and try again.",
+      "deviceMissing": "No camera or microphone was found.",
+      "deviceBusy": "Another app is using the camera or microphone.",
+      "unsupported": "This browser cannot use the camera or microphone here.",
+      "publishFailed": "The device opened, but could not be sent to the call. Try again.",
+      "mediaFailed": "The camera or microphone could not be started. Try again.",
+      "endsIn": "Ends in {{time}}",
+      "overtime": "Overtime +{{time}}",
+      "reconnecting": "Reconnecting…",
+      "cameraOff": "Camera off",
+      "participantLeft": "Left the session",
+      "waitingShort": "Waiting to join…"
+    },
+    "columns": {
+      "session": "Session",
+      "participant": "Participant",
+      "status": "Status",
+      "actions": "Actions"
     }
   },
   "preferences": {
@@ -737,7 +772,10 @@
       "fr": "French"
     },
     "emailHint": "Used to sign in.",
-    "expertAccess": "Become an expert"
+    "expertAccess": "Become an expert",
+    "displayName": "Display name",
+    "displayNameHelp": "Shown to other students instead of your real name.",
+    "displayNameRequired": "Display name is required."
   },
   "avatar": {
     "selectImage": "Select image",
@@ -909,6 +947,82 @@
       "upgrading": "Activating...",
       "invalidCode": "This expert code is invalid, unavailable, or has already been used.",
       "success": "Your account now has expert access."
+    }
+  },
+  "moderation": {
+    "report": {
+      "dialog": {
+        "title": "Report",
+        "description": "Report a comment or the person who wrote it. Target: {{name}}."
+      },
+      "subject": {
+        "reviewComment": "Comment",
+        "user": "User"
+      },
+      "reason": {
+        "harassment": "Harassment",
+        "spam": "Spam",
+        "inappropriateContent": "Inappropriate content",
+        "other": "Other"
+      },
+      "fields": {
+        "subject": "What are you reporting?",
+        "reason": "Reason",
+        "details": "Details (optional)",
+        "detailsPlaceholder": "Add context for the moderation team."
+      },
+      "actions": {
+        "send": "Send report"
+      },
+      "toast": {
+        "successTitle": "Report sent",
+        "successMessage": "Thanks. The moderation team will review it.",
+        "errorTitle": "Could not send report",
+        "errorMessage": "Please try again."
+      }
+    },
+    "admin": {
+      "title": "Report inbox",
+      "description": "Review comment and user reports from the dashboard.",
+      "filters": {
+        "status": "Status",
+        "subject": "Subject",
+        "allStatuses": "All statuses",
+        "allSubjects": "All subjects"
+      },
+      "statuses": {
+        "open": "Open",
+        "resolved": "Resolved",
+        "rejected": "Rejected"
+      },
+      "dashboard": {
+        "title": "Latest reports",
+        "description": "Newest moderation reports across comments and users.",
+        "openReports": "Open reports",
+        "viewReports": "View inbox",
+        "emptyTitle": "No reports yet",
+        "emptyDescription": "Reports will appear here after users submit them."
+      },
+      "reporter": "Reporter",
+      "target": "Target",
+      "videoId": "Video ID",
+      "commentId": "Comment ID",
+      "reportedComment": "Reported comment",
+      "reporterDetails": "Reporter details",
+      "noReportedComment": "No reported comment captured.",
+      "noDetails": "No extra details provided.",
+      "unknown": "Unknown",
+      "status": "Status",
+      "emptyTitle": "No reports",
+      "emptyDescription": "Reports that match the current filters will appear here.",
+      "errorTitle": "Could not load reports",
+      "errorDescription": "Refresh the page or try again in a moment.",
+      "toast": {
+        "savedTitle": "Report updated",
+        "savedMessage": "The moderation status was saved.",
+        "errorTitle": "Could not update report",
+        "errorMessage": "Please try again."
+      }
     }
   }
 }

@@ -43,6 +43,15 @@ body {
   box-sizing: border-box;
 }
 
+[ngpTooltip] {
+  position: absolute;
+}
+
+[ngpSelectDropdown],
+[ngpMenu] {
+  position: absolute;
+}
+
 @keyframes z-shimmer {
   100% {
     transform: translateX(100%);
@@ -67,6 +76,10 @@ body {
 
 .z-list-enter {
   animation: z-list-in 220ms ease-out;
+}
+
+.z-comment-composer-enter {
+  animation: z-comment-composer-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .z-pop-enter {
@@ -117,6 +130,13 @@ body {
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+
+@keyframes z-comment-composer-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
 }
 

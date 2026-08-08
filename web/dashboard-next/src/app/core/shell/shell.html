@@ -35,6 +35,9 @@
               @case ('groups') {
                 <svg lucideUsers class="size-4" aria-hidden="true"></svg>
               }
+              @case ('admin') {
+                <svg lucideShieldAlert class="size-4" aria-hidden="true"></svg>
+              }
               @case ('reports-expert') {
                 <svg lucideChartColumn class="size-4" aria-hidden="true"></svg>
               }
@@ -276,6 +279,9 @@
                     @case ('groups') {
                       <svg lucideUsers class="size-4" aria-hidden="true"></svg>
                     }
+                    @case ('admin') {
+                      <svg lucideShieldAlert class="size-4" aria-hidden="true"></svg>
+                    }
                     @case ('reports-expert') {
                       <svg lucideChartColumn class="size-4" aria-hidden="true"></svg>
                     }
@@ -390,7 +396,7 @@
 
       @if (shell.isToastVisible()) {
         <div
-          class="fixed bottom-4 right-4 z-50 w-[min(24rem,calc(100vw-2rem))]"
+          class="fixed bottom-4 right-4 z-[1000] w-[min(24rem,calc(100vw-2rem))]"
           animate.enter="z-toast-enter"
           animate.leave="z-toast-leave"
         >

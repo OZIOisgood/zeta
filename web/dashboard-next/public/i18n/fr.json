@@ -32,7 +32,10 @@
       "uploadVideo": "Téléverser une vidéo",
       "viewAll": "Voir tout",
       "retry": "Réessayer",
-      "changePhoto": "Changer la photo"
+      "changePhoto": "Changer la photo",
+      "report": "Signaler",
+      "send": "Envoyer",
+      "watch": "Regarder"
     },
     "aria": {
       "appLogo": "Logo de l'application",
@@ -85,7 +88,8 @@
       "report": "Rapport",
       "sessions": "Séances",
       "videos": "Vidéos",
-      "inviteCodes": "Invitations d’experts"
+      "inviteCodes": "Invitations d’experts",
+      "admin": "Admin"
     },
     "status": {
       "cancelled": "annulé",
@@ -356,8 +360,16 @@
       "videoPart": "Partie {{count}}",
       "noVideoParts": "Aucune partie vidéo n’est encore attachée.",
       "reviewPlaceholder": "Les commentaires horodatés, l’édition et la finalisation seront approfondis dans la prochaine tranche de révision vidéo.",
-      "commentsFailed": "Impossible de charger les commentaires."
-    }
+      "commentsFailed": "Impossible de charger les commentaires.",
+      "status": {
+        "waiting_upload": "En attente de l’envoi",
+        "ready": "Prête",
+        "failed": "Échec de l’envoi"
+      }
+    },
+    "commentTimestampHint": "Ce commentaire sera associé à cet instant de la vidéo",
+    "commentAdded": "Commentaire ajouté",
+    "commentAddFailed": "Impossible d’ajouter le commentaire. Veuillez réessayer."
   },
   "groups": {
     "myGroups": "Mes groupes",
@@ -465,7 +477,8 @@
       "removeUser": "Retirer l'utilisateur",
       "confirmRemove": "Êtes-vous sûr de vouloir retirer {{name}} de ce groupe ?",
       "removed": "{{name}} a été retiré du groupe",
-      "removeFailed": "Échec du retrait de l'utilisateur"
+      "removeFailed": "Échec du retrait de l'utilisateur",
+      "namePending": "Sans nom pour le moment"
     },
     "phase4": {
       "summary": "Parcourez les groupes de coaching, ouvrez les pages de groupe et préparez les invitations.",
@@ -683,7 +696,29 @@
       "permissionBody": "L'accès à la caméra et au microphone est requis pour les séances de coaching en direct.",
       "grantCamera": "Autoriser la caméra",
       "grantMicrophone": "Autoriser le microphone",
-      "switchCamera": "Changer de caméra"
+      "switchCamera": "Changer de caméra",
+      "noMicrophone": "Aucun microphone disponible",
+      "noCamera": "Aucune caméra disponible",
+      "devicesOptional": "Vous êtes dans l’appel. La caméra et le microphone sont facultatifs.",
+      "enableDevices": "Activer la caméra et le microphone",
+      "permissionDenied": "L’accès du navigateur a été refusé. Autorisez la caméra ou le microphone dans les réglages puis réessayez.",
+      "deviceMissing": "Aucune caméra ni aucun microphone n’a été trouvé.",
+      "deviceBusy": "Une autre application utilise la caméra ou le microphone.",
+      "unsupported": "Ce navigateur ne peut pas utiliser la caméra ou le microphone ici.",
+      "publishFailed": "L’appareil a été ouvert mais n’a pas pu être envoyé dans l’appel. Réessayez.",
+      "mediaFailed": "La caméra ou le microphone n’a pas pu démarrer. Réessayez.",
+      "endsIn": "Se termine dans {{time}}",
+      "overtime": "Temps supplémentaire +{{time}}",
+      "reconnecting": "Reconnexion…",
+      "cameraOff": "Caméra désactivée",
+      "participantLeft": "A quitté la session",
+      "waitingShort": "En attente…"
+    },
+    "columns": {
+      "session": "Séance",
+      "participant": "Participant",
+      "status": "Statut",
+      "actions": "Actions"
     }
   },
   "preferences": {
@@ -737,7 +772,10 @@
       "fr": "Français"
     },
     "emailHint": "Utilisé pour la connexion.",
-    "expertAccess": "Devenir expert"
+    "expertAccess": "Devenir expert",
+    "displayName": "Nom d'affichage",
+    "displayNameHelp": "Affiché aux autres élèves à la place de votre vrai nom.",
+    "displayNameRequired": "Le nom d'affichage est obligatoire."
   },
   "avatar": {
     "selectImage": "Sélectionner une image",
@@ -909,6 +947,82 @@
       "upgrading": "Activation...",
       "invalidCode": "Ce code expert est invalide, indisponible ou a déjà été utilisé.",
       "success": "Votre compte dispose maintenant de l’accès expert."
+    }
+  },
+  "moderation": {
+    "report": {
+      "dialog": {
+        "title": "Signaler",
+        "description": "Signale un commentaire ou la personne qui l'a écrit. Cible : {{name}}."
+      },
+      "subject": {
+        "reviewComment": "Commentaire",
+        "user": "Utilisateur"
+      },
+      "reason": {
+        "harassment": "Harcèlement",
+        "spam": "Spam",
+        "inappropriateContent": "Contenu inapproprié",
+        "other": "Autre"
+      },
+      "fields": {
+        "subject": "Que veux-tu signaler ?",
+        "reason": "Motif",
+        "details": "Détails (optionnel)",
+        "detailsPlaceholder": "Ajoute du contexte pour l'équipe de modération."
+      },
+      "actions": {
+        "send": "Envoyer le signalement"
+      },
+      "toast": {
+        "successTitle": "Signalement envoyé",
+        "successMessage": "Merci. L'équipe de modération va l'examiner.",
+        "errorTitle": "Impossible d'envoyer le signalement",
+        "errorMessage": "Réessaie, s'il te plaît."
+      }
+    },
+    "admin": {
+      "title": "Boîte de signalements",
+      "description": "Passe en revue les signalements de commentaires et d'utilisateurs.",
+      "filters": {
+        "status": "Statut",
+        "subject": "Sujet",
+        "allStatuses": "Tous les statuts",
+        "allSubjects": "Tous les sujets"
+      },
+      "statuses": {
+        "open": "Ouvert",
+        "resolved": "Résolu",
+        "rejected": "Rejeté"
+      },
+      "dashboard": {
+        "title": "Derniers signalements",
+        "description": "Signalements de modération récents pour commentaires et utilisateurs.",
+        "openReports": "Signalements ouverts",
+        "viewReports": "Voir la boîte",
+        "emptyTitle": "Aucun signalement pour l'instant",
+        "emptyDescription": "Les signalements apparaîtront ici après leur envoi."
+      },
+      "reporter": "Auteur du signalement",
+      "target": "Cible",
+      "videoId": "ID vidéo",
+      "commentId": "ID commentaire",
+      "reportedComment": "Commentaire signalé",
+      "reporterDetails": "Détails du signalement",
+      "noReportedComment": "Aucun commentaire signalé enregistré.",
+      "noDetails": "Aucun détail supplémentaire.",
+      "unknown": "Inconnu",
+      "status": "Statut",
+      "emptyTitle": "Aucun signalement",
+      "emptyDescription": "Les signalements correspondant aux filtres apparaîtront ici.",
+      "errorTitle": "Impossible de charger les signalements",
+      "errorDescription": "Actualise la page ou réessaie dans un instant.",
+      "toast": {
+        "savedTitle": "Signalement mis à jour",
+        "savedMessage": "Le statut de modération a été enregistré.",
+        "errorTitle": "Impossible de mettre à jour le signalement",
+        "errorMessage": "Réessaie, s'il te plaît."
+      }
     }
   }
 }

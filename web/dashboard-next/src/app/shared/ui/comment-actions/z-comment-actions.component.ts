@@ -1,6 +1,6 @@
 import { Component, HostListener, input, output, signal } from '@angular/core';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
-import { LucideEllipsis, LucidePencil, LucideTrash } from '@lucide/angular';
+import { LucideEllipsis, LucideFlag, LucidePencil, LucideTrash } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ZConfirmDialogComponent } from '../dialog/z-confirm-dialog.component';
 
@@ -31,6 +31,7 @@ import { ZConfirmDialogComponent } from '../dialog/z-confirm-dialog.component';
     TranslocoPipe,
     ZConfirmDialogComponent,
     LucideEllipsis,
+    LucideFlag,
     LucidePencil,
     LucideTrash,
   ],
@@ -106,6 +107,20 @@ import { ZConfirmDialogComponent } from '../dialog/z-confirm-dialog.component';
               {{ 'common.actions.delete' | transloco }}
             </button>
           }
+
+          @if (canReport()) {
+            <button
+              type="button"
+              role="menuitem"
+              class="flex min-h-11 w-full items-center gap-2.5 rounded-md px-3 text-left
+                     text-sm font-semibold text-[var(--z-text)]
+                     hover:bg-[var(--z-surface-warm)] sm:min-h-9"
+              (click)="onReport()"
+            >
+              <svg lucideFlag class="size-4" aria-hidden="true"></svg>
+              {{ 'common.actions.report' | transloco }}
+            </button>
+          }
         </div>
       }
     </div>
@@ -114,8 +129,10 @@ import { ZConfirmDialogComponent } from '../dialog/z-confirm-dialog.component';
 export class ZCommentActionsComponent {
   readonly canEdit = input(true);
   readonly canDelete = input(true);
+  readonly canReport = input(false);
   readonly edit = output<void>();
   readonly delete = output<void>();
+  readonly report = output<void>();
 
   protected readonly open = signal(false);
 
@@ -132,5 +149,10 @@ export class ZCommentActionsComponent {
   protected onDelete(result: unknown): void {
     this.open.set(false);
     if (result === true) this.delete.emit();
+  }
+
+  protected onReport(): void {
+    this.open.set(false);
+    this.report.emit();
   }
 }

@@ -1,15 +1,12 @@
 import { NgClass } from '@angular/common';
 import {
   Component,
-  ElementRef,
   HostListener,
   OnDestroy,
   OnInit,
   computed,
-  effect,
   inject,
   signal,
-  viewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -23,7 +20,9 @@ import {
 } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
 import { AgoraService } from '../../core/calls/agora.service';
-import { CoachingApiClient } from '../../core/http/coaching-api.service';
+import { ParticipantTileState } from '../../core/calls/coaching-call.types';
+import { CoachingApiClient, ConnectResponse } from '../../core/http/coaching-api.service';
+import { ParticipantTileComponent } from '../../features/coaching-call/participant-tile.component';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
 
@@ -32,6 +31,7 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
   imports: [
     NgClass,
     TranslocoPipe,
+    ParticipantTileComponent,
     ZButtonComponent,
     ZSelectComponent,
     LucideCamera,
@@ -42,9 +42,9 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
     LucideSettings,
   ],
   template: `
-    <main class="min-h-dvh bg-stone-950 p-3 text-white sm:p-4">
+    <main class="h-dvh overflow-hidden bg-stone-950 p-2 text-white sm:p-3">
       @if (connecting()) {
-        <div class="grid min-h-[calc(100dvh-2rem)] place-items-center">
+        <div class="grid h-full place-items-center">
           <div class="text-center">
             <div
               class="mx-auto size-12 animate-spin rounded-full border-2 border-white/20 border-t-[var(--z-primary)]"
@@ -53,7 +53,7 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
           </div>
         </div>
       } @else if (error()) {
-        <div class="grid min-h-[calc(100dvh-2rem)] place-items-center">
+        <div class="grid h-full place-items-center">
           <section
             class="max-w-md rounded-lg border border-white/10 bg-white p-6 text-center text-[var(--z-text)] shadow-2xl"
           >
@@ -64,62 +64,63 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
             </z-button>
           </section>
         </div>
-      } @else {
+      } @else if (credentials(); as session) {
         <section
-          class="grid min-h-[calc(100dvh-1.5rem)] grid-rows-[minmax(0,1fr)_auto] gap-3 sm:min-h-[calc(100dvh-2rem)]"
+          class="relative grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-2 sm:gap-3"
         >
-          <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
-            <div class="relative overflow-hidden rounded-lg bg-stone-900">
-              <div #remoteVideo class="h-full min-h-[60dvh] w-full"></div>
-              @if (!remoteJoined()) {
-                <div class="absolute inset-0 grid place-items-center bg-stone-900">
-                  <p class="px-6 text-center text-sm font-semibold text-white/70">
-                    {{ 'sessions.call.waiting' | transloco }}
-                  </p>
-                </div>
-              }
-            </div>
+          <header class="flex min-h-9 items-center justify-center">
+            <span class="rounded-md bg-white/10 px-3 py-1 text-xs font-semibold">{{
+              timerLabel()
+            }}</span>
+          </header>
 
-            <div class="grid gap-3 content-start">
-              <div class="overflow-hidden rounded-lg bg-stone-900">
-                <div #localVideo class="aspect-video w-full"></div>
-              </div>
-
-              @if (showDevicePanel()) {
-                <section
-                  #devicePanel
-                  animate.enter="z-device-panel-enter"
-                  animate.leave="z-device-panel-leave"
-                  class="rounded-lg border border-white/10 bg-white p-3 text-[var(--z-text)] shadow-xl"
-                >
-                  <label class="grid gap-1 text-xs font-semibold">
-                    <span>{{ 'common.labels.microphone' | transloco }}</span>
-                    <z-select
-                      [value]="agora.selectedAudioDeviceId()"
-                      [options]="audioOptions()"
-                      (valueChange)="setAudioDevice($event)"
-                    />
-                  </label>
-                  <label class="mt-3 grid gap-1 text-xs font-semibold">
-                    <span>{{ 'common.labels.camera' | transloco }}</span>
-                    <z-select
-                      [value]="agora.selectedVideoDeviceId()"
-                      [options]="videoOptions()"
-                      (valueChange)="setVideoDevice($event)"
-                    />
-                  </label>
-                </section>
-              }
+          <div class="relative min-h-0 overflow-hidden rounded-lg bg-stone-900">
+            <app-participant-tile [state]="remoteTile()" videoFit="contain" />
+            <div
+              class="absolute right-3 top-3 z-10 aspect-video w-32 overflow-hidden rounded-lg border border-white/15 shadow-2xl sm:w-48 lg:w-[24%] lg:max-w-72"
+            >
+              <app-participant-tile [state]="localTile()" videoFit="cover" [compact]="true" />
             </div>
           </div>
 
+          @if (showDevicePanel()) {
+            <section
+              class="fixed inset-x-3 bottom-24 z-50 mx-auto grid max-h-[22rem] max-w-md gap-4 overflow-auto rounded-lg border border-zinc-700 bg-zinc-950 p-4 shadow-2xl"
+            >
+              <label class="grid gap-2 text-xs font-semibold">
+                <span>{{ 'common.labels.microphone' | transloco }}</span>
+                <z-select
+                  tone="dark"
+                  [options]="audioOptions()"
+                  [ariaLabel]="'common.labels.microphone' | transloco"
+                  [value]="agora.selectedAudioDeviceId()"
+                  [disabled]="!agora.localAudioTrack()"
+                  (valueChange)="setAudioDevice($event)"
+                />
+              </label>
+              <label class="grid gap-2 text-xs font-semibold">
+                <span>{{ 'common.labels.camera' | transloco }}</span>
+                <z-select
+                  tone="dark"
+                  [options]="videoOptions()"
+                  [ariaLabel]="'common.labels.camera' | transloco"
+                  [value]="agora.selectedVideoDeviceId()"
+                  [disabled]="!agora.localVideoTrack()"
+                  (valueChange)="setVideoDevice($event)"
+                />
+              </label>
+            </section>
+          }
+
           <footer
-            class="flex flex-wrap items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/10 p-3 backdrop-blur"
+            class="mx-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/95 p-2 shadow-2xl sm:gap-3 sm:p-3"
           >
             <button
               type="button"
-              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
-              [ngClass]="agora.audioEnabled() ? '' : 'bg-rose-700 text-white'"
+              class="grid size-11 place-items-center rounded-md border border-zinc-700 bg-zinc-800"
+              [ngClass]="
+                agora.audioEnabled() ? '' : '!border-red-950/70 !bg-red-950/50 !text-red-400'
+              "
               (click)="toggleAudio()"
             >
               @if (agora.audioEnabled()) {
@@ -130,8 +131,10 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
             </button>
             <button
               type="button"
-              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
-              [ngClass]="agora.videoEnabled() ? '' : 'bg-rose-700 text-white'"
+              class="grid size-11 place-items-center rounded-md border border-zinc-700 bg-zinc-800"
+              [ngClass]="
+                agora.videoEnabled() ? '' : '!border-red-950/70 !bg-red-950/50 !text-red-400'
+              "
               (click)="toggleVideo()"
             >
               @if (agora.videoEnabled()) {
@@ -141,16 +144,15 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
               }
             </button>
             <button
-              #settingsButton
               type="button"
-              class="grid size-11 place-items-center rounded-md border border-white/10 bg-white text-[var(--z-text)]"
+              class="grid size-11 place-items-center rounded-md border border-zinc-700 bg-zinc-800"
               (click)="toggleDevicePanel()"
             >
               <svg lucideSettings class="size-5" aria-hidden="true"></svg>
             </button>
             <button
               type="button"
-              class="inline-flex min-h-11 items-center gap-2 rounded-md border border-rose-700 bg-rose-700 px-4 text-sm font-semibold text-white"
+              class="inline-flex min-h-11 items-center gap-2 rounded-md bg-rose-600 px-4 text-sm font-semibold"
               (click)="leave()"
             >
               <svg lucidePhoneOff class="size-5" aria-hidden="true"></svg>
@@ -161,34 +163,6 @@ import { ZSelectComponent } from '../../shared/ui/select/z-select.component';
       }
     </main>
   `,
-  styles: `
-    .z-device-panel-enter {
-      animation: z-device-panel-in 120ms ease-out;
-    }
-    .z-device-panel-leave {
-      animation: z-device-panel-out 100ms ease-in;
-    }
-    @keyframes z-device-panel-in {
-      from {
-        opacity: 0;
-        transform: translateY(6px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    @keyframes z-device-panel-out {
-      from {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      to {
-        opacity: 0;
-        transform: translateY(6px);
-      }
-    }
-  `,
 })
 export class VideoCallPageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
@@ -196,21 +170,50 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   private readonly api = inject(CoachingApiClient);
   protected readonly agora = inject(AgoraService);
   private readonly transloco = inject(TranslocoService);
-
-  private readonly localVideo = viewChild<ElementRef<HTMLDivElement>>('localVideo');
-  private readonly remoteVideo = viewChild<ElementRef<HTMLDivElement>>('remoteVideo');
-  private readonly devicePanel = viewChild<ElementRef<HTMLElement>>('devicePanel');
-  private readonly settingsButton = viewChild<ElementRef<HTMLElement>>('settingsButton');
   private groupId: string | null = null;
   private bookingId: string | null = null;
-  private recordingStopRequested = false;
+  private heartbeat: ReturnType<typeof setInterval> | null = null;
+  private timer: ReturnType<typeof setInterval> | null = null;
 
   protected readonly connecting = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly showDevicePanel = signal(false);
-  protected readonly remoteJoined = computed(
-    () => !!(this.agora.remoteAudioTrack() || this.agora.remoteVideoTrack()),
-  );
+  protected readonly credentials = signal<ConnectResponse | null>(null);
+  protected readonly now = signal(Date.now());
+  protected readonly remoteTile = computed<ParticipantTileState>(() => {
+    const session = this.credentials()!;
+    const remoteIdentity = session.caller_role === 'student' ? session.expert : session.student;
+    const remote = this.agora.remoteParticipants().get(remoteIdentity.uid);
+    return {
+      identity: remoteIdentity,
+      presence: remote?.presence ?? 'waiting',
+      audioEnabled: remote?.audioPublished ?? false,
+      videoEnabled: remote?.videoPublished ?? false,
+      videoTrack: remote?.videoTrack,
+    };
+  });
+  protected readonly localTile = computed<ParticipantTileState>(() => {
+    const session = this.credentials()!;
+    const identity = session.caller_role === 'student' ? session.student : session.expert;
+    return {
+      identity,
+      presence: this.agora.connectionState() === 'reconnecting' ? 'reconnecting' : 'joined',
+      audioEnabled: this.agora.audioEnabled(),
+      videoEnabled: this.agora.videoEnabled(),
+      videoTrack: this.agora.localVideoTrack(),
+    };
+  });
+  protected readonly timerLabel = computed(() => {
+    const session = this.credentials();
+    if (!session) return '';
+    const remaining = new Date(session.scheduled_ends_at).getTime() - this.now();
+    const totalSeconds = Math.floor(Math.abs(remaining) / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    return remaining >= 0
+      ? this.transloco.translate('sessions.call.endsIn', { time: `${minutes}:${seconds}` })
+      : this.transloco.translate('sessions.call.overtime', { time: `${minutes}:${seconds}` });
+  });
   protected readonly audioOptions = computed(() =>
     this.agora.audioDevices().map((device, index) => ({
       value: device.deviceId,
@@ -228,40 +231,40 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
     })),
   );
 
-  constructor() {
-    effect(() => {
-      const track = this.agora.localVideoTrack();
-      const el = this.localVideo();
-      if (track && el) track.play(el.nativeElement);
-    });
-
-    effect(() => {
-      const track = this.agora.remoteVideoTrack();
-      const el = this.remoteVideo();
-      if (track && el) track.play(el.nativeElement);
-    });
-  }
-
   async ngOnInit(): Promise<void> {
     this.groupId = this.route.snapshot.paramMap.get('groupId');
     this.bookingId = this.route.snapshot.paramMap.get('bookingId');
-
     if (!this.groupId || !this.bookingId) {
       this.error.set(this.transloco.translate('sessions.call.missingBooking'));
       this.connecting.set(false);
       return;
     }
-
     try {
       const credentials = await firstValueFrom(
         this.api.connectToBooking(this.groupId, this.bookingId),
       );
+      this.credentials.set(credentials);
       await this.agora.join(
         credentials.app_id,
         credentials.channel,
         credentials.token,
         credentials.uid,
+        [1, 2],
       );
+      this.sendPresence('joined');
+      this.heartbeat = setInterval(() => {
+        this.sendPresence(
+          this.agora.connectionState() === 'reconnecting' ? 'reconnecting' : 'joined',
+        );
+      }, 10_000);
+      this.timer = setInterval(() => this.now.set(Date.now()), 1_000);
+      // Media permissions are not a prerequisite for joining. Start devices
+      // best-effort after the RTC connection succeeds and stay receive-only if
+      // the browser denies or cannot provide either device.
+      void this.agora
+        .enableLocalMedia()
+        .then(() => this.sendPresence('joined'))
+        .catch(() => undefined);
     } catch (error) {
       this.error.set(
         error instanceof Error
@@ -274,57 +277,59 @@ export class VideoCallPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.stopRecording();
+    this.clearIntervals();
+    if (this.agora.localJoined()) this.sendPresence('left');
     void this.agora.leave();
   }
 
-  protected toggleAudio(): void {
-    void this.agora.toggleAudio();
+  protected async toggleAudio(): Promise<void> {
+    await this.agora.toggleAudio();
+    this.sendPresence('joined');
   }
-
-  protected toggleVideo(): void {
-    void this.agora.toggleVideo();
+  protected async toggleVideo(): Promise<void> {
+    await this.agora.toggleVideo();
+    this.sendPresence('joined');
   }
-
   protected setAudioDevice(deviceId: string): void {
     void this.agora.setAudioDevice(deviceId);
   }
-
   protected setVideoDevice(deviceId: string): void {
     void this.agora.setVideoDevice(deviceId);
   }
-
   protected toggleDevicePanel(): void {
     this.showDevicePanel.update((open) => !open);
   }
-
   protected leave(): void {
-    this.stopRecording();
-    void this.agora.leave().then(() => this.backToSessions());
+    this.clearIntervals();
+    this.sendPresence('left');
+    void this.agora.leave().then(
+      () => this.backToSessions(),
+      () => this.backToSessions(),
+    );
   }
-
   protected backToSessions(): void {
     void this.router.navigate(['/sessions', 'upcoming']);
   }
-
-  private stopRecording(): void {
-    if (!this.groupId || !this.bookingId || this.recordingStopRequested) return;
-    this.recordingStopRequested = true;
-    this.api.stopBookingRecording(this.groupId, this.bookingId).subscribe({
-      error: () => {
-        this.recordingStopRequested = false;
-      },
-    });
+  private sendPresence(state: 'joined' | 'reconnecting' | 'left'): void {
+    const session = this.credentials();
+    if (!session || !this.groupId || !this.bookingId) return;
+    this.api
+      .updateBookingPresence(this.groupId, this.bookingId, {
+        connection_id: session.connection_id,
+        state,
+      })
+      .subscribe({ error: () => undefined });
   }
 
-  @HostListener('document:click', ['$event'])
-  protected onDocumentClick(event: MouseEvent): void {
-    if (!this.showDevicePanel()) return;
-    const target = event.target as HTMLElement | null;
-    const panel = this.devicePanel()?.nativeElement;
-    const button = this.settingsButton()?.nativeElement;
-    if (target && !panel?.contains(target) && !button?.contains(target)) {
-      this.showDevicePanel.set(false);
-    }
+  private clearIntervals(): void {
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    if (this.timer) clearInterval(this.timer);
+    this.heartbeat = null;
+    this.timer = null;
+  }
+
+  @HostListener('document:keydown.escape')
+  protected closeDevicePanel(): void {
+    this.showDevicePanel.set(false);
   }
 }

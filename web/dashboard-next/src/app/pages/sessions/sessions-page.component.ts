@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -103,17 +103,44 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
           @if (visibleBookings().length === 0) {
             <z-empty-state [title]="emptyTitle()" [description]="emptyDescription()" />
           } @else {
-            <div class="grid gap-3">
-              @for (booking of visibleBookings(); track booking.id) {
-                <article class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm">
-                  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div
+              class="overflow-hidden rounded-lg border border-[var(--z-border)] bg-white shadow-sm"
+            >
+              <div
+                class="hidden border-b border-[var(--z-border)] bg-[var(--z-surface-warm)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--z-muted)] md:grid md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_7rem] md:gap-4"
+                aria-hidden="true"
+              >
+                <span>{{ 'sessions.columns.session' | transloco }}</span>
+                <span>{{ 'sessions.columns.participant' | transloco }}</span>
+                <span>{{ 'sessions.columns.status' | transloco }}</span>
+                <span class="text-right">{{ 'sessions.columns.actions' | transloco }}</span>
+              </div>
+              <div class="divide-y divide-[var(--z-border)]">
+                @for (booking of visibleBookings(); track booking.id) {
+                  <article
+                    class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-3 p-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)_7rem] md:items-center md:gap-4"
+                  >
+                    <div class="col-span-2 min-w-0 md:col-span-1">
+                      <h2 class="truncate text-base font-semibold">
+                        {{ booking.session_type_name || ('sessions.book.sessionType' | transloco) }}
+                      </h2>
+                      <p class="mt-1 text-sm leading-5 text-[var(--z-muted)]">
+                        {{ formatDateTime(booking.scheduled_at) }}
+                        · {{ booking.duration_minutes }} min
+                      </p>
+                    </div>
+
+                    <div class="col-span-2 min-w-0 md:col-span-1">
+                      <p class="truncate text-sm text-[var(--z-text)]">
+                        <span class="font-medium text-[var(--z-muted)] md:hidden"
+                          >{{ otherPartyRole(booking) }}:&nbsp;</span
+                        >
+                        {{ otherParty(booking) }}
+                      </p>
+                    </div>
+
                     <div class="min-w-0">
                       <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-base font-semibold">
-                          {{
-                            booking.session_type_name || ('sessions.book.sessionType' | transloco)
-                          }}
-                        </h2>
                         <z-badge [tone]="booking.status === 'cancelled' ? 'danger' : 'primary'">
                           {{ statusLabel(booking) }}
                         </z-badge>
@@ -125,15 +152,8 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                           </z-badge>
                         }
                       </div>
-                      <p class="mt-2 text-sm leading-6 text-[var(--z-muted)]">
-                        {{ formatDateTime(booking.scheduled_at) }}
-                        · {{ booking.duration_minutes }} min
-                      </p>
-                      <p class="mt-1 text-sm leading-6 text-[var(--z-muted)]">
-                        {{ otherPartyRole(booking) }}: {{ otherParty(booking) }}
-                      </p>
                       @if (booking.cancellation_reason) {
-                        <p class="mt-2 text-sm leading-6 text-rose-700">
+                        <p class="mt-1 text-xs leading-5 text-rose-700">
                           {{
                             'common.labels.reason'
                               | transloco: { reason: booking.cancellation_reason }
@@ -142,11 +162,11 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                       }
                     </div>
 
-                    <div class="flex flex-wrap gap-2 lg:justify-end">
+                    <div class="flex flex-wrap gap-2 md:justify-end">
                       @if (canJoin(booking)) {
                         <a
                           [routerLink]="['/sessions', booking.group_id, booking.id, 'call']"
-                          class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
+                          class="inline-flex min-h-10 w-24 items-center justify-center gap-2 rounded-md border border-[var(--z-primary)] bg-[var(--z-primary)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--z-primary-strong)]"
                         >
                           <svg lucideVideo class="size-4" aria-hidden="true"></svg>
                           <span>{{ 'common.actions.join' | transloco }}</span>
@@ -158,7 +178,7 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                           class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[var(--z-border)] bg-white px-3 text-sm font-semibold text-[var(--z-text)] transition hover:bg-[var(--z-surface-warm)]"
                         >
                           <svg lucideExternalLink class="size-4" aria-hidden="true"></svg>
-                          <span>{{ 'common.status.recordingReady' | transloco }}</span>
+                          <span>{{ 'common.actions.watch' | transloco }}</span>
                         </a>
                       }
                       @if (canCancel(booking)) {
@@ -183,20 +203,22 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
                           </z-action-dialog>
                         </ng-template>
                         <z-button
+                          class="inline-block w-24 [&_button]:min-h-10"
                           size="sm"
                           variant="secondary"
+                          [fullWidth]="true"
                           [ngpDialogTrigger]="cancelDialog"
                           (pressed)="cancelReasonControl.reset('')"
                           (ngpDialogTriggerClosed)="confirmCancel($event, booking)"
                         >
                           <svg lucideX class="size-4" aria-hidden="true"></svg>
-                          <span>{{ 'sessions.cancel.title' | transloco }}</span>
+                          <span>{{ 'common.actions.cancel' | transloco }}</span>
                         </z-button>
                       }
                     </div>
-                  </div>
-                </article>
-              }
+                  </article>
+                }
+              </div>
             </div>
           }
         }
@@ -211,7 +233,33 @@ export class SessionsPageComponent {
   private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly _translationEvents = toSignal(this.transloco.events$, { initialValue: null });
+  private readonly tabLabels = toSignal(
+    this.transloco.selectTranslateObject<Record<SessionTab, string>>('sessions.tabs'),
+    { initialValue: { upcoming: '', past: '', cancelled: '' } },
+  );
+  private readonly emptyLabels = toSignal(
+    this.transloco.selectTranslateObject<
+      Record<
+        | 'upcomingHeading'
+        | 'upcomingDescription'
+        | 'pastHeading'
+        | 'pastDescription'
+        | 'cancelledHeading'
+        | 'cancelledDescription',
+        string
+      >
+    >('sessions.empty'),
+    {
+      initialValue: {
+        upcomingHeading: '',
+        upcomingDescription: '',
+        pastHeading: '',
+        pastDescription: '',
+        cancelledHeading: '',
+        cancelledDescription: '',
+      },
+    },
+  );
 
   protected readonly cancelReasonControl = new FormControl('', { nonNullable: true });
   protected readonly activeTab = signal<SessionTab>('upcoming');
@@ -220,21 +268,21 @@ export class SessionsPageComponent {
     this.session.hasPermission('coaching:availability:manage'),
   );
   protected readonly tabOptions = computed(() => {
-    this._translationEvents();
+    const labels = this.tabLabels();
     return [
       {
         value: 'upcoming',
-        label: this.transloco.translate('sessions.tabs.upcoming'),
+        label: labels.upcoming,
         badge: this.store.upcomingBookings().length,
       },
       {
         value: 'past',
-        label: this.transloco.translate('sessions.tabs.past'),
+        label: labels.past,
         badge: this.store.completedBookings().length,
       },
       {
         value: 'cancelled',
-        label: this.transloco.translate('sessions.tabs.cancelled'),
+        label: labels.cancelled,
         badge: this.store.cancelledBookings().length,
       },
     ];
@@ -250,12 +298,10 @@ export class SessionsPageComponent {
     }
   });
   protected readonly emptyTitle = computed(() => {
-    this._translationEvents();
-    return this.transloco.translate(`sessions.empty.${this.activeTab()}Heading`);
+    return this.emptyLabels()[`${this.activeTab()}Heading`];
   });
   protected readonly emptyDescription = computed(() => {
-    this._translationEvents();
-    return this.transloco.translate(`sessions.empty.${this.activeTab()}Description`);
+    return this.emptyLabels()[`${this.activeTab()}Description`];
   });
 
   constructor() {
@@ -264,11 +310,7 @@ export class SessionsPageComponent {
       this.activeTab.set(tab === 'past' || tab === 'cancelled' ? tab : 'upcoming');
     });
 
-    effect(() => {
-      if (this.store.status() === 'idle') {
-        void this.store.loadBookings();
-      }
-    });
+    void this.store.loadBookings();
   }
 
   protected setTab(value: string): void {
@@ -306,7 +348,8 @@ export class SessionsPageComponent {
 
   protected statusLabel(booking: CoachingBooking): string {
     if (booking.status === 'cancelled') return this.transloco.translate('common.status.cancelled');
-    return new Date(booking.scheduled_at).getTime() > Date.now()
+    const endsAt = new Date(booking.scheduled_at).getTime() + booking.duration_minutes * 60 * 1000;
+    return endsAt > Date.now()
       ? this.transloco.translate('common.status.upcoming')
       : this.transloco.translate('common.status.done');
   }

@@ -32,7 +32,10 @@
       "uploadVideo": "Video hochladen",
       "viewAll": "Alle ansehen",
       "retry": "Erneut versuchen",
-      "changePhoto": "Bild ändern"
+      "changePhoto": "Bild ändern",
+      "report": "Melden",
+      "send": "Senden",
+      "watch": "Ansehen"
     },
     "aria": {
       "appLogo": "App-Logo",
@@ -85,7 +88,8 @@
       "report": "Bericht",
       "sessions": "Termine",
       "videos": "Videos",
-      "inviteCodes": "Experteneinladungen"
+      "inviteCodes": "Experteneinladungen",
+      "admin": "Admin"
     },
     "status": {
       "cancelled": "abgesagt",
@@ -356,8 +360,16 @@
       "videoPart": "Teil {{count}}",
       "noVideoParts": "Es sind noch keine Videoteile angehängt.",
       "reviewPlaceholder": "Zeitmarkierte Kommentare, Bearbeitung und Abschluss werden im nächsten Video-Review-Schritt vertieft.",
-      "commentsFailed": "Kommentare konnten nicht geladen werden."
-    }
+      "commentsFailed": "Kommentare konnten nicht geladen werden.",
+      "status": {
+        "waiting_upload": "Wartet auf Upload",
+        "ready": "Bereit",
+        "failed": "Upload fehlgeschlagen"
+      }
+    },
+    "commentTimestampHint": "Dieser Kommentar wird mit diesem Zeitpunkt im Video verknüpft",
+    "commentAdded": "Kommentar hinzugefügt",
+    "commentAddFailed": "Kommentar konnte nicht hinzugefügt werden. Bitte versuche es erneut."
   },
   "groups": {
     "myGroups": "Meine Gruppen",
@@ -465,7 +477,8 @@
       "removeUser": "Benutzer entfernen",
       "confirmRemove": "Möchtest du {{name}} wirklich aus dieser Gruppe entfernen?",
       "removed": "{{name}} wurde aus der Gruppe entfernt",
-      "removeFailed": "Benutzer konnte nicht entfernt werden"
+      "removeFailed": "Benutzer konnte nicht entfernt werden",
+      "namePending": "Noch ohne Namen"
     },
     "phase4": {
       "summary": "Durchsuche Coaching-Gruppen, öffne Gruppenseiten und bereite Einladungen vor.",
@@ -683,7 +696,29 @@
       "permissionBody": "Für Live-Coaching-Sitzungen benötigst du Zugriff auf Kamera und Mikrofon.",
       "grantCamera": "Kamerazugriff erlauben",
       "grantMicrophone": "Mikrofonzugriff erlauben",
-      "switchCamera": "Kamera wechseln"
+      "switchCamera": "Kamera wechseln",
+      "noMicrophone": "Kein Mikrofon verfügbar",
+      "noCamera": "Keine Kamera verfügbar",
+      "devicesOptional": "Du bist im Anruf. Kamera und Mikrofon sind optional.",
+      "enableDevices": "Kamera und Mikrofon aktivieren",
+      "permissionDenied": "Der Browserzugriff wurde abgelehnt. Erlaube Kamera oder Mikrofon in den Browsereinstellungen und versuche es erneut.",
+      "deviceMissing": "Keine Kamera und kein Mikrofon gefunden.",
+      "deviceBusy": "Eine andere App verwendet die Kamera oder das Mikrofon.",
+      "unsupported": "Dieser Browser kann Kamera oder Mikrofon hier nicht verwenden.",
+      "publishFailed": "Das Gerät wurde geöffnet, konnte aber nicht in den Anruf übertragen werden. Versuche es erneut.",
+      "mediaFailed": "Kamera oder Mikrofon konnten nicht gestartet werden. Versuche es erneut.",
+      "endsIn": "Endet in {{time}}",
+      "overtime": "Überzeit +{{time}}",
+      "reconnecting": "Verbindung wird wiederhergestellt…",
+      "cameraOff": "Kamera ausgeschaltet",
+      "participantLeft": "Hat den Termin verlassen",
+      "waitingShort": "Warten auf Beitritt…"
+    },
+    "columns": {
+      "session": "Termin",
+      "participant": "Teilnehmer",
+      "status": "Status",
+      "actions": "Aktionen"
     }
   },
   "preferences": {
@@ -737,7 +772,10 @@
       "fr": "Französisch"
     },
     "emailHint": "Wird für die Anmeldung verwendet.",
-    "expertAccess": "Experte werden"
+    "expertAccess": "Experte werden",
+    "displayName": "Anzeigename",
+    "displayNameHelp": "Wird anderen Schülern statt deines echten Namens angezeigt.",
+    "displayNameRequired": "Der Anzeigename ist erforderlich."
   },
   "avatar": {
     "selectImage": "Bild auswählen",
@@ -909,6 +947,82 @@
       "upgrading": "Wird aktiviert...",
       "invalidCode": "Dieser Expertencode ist ungültig, nicht verfügbar oder wurde bereits verwendet.",
       "success": "Dein Konto hat jetzt Expertenzugang."
+    }
+  },
+  "moderation": {
+    "report": {
+      "dialog": {
+        "title": "Melden",
+        "description": "Melde einen Kommentar oder die Person, die ihn geschrieben hat. Ziel: {{name}}."
+      },
+      "subject": {
+        "reviewComment": "Kommentar",
+        "user": "Benutzer"
+      },
+      "reason": {
+        "harassment": "Belästigung",
+        "spam": "Spam",
+        "inappropriateContent": "Unangemessener Inhalt",
+        "other": "Sonstiges"
+      },
+      "fields": {
+        "subject": "Was möchtest du melden?",
+        "reason": "Grund",
+        "details": "Details (optional)",
+        "detailsPlaceholder": "Ergänze Kontext für das Moderationsteam."
+      },
+      "actions": {
+        "send": "Meldung senden"
+      },
+      "toast": {
+        "successTitle": "Meldung gesendet",
+        "successMessage": "Danke. Das Moderationsteam prüft sie.",
+        "errorTitle": "Meldung konnte nicht gesendet werden",
+        "errorMessage": "Bitte versuche es erneut."
+      }
+    },
+    "admin": {
+      "title": "Report-Inbox",
+      "description": "Prüfe Kommentar- und Benutzer-Meldungen aus dem Dashboard.",
+      "filters": {
+        "status": "Status",
+        "subject": "Betreff",
+        "allStatuses": "Alle Status",
+        "allSubjects": "Alle Betreffe"
+      },
+      "statuses": {
+        "open": "Offen",
+        "resolved": "Gelöst",
+        "rejected": "Abgelehnt"
+      },
+      "dashboard": {
+        "title": "Neueste Meldungen",
+        "description": "Aktuelle Moderationsmeldungen zu Kommentaren und Benutzern.",
+        "openReports": "Offene Meldungen",
+        "viewReports": "Inbox öffnen",
+        "emptyTitle": "Noch keine Meldungen",
+        "emptyDescription": "Meldungen erscheinen hier, sobald Nutzer sie senden."
+      },
+      "reporter": "Gemeldet von",
+      "target": "Ziel",
+      "videoId": "Video-ID",
+      "commentId": "Kommentar-ID",
+      "reportedComment": "Gemeldeter Kommentar",
+      "reporterDetails": "Details des Meldenden",
+      "noReportedComment": "Kein gemeldeter Kommentar gespeichert.",
+      "noDetails": "Keine weiteren Details angegeben.",
+      "unknown": "Unbekannt",
+      "status": "Status",
+      "emptyTitle": "Keine Meldungen",
+      "emptyDescription": "Meldungen passend zu den aktuellen Filtern erscheinen hier.",
+      "errorTitle": "Meldungen konnten nicht geladen werden",
+      "errorDescription": "Aktualisiere die Seite oder versuche es gleich erneut.",
+      "toast": {
+        "savedTitle": "Meldung aktualisiert",
+        "savedMessage": "Der Moderationsstatus wurde gespeichert.",
+        "errorTitle": "Meldung konnte nicht aktualisiert werden",
+        "errorMessage": "Bitte versuche es erneut."
+      }
     }
   }
 }

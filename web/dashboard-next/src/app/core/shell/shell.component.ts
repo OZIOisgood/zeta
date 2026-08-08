@@ -27,6 +27,7 @@ import {
   LucideMenu,
   LucideSend,
   LucideSettings,
+  LucideShieldAlert,
   LucideStar,
   LucideUserRound,
   LucideUsers,
@@ -84,6 +85,7 @@ import { AppShellStore } from '../state/app-shell.store';
     LucideMenu,
     LucideSend,
     LucideSettings,
+    LucideShieldAlert,
     LucideStar,
     LucideUserRound,
     LucideUsers,
@@ -107,6 +109,10 @@ export class ShellComponent implements OnDestroy {
     this.shell.navigation().filter((item) => {
       if (item.id === 'groups') {
         return this.permissions.hasPermission('groups:read');
+      }
+
+      if (item.id === 'admin') {
+        return this.permissions.hasPermission('moderation:reports:read');
       }
 
       if (item.id === 'sessions') {

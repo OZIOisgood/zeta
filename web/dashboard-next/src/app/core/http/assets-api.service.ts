@@ -15,15 +15,22 @@ export type CreateAssetResponse = {
 };
 
 export type AssetStatus = 'waiting_upload' | 'pending' | 'completed';
+export type VideoStatus = 'waiting_upload' | 'ready' | 'failed';
 
 export type VideoItem = {
   id: string;
   playback_id: string;
-  status: string;
+  status: VideoStatus;
   review_count: number;
 };
 
 export type AssetGroup = {
+  id: string;
+  name: string;
+  avatar?: string;
+};
+
+export type AssetStudent = {
   id: string;
   name: string;
   avatar?: string;
@@ -41,9 +48,11 @@ export type Asset = {
   playback_id?: string;
   videos?: VideoItem[];
   group?: AssetGroup;
+  student?: AssetStudent;
 };
 
 export type ReviewAuthor = {
+  id?: string;
   name: string;
   avatar?: string;
 };

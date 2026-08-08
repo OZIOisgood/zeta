@@ -18,3 +18,9 @@ variable "tf_state_bucket" {
   description = "GCS bucket name that holds Terraform state"
   default     = "zeta-terraform-state"
 }
+
+variable "grant_monitoring_editor" {
+  type        = bool
+  description = "Grant deploy service account permissions to manage Cloud Monitoring resources."
+  default     = false
+}

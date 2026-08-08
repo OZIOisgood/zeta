@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -18,6 +19,8 @@ import (
 
 const recordingSignedURLTTL = 2 * time.Hour
 
+var ErrRecordingMP4NotFound = errors.New("recording mp4 not found")
+
 type RecordingObject struct {
 	Name    string
 	Size    int64
@@ -27,6 +30,10 @@ type RecordingObject struct {
 type RecordingObjectStore interface {
 	FindMP4(ctx context.Context, prefix []string) (RecordingObject, error)
 	SignedURL(ctx context.Context, objectName string, ttl time.Duration) (string, error)
+}
+
+type recordingObjectLister interface {
+	ListMP4(ctx context.Context, prefix []string) ([]RecordingObject, error)
 }
 
 type gcsRecordingObjectStore struct {
@@ -48,37 +55,43 @@ func NewGCSRecordingObjectStore(ctx context.Context, bucket, serviceAccountEmail
 }
 
 func (s *gcsRecordingObjectStore) FindMP4(ctx context.Context, prefix []string) (RecordingObject, error) {
+	objects, err := s.ListMP4(ctx, prefix)
+	if err != nil {
+		return RecordingObject{}, err
+	}
+	return objects[0], nil
+}
+
+func (s *gcsRecordingObjectStore) ListMP4(ctx context.Context, prefix []string) ([]RecordingObject, error) {
 	if s.bucket == "" {
-		return RecordingObject{}, errors.New("recording storage bucket is not configured")
+		return nil, errors.New("recording storage bucket is not configured")
 	}
 	objectPrefix := recordingObjectPrefix(prefix)
 	if objectPrefix == "" {
-		return RecordingObject{}, errors.New("recording file prefix is empty")
+		return nil, errors.New("recording file prefix is empty")
 	}
 
 	it := s.client.Bucket(s.bucket).Objects(ctx, &storage.Query{Prefix: objectPrefix})
-	var selected RecordingObject
+	var objects []RecordingObject
 	for {
 		attrs, err := it.Next()
 		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
-			return RecordingObject{}, err
+			return nil, err
 		}
 		if attrs == nil || !strings.HasSuffix(strings.ToLower(attrs.Name), ".mp4") {
 			continue
 		}
-		candidate := RecordingObject{Name: attrs.Name, Size: attrs.Size, Updated: attrs.Updated}
-		if selected.Name == "" || betterRecordingObject(candidate, selected) {
-			selected = candidate
-		}
+		objects = append(objects, RecordingObject{Name: attrs.Name, Size: attrs.Size, Updated: attrs.Updated})
 	}
 
-	if selected.Name == "" {
-		return RecordingObject{}, fmt.Errorf("no mp4 recording found under prefix %q", objectPrefix)
+	if len(objects) == 0 {
+		return nil, fmt.Errorf("%w under prefix %q", ErrRecordingMP4NotFound, objectPrefix)
 	}
-	return selected, nil
+	sort.Slice(objects, func(i, j int) bool { return objects[i].Name < objects[j].Name })
+	return objects, nil
 }
 
 func (s *gcsRecordingObjectStore) SignedURL(ctx context.Context, objectName string, ttl time.Duration) (string, error) {
