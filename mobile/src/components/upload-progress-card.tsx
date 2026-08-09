@@ -11,7 +11,7 @@ export function UploadProgressCard({
   onDismiss,
 }: {
   job: UploadJob;
-  onRetry: (jobId: string, videoId: string) => void;
+  onRetry: (jobId: string) => void;
   onDismiss: (jobId: string) => void;
 }) {
   const { t } = useTranslation();
@@ -21,34 +21,41 @@ export function UploadProgressCard({
     job.files.length > 0
       ? job.files.reduce((sum, f) => sum + f.progress, 0) / job.files.length
       : 0;
-  const firstFailed = job.files.find((f) => f.status === 'failed');
+  // Both actions hang off the JOB status, never off a failed file. When only the
+  // /complete step failed, every file is 'done' and there is no failed file to
+  // key on — the card used to render neither action, leaving a permanent error
+  // tile that survived restarts via the persisted queue.
+  const isFailed = job.status === 'failed';
+  const isTerminal = isFailed || job.status === 'done';
 
   return (
     <View className="rounded-lg border border-z-border bg-z-surface p-3">
       <View className="mb-1 flex-row items-center justify-between">
-        <Text className="text-base font-bold text-z-text">{job.title}</Text>
+        <Text className="flex-1 text-base font-bold text-z-text">{job.title}</Text>
 
-        {job.status === 'done' && (
-          <ZIconButton
-            testID="upload-dismiss"
-            label={t('common.actions.close')}
-            size="sm"
-            onPress={() => onDismiss(job.id)}
-          >
-            <X color={color('onSurfaceVariant')} size={16} />
-          </ZIconButton>
-        )}
+        <View className="flex-row items-center">
+          {isFailed && (
+            <ZIconButton
+              testID="upload-retry"
+              label={t('common.actions.retry')}
+              size="sm"
+              onPress={() => onRetry(job.id)}
+            >
+              <RotateCcw color={color('onSurfaceVariant')} size={16} />
+            </ZIconButton>
+          )}
 
-        {job.status === 'failed' && firstFailed && (
-          <ZIconButton
-            testID="upload-retry"
-            label={t('common.actions.retry')}
-            size="sm"
-            onPress={() => onRetry(job.id, firstFailed.videoId)}
-          >
-            <RotateCcw color={color('onSurfaceVariant')} size={16} />
-          </ZIconButton>
-        )}
+          {isTerminal && (
+            <ZIconButton
+              testID="upload-dismiss"
+              label={t('common.actions.close')}
+              size="sm"
+              onPress={() => onDismiss(job.id)}
+            >
+              <X color={color('onSurfaceVariant')} size={16} />
+            </ZIconButton>
+          )}
+        </View>
       </View>
 
       {(job.status === 'uploading' || job.status === 'completing') && (

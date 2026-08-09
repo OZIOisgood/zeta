@@ -59,7 +59,7 @@ function JobCards({ jobs }: { jobs: UploadJob[] }) {
         <UploadProgressCard
           key={j.id}
           job={j}
-          onRetry={(id, vid) => void uploadStore.getState().retryFile(id, vid)}
+          onRetry={(id) => void uploadStore.getState().retryJob(id)}
           onDismiss={(id) => uploadStore.getState().dismissJob(id)}
         />
       ))}

@@ -98,18 +98,84 @@ test('retryFile re-runs only the failed file and finishes the job', async () => 
   expect(completed).toEqual(['asset_1']);
 });
 
-test('failed completion can be retried via retryFile and only re-runs completion', async () => {
-  const { deps, completed } = makeDeps({ completeOk: false });
+test('retryJob re-runs ONLY the completion when every file already uploaded', async () => {
+  const { deps, calls, completed } = makeDeps({ completeOk: false });
   const store = createUploadStore(deps);
   await store.getState().enqueue(CREATE_RESPONSE, PICKED, 'My upload');
-  expect(store.getState().jobs[0].status).toBe('failed');
+
+  const failedJob = store.getState().jobs[0];
+  expect(failedJob.status).toBe('failed');
+  expect(failedJob.files.every((f) => f.status === 'done')).toBe(true);
   expect(completed).toEqual(['asset_1']);
+  const transfersBefore = calls.length;
 
   deps.completeAsset = async (assetId: string) => {
     completed.push(assetId);
   };
-  await store.getState().retryFile('asset_1', 'v1');
+  await store.getState().retryJob('asset_1');
+
   expect(store.getState().jobs[0].status).toBe('done');
+  // The done files had their capability URL cleared on success, so re-running
+  // their transfers would PUT against an empty URL. Nothing may be re-uploaded.
+  expect(calls.length).toBe(transfersBefore);
+});
+
+test('retryJob re-uploads the failed files and then completes', async () => {
+  const { deps, completed } = makeDeps({ transferStatus: 500 });
+  const store = createUploadStore(deps);
+  await store.getState().enqueue(CREATE_RESPONSE, PICKED, 'My upload');
+  expect(store.getState().jobs[0].status).toBe('failed');
+  expect(completed).toHaveLength(0);
+
+  deps.transfer = (localUri, uploadUrl, onProgress) => ({
+    start: async () => {
+      onProgress(1);
+      return { status: 200 };
+    },
+    cancel: async () => undefined,
+  });
+
+  await store.getState().retryJob('asset_1');
+
+  const job = store.getState().jobs[0];
+  expect(job.status).toBe('done');
+  expect(job.files.every((f) => f.status === 'done')).toBe(true);
+  expect(completed).toEqual(['asset_1']);
+});
+
+test('retryJob on a completion failure that fails again stays retryable', async () => {
+  const { deps } = makeDeps({ completeOk: false });
+  const store = createUploadStore(deps);
+  await store.getState().enqueue(CREATE_RESPONSE, PICKED, 'My upload');
+
+  await store.getState().retryJob('asset_1');
+  // Still failed, and still every-file-done — so the card keeps offering retry
+  // rather than degrading into an actionless tile.
+  const job = store.getState().jobs[0];
+  expect(job.status).toBe('failed');
+  expect(job.files.every((f) => f.status === 'done')).toBe(true);
+});
+
+test('a done file whose upload URL was cleared is never re-transferred', async () => {
+  const { deps, calls } = makeDeps();
+  const store = createUploadStore(deps);
+  await store.getState().enqueue(CREATE_RESPONSE, PICKED, 'My upload');
+  const transfersBefore = calls.length;
+
+  // Force the file back to pending the way retryFile does; uploadOne's
+  // pre-flight must refuse it because the capability URL is gone.
+  await store.getState().retryFile('asset_1', 'v1');
+
+  expect(calls.length).toBe(transfersBefore);
+  expect(store.getState().jobs[0].files.find((f) => f.videoId === 'v1')?.status).toBe('failed');
+});
+
+test('retryJob on an unknown job id is a no-op', async () => {
+  const { deps, calls } = makeDeps();
+  const store = createUploadStore(deps);
+  await store.getState().retryJob('nope');
+  expect(calls).toHaveLength(0);
+  expect(store.getState().jobs).toHaveLength(0);
 });
 
 test('dismissJob removes finished jobs', async () => {
