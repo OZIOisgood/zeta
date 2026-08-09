@@ -37,7 +37,47 @@ test('failed job shows retry with localized label', async () => {
   await render(<UploadProgressCard job={failed} onRetry={onRetry} onDismiss={jest.fn()} />);
   expect(screen.getByLabelText('Retry')).toBeOnTheScreen();
   await user.press(screen.getByTestId('upload-retry'));
-  expect(onRetry).toHaveBeenCalledWith('asset_1', 'v1');
+  expect(onRetry).toHaveBeenCalledWith('asset_1');
+});
+
+test('a job that failed at the completion step still offers retry AND dismiss', async () => {
+  // Every file uploaded and only POST /assets/{id}/complete failed, so there is
+  // no failed FILE. Keying the actions off one used to leave the card with no
+  // action at all — a permanent error tile that survived restarts.
+  const onRetry = jest.fn();
+  const onDismiss = jest.fn();
+  const failedCompletion = job({
+    status: 'failed',
+    files: job().files.map((f) => ({ ...f, status: 'done' as const, progress: 1, uploadUrl: '' })),
+  });
+  const user = userEvent.setup();
+  await render(
+    <UploadProgressCard job={failedCompletion} onRetry={onRetry} onDismiss={onDismiss} />,
+  );
+
+  await user.press(screen.getByTestId('upload-retry'));
+  expect(onRetry).toHaveBeenCalledWith('asset_1');
+
+  await user.press(screen.getByTestId('upload-dismiss'));
+  expect(onDismiss).toHaveBeenCalledWith('asset_1');
+});
+
+test('a failed job is dismissable', async () => {
+  const onDismiss = jest.fn();
+  const failed = job({
+    status: 'failed',
+    files: [{ videoId: 'v1', uploadUrl: 'u1', localUri: 'f1', filename: 'a.mp4', progress: 0, status: 'failed' }],
+  });
+  const user = userEvent.setup();
+  await render(<UploadProgressCard job={failed} onRetry={jest.fn()} onDismiss={onDismiss} />);
+  await user.press(screen.getByTestId('upload-dismiss'));
+  expect(onDismiss).toHaveBeenCalledWith('asset_1');
+});
+
+test('an in-flight job offers neither action', async () => {
+  await render(<UploadProgressCard job={job()} onRetry={jest.fn()} onDismiss={jest.fn()} />);
+  expect(screen.queryByTestId('upload-retry')).toBeNull();
+  expect(screen.queryByTestId('upload-dismiss')).toBeNull();
 });
 
 test('done job shows dismiss with localized label', async () => {

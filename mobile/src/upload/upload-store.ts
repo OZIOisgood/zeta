@@ -41,6 +41,16 @@ type UploadState = {
   jobs: UploadJob[];
   enqueue: (created: CreateAssetResponse, picked: PickedFile[], title: string) => Promise<void>;
   retryFile: (jobId: string, videoId: string) => Promise<void>;
+  /**
+   * Retries a whole failed job — the entry point the UI uses.
+   *
+   * Covers the case retryFile structurally cannot: when every file uploaded and
+   * only the completion call failed, there is no failed file to target, and the
+   * done files had their capability URL cleared on success, so re-running their
+   * transfers is impossible as well as pointless. Then only the completion is
+   * re-attempted.
+   */
+  retryJob: (jobId: string) => Promise<void>;
   dismissJob: (jobId: string) => void;
 };
 
@@ -123,8 +133,10 @@ function buildStateCreator(deps: UploadDeps) {
 
     async function uploadOne(jobId: string, file: UploadFileState): Promise<boolean> {
       // Pre-flight: a blank localUri means the file could not be matched to a
-      // picked file — fail immediately without calling the transfer.
-      if (file.localUri === '') {
+      // picked file; a blank uploadUrl means the capability URL was already
+      // consumed by a successful upload and cleared below. Either way there is
+      // nothing to transfer — fail immediately instead of PUTting into the void.
+      if (file.localUri === '' || file.uploadUrl === '') {
         patchFile(jobId, file.videoId, { status: 'failed' });
         return false;
       }
@@ -154,6 +166,21 @@ function buildStateCreator(deps: UploadDeps) {
       return false;
     }
 
+    // Marks the asset complete server-side. Split out of processJob so a
+    // completion-only retry can re-run exactly this step without touching the
+    // already-uploaded files. Callers hold the `processing` guard.
+    async function runCompletion(jobId: string): Promise<void> {
+      patchJob(jobId, { status: 'completing' });
+      try {
+        await deps.completeAsset(jobId);
+      } catch {
+        patchJob(jobId, { status: 'failed' });
+        return;
+      }
+      patchJob(jobId, { status: 'done' });
+      deps.invalidateAssets();
+    }
+
     async function processJob(jobId: string): Promise<void> {
       // Re-entrancy guard: if this job is already being processed (e.g. a
       // retryFile call arrives while a transfer is still in flight), return
@@ -181,15 +208,7 @@ function buildStateCreator(deps: UploadDeps) {
           }
         }
 
-        patchJob(jobId, { status: 'completing' });
-        try {
-          await deps.completeAsset(jobId);
-        } catch {
-          patchJob(jobId, { status: 'failed' });
-          return;
-        }
-        patchJob(jobId, { status: 'done' });
-        deps.invalidateAssets();
+        await runCompletion(jobId);
       } finally {
         processing.delete(jobId);
       }
@@ -237,6 +256,34 @@ function buildStateCreator(deps: UploadDeps) {
       // a job only succeeds when all parts are uploaded.
       retryFile: async (jobId, videoId) => {
         patchFile(jobId, videoId, { status: 'pending', progress: 0 });
+        await processJob(jobId);
+      },
+
+      retryJob: async (jobId) => {
+        const job = get().jobs.find((j) => j.id === jobId);
+        if (!job) return;
+
+        // Every file uploaded, so only the /complete call can have failed.
+        // Re-running the transfers is impossible here — the capability URLs
+        // were cleared when each upload succeeded — so retry just that step.
+        if (job.files.every((f) => f.status === 'done')) {
+          if (processing.has(jobId)) return;
+          processing.add(jobId);
+          try {
+            await runCompletion(jobId);
+          } finally {
+            processing.delete(jobId);
+          }
+          return;
+        }
+
+        // Otherwise reset the failed files and let processJob work through the
+        // job; it re-attempts every non-done file and re-runs the completion.
+        for (const file of job.files) {
+          if (file.status === 'failed') {
+            patchFile(jobId, file.videoId, { status: 'pending', progress: 0 });
+          }
+        }
         await processJob(jobId);
       },
 
