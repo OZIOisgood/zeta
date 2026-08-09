@@ -84,17 +84,33 @@ export default function HomeScreen() {
   const videoList = useMemo(() => assets.data ?? [], [assets.data]);
   const groupList = useMemo(() => groups.data ?? [], [groups.data]);
 
-  const nowMs = new Date().getTime();
-  const upcoming = (bookings.data ?? [])
-    .filter((b) => b.status !== 'cancelled' && new Date(b.scheduled_at).getTime() > nowMs)
-    .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+  const now = new Date();
+  const nowMs = now.getTime();
+  const byStart = (a: { scheduled_at: string }, b: { scheduled_at: string }) =>
+    new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
+  const live = (bookings.data ?? []).filter((b) => b.status !== 'cancelled');
+
+  // "Upcoming" keeps its literal meaning for the counter: sessions that have
+  // not started yet.
+  const upcoming = live
+    .filter((b) => new Date(b.scheduled_at).getTime() > nowMs)
+    .sort(byStart);
   const upcomingCount = upcoming.length;
-  const nextBooking = upcoming[0] ?? null;
+
+  // The hero surfaces whatever needs attention NOW, so an already-running
+  // session outranks the next scheduled one. Selecting purely on
+  // `scheduled_at > now` dropped a session from the hero at exactly the moment
+  // its Join button became useful — which is also when someone returning after
+  // a network drop needs it most.
+  const running = live
+    .filter((b) => new Date(b.scheduled_at).getTime() <= nowMs && isJoinable(b, now))
+    .sort(byStart);
+  const nextBooking = running[0] ?? upcoming[0] ?? null;
 
   // Gate the hero Join button on the same contract as the coaching screen:
   // the user can connect AND the session is inside its join window. Read the
   // clock in the render body (not a memo) to keep the deps lint happy.
-  const canJoinNext = !!nextBooking && canConnect && isJoinable(nextBooking, new Date());
+  const canJoinNext = !!nextBooking && canConnect && isJoinable(nextBooking, now);
 
   const latestVideos = useMemo(() => videoList.slice(0, LATEST_VIDEOS_LIMIT), [videoList]);
 

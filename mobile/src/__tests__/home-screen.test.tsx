@@ -189,6 +189,74 @@ test('hero Join is shown inside the window and routes to the call', async () => 
   expect(mockPush).toHaveBeenCalledWith('/call/b1?groupId=g1');
 });
 
+test('a session that already started stays in the hero with a working Join', async () => {
+  // Regression: the hero selected on `scheduled_at > now`, so a running session
+  // vanished at exactly the moment its Join button became useful. The API also
+  // reports such a booking as 'done', which the old isJoinable rejected.
+  const user = userEvent.setup();
+  mockUser = {
+    id: 'me', first_name: 'A', last_name: 'B',
+    permissions: ['coaching:book', 'coaching:video:connect'],
+  };
+  mockUseMyBookingsQuery.mockReturnValue(success([{
+    id: 'b1', student_id: 'me', expert_id: 'x', expert_name: 'Coach Lee', student_name: 'Me',
+    session_type_name: 'Video Review', status: 'done', duration_minutes: 60, group_id: 'g1',
+    scheduled_at: new Date(Date.now() - 10 * 60_000).toISOString(),
+  }]));
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+  expect(screen.getByTestId('next-session-card')).toBeOnTheScreen();
+  await user.press(screen.getByTestId('next-session-join'));
+  expect(mockPush).toHaveBeenCalledWith('/call/b1?groupId=g1');
+});
+
+test('a running session outranks the next scheduled one in the hero', async () => {
+  mockUser = {
+    id: 'me', first_name: 'A', last_name: 'B',
+    permissions: ['coaching:book', 'coaching:video:connect'],
+  };
+  mockUseMyBookingsQuery.mockReturnValue(success([
+    {
+      id: 'later', student_id: 'me', expert_id: 'x', expert_name: 'Coach Later', student_name: 'Me',
+      session_type_name: 'Video Review', status: 'pending', duration_minutes: 30, group_id: 'g1',
+      scheduled_at: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+    },
+    {
+      id: 'now', student_id: 'me', expert_id: 'x', expert_name: 'Coach Now', student_name: 'Me',
+      session_type_name: 'Video Review', status: 'done', duration_minutes: 60, group_id: 'g1',
+      scheduled_at: new Date(Date.now() - 5 * 60_000).toISOString(),
+    },
+  ]));
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+  expect(screen.getByText(/Coach Now/)).toBeOnTheScreen();
+  expect(screen.queryByText(/Coach Later/)).toBeNull();
+});
+
+test('a finished session is not resurrected into the hero', async () => {
+  mockUser = {
+    id: 'me', first_name: 'A', last_name: 'B',
+    permissions: ['coaching:book', 'coaching:video:connect'],
+  };
+  mockUseMyBookingsQuery.mockReturnValue(success([{
+    id: 'over', student_id: 'me', expert_id: 'x', expert_name: 'Coach Past', student_name: 'Me',
+    session_type_name: 'Video Review', status: 'done', duration_minutes: 30, group_id: 'g1',
+    scheduled_at: new Date(Date.now() - 3 * 3_600_000).toISOString(),
+  }]));
+  await render(
+    <Providers>
+      <HomeScreen />
+    </Providers>,
+  );
+  expect(screen.queryByText(/Coach Past/)).toBeNull();
+});
+
 test('hero shows a book prompt when there is no booking and the user can book', async () => {
   mockUser = { id: 'me', first_name: 'A', last_name: 'B', permissions: ['coaching:book'] };
   mockUseMyBookingsQuery.mockReturnValue(success([]));
