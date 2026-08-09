@@ -96,28 +96,6 @@ func TestPgTimeToString(t *testing.T) {
 	}
 }
 
-func TestFormatDuration(t *testing.T) {
-	tests := []struct {
-		minutes int32
-		want    string
-	}{
-		{15, "15 minutes"},
-		{30, "30 minutes"},
-		{59, "59 minutes"},
-		{60, "1 hour(s)"},
-		{90, "1 hour(s) 30 minutes"},
-		{120, "2 hour(s)"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
-			if got := formatDuration(tt.minutes); got != tt.want {
-				t.Errorf("formatDuration(%d) = %q, want %q", tt.minutes, got, tt.want)
-			}
-		})
-	}
-}
-
 func TestCollectUserIDs(t *testing.T) {
 	pairs := [][2]string{
 		{"alice", "bob"},

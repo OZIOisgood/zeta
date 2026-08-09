@@ -129,7 +129,7 @@ func previewScenarios() []scenario {
 				Copy: email.Copy{
 					Preheader: "Your live coaching session has been confirmed.",
 					Title:     "Live coaching session confirmed",
-					Intro:     "Your **“Dressage review”** session with **Alex Morgan** for **“Dressage Team”** is booked for **Friday, May 8, 2026 at 15:00 UTC** and lasts 45 min.",
+					Intro:     "Your **“Dressage review”** session with **Alex Morgan** for **“Dressage Team”** is booked for **Friday, 8 May 2026 at 17:00 (Europe/Berlin, UTC+02:00)** and lasts 45 minutes.",
 					Note:      "Booking note: Please focus on rider position through the transition.",
 				},
 			},
@@ -140,7 +140,7 @@ func previewScenarios() []scenario {
 				Copy: email.Copy{
 					Preheader: "A coaching session has been cancelled.",
 					Title:     "Live coaching session cancelled",
-					Intro:     "The **“Dressage review”** session for **“Dressage Team”**, scheduled for **Friday, May 8, 2026 at 15:00 UTC**, was cancelled by **Jamie Lee**.",
+					Intro:     "The **“Dressage review”** session for **“Dressage Team”**, scheduled for **Friday, 8 May 2026 at 17:00 (Europe/Berlin, UTC+02:00)**, was cancelled by **Jamie Lee**.",
 					Note:      "Reason: Schedule conflict",
 				},
 			},
@@ -151,7 +151,7 @@ func previewScenarios() []scenario {
 				Copy: email.Copy{
 					Preheader: "You have an upcoming coaching session.",
 					Title:     "Coaching session reminder",
-					Intro:     "Your coaching session starts at **Friday, May 8, 2026 at 15:00 UTC** and lasts 45 min.",
+					Intro:     "Your coaching session starts at **Friday, 8 May 2026 at 17:00 (Europe/Berlin, UTC+02:00)** and lasts 45 minutes.",
 					Button:    "Join session",
 				},
 				Action: &email.Action{URL: "http://localhost:4200/sessions/group-id/booking-id/call"},

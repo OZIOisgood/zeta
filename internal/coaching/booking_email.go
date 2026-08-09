@@ -5,8 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	goi18n "github.com/nicksnyder/go-i18n/v2/i18n"
-
 	"github.com/OZIOisgood/zeta/internal/db"
 	"github.com/OZIOisgood/zeta/internal/email"
 	"github.com/OZIOisgood/zeta/internal/i18n"
@@ -110,10 +108,8 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 	expert := h.resolveParticipant(ctx, b.ExpertID)
 	student := h.resolveParticipant(ctx, b.StudentID)
 
-	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
-	durationStr := formatDuration(b.DurationMinutes)
-
-	buildMessage := func(loc *goi18n.Localizer, partnerName string) email.Message {
+	buildMessage := func(localization recipientLocalization, partnerName string) email.Message {
+		loc := localization.localizer
 		note := ""
 		if b.Notes.Valid && b.Notes.String != "" {
 			note = i18n.T(loc, "email.booking_confirmed.note", map[string]any{"Note": b.Notes.String})
@@ -126,8 +122,8 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 					"SessionName": sessionTypeName,
 					"PartnerName": partnerName,
 					"GroupName":   groupName,
-					"ScheduledAt": scheduledStr,
-					"Duration":    durationStr,
+					"ScheduledAt": formatEmailDateTime(b.ScheduledAt.Time, localization),
+					"Duration":    formatEmailDuration(b.DurationMinutes, localization),
 				}),
 				Note: note,
 			},
@@ -157,9 +153,10 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 			)
 			continue
 		}
-		loc := i18n.For(preferences.UserLang(ctx, h.q, h.logger, t.userID))
+		localization := h.resolveRecipientLocalization(ctx, t.userID)
+		loc := localization.localizer
 		subject := i18n.T(loc, "email.booking_confirmed.subject")
-		if err := h.emailService.SendTemplate([]string{t.addr}, subject, email.TemplateNotification, buildMessage(loc, t.partner)); err != nil {
+		if err := h.emailService.SendTemplate([]string{t.addr}, subject, email.TemplateNotification, buildMessage(localization, t.partner)); err != nil {
 			log.ErrorContext(ctx, "booking_created_email_failed",
 				slog.String("component", "coaching"),
 				slog.String("user_id", t.userID),
@@ -180,9 +177,10 @@ func (h *Handler) sendBookingCreatedEmail(ctx context.Context, b db.CoachingBook
 
 	log.InfoContext(ctx, "booking_created_email_sent",
 		slog.String("component", "coaching"),
+		slog.String("booking_id", uuidToString(b.ID)),
 		slog.String("expert_id", b.ExpertID),
 		slog.String("student_id", b.StudentID),
-		slog.String("scheduled_at", scheduledStr),
+		slog.String("scheduled_at", b.ScheduledAt.Time.UTC().Format(time.RFC3339)),
 	)
 }
 
@@ -238,8 +236,8 @@ func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBookin
 		return
 	}
 
-	scheduledStr := b.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
-	loc := i18n.For(preferences.UserLang(ctx, h.q, h.logger, otherID))
+	localization := h.resolveRecipientLocalization(ctx, otherID)
+	loc := localization.localizer
 	note := ""
 	if reason := b.CancellationReason.String; reason != "" {
 		note = i18n.T(loc, "email.booking_cancelled.note", map[string]any{"Reason": reason})
@@ -252,7 +250,7 @@ func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBookin
 			Intro: i18n.T(loc, "email.booking_cancelled.intro", map[string]any{
 				"SessionName":   sessionTypeName,
 				"GroupName":     groupName,
-				"ScheduledAt":   scheduledStr,
+				"ScheduledAt":   formatEmailDateTime(b.ScheduledAt.Time, localization),
 				"CancellerName": cancellerName,
 			}),
 			Note: note,
@@ -269,9 +267,10 @@ func (h *Handler) sendCancellationEmail(ctx context.Context, b db.CoachingBookin
 
 	log.InfoContext(ctx, "booking_cancellation_email_sent",
 		slog.String("component", "coaching"),
+		slog.String("booking_id", uuidToString(b.ID)),
 		slog.String("expert_id", b.ExpertID),
 		slog.String("student_id", b.StudentID),
 		slog.String("cancelled_by", cancelledByID),
-		slog.String("scheduled_at", scheduledStr),
+		slog.String("scheduled_at", b.ScheduledAt.Time.UTC().Format(time.RFC3339)),
 	)
 }

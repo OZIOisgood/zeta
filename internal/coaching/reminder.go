@@ -40,8 +40,6 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		scheduledStr := rem.ScheduledAt.Time.UTC().Format("Monday, January 2, 2006 at 15:04 UTC")
-
 		// isImminent is true for the ≤20-min reminder that includes a join link.
 		diff := rem.ScheduledAt.Time.Sub(rem.RemindAt.Time)
 		isImminent := diff <= 20*time.Minute
@@ -76,7 +74,8 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			loc := i18n.For(preferences.UserLang(ctx, h.q, h.logger, userID))
+			localization := h.resolveRecipientLocalization(ctx, userID)
+			loc := localization.localizer
 			introKey := "email.reminder.intro"
 			if isImminent {
 				introKey = "email.reminder.intro_imminent"
@@ -86,8 +85,8 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 					Preheader: i18n.T(loc, "email.reminder.preheader"),
 					Title:     i18n.T(loc, "email.reminder.title"),
 					Intro: i18n.T(loc, introKey, map[string]any{
-						"ScheduledAt": scheduledStr,
-						"Duration":    formatDuration(rem.DurationMinutes),
+						"ScheduledAt": formatEmailDateTime(rem.ScheduledAt.Time, localization),
+						"Duration":    formatEmailDuration(rem.DurationMinutes, localization),
 					}),
 				},
 			}
@@ -105,7 +104,16 @@ func (h *Handler) ProcessReminders(w http.ResponseWriter, r *http.Request) {
 					slog.Any("err", err),
 				)
 				sendFailed = true
+				continue
 			}
+
+			log.InfoContext(ctx, "reminder_email_sent",
+				slog.String("component", "coaching"),
+				slog.String("reminder_id", uuidToString(rem.ID)),
+				slog.String("booking_id", uuidToString(rem.BookingID)),
+				slog.String("user_id", userID),
+				slog.String("scheduled_at", rem.ScheduledAt.Time.UTC().Format(time.RFC3339)),
+			)
 		}
 
 		if sendFailed {

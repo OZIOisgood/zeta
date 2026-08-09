@@ -73,20 +73,6 @@ func parseTimeRange(startStr, endStr string) (start, end pgtype.Time, errMsg str
 	return start, end, ""
 }
 
-// --- Duration ---
-
-func formatDuration(minutes int32) string {
-	if minutes < 60 {
-		return fmt.Sprintf("%d minutes", minutes)
-	}
-	h := minutes / 60
-	m := minutes % 60
-	if m == 0 {
-		return fmt.Sprintf("%d hour(s)", h)
-	}
-	return fmt.Sprintf("%d hour(s) %d minutes", h, m)
-}
-
 // --- User ID collection ---
 
 // collectUserIDs de-duplicates expert and student IDs from a list of (expertID, studentID) pairs.
