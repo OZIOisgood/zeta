@@ -1,0 +1,78 @@
+<!-- @dsCard group="Mobile App" viewport="1180x980" name="Home redesign — Material You (Android)" subtitle="4 Varianten · Orange/Neutral × Light/Dark" -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Strido — Home Redesign (Android / Material You)</title>
+<link rel="stylesheet" href="../styles.css" />
+<style>
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: #e9eaee;
+    background-image: radial-gradient(circle at 1px 1px, rgba(20,22,30,.12) 1px, transparent 0);
+    background-size: 22px 22px;
+    font-family: var(--font-sans), system-ui, sans-serif;
+    color: #20222b;
+    padding: 40px 36px 64px; box-sizing: border-box;
+  }
+  .head { max-width: 1000px; margin: 0 auto 34px; }
+  .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #6b6f7d; }
+  .head h1 { margin: 8px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+  .head p { margin: 10px 0 0; font-size: 15px; line-height: 1.6; color: #565a68; max-width: 62ch; }
+  .grid {
+    display: grid; grid-template-columns: repeat(2, max-content);
+    gap: 56px 64px; justify-content: center; align-items: start;
+  }
+  .frame { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .cap { text-align: center; }
+  .cap .name { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
+  .cap .sub { font-size: 13px; font-weight: 600; color: #6b6f7d; margin-top: 2px; }
+  .m-scroll::-webkit-scrollbar { width: 0; }
+  /* Scroll children must keep their natural height, not flex-shrink to fit. */
+  .m-scroll > * { flex-shrink: 0; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="eyebrow">Strido · Home Screen</div>
+    <h1>Redesign — Material You, native Android</h1>
+    <p>Vier Richtungen derselben Startseite: ein neues Modul-Layout (personalisierte Begrüßung · Hero „Nächste Session“ mit Beitreten · „Deine Videos“ · „Erste Schritte“), Material-3-Navigation Bar mit Pill-Indikator und Extended-FAB zum Hochladen. Verglichen werden die Markenfarbe Ember-Orange und eine neutrale, native Material-Palette — jeweils hell und dunkel.</p>
+    <p style="margin-top:14px;"><a href="videos.html" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:800;color:#bd4309;text-decoration:none;">Videos-Seite ansehen (Orange) →</a></p>
+  </div>
+
+  <div id="root" class="grid"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="data.js"></script>
+  <script src="material-themes.js"></script>
+  <script type="text/babel" src="material-home.jsx" data-presets="react"></script>
+  <script type="text/babel" data-presets="react">
+    const { PhoneFrame } = window.StridoMaterial;
+    const VARIANTS = ['orange-light', 'neutral-light', 'orange-dark', 'neutral-dark'];
+
+    function Canvas() {
+      return VARIANTS.map((key) => {
+        const t = window.MThemes[key];
+        return (
+          <div className="frame" key={key}>
+            <div className="cap">
+              <div className="name">{t.label}</div>
+              <div className="sub">{t.sub}</div>
+            </div>
+            <PhoneFrame theme={key} />
+          </div>
+        );
+      });
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<Canvas />);
+    const draw = () => window.lucide && window.lucide.createIcons();
+    setTimeout(draw, 120);
+    setTimeout(draw, 400);
+  </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+import { KeyboardAvoidingView, Modal, Platform, Pressable } from 'react-native';
+
+import type { ZDialogPanelProps } from './z-dialog-panel.types';
+
+/**
+ * ZDialogPanel — shared RN implementation (M3 basic dialog).
+ *
+ * Reusable modal surface: a dimmed backdrop with a centered panel.
+ * Mobile counterpart of the web dialog panel
+ * (web/dashboard-next/src/app/shared/ui/dialog/). Tapping the backdrop closes;
+ * tapping the panel does not. Consumers provide the panel content as children.
+ *
+ * The panel is wrapped in a `KeyboardAvoidingView` (padding behavior on iOS,
+ * where the keyboard overlaps content) so dialogs that hold text inputs keep
+ * their fields and buttons above the keyboard. (Android resizes the window.)
+ * Consumers: ZConfirmDialog's children branch and ZVideoPartRail — form input
+ * belongs in formSheet ROUTES instead (the availability sheets moved there).
+ *
+ * Consumed by BOTH the bare entry (web / Storybook / jest) and the Android
+ * entry — see z-dialog-panel.android.tsx for why Android retreats from Compose.
+ */
+export function ZDialogPanelShared({
+  visible,
+  onClose,
+  children,
+  closeLabel = 'Close',
+  testID,
+}: ZDialogPanelProps) {
+  return (
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+      <Pressable
+        accessibilityLabel={closeLabel}
+        onPress={onClose}
+        className="flex-1 bg-black/40"
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1 items-center justify-center p-4"
+        >
+          <Pressable
+            testID={testID}
+            onPress={() => {}}
+            className="w-full max-w-md rounded-lg border border-z-border bg-z-surface p-4"
+          >
+            {children}
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Pressable>
+    </Modal>
+  );
+}

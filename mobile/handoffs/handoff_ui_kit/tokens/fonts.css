@@ -1,0 +1,40 @@
+/* Strido webfonts — Nunito Sans
+ *
+ * The app's single brand typeface (see mobile/storybook-static + web dashboard).
+ * The four static binaries below (400, 400 italic, 700, 700 italic) are the
+ * real files shipped with the product. Google Fonts is imported FIRST to fill
+ * the intermediate weights the product uses heavily (500 medium, 600 semibold,
+ * 800 extrabold) which have no local binary; the local @font-face rules are
+ * declared AFTER the import so they win for 400/700 (real brand files).
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400;1,6..12,700&display=swap');
+
+@font-face {
+  font-family: 'Nunito Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/nunito-sans-regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito Sans';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/nunito-sans-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/nunito-sans-bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito Sans';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/nunito-sans-bold-italic.woff2') format('woff2');
+}

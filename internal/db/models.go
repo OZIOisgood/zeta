@@ -672,6 +672,15 @@ type UserAccess struct {
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
+type UserDevice struct {
+	ID            pgtype.UUID        `json:"id"`
+	UserID        string             `json:"user_id"`
+	ExpoPushToken string             `json:"expo_push_token"`
+	Platform      pgtype.Text        `json:"platform"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	LastSeenAt    pgtype.Timestamptz `json:"last_seen_at"`
+}
+
 type UserGroup struct {
 	UserID    string             `json:"user_id"`
 	GroupID   pgtype.UUID        `json:"group_id"`
@@ -695,6 +704,12 @@ type UserPreference struct {
 	FirstName                          string           `json:"first_name"`
 	LastName                           string           `json:"last_name"`
 	DisplayName                        string           `json:"display_name"`
+	PushNotificationsEnabled           bool             `json:"push_notifications_enabled"`
+	PushAssetUploadsEnabled            bool             `json:"push_asset_uploads_enabled"`
+	PushAssetReviewsEnabled            bool             `json:"push_asset_reviews_enabled"`
+	PushInvitationUpdatesEnabled       bool             `json:"push_invitation_updates_enabled"`
+	PushGroupMembershipUpdatesEnabled  bool             `json:"push_group_membership_updates_enabled"`
+	PushCoachingBookingUpdatesEnabled  bool             `json:"push_coaching_booking_updates_enabled"`
 }
 
 type Video struct {

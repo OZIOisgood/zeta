@@ -25,6 +25,9 @@ api\:restart:
 	@sleep 1
 	go run ./cmd/api
 
+api\:openapi\:lint:
+	pnpm --package=@redocly/cli@2 dlx redocly lint docs/openapi.yaml
+
 web-next\:build:
 	cd web/dashboard-next && pnpm install && pnpm run build
 
@@ -42,6 +45,21 @@ web-next\:storybook:
 
 web-next\:storybook\:build:
 	cd web/dashboard-next && pnpm install && pnpm run build-storybook
+
+mobile\:start:
+	cd mobile && pnpm install && pnpm run start
+
+mobile\:lint:
+	cd mobile && pnpm install && pnpm run lint
+
+mobile\:test:
+	cd mobile && pnpm install && pnpm run test
+
+mobile\:typecheck:
+	cd mobile && pnpm install && pnpm exec tsc --noEmit
+
+mobile\:check-tokens:
+	cd mobile && pnpm install && pnpm run check:tokens
 
 infra\:up:
 	docker-compose -f ./infra/docker-compose.yml up -d --build

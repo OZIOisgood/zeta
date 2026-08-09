@@ -61,3 +61,56 @@ jobs:
       - name: Build Landing Container
         working-directory: web/landing
         run: docker build -t zeta-landing:ci .
+
+  lint-openapi:
+    name: Lint OpenAPI Spec
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Lint OpenAPI spec
+        run: pnpm --package=@redocly/cli@2 dlx redocly lint docs/openapi.yaml
+
+  lint-and-test-mobile:
+    name: Lint & Test Mobile
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: mobile/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        working-directory: mobile
+        run: pnpm run lint
+
+      - name: Typecheck
+        working-directory: mobile
+        run: pnpm exec tsc --noEmit
+
+      - name: Test
+        working-directory: mobile
+        run: pnpm run test

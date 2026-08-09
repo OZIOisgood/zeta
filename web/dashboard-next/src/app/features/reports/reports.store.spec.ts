@@ -4,6 +4,10 @@ import { ReportEventsResponse, ReportsApiClient } from '../../core/http/reports-
 import { ReportsStore } from './reports.store';
 
 const now = new Date();
+// Mid-month anchor: the fixtures sit at now-1d/now-2d and must stay inside the
+// CURRENT month ("current month" report). With the raw clock this spec broke
+// on the 1st/2nd of every month, when now-2d slid into the previous month.
+now.setDate(15);
 const iso = (offsetDays: number): string => {
   const d = new Date(now);
   d.setDate(d.getDate() - offsetDays);
