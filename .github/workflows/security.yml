@@ -100,11 +100,49 @@ jobs:
           import json
           from pathlib import Path
 
+          # Gate policy. The plan (.agents/plans/20260704134950_cve_check_pipeline_plan.md)
+          # assigns PR blocking to Dependency Review at `fail-on-severity: high` and
+          # gives Trivy HIGH,CRITICAL; this step is the only scanner that shipped
+          # without a threshold. Matching it keeps the three gates consistent.
+          BLOCKING = {"HIGH", "CRITICAL", "UNKNOWN"}  # UNKNOWN blocks: fail closed
+
+          # Time-bound ignores, per the plan's triage rule ("add a time-bound ignore
+          # with a reason and follow-up issue"). Keep in sync with `allow-ghsas` on
+          # the Dependency Review step above.
+          #
+          # image-size DoS advisories (JXL/HEIF and ICNS parser infinite loops):
+          # no fixed release exists — 1.2.1 is the head of the `legacy` tag and
+          # metro declares `image-size: ^1.0.2`. Forcing 2.x was tried and breaks
+          # the Metro asset pipeline on the first PNG. image-size runs inside the
+          # bundler, never in the shipped app. Revisit when Expo/metro moves to 2.x.
+          IGNORED_IDS = {
+              "GHSA-5p2g-fcmc-qvqq",
+              "GHSA-w3rx-r6r6-pgpr",
+          }
+
           def load(path):
               p = Path(path)
               if not p.exists() or p.stat().st_size == 0:
                   return {"results": []}
               return json.loads(p.read_text())
+
+          def severity_of(vulnerability, cvss):
+              """GitHub advisories carry database_specific.severity; fall back to the
+              group's CVSS score, and treat anything unlabelled as blocking."""
+              label = (vulnerability.get("database_specific") or {}).get("severity")
+              if isinstance(label, str) and label.strip():
+                  return label.strip().upper()
+              try:
+                  score = float(cvss)
+              except (TypeError, ValueError):
+                  return "UNKNOWN"
+              if score >= 9.0:
+                  return "CRITICAL"
+              if score >= 7.0:
+                  return "HIGH"
+              if score >= 4.0:
+                  return "MODERATE"
+              return "LOW"
 
           def findings(path):
               doc = load(path)
@@ -120,10 +158,17 @@ jobs:
                           pkg.get("name", ""),
                           pkg.get("version", ""),
                       )
+                      cvss_by_id = {}
+                      for group in package.get("groups", []):
+                          for gid in group.get("ids", []):
+                              cvss_by_id[gid] = group.get("max_severity")
                       for vulnerability in package.get("vulnerabilities", []):
                           vuln_id = vulnerability.get("id")
-                          if vuln_id:
-                              found.add(pkg_key + (vuln_id,))
+                          if not vuln_id or vuln_id in IGNORED_IDS:
+                              continue
+                          if severity_of(vulnerability, cvss_by_id.get(vuln_id)) not in BLOCKING:
+                              continue
+                          found.add(pkg_key + (vuln_id,))
               return found
 
           baseline = findings("osv-baseline.json")
@@ -131,12 +176,12 @@ jobs:
           introduced = sorted(current - baseline)
 
           if introduced:
-              print("New OSV vulnerability findings introduced by this change:")
+              print("New high/critical OSV findings introduced by this change:")
               for source, ecosystem, name, version, vuln_id in introduced:
                   print(f"- {vuln_id}: {ecosystem} {name}@{version} from {source}")
               raise SystemExit(1)
 
-          print(f"No new OSV findings introduced by this change. Current scan still contains {len(current)} existing finding(s).")
+          print(f"No new high/critical OSV findings introduced by this change. Current scan still contains {len(current)} blocking finding(s).")
           PY
 
       - name: Summarize full OSV scan
