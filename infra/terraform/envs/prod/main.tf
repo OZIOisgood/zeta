@@ -145,7 +145,7 @@ module "cloud_sql" {
   environment         = "prod"
   tier                = "db-f1-micro"
   disk_size_gb        = 10
-  availability_type   = "REGIONAL"
+  availability_type   = "ZONAL"
   deletion_protection = true
 }
 
