@@ -58,7 +58,7 @@ jest.mock('../api/queries/notifications', () => ({
 const mockPush = jest.fn();
 const mockSetOptions = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, setParams: jest.fn() }),
   useNavigation: () => ({ setOptions: mockSetOptions }),
   // No test here deep-links with a `tab` param; the coaching screen just needs
   // the hook present so it doesn't crash (see coaching-list.test.tsx for the

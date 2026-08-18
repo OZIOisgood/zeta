@@ -25,6 +25,12 @@ type SessionTab = 'upcoming' | 'past' | 'cancelled';
 
 const startsAt = (booking: Booking): number => new Date(booking.scheduled_at).getTime();
 
+/** Narrows a raw `?tab=` query value to a valid SessionTab; an absent or
+ *  unrecognised value falls back to 'upcoming'. */
+function sessionTabFromParam(value?: string): SessionTab {
+  return value === 'past' || value === 'cancelled' ? value : 'upcoming';
+}
+
 function ListSkeleton() {
   return (
     <View className="gap-3 p-4">
@@ -62,10 +68,38 @@ export default function CoachingScreen() {
   const canManageAvailability =
     permissions !== null && permissions.includes('coaching:availability:manage');
 
+  // Deep-linked tab (?tab=past|cancelled|upcoming): a booking notification links
+  // here so the recipient lands on the tab that actually holds the booking,
+  // instead of always opening on "upcoming" (empty for a past/cancelled one).
+  // This screen never unmounts across tab-bar visits ((tabs)/_layout.tsx uses
+  // `hidden` specifically to avoid a navigator remount), so a useState
+  // initializer alone only ever catches the FIRST mount — a second
+  // notification tap while already mounted must also update `activeTab`.
+  // `appliedTabParam` tracks the last `tab` value already reacted to; comparing
+  // it against the current `tab` directly in the render body (React's
+  // documented "adjusting state when a prop changes" pattern — see
+  // https://react.dev/learn/you-might-not-need-an-effect) applies a new value
+  // without an extra render pass or the react-hooks/set-state-in-effect lint
+  // violation a plain `useEffect(() => setActiveTab(...), [tab])` would trip.
+  // The actual param CLEARING below is a genuine external-system sync (the
+  // router's params, not React state), so it stays in an effect — and that
+  // clearing is not cosmetic: without it, tapping a SECOND notification for
+  // the SAME tab (cancelled → user manually switches to Upcoming → cancelled
+  // again) would never re-apply, because `tab` wouldn't have "changed" from
+  // its own last-seen value either way. Clearing turns every fresh deep link
+  // into a genuine undefined→value transition, and it also means returning
+  // here via the tab bar with no new deep link (tab stays undefined) leaves
+  // the user's manual tab choice alone instead of snapping back to a stale one.
   const { tab } = useLocalSearchParams<{ tab?: string }>();
-  const [activeTab, setActiveTab] = useState<SessionTab>(
-    tab === 'past' || tab === 'cancelled' ? tab : 'upcoming',
-  );
+  const [activeTab, setActiveTab] = useState<SessionTab>(sessionTabFromParam(tab));
+  const [appliedTabParam, setAppliedTabParam] = useState(tab);
+  if (tab !== appliedTabParam) {
+    setAppliedTabParam(tab);
+    if (tab !== undefined) setActiveTab(sessionTabFromParam(tab));
+  }
+  useEffect(() => {
+    if (tab !== undefined) router.setParams({ tab: undefined });
+  }, [tab, router]);
   // M3 scroll-edge: flat header at rest, elevated once the list scrolls under it
   // (Android only; iOS large-title header owns its native hairline).
   const onHeaderScroll = useHeaderScrollEdge();
