@@ -126,6 +126,22 @@ const PAST_BOOKING: Booking = {
   created_at: '2026-01-01T00:00:00Z',
 };
 
+// Started 10 minutes ago, runs for 60 — live right now.
+const IN_PROGRESS_BOOKING: Booking = {
+  id: 'b4',
+  expert_id: 'e1',
+  expert_name: 'Coach Ana',
+  student_id: 's1',
+  student_name: 'Bob Student',
+  group_id: 'g1',
+  session_type_id: 'st1',
+  session_type_name: 'Live Session',
+  scheduled_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+  duration_minutes: 60,
+  status: 'pending',
+  created_at: '2026-01-01T00:00:00Z',
+};
+
 const CANCELLED_BOOKING: Booking = {
   id: 'b3',
   expert_id: 'e1',
@@ -206,6 +222,70 @@ test('tab counts reflect upcoming / past / cancelled buckets', async () => {
   expect(screen.getByText('Strategy Session')).toBeOnTheScreen();
   expect(screen.queryByText('Past Session')).toBeNull();
   expect(screen.queryByText('Cancelled Session')).toBeNull();
+});
+
+// A session that has started but not finished is still "upcoming", matching the
+// dashboard SessionsOverviewStore. Bucketing on scheduled_at alone dropped it
+// into "past" for its whole duration — including while the user could join it.
+test('an in-progress session stays in the upcoming tab', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [IN_PROGRESS_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  expect(screen.getByText('Live Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Past Session')).toBeNull();
+});
+
+test('an in-progress session does not appear in the past tab', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [IN_PROGRESS_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  fireEvent.press(screen.getByRole('tab', { name: /past/i }));
+
+  await waitFor(() => expect(screen.getByText('Past Session')).toBeOnTheScreen());
+  expect(screen.queryByText('Live Session')).toBeNull();
+});
+
+// Moving in-progress sessions into "upcoming" must not hand them the cancel
+// affordance that tab implies: the API refuses a cancellation inside
+// CANCELLATION_NOTICE (1h) of the start, so a live session can never be
+// cancelled. It stayed uncancellable before the bucket change; keep it that way.
+test('an in-progress session on the upcoming tab offers no swipe-to-cancel', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [IN_PROGRESS_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  expect(screen.getByText('Live Session')).toBeOnTheScreen();
+  expect(screen.queryByTestId('booking-cancel-swipe')).toBeNull();
+});
+
+test('a future session on the upcoming tab still offers swipe-to-cancel', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  expect(screen.getByTestId('booking-cancel-swipe')).toBeOnTheScreen();
 });
 
 // ── deep-linked initial tab (?tab=) ─────────────────────────────────────────────

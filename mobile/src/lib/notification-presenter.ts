@@ -15,13 +15,27 @@ export type SessionsTab = 'upcoming' | 'past' | 'cancelled';
 // Mirrors the web presenter: link to the tab that actually holds the booking.
 // Linking a cancelled or already-finished session to the default "upcoming"
 // tab lands the recipient on an empty list.
+//
+// A session counts as upcoming until it actually ends, so a live one links to
+// "upcoming" rather than "past". This mirrors the coaching list's buckets,
+// where upcoming = in progress || starts later and past = ended.
 export function sessionsTabFor(item: NotificationItem, now = Date.now()): SessionsTab {
   if (item.type === 'coaching_booking_cancelled') return 'cancelled';
   const scheduledAt = item.payload?.scheduled_at;
   if (!scheduledAt) return 'upcoming';
   const startsAt = new Date(scheduledAt).getTime();
   if (Number.isNaN(startsAt)) return 'upcoming';
-  return startsAt > now ? 'upcoming' : 'past';
+  // A missing, zero or nonsensical duration degrades to a zero-length session,
+  // i.e. the start time alone. Those are legacy rows recorded before
+  // duration_minutes existed, so they are old enough that the session has
+  // ended — better than inventing a length.
+  const durationMinutes = item.payload?.duration_minutes;
+  const minutes =
+    typeof durationMinutes === 'number' && Number.isFinite(durationMinutes) && durationMinutes > 0
+      ? durationMinutes
+      : 0;
+  const endsAt = startsAt + minutes * 60 * 1000;
+  return now < endsAt ? 'upcoming' : 'past';
 }
 
 /** The deep-link target alone, for callers that only need to navigate (e.g. onOpen). */

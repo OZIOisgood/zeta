@@ -1,5 +1,5 @@
 import { NotificationItem } from '../../core/http/notifications-api.service';
-import { presentNotification } from './notification-presenter';
+import { presentNotification, sessionsTabFor } from './notification-presenter';
 
 function build(overrides: Partial<NotificationItem>): NotificationItem {
   return {
@@ -212,5 +212,74 @@ describe('presentNotification', () => {
 
     expect(view.messageKey).toBe('notifications.types.generic');
     expect(view.link).toBe('/');
+  });
+});
+
+// A booking is "upcoming" until it actually ends — an in-progress session is
+// still upcoming, matching SessionsOverviewStore (upcoming = in progress ||
+// starts later; completed = endsAt <= now).
+describe('sessionsTabFor', () => {
+  const START = Date.parse('2026-08-18T10:00:00Z');
+  const MINUTE = 60 * 1000;
+
+  function created(payload: Record<string, unknown>): NotificationItem {
+    return build({ type: 'coaching_booking_created', payload });
+  }
+
+  const sixtyMinuteBooking = created({
+    scheduled_at: '2026-08-18T10:00:00Z',
+    duration_minutes: 60,
+  });
+
+  it('is upcoming before the session starts', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START - MINUTE)).toBe('upcoming');
+  });
+
+  it('is upcoming exactly at the start', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START)).toBe('upcoming');
+  });
+
+  it('is upcoming mid-session', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START + 30 * MINUTE)).toBe('upcoming');
+  });
+
+  it('is past exactly at the end', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START + 60 * MINUTE)).toBe('past');
+  });
+
+  it('is past after the session ends', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START + 61 * MINUTE)).toBe('past');
+  });
+
+  // Legacy notifications recorded before duration_minutes existed carry no
+  // duration. Degrade to the start-time-only rule rather than guessing a
+  // length: those rows are old, so their session has long since ended.
+  it('degrades to the start time when duration_minutes is missing', () => {
+    const item = created({ scheduled_at: '2026-08-18T10:00:00Z' });
+
+    expect(sessionsTabFor(item, START - MINUTE)).toBe('upcoming');
+    expect(sessionsTabFor(item, START)).toBe('past');
+    expect(sessionsTabFor(item, START + MINUTE)).toBe('past');
+  });
+
+  it('degrades to the start time when duration_minutes is zero', () => {
+    const item = created({ scheduled_at: '2026-08-18T10:00:00Z', duration_minutes: 0 });
+
+    expect(sessionsTabFor(item, START - MINUTE)).toBe('upcoming');
+    expect(sessionsTabFor(item, START + MINUTE)).toBe('past');
+  });
+
+  it('keeps a cancellation on the cancelled tab whatever the time', () => {
+    const item = build({
+      type: 'coaching_booking_cancelled',
+      payload: { scheduled_at: '2026-08-18T10:00:00Z', duration_minutes: 60 },
+    });
+
+    expect(sessionsTabFor(item, START + 61 * MINUTE)).toBe('cancelled');
+  });
+
+  it('falls back to upcoming without a usable scheduled_at', () => {
+    expect(sessionsTabFor(created({ duration_minutes: 60 }), START)).toBe('upcoming');
+    expect(sessionsTabFor(created({ scheduled_at: 'not-a-date' }), START)).toBe('upcoming');
   });
 });

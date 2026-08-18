@@ -17,13 +17,27 @@ export type SessionsTab = 'upcoming' | 'past' | 'cancelled';
 // "upcoming" tab lands the recipient on an empty list. The tab is a route path
 // segment (`sessions/:tab`), never a query param — `/sessions?tab=` matches the
 // `sessions` -> `sessions/upcoming` redirect and loses the tab entirely.
+//
+// A session counts as upcoming until it actually ends, so a live one links to
+// "upcoming" rather than "past". This mirrors SessionsOverviewStore, where
+// upcoming = in progress || starts later and completed = endsAt <= now.
 export function sessionsTabFor(item: NotificationItem, now = Date.now()): SessionsTab {
   if (item.type === 'coaching_booking_cancelled') return 'cancelled';
   const scheduledAt = item.payload?.scheduled_at;
   if (!scheduledAt) return 'upcoming';
   const startsAt = new Date(scheduledAt).getTime();
   if (Number.isNaN(startsAt)) return 'upcoming';
-  return startsAt > now ? 'upcoming' : 'past';
+  // A missing, zero or nonsensical duration degrades to a zero-length session,
+  // i.e. the start time alone. Those are legacy rows recorded before
+  // duration_minutes existed, so they are old enough that the session has
+  // ended — better than inventing a length.
+  const durationMinutes = item.payload?.duration_minutes;
+  const minutes =
+    typeof durationMinutes === 'number' && Number.isFinite(durationMinutes) && durationMinutes > 0
+      ? durationMinutes
+      : 0;
+  const endsAt = startsAt + minutes * 60 * 1000;
+  return now < endsAt ? 'upcoming' : 'past';
 }
 
 export function notificationLink(item: NotificationItem): {

@@ -24,6 +24,10 @@ import { ANDROID_FAB_LIST_CLEARANCE } from '../../../lib/android-fab-clearance';
 type SessionTab = 'upcoming' | 'past' | 'cancelled';
 
 const startsAt = (booking: Booking): number => new Date(booking.scheduled_at).getTime();
+const endsAt = (booking: Booking): number =>
+  startsAt(booking) + booking.duration_minutes * 60 * 1000;
+const isInProgress = (booking: Booking, now: number): boolean =>
+  startsAt(booking) <= now && now < endsAt(booking);
 
 /** Narrows a raw `?tab=` query value to a valid SessionTab; an absent or
  *  unrecognised value falls back to 'upcoming'. */
@@ -169,13 +173,14 @@ export default function CoachingScreen() {
 
   // Three distinct lists, mirroring the web SessionsOverviewStore: cancelled is
   // its own bucket (never folded into past); upcoming/past split pending+done by
-  // the scheduled time.
+  // the session END time, so a session that is under way stays under "upcoming"
+  // for its whole duration instead of dropping into "past" the moment it starts.
   const bookings = data ?? [];
   const upcoming = bookings
-    .filter((b) => b.status !== 'cancelled' && startsAt(b) > nowMs)
+    .filter((b) => b.status !== 'cancelled' && (isInProgress(b, nowMs) || startsAt(b) > nowMs))
     .sort((a, b) => startsAt(a) - startsAt(b));
   const past = bookings
-    .filter((b) => b.status !== 'cancelled' && startsAt(b) <= nowMs)
+    .filter((b) => b.status !== 'cancelled' && endsAt(b) <= nowMs)
     .sort((a, b) => startsAt(b) - startsAt(a));
   const cancelled = bookings
     .filter((b) => b.status === 'cancelled')
@@ -199,7 +204,9 @@ export default function CoachingScreen() {
   );
 
   function renderBooking(booking: Booking) {
-    const cancellable = activeTab === 'upcoming';
+    // In-progress sessions live under "upcoming" but can never be cancelled —
+    // the API refuses a cancellation inside CANCELLATION_NOTICE of the start.
+    const cancellable = activeTab === 'upcoming' && !isInProgress(booking, nowMs);
     return (
       <BookingCard
         booking={booking}
