@@ -14,7 +14,9 @@ export type SessionsTab = 'upcoming' | 'past' | 'cancelled';
 
 // The booking notifications deep-link to the tab that actually holds the
 // booking. Linking a cancelled or already-finished session to the default
-// "upcoming" tab lands the recipient on an empty list.
+// "upcoming" tab lands the recipient on an empty list. The tab is a route path
+// segment (`sessions/:tab`), never a query param — `/sessions?tab=` matches the
+// `sessions` -> `sessions/upcoming` redirect and loses the tab entirely.
 export function sessionsTabFor(item: NotificationItem, now = Date.now()): SessionsTab {
   if (item.type === 'coaching_booking_cancelled') return 'cancelled';
   const scheduledAt = item.payload?.scheduled_at;
@@ -84,8 +86,7 @@ export function presentNotification(
       return {
         messageKey: 'notifications.types.coachingBookingCreated',
         params: { student: p.student_name ?? '', session: p.session_name ?? '', when },
-        link: '/sessions',
-        queryParams: { tab: sessionsTabFor(item) },
+        link: `/sessions/${sessionsTabFor(item)}`,
         icon: 'booking',
       };
     case 'coaching_booking_cancelled':
@@ -94,8 +95,7 @@ export function presentNotification(
           ? 'notifications.types.coachingBookingCancelled'
           : 'notifications.types.coachingBookingCancelledNoSession',
         params: { actor: p.actor_name ?? '', session: p.session_name ?? '', when },
-        link: '/sessions',
-        queryParams: { tab: sessionsTabFor(item) },
+        link: `/sessions/${sessionsTabFor(item)}`,
         icon: 'booking',
       };
     default:

@@ -118,8 +118,8 @@ describe('presentNotification', () => {
       session: 'Live coaching',
       when: 'formatted(2999-01-01T10:00:00Z)',
     });
-    expect(view.link).toBe('/sessions');
-    expect(view.queryParams).toEqual({ tab: 'upcoming' });
+    expect(view.link).toBe('/sessions/upcoming');
+    expect(view.queryParams).toBeUndefined();
     expect(view.icon).toBe('booking');
   });
 
@@ -132,7 +132,8 @@ describe('presentNotification', () => {
       formatWhen,
     );
 
-    expect(view.queryParams).toEqual({ tab: 'past' });
+    expect(view.link).toBe('/sessions/past');
+    expect(view.queryParams).toBeUndefined();
   });
 
   it('falls back to the upcoming tab when scheduled_at is missing', () => {
@@ -142,7 +143,8 @@ describe('presentNotification', () => {
     );
 
     expect(view.params['when']).toBe('');
-    expect(view.queryParams).toEqual({ tab: 'upcoming' });
+    expect(view.link).toBe('/sessions/upcoming');
+    expect(view.queryParams).toBeUndefined();
   });
 
   it('falls back to the upcoming tab when scheduled_at is unparseable', () => {
@@ -155,7 +157,8 @@ describe('presentNotification', () => {
     );
 
     expect(view.params['when']).toBe('formatted(not-a-date)');
-    expect(view.queryParams).toEqual({ tab: 'upcoming' });
+    expect(view.link).toBe('/sessions/upcoming');
+    expect(view.queryParams).toBeUndefined();
   });
 
   it('maps a cancellation to the cancelled tab and names the actor', () => {
@@ -177,8 +180,8 @@ describe('presentNotification', () => {
       session: 'Live coaching',
       when: 'formatted(2999-01-01T10:00:00Z)',
     });
-    expect(view.link).toBe('/sessions');
-    expect(view.queryParams).toEqual({ tab: 'cancelled' });
+    expect(view.link).toBe('/sessions/cancelled');
+    expect(view.queryParams).toBeUndefined();
     expect(view.icon).toBe('booking');
   });
 
@@ -197,7 +200,8 @@ describe('presentNotification', () => {
       session: '',
       when: 'formatted(2999-01-01T10:00:00Z)',
     });
-    expect(view.queryParams).toEqual({ tab: 'cancelled' });
+    expect(view.link).toBe('/sessions/cancelled');
+    expect(view.queryParams).toBeUndefined();
   });
 
   it('falls back gracefully for an unknown type', () => {
