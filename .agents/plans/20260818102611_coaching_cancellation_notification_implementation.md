@@ -837,13 +837,15 @@ test('a booking notification renders the formatted appointment time', async () =
     payload: { student_name: 'Lena', scheduled_at: '2026-08-21T12:15:00Z' },
     read: true,
   });
-  const { toJSON } = await render(
+  const { getByText } = await render(
     <NotificationRow item={item} onOpen={noop} onAccept={noop} onDecline={noop} />,
   );
 
-  // The t() mock echoes interpolation params as JSON, so the formatted time is
-  // observable without depending on the emulator's locale.
-  expect(JSON.stringify(toJSON())).toMatch(/"when\\":\\"[^"\\]+/);
+  // The t() mock echoes interpolation params, so the row's text node literally
+  // contains `...coachingBookingCreated|{"student":"Lena",...,"when":"<time>"}`.
+  // Matching that node directly keeps the assertion free of JSON escaping and
+  // independent of the emulator's locale — it only asserts `when` is non-empty.
+  expect(getByText(/coachingBookingCreated\|.*"when":"[^"]+"/)).toBeTruthy();
 });
 ```
 
