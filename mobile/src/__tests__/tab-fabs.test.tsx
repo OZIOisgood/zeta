@@ -60,6 +60,10 @@ const mockSetOptions = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
   useNavigation: () => ({ setOptions: mockSetOptions }),
+  // No test here deep-links with a `tab` param; the coaching screen just needs
+  // the hook present so it doesn't crash (see coaching-list.test.tsx for the
+  // deep-linked-tab coverage).
+  useLocalSearchParams: () => ({}),
 }));
 
 let mockPermissions: string[] | null = null;

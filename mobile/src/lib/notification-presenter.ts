@@ -38,8 +38,7 @@ export function notificationHref(item: NotificationItem): Href {
  */
 export function presentNotification(
   item: NotificationItem,
-  // TODO(task-7): make required once notification-row.tsx and notifications.tsx both pass formatWhen explicitly
-  formatWhen: (iso: string) => string = () => '',
+  formatWhen: (iso: string) => string,
 ): NotificationPresentation {
   const p = item.payload ?? {};
   const when = p.scheduled_at ? formatWhen(p.scheduled_at) : '';

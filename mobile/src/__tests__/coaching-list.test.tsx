@@ -48,9 +48,13 @@ jest.mock('../auth/auth-store', () => ({
 
 const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
+// Default: no `tab` param, matching a plain tab-bar navigation to /coaching.
+// Individual tests override this to cover the deep-linked-tab behavior.
+const mockUseLocalSearchParams = jest.fn(() => ({}) as { tab?: string });
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
   useNavigation: () => ({ setOptions: mockSetOptions }),
+  useLocalSearchParams: () => mockUseLocalSearchParams(),
 }));
 
 import { initI18n } from '../i18n';
@@ -65,6 +69,7 @@ beforeEach(() => {
   mockSetOptions.mockClear();
   mockMutateAsync.mockClear();
   mockShowToast.mockClear();
+  mockUseLocalSearchParams.mockReturnValue({});
   mockPermissions = ['coaching:bookings:read', 'coaching:book'];
   mockUserId = 's1';
   mockUseCancelBookingMutation.mockReturnValue({
@@ -194,6 +199,56 @@ test('tab counts reflect upcoming / past / cancelled buckets', async () => {
   });
   await render(<Providers><CoachingScreen /></Providers>);
   // Default (upcoming) tab shows only the upcoming booking.
+  expect(screen.getByText('Strategy Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Past Session')).toBeNull();
+  expect(screen.queryByText('Cancelled Session')).toBeNull();
+});
+
+// ── deep-linked initial tab (?tab=) ─────────────────────────────────────────────
+// A booking notification links to /coaching?tab=<past|cancelled|upcoming> so the
+// recipient lands on the tab that actually holds the booking, instead of always
+// opening on "upcoming" (empty for a past or cancelled booking).
+
+test('opening with ?tab=past starts on the past tab', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'past' });
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.getByText('Past Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+  expect(screen.queryByText('Cancelled Session')).toBeNull();
+});
+
+test('opening with ?tab=cancelled starts on the cancelled tab', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'cancelled' });
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.getByText('Cancelled Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+  expect(screen.queryByText('Past Session')).toBeNull();
+});
+
+test('an unrecognised ?tab= value falls back to upcoming', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'bogus' });
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
   expect(screen.getByText('Strategy Session')).toBeOnTheScreen();
   expect(screen.queryByText('Past Session')).toBeNull();
   expect(screen.queryByText('Cancelled Session')).toBeNull();

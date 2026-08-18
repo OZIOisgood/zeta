@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Platform, RefreshControl, View } from 'react-native';
-import { useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../../api/queries/coaching';
 import { useMyBookingsQuery } from '../../../api/queries/coaching';
@@ -62,7 +62,10 @@ export default function CoachingScreen() {
   const canManageAvailability =
     permissions !== null && permissions.includes('coaching:availability:manage');
 
-  const [activeTab, setActiveTab] = useState<SessionTab>('upcoming');
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState<SessionTab>(
+    tab === 'past' || tab === 'cancelled' ? tab : 'upcoming',
+  );
   // M3 scroll-edge: flat header at rest, elevated once the list scrolls under it
   // (Android only; iOS large-title header owns its native hairline).
   const onHeaderScroll = useHeaderScrollEdge();

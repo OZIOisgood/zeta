@@ -16,7 +16,7 @@ import {
   showInviteActions,
   type NotificationIcon,
 } from '../lib/notification-presenter';
-import { formatRelativeTime } from '../lib/datetime';
+import { formatDateTime, formatRelativeTime } from '../lib/datetime';
 import { useRoleColors } from '../theme/native';
 import { ZButton } from './ui/z-button';
 import { ZIconTile } from './ui/z-icon-tile';
@@ -84,7 +84,7 @@ export function NotificationRow({
 }) {
   const { t } = useTranslation();
   const { color } = useRoleColors();
-  const view = presentNotification(item);
+  const view = presentNotification(item, formatDateTime);
   const unread = !item.read;
   const resolved = resolvedInvite(item);
   const expired = item.type === 'group_invitation_received' && item.invite_status === 'expired';
