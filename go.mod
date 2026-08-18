@@ -22,7 +22,7 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/testcontainers/testcontainers-go v0.43.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.43.0
-	github.com/vanng822/go-premailer v1.33.0
+	github.com/vanng822/go-premailer v1.34.0
 	github.com/workos/workos-go/v4 v4.46.1
 	go.uber.org/mock v0.6.0
 	google.golang.org/api v0.247.0
