@@ -115,9 +115,20 @@ jobs:
           # metro declares `image-size: ^1.0.2`. Forcing 2.x was tried and breaks
           # the Metro asset pipeline on the first PNG. image-size runs inside the
           # bundler, never in the shipped app. Revisit when Expo/metro moves to 2.x.
+          #
+          # GO-2026-5932 (golang.org/x/crypto): not a patchable defect — the advisory
+          # says the x/crypto/openpgp package is unmaintained and unsafe by design.
+          # Its affected range is `introduced: 0` with no fixed version, so every
+          # release carries it and no bump can clear it. We do not import
+          # x/crypto/openpgp anywhere, and govulncheck (call-graph based, run earlier
+          # in this job) reports nothing. Without this entry the gate misfires on any
+          # x/crypto version bump: findings are keyed by version, so moving an
+          # already-affected package from 0.52.0 to 0.53.0 reads as "newly
+          # introduced". Drop this if we ever add an openpgp dependency.
           IGNORED_IDS = {
               "GHSA-5p2g-fcmc-qvqq",
               "GHSA-w3rx-r6r6-pgpr",
+              "GO-2026-5932",
           }
 
           def load(path):
