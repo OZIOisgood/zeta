@@ -190,6 +190,44 @@ func TestBuildMessage(t *testing.T) {
 			},
 		},
 		{
+			name:             "coaching_booking_cancelled with session name",
+			notificationType: typeCoachingBookingCancelled,
+			payload: mustMarshal(coachingBookingCancelledPayload{
+				BookingID:   "book-3",
+				GroupID:     "grp-5",
+				GroupName:   "Pro Coaching",
+				ActorName:   "Dave",
+				SessionName: "60-min Technique",
+				ScheduledAt: "2026-06-14T10:00:00Z",
+			}),
+			wantOk:            true,
+			wantTitleNonEmpty: true,
+			wantBodyNonEmpty:  true,
+			checkData: func(t *testing.T, data map[string]string) {
+				t.Helper()
+				assert.Equal(t, typeCoachingBookingCancelled, data["type"])
+				assert.Equal(t, "book-3", data["booking_id"])
+				assert.Equal(t, "grp-5", data["group_id"])
+			},
+		},
+		{
+			name:             "coaching_booking_cancelled without session name",
+			notificationType: typeCoachingBookingCancelled,
+			payload: mustMarshal(coachingBookingCancelledPayload{
+				BookingID: "book-4",
+				ActorName: "Eve",
+			}),
+			wantOk:            true,
+			wantTitleNonEmpty: true,
+			wantBodyNonEmpty:  true,
+			checkData: func(t *testing.T, data map[string]string) {
+				t.Helper()
+				assert.Equal(t, "book-4", data["booking_id"])
+				_, hasGroupID := data["group_id"]
+				assert.False(t, hasGroupID, "group_id should be absent when empty")
+			},
+		},
+		{
 			name:             "unknown type returns ok=false",
 			notificationType: "not_a_real_type",
 			payload:          []byte(`{}`),
