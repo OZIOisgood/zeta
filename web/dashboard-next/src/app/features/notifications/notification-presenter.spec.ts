@@ -145,6 +145,19 @@ describe('presentNotification', () => {
     expect(view.queryParams).toEqual({ tab: 'upcoming' });
   });
 
+  it('falls back to the upcoming tab when scheduled_at is unparseable', () => {
+    const view = presentNotification(
+      build({
+        type: 'coaching_booking_created',
+        payload: { student_name: 'Lena', scheduled_at: 'not-a-date' },
+      }),
+      formatWhen,
+    );
+
+    expect(view.params['when']).toBe('formatted(not-a-date)');
+    expect(view.queryParams).toEqual({ tab: 'upcoming' });
+  });
+
   it('maps a cancellation to the cancelled tab and names the actor', () => {
     const view = presentNotification(
       build({

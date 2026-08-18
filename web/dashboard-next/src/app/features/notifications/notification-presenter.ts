@@ -40,6 +40,9 @@ export function presentNotification(
   // Optional so the handful of call sites this task deliberately leaves
   // untouched (wired to a real formatter in the next task) keep compiling;
   // every case in this file's own tests supplies formatWhen explicitly.
+  // TODO(task-5): make required once notification-list.component.ts,
+  // shell.component.ts, and notifications-page.component.ts all pass
+  // formatWhen explicitly.
   formatWhen: (iso: string) => string = () => '',
 ): NotificationPresentation {
   const p = item.payload ?? {};
