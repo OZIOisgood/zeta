@@ -25,7 +25,7 @@ Two gaps made that unexplainable to the coach:
 - Migration `db/migrations/20260818101949_add_coaching_booking_cancelled_notification.{up,down}.sql`.
   Up: `ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'coaching_booking_cancelled';` following `20260621183000_add_group_invitation_revocation.up.sql`.
   Down: delete rows of that type, then rebuild the enum via rename/create/`USING status::text::…`/drop, following that migration's down script. `notifications.type` has no default, so none needs restoring.
-- `internal/notifications/types.go`: add `TypeCoachingBookingCancelled` and `CoachingBookingCancelledPayload{booking_id, group_id, group_name, actor_name, session_name, scheduled_at}`. `actor_name` rather than `student_name`, because either party can cancel.
+- `internal/notifications/types.go`: add `TypeCoachingBookingCancelled` and `CoachingBookingCancelledPayload{booking_id, group_id, group_name, actor_name, session_name, scheduled_at, duration_minutes}`. `actor_name` rather than `student_name`, because either party can cancel. `duration_minutes` goes on the created payload too — the tab derivation needs the end time, not just the start.
 - `internal/coaching/booking_email.go`: add `recordBookingCancelledNotification(b, sessionTypeName, cancelledByID)` next to `recordBookingCreatedNotification`. Recipient is `cancelledByID == b.StudentID ? b.ExpertID : b.StudentID`; `actor_name` comes from `resolveParticipant(cancelledByID)`.
 - `internal/coaching/bookings.go`: call it in `CancelBooking` beside `sendCancellationEmail` (line 548).
 - Run `make db:sqlc` for the regenerated `db.NotificationType`.
@@ -45,13 +45,14 @@ notificationHref(item: NotificationItem): Href   // link only, no formatting
 Tab derivation from the payload:
 
 - `coaching_booking_cancelled` → `cancelled`
-- `coaching_booking_created` → `upcoming` when `scheduled_at` is in the future at render time, otherwise `past`
-- missing or unparseable `scheduled_at` → `upcoming`, the current behavior
+- `coaching_booking_created` → `upcoming` while `scheduled_at + duration_minutes` is still in the future at render time, otherwise `past`. A session counts as upcoming until it **ends**, not until it starts — that matches the dashboard store, and the mobile list is realigned to the same rule.
+- missing or unparseable `scheduled_at` → `upcoming`; no start time means no information at all
+- missing, zero, or non-finite `duration_minutes` → treated as a zero-length session, i.e. the start-time-only rule. Only rows predating this change lack the field, and those sessions have ended.
 
 ### Dashboard
 
 - `notification-presenter.ts`: add the cancelled case, add the `when` param to both booking cases, and build `/sessions/<derived>`.
-- Call sites inject `DashboardDateTimeService` and pass `formatInstantDateTime(iso, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })` — the same options the sessions page uses, so notification and list agree: `notification-list.component.ts`, `shell.component.ts`, `notifications-page.component.ts`.
+- The options live once, in `DashboardDateTimeService.formatSessionDateTime`, which the sessions page uses too — so a notification and the sessions list cannot drift apart. `notification-list.component.ts` injects the service and passes that method as the formatter; `notifications-page.component.ts` needs only the link and uses `notificationLink`. `shell.component.ts` renders `<z-notification-list>` and presents nothing itself.
 - The tab is a **route path segment**, not a query param: `app.routes.ts` declares `sessions/:tab`, `/sessions` redirects to `/sessions/upcoming` with `pathMatch: 'full'`, and the page reads `route.paramMap`. A `?tab=` query param is silently dropped by that redirect. No routing change is needed, but the link must be a path.
 
 ### Mobile
