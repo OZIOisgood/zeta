@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
@@ -63,7 +63,7 @@ function notification(overrides: Partial<NotificationItem>): NotificationItem {
  * Routes copied from app.routes.ts. The redirect matters: it is what silently
  * swallowed `/sessions?tab=<x>` and landed booking notifications on "upcoming".
  */
-async function renderAt(url: string): Promise<RouterTestingHarness> {
+function configure(): void {
   TestBed.configureTestingModule({
     imports: [
       SessionsPageComponent,
@@ -129,9 +129,27 @@ async function renderAt(url: string): Promise<RouterTestingHarness> {
       },
     ],
   });
+}
+
+async function renderAt(url: string): Promise<RouterTestingHarness> {
+  configure();
 
   const harness = await RouterTestingHarness.create();
   await harness.navigateByUrl(url);
+  await harness.fixture.whenStable();
+  harness.detectChanges();
+
+  return harness;
+}
+
+/** How notifications-page.component.ts actually navigates: a commands array. */
+async function renderViaRouterCommands(
+  target: ReturnType<typeof notificationLink>,
+): Promise<RouterTestingHarness> {
+  configure();
+
+  const harness = await RouterTestingHarness.create();
+  await TestBed.inject(Router).navigate([target.link], { queryParams: target.queryParams });
   await harness.fixture.whenStable();
   harness.detectChanges();
 
@@ -187,6 +205,20 @@ describe('SessionsPageComponent deep-link target', () => {
 
     expect(activeTabLabel(harness)).toBe('Upcoming');
     expect(sessionNames(harness)).toEqual(['Strategy Session']);
+  });
+
+  it('lands on the cancelled tab through a router commands array, as the page navigates', async () => {
+    const target = notificationLink(
+      notification({
+        type: 'coaching_booking_cancelled',
+        payload: { actor_name: 'Vanessa', scheduled_at: CANCELLED.scheduled_at },
+      }),
+    );
+
+    const harness = await renderViaRouterCommands(target);
+
+    expect(activeTabLabel(harness)).toBe('Cancelled');
+    expect(sessionNames(harness)).toEqual(['Dropped Session']);
   });
 
   it('ignores a ?tab= query param — the redirect swallows it (why the tab is a path segment)', async () => {
