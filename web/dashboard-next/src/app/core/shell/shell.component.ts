@@ -39,10 +39,6 @@ import { filter, firstValueFrom } from 'rxjs';
 import { FeedbackApiClient } from '../../core/http/feedback-api.service';
 import { NotificationItem } from '../../core/http/notifications-api.service';
 import { NotificationListComponent } from '../../features/notifications/notification-list.component';
-import {
-  NotificationPresentation,
-  presentNotification,
-} from '../../features/notifications/notification-presenter';
 import { NotificationsStore } from '../../features/notifications/notifications.store';
 import { SessionStore } from '../../features/session/session.store';
 import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
@@ -55,7 +51,6 @@ import {
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
-import { DashboardDateTimeService } from '../i18n/dashboard-date-time.service';
 import { DashboardLocalizationService } from '../i18n/dashboard-localization.service';
 import { PermissionsService } from '../permissions/permissions.service';
 import { AppShellStore } from '../state/app-shell.store';
@@ -145,7 +140,6 @@ export class ShellComponent implements OnDestroy {
       .join('');
   });
   private readonly localization = inject(DashboardLocalizationService);
-  private readonly dateTime = inject(DashboardDateTimeService);
   private readonly transloco = inject(TranslocoService);
   private readonly router = inject(Router);
   private readonly feedbackApi = inject(FeedbackApiClient);
@@ -228,10 +222,6 @@ export class ShellComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.notifications.disconnect();
-  }
-
-  protected present(item: NotificationItem): NotificationPresentation {
-    return presentNotification(item, (iso) => this.dateTime.formatSessionDateTime(iso));
   }
 
   protected onNotificationClick(item: NotificationItem): void {
