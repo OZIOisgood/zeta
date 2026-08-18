@@ -55,6 +55,7 @@ import {
 import { ZIconButtonComponent } from '../../shared/ui/icon-button/z-icon-button.component';
 import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.component';
 import { ZToastComponent } from '../../shared/ui/toast/z-toast.component';
+import { DashboardDateTimeService } from '../i18n/dashboard-date-time.service';
 import { DashboardLocalizationService } from '../i18n/dashboard-localization.service';
 import { PermissionsService } from '../permissions/permissions.service';
 import { AppShellStore } from '../state/app-shell.store';
@@ -144,6 +145,7 @@ export class ShellComponent implements OnDestroy {
       .join('');
   });
   private readonly localization = inject(DashboardLocalizationService);
+  private readonly dateTime = inject(DashboardDateTimeService);
   private readonly transloco = inject(TranslocoService);
   private readonly router = inject(Router);
   private readonly feedbackApi = inject(FeedbackApiClient);
@@ -229,7 +231,15 @@ export class ShellComponent implements OnDestroy {
   }
 
   protected present(item: NotificationItem): NotificationPresentation {
-    return presentNotification(item);
+    return presentNotification(item, (iso) =>
+      this.dateTime.formatInstantDateTime(iso, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    );
   }
 
   protected onNotificationClick(item: NotificationItem): void {

@@ -848,7 +848,8 @@
       "videoReviewed": "Votre vidéo « {{video}} » a été évaluée",
       "videoUploaded": "{{uploader}} a téléversé une vidéo dans {{group}}",
       "videoUploadedNoGroup": "{{uploader}} a téléversé une vidéo pour vous",
-      "coachingBookingCreated": "{{student}} a réservé une séance avec vous",
+      "coachingBookingCreated": "{{student}} a réservé une séance avec vous — {{when}}",
+      "coachingBookingCancelled": "{{actor}} a annulé la séance du {{when}}",
       "generic": "Vous avez une nouvelle notification"
     }
   },
