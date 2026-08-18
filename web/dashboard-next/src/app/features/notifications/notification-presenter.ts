@@ -90,7 +90,9 @@ export function presentNotification(
       };
     case 'coaching_booking_cancelled':
       return {
-        messageKey: 'notifications.types.coachingBookingCancelled',
+        messageKey: p.session_name
+          ? 'notifications.types.coachingBookingCancelled'
+          : 'notifications.types.coachingBookingCancelledNoSession',
         params: { actor: p.actor_name ?? '', session: p.session_name ?? '', when },
         link: '/sessions',
         queryParams: { tab: sessionsTabFor(item) },

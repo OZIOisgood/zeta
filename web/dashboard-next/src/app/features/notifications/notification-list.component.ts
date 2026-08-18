@@ -177,15 +177,7 @@ export class NotificationListComponent {
   private readonly dateTime = inject(DashboardDateTimeService);
 
   protected present(item: NotificationItem) {
-    return presentNotification(item, (iso) =>
-      this.dateTime.formatInstantDateTime(iso, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    );
+    return presentNotification(item, (iso) => this.dateTime.formatSessionDateTime(iso));
   }
 
   protected isInvite(item: NotificationItem): boolean {

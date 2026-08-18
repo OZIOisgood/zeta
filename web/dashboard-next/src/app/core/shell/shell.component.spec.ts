@@ -6,6 +6,8 @@ import { provideExitAnimationManager } from 'ng-primitives/internal';
 import { of } from 'rxjs';
 import { AuthApiClient, User } from '../http/auth-api.service';
 import { FeedbackApiClient } from '../http/feedback-api.service';
+import { NotificationItem, NotificationsApiClient } from '../http/notifications-api.service';
+import { DashboardDateTimeService } from '../i18n/dashboard-date-time.service';
 import { DashboardLocalizationService } from '../i18n/dashboard-localization.service';
 import { ShellComponent } from './shell.component';
 
@@ -29,6 +31,20 @@ const mockUser: User = {
     coaching_booking_updates_enabled: true,
     coaching_reminders_enabled: true,
   },
+};
+
+const FORMATTED_SESSION_TIME = 'Wed, Jan 1, 10:00 AM';
+
+const bookingNotification: NotificationItem = {
+  id: 'n1',
+  type: 'coaching_booking_created',
+  payload: {
+    student_name: 'Lena',
+    session_name: 'Live coaching',
+    scheduled_at: '2999-01-01T10:00:00Z',
+  },
+  read: true,
+  created_at: new Date().toISOString(),
 };
 
 const translocoLangs = {
@@ -82,6 +98,19 @@ const translocoLangs = {
       kicker: 'Today',
       kicker_en: 'Today',
     },
+    notifications: {
+      open: 'Open notifications',
+      title: 'Notifications',
+      empty: 'No notifications yet',
+      emptyDescription: "You're all caught up.",
+      markAllRead: 'Mark all as read',
+      viewAll: 'View all notifications',
+      today: 'Today',
+      earlier: 'Earlier',
+      types: {
+        coachingBookingCreated: '{{student}} booked a session with you — {{when}}',
+      },
+    },
     toast: { title: '', message: '' },
     user: { initials: 'AC', name: 'Ada Coach', role: 'expert' },
   },
@@ -134,6 +163,22 @@ describe('ShellComponent', () => {
             useLanguage: () => {},
             useUserPreferences: () => {},
             isSupportedLanguage: () => true,
+          },
+        },
+        {
+          provide: NotificationsApiClient,
+          useValue: {
+            list: () => of({ items: [bookingNotification], unread_count: 0 }),
+            markRead: () => of(undefined),
+            markAllRead: () => of(undefined),
+            streamUrl: () => '',
+          },
+        },
+        {
+          provide: DashboardDateTimeService,
+          useValue: {
+            formatRelative: () => 'just now',
+            formatSessionDateTime: () => FORMATTED_SESSION_TIME,
           },
         },
       ],
@@ -254,5 +299,17 @@ describe('ShellComponent', () => {
       page_url: expect.any(String),
     });
     expect(el.textContent).toContain('Feedback sent');
+  });
+
+  it('renders the formatted appointment time for a booking notification', async () => {
+    const fixture = TestBed.createComponent(ShellComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector<HTMLButtonElement>('button[aria-label="Open notifications"]')?.click();
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain(FORMATTED_SESSION_TIME);
   });
 });

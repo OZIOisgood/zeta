@@ -182,6 +182,24 @@ describe('presentNotification', () => {
     expect(view.icon).toBe('booking');
   });
 
+  it('falls back to the no-session cancellation key when the session name is missing', () => {
+    const view = presentNotification(
+      build({
+        type: 'coaching_booking_cancelled',
+        payload: { actor_name: 'Vanessa', scheduled_at: '2999-01-01T10:00:00Z' },
+      }),
+      formatWhen,
+    );
+
+    expect(view.messageKey).toBe('notifications.types.coachingBookingCancelledNoSession');
+    expect(view.params).toEqual({
+      actor: 'Vanessa',
+      session: '',
+      when: 'formatted(2999-01-01T10:00:00Z)',
+    });
+    expect(view.queryParams).toEqual({ tab: 'cancelled' });
+  });
+
   it('falls back gracefully for an unknown type', () => {
     const view = presentNotification(
       build({ type: 'unknown_type' as never, payload: {} }),

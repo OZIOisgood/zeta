@@ -22,15 +22,33 @@ const LANG = {
     types: {
       groupInvitationReceived: '{{inviter}} invited you to {{group}}',
       groupMemberJoined: '{{member}} joined {{group}}',
+      coachingBookingCreated: '{{student}} booked a session with you — {{when}}',
     },
   },
 };
+
+const FORMATTED_SESSION_TIME = 'Wed, Jan 1, 10:00 AM';
 
 function inviteItem(overrides: Partial<NotificationItem> = {}): NotificationItem {
   return {
     id: 'inv1',
     type: 'group_invitation_received',
     payload: { group_name: 'Academy', inviter_name: 'Sofia', code: 'ZP-1' },
+    read: false,
+    created_at: '2026-06-05T10:00:00Z',
+    ...overrides,
+  };
+}
+
+function bookingItem(overrides: Partial<NotificationItem> = {}): NotificationItem {
+  return {
+    id: 'b1',
+    type: 'coaching_booking_created',
+    payload: {
+      student_name: 'Lena',
+      session_name: 'Live coaching',
+      scheduled_at: '2999-01-01T10:00:00Z',
+    },
     read: false,
     created_at: '2026-06-05T10:00:00Z',
     ...overrides,
@@ -53,7 +71,13 @@ async function setup() {
     ],
     providers: [
       provideRouter([]),
-      { provide: DashboardDateTimeService, useValue: { formatRelative: () => 'just now' } },
+      {
+        provide: DashboardDateTimeService,
+        useValue: {
+          formatRelative: () => 'just now',
+          formatSessionDateTime: () => FORMATTED_SESSION_TIME,
+        },
+      },
     ],
   }).compileComponents();
 
@@ -127,5 +151,13 @@ describe('NotificationListComponent', () => {
 
     expect(fixture.nativeElement.querySelectorAll('z-skeleton').length).toBeGreaterThan(0);
     expect(fixture.nativeElement.querySelector('z-empty-state')).toBeFalsy();
+  });
+
+  it('renders the formatted appointment time for a booking notification', async () => {
+    const fixture = await setup();
+    fixture.componentRef.setInput('groups', groupsWith([bookingItem()]));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(FORMATTED_SESSION_TIME);
   });
 });

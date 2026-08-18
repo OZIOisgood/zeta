@@ -849,7 +849,8 @@
       "videoUploaded": "{{uploader}} hat ein Video zu {{group}} hochgeladen",
       "videoUploadedNoGroup": "{{uploader}} hat ein Video für dich hochgeladen",
       "coachingBookingCreated": "{{student}} hat einen Termin mit dir gebucht — {{when}}",
-      "coachingBookingCancelled": "{{actor}} hat den Termin am {{when}} abgesagt",
+      "coachingBookingCancelled": "{{actor}} hat „{{session}}“ am {{when}} abgesagt",
+      "coachingBookingCancelledNoSession": "{{actor}} hat den Termin am {{when}} abgesagt",
       "generic": "Du hast eine neue Benachrichtigung"
     }
   },

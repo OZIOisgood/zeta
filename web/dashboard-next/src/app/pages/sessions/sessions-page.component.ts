@@ -320,13 +320,7 @@ export class SessionsPageComponent {
   }
 
   protected formatDateTime(isoString: string): string {
-    return this.dateTime.formatInstantDateTime(isoString, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return this.dateTime.formatSessionDateTime(isoString);
   }
 
   protected canCancel(booking: CoachingBooking): boolean {
