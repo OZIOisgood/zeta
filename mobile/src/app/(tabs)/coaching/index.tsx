@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Platform, RefreshControl, View } from 'react-native';
-import { useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import type { Booking } from '../../../api/queries/coaching';
 import { useMyBookingsQuery } from '../../../api/queries/coaching';
@@ -24,6 +24,16 @@ import { ANDROID_FAB_LIST_CLEARANCE } from '../../../lib/android-fab-clearance';
 type SessionTab = 'upcoming' | 'past' | 'cancelled';
 
 const startsAt = (booking: Booking): number => new Date(booking.scheduled_at).getTime();
+const endsAt = (booking: Booking): number =>
+  startsAt(booking) + booking.duration_minutes * 60 * 1000;
+const isInProgress = (booking: Booking, now: number): boolean =>
+  startsAt(booking) <= now && now < endsAt(booking);
+
+/** Narrows a raw `?tab=` query value to a valid SessionTab; an absent or
+ *  unrecognised value falls back to 'upcoming'. */
+function sessionTabFromParam(value?: string): SessionTab {
+  return value === 'past' || value === 'cancelled' ? value : 'upcoming';
+}
 
 function ListSkeleton() {
   return (
@@ -62,7 +72,38 @@ export default function CoachingScreen() {
   const canManageAvailability =
     permissions !== null && permissions.includes('coaching:availability:manage');
 
-  const [activeTab, setActiveTab] = useState<SessionTab>('upcoming');
+  // Deep-linked tab (?tab=past|cancelled|upcoming): a booking notification links
+  // here so the recipient lands on the tab that actually holds the booking,
+  // instead of always opening on "upcoming" (empty for a past/cancelled one).
+  // This screen never unmounts across tab-bar visits ((tabs)/_layout.tsx uses
+  // `hidden` specifically to avoid a navigator remount), so a useState
+  // initializer alone only ever catches the FIRST mount — a second
+  // notification tap while already mounted must also update `activeTab`.
+  // `appliedTabParam` tracks the last `tab` value already reacted to; comparing
+  // it against the current `tab` directly in the render body (React's
+  // documented "adjusting state when a prop changes" pattern — see
+  // https://react.dev/learn/you-might-not-need-an-effect) applies a new value
+  // without an extra render pass or the react-hooks/set-state-in-effect lint
+  // violation a plain `useEffect(() => setActiveTab(...), [tab])` would trip.
+  // The actual param CLEARING below is a genuine external-system sync (the
+  // router's params, not React state), so it stays in an effect — and that
+  // clearing is not cosmetic: without it, tapping a SECOND notification for
+  // the SAME tab (cancelled → user manually switches to Upcoming → cancelled
+  // again) would never re-apply, because `tab` wouldn't have "changed" from
+  // its own last-seen value either way. Clearing turns every fresh deep link
+  // into a genuine undefined→value transition, and it also means returning
+  // here via the tab bar with no new deep link (tab stays undefined) leaves
+  // the user's manual tab choice alone instead of snapping back to a stale one.
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState<SessionTab>(sessionTabFromParam(tab));
+  const [appliedTabParam, setAppliedTabParam] = useState(tab);
+  if (tab !== appliedTabParam) {
+    setAppliedTabParam(tab);
+    if (tab !== undefined) setActiveTab(sessionTabFromParam(tab));
+  }
+  useEffect(() => {
+    if (tab !== undefined) router.setParams({ tab: undefined });
+  }, [tab, router]);
   // M3 scroll-edge: flat header at rest, elevated once the list scrolls under it
   // (Android only; iOS large-title header owns its native hairline).
   const onHeaderScroll = useHeaderScrollEdge();
@@ -132,13 +173,14 @@ export default function CoachingScreen() {
 
   // Three distinct lists, mirroring the web SessionsOverviewStore: cancelled is
   // its own bucket (never folded into past); upcoming/past split pending+done by
-  // the scheduled time.
+  // the session END time, so a session that is under way stays under "upcoming"
+  // for its whole duration instead of dropping into "past" the moment it starts.
   const bookings = data ?? [];
   const upcoming = bookings
-    .filter((b) => b.status !== 'cancelled' && startsAt(b) > nowMs)
+    .filter((b) => b.status !== 'cancelled' && (isInProgress(b, nowMs) || startsAt(b) > nowMs))
     .sort((a, b) => startsAt(a) - startsAt(b));
   const past = bookings
-    .filter((b) => b.status !== 'cancelled' && startsAt(b) <= nowMs)
+    .filter((b) => b.status !== 'cancelled' && endsAt(b) <= nowMs)
     .sort((a, b) => startsAt(b) - startsAt(a));
   const cancelled = bookings
     .filter((b) => b.status === 'cancelled')
@@ -162,7 +204,9 @@ export default function CoachingScreen() {
   );
 
   function renderBooking(booking: Booking) {
-    const cancellable = activeTab === 'upcoming';
+    // In-progress sessions live under "upcoming" but can never be cancelled —
+    // the API refuses a cancellation inside CANCELLATION_NOTICE of the start.
+    const cancellable = activeTab === 'upcoming' && !isInProgress(booking, nowMs);
     return (
       <BookingCard
         booking={booking}

@@ -92,8 +92,29 @@ test('hides accept/decline once the invite is resolved or expired', async () => 
   expect(getByText(/notifications\.invite\.accepted/)).toBeTruthy();
 });
 
-test('renders accept/decline for an actionable invite and wires the callbacks', async () => {
+// Two separate presses (accept then decline) fired back-to-back in ONE test,
+// without an intervening render/cleanup, corrupt react-test-renderer's act()
+// bookkeeping for whatever test runs next in this file (confirmed by bisection:
+// either press alone is clean; the pair is not, and no post-press act()/timer
+// flush recovers it — this file previously got away with it only because that
+// was the last test). Kept as two single-press tests so each gets its own
+// render + auto afterEach(cleanup) between them.
+test('renders accept/decline for an actionable invite and fires onAccept when pressed', async () => {
   const onAccept = jest.fn();
+  const item = make({
+    type: 'group_invitation_received',
+    payload: { group_name: 'Karate', inviter_name: 'Sam', code: 'aB3xZ9' },
+    invite_status: 'pending',
+    read: false,
+  });
+  const { getByTestId } = await render(
+    <NotificationRow item={item} onOpen={noop} onAccept={onAccept} onDecline={noop} />,
+  );
+  fireEvent.press(getByTestId('notification-accept-n1'));
+  expect(onAccept).toHaveBeenCalledWith(item);
+});
+
+test('renders accept/decline for an actionable invite and fires onDecline when pressed', async () => {
   const onDecline = jest.fn();
   const item = make({
     type: 'group_invitation_received',
@@ -102,10 +123,26 @@ test('renders accept/decline for an actionable invite and wires the callbacks', 
     read: false,
   });
   const { getByTestId } = await render(
-    <NotificationRow item={item} onOpen={noop} onAccept={onAccept} onDecline={onDecline} />,
+    <NotificationRow item={item} onOpen={noop} onAccept={noop} onDecline={onDecline} />,
   );
-  fireEvent.press(getByTestId('notification-accept-n1'));
   fireEvent.press(getByTestId('notification-decline-n1'));
-  expect(onAccept).toHaveBeenCalledWith(item);
   expect(onDecline).toHaveBeenCalledWith(item);
+});
+
+test('a booking notification renders the formatted appointment time', async () => {
+  const item = make({
+    id: 'n-booking',
+    type: 'coaching_booking_created',
+    payload: { student_name: 'Lena', scheduled_at: '2026-08-21T12:15:00Z' },
+    read: true,
+  });
+  const { getByText } = await render(
+    <NotificationRow item={item} onOpen={noop} onAccept={noop} onDecline={noop} />,
+  );
+
+  // The t() mock echoes interpolation params, so the row's text node literally
+  // contains `...coachingBookingCreated|{"student":"Lena",...,"when":"<time>"}`.
+  // Matching that node directly keeps the assertion free of JSON escaping and
+  // independent of the emulator's locale — it only asserts `when` is non-empty.
+  expect(getByText(/coachingBookingCreated\|.*"when":"[^"]+"/)).toBeTruthy();
 });

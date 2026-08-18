@@ -13,11 +13,12 @@ import (
 // Mirrored notification type constants.
 // mirrors internal/notifications.Type — keep in sync.
 const (
-	typeGroupInvitationReceived = "group_invitation_received"
-	typeGroupMemberJoined       = "group_member_joined"
-	typeVideoReviewed           = "video_reviewed"
-	typeVideoUploaded           = "video_uploaded"
-	typeCoachingBookingCreated  = "coaching_booking_created"
+	typeGroupInvitationReceived  = "group_invitation_received"
+	typeGroupMemberJoined        = "group_member_joined"
+	typeVideoReviewed            = "video_reviewed"
+	typeVideoUploaded            = "video_uploaded"
+	typeCoachingBookingCreated   = "coaching_booking_created"
+	typeCoachingBookingCancelled = "coaching_booking_cancelled"
 )
 
 // Local payload shapes mirror the structs in internal/notifications/types.go.
@@ -53,12 +54,23 @@ type videoUploadedPayload struct {
 }
 
 type coachingBookingCreatedPayload struct {
-	BookingID   string `json:"booking_id"`
-	GroupID     string `json:"group_id,omitempty"`
-	GroupName   string `json:"group_name,omitempty"`
-	StudentName string `json:"student_name"`
-	SessionName string `json:"session_name,omitempty"`
-	ScheduledAt string `json:"scheduled_at,omitempty"` // RFC3339
+	BookingID       string `json:"booking_id"`
+	GroupID         string `json:"group_id,omitempty"`
+	GroupName       string `json:"group_name,omitempty"`
+	StudentName     string `json:"student_name"`
+	SessionName     string `json:"session_name,omitempty"`
+	ScheduledAt     string `json:"scheduled_at,omitempty"` // RFC3339
+	DurationMinutes int    `json:"duration_minutes"`
+}
+
+type coachingBookingCancelledPayload struct {
+	BookingID       string `json:"booking_id"`
+	GroupID         string `json:"group_id,omitempty"`
+	GroupName       string `json:"group_name,omitempty"`
+	ActorName       string `json:"actor_name"`
+	SessionName     string `json:"session_name,omitempty"`
+	ScheduledAt     string `json:"scheduled_at,omitempty"` // RFC3339
+	DurationMinutes int    `json:"duration_minutes"`
 }
 
 // BuildMessage translates a notification type and its JSON payload into the
@@ -140,6 +152,22 @@ func BuildMessage(notificationType string, payload []byte) (title, body string, 
 			body = fmt.Sprintf("%s booked \"%s\"", p.StudentName, p.SessionName)
 		} else {
 			body = fmt.Sprintf("%s booked a coaching session", p.StudentName)
+		}
+		data["booking_id"] = p.BookingID
+		if p.GroupID != "" {
+			data["group_id"] = p.GroupID
+		}
+
+	case typeCoachingBookingCancelled:
+		var p coachingBookingCancelledPayload
+		if err := json.Unmarshal(payload, &p); err != nil {
+			return "", "", nil, false
+		}
+		title = "Coaching session cancelled"
+		if p.SessionName != "" {
+			body = fmt.Sprintf("%s cancelled \"%s\"", p.ActorName, p.SessionName)
+		} else {
+			body = fmt.Sprintf("%s cancelled the coaching session", p.ActorName)
 		}
 		data["booking_id"] = p.BookingID
 		if p.GroupID != "" {

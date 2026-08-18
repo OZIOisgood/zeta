@@ -848,7 +848,9 @@
       "videoReviewed": "Your video \"{{video}}\" was reviewed",
       "videoUploaded": "{{uploader}} uploaded a video to {{group}}",
       "videoUploadedNoGroup": "{{uploader}} uploaded a video for you",
-      "coachingBookingCreated": "{{student}} booked a session with you",
+      "coachingBookingCreated": "{{student}} booked a session with you — {{when}}",
+      "coachingBookingCancelled": "{{actor}} cancelled \"{{session}}\" on {{when}}",
+      "coachingBookingCancelledNoSession": "{{actor}} cancelled the session on {{when}}",
       "generic": "You have a new notification"
     }
   },

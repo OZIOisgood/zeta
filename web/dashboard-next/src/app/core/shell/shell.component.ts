@@ -39,10 +39,6 @@ import { filter, firstValueFrom } from 'rxjs';
 import { FeedbackApiClient } from '../../core/http/feedback-api.service';
 import { NotificationItem } from '../../core/http/notifications-api.service';
 import { NotificationListComponent } from '../../features/notifications/notification-list.component';
-import {
-  NotificationPresentation,
-  presentNotification,
-} from '../../features/notifications/notification-presenter';
 import { NotificationsStore } from '../../features/notifications/notifications.store';
 import { SessionStore } from '../../features/session/session.store';
 import { ZAvatarComponent } from '../../shared/ui/avatar/z-avatar.component';
@@ -226,10 +222,6 @@ export class ShellComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.notifications.disconnect();
-  }
-
-  protected present(item: NotificationItem): NotificationPresentation {
-    return presentNotification(item);
   }
 
   protected onNotificationClick(item: NotificationItem): void {

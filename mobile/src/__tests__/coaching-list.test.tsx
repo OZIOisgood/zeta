@@ -48,9 +48,16 @@ jest.mock('../auth/auth-store', () => ({
 
 const mockSetOptions = jest.fn();
 const mockPush = jest.fn();
+const mockSetParams = jest.fn();
+// Default: no `tab` param, matching a plain tab-bar navigation to /coaching.
+// Individual tests override this — including mid-test, via `rerender` — to
+// simulate a notification tap arriving while the screen is already mounted
+// (this screen never unmounts across tab-bar visits, see (tabs)/_layout.tsx).
+const mockUseLocalSearchParams = jest.fn(() => ({}) as { tab?: string });
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, setParams: mockSetParams }),
   useNavigation: () => ({ setOptions: mockSetOptions }),
+  useLocalSearchParams: () => mockUseLocalSearchParams(),
 }));
 
 import { initI18n } from '../i18n';
@@ -63,8 +70,10 @@ let client: QueryClient;
 beforeEach(() => {
   mockPush.mockClear();
   mockSetOptions.mockClear();
+  mockSetParams.mockClear();
   mockMutateAsync.mockClear();
   mockShowToast.mockClear();
+  mockUseLocalSearchParams.mockReturnValue({});
   mockPermissions = ['coaching:bookings:read', 'coaching:book'];
   mockUserId = 's1';
   mockUseCancelBookingMutation.mockReturnValue({
@@ -114,6 +123,22 @@ const PAST_BOOKING: Booking = {
   scheduled_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // past
   duration_minutes: 45,
   status: 'done',
+  created_at: '2026-01-01T00:00:00Z',
+};
+
+// Started 10 minutes ago, runs for 60 — live right now.
+const IN_PROGRESS_BOOKING: Booking = {
+  id: 'b4',
+  expert_id: 'e1',
+  expert_name: 'Coach Ana',
+  student_id: 's1',
+  student_name: 'Bob Student',
+  group_id: 'g1',
+  session_type_id: 'st1',
+  session_type_name: 'Live Session',
+  scheduled_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+  duration_minutes: 60,
+  status: 'pending',
   created_at: '2026-01-01T00:00:00Z',
 };
 
@@ -197,6 +222,203 @@ test('tab counts reflect upcoming / past / cancelled buckets', async () => {
   expect(screen.getByText('Strategy Session')).toBeOnTheScreen();
   expect(screen.queryByText('Past Session')).toBeNull();
   expect(screen.queryByText('Cancelled Session')).toBeNull();
+});
+
+// A session that has started but not finished is still "upcoming", matching the
+// dashboard SessionsOverviewStore. Bucketing on scheduled_at alone dropped it
+// into "past" for its whole duration — including while the user could join it.
+test('an in-progress session stays in the upcoming tab', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [IN_PROGRESS_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  expect(screen.getByText('Live Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Past Session')).toBeNull();
+});
+
+test('an in-progress session does not appear in the past tab', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [IN_PROGRESS_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  fireEvent.press(screen.getByRole('tab', { name: /past/i }));
+
+  await waitFor(() => expect(screen.getByText('Past Session')).toBeOnTheScreen());
+  expect(screen.queryByText('Live Session')).toBeNull();
+});
+
+// Moving in-progress sessions into "upcoming" must not hand them the cancel
+// affordance that tab implies: the API refuses a cancellation inside
+// CANCELLATION_NOTICE (1h) of the start, so a live session can never be
+// cancelled. It stayed uncancellable before the bucket change; keep it that way.
+test('an in-progress session on the upcoming tab offers no swipe-to-cancel', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [IN_PROGRESS_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  expect(screen.getByText('Live Session')).toBeOnTheScreen();
+  expect(screen.queryByTestId('booking-cancel-swipe')).toBeNull();
+});
+
+test('a future session on the upcoming tab still offers swipe-to-cancel', async () => {
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+
+  expect(screen.getByTestId('booking-cancel-swipe')).toBeOnTheScreen();
+});
+
+// ── deep-linked initial tab (?tab=) ─────────────────────────────────────────────
+// A booking notification links to /coaching?tab=<past|cancelled|upcoming> so the
+// recipient lands on the tab that actually holds the booking, instead of always
+// opening on "upcoming" (empty for a past or cancelled booking).
+
+test('opening with ?tab=past starts on the past tab', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'past' });
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.getByText('Past Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+  expect(screen.queryByText('Cancelled Session')).toBeNull();
+});
+
+test('opening with ?tab=cancelled starts on the cancelled tab', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'cancelled' });
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.getByText('Cancelled Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+  expect(screen.queryByText('Past Session')).toBeNull();
+});
+
+test('an unrecognised ?tab= value falls back to upcoming', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'bogus' });
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.getByText('Strategy Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Past Session')).toBeNull();
+  expect(screen.queryByText('Cancelled Session')).toBeNull();
+});
+
+// CoachingScreen never unmounts across tab-bar visits — (tabs)/_layout.tsx uses
+// `hidden` specifically to avoid a navigator remount — so a useState initializer
+// only ever catches the FIRST mount. These three tests keep the SAME rendered
+// instance alive across `rerender` calls (per the plain component tree, no new
+// mount) while changing what `useLocalSearchParams` returns, to model a second
+// notification tap — or a plain tab-bar return with no new deep link — arriving
+// on an already-mounted screen.
+
+test('a new deep link while already mounted switches to the newly requested tab (case 2)', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'cancelled' });
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  const { rerender } = await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.getByText('Cancelled Session')).toBeOnTheScreen();
+
+  // A second notification tap for a DIFFERENT tab arrives on the same instance.
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'past' });
+  await rerender(<Providers><CoachingScreen /></Providers>);
+
+  await waitFor(() => expect(screen.getByText('Past Session')).toBeOnTheScreen());
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+  expect(screen.queryByText('Cancelled Session')).toBeNull();
+});
+
+test('the same tab value repeated after a manual switch away switches back to it (case 3)', async () => {
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'cancelled' });
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  const { rerender } = await render(<Providers><CoachingScreen /></Providers>);
+  expect(screen.getByText('Cancelled Session')).toBeOnTheScreen();
+  // The screen must consume (clear) the param once applied — this is WHY a
+  // later repeat of the identical value below can register as a fresh request
+  // instead of a same-value no-op that a naive `useEffect(..., [tab])` would miss.
+  expect(mockSetParams).toHaveBeenCalledWith({ tab: undefined });
+
+  // Model that clear taking effect (as the real router.setParams call would).
+  mockUseLocalSearchParams.mockReturnValue({});
+  await rerender(<Providers><CoachingScreen /></Providers>);
+
+  // User manually switches away from the tab the notification landed on.
+  fireEvent.press(screen.getByRole('tab', { name: /upcoming/i }));
+  await waitFor(() => expect(screen.getByText('Strategy Session')).toBeOnTheScreen());
+
+  // A second notification for the SAME tab value arrives.
+  mockUseLocalSearchParams.mockReturnValue({ tab: 'cancelled' });
+  await rerender(<Providers><CoachingScreen /></Providers>);
+
+  await waitFor(() => expect(screen.getByText('Cancelled Session')).toBeOnTheScreen());
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+});
+
+test('a manual tab switch survives returning with no new deep link (case 4)', async () => {
+  mockUseLocalSearchParams.mockReturnValue({});
+  mockUseMyBookingsQuery.mockReturnValue({
+    isPending: false,
+    isError: false,
+    data: [UPCOMING_BOOKING, PAST_BOOKING, CANCELLED_BOOKING],
+    refetch: jest.fn(),
+    isRefetching: false,
+  });
+  const { rerender } = await render(<Providers><CoachingScreen /></Providers>);
+  fireEvent.press(screen.getByRole('tab', { name: /cancelled/i }));
+  await waitFor(() => expect(screen.getByText('Cancelled Session')).toBeOnTheScreen());
+
+  // Leaving and returning via the bottom tab bar: the screen stays mounted and
+  // no new `tab` param ever arrives (still {}) — nothing should force a re-apply.
+  await rerender(<Providers><CoachingScreen /></Providers>);
+
+  expect(screen.getByText('Cancelled Session')).toBeOnTheScreen();
+  expect(screen.queryByText('Strategy Session')).toBeNull();
+  expect(mockSetParams).not.toHaveBeenCalled();
 });
 
 test('switching to the past tab shows past sessions only (cancelled NOT folded in)', async () => {

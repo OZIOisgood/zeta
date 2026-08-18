@@ -1,4 +1,4 @@
-import { formatDate, formatMonthYear, formatRelativeTime } from './datetime';
+import { formatDate, formatDateTime, formatMonthYear, formatRelativeTime } from './datetime';
 
 // Minimal i18next-style t: returns "<key>:<count?>" so we can assert the bucket
 // chosen and the count passed, without booting i18n.
@@ -51,6 +51,15 @@ test('formatDate returns a non-empty locale string for a valid ISO', () => {
 test('formatDate returns empty string for invalid ISO', () => {
   expect(formatDate('')).toBe('');
   expect(formatDate('nope')).toBe('');
+});
+
+test('formatDateTime returns a non-empty locale string for a valid ISO', () => {
+  expect(formatDateTime('2026-06-13T12:00:00.000Z')).not.toBe('');
+});
+
+test('formatDateTime returns empty string for invalid ISO', () => {
+  expect(formatDateTime('')).toBe('');
+  expect(formatDateTime('not-a-date')).toBe('');
 });
 
 // formatMonthYear — "March 2026" style (month: long, year: numeric)

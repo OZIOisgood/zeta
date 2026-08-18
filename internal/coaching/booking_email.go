@@ -40,14 +40,71 @@ func (h *Handler) recordBookingCreatedNotification(b db.CoachingBooking, session
 
 		notifications.Record(bgCtx, h.q, h.logger, b.ExpertID, notifications.TypeCoachingBookingCreated,
 			notifications.CoachingBookingCreatedPayload{
-				BookingID:   uuidToString(b.ID),
-				GroupID:     uuidToString(b.GroupID),
-				GroupName:   groupName,
-				StudentName: student.name,
-				SessionName: sessionTypeName,
-				ScheduledAt: scheduledAt,
+				BookingID:       uuidToString(b.ID),
+				GroupID:         uuidToString(b.GroupID),
+				GroupName:       groupName,
+				StudentName:     student.name,
+				SessionName:     sessionTypeName,
+				ScheduledAt:     scheduledAt,
+				DurationMinutes: int(b.DurationMinutes),
 			})
 	}()
+}
+
+// recordBookingCancelledNotification records an in-app notification for the party
+// that did NOT cancel — the same recipient rule as sendCancellationEmail. Runs
+// detached from the request context.
+func (h *Handler) recordBookingCancelledNotification(b db.CoachingBooking, cancelledByID string) {
+	go h.writeBookingCancelledNotification(context.Background(), b, cancelledByID)
+}
+
+// writeBookingCancelledNotification is the synchronous body, split out so it can
+// be unit-tested without racing the goroutine above.
+func (h *Handler) writeBookingCancelledNotification(ctx context.Context, b db.CoachingBooking, cancelledByID string) {
+	recipientID := b.StudentID
+	if cancelledByID == b.StudentID {
+		recipientID = b.ExpertID
+	}
+
+	sessionTypeName := ""
+	if st, err := h.q.GetSessionType(ctx, db.GetSessionTypeParams{ID: b.SessionTypeID, GroupID: b.GroupID}); err != nil {
+		h.logger.WarnContext(ctx, "booking_cancelled_notification_fetch_session_type_failed",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(b.ID)),
+			slog.Any("err", err),
+		)
+	} else {
+		sessionTypeName = st.Name
+	}
+
+	groupName := ""
+	if group, err := h.q.GetGroup(ctx, b.GroupID); err != nil {
+		h.logger.WarnContext(ctx, "booking_notification_fetch_group_failed",
+			slog.String("component", "coaching"),
+			slog.String("booking_id", uuidToString(b.ID)),
+			slog.Any("err", err),
+		)
+	} else {
+		groupName = group.Name
+	}
+
+	actor := h.resolveParticipant(ctx, cancelledByID)
+
+	scheduledAt := ""
+	if b.ScheduledAt.Valid {
+		scheduledAt = b.ScheduledAt.Time.UTC().Format(time.RFC3339)
+	}
+
+	notifications.Record(ctx, h.q, h.logger, recipientID, notifications.TypeCoachingBookingCancelled,
+		notifications.CoachingBookingCancelledPayload{
+			BookingID:       uuidToString(b.ID),
+			GroupID:         uuidToString(b.GroupID),
+			GroupName:       groupName,
+			ActorName:       actor.name,
+			SessionName:     sessionTypeName,
+			ScheduledAt:     scheduledAt,
+			DurationMinutes: int(b.DurationMinutes),
+		})
 }
 
 // bookingParticipant holds the resolved name and email for a booking participant.

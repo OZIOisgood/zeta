@@ -1,5 +1,5 @@
 import { NotificationItem } from '../../core/http/notifications-api.service';
-import { presentNotification } from './notification-presenter';
+import { presentNotification, sessionsTabFor } from './notification-presenter';
 
 function build(overrides: Partial<NotificationItem>): NotificationItem {
   return {
@@ -13,12 +13,15 @@ function build(overrides: Partial<NotificationItem>): NotificationItem {
 }
 
 describe('presentNotification', () => {
+  const formatWhen = (iso: string) => `formatted(${iso})`;
+
   it('maps a group invitation with an inviter and carries the code as a query param', () => {
     const view = presentNotification(
       build({
         type: 'group_invitation_received',
         payload: { inviter_name: 'Sofia', group_name: 'Academy', code: 'ZP-1' },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.groupInvitationReceived');
@@ -34,6 +37,7 @@ describe('presentNotification', () => {
         type: 'group_invitation_received',
         payload: { group_name: 'Academy' },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.groupInvitationReceivedNoActor');
@@ -46,6 +50,7 @@ describe('presentNotification', () => {
         type: 'group_member_joined',
         payload: { member_name: 'Max', group_name: 'Academy', group_id: 'g1' },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.groupMemberJoined');
@@ -59,6 +64,7 @@ describe('presentNotification', () => {
         type: 'video_reviewed',
         payload: { video_title: 'Backhand', reviewer_name: 'Sofia', asset_id: 'a1' },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.videoReviewed');
@@ -77,12 +83,14 @@ describe('presentNotification', () => {
           asset_id: 'a2',
         },
       }),
+      formatWhen,
     );
     const withoutGroup = presentNotification(
       build({
         type: 'video_uploaded',
         payload: { uploader_name: 'Max', video_title: 'Serve', asset_id: 'a2' },
       }),
+      formatWhen,
     );
 
     expect(withGroup.messageKey).toBe('notifications.types.videoUploaded');
@@ -91,23 +99,187 @@ describe('presentNotification', () => {
     expect(withGroup.icon).toBe('upload');
   });
 
-  it('links a booking to the sessions page', () => {
+  it('shows the appointment time and links a future booking to the upcoming tab', () => {
     const view = presentNotification(
       build({
         type: 'coaching_booking_created',
-        payload: { student_name: 'Lena', session_name: 'Live coaching' },
+        payload: {
+          student_name: 'Lena',
+          session_name: 'Live coaching',
+          scheduled_at: '2999-01-01T10:00:00Z',
+        },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.coachingBookingCreated');
-    expect(view.link).toBe('/sessions');
+    expect(view.params).toEqual({
+      student: 'Lena',
+      session: 'Live coaching',
+      when: 'formatted(2999-01-01T10:00:00Z)',
+    });
+    expect(view.link).toBe('/sessions/upcoming');
+    expect(view.queryParams).toBeUndefined();
     expect(view.icon).toBe('booking');
   });
 
+  it('links a past booking to the past tab', () => {
+    const view = presentNotification(
+      build({
+        type: 'coaching_booking_created',
+        payload: { student_name: 'Lena', scheduled_at: '2020-01-01T10:00:00Z' },
+      }),
+      formatWhen,
+    );
+
+    expect(view.link).toBe('/sessions/past');
+    expect(view.queryParams).toBeUndefined();
+  });
+
+  it('falls back to the upcoming tab when scheduled_at is missing', () => {
+    const view = presentNotification(
+      build({ type: 'coaching_booking_created', payload: { student_name: 'Lena' } }),
+      formatWhen,
+    );
+
+    expect(view.params['when']).toBe('');
+    expect(view.link).toBe('/sessions/upcoming');
+    expect(view.queryParams).toBeUndefined();
+  });
+
+  it('falls back to the upcoming tab when scheduled_at is unparseable', () => {
+    const view = presentNotification(
+      build({
+        type: 'coaching_booking_created',
+        payload: { student_name: 'Lena', scheduled_at: 'not-a-date' },
+      }),
+      formatWhen,
+    );
+
+    expect(view.params['when']).toBe('formatted(not-a-date)');
+    expect(view.link).toBe('/sessions/upcoming');
+    expect(view.queryParams).toBeUndefined();
+  });
+
+  it('maps a cancellation to the cancelled tab and names the actor', () => {
+    const view = presentNotification(
+      build({
+        type: 'coaching_booking_cancelled',
+        payload: {
+          actor_name: 'Vanessa',
+          session_name: 'Live coaching',
+          scheduled_at: '2999-01-01T10:00:00Z',
+        },
+      }),
+      formatWhen,
+    );
+
+    expect(view.messageKey).toBe('notifications.types.coachingBookingCancelled');
+    expect(view.params).toEqual({
+      actor: 'Vanessa',
+      session: 'Live coaching',
+      when: 'formatted(2999-01-01T10:00:00Z)',
+    });
+    expect(view.link).toBe('/sessions/cancelled');
+    expect(view.queryParams).toBeUndefined();
+    expect(view.icon).toBe('booking');
+  });
+
+  it('falls back to the no-session cancellation key when the session name is missing', () => {
+    const view = presentNotification(
+      build({
+        type: 'coaching_booking_cancelled',
+        payload: { actor_name: 'Vanessa', scheduled_at: '2999-01-01T10:00:00Z' },
+      }),
+      formatWhen,
+    );
+
+    expect(view.messageKey).toBe('notifications.types.coachingBookingCancelledNoSession');
+    expect(view.params).toEqual({
+      actor: 'Vanessa',
+      session: '',
+      when: 'formatted(2999-01-01T10:00:00Z)',
+    });
+    expect(view.link).toBe('/sessions/cancelled');
+    expect(view.queryParams).toBeUndefined();
+  });
+
   it('falls back gracefully for an unknown type', () => {
-    const view = presentNotification(build({ type: 'unknown_type' as never, payload: {} }));
+    const view = presentNotification(
+      build({ type: 'unknown_type' as never, payload: {} }),
+      formatWhen,
+    );
 
     expect(view.messageKey).toBe('notifications.types.generic');
     expect(view.link).toBe('/');
+  });
+});
+
+// A booking is "upcoming" until it actually ends — an in-progress session is
+// still upcoming, matching SessionsOverviewStore (upcoming = in progress ||
+// starts later; completed = endsAt <= now).
+describe('sessionsTabFor', () => {
+  const START = Date.parse('2026-08-18T10:00:00Z');
+  const MINUTE = 60 * 1000;
+
+  function created(payload: Record<string, unknown>): NotificationItem {
+    return build({ type: 'coaching_booking_created', payload });
+  }
+
+  const sixtyMinuteBooking = created({
+    scheduled_at: '2026-08-18T10:00:00Z',
+    duration_minutes: 60,
+  });
+
+  it('is upcoming before the session starts', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START - MINUTE)).toBe('upcoming');
+  });
+
+  it('is upcoming exactly at the start', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START)).toBe('upcoming');
+  });
+
+  it('is upcoming mid-session', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START + 30 * MINUTE)).toBe('upcoming');
+  });
+
+  it('is past exactly at the end', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START + 60 * MINUTE)).toBe('past');
+  });
+
+  it('is past after the session ends', () => {
+    expect(sessionsTabFor(sixtyMinuteBooking, START + 61 * MINUTE)).toBe('past');
+  });
+
+  // Legacy notifications recorded before duration_minutes existed carry no
+  // duration. Degrade to the start-time-only rule rather than guessing a
+  // length: those rows are old, so their session has long since ended.
+  it('degrades to the start time when duration_minutes is missing', () => {
+    const item = created({ scheduled_at: '2026-08-18T10:00:00Z' });
+
+    expect(sessionsTabFor(item, START - MINUTE)).toBe('upcoming');
+    expect(sessionsTabFor(item, START)).toBe('past');
+    expect(sessionsTabFor(item, START + MINUTE)).toBe('past');
+  });
+
+  it('degrades to the start time when duration_minutes is zero', () => {
+    const item = created({ scheduled_at: '2026-08-18T10:00:00Z', duration_minutes: 0 });
+
+    expect(sessionsTabFor(item, START - MINUTE)).toBe('upcoming');
+    expect(sessionsTabFor(item, START + MINUTE)).toBe('past');
+  });
+
+  it('keeps a cancellation on the cancelled tab whatever the time', () => {
+    const item = build({
+      type: 'coaching_booking_cancelled',
+      payload: { scheduled_at: '2026-08-18T10:00:00Z', duration_minutes: 60 },
+    });
+
+    expect(sessionsTabFor(item, START + 61 * MINUTE)).toBe('cancelled');
+  });
+
+  it('falls back to upcoming without a usable scheduled_at', () => {
+    expect(sessionsTabFor(created({ duration_minutes: 60 }), START)).toBe('upcoming');
+    expect(sessionsTabFor(created({ scheduled_at: 'not-a-date' }), START)).toBe('upcoming');
   });
 });

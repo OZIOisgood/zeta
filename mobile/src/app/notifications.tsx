@@ -23,7 +23,7 @@ import { ZSkeleton } from '../components/ui/z-skeleton';
 import { ZTabs, type ZTab } from '../components/ui/z-tabs';
 import { showToast } from '../components/ui/z-toast';
 import { groupByDay } from '../lib/notification-groups';
-import { presentNotification, resolvedInvite } from '../lib/notification-presenter';
+import { notificationHref, resolvedInvite } from '../lib/notification-presenter';
 import { useRoleColors } from '../theme/native';
 
 type NotificationFilter = 'all' | 'unread';
@@ -77,7 +77,7 @@ export default function NotificationsScreen() {
 
   function onOpen(item: NotificationItem) {
     if (!item.read) markRead.mutate({ id: item.id });
-    router.push(presentNotification(item).href as never);
+    router.push(notificationHref(item) as never);
   }
 
   async function onAccept(item: NotificationItem) {

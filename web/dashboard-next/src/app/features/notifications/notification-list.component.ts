@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
@@ -12,6 +12,7 @@ import {
   LucideX,
 } from '@lucide/angular';
 import { NotificationItem } from '../../core/http/notifications-api.service';
+import { DashboardDateTimeService } from '../../core/i18n/dashboard-date-time.service';
 import { RelativeTimePipe } from '../../core/i18n/relative-time.pipe';
 import { ZButtonComponent } from '../../shared/ui/button/z-button.component';
 import { ZEmptyStateComponent } from '../../shared/ui/empty-state/z-empty-state.component';
@@ -173,8 +174,10 @@ export class NotificationListComponent {
 
   protected readonly skeletonRows = SKELETON_ROWS;
 
+  private readonly dateTime = inject(DashboardDateTimeService);
+
   protected present(item: NotificationItem) {
-    return presentNotification(item);
+    return presentNotification(item, (iso) => this.dateTime.formatSessionDateTime(iso));
   }
 
   protected isInvite(item: NotificationItem): boolean {

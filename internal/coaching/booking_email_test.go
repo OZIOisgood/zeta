@@ -1,6 +1,8 @@
 package coaching
 
 import (
+	"context"
+	"encoding/json"
 	"log/slog"
 	"testing"
 	"time"
@@ -10,6 +12,7 @@ import (
 	dbmocks "github.com/OZIOisgood/zeta/internal/db/mocks"
 	"github.com/OZIOisgood/zeta/internal/email"
 	emailmocks "github.com/OZIOisgood/zeta/internal/email/mocks"
+	"github.com/OZIOisgood/zeta/internal/notifications"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 	"go.uber.org/mock/gomock"
@@ -220,4 +223,92 @@ func TestSendCancellationEmailUsesRemainingRecipientsTimezone(t *testing.T) {
 	).Return(nil)
 
 	h.sendCancellationEmail(t.Context(), booking, "expert-1")
+}
+
+func TestWriteBookingCancelledNotificationTargetsOtherParty(t *testing.T) {
+	tests := []struct {
+		name          string
+		cancelledBy   string
+		wantRecipient string
+		wantActorName string
+	}{
+		{"student cancels, expert is notified", "student-1", "expert-1", "Local Student"},
+		{"expert cancels, student is notified", "expert-1", "student-1", "Local Expert"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			q := dbmocks.NewMockQuerier(ctrl)
+			sender := emailmocks.NewMockSender(ctrl)
+			workos := authmocks.NewMockUserManagement(ctrl)
+			h := NewHandler(q, nil, sender, workos, slog.Default(), HandlerConfig{})
+
+			var id pgtype.UUID
+			if err := id.Scan("11111111-1111-1111-1111-111111111111"); err != nil {
+				t.Fatalf("scan id: %v", err)
+			}
+
+			scheduled := time.Date(2026, 8, 21, 12, 15, 0, 0, time.UTC)
+			booking := db.CoachingBooking{
+				ID:              id,
+				ExpertID:        "expert-1",
+				StudentID:       "student-1",
+				GroupID:         id,
+				SessionTypeID:   id,
+				ScheduledAt:     pgtype.Timestamptz{Time: scheduled, Valid: true},
+				DurationMinutes: 45,
+			}
+
+			q.EXPECT().GetSessionType(gomock.Any(), db.GetSessionTypeParams{ID: id, GroupID: id}).
+				Return(db.CoachingSessionType{Name: "Private Session"}, nil)
+			q.EXPECT().GetGroup(gomock.Any(), id).Return(db.Group{Name: "Training"}, nil)
+			workos.EXPECT().GetUser(gomock.Any(), usermanagement.GetUserOpts{User: tc.cancelledBy}).
+				Return(usermanagement.User{ID: tc.cancelledBy, Email: "someone@example.com"}, nil)
+
+			firstName, lastName := "Local", "Student"
+			if tc.cancelledBy == "expert-1" {
+				lastName = "Expert"
+			}
+			q.EXPECT().GetUserPreferences(gomock.Any(), tc.cancelledBy).Return(
+				db.UserPreference{UserID: tc.cancelledBy, FirstName: firstName, LastName: lastName, Language: db.LanguageCodeEn},
+				nil,
+			)
+
+			var got db.CreateNotificationParams
+			q.EXPECT().CreateNotification(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, arg db.CreateNotificationParams) (db.Notification, error) {
+					got = arg
+					return db.Notification{}, nil
+				})
+
+			h.writeBookingCancelledNotification(t.Context(), booking, tc.cancelledBy)
+
+			if got.RecipientID != tc.wantRecipient {
+				t.Fatalf("recipient = %q, want %q", got.RecipientID, tc.wantRecipient)
+			}
+			if got.Type != db.NotificationTypeCoachingBookingCancelled {
+				t.Fatalf("type = %q, want coaching_booking_cancelled", got.Type)
+			}
+
+			var payload notifications.CoachingBookingCancelledPayload
+			if err := json.Unmarshal(got.Payload, &payload); err != nil {
+				t.Fatalf("unmarshal payload: %v", err)
+			}
+			if payload.ActorName != tc.wantActorName {
+				t.Fatalf("actor_name = %q, want %q", payload.ActorName, tc.wantActorName)
+			}
+			if payload.ScheduledAt != "2026-08-21T12:15:00Z" {
+				t.Fatalf("scheduled_at = %q, want 2026-08-21T12:15:00Z", payload.ScheduledAt)
+			}
+			if payload.SessionName != "Private Session" {
+				t.Fatalf("session_name = %q, want Private Session", payload.SessionName)
+			}
+			// The clients derive the session end time from scheduled_at +
+			// duration_minutes to pick the sessions tab to deep-link into.
+			if payload.DurationMinutes != 45 {
+				t.Fatalf("duration_minutes = %d, want 45", payload.DurationMinutes)
+			}
+		})
+	}
 }

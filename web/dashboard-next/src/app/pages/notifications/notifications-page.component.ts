@@ -4,7 +4,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideCheckCheck } from '@lucide/angular';
 import { NotificationItem } from '../../core/http/notifications-api.service';
 import { NotificationListComponent } from '../../features/notifications/notification-list.component';
-import { presentNotification } from '../../features/notifications/notification-presenter';
+import { notificationLink } from '../../features/notifications/notification-presenter';
 import {
   NotificationDayGroup,
   NotificationsStore,
@@ -135,8 +135,8 @@ export class NotificationsPageComponent {
 
   protected onOpen(item: NotificationItem): void {
     void this.store.markRead(item.id);
-    const view = presentNotification(item);
-    void this.router.navigate([view.link], { queryParams: view.queryParams });
+    const target = notificationLink(item);
+    void this.router.navigate([target.link], { queryParams: target.queryParams });
   }
 
   protected async onAccept(item: NotificationItem): Promise<void> {

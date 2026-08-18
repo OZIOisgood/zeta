@@ -30,6 +30,17 @@ export class DashboardDateTimeService {
     });
   }
 
+  /** The one appointment format — notifications and the sessions list must render identically. */
+  formatSessionDateTime(value: DateTimeValue): string {
+    return this.formatInstantDateTime(value, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
   formatCalendarDate(date: string, options: Intl.DateTimeFormatOptions): string {
     return new Date(`${date}T00:00:00`).toLocaleDateString(this.localization.dateLocale(), options);
   }

@@ -241,6 +241,7 @@ func TestPushCategory(t *testing.T) {
 		{TypeGroupInvitationReceived, "invitation_updates", true},
 		{TypeGroupMemberJoined, "group_membership_updates", true},
 		{TypeCoachingBookingCreated, "coaching_booking_updates", true},
+		{TypeCoachingBookingCancelled, "coaching_booking_updates", true},
 		{"unknown_type", "", false},
 	}
 	for _, tc := range tt {

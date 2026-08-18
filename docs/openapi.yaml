@@ -2161,8 +2161,15 @@ components:
         uploader_name: { type: string }
         booking_id: { type: string }
         student_name: { type: string }
+        actor_name: { type: string }
         session_name: { type: string }
         scheduled_at: { type: string }
+        duration_minutes:
+          type: integer
+          description: >
+            Session length in minutes, paired with scheduled_at so clients can
+            derive the session end time (coaching_booking_created and
+            coaching_booking_cancelled).
     NotificationItem:
       type: object
       description: A single in-app notification (list item / SSE frame shape).
@@ -2174,7 +2181,7 @@ components:
           type: string
           description: >
             One of group_invitation_received, group_member_joined, video_reviewed,
-            video_uploaded, coaching_booking_created.
+            video_uploaded, coaching_booking_created, coaching_booking_cancelled.
         payload:
           $ref: "#/components/schemas/NotificationPayload"
         read:
