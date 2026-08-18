@@ -9,11 +9,12 @@ package notifications
 type Type string
 
 const (
-	TypeGroupInvitationReceived Type = "group_invitation_received"
-	TypeGroupMemberJoined       Type = "group_member_joined"
-	TypeVideoReviewed           Type = "video_reviewed"
-	TypeVideoUploaded           Type = "video_uploaded"
-	TypeCoachingBookingCreated  Type = "coaching_booking_created"
+	TypeGroupInvitationReceived  Type = "group_invitation_received"
+	TypeGroupMemberJoined        Type = "group_member_joined"
+	TypeVideoReviewed            Type = "video_reviewed"
+	TypeVideoUploaded            Type = "video_uploaded"
+	TypeCoachingBookingCreated   Type = "coaching_booking_created"
+	TypeCoachingBookingCancelled Type = "coaching_booking_cancelled"
 )
 
 // Payloads are denormalized so the client can render text and build a deep-link
@@ -53,6 +54,16 @@ type CoachingBookingCreatedPayload struct {
 	GroupID     string `json:"group_id,omitempty"`
 	GroupName   string `json:"group_name,omitempty"`
 	StudentName string `json:"student_name"`
+	SessionName string `json:"session_name,omitempty"`
+	ScheduledAt string `json:"scheduled_at,omitempty"` // RFC3339
+}
+
+// ActorName is whoever cancelled — either party can, so it is not student_name.
+type CoachingBookingCancelledPayload struct {
+	BookingID   string `json:"booking_id"`
+	GroupID     string `json:"group_id,omitempty"`
+	GroupName   string `json:"group_name,omitempty"`
+	ActorName   string `json:"actor_name"`
 	SessionName string `json:"session_name,omitempty"`
 	ScheduledAt string `json:"scheduled_at,omitempty"` // RFC3339
 }

@@ -41,6 +41,8 @@ func pushCategory(t Type) (preferences.EmailCategory, bool) {
 		return preferences.EmailCategoryGroupMembershipUpdates, true
 	case TypeCoachingBookingCreated:
 		return preferences.EmailCategoryCoachingBookingUpdates, true
+	case TypeCoachingBookingCancelled:
+		return preferences.EmailCategoryCoachingBookingUpdates, true
 	default:
 		return "", false
 	}

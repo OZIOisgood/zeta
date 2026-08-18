@@ -276,11 +276,12 @@ func (ns NullLanguageCode) Value() (driver.Value, error) {
 type NotificationType string
 
 const (
-	NotificationTypeGroupInvitationReceived NotificationType = "group_invitation_received"
-	NotificationTypeGroupMemberJoined       NotificationType = "group_member_joined"
-	NotificationTypeVideoReviewed           NotificationType = "video_reviewed"
-	NotificationTypeVideoUploaded           NotificationType = "video_uploaded"
-	NotificationTypeCoachingBookingCreated  NotificationType = "coaching_booking_created"
+	NotificationTypeGroupInvitationReceived  NotificationType = "group_invitation_received"
+	NotificationTypeGroupMemberJoined        NotificationType = "group_member_joined"
+	NotificationTypeVideoReviewed            NotificationType = "video_reviewed"
+	NotificationTypeVideoUploaded            NotificationType = "video_uploaded"
+	NotificationTypeCoachingBookingCreated   NotificationType = "coaching_booking_created"
+	NotificationTypeCoachingBookingCancelled NotificationType = "coaching_booking_cancelled"
 )
 
 func (e *NotificationType) Scan(src interface{}) error {
