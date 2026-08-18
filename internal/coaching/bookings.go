@@ -546,6 +546,7 @@ func (h *Handler) CancelBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.sendCancellationEmail(ctx, updated, user.ID)
+	h.recordBookingCancelledNotification(updated, user.ID)
 
 	users, err := h.resolveUsers(ctx, []string{updated.ExpertID, updated.StudentID})
 	if err != nil {
