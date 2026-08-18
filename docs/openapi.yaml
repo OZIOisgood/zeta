@@ -2164,6 +2164,12 @@ components:
         actor_name: { type: string }
         session_name: { type: string }
         scheduled_at: { type: string }
+        duration_minutes:
+          type: integer
+          description: >
+            Session length in minutes, paired with scheduled_at so clients can
+            derive the session end time (coaching_booking_created and
+            coaching_booking_cancelled).
     NotificationItem:
       type: object
       description: A single in-app notification (list item / SSE frame shape).

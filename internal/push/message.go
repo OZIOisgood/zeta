@@ -54,21 +54,23 @@ type videoUploadedPayload struct {
 }
 
 type coachingBookingCreatedPayload struct {
-	BookingID   string `json:"booking_id"`
-	GroupID     string `json:"group_id,omitempty"`
-	GroupName   string `json:"group_name,omitempty"`
-	StudentName string `json:"student_name"`
-	SessionName string `json:"session_name,omitempty"`
-	ScheduledAt string `json:"scheduled_at,omitempty"` // RFC3339
+	BookingID       string `json:"booking_id"`
+	GroupID         string `json:"group_id,omitempty"`
+	GroupName       string `json:"group_name,omitempty"`
+	StudentName     string `json:"student_name"`
+	SessionName     string `json:"session_name,omitempty"`
+	ScheduledAt     string `json:"scheduled_at,omitempty"` // RFC3339
+	DurationMinutes int    `json:"duration_minutes"`
 }
 
 type coachingBookingCancelledPayload struct {
-	BookingID   string `json:"booking_id"`
-	GroupID     string `json:"group_id,omitempty"`
-	GroupName   string `json:"group_name,omitempty"`
-	ActorName   string `json:"actor_name"`
-	SessionName string `json:"session_name,omitempty"`
-	ScheduledAt string `json:"scheduled_at,omitempty"` // RFC3339
+	BookingID       string `json:"booking_id"`
+	GroupID         string `json:"group_id,omitempty"`
+	GroupName       string `json:"group_name,omitempty"`
+	ActorName       string `json:"actor_name"`
+	SessionName     string `json:"session_name,omitempty"`
+	ScheduledAt     string `json:"scheduled_at,omitempty"` // RFC3339
+	DurationMinutes int    `json:"duration_minutes"`
 }
 
 // BuildMessage translates a notification type and its JSON payload into the

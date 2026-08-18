@@ -304,6 +304,11 @@ func TestWriteBookingCancelledNotificationTargetsOtherParty(t *testing.T) {
 			if payload.SessionName != "Private Session" {
 				t.Fatalf("session_name = %q, want Private Session", payload.SessionName)
 			}
+			// The clients derive the session end time from scheduled_at +
+			// duration_minutes to pick the sessions tab to deep-link into.
+			if payload.DurationMinutes != 45 {
+				t.Fatalf("duration_minutes = %d, want 45", payload.DurationMinutes)
+			}
 		})
 	}
 }

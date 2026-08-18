@@ -28,6 +28,8 @@ export type NotificationPayload = {
   actor_name?: string;
   session_name?: string;
   scheduled_at?: string;
+  /** Paired with scheduled_at so clients can derive the session end time. */
+  duration_minutes?: number;
 };
 
 // Client-only resolution state for invitation notifications, set after the user

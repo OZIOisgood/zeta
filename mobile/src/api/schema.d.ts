@@ -1087,6 +1087,8 @@ export interface components {
             actor_name?: string;
             session_name?: string;
             scheduled_at?: string;
+            /** @description Session length in minutes, paired with scheduled_at so clients can derive the session end time (coaching_booking_created and coaching_booking_cancelled). */
+            duration_minutes?: number;
         } & {
             [key: string]: unknown;
         };

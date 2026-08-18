@@ -40,12 +40,13 @@ func (h *Handler) recordBookingCreatedNotification(b db.CoachingBooking, session
 
 		notifications.Record(bgCtx, h.q, h.logger, b.ExpertID, notifications.TypeCoachingBookingCreated,
 			notifications.CoachingBookingCreatedPayload{
-				BookingID:   uuidToString(b.ID),
-				GroupID:     uuidToString(b.GroupID),
-				GroupName:   groupName,
-				StudentName: student.name,
-				SessionName: sessionTypeName,
-				ScheduledAt: scheduledAt,
+				BookingID:       uuidToString(b.ID),
+				GroupID:         uuidToString(b.GroupID),
+				GroupName:       groupName,
+				StudentName:     student.name,
+				SessionName:     sessionTypeName,
+				ScheduledAt:     scheduledAt,
+				DurationMinutes: int(b.DurationMinutes),
 			})
 	}()
 }
@@ -96,12 +97,13 @@ func (h *Handler) writeBookingCancelledNotification(ctx context.Context, b db.Co
 
 	notifications.Record(ctx, h.q, h.logger, recipientID, notifications.TypeCoachingBookingCancelled,
 		notifications.CoachingBookingCancelledPayload{
-			BookingID:   uuidToString(b.ID),
-			GroupID:     uuidToString(b.GroupID),
-			GroupName:   groupName,
-			ActorName:   actor.name,
-			SessionName: sessionTypeName,
-			ScheduledAt: scheduledAt,
+			BookingID:       uuidToString(b.ID),
+			GroupID:         uuidToString(b.GroupID),
+			GroupName:       groupName,
+			ActorName:       actor.name,
+			SessionName:     sessionTypeName,
+			ScheduledAt:     scheduledAt,
+			DurationMinutes: int(b.DurationMinutes),
 		})
 }
 

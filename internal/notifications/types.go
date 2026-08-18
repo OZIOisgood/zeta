@@ -56,6 +56,9 @@ type CoachingBookingCreatedPayload struct {
 	StudentName string `json:"student_name"`
 	SessionName string `json:"session_name,omitempty"`
 	ScheduledAt string `json:"scheduled_at,omitempty"` // RFC3339
+	// DurationMinutes lets clients derive the session end time from
+	// ScheduledAt, which is what decides the sessions tab they deep-link into.
+	DurationMinutes int `json:"duration_minutes"`
 }
 
 // ActorName is whoever cancelled — either party can, so it is not student_name.
@@ -66,4 +69,7 @@ type CoachingBookingCancelledPayload struct {
 	ActorName   string `json:"actor_name"`
 	SessionName string `json:"session_name,omitempty"`
 	ScheduledAt string `json:"scheduled_at,omitempty"` // RFC3339
+	// DurationMinutes lets clients derive the session end time from
+	// ScheduledAt, which is what decides the sessions tab they deep-link into.
+	DurationMinutes int `json:"duration_minutes"`
 }
