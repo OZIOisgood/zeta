@@ -8,7 +8,8 @@ export type NotificationType =
   | 'group_member_joined'
   | 'video_reviewed'
   | 'video_uploaded'
-  | 'coaching_booking_created';
+  | 'coaching_booking_created'
+  | 'coaching_booking_cancelled';
 
 // Denormalized payload carried per notification. Fields present depend on the
 // type; all optional so the client can render and deep-link defensively.
@@ -24,6 +25,7 @@ export type NotificationPayload = {
   uploader_name?: string;
   booking_id?: string;
   student_name?: string;
+  actor_name?: string;
   session_name?: string;
   scheduled_at?: string;
 };

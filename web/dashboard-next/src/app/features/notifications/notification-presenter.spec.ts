@@ -13,12 +13,15 @@ function build(overrides: Partial<NotificationItem>): NotificationItem {
 }
 
 describe('presentNotification', () => {
+  const formatWhen = (iso: string) => `formatted(${iso})`;
+
   it('maps a group invitation with an inviter and carries the code as a query param', () => {
     const view = presentNotification(
       build({
         type: 'group_invitation_received',
         payload: { inviter_name: 'Sofia', group_name: 'Academy', code: 'ZP-1' },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.groupInvitationReceived');
@@ -34,6 +37,7 @@ describe('presentNotification', () => {
         type: 'group_invitation_received',
         payload: { group_name: 'Academy' },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.groupInvitationReceivedNoActor');
@@ -46,6 +50,7 @@ describe('presentNotification', () => {
         type: 'group_member_joined',
         payload: { member_name: 'Max', group_name: 'Academy', group_id: 'g1' },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.groupMemberJoined');
@@ -59,6 +64,7 @@ describe('presentNotification', () => {
         type: 'video_reviewed',
         payload: { video_title: 'Backhand', reviewer_name: 'Sofia', asset_id: 'a1' },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.videoReviewed');
@@ -77,12 +83,14 @@ describe('presentNotification', () => {
           asset_id: 'a2',
         },
       }),
+      formatWhen,
     );
     const withoutGroup = presentNotification(
       build({
         type: 'video_uploaded',
         payload: { uploader_name: 'Max', video_title: 'Serve', asset_id: 'a2' },
       }),
+      formatWhen,
     );
 
     expect(withGroup.messageKey).toBe('notifications.types.videoUploaded');
@@ -91,21 +99,81 @@ describe('presentNotification', () => {
     expect(withGroup.icon).toBe('upload');
   });
 
-  it('links a booking to the sessions page', () => {
+  it('shows the appointment time and links a future booking to the upcoming tab', () => {
     const view = presentNotification(
       build({
         type: 'coaching_booking_created',
-        payload: { student_name: 'Lena', session_name: 'Live coaching' },
+        payload: {
+          student_name: 'Lena',
+          session_name: 'Live coaching',
+          scheduled_at: '2999-01-01T10:00:00Z',
+        },
       }),
+      formatWhen,
     );
 
     expect(view.messageKey).toBe('notifications.types.coachingBookingCreated');
+    expect(view.params).toEqual({
+      student: 'Lena',
+      session: 'Live coaching',
+      when: 'formatted(2999-01-01T10:00:00Z)',
+    });
     expect(view.link).toBe('/sessions');
+    expect(view.queryParams).toEqual({ tab: 'upcoming' });
+    expect(view.icon).toBe('booking');
+  });
+
+  it('links a past booking to the past tab', () => {
+    const view = presentNotification(
+      build({
+        type: 'coaching_booking_created',
+        payload: { student_name: 'Lena', scheduled_at: '2020-01-01T10:00:00Z' },
+      }),
+      formatWhen,
+    );
+
+    expect(view.queryParams).toEqual({ tab: 'past' });
+  });
+
+  it('falls back to the upcoming tab when scheduled_at is missing', () => {
+    const view = presentNotification(
+      build({ type: 'coaching_booking_created', payload: { student_name: 'Lena' } }),
+      formatWhen,
+    );
+
+    expect(view.params['when']).toBe('');
+    expect(view.queryParams).toEqual({ tab: 'upcoming' });
+  });
+
+  it('maps a cancellation to the cancelled tab and names the actor', () => {
+    const view = presentNotification(
+      build({
+        type: 'coaching_booking_cancelled',
+        payload: {
+          actor_name: 'Vanessa',
+          session_name: 'Live coaching',
+          scheduled_at: '2999-01-01T10:00:00Z',
+        },
+      }),
+      formatWhen,
+    );
+
+    expect(view.messageKey).toBe('notifications.types.coachingBookingCancelled');
+    expect(view.params).toEqual({
+      actor: 'Vanessa',
+      session: 'Live coaching',
+      when: 'formatted(2999-01-01T10:00:00Z)',
+    });
+    expect(view.link).toBe('/sessions');
+    expect(view.queryParams).toEqual({ tab: 'cancelled' });
     expect(view.icon).toBe('booking');
   });
 
   it('falls back gracefully for an unknown type', () => {
-    const view = presentNotification(build({ type: 'unknown_type' as never, payload: {} }));
+    const view = presentNotification(
+      build({ type: 'unknown_type' as never, payload: {} }),
+      formatWhen,
+    );
 
     expect(view.messageKey).toBe('notifications.types.generic');
     expect(view.link).toBe('/');
