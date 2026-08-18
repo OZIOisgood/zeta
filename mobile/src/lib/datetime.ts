@@ -41,6 +41,19 @@ export function formatDate(iso: string): string {
   return date.toLocaleDateString(appLocale());
 }
 
+/** Locale-aware absolute date + time for notification copy. Empty on invalid input. */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString(appLocale(), {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 /**
  * YYYY-MM-DD from LOCAL date parts — the availability API's date key.
  * `toISOString().slice(0, 10)` is the UTC date: off by one every evening west

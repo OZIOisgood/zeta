@@ -10,6 +10,25 @@ export type NotificationPresentation = {
   icon: NotificationIcon;
 };
 
+export type SessionsTab = 'upcoming' | 'past' | 'cancelled';
+
+// Mirrors the web presenter: link to the tab that actually holds the booking.
+// Linking a cancelled or already-finished session to the default "upcoming"
+// tab lands the recipient on an empty list.
+export function sessionsTabFor(item: NotificationItem, now = Date.now()): SessionsTab {
+  if (item.type === 'coaching_booking_cancelled') return 'cancelled';
+  const scheduledAt = item.payload?.scheduled_at;
+  if (!scheduledAt) return 'upcoming';
+  const startsAt = new Date(scheduledAt).getTime();
+  if (Number.isNaN(startsAt)) return 'upcoming';
+  return startsAt > now ? 'upcoming' : 'past';
+}
+
+/** The deep-link target alone, for callers that only need to navigate (e.g. onOpen). */
+export function notificationHref(item: NotificationItem): Href {
+  return presentNotification(item, () => '').href;
+}
+
 /**
  * Maps a notification to its i18n key + interpolation params, expo-router
  * deep-link target, and icon name. Pure — unit-tested directly. Mobile port of
@@ -17,8 +36,13 @@ export type NotificationPresentation = {
  * the only divergence is the deep-link, retargeted to the mobile routes
  * (invite screen instead of /groups?invite=, /group/[id], /asset/[id]).
  */
-export function presentNotification(item: NotificationItem): NotificationPresentation {
+export function presentNotification(
+  item: NotificationItem,
+  // TODO(task-7): make required once notification-row.tsx and notifications.tsx both pass formatWhen explicitly
+  formatWhen: (iso: string) => string = () => '',
+): NotificationPresentation {
   const p = item.payload ?? {};
+  const when = p.scheduled_at ? formatWhen(p.scheduled_at) : '';
 
   switch (item.type) {
     case 'group_invitation_received':
@@ -62,8 +86,17 @@ export function presentNotification(item: NotificationItem): NotificationPresent
     case 'coaching_booking_created':
       return {
         messageKey: 'notifications.types.coachingBookingCreated',
-        params: { student: p.student_name ?? '', session: p.session_name ?? '' },
-        href: { pathname: '/coaching' } as Href,
+        params: { student: p.student_name ?? '', session: p.session_name ?? '', when },
+        href: { pathname: '/coaching', params: { tab: sessionsTabFor(item) } } as Href,
+        icon: 'booking',
+      };
+    case 'coaching_booking_cancelled':
+      return {
+        messageKey: p.session_name
+          ? 'notifications.types.coachingBookingCancelled'
+          : 'notifications.types.coachingBookingCancelledNoSession',
+        params: { actor: p.actor_name ?? '', session: p.session_name ?? '', when },
+        href: { pathname: '/coaching', params: { tab: sessionsTabFor(item) } } as Href,
         icon: 'booking',
       };
     default:
