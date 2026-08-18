@@ -2161,6 +2161,7 @@ components:
         uploader_name: { type: string }
         booking_id: { type: string }
         student_name: { type: string }
+        actor_name: { type: string }
         session_name: { type: string }
         scheduled_at: { type: string }
     NotificationItem:
@@ -2174,7 +2175,7 @@ components:
           type: string
           description: >
             One of group_invitation_received, group_member_joined, video_reviewed,
-            video_uploaded, coaching_booking_created.
+            video_uploaded, coaching_booking_created, coaching_booking_cancelled.
         payload:
           $ref: "#/components/schemas/NotificationPayload"
         read:

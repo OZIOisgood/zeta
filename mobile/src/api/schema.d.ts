@@ -1084,6 +1084,7 @@ export interface components {
             uploader_name?: string;
             booking_id?: string;
             student_name?: string;
+            actor_name?: string;
             session_name?: string;
             scheduled_at?: string;
         } & {
@@ -1093,7 +1094,7 @@ export interface components {
         NotificationItem: {
             /** Format: uuid */
             id: string;
-            /** @description One of group_invitation_received, group_member_joined, video_reviewed, video_uploaded, coaching_booking_created. */
+            /** @description One of group_invitation_received, group_member_joined, video_reviewed, video_uploaded, coaching_booking_created, coaching_booking_cancelled. */
             type: string;
             payload: components["schemas"]["NotificationPayload"];
             read: boolean;
