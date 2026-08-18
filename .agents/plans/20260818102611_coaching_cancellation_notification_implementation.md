@@ -10,6 +10,16 @@
 
 **Design spec:** `.agents/plans/20260818101949_coaching_booking_cancellation_notification.md`
 
+## Corrections found during execution
+
+This plan was executed as written; these are the places where it was wrong. The task text below is left intact as the record of what was actually run — read these corrections as governing.
+
+- **Task 4/5, the dashboard deep-link.** The plan builds `link: '/sessions'` plus `queryParams: { tab }`. That is inert: the tab is a route path segment (`sessions/:tab`), `/sessions` redirects to `/sessions/upcoming` with `pathMatch: 'full'`, and the page reads `route.paramMap`, so the query param is dropped and every notification landed on "upcoming". The shipped code builds `/sessions/<tab>`. Mobile's `href` was correct as planned.
+- **Task 1, the push path.** The plan maps the new type in `pushCategory` but never adds the matching `BuildMessage` case, so the push would have returned `ok=false` and silently no-opped. The shipped code adds it.
+- **Task 4, the dashboard payload types.** The plan never mentions `notifications-api.service.ts`, whose `NotificationType` union and `NotificationPayload` had to learn the new type and `actor_name` before the presenter could compile.
+- **Tab derivation.** The plan derives the tab from the start time alone, which sends a live session to "past". Bookings now carry `duration_minutes` in the payload and a session counts as upcoming until it ends — on both surfaces, with the mobile list realigned to match the dashboard store.
+- **Owner rulings that override the plan text:** the date-format options are shared through `DashboardDateTimeService.formatSessionDateTime` rather than copied per component, and the cancellation copy names the session with a `coachingBookingCancelledNoSession` fallback key.
+
 ## Global Constraints
 
 - Structured `log/slog` logging only; every log carries `component`, errors use the `err` field. Never log tokens, cookies, emails, or other PII.

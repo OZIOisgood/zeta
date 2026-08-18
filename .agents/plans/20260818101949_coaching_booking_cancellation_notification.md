@@ -50,9 +50,9 @@ Tab derivation from the payload:
 
 ### Dashboard
 
-- `notification-presenter.ts`: add the cancelled case, add the `when` param to both booking cases, and build `/sessions?tab=<derived>`.
+- `notification-presenter.ts`: add the cancelled case, add the `when` param to both booking cases, and build `/sessions/<derived>`.
 - Call sites inject `DashboardDateTimeService` and pass `formatInstantDateTime(iso, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })` — the same options the sessions page uses, so notification and list agree: `notification-list.component.ts`, `shell.component.ts`, `notifications-page.component.ts`.
-- The sessions page already reads `tab` from the query string; no routing change needed.
+- The tab is a **route path segment**, not a query param: `app.routes.ts` declares `sessions/:tab`, `/sessions` redirects to `/sessions/upcoming` with `pathMatch: 'full'`, and the page reads `route.paramMap`. A `?tab=` query param is silently dropped by that redirect. No routing change is needed, but the link must be a path.
 
 ### Mobile
 
