@@ -28,7 +28,7 @@ variable "disk_size_gb" {
 
 variable "availability_type" {
   type        = string
-  description = "ZONAL for dev, REGIONAL for prod (automatic failover)"
+  description = "Cloud SQL availability topology: ZONAL or REGIONAL"
   default     = "ZONAL"
 }
 

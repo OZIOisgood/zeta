@@ -141,7 +141,7 @@ module "cloud_sql" {
   tier                = "db-f1-micro"
   disk_size_gb        = 10
   availability_type   = "ZONAL"
-  deletion_protection = false
+  deletion_protection = true
 }
 
 module "observability_dev" {
