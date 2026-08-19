@@ -13,16 +13,21 @@ Production needed the development authorization contract, its initial WorkOS org
 - Created a Google web OAuth client in project `zeta-491012`, configured the WorkOS callback, enabled Google in WorkOS, and published the external OAuth consent app.
 - Created and versioned the missing WorkOS, default-organization, Mux, and OpenRouter production secrets. Added new versions for the supplied Agora app ID and certificate.
 - Left the Google client secret in Google/WorkOS because the Zeta runtime does not consume it.
-- Left `zeta-prod-db-url` absent because the Terraform Cloud SQL module generates its value. Preserved Terraform ownership of the Agora recording-storage credentials.
+- Preserved Terraform ownership of `zeta-prod-db-url` and the Agora recording-storage credentials. The production apply generated the database credential and stored it as Secret Manager version 1.
 - Added `MOBILE_LOGOUT_RETURN_TO=zeta://login` to both deployment workflows so the runtime matches the configured WorkOS mobile sign-out URI.
+- Granted `zeta-deploy-prod@zeta-491012.iam.gserviceaccount.com` verified-owner access to `strido.net` in Search Console so Terraform can administer the production Cloud Run domain mappings.
 
 ## Verification
 
 - WorkOS application permission count: development 30, production 30; metadata comparison matched exactly.
 - WorkOS role grants: `student`, `expert`, and `admin` matched development exactly.
 - Google provider shows enabled in WorkOS; Google Auth Platform shows `In production`.
-- Sixteen of the seventeen production runtime secret bindings have enabled versions. Only Terraform-generated `zeta-prod-db-url` is missing.
-- Production Cloud Run services and Cloud SQL do not yet exist, so live runtime binding and database connectivity checks remain pending.
+- All seventeen production runtime secret bindings now have enabled versions, including Terraform-generated `zeta-prod-db-url` version 1.
+- `zeta-prod` is runnable in `europe-west1` with PostgreSQL 16, zonal availability, `db-f1-micro`, 10 GiB SSD, backups, and point-in-time recovery.
+- Production Cloud Run service shells, scheduler jobs, recording storage, IAM, and database resources were provisioned.
+- The first apply created the production resources but failed on domain ownership. After granting the deployment service account verified ownership, GitHub Actions run `32260642660` completed successfully.
+- `api.strido.net` and `app.strido.net` are mapped to their production services and DNS already resolves to `ghs.googlehosted.com`; Google-managed certificates are provisioning.
+- A final production Terraform plan reported no changes.
 - The initial production Terraform plan was read-only: 34 to add, 0 to change, 0 to destroy. No apply or deployment was run during the identity bootstrap.
 
 ## Cost and topology
@@ -33,5 +38,6 @@ Production needed the development authorization contract, its initial WorkOS org
 
 ## Follow-ups
 
-- Run the approved production Terraform apply and record its result separately.
-- After apply, verify `zeta-prod-db-url`, Cloud Run secret bindings, database migration, and the production proxy/DataGrip connection.
+- Merge `codex/prod-zonal-bootstrap` before a future production infrastructure run so `main` retains the zonal topology.
+- Run the production application deployment/migrations from the release workflow; infrastructure provisioning alone does not deploy the current application images.
+- Verify the managed certificates and production health endpoints after certificate issuance and application deployment.

@@ -24,5 +24,5 @@ The production WorkOS environment is empty and the first production deployment n
 
 - [x] Obtain explicit approval before production Terraform plan/apply.
 - [x] Reduce the initial production Cloud SQL topology from regional HA to zonal availability for the pre-release cost target.
-- Run the production infrastructure workflow and verify the generated database URL secret and provisioned resources.
+- [x] Run the production infrastructure workflow and verify the generated database URL secret and provisioned resources.
 - Deploy the production application only after infrastructure completes successfully.
