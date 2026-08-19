@@ -28,6 +28,7 @@ Production needed the development authorization contract, its initial WorkOS org
 - The first apply created the production resources but failed on domain ownership. After granting the deployment service account verified ownership, GitHub Actions run `32260642660` completed successfully.
 - `api.strido.net` and `app.strido.net` are mapped to their production services and DNS already resolves to `ghs.googlehosted.com`; Google-managed certificates are provisioning.
 - A final production Terraform plan reported no changes.
+- Before the first production release, confirmed the branch adds no database migrations and created successful on-demand dev backup `1787150689862`. Dev and prod plans contained only in-place database protection updates with no replacement or destroy actions. Enabled both Terraform and Cloud SQL API deletion protection for dev to guard its data during future infrastructure changes.
 - The initial production Terraform plan was read-only: 34 to add, 0 to change, 0 to destroy. No apply or deployment was run during the identity bootstrap.
 
 ## Cost and topology
