@@ -19,12 +19,15 @@ WorkOS documents that expired access tokens must be renewed with the refresh tok
 - Reload triggered AuthKit and both `/auth/me` and `/reports/events` returned 200 at 18:49:14.
 - The failed request is rejected by authentication middleware before profile preference handling runs.
 
-## Recommended follow-up
+## Resolution
 
-- Add a cookie-based web refresh endpoint using the existing organization-scoped refresh helper.
-- Add single-flight Angular refresh-and-retry handling for API 401 responses.
-- Reconnect notification SSE after a successful refresh.
-- Make profile-update token rotation use the same organization-scoped helper and persistent cookie settings.
-- Test concurrent 401s, rotated refresh tokens, terminal versus transient refresh failures, recursion prevention, and SSE recovery.
+- Added `POST /auth/refresh`, which uses the organization-scoped helper and
+  rotates persistent HttpOnly browser cookies without requiring a valid access token.
+- Added single-flight Angular refresh-and-retry handling for API 401 responses.
+- Added notification SSE recovery after a successful shared refresh.
+- Removed profile-update token rotation; profile changes no longer compete with
+  the centralized refresh path.
+- Added backend and frontend coverage for successful and rejected refreshes,
+  concurrent 401s, retry behavior, and SSE recovery.
 
-No authorization code was changed during this investigation.
+No new runtime configuration or secrets were required.

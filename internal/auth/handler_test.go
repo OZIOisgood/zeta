@@ -226,6 +226,86 @@ func TestRefreshSessionCookiesReissuesCookies(t *testing.T) {
 	}
 }
 
+func TestRefreshWebSessionRotatesPersistentOrganizationScopedCookies(t *testing.T) {
+	t.Setenv("DEV_AUTH_ENABLED", "true")
+	t.Setenv("WORKOS_CLIENT_ID", "client_test")
+	t.Setenv("DEFAULT_ORG_ID", "org_123")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().AuthenticateWithRefreshToken(gomock.Any(), usermanagement.AuthenticateWithRefreshTokenOpts{
+		ClientID:       "client_test",
+		RefreshToken:   "refresh_old",
+		OrganizationID: "org_123",
+	}).Return(usermanagement.RefreshAuthenticationResponse{
+		AccessToken:  "access_new",
+		RefreshToken: "refresh_new",
+	}, nil)
+
+	h := NewHandler(slog.Default(), nil, workos)
+	req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
+	req.AddCookie(&http.Cookie{Name: RefreshCookieName, Value: "refresh_old"})
+	rec := httptest.NewRecorder()
+
+	h.RefreshWebSession(rec, req)
+
+	require.Equal(t, http.StatusNoContent, rec.Code)
+	require.Equal(t, "no-store", rec.Header().Get("Cache-Control"))
+	cookies := rec.Result().Cookies()
+	require.Len(t, cookies, 2)
+	for _, cookie := range cookies {
+		assert.True(t, cookie.HttpOnly)
+		assert.False(t, cookie.Secure)
+		assert.Equal(t, http.SameSiteLaxMode, cookie.SameSite)
+		assert.True(t, cookie.Expires.After(time.Now()))
+	}
+	assert.Equal(t, "access_new", cookies[0].Value)
+	assert.Equal(t, "refresh_new", cookies[1].Value)
+}
+
+func TestRefreshWebSessionRequiresRefreshCookie(t *testing.T) {
+	h := NewHandler(slog.Default(), nil, nil)
+	req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
+	rec := httptest.NewRecorder()
+
+	h.RefreshWebSession(rec, req)
+
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+func TestRefreshWebSessionReportsMissingOrganizationConfiguration(t *testing.T) {
+	t.Setenv("DEFAULT_ORG_ID", "")
+	h := NewHandler(slog.Default(), nil, nil)
+	req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
+	req.AddCookie(&http.Cookie{Name: RefreshCookieName, Value: "refresh_old"})
+	rec := httptest.NewRecorder()
+
+	h.RefreshWebSession(rec, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestRefreshWebSessionRejectsFailedRefresh(t *testing.T) {
+	t.Setenv("WORKOS_CLIENT_ID", "client_test")
+	t.Setenv("DEFAULT_ORG_ID", "org_123")
+
+	ctrl := gomock.NewController(t)
+	workos := authmocks.NewMockUserManagement(ctrl)
+	workos.EXPECT().AuthenticateWithRefreshToken(gomock.Any(), gomock.Any()).Return(
+		usermanagement.RefreshAuthenticationResponse{}, fmt.Errorf("revoked"),
+	)
+
+	h := NewHandler(slog.Default(), nil, workos)
+	req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
+	req.AddCookie(&http.Cookie{Name: RefreshCookieName, Value: "refresh_old"})
+	rec := httptest.NewRecorder()
+
+	h.RefreshWebSession(rec, req)
+
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	assert.Empty(t, rec.Result().Cookies())
+}
+
 func TestMeIncludesAccessStatus(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	q := dbmocks.NewMockQuerier(ctrl)

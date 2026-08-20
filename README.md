@@ -182,6 +182,10 @@ GitHub Environment variable; there is no separate Zeta observability password. S
 - Protected: `/assets` (Requires Login)
 - Login: Click "Login via WorkOS" -> Redirects to WorkOS AuthKit -> Callback -> Logged In.
 - **Redirect Preservation**: When an unauthenticated user accesses a deep link (e.g., an invite URL), the Angular guards call `/auth/login?return_to=<path>`. The API validates the relative return path, stores it in a short-lived HttpOnly auth-state cookie, sends only an opaque `state` value to WorkOS, and restores the original path from `/auth/callback` after successful authentication.
+- **Dashboard Session Refresh**: When the WorkOS access token expires, the
+  dashboard calls `POST /auth/refresh` with the HttpOnly refresh cookie, stores
+  the rotated cookie pair, and retries concurrent API requests through one
+  shared refresh. Notification SSE reconnects after the same refresh succeeds.
 - **Mobile Token Flow**: Native apps authenticate with AuthKit via PKCE in the
   system browser. The app sends the authorization code to `POST /auth/token`
   (`{ "code": "...", "code_verifier": "..." }`) and receives an access/refresh

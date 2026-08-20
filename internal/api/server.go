@@ -238,6 +238,7 @@ func (s *Server) routes(ctx context.Context) {
 		r.Get("/auth/login", authHandler.Login)
 		r.Get("/auth/callback", authHandler.Callback)
 		r.Post("/auth/logout", authHandler.Logout)
+		r.Post("/auth/refresh", authHandler.RefreshWebSession)
 		r.Get("/auth/me", authHandler.Me)
 		r.Put("/auth/me", authHandler.UpdateMe)
 		// Credential endpoints are unauthenticated and fan out to WorkOS —

@@ -7,6 +7,7 @@ import {
   NotificationItem,
   NotificationsApiClient,
 } from '../../core/http/notifications-api.service';
+import { SessionRefreshService } from '../../core/http/session-refresh.service';
 
 const MAX_ITEMS = 50;
 
@@ -69,8 +70,15 @@ export const NotificationsStore = signalStore(
     }),
   })),
   withMethods(
-    (store, api = inject(NotificationsApiClient), invitations = inject(InvitationsApiClient)) => {
+    (
+      store,
+      api = inject(NotificationsApiClient),
+      invitations = inject(InvitationsApiClient),
+      sessionRefresh = inject(SessionRefreshService),
+    ) => {
       let source: EventSource | null = null;
+      let recoveryAttempts = 0;
+      let recoveryInProgress = false;
 
       const prepend = (item: NotificationItem): void => {
         // Guard against duplicates from a reconnect resync racing the live push.
@@ -182,6 +190,8 @@ export const NotificationsStore = signalStore(
           const es = new EventSource(api.streamUrl(), { withCredentials: true });
           source = es;
           es.onopen = () => {
+            recoveryAttempts = 0;
+            recoveryInProgress = false;
             patchState(store, { connected: true });
             // Resync on (re)connect to pick up anything missed while offline.
             void methods.load();
@@ -194,14 +204,32 @@ export const NotificationsStore = signalStore(
             }
           };
           es.onerror = () => {
-            // EventSource reconnects automatically; just reflect the state.
             patchState(store, { connected: false });
+            if (recoveryInProgress || recoveryAttempts >= 1) return;
+
+            recoveryAttempts += 1;
+            recoveryInProgress = true;
+            void firstValueFrom(sessionRefresh.refresh())
+              .then(() => {
+                recoveryInProgress = false;
+                if (source !== es) return;
+                es.close();
+                source = null;
+                methods.connect();
+              })
+              .catch(() => {
+                // Preserve EventSource's native reconnect behavior for network
+                // failures. A later successful open resets the recovery budget.
+                recoveryInProgress = false;
+              });
           };
         },
 
         disconnect(): void {
           source?.close();
           source = null;
+          recoveryAttempts = 0;
+          recoveryInProgress = false;
           patchState(store, { connected: false });
         },
       };

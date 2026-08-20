@@ -58,6 +58,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh the browser session from its HttpOnly cookie
+         * @description Rotates the WorkOS browser token pair and replaces both session cookies. This recovery endpoint remains reachable after the access token expires.
+         */
+        post: operations["refreshWebSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/access/redeem": {
         parameters: {
             query?: never;
@@ -1409,6 +1429,38 @@ export interface operations {
             };
             /** @description Rate limit exceeded for this client */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    refreshWebSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Browser session refreshed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Refresh cookie is missing, expired, or revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Browser session refresh is not configured */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

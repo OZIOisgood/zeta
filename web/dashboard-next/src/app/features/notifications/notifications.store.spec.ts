@@ -7,6 +7,7 @@ import {
   NotificationListResponse,
   NotificationsApiClient,
 } from '../../core/http/notifications-api.service';
+import { SessionRefreshService } from '../../core/http/session-refresh.service';
 import { NotificationsStore } from './notifications.store';
 
 function item(id: string, read = false): NotificationItem {
@@ -32,17 +33,21 @@ function inviteItem(id: string, code = 'ZP-1'): NotificationItem {
 function provide(
   api: Partial<NotificationsApiClient>,
   invitations: Partial<InvitationsApiClient> = {},
+  sessionRefresh: Partial<SessionRefreshService> = { refresh: () => of(undefined) },
 ) {
   TestBed.configureTestingModule({
     providers: [
       { provide: NotificationsApiClient, useValue: api },
       { provide: InvitationsApiClient, useValue: invitations },
+      { provide: SessionRefreshService, useValue: sessionRefresh },
     ],
   });
   return TestBed.inject(NotificationsStore);
 }
 
 describe('NotificationsStore', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   it('loads items and unread count', async () => {
     const res: NotificationListResponse = {
       items: [item('n1'), item('n2', true)],
@@ -167,5 +172,49 @@ describe('NotificationsStore', () => {
     expect(groups.map((g) => g.key)).toEqual(['today', 'earlier']);
     expect(groups[0].items[0].id).toBe('today1');
     expect(groups[1].items[0].id).toBe('old1');
+  });
+
+  it('refreshes the session once and recreates an SSE stream after an error', async () => {
+    class MockEventSource {
+      static readonly instances: MockEventSource[] = [];
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      readonly close = vi.fn();
+
+      constructor(
+        readonly url: string,
+        readonly options: EventSourceInit,
+      ) {
+        MockEventSource.instances.push(this);
+      }
+    }
+    vi.stubGlobal('EventSource', MockEventSource);
+
+    const refresh = vi.fn(() => of(undefined));
+    const store = provide(
+      {
+        list: () => of({ items: [], unread_count: 0 }),
+        streamUrl: () => 'https://api.example.test/notifications/stream',
+      },
+      {},
+      { refresh },
+    );
+
+    store.connect();
+    expect(MockEventSource.instances).toHaveLength(1);
+    const first = MockEventSource.instances[0];
+
+    first.onerror?.(new Event('error'));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(first.close).toHaveBeenCalledTimes(1);
+    expect(MockEventSource.instances).toHaveLength(2);
+
+    MockEventSource.instances[1].onerror?.(new Event('error'));
+    await Promise.resolve();
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });

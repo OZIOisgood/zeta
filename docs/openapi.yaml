@@ -86,6 +86,22 @@ paths:
           description: Refresh token expired or revoked
         "429":
           description: Rate limit exceeded for this client
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh the browser session from its HttpOnly cookie
+      description: >
+        Rotates the WorkOS browser token pair and replaces both session cookies.
+        This recovery endpoint remains reachable after the access token expires.
+      operationId: refreshWebSession
+      security: []
+      responses:
+        "204":
+          description: Browser session refreshed
+        "401":
+          description: Refresh cookie is missing, expired, or revoked
+        "500":
+          description: Browser session refresh is not configured
   /access/redeem:
     post:
       tags: [access]

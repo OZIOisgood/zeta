@@ -522,6 +522,40 @@ func (h *Handler) RefreshSessionCookies(ctx context.Context, w http.ResponseWrit
 	return nil
 }
 
+// RefreshWebSession rotates the browser session from its HttpOnly refresh-token
+// cookie. It intentionally does not require a valid access token because this
+// endpoint is the recovery path after that token expires.
+func (h *Handler) RefreshWebSession(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	refreshCookie, err := r.Cookie(RefreshCookieName)
+	if err != nil || refreshCookie.Value == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if h.getDefaultOrgID() == "" {
+		h.logger.ErrorContext(ctx, "auth_web_session_refresh_misconfigured",
+			slog.String("component", "auth"),
+			slog.String("config", "DEFAULT_ORG_ID"),
+		)
+		http.Error(w, "Session refresh unavailable", http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := h.refreshSessionForDefaultOrg(ctx, refreshCookie.Value)
+	if err != nil {
+		h.logger.WarnContext(ctx, "auth_web_session_refresh_failed",
+			slog.String("component", "auth"),
+			slog.Any("err", err),
+		)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	setSessionCookies(w, resp.AccessToken, resp.RefreshToken, true)
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // getPermissionsForRole fetches the permissions for a given role slug from WorkOS.
 // The Go SDK's roles.Role struct does not include Permissions, so we call the
 // WorkOS REST API directly and decode into a custom response struct.
@@ -907,25 +941,6 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		slog.String("component", "auth"),
 		slog.String("user_id", user.ID),
 	)
-
-	// Refresh the session cookie so that the updated name is reflected immediately.
-	// We use the stored refresh token to obtain a new WorkOS AccessToken (RS256).
-	if refreshCookie, err := r.Cookie(RefreshCookieName); err == nil && refreshCookie.Value != "" {
-		clientID := os.Getenv("WORKOS_CLIENT_ID")
-		refreshResp, err := h.workos.AuthenticateWithRefreshToken(ctx, usermanagement.AuthenticateWithRefreshTokenOpts{
-			ClientID:     clientID,
-			RefreshToken: refreshCookie.Value,
-		})
-		if err != nil {
-			h.logger.WarnContext(ctx, "auth_token_refresh_failed",
-				slog.String("component", "auth"),
-				slog.String("user_id", user.ID),
-				slog.Any("err", err),
-			)
-		} else {
-			setSessionCookies(w, refreshResp.AccessToken, refreshResp.RefreshToken, false)
-		}
-	}
 
 	resp := map[string]interface{}{
 		"id":                user.ID,
