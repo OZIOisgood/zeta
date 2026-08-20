@@ -47,6 +47,9 @@ import { LucideCalendar, LucideClock } from '@lucide/angular';
         [disabled]="isEffectivelyDisabled()"
         [attr.autocomplete]="autocomplete() || null"
         [attr.inputmode]="inputMode() || null"
+        [attr.min]="min()"
+        [attr.max]="max()"
+        [attr.step]="step()"
         [attr.aria-label]="ariaLabel() || null"
         [attr.aria-describedby]="ariaDescribedBy() || null"
         [attr.aria-invalid]="invalid() || null"
@@ -77,6 +80,9 @@ export class ZTextInputComponent implements ControlValueAccessor {
   readonly placeholder = input('');
   readonly autocomplete = input('');
   readonly inputMode = input('');
+  readonly min = input<number | null>(null);
+  readonly max = input<number | null>(null);
+  readonly step = input<number | null>(null);
   readonly ariaLabel = input('');
   readonly ariaDescribedBy = input('');
   readonly invalid = input(false);

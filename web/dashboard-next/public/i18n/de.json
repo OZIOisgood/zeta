@@ -670,7 +670,7 @@
       "descriptionPlaceholder": "Kurze Beschreibung",
       "reasonPlaceholder": "z. B. Urlaub",
       "nameRequired": "Der Name der Terminart ist erforderlich.",
-      "durationInvalid": "Gib eine Dauer größer als null ein.",
+      "durationInvalid": "Gib {{min}}–{{max}} Minuten in {{step}}-Minuten-Schritten ein.",
       "startTimeRequired": "Die Startzeit ist erforderlich.",
       "endTimeRequired": "Die Endzeit ist erforderlich.",
       "dateRequired": "Das Datum ist erforderlich.",

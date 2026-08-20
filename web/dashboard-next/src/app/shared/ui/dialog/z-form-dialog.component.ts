@@ -14,6 +14,7 @@ import { ZActionDialogComponent } from './z-action-dialog.component';
       [cancelLabel]="'common.actions.cancel' | transloco"
       [confirmCloses]="false"
       [cancelCloses]="false"
+      [confirmDisabled]="confirmDisabled()"
       [close]="noopClose"
       (confirmed)="saved.emit()"
       (cancelled)="cancelled.emit()"
@@ -26,6 +27,7 @@ import { ZActionDialogComponent } from './z-action-dialog.component';
 })
 export class ZFormDialogComponent {
   readonly title = input.required<string>();
+  readonly confirmDisabled = input(false);
   readonly cancelled = output<void>();
   readonly saved = output<void>();
 

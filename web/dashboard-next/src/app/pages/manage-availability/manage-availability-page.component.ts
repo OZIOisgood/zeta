@@ -1,12 +1,20 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideCalendarOff, LucidePencil, LucidePlus, LucideTrash } from '@lucide/angular';
 import { NgpDialogTrigger } from 'ng-primitives/dialog';
 import { distinctUntilChanged, map } from 'rxjs';
 import { CoachingAvailability, SessionType } from '../../core/http/coaching-api.service';
+import { EnvService } from '../../core/http/env.service';
 import { Group } from '../../core/http/groups-api.service';
 import { DashboardDateTimeService } from '../../core/i18n/dashboard-date-time.service';
 import { DashboardLocalizationService } from '../../core/i18n/dashboard-localization.service';
@@ -32,6 +40,17 @@ import { ZTextareaComponent } from '../../shared/ui/textarea/z-textarea.componen
 import { orderedWeekdayValues, resolveFirstDayOfWeek } from '../../shared/utils/weekdays';
 
 type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
+
+const MAX_SESSION_DURATION_MINUTES = 120;
+
+const durationStepValidator =
+  (step: number): ValidatorFn =>
+  (control: AbstractControl): ValidationErrors | null => {
+    const duration = Number(control.value);
+    return Number.isFinite(duration) && Number.isInteger(duration) && duration % step === 0
+      ? null
+      : { durationStep: true };
+  };
 
 @Component({
   selector: 'app-manage-availability-page',
@@ -357,6 +376,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
               ? ('sessions.availability.editSessionType' | transloco)
               : ('sessions.availability.addSessionType' | transloco)
           "
+          [confirmDisabled]="sessionTypeName.invalid || sessionTypeDuration.invalid"
           (cancelled)="close(null)"
           (saved)="closeSessionTypeDialog(close)"
         >
@@ -395,6 +415,9 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
               [formControl]="sessionTypeDuration"
               placeholder="45"
               inputMode="numeric"
+              [min]="minSessionDurationMinutes"
+              [max]="maxSessionDurationMinutes"
+              [step]="sessionDurationStepMinutes"
               ariaDescribedBy="session-type-duration-error"
               [invalid]="
                 (sessionTypeDuration.dirty || sessionTypeDuration.touched) &&
@@ -407,7 +430,15 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
             ) {
               <z-field-error
                 id="session-type-duration-error"
-                [message]="'sessions.availability.durationInvalid' | transloco"
+                [message]="
+                  'sessions.availability.durationInvalid'
+                    | transloco
+                      : {
+                          min: minSessionDurationMinutes,
+                          max: maxSessionDurationMinutes,
+                          step: sessionDurationStepMinutes,
+                        }
+                "
               />
             }
           </label>
@@ -527,6 +558,7 @@ type AvailabilityTab = 'session-types' | 'schedule' | 'blocked';
 export class ManageAvailabilityPageComponent {
   protected readonly store = inject(AvailabilityStore);
   private readonly dateTime = inject(DashboardDateTimeService);
+  private readonly env = inject(EnvService);
   private readonly localization = inject(DashboardLocalizationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -536,6 +568,9 @@ export class ManageAvailabilityPageComponent {
   protected readonly activeTab = signal<AvailabilityTab>('session-types');
   protected readonly editingSessionType = signal<SessionType | null>(null);
   protected readonly editingAvailability = signal<CoachingAvailability | null>(null);
+  protected readonly minSessionDurationMinutes = this.env.minSessionDurationMinutes;
+  protected readonly maxSessionDurationMinutes = MAX_SESSION_DURATION_MINUTES;
+  protected readonly sessionDurationStepMinutes = this.env.sessionDurationStepMinutes;
 
   protected readonly sessionTypeName = new FormControl('', {
     nonNullable: true,
@@ -544,7 +579,12 @@ export class ManageAvailabilityPageComponent {
   protected readonly sessionTypeDescription = new FormControl('', { nonNullable: true });
   protected readonly sessionTypeDuration = new FormControl('45', {
     nonNullable: true,
-    validators: [Validators.required, Validators.min(1)],
+    validators: [
+      Validators.required,
+      Validators.min(this.minSessionDurationMinutes),
+      Validators.max(this.maxSessionDurationMinutes),
+      durationStepValidator(this.sessionDurationStepMinutes),
+    ],
   });
   protected readonly availabilityDay = new FormControl('1', {
     nonNullable: true,

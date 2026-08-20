@@ -18,8 +18,10 @@ COPY --from=build /app/dist/dashboard-next/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 ENV API_URL=http://localhost:8080
+ENV MIN_SESSION_DURATION_MINUTES=15
+ENV SESSION_DURATION_STEP_MINUTES=5
 
 # Write runtime config before starting Nginx.
-CMD ["/bin/sh", "-c", "echo \"window.__env={apiUrl:\\\"${API_URL}\\\"}\" > /usr/share/nginx/html/env.js && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "echo \"window.__env={apiUrl:\\\"${API_URL}\\\",minSessionDurationMinutes:${MIN_SESSION_DURATION_MINUTES},sessionDurationStepMinutes:${SESSION_DURATION_STEP_MINUTES}}\" > /usr/share/nginx/html/env.js && nginx -g 'daemon off;'"]
 
 EXPOSE 8080

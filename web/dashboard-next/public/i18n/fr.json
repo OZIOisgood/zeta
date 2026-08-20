@@ -670,7 +670,7 @@
       "descriptionPlaceholder": "Courte description",
       "reasonPlaceholder": "ex. Vacances",
       "nameRequired": "Le nom du type de séance est obligatoire.",
-      "durationInvalid": "Saisissez une durée supérieure à zéro.",
+      "durationInvalid": "Saisissez {{min}}–{{max}} minutes par incréments de {{step}} minutes.",
       "startTimeRequired": "L’heure de début est obligatoire.",
       "endTimeRequired": "L’heure de fin est obligatoire.",
       "dateRequired": "La date est obligatoire.",

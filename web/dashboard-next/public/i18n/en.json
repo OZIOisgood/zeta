@@ -670,7 +670,7 @@
       "descriptionPlaceholder": "Short description",
       "reasonPlaceholder": "e.g. Holiday",
       "nameRequired": "Session type name is required.",
-      "durationInvalid": "Enter a duration greater than zero.",
+      "durationInvalid": "Enter {{min}}–{{max}} minutes in {{step}}-minute increments.",
       "startTimeRequired": "Start time is required.",
       "endTimeRequired": "End time is required.",
       "dateRequired": "Date is required.",
