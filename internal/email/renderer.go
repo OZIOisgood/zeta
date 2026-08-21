@@ -66,7 +66,8 @@ func RenderTemplate(templateName TemplateName, message Message) (RenderedEmail, 
 
 	name := string(templateName)
 	tmpl, err := template.New("email").Funcs(template.FuncMap{
-		"richText": formatRichText,
+		"richText":               formatRichText,
+		"richTextWithLineBreaks": formatRichTextWithLineBreaks,
 	}).ParseFS(templateFiles, "templates/layout.html", "templates/"+name+".html")
 	if err != nil {
 		return RenderedEmail{}, fmt.Errorf("parse email template: %w", err)
@@ -132,4 +133,10 @@ func formatRichText(value string) template.HTML {
 		result.WriteString(part)
 	}
 	return template.HTML(result.String())
+}
+
+func formatRichTextWithLineBreaks(value string) template.HTML {
+	normalized := strings.ReplaceAll(strings.ReplaceAll(value, "\r\n", "\n"), "\r", "\n")
+	richText := formatRichText(normalized)
+	return template.HTML(strings.ReplaceAll(string(richText), "\n", "<br>\n"))
 }

@@ -89,7 +89,7 @@ func TestRenderInboxReplyUsesBrandedLayoutAndPreservesLineBreaks(t *testing.T) {
 	rendered, err := RenderTemplate(TemplateInboxReply, Message{Copy: Copy{
 		Preheader:  "Reply from Strido Support",
 		Title:      "Strido Support",
-		Intro:      "Hello Shannon,\n\nThanks for writing to us.",
+		Intro:      "-\nAnswer\n-\n\nEmpty line above\n-",
 		FooterNote: "Strido Support Team",
 	}})
 	if err != nil {
@@ -97,18 +97,18 @@ func TestRenderInboxReplyUsesBrandedLayoutAndPreservesLineBreaks(t *testing.T) {
 	}
 	for _, expected := range []string{
 		"strido-logo-320.png",
-		"Hello Shannon",
-		"Thanks for writing to us.",
+		"Answer",
+		"Empty line above",
 		"Strido Support Team",
 	} {
 		if !strings.Contains(rendered.HTML, expected) {
 			t.Fatalf("rendered inbox reply is missing %q", expected)
 		}
 	}
-	if !strings.Contains(strings.ReplaceAll(rendered.HTML, " ", ""), "white-space:pre-line") {
-		t.Fatal("rendered inbox reply does not preserve line breaks")
+	if strings.Count(rendered.HTML, "<br") != 5 {
+		t.Fatalf("rendered inbox reply does not contain every explicit line break:\n%s", rendered.HTML)
 	}
-	if !strings.Contains(rendered.Text, "Hello Shannon") {
+	if !strings.Contains(rendered.Text, "Answer") {
 		t.Fatalf("text fallback missing reply: %q", rendered.Text)
 	}
 }
