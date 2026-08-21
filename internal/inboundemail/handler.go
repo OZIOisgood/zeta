@@ -37,6 +37,15 @@ type Store interface {
 	MarkInboundEmailForwardingFailed(ctx context.Context, arg db.MarkInboundEmailForwardingFailedParams) error
 	MarkInboundEmailForwardingSkipped(ctx context.Context, arg db.MarkInboundEmailForwardingSkippedParams) error
 	ReleaseInboundEmailClaim(ctx context.Context, id pgtype.UUID) error
+	ListAdminInboundEmails(ctx context.Context, arg db.ListAdminInboundEmailsParams) ([]db.InboundEmail, error)
+	CountAdminInboundEmails(ctx context.Context, arg db.CountAdminInboundEmailsParams) (int64, error)
+	GetAdminInboundEmail(ctx context.Context, id pgtype.UUID) (db.InboundEmail, error)
+	MarkInboundEmailRead(ctx context.Context, id pgtype.UUID) (db.InboundEmail, error)
+	UpdateInboundEmailHandlingStatus(ctx context.Context, arg db.UpdateInboundEmailHandlingStatusParams) (db.InboundEmail, error)
+	CreateInboundEmailReply(ctx context.Context, arg db.CreateInboundEmailReplyParams) (db.InboundEmailReply, error)
+	ListInboundEmailReplies(ctx context.Context, inboundEmailID pgtype.UUID) ([]db.InboundEmailReply, error)
+	MarkInboundEmailReplySent(ctx context.Context, arg db.MarkInboundEmailReplySentParams) (db.MarkInboundEmailReplySentRow, error)
+	MarkInboundEmailReplyFailed(ctx context.Context, arg db.MarkInboundEmailReplyFailedParams) (db.InboundEmailReply, error)
 }
 
 type Handler struct {

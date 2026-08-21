@@ -11,7 +11,15 @@ type NavigationItem = {
   label: string;
   labelKey: string;
   href: string;
-  icon: 'home' | 'videos' | 'groups' | 'sessions' | 'reports-expert' | 'reports-student' | 'admin';
+  icon:
+    | 'home'
+    | 'videos'
+    | 'groups'
+    | 'sessions'
+    | 'reports-expert'
+    | 'reports-student'
+    | 'admin'
+    | 'email';
 };
 
 type WorkQueueItem = {
@@ -91,6 +99,13 @@ const initialState: AppShellState = {
       labelKey: 'common.nav.report',
       href: '/reports/students',
       icon: 'reports-student',
+    },
+    {
+      id: 'email',
+      label: 'Email',
+      labelKey: 'common.nav.email',
+      href: '/admin/emails',
+      icon: 'email',
     },
     {
       id: 'admin',
@@ -191,6 +206,9 @@ export const AppShellStore = signalStore(
           'create-group': 'groups',
         };
         let aliasedSection = sectionAliases[firstSegment] ?? firstSegment;
+        if (firstSegment === 'admin' && (segments[1] === 'emails' || segments[1] === 'support')) {
+          aliasedSection = 'email';
+        }
         // The two report routes share the `reports` segment; resolve to the
         // matching nav item so the right one highlights.
         if (firstSegment === 'reports') {

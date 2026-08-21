@@ -40,16 +40,17 @@ func (h *Handler) processClaimed(ctx context.Context, row db.InboundEmail) (resu
 		return resultErr
 	}
 	if err := h.q.UpdateInboundEmailContent(ctx, db.UpdateInboundEmailContentParams{
-		ID:          row.ID,
-		Sender:      email.From,
-		Recipients:  email.To,
-		Cc:          email.Cc,
-		Bcc:         email.Bcc,
-		Subject:     email.Subject,
-		MessageID:   email.MessageID,
-		ReceivedAt:  pgtype.Timestamptz{Time: email.CreatedAt, Valid: true},
-		BodyText:    bodyText,
-		Attachments: attachments,
+		ID:               row.ID,
+		Sender:           email.From,
+		Recipients:       email.To,
+		Cc:               email.Cc,
+		Bcc:              email.Bcc,
+		Subject:          email.Subject,
+		MessageID:        email.MessageID,
+		ReceivedAt:       pgtype.Timestamptz{Time: email.CreatedAt, Valid: true},
+		BodyText:         bodyText,
+		Attachments:      attachments,
+		ReferencesHeader: email.References,
 	}); err != nil {
 		return fmt.Errorf("persist inbound email content: %w", err)
 	}
@@ -63,6 +64,7 @@ func (h *Handler) processClaimed(ctx context.Context, row db.InboundEmail) (resu
 	row.ReceivedAt = pgtype.Timestamptz{Time: email.CreatedAt, Valid: true}
 	row.BodyText = bodyText
 	row.Attachments = attachments
+	row.ReferencesHeader = email.References
 
 	if row.DiscordStatus != "posted" {
 		if err := h.deliverDiscord(ctx, row, email.Attachments); err != nil {

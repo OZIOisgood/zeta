@@ -17,7 +17,10 @@ var templateFiles embed.FS
 
 type TemplateName string
 
-const TemplateNotification TemplateName = "notification"
+const (
+	TemplateNotification TemplateName = "notification"
+	TemplateInboxReply   TemplateName = "inbox_reply"
+)
 
 // Copy holds all translated text for an outgoing email.
 // Fields are fully-rendered strings (template variables already substituted).

@@ -603,6 +603,27 @@ type InboundEmail struct {
 	ForwardingError    string             `json:"forwarding_error"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	HandlingStatus     string             `json:"handling_status"`
+	ReadAt             pgtype.Timestamptz `json:"read_at"`
+	ReferencesHeader   string             `json:"references_header"`
+}
+
+type InboundEmailReply struct {
+	ID                pgtype.UUID        `json:"id"`
+	InboundEmailID    pgtype.UUID        `json:"inbound_email_id"`
+	IdempotencyKey    pgtype.UUID        `json:"idempotency_key"`
+	ResendEmailID     string             `json:"resend_email_id"`
+	SenderUserID      string             `json:"sender_user_id"`
+	SenderDisplayName string             `json:"sender_display_name"`
+	FromAddress       string             `json:"from_address"`
+	ToAddress         string             `json:"to_address"`
+	Subject           string             `json:"subject"`
+	BodyText          string             `json:"body_text"`
+	DeliveryStatus    string             `json:"delivery_status"`
+	DeliveryError     string             `json:"delivery_error"`
+	SentAt            pgtype.Timestamptz `json:"sent_at"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
 type LandingContactSubmission struct {

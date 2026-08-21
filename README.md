@@ -292,6 +292,8 @@ sequenceDiagram
 3. The API idempotently stores the event in `inbound_emails` before attempting delivery.
 4. The processor fetches the complete body and attachment metadata from Resend, creates one Discord forum thread, and forwards a copy to configured recipients with an idempotency key.
 5. Discord and forwarding outcomes are tracked independently. `POST /internal/inbound-email/reconcile` polls recent Resend mail and retries pending or failed work every five minutes.
+6. Administrators with `inbound-email:read` open the shared **Email** navigation item at `/admin/emails` (or `/admin/support` for the support-filtered view). The page covers social, support, and DSA inboxes.
+7. Administrators with `inbound-email:reply` reply from the exact route address that received the message. Replies are persisted before delivery, sent through Resend with idempotency and `In-Reply-To`/`References` headers, and rendered with the shared Strido email layout.
 
 ### API Examples
 

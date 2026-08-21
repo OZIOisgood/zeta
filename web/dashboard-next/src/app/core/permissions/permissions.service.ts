@@ -30,7 +30,9 @@ export type Permission =
   | 'reports:read'
   | 'moderation:reports:create'
   | 'moderation:reports:read'
-  | 'moderation:reports:update';
+  | 'moderation:reports:update'
+  | 'inbound-email:read'
+  | 'inbound-email:reply';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {

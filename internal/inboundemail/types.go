@@ -29,10 +29,22 @@ type ReceivedEmail struct {
 	Bcc         []string
 	Subject     string
 	MessageID   string
+	References  string
 	CreatedAt   time.Time
 	Text        string
 	HTML        string
 	Attachments []Attachment
+}
+
+type ReplyEmail struct {
+	From       string
+	To         string
+	ReplyTo    string
+	Subject    string
+	Text       string
+	HTML       string
+	InReplyTo  string
+	References string
 }
 
 type ForwardMetadata struct {
@@ -45,6 +57,8 @@ type Provider interface {
 	GetReceivedEmail(ctx context.Context, emailID string) (ReceivedEmail, error)
 	ListReceivedEmails(ctx context.Context, limit int) ([]ReceivedEmail, error)
 	ForwardReceivedEmail(ctx context.Context, email ReceivedEmail, metadata ForwardMetadata, recipients []string, from, idempotencyKey string) (string, error)
+	SendReply(ctx context.Context, email ReplyEmail, idempotencyKey string) (string, error)
+	GetReceivedAttachment(ctx context.Context, emailID, attachmentID string) (Attachment, error)
 }
 
 type Route struct {

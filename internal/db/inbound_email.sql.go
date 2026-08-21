@@ -31,7 +31,7 @@ SET
   updated_at = NOW()
 FROM candidate
 WHERE email.id = candidate.id
-RETURNING email.id, email.resend_email_id, email.svix_id, email.inbox, email.inbox_address, email.sender, email.recipients, email.cc, email.bcc, email.subject, email.message_id, email.received_at, email.body_text, email.attachments, email.processing_status, email.processing_attempts, email.last_attempt_at, email.next_attempt_at, email.claim_until, email.processed_at, email.discord_status, email.discord_channel_id, email.discord_thread_id, email.discord_message_id, email.discord_error, email.forwarding_status, email.forwarding_email_id, email.forwarding_error, email.created_at, email.updated_at
+RETURNING email.id, email.resend_email_id, email.svix_id, email.inbox, email.inbox_address, email.sender, email.recipients, email.cc, email.bcc, email.subject, email.message_id, email.received_at, email.body_text, email.attachments, email.processing_status, email.processing_attempts, email.last_attempt_at, email.next_attempt_at, email.claim_until, email.processed_at, email.discord_status, email.discord_channel_id, email.discord_thread_id, email.discord_message_id, email.discord_error, email.forwarding_status, email.forwarding_email_id, email.forwarding_error, email.created_at, email.updated_at, email.handling_status, email.read_at, email.references_header
 `
 
 func (q *Queries) ClaimInboundEmailByResendID(ctx context.Context, resendEmailID string) (InboundEmail, error) {
@@ -68,6 +68,9 @@ func (q *Queries) ClaimInboundEmailByResendID(ctx context.Context, resendEmailID
 		&i.ForwardingError,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.HandlingStatus,
+		&i.ReadAt,
+		&i.ReferencesHeader,
 	)
 	return i, err
 }
@@ -93,7 +96,7 @@ SET
   updated_at = NOW()
 FROM candidates
 WHERE email.id = candidates.id
-RETURNING email.id, email.resend_email_id, email.svix_id, email.inbox, email.inbox_address, email.sender, email.recipients, email.cc, email.bcc, email.subject, email.message_id, email.received_at, email.body_text, email.attachments, email.processing_status, email.processing_attempts, email.last_attempt_at, email.next_attempt_at, email.claim_until, email.processed_at, email.discord_status, email.discord_channel_id, email.discord_thread_id, email.discord_message_id, email.discord_error, email.forwarding_status, email.forwarding_email_id, email.forwarding_error, email.created_at, email.updated_at
+RETURNING email.id, email.resend_email_id, email.svix_id, email.inbox, email.inbox_address, email.sender, email.recipients, email.cc, email.bcc, email.subject, email.message_id, email.received_at, email.body_text, email.attachments, email.processing_status, email.processing_attempts, email.last_attempt_at, email.next_attempt_at, email.claim_until, email.processed_at, email.discord_status, email.discord_channel_id, email.discord_thread_id, email.discord_message_id, email.discord_error, email.forwarding_status, email.forwarding_email_id, email.forwarding_error, email.created_at, email.updated_at, email.handling_status, email.read_at, email.references_header
 `
 
 func (q *Queries) ClaimPendingInboundEmails(ctx context.Context, limit int32) ([]InboundEmail, error) {
@@ -134,6 +137,252 @@ func (q *Queries) ClaimPendingInboundEmails(ctx context.Context, limit int32) ([
 			&i.ForwardingStatus,
 			&i.ForwardingEmailID,
 			&i.ForwardingError,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.HandlingStatus,
+			&i.ReadAt,
+			&i.ReferencesHeader,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countAdminInboundEmails = `-- name: CountAdminInboundEmails :one
+SELECT COUNT(*)
+FROM inbound_emails
+WHERE ($1::TEXT = '' OR inbox = $1)
+  AND ($2::TEXT = '' OR handling_status = $2)
+`
+
+type CountAdminInboundEmailsParams struct {
+	Inbox          string `json:"inbox"`
+	HandlingStatus string `json:"handling_status"`
+}
+
+func (q *Queries) CountAdminInboundEmails(ctx context.Context, arg CountAdminInboundEmailsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAdminInboundEmails, arg.Inbox, arg.HandlingStatus)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const createInboundEmailReply = `-- name: CreateInboundEmailReply :one
+INSERT INTO inbound_email_replies (
+  inbound_email_id,
+  idempotency_key,
+  sender_user_id,
+  sender_display_name,
+  from_address,
+  to_address,
+  subject,
+  body_text
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (idempotency_key) DO UPDATE SET
+  updated_at = inbound_email_replies.updated_at
+RETURNING id, inbound_email_id, idempotency_key, resend_email_id, sender_user_id, sender_display_name, from_address, to_address, subject, body_text, delivery_status, delivery_error, sent_at, created_at, updated_at
+`
+
+type CreateInboundEmailReplyParams struct {
+	InboundEmailID    pgtype.UUID `json:"inbound_email_id"`
+	IdempotencyKey    pgtype.UUID `json:"idempotency_key"`
+	SenderUserID      string      `json:"sender_user_id"`
+	SenderDisplayName string      `json:"sender_display_name"`
+	FromAddress       string      `json:"from_address"`
+	ToAddress         string      `json:"to_address"`
+	Subject           string      `json:"subject"`
+	BodyText          string      `json:"body_text"`
+}
+
+func (q *Queries) CreateInboundEmailReply(ctx context.Context, arg CreateInboundEmailReplyParams) (InboundEmailReply, error) {
+	row := q.db.QueryRow(ctx, createInboundEmailReply,
+		arg.InboundEmailID,
+		arg.IdempotencyKey,
+		arg.SenderUserID,
+		arg.SenderDisplayName,
+		arg.FromAddress,
+		arg.ToAddress,
+		arg.Subject,
+		arg.BodyText,
+	)
+	var i InboundEmailReply
+	err := row.Scan(
+		&i.ID,
+		&i.InboundEmailID,
+		&i.IdempotencyKey,
+		&i.ResendEmailID,
+		&i.SenderUserID,
+		&i.SenderDisplayName,
+		&i.FromAddress,
+		&i.ToAddress,
+		&i.Subject,
+		&i.BodyText,
+		&i.DeliveryStatus,
+		&i.DeliveryError,
+		&i.SentAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getAdminInboundEmail = `-- name: GetAdminInboundEmail :one
+SELECT id, resend_email_id, svix_id, inbox, inbox_address, sender, recipients, cc, bcc, subject, message_id, received_at, body_text, attachments, processing_status, processing_attempts, last_attempt_at, next_attempt_at, claim_until, processed_at, discord_status, discord_channel_id, discord_thread_id, discord_message_id, discord_error, forwarding_status, forwarding_email_id, forwarding_error, created_at, updated_at, handling_status, read_at, references_header
+FROM inbound_emails
+WHERE id = $1
+`
+
+func (q *Queries) GetAdminInboundEmail(ctx context.Context, id pgtype.UUID) (InboundEmail, error) {
+	row := q.db.QueryRow(ctx, getAdminInboundEmail, id)
+	var i InboundEmail
+	err := row.Scan(
+		&i.ID,
+		&i.ResendEmailID,
+		&i.SvixID,
+		&i.Inbox,
+		&i.InboxAddress,
+		&i.Sender,
+		&i.Recipients,
+		&i.Cc,
+		&i.Bcc,
+		&i.Subject,
+		&i.MessageID,
+		&i.ReceivedAt,
+		&i.BodyText,
+		&i.Attachments,
+		&i.ProcessingStatus,
+		&i.ProcessingAttempts,
+		&i.LastAttemptAt,
+		&i.NextAttemptAt,
+		&i.ClaimUntil,
+		&i.ProcessedAt,
+		&i.DiscordStatus,
+		&i.DiscordChannelID,
+		&i.DiscordThreadID,
+		&i.DiscordMessageID,
+		&i.DiscordError,
+		&i.ForwardingStatus,
+		&i.ForwardingEmailID,
+		&i.ForwardingError,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.HandlingStatus,
+		&i.ReadAt,
+		&i.ReferencesHeader,
+	)
+	return i, err
+}
+
+const listAdminInboundEmails = `-- name: ListAdminInboundEmails :many
+SELECT id, resend_email_id, svix_id, inbox, inbox_address, sender, recipients, cc, bcc, subject, message_id, received_at, body_text, attachments, processing_status, processing_attempts, last_attempt_at, next_attempt_at, claim_until, processed_at, discord_status, discord_channel_id, discord_thread_id, discord_message_id, discord_error, forwarding_status, forwarding_email_id, forwarding_error, created_at, updated_at, handling_status, read_at, references_header
+FROM inbound_emails
+WHERE ($1::TEXT = '' OR inbox = $1)
+  AND ($2::TEXT = '' OR handling_status = $2)
+ORDER BY received_at DESC
+LIMIT $4 OFFSET $3
+`
+
+type ListAdminInboundEmailsParams struct {
+	Inbox          string `json:"inbox"`
+	HandlingStatus string `json:"handling_status"`
+	PageOffset     int32  `json:"page_offset"`
+	PageLimit      int32  `json:"page_limit"`
+}
+
+func (q *Queries) ListAdminInboundEmails(ctx context.Context, arg ListAdminInboundEmailsParams) ([]InboundEmail, error) {
+	rows, err := q.db.Query(ctx, listAdminInboundEmails,
+		arg.Inbox,
+		arg.HandlingStatus,
+		arg.PageOffset,
+		arg.PageLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []InboundEmail
+	for rows.Next() {
+		var i InboundEmail
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResendEmailID,
+			&i.SvixID,
+			&i.Inbox,
+			&i.InboxAddress,
+			&i.Sender,
+			&i.Recipients,
+			&i.Cc,
+			&i.Bcc,
+			&i.Subject,
+			&i.MessageID,
+			&i.ReceivedAt,
+			&i.BodyText,
+			&i.Attachments,
+			&i.ProcessingStatus,
+			&i.ProcessingAttempts,
+			&i.LastAttemptAt,
+			&i.NextAttemptAt,
+			&i.ClaimUntil,
+			&i.ProcessedAt,
+			&i.DiscordStatus,
+			&i.DiscordChannelID,
+			&i.DiscordThreadID,
+			&i.DiscordMessageID,
+			&i.DiscordError,
+			&i.ForwardingStatus,
+			&i.ForwardingEmailID,
+			&i.ForwardingError,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.HandlingStatus,
+			&i.ReadAt,
+			&i.ReferencesHeader,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listInboundEmailReplies = `-- name: ListInboundEmailReplies :many
+SELECT id, inbound_email_id, idempotency_key, resend_email_id, sender_user_id, sender_display_name, from_address, to_address, subject, body_text, delivery_status, delivery_error, sent_at, created_at, updated_at
+FROM inbound_email_replies
+WHERE inbound_email_id = $1
+ORDER BY created_at
+`
+
+func (q *Queries) ListInboundEmailReplies(ctx context.Context, inboundEmailID pgtype.UUID) ([]InboundEmailReply, error) {
+	rows, err := q.db.Query(ctx, listInboundEmailReplies, inboundEmailID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []InboundEmailReply
+	for rows.Next() {
+		var i InboundEmailReply
+		if err := rows.Scan(
+			&i.ID,
+			&i.InboundEmailID,
+			&i.IdempotencyKey,
+			&i.ResendEmailID,
+			&i.SenderUserID,
+			&i.SenderDisplayName,
+			&i.FromAddress,
+			&i.ToAddress,
+			&i.Subject,
+			&i.BodyText,
+			&i.DeliveryStatus,
+			&i.DeliveryError,
+			&i.SentAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -265,6 +514,172 @@ func (q *Queries) MarkInboundEmailForwardingSkipped(ctx context.Context, arg Mar
 	return err
 }
 
+const markInboundEmailRead = `-- name: MarkInboundEmailRead :one
+UPDATE inbound_emails
+SET read_at = COALESCE(read_at, NOW()),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, resend_email_id, svix_id, inbox, inbox_address, sender, recipients, cc, bcc, subject, message_id, received_at, body_text, attachments, processing_status, processing_attempts, last_attempt_at, next_attempt_at, claim_until, processed_at, discord_status, discord_channel_id, discord_thread_id, discord_message_id, discord_error, forwarding_status, forwarding_email_id, forwarding_error, created_at, updated_at, handling_status, read_at, references_header
+`
+
+func (q *Queries) MarkInboundEmailRead(ctx context.Context, id pgtype.UUID) (InboundEmail, error) {
+	row := q.db.QueryRow(ctx, markInboundEmailRead, id)
+	var i InboundEmail
+	err := row.Scan(
+		&i.ID,
+		&i.ResendEmailID,
+		&i.SvixID,
+		&i.Inbox,
+		&i.InboxAddress,
+		&i.Sender,
+		&i.Recipients,
+		&i.Cc,
+		&i.Bcc,
+		&i.Subject,
+		&i.MessageID,
+		&i.ReceivedAt,
+		&i.BodyText,
+		&i.Attachments,
+		&i.ProcessingStatus,
+		&i.ProcessingAttempts,
+		&i.LastAttemptAt,
+		&i.NextAttemptAt,
+		&i.ClaimUntil,
+		&i.ProcessedAt,
+		&i.DiscordStatus,
+		&i.DiscordChannelID,
+		&i.DiscordThreadID,
+		&i.DiscordMessageID,
+		&i.DiscordError,
+		&i.ForwardingStatus,
+		&i.ForwardingEmailID,
+		&i.ForwardingError,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.HandlingStatus,
+		&i.ReadAt,
+		&i.ReferencesHeader,
+	)
+	return i, err
+}
+
+const markInboundEmailReplyFailed = `-- name: MarkInboundEmailReplyFailed :one
+UPDATE inbound_email_replies
+SET delivery_status = 'failed',
+    delivery_error = $1,
+    updated_at = NOW()
+WHERE id = $2
+RETURNING id, inbound_email_id, idempotency_key, resend_email_id, sender_user_id, sender_display_name, from_address, to_address, subject, body_text, delivery_status, delivery_error, sent_at, created_at, updated_at
+`
+
+type MarkInboundEmailReplyFailedParams struct {
+	DeliveryError string      `json:"delivery_error"`
+	ReplyID       pgtype.UUID `json:"reply_id"`
+}
+
+func (q *Queries) MarkInboundEmailReplyFailed(ctx context.Context, arg MarkInboundEmailReplyFailedParams) (InboundEmailReply, error) {
+	row := q.db.QueryRow(ctx, markInboundEmailReplyFailed, arg.DeliveryError, arg.ReplyID)
+	var i InboundEmailReply
+	err := row.Scan(
+		&i.ID,
+		&i.InboundEmailID,
+		&i.IdempotencyKey,
+		&i.ResendEmailID,
+		&i.SenderUserID,
+		&i.SenderDisplayName,
+		&i.FromAddress,
+		&i.ToAddress,
+		&i.Subject,
+		&i.BodyText,
+		&i.DeliveryStatus,
+		&i.DeliveryError,
+		&i.SentAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const markInboundEmailReplySent = `-- name: MarkInboundEmailReplySent :one
+WITH sent_reply AS (
+  UPDATE inbound_email_replies
+  SET resend_email_id = $1,
+      delivery_status = 'sent',
+      delivery_error = '',
+      sent_at = NOW(),
+      updated_at = NOW()
+  WHERE inbound_email_replies.id = $2
+  RETURNING id, inbound_email_id, idempotency_key, resend_email_id, sender_user_id, sender_display_name, from_address, to_address, subject, body_text, delivery_status, delivery_error, sent_at, created_at, updated_at
+)
+UPDATE inbound_emails AS email
+SET handling_status = 'replied',
+    read_at = COALESCE(email.read_at, NOW()),
+    updated_at = NOW()
+FROM sent_reply
+WHERE email.id = sent_reply.inbound_email_id
+RETURNING sent_reply.id,
+          sent_reply.inbound_email_id,
+          sent_reply.idempotency_key,
+          sent_reply.resend_email_id,
+          sent_reply.sender_user_id,
+          sent_reply.sender_display_name,
+          sent_reply.from_address,
+          sent_reply.to_address,
+          sent_reply.subject,
+          sent_reply.body_text,
+          sent_reply.delivery_status,
+          sent_reply.delivery_error,
+          sent_reply.sent_at,
+          sent_reply.created_at,
+          sent_reply.updated_at
+`
+
+type MarkInboundEmailReplySentParams struct {
+	ResendEmailID string      `json:"resend_email_id"`
+	ReplyID       pgtype.UUID `json:"reply_id"`
+}
+
+type MarkInboundEmailReplySentRow struct {
+	ID                pgtype.UUID        `json:"id"`
+	InboundEmailID    pgtype.UUID        `json:"inbound_email_id"`
+	IdempotencyKey    pgtype.UUID        `json:"idempotency_key"`
+	ResendEmailID     string             `json:"resend_email_id"`
+	SenderUserID      string             `json:"sender_user_id"`
+	SenderDisplayName string             `json:"sender_display_name"`
+	FromAddress       string             `json:"from_address"`
+	ToAddress         string             `json:"to_address"`
+	Subject           string             `json:"subject"`
+	BodyText          string             `json:"body_text"`
+	DeliveryStatus    string             `json:"delivery_status"`
+	DeliveryError     string             `json:"delivery_error"`
+	SentAt            pgtype.Timestamptz `json:"sent_at"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) MarkInboundEmailReplySent(ctx context.Context, arg MarkInboundEmailReplySentParams) (MarkInboundEmailReplySentRow, error) {
+	row := q.db.QueryRow(ctx, markInboundEmailReplySent, arg.ResendEmailID, arg.ReplyID)
+	var i MarkInboundEmailReplySentRow
+	err := row.Scan(
+		&i.ID,
+		&i.InboundEmailID,
+		&i.IdempotencyKey,
+		&i.ResendEmailID,
+		&i.SenderUserID,
+		&i.SenderDisplayName,
+		&i.FromAddress,
+		&i.ToAddress,
+		&i.Subject,
+		&i.BodyText,
+		&i.DeliveryStatus,
+		&i.DeliveryError,
+		&i.SentAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const releaseInboundEmailClaim = `-- name: ReleaseInboundEmailClaim :exec
 UPDATE inbound_emails
 SET
@@ -305,21 +720,23 @@ SET
   received_at = $8,
   body_text = $9,
   attachments = $10,
+  references_header = $11,
   updated_at = NOW()
 WHERE id = $1
 `
 
 type UpdateInboundEmailContentParams struct {
-	ID          pgtype.UUID        `json:"id"`
-	Sender      string             `json:"sender"`
-	Recipients  []string           `json:"recipients"`
-	Cc          []string           `json:"cc"`
-	Bcc         []string           `json:"bcc"`
-	Subject     string             `json:"subject"`
-	MessageID   string             `json:"message_id"`
-	ReceivedAt  pgtype.Timestamptz `json:"received_at"`
-	BodyText    string             `json:"body_text"`
-	Attachments []byte             `json:"attachments"`
+	ID               pgtype.UUID        `json:"id"`
+	Sender           string             `json:"sender"`
+	Recipients       []string           `json:"recipients"`
+	Cc               []string           `json:"cc"`
+	Bcc              []string           `json:"bcc"`
+	Subject          string             `json:"subject"`
+	MessageID        string             `json:"message_id"`
+	ReceivedAt       pgtype.Timestamptz `json:"received_at"`
+	BodyText         string             `json:"body_text"`
+	Attachments      []byte             `json:"attachments"`
+	ReferencesHeader string             `json:"references_header"`
 }
 
 func (q *Queries) UpdateInboundEmailContent(ctx context.Context, arg UpdateInboundEmailContentParams) error {
@@ -334,8 +751,64 @@ func (q *Queries) UpdateInboundEmailContent(ctx context.Context, arg UpdateInbou
 		arg.ReceivedAt,
 		arg.BodyText,
 		arg.Attachments,
+		arg.ReferencesHeader,
 	)
 	return err
+}
+
+const updateInboundEmailHandlingStatus = `-- name: UpdateInboundEmailHandlingStatus :one
+UPDATE inbound_emails
+SET handling_status = $2,
+    read_at = COALESCE(read_at, NOW()),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, resend_email_id, svix_id, inbox, inbox_address, sender, recipients, cc, bcc, subject, message_id, received_at, body_text, attachments, processing_status, processing_attempts, last_attempt_at, next_attempt_at, claim_until, processed_at, discord_status, discord_channel_id, discord_thread_id, discord_message_id, discord_error, forwarding_status, forwarding_email_id, forwarding_error, created_at, updated_at, handling_status, read_at, references_header
+`
+
+type UpdateInboundEmailHandlingStatusParams struct {
+	ID             pgtype.UUID `json:"id"`
+	HandlingStatus string      `json:"handling_status"`
+}
+
+func (q *Queries) UpdateInboundEmailHandlingStatus(ctx context.Context, arg UpdateInboundEmailHandlingStatusParams) (InboundEmail, error) {
+	row := q.db.QueryRow(ctx, updateInboundEmailHandlingStatus, arg.ID, arg.HandlingStatus)
+	var i InboundEmail
+	err := row.Scan(
+		&i.ID,
+		&i.ResendEmailID,
+		&i.SvixID,
+		&i.Inbox,
+		&i.InboxAddress,
+		&i.Sender,
+		&i.Recipients,
+		&i.Cc,
+		&i.Bcc,
+		&i.Subject,
+		&i.MessageID,
+		&i.ReceivedAt,
+		&i.BodyText,
+		&i.Attachments,
+		&i.ProcessingStatus,
+		&i.ProcessingAttempts,
+		&i.LastAttemptAt,
+		&i.NextAttemptAt,
+		&i.ClaimUntil,
+		&i.ProcessedAt,
+		&i.DiscordStatus,
+		&i.DiscordChannelID,
+		&i.DiscordThreadID,
+		&i.DiscordMessageID,
+		&i.DiscordError,
+		&i.ForwardingStatus,
+		&i.ForwardingEmailID,
+		&i.ForwardingError,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.HandlingStatus,
+		&i.ReadAt,
+		&i.ReferencesHeader,
+	)
+	return i, err
 }
 
 const upsertInboundEmail = `-- name: UpsertInboundEmail :one
@@ -381,7 +854,7 @@ ON CONFLICT (resend_email_id) DO UPDATE SET
   received_at = EXCLUDED.received_at,
   discord_channel_id = EXCLUDED.discord_channel_id,
   updated_at = NOW()
-RETURNING id, resend_email_id, svix_id, inbox, inbox_address, sender, recipients, cc, bcc, subject, message_id, received_at, body_text, attachments, processing_status, processing_attempts, last_attempt_at, next_attempt_at, claim_until, processed_at, discord_status, discord_channel_id, discord_thread_id, discord_message_id, discord_error, forwarding_status, forwarding_email_id, forwarding_error, created_at, updated_at
+RETURNING id, resend_email_id, svix_id, inbox, inbox_address, sender, recipients, cc, bcc, subject, message_id, received_at, body_text, attachments, processing_status, processing_attempts, last_attempt_at, next_attempt_at, claim_until, processed_at, discord_status, discord_channel_id, discord_thread_id, discord_message_id, discord_error, forwarding_status, forwarding_email_id, forwarding_error, created_at, updated_at, handling_status, read_at, references_header
 `
 
 type UpsertInboundEmailParams struct {
@@ -448,6 +921,9 @@ func (q *Queries) UpsertInboundEmail(ctx context.Context, arg UpsertInboundEmail
 		&i.ForwardingError,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.HandlingStatus,
+		&i.ReadAt,
+		&i.ReferencesHeader,
 	)
 	return i, err
 }

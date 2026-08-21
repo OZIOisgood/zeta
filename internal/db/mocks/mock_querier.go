@@ -220,6 +220,21 @@ func (mr *MockQuerierMockRecorder) ConsumeSignupCode(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeSignupCode", reflect.TypeOf((*MockQuerier)(nil).ConsumeSignupCode), ctx, arg)
 }
 
+// CountAdminInboundEmails mocks base method.
+func (m *MockQuerier) CountAdminInboundEmails(ctx context.Context, arg db.CountAdminInboundEmailsParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountAdminInboundEmails", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountAdminInboundEmails indicates an expected call of CountAdminInboundEmails.
+func (mr *MockQuerierMockRecorder) CountAdminInboundEmails(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountAdminInboundEmails", reflect.TypeOf((*MockQuerier)(nil).CountAdminInboundEmails), ctx, arg)
+}
+
 // CountConflictingBookings mocks base method.
 func (m *MockQuerier) CountConflictingBookings(ctx context.Context, arg db.CountConflictingBookingsParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -426,6 +441,21 @@ func (m *MockQuerier) CreateGroupInvitation(ctx context.Context, arg db.CreateGr
 func (mr *MockQuerierMockRecorder) CreateGroupInvitation(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroupInvitation", reflect.TypeOf((*MockQuerier)(nil).CreateGroupInvitation), ctx, arg)
+}
+
+// CreateInboundEmailReply mocks base method.
+func (m *MockQuerier) CreateInboundEmailReply(ctx context.Context, arg db.CreateInboundEmailReplyParams) (db.InboundEmailReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateInboundEmailReply", ctx, arg)
+	ret0, _ := ret[0].(db.InboundEmailReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateInboundEmailReply indicates an expected call of CreateInboundEmailReply.
+func (mr *MockQuerierMockRecorder) CreateInboundEmailReply(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInboundEmailReply", reflect.TypeOf((*MockQuerier)(nil).CreateInboundEmailReply), ctx, arg)
 }
 
 // CreateLandingContactSubmission mocks base method.
@@ -722,6 +752,21 @@ func (m *MockQuerier) GetActiveRecordingPart(ctx context.Context, bookingID pgty
 func (mr *MockQuerierMockRecorder) GetActiveRecordingPart(ctx, bookingID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveRecordingPart", reflect.TypeOf((*MockQuerier)(nil).GetActiveRecordingPart), ctx, bookingID)
+}
+
+// GetAdminInboundEmail mocks base method.
+func (m *MockQuerier) GetAdminInboundEmail(ctx context.Context, id pgtype.UUID) (db.InboundEmail, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAdminInboundEmail", ctx, id)
+	ret0, _ := ret[0].(db.InboundEmail)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAdminInboundEmail indicates an expected call of GetAdminInboundEmail.
+func (mr *MockQuerierMockRecorder) GetAdminInboundEmail(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdminInboundEmail", reflect.TypeOf((*MockQuerier)(nil).GetAdminInboundEmail), ctx, id)
 }
 
 // GetAsset mocks base method.
@@ -1099,6 +1144,21 @@ func (mr *MockQuerierMockRecorder) ListActiveExpertsInGroup(ctx, groupID any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActiveExpertsInGroup", reflect.TypeOf((*MockQuerier)(nil).ListActiveExpertsInGroup), ctx, groupID)
 }
 
+// ListAdminInboundEmails mocks base method.
+func (m *MockQuerier) ListAdminInboundEmails(ctx context.Context, arg db.ListAdminInboundEmailsParams) ([]db.InboundEmail, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAdminInboundEmails", ctx, arg)
+	ret0, _ := ret[0].([]db.InboundEmail)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAdminInboundEmails indicates an expected call of ListAdminInboundEmails.
+func (mr *MockQuerierMockRecorder) ListAdminInboundEmails(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminInboundEmails", reflect.TypeOf((*MockQuerier)(nil).ListAdminInboundEmails), ctx, arg)
+}
+
 // ListAllMyBookings mocks base method.
 func (m *MockQuerier) ListAllMyBookings(ctx context.Context, expertID string) ([]db.ListAllMyBookingsRow, error) {
 	m.ctrl.T.Helper()
@@ -1247,6 +1307,21 @@ func (m *MockQuerier) ListGroupMembers(ctx context.Context, groupID pgtype.UUID)
 func (mr *MockQuerierMockRecorder) ListGroupMembers(ctx, groupID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroupMembers", reflect.TypeOf((*MockQuerier)(nil).ListGroupMembers), ctx, groupID)
+}
+
+// ListInboundEmailReplies mocks base method.
+func (m *MockQuerier) ListInboundEmailReplies(ctx context.Context, inboundEmailID pgtype.UUID) ([]db.InboundEmailReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListInboundEmailReplies", ctx, inboundEmailID)
+	ret0, _ := ret[0].([]db.InboundEmailReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListInboundEmailReplies indicates an expected call of ListInboundEmailReplies.
+func (mr *MockQuerierMockRecorder) ListInboundEmailReplies(ctx, inboundEmailID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInboundEmailReplies", reflect.TypeOf((*MockQuerier)(nil).ListInboundEmailReplies), ctx, inboundEmailID)
 }
 
 // ListModerationReports mocks base method.
@@ -1597,6 +1672,51 @@ func (m *MockQuerier) MarkInboundEmailForwardingSkipped(ctx context.Context, arg
 func (mr *MockQuerierMockRecorder) MarkInboundEmailForwardingSkipped(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkInboundEmailForwardingSkipped", reflect.TypeOf((*MockQuerier)(nil).MarkInboundEmailForwardingSkipped), ctx, arg)
+}
+
+// MarkInboundEmailRead mocks base method.
+func (m *MockQuerier) MarkInboundEmailRead(ctx context.Context, id pgtype.UUID) (db.InboundEmail, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkInboundEmailRead", ctx, id)
+	ret0, _ := ret[0].(db.InboundEmail)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkInboundEmailRead indicates an expected call of MarkInboundEmailRead.
+func (mr *MockQuerierMockRecorder) MarkInboundEmailRead(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkInboundEmailRead", reflect.TypeOf((*MockQuerier)(nil).MarkInboundEmailRead), ctx, id)
+}
+
+// MarkInboundEmailReplyFailed mocks base method.
+func (m *MockQuerier) MarkInboundEmailReplyFailed(ctx context.Context, arg db.MarkInboundEmailReplyFailedParams) (db.InboundEmailReply, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkInboundEmailReplyFailed", ctx, arg)
+	ret0, _ := ret[0].(db.InboundEmailReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkInboundEmailReplyFailed indicates an expected call of MarkInboundEmailReplyFailed.
+func (mr *MockQuerierMockRecorder) MarkInboundEmailReplyFailed(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkInboundEmailReplyFailed", reflect.TypeOf((*MockQuerier)(nil).MarkInboundEmailReplyFailed), ctx, arg)
+}
+
+// MarkInboundEmailReplySent mocks base method.
+func (m *MockQuerier) MarkInboundEmailReplySent(ctx context.Context, arg db.MarkInboundEmailReplySentParams) (db.MarkInboundEmailReplySentRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkInboundEmailReplySent", ctx, arg)
+	ret0, _ := ret[0].(db.MarkInboundEmailReplySentRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarkInboundEmailReplySent indicates an expected call of MarkInboundEmailReplySent.
+func (mr *MockQuerierMockRecorder) MarkInboundEmailReplySent(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkInboundEmailReplySent", reflect.TypeOf((*MockQuerier)(nil).MarkInboundEmailReplySent), ctx, arg)
 }
 
 // MarkLandingContactEmailFailed mocks base method.
@@ -2104,6 +2224,21 @@ func (m *MockQuerier) UpdateInboundEmailContent(ctx context.Context, arg db.Upda
 func (mr *MockQuerierMockRecorder) UpdateInboundEmailContent(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInboundEmailContent", reflect.TypeOf((*MockQuerier)(nil).UpdateInboundEmailContent), ctx, arg)
+}
+
+// UpdateInboundEmailHandlingStatus mocks base method.
+func (m *MockQuerier) UpdateInboundEmailHandlingStatus(ctx context.Context, arg db.UpdateInboundEmailHandlingStatusParams) (db.InboundEmail, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateInboundEmailHandlingStatus", ctx, arg)
+	ret0, _ := ret[0].(db.InboundEmail)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateInboundEmailHandlingStatus indicates an expected call of UpdateInboundEmailHandlingStatus.
+func (mr *MockQuerierMockRecorder) UpdateInboundEmailHandlingStatus(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInboundEmailHandlingStatus", reflect.TypeOf((*MockQuerier)(nil).UpdateInboundEmailHandlingStatus), ctx, arg)
 }
 
 // UpdateModerationReportStatus mocks base method.

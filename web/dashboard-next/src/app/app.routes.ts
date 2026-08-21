@@ -5,6 +5,7 @@ import { permissionGuard } from './core/guards/permission.guard';
 import { ShellComponent } from './core/shell/shell.component';
 import { AdminPageComponent } from './pages/admin/admin-page.component';
 import { AdminReportsPageComponent } from './pages/admin-reports/admin-reports-page.component';
+import { AdminEmailPageComponent } from './pages/admin-email/admin-email-page.component';
 import { CreateGroupPageComponent } from './pages/create-group/create-group-page.component';
 import { GroupDetailsPageComponent } from './pages/group-details/group-details-page.component';
 import { GroupPreferencesPageComponent } from './pages/group-preferences/group-preferences-page.component';
@@ -55,6 +56,20 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { permission: 'moderation:reports:read' },
         title: 'Admin reports',
+      },
+      {
+        path: 'admin/emails',
+        component: AdminEmailPageComponent,
+        canActivate: [permissionGuard],
+        data: { permission: 'inbound-email:read' },
+        title: 'Email inbox',
+      },
+      {
+        path: 'admin/support',
+        component: AdminEmailPageComponent,
+        canActivate: [permissionGuard],
+        data: { permission: 'inbound-email:read' },
+        title: 'Support inbox',
       },
       { path: 'videos', component: VideosPageComponent, title: 'Strido Videos' },
       { path: 'reports', redirectTo: 'reports/experts', pathMatch: 'full' },

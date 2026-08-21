@@ -397,6 +397,42 @@ func (s *fakeStore) ReleaseInboundEmailClaim(context.Context, pgtype.UUID) error
 	return nil
 }
 
+func (s *fakeStore) ListAdminInboundEmails(context.Context, db.ListAdminInboundEmailsParams) ([]db.InboundEmail, error) {
+	return nil, nil
+}
+
+func (s *fakeStore) CountAdminInboundEmails(context.Context, db.CountAdminInboundEmailsParams) (int64, error) {
+	return 0, nil
+}
+
+func (s *fakeStore) GetAdminInboundEmail(context.Context, pgtype.UUID) (db.InboundEmail, error) {
+	return fakeInboundRow(), nil
+}
+
+func (s *fakeStore) MarkInboundEmailRead(context.Context, pgtype.UUID) (db.InboundEmail, error) {
+	return fakeInboundRow(), nil
+}
+
+func (s *fakeStore) UpdateInboundEmailHandlingStatus(context.Context, db.UpdateInboundEmailHandlingStatusParams) (db.InboundEmail, error) {
+	return fakeInboundRow(), nil
+}
+
+func (s *fakeStore) CreateInboundEmailReply(context.Context, db.CreateInboundEmailReplyParams) (db.InboundEmailReply, error) {
+	return db.InboundEmailReply{}, nil
+}
+
+func (s *fakeStore) ListInboundEmailReplies(context.Context, pgtype.UUID) ([]db.InboundEmailReply, error) {
+	return nil, nil
+}
+
+func (s *fakeStore) MarkInboundEmailReplySent(context.Context, db.MarkInboundEmailReplySentParams) (db.MarkInboundEmailReplySentRow, error) {
+	return db.MarkInboundEmailReplySentRow{}, nil
+}
+
+func (s *fakeStore) MarkInboundEmailReplyFailed(context.Context, db.MarkInboundEmailReplyFailedParams) (db.InboundEmailReply, error) {
+	return db.InboundEmailReply{}, nil
+}
+
 type fakeProvider struct {
 	verifyErr       error
 	received        ReceivedEmail
@@ -428,6 +464,14 @@ func (p *fakeProvider) ForwardReceivedEmail(_ context.Context, _ ReceivedEmail, 
 		p.forwardID = "forward-1"
 	}
 	return p.forwardID, p.forwardErr
+}
+
+func (p *fakeProvider) SendReply(context.Context, ReplyEmail, string) (string, error) {
+	return "reply-1", nil
+}
+
+func (p *fakeProvider) GetReceivedAttachment(context.Context, string, string) (Attachment, error) {
+	return Attachment{}, nil
 }
 
 type fakePoster struct {

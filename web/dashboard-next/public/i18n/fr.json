@@ -89,7 +89,8 @@
       "sessions": "Séances",
       "videos": "Vidéos",
       "inviteCodes": "Invitations d’experts",
-      "admin": "Admin"
+      "admin": "Admin",
+      "email": "E-mail"
     },
     "status": {
       "cancelled": "annulé",
@@ -949,6 +950,66 @@
       "upgrading": "Activation...",
       "invalidCode": "Ce code expert est invalide, indisponible ou a déjà été utilisé.",
       "success": "Votre compte dispose maintenant de l’accès expert."
+    }
+  },
+  "adminEmail": {
+    "title": "Boîte e-mail",
+    "description": "Lire et répondre aux messages envoyés aux adresses Support, Social et DSA de Strido.",
+    "refresh": "Actualiser",
+    "total": "{{count}} messages",
+    "messageList": "Liste des e-mails reçus",
+    "unread": "Non lu",
+    "status": "Statut",
+    "attachments": "Pièces jointes",
+    "unnamedAttachment": "Pièce jointe",
+    "replies": "Réponses",
+    "replyFailed": "L’envoi a échoué. Réessayez depuis le champ de réponse.",
+    "closedMessage": "Ce message est fermé. Rouvrez-le pour envoyer une autre réponse.",
+    "filters": {
+      "inbox": "Boîte",
+      "status": "Statut",
+      "allInboxes": "Toutes les boîtes",
+      "allStatuses": "Tous les statuts"
+    },
+    "inboxes": {
+      "support": "Support",
+      "social": "Social",
+      "dsa": "DSA"
+    },
+    "statuses": {
+      "open": "Ouvert",
+      "replied": "Répondu",
+      "closed": "Fermé"
+    },
+    "compose": {
+      "title": "Écrire une réponse",
+      "from": "La réponse sera envoyée depuis {{address}}.",
+      "placeholder": "Écrivez votre réponse…",
+      "send": "Envoyer la réponse",
+      "sending": "Envoi…"
+    },
+    "empty": {
+      "title": "Aucun message",
+      "description": "Les messages correspondant à la boîte et au statut sélectionnés apparaîtront ici."
+    },
+    "errors": {
+      "listTitle": "Impossible de charger les e-mails",
+      "listDescription": "Actualisez la page ou réessayez dans un instant.",
+      "detailTitle": "Impossible d’ouvrir ce message",
+      "detailDescription": "Sélectionnez à nouveau le message ou actualisez la boîte.",
+      "sendDescription": "La réponse n’a pas pu être envoyée. Votre texte est conservé ; réessayez.",
+      "statusDescription": "Le statut du message n’a pas pu être mis à jour."
+    },
+    "toast": {
+      "sentTitle": "Réponse envoyée",
+      "sentDescription": "La réponse a été envoyée à {{address}}.",
+      "statusTitle": "Statut mis à jour",
+      "statusDescription": "Le statut du message a été enregistré.",
+      "errorTitle": "Une erreur est survenue"
+    },
+    "adminCard": {
+      "eyebrow": "E-mail",
+      "title": "Ouvrir la boîte e-mail"
     }
   },
   "moderation": {

@@ -39,7 +39,7 @@ func (p *ResendProvider) GetReceivedEmail(ctx context.Context, emailID string) (
 	if err != nil {
 		return ReceivedEmail{}, fmt.Errorf("retrieve received email: %w", err)
 	}
-	result, err := mapReceivedEmail(email.Id, email.From, email.To, email.Cc, email.Bcc, email.Subject, email.MessageId, email.CreatedAt, email.Text, email.Html)
+	result, err := mapReceivedEmail(email.Id, email.From, email.To, email.Cc, email.Bcc, email.Subject, email.MessageId, headerValue(email.Headers, "References"), email.CreatedAt, email.Text, email.Html)
 	if err != nil {
 		return ReceivedEmail{}, err
 	}
@@ -63,7 +63,7 @@ func (p *ResendProvider) ListReceivedEmails(ctx context.Context, limit int) ([]R
 
 	emails := make([]ReceivedEmail, 0, len(response.Data))
 	for _, item := range response.Data {
-		email, err := mapReceivedEmail(item.Id, item.From, item.To, item.Cc, item.Bcc, item.Subject, item.MessageId, item.CreatedAt, "", "")
+		email, err := mapReceivedEmail(item.Id, item.From, item.To, item.Cc, item.Bcc, item.Subject, item.MessageId, "", item.CreatedAt, "", "")
 		if err != nil {
 			return nil, err
 		}
@@ -79,6 +79,45 @@ func (p *ResendProvider) ListReceivedEmails(ctx context.Context, limit int) ([]R
 		emails = append(emails, email)
 	}
 	return emails, nil
+}
+
+func (p *ResendProvider) SendReply(ctx context.Context, email ReplyEmail, idempotencyKey string) (string, error) {
+	headers := make(map[string]string, 2)
+	if value := strings.TrimSpace(email.InReplyTo); value != "" {
+		headers["In-Reply-To"] = value
+	}
+	if value := strings.TrimSpace(email.References); value != "" {
+		headers["References"] = value
+	}
+	params := &resend.SendEmailRequest{
+		From:    email.From,
+		To:      []string{email.To},
+		ReplyTo: email.ReplyTo,
+		Subject: email.Subject,
+		Text:    email.Text,
+		Html:    email.HTML,
+		Headers: headers,
+	}
+	response, err := p.client.Emails.SendWithOptions(ctx, params, &resend.SendEmailOptions{IdempotencyKey: idempotencyKey})
+	if err != nil {
+		return "", fmt.Errorf("send inbound email reply: %w", err)
+	}
+	return response.Id, nil
+}
+
+func (p *ResendProvider) GetReceivedAttachment(ctx context.Context, emailID, attachmentID string) (Attachment, error) {
+	attachment, err := p.client.Emails.Receiving.GetAttachmentWithContext(ctx, emailID, attachmentID)
+	if err != nil {
+		return Attachment{}, fmt.Errorf("retrieve received email attachment: %w", err)
+	}
+	return Attachment{
+		ID:                 attachment.Id,
+		Filename:           attachment.Filename,
+		ContentType:        attachment.ContentType,
+		ContentDisposition: attachment.ContentDisposition,
+		ContentID:          attachment.ContentId,
+		DownloadURL:        attachment.DownloadUrl,
+	}, nil
 }
 
 func (p *ResendProvider) ForwardReceivedEmail(ctx context.Context, email ReceivedEmail, metadata ForwardMetadata, recipients []string, from, idempotencyKey string) (string, error) {
@@ -157,21 +196,31 @@ func (p *ResendProvider) listAttachments(ctx context.Context, emailID string) ([
 	return attachments, nil
 }
 
-func mapReceivedEmail(id, from string, to, cc, bcc []string, subject, messageID, createdAt, text, html string) (ReceivedEmail, error) {
+func mapReceivedEmail(id, from string, to, cc, bcc []string, subject, messageID, references, createdAt, text, html string) (ReceivedEmail, error) {
 	receivedAt, err := time.Parse(time.RFC3339Nano, createdAt)
 	if err != nil {
 		return ReceivedEmail{}, fmt.Errorf("parse received email timestamp: %w", err)
 	}
 	return ReceivedEmail{
-		ID:        id,
-		From:      from,
-		To:        to,
-		Cc:        cc,
-		Bcc:       bcc,
-		Subject:   subject,
-		MessageID: messageID,
-		CreatedAt: receivedAt,
-		Text:      text,
-		HTML:      html,
+		ID:         id,
+		From:       from,
+		To:         to,
+		Cc:         cc,
+		Bcc:        bcc,
+		Subject:    subject,
+		MessageID:  messageID,
+		References: references,
+		CreatedAt:  receivedAt,
+		Text:       text,
+		HTML:       html,
 	}, nil
+}
+
+func headerValue(headers map[string]string, name string) string {
+	for key, value := range headers {
+		if strings.EqualFold(strings.TrimSpace(key), name) {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
 }

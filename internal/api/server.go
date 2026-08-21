@@ -297,6 +297,7 @@ func (s *Server) routes(ctx context.Context) {
 			r.Route("/notifications", notificationsHandler.RegisterRoutes)
 			r.Route("/feedback", feedbackHandler.RegisterRoutes)
 			r.Route("/moderation", moderationHandler.RegisterRoutes)
+			r.Route("/admin/emails", inboundEmailHandler.RegisterAdminRoutes)
 			reportsHandler.RegisterRoutes(r)
 			coachingHandler.RegisterRoutes(r)
 			devicesHandler.RegisterRoutes(r)

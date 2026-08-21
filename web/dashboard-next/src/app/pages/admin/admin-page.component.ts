@@ -29,6 +29,22 @@ type AsyncStatus = 'idle' | 'loading' | 'success' | 'error';
     <div class="grid gap-6">
       <section class="grid gap-3 sm:grid-cols-2">
         <a
+          routerLink="/admin/emails"
+          class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm transition hover:border-[var(--z-primary-soft)] hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-medium text-[var(--z-muted)]">
+                {{ 'adminEmail.adminCard.eyebrow' | transloco }}
+              </p>
+              <p class="mt-2 text-base font-semibold">
+                {{ 'adminEmail.adminCard.title' | transloco }}
+              </p>
+            </div>
+            <svg lucideInbox class="size-5 text-[var(--z-primary)]" aria-hidden="true"></svg>
+          </div>
+        </a>
+        <a
           routerLink="/admin/reports"
           class="rounded-lg border border-[var(--z-border)] bg-white p-4 shadow-sm transition hover:border-[var(--z-primary-soft)] hover:bg-[var(--z-surface-warm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--z-primary)]"
         >

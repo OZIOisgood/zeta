@@ -33,6 +33,7 @@ describe('AppShellStore', () => {
       'sessions',
       'reports-expert',
       'reports-student',
+      'email',
       'admin',
     ]);
     expect(store.openWorkCount()).toBe(3);
@@ -71,6 +72,12 @@ describe('AppShellStore', () => {
 
     store.selectSectionForUrl('/admin/reports');
     expect(store.activeSection()).toBe('admin');
+
+    store.selectSectionForUrl('/admin/emails');
+    expect(store.activeSection()).toBe('email');
+
+    store.selectSectionForUrl('/admin/support');
+    expect(store.activeSection()).toBe('email');
 
     store.selectSectionForUrl('/create-group');
     expect(store.activeSection()).toBe('groups');

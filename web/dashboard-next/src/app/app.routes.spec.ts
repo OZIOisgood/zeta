@@ -48,6 +48,14 @@ describe('app routes', () => {
           path: 'sessions/:tab',
           data: { permission: 'coaching:bookings:read' },
         }),
+        expect.objectContaining({
+          path: 'admin/emails',
+          data: { permission: 'inbound-email:read' },
+        }),
+        expect.objectContaining({
+          path: 'admin/support',
+          data: { permission: 'inbound-email:read' },
+        }),
       ]),
     );
     expect(routes[0]).toEqual(

@@ -89,7 +89,8 @@
       "sessions": "Sessions",
       "videos": "Videos",
       "inviteCodes": "Expert invitations",
-      "admin": "Admin"
+      "admin": "Admin",
+      "email": "Email"
     },
     "status": {
       "cancelled": "Cancelled",
@@ -949,6 +950,66 @@
       "upgrading": "Activating...",
       "invalidCode": "This expert code is invalid, unavailable, or has already been used.",
       "success": "Your account now has expert access."
+    }
+  },
+  "adminEmail": {
+    "title": "Email inbox",
+    "description": "Read and reply to messages sent to Strido support, social, and DSA addresses.",
+    "refresh": "Refresh",
+    "total": "{{count}} messages",
+    "messageList": "Inbound email list",
+    "unread": "Unread",
+    "status": "Status",
+    "attachments": "Attachments",
+    "unnamedAttachment": "Attachment",
+    "replies": "Replies",
+    "replyFailed": "Delivery failed. Retry the reply from the composer.",
+    "closedMessage": "This message is closed. Reopen it to send another reply.",
+    "filters": {
+      "inbox": "Inbox",
+      "status": "Status",
+      "allInboxes": "All inboxes",
+      "allStatuses": "All statuses"
+    },
+    "inboxes": {
+      "support": "Support",
+      "social": "Social",
+      "dsa": "DSA"
+    },
+    "statuses": {
+      "open": "Open",
+      "replied": "Replied",
+      "closed": "Closed"
+    },
+    "compose": {
+      "title": "Write a reply",
+      "from": "The reply will be sent from {{address}}.",
+      "placeholder": "Write your reply…",
+      "send": "Send reply",
+      "sending": "Sending…"
+    },
+    "empty": {
+      "title": "No messages",
+      "description": "Messages matching the selected inbox and status will appear here."
+    },
+    "errors": {
+      "listTitle": "Could not load email",
+      "listDescription": "Refresh the page or try again in a moment.",
+      "detailTitle": "Could not open this message",
+      "detailDescription": "Select the message again or refresh the inbox.",
+      "sendDescription": "The reply could not be sent. Your text is still here; try again.",
+      "statusDescription": "The message status could not be updated."
+    },
+    "toast": {
+      "sentTitle": "Reply sent",
+      "sentDescription": "The reply was sent to {{address}}.",
+      "statusTitle": "Status updated",
+      "statusDescription": "The message status was saved.",
+      "errorTitle": "Something went wrong"
+    },
+    "adminCard": {
+      "eyebrow": "Email",
+      "title": "Open email inbox"
     }
   },
   "moderation": {

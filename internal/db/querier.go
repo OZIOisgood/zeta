@@ -24,6 +24,7 @@ type Querier interface {
 	ClaimPendingRecordingPartImports(ctx context.Context, limit int32) ([]ClaimPendingRecordingPartImportsRow, error)
 	ClearRecordingPartEmptySince(ctx context.Context, bookingID pgtype.UUID) error
 	ConsumeSignupCode(ctx context.Context, arg ConsumeSignupCodeParams) (SignupCode, error)
+	CountAdminInboundEmails(ctx context.Context, arg CountAdminInboundEmailsParams) (int64, error)
 	CountConflictingBookings(ctx context.Context, arg CountConflictingBookingsParams) (int64, error)
 	CountFreshBookingParticipants(ctx context.Context, arg CountFreshBookingParticipantsParams) (int64, error)
 	CountSignupCodesByOwner(ctx context.Context, ownerUserID string) (int64, error)
@@ -41,6 +42,7 @@ type Querier interface {
 	CreateFeedbackSubmission(ctx context.Context, arg CreateFeedbackSubmissionParams) (FeedbackSubmission, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateGroupInvitation(ctx context.Context, arg CreateGroupInvitationParams) (GroupInvitation, error)
+	CreateInboundEmailReply(ctx context.Context, arg CreateInboundEmailReplyParams) (InboundEmailReply, error)
 	CreateLandingContactSubmission(ctx context.Context, arg CreateLandingContactSubmissionParams) (LandingContactSubmission, error)
 	CreateModerationReport(ctx context.Context, arg CreateModerationReportParams) (ModerationReport, error)
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
@@ -62,6 +64,7 @@ type Querier interface {
 	EnsureUserAccess(ctx context.Context, userID string) (UserAccess, error)
 	ExchangeRecordingRendererCapability(ctx context.Context, rendererTokenHash []byte) (ExchangeRecordingRendererCapabilityRow, error)
 	GetActiveRecordingPart(ctx context.Context, bookingID pgtype.UUID) (CoachingBookingRecording, error)
+	GetAdminInboundEmail(ctx context.Context, id pgtype.UUID) (InboundEmail, error)
 	GetAsset(ctx context.Context, id pgtype.UUID) (GetAssetRow, error)
 	GetAssetOwnerByVideoID(ctx context.Context, id pgtype.UUID) (GetAssetOwnerByVideoIDRow, error)
 	GetAssetStatusByVideoID(ctx context.Context, id pgtype.UUID) (AssetStatus, error)
@@ -88,6 +91,7 @@ type Querier interface {
 	IsRecordingAssetStillOpen(ctx context.Context, recordingAssetID pgtype.UUID) (bool, error)
 	LeaveGroupIfNotLastMember(ctx context.Context, arg LeaveGroupIfNotLastMemberParams) (int64, error)
 	ListActiveExpertsInGroup(ctx context.Context, groupID pgtype.UUID) ([]string, error)
+	ListAdminInboundEmails(ctx context.Context, arg ListAdminInboundEmailsParams) ([]InboundEmail, error)
 	ListAllMyBookings(ctx context.Context, expertID string) ([]ListAllMyBookingsRow, error)
 	ListAvailabilityByExpertGroup(ctx context.Context, arg ListAvailabilityByExpertGroupParams) ([]CoachingAvailability, error)
 	ListAvailabilityByExpertGroupDay(ctx context.Context, arg ListAvailabilityByExpertGroupDayParams) ([]CoachingAvailability, error)
@@ -99,6 +103,7 @@ type Querier interface {
 	ListGroupBookings(ctx context.Context, groupID pgtype.UUID) ([]ListGroupBookingsRow, error)
 	ListGroupInvitations(ctx context.Context, groupID pgtype.UUID) ([]GroupInvitation, error)
 	ListGroupMembers(ctx context.Context, groupID pgtype.UUID) ([]string, error)
+	ListInboundEmailReplies(ctx context.Context, inboundEmailID pgtype.UUID) ([]InboundEmailReply, error)
 	ListModerationReports(ctx context.Context, arg ListModerationReportsParams) ([]ModerationReport, error)
 	ListMyBookings(ctx context.Context, arg ListMyBookingsParams) ([]ListMyBookingsRow, error)
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
@@ -125,6 +130,9 @@ type Querier interface {
 	MarkInboundEmailForwarded(ctx context.Context, arg MarkInboundEmailForwardedParams) error
 	MarkInboundEmailForwardingFailed(ctx context.Context, arg MarkInboundEmailForwardingFailedParams) error
 	MarkInboundEmailForwardingSkipped(ctx context.Context, arg MarkInboundEmailForwardingSkippedParams) error
+	MarkInboundEmailRead(ctx context.Context, id pgtype.UUID) (InboundEmail, error)
+	MarkInboundEmailReplyFailed(ctx context.Context, arg MarkInboundEmailReplyFailedParams) (InboundEmailReply, error)
+	MarkInboundEmailReplySent(ctx context.Context, arg MarkInboundEmailReplySentParams) (MarkInboundEmailReplySentRow, error)
 	MarkLandingContactEmailFailed(ctx context.Context, arg MarkLandingContactEmailFailedParams) error
 	MarkLandingContactEmailSent(ctx context.Context, arg MarkLandingContactEmailSentParams) error
 	MarkModerationReportDiscordFailed(ctx context.Context, arg MarkModerationReportDiscordFailedParams) error
@@ -172,6 +180,7 @@ type Querier interface {
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Group, error)
 	UpdateGroupInvitationStatus(ctx context.Context, arg UpdateGroupInvitationStatusParams) error
 	UpdateInboundEmailContent(ctx context.Context, arg UpdateInboundEmailContentParams) error
+	UpdateInboundEmailHandlingStatus(ctx context.Context, arg UpdateInboundEmailHandlingStatusParams) (InboundEmail, error)
 	UpdateModerationReportStatus(ctx context.Context, arg UpdateModerationReportStatusParams) (ModerationReport, error)
 	UpdateSessionType(ctx context.Context, arg UpdateSessionTypeParams) (CoachingSessionType, error)
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) (UserPreference, error)

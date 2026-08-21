@@ -1,0 +1,5 @@
+{{define "inbox_reply"}} {{template "layout.start" .}}
+<div class="reply-body">{{richText .Copy.Intro}}</div>
+{{if .Copy.FooterNote}}
+<p class="reply-signature">{{.Copy.FooterNote}}</p>
+{{end}} {{template "layout.end" .}} {{end}}

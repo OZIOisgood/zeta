@@ -36,6 +36,9 @@ const (
 	ModerationReportsUpdate = "moderation:reports:update"
 
 	AccessInviteCodesRead = "access:invite-codes:read"
+
+	InboundEmailRead  = "inbound-email:read"
+	InboundEmailReply = "inbound-email:reply"
 )
 
 // Roles

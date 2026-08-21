@@ -122,6 +122,26 @@ h1 {
   line-height: 1.5;
 }
 
+.reply-body {
+  margin: 0;
+  color: #26180f;
+  font-size: 16px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.reply-body strong {
+  font-weight: 700;
+}
+
+.reply-signature {
+  margin: 28px 0 0;
+  color: #735f4d;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
 .email-footer {
   padding: 22px 34px 26px;
   border-top: 1px solid #ead2b8;

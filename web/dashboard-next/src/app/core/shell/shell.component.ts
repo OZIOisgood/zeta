@@ -23,6 +23,7 @@ import {
   LucideChevronRight,
   LucideHome,
   LucideLogOut,
+  LucideInbox,
   LucideMessageSquareText,
   LucideMenu,
   LucideSend,
@@ -77,6 +78,7 @@ import { AppShellStore } from '../state/app-shell.store';
     LucideChevronRight,
     LucideHome,
     LucideLogOut,
+    LucideInbox,
     LucideMessageSquareText,
     LucideMenu,
     LucideSend,
@@ -108,7 +110,14 @@ export class ShellComponent implements OnDestroy {
       }
 
       if (item.id === 'admin') {
-        return this.permissions.hasPermission('moderation:reports:read');
+        return (
+          this.permissions.hasPermission('moderation:reports:read') ||
+          this.permissions.hasPermission('inbound-email:read')
+        );
+      }
+
+      if (item.id === 'email') {
+        return this.permissions.hasPermission('inbound-email:read');
       }
 
       if (item.id === 'sessions') {

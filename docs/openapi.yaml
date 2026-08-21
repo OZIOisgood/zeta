@@ -19,6 +19,7 @@ tags:
   - name: devices
   - name: notifications
   - name: reports
+  - name: admin-email
 paths:
   /health:
     get:
@@ -1633,6 +1634,149 @@ paths:
         "500":
           description: Failed to build the report
 
+  # --- Admin email inbox ---
+
+  /admin/emails:
+    get:
+      tags: [admin-email]
+      summary: List inbound email for administrators
+      operationId: listAdminEmails
+      parameters:
+        - name: inbox
+          in: query
+          schema:
+            $ref: "#/components/schemas/AdminEmailInbox"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/AdminEmailHandlingStatus"
+      responses:
+        "200":
+          description: Filtered inbound email list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailListResponse"
+        "400":
+          description: Invalid inbox or status filter
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing inbound-email:read permission
+
+  /admin/emails/{id}:
+    get:
+      tags: [admin-email]
+      summary: Retrieve one inbound email and its replies
+      operationId: getAdminEmail
+      parameters:
+        - $ref: "#/components/parameters/AdminEmailID"
+      responses:
+        "200":
+          description: Inbound email detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailDetail"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing inbound-email:read permission
+        "404":
+          description: Inbound email not found
+    patch:
+      tags: [admin-email]
+      summary: Mark an inbound email read or update its handling status
+      operationId: updateAdminEmail
+      parameters:
+        - $ref: "#/components/parameters/AdminEmailID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAdminEmailRequest"
+      responses:
+        "200":
+          description: Updated inbound email summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailSummary"
+        "400":
+          description: Invalid update
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing inbound-email:reply permission
+        "404":
+          description: Inbound email not found
+
+  /admin/emails/{id}/replies:
+    post:
+      tags: [admin-email]
+      summary: Send a reply from the address that received the inbound email
+      operationId: replyToAdminEmail
+      parameters:
+        - $ref: "#/components/parameters/AdminEmailID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendAdminEmailReplyRequest"
+      responses:
+        "200":
+          description: Previously sent idempotent reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailReply"
+        "201":
+          description: Reply sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminEmailReply"
+        "400":
+          description: Invalid body or idempotency key
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing inbound-email:reply permission
+        "404":
+          description: Inbound email not found
+        "409":
+          description: Idempotency key belongs to another reply
+        "422":
+          description: Original sender or inbox address is not replyable
+        "502":
+          description: Resend could not deliver the reply
+
+  /admin/emails/{id}/attachments/{attachmentId}:
+    get:
+      tags: [admin-email]
+      summary: Open a temporary download URL for an inbound attachment
+      operationId: getAdminEmailAttachment
+      parameters:
+        - $ref: "#/components/parameters/AdminEmailID"
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to a short-lived Resend attachment URL
+        "401":
+          description: Not authenticated
+        "403":
+          description: Missing inbound-email:read permission
+        "404":
+          description: Email or attachment not found
+        "502":
+          description: Resend could not retrieve the attachment
+
 security:
   - bearerAuth: []
 components:
@@ -1642,7 +1786,163 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: WorkOS access token, validated via JWKS
+  parameters:
+    AdminEmailID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   schemas:
+    AdminEmailInbox:
+      type: string
+      enum: [support, social, dsa]
+
+    AdminEmailHandlingStatus:
+      type: string
+      enum: [open, replied, closed]
+
+    AdminEmailAttachment:
+      type: object
+      required: [id, filename, content_type]
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        content_type:
+          type: string
+        content_disposition:
+          type: string
+        content_id:
+          type: string
+        size:
+          type: integer
+          format: int64
+
+    AdminEmailSummary:
+      type: object
+      required:
+        [id, inbox, inbox_address, sender, sender_name, subject, preview, received_at, handling_status, attachment_count]
+      properties:
+        id:
+          type: string
+          format: uuid
+        inbox:
+          $ref: "#/components/schemas/AdminEmailInbox"
+        inbox_address:
+          type: string
+          format: email
+        sender:
+          type: string
+        sender_name:
+          type: string
+        subject:
+          type: string
+        preview:
+          type: string
+        received_at:
+          type: string
+          format: date-time
+        handling_status:
+          $ref: "#/components/schemas/AdminEmailHandlingStatus"
+        read_at:
+          type: string
+          format: date-time
+        attachment_count:
+          type: integer
+
+    AdminEmailReply:
+      type: object
+      required:
+        [id, from_address, to_address, subject, body_text, sender_user_id, sender_display_name, delivery_status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        from_address:
+          type: string
+          format: email
+        to_address:
+          type: string
+          format: email
+        subject:
+          type: string
+        body_text:
+          type: string
+        sender_user_id:
+          type: string
+        sender_display_name:
+          type: string
+        delivery_status:
+          type: string
+          enum: [pending, sent, failed]
+        delivery_error:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    AdminEmailDetail:
+      allOf:
+        - $ref: "#/components/schemas/AdminEmailSummary"
+        - type: object
+          required: [recipients, cc, body_text, attachments, replies]
+          properties:
+            recipients:
+              type: array
+              items:
+                type: string
+            cc:
+              type: array
+              items:
+                type: string
+            body_text:
+              type: string
+            attachments:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminEmailAttachment"
+            replies:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminEmailReply"
+
+    AdminEmailListResponse:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminEmailSummary"
+        total:
+          type: integer
+          format: int64
+
+    UpdateAdminEmailRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/AdminEmailHandlingStatus"
+        mark_read:
+          type: boolean
+
+    SendAdminEmailReplyRequest:
+      type: object
+      required: [body, idempotency_key]
+      properties:
+        body:
+          type: string
+          maxLength: 20000
+        idempotency_key:
+          type: string
+          format: uuid
+
     HealthResponse:
       type: object
       properties:

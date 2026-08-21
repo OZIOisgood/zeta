@@ -100,8 +100,105 @@ SET
   received_at = $8,
   body_text = $9,
   attachments = $10,
+  references_header = $11,
   updated_at = NOW()
 WHERE id = $1;
+
+-- name: ListAdminInboundEmails :many
+SELECT *
+FROM inbound_emails
+WHERE (sqlc.arg(inbox)::TEXT = '' OR inbox = sqlc.arg(inbox))
+  AND (sqlc.arg(handling_status)::TEXT = '' OR handling_status = sqlc.arg(handling_status))
+ORDER BY received_at DESC
+LIMIT sqlc.arg(page_limit) OFFSET sqlc.arg(page_offset);
+
+-- name: CountAdminInboundEmails :one
+SELECT COUNT(*)
+FROM inbound_emails
+WHERE (sqlc.arg(inbox)::TEXT = '' OR inbox = sqlc.arg(inbox))
+  AND (sqlc.arg(handling_status)::TEXT = '' OR handling_status = sqlc.arg(handling_status));
+
+-- name: GetAdminInboundEmail :one
+SELECT *
+FROM inbound_emails
+WHERE id = $1;
+
+-- name: MarkInboundEmailRead :one
+UPDATE inbound_emails
+SET read_at = COALESCE(read_at, NOW()),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateInboundEmailHandlingStatus :one
+UPDATE inbound_emails
+SET handling_status = $2,
+    read_at = COALESCE(read_at, NOW()),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: CreateInboundEmailReply :one
+INSERT INTO inbound_email_replies (
+  inbound_email_id,
+  idempotency_key,
+  sender_user_id,
+  sender_display_name,
+  from_address,
+  to_address,
+  subject,
+  body_text
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (idempotency_key) DO UPDATE SET
+  updated_at = inbound_email_replies.updated_at
+RETURNING *;
+
+-- name: ListInboundEmailReplies :many
+SELECT *
+FROM inbound_email_replies
+WHERE inbound_email_id = $1
+ORDER BY created_at;
+
+-- name: MarkInboundEmailReplySent :one
+WITH sent_reply AS (
+  UPDATE inbound_email_replies
+  SET resend_email_id = sqlc.arg(resend_email_id),
+      delivery_status = 'sent',
+      delivery_error = '',
+      sent_at = NOW(),
+      updated_at = NOW()
+  WHERE inbound_email_replies.id = sqlc.arg(reply_id)
+  RETURNING *
+)
+UPDATE inbound_emails AS email
+SET handling_status = 'replied',
+    read_at = COALESCE(email.read_at, NOW()),
+    updated_at = NOW()
+FROM sent_reply
+WHERE email.id = sent_reply.inbound_email_id
+RETURNING sent_reply.id,
+          sent_reply.inbound_email_id,
+          sent_reply.idempotency_key,
+          sent_reply.resend_email_id,
+          sent_reply.sender_user_id,
+          sent_reply.sender_display_name,
+          sent_reply.from_address,
+          sent_reply.to_address,
+          sent_reply.subject,
+          sent_reply.body_text,
+          sent_reply.delivery_status,
+          sent_reply.delivery_error,
+          sent_reply.sent_at,
+          sent_reply.created_at,
+          sent_reply.updated_at;
+
+-- name: MarkInboundEmailReplyFailed :one
+UPDATE inbound_email_replies
+SET delivery_status = 'failed',
+    delivery_error = sqlc.arg(delivery_error),
+    updated_at = NOW()
+WHERE id = sqlc.arg(reply_id)
+RETURNING *;
 
 -- name: MarkInboundEmailDiscordPosted :exec
 UPDATE inbound_emails

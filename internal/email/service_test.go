@@ -82,3 +82,33 @@ func TestRenderTemplateRejectsUnknownTemplate(t *testing.T) {
 		t.Fatal("expected missing template to fail")
 	}
 }
+
+func TestRenderInboxReplyUsesBrandedLayoutAndPreservesLineBreaks(t *testing.T) {
+	t.Setenv("FRONTEND_URL", "https://app.strido.net")
+
+	rendered, err := RenderTemplate(TemplateInboxReply, Message{Copy: Copy{
+		Preheader:  "Reply from Strido Support",
+		Title:      "Strido Support",
+		Intro:      "Hello Shannon,\n\nThanks for writing to us.",
+		FooterNote: "Strido Support Team",
+	}})
+	if err != nil {
+		t.Fatalf("render inbox reply: %v", err)
+	}
+	for _, expected := range []string{
+		"strido-logo-320.png",
+		"Hello Shannon",
+		"Thanks for writing to us.",
+		"Strido Support Team",
+	} {
+		if !strings.Contains(rendered.HTML, expected) {
+			t.Fatalf("rendered inbox reply is missing %q", expected)
+		}
+	}
+	if !strings.Contains(strings.ReplaceAll(rendered.HTML, " ", ""), "white-space:pre-line") {
+		t.Fatal("rendered inbox reply does not preserve line breaks")
+	}
+	if !strings.Contains(rendered.Text, "Hello Shannon") {
+		t.Fatalf("text fallback missing reply: %q", rendered.Text)
+	}
+}

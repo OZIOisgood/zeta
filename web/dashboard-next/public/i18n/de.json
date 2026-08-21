@@ -89,7 +89,8 @@
       "sessions": "Termine",
       "videos": "Videos",
       "inviteCodes": "Experteneinladungen",
-      "admin": "Admin"
+      "admin": "Admin",
+      "email": "E-Mail"
     },
     "status": {
       "cancelled": "abgesagt",
@@ -949,6 +950,66 @@
       "upgrading": "Wird aktiviert...",
       "invalidCode": "Dieser Expertencode ist ungültig, nicht verfügbar oder wurde bereits verwendet.",
       "success": "Dein Konto hat jetzt Expertenzugang."
+    }
+  },
+  "adminEmail": {
+    "title": "E-Mail-Postfach",
+    "description": "Nachrichten an die Support-, Social- und DSA-Adressen von Strido lesen und beantworten.",
+    "refresh": "Aktualisieren",
+    "total": "{{count}} Nachrichten",
+    "messageList": "Liste eingegangener E-Mails",
+    "unread": "Ungelesen",
+    "status": "Status",
+    "attachments": "Anhänge",
+    "unnamedAttachment": "Anhang",
+    "replies": "Antworten",
+    "replyFailed": "Die Zustellung ist fehlgeschlagen. Versuche die Antwort im Eingabefeld erneut.",
+    "closedMessage": "Diese Nachricht ist geschlossen. Öffne sie erneut, um eine weitere Antwort zu senden.",
+    "filters": {
+      "inbox": "Postfach",
+      "status": "Status",
+      "allInboxes": "Alle Postfächer",
+      "allStatuses": "Alle Status"
+    },
+    "inboxes": {
+      "support": "Support",
+      "social": "Social",
+      "dsa": "DSA"
+    },
+    "statuses": {
+      "open": "Offen",
+      "replied": "Beantwortet",
+      "closed": "Geschlossen"
+    },
+    "compose": {
+      "title": "Antwort schreiben",
+      "from": "Die Antwort wird von {{address}} gesendet.",
+      "placeholder": "Antwort schreiben…",
+      "send": "Antwort senden",
+      "sending": "Wird gesendet…"
+    },
+    "empty": {
+      "title": "Keine Nachrichten",
+      "description": "Nachrichten mit dem ausgewählten Postfach und Status werden hier angezeigt."
+    },
+    "errors": {
+      "listTitle": "E-Mails konnten nicht geladen werden",
+      "listDescription": "Aktualisiere die Seite oder versuche es gleich erneut.",
+      "detailTitle": "Diese Nachricht konnte nicht geöffnet werden",
+      "detailDescription": "Wähle die Nachricht erneut aus oder aktualisiere das Postfach.",
+      "sendDescription": "Die Antwort konnte nicht gesendet werden. Dein Text bleibt erhalten; versuche es erneut.",
+      "statusDescription": "Der Nachrichtenstatus konnte nicht aktualisiert werden."
+    },
+    "toast": {
+      "sentTitle": "Antwort gesendet",
+      "sentDescription": "Die Antwort wurde an {{address}} gesendet.",
+      "statusTitle": "Status aktualisiert",
+      "statusDescription": "Der Nachrichtenstatus wurde gespeichert.",
+      "errorTitle": "Etwas ist schiefgelaufen"
+    },
+    "adminCard": {
+      "eyebrow": "E-Mail",
+      "title": "E-Mail-Postfach öffnen"
     }
   },
   "moderation": {
