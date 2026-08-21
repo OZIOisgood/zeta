@@ -164,8 +164,11 @@ Inbound mailbox addresses, Discord forum IDs, and copy recipients are plain
 runtime configuration owned by the deploy workflows. Production routes
 `social@strido.net`, `support@strido.net`, and `dsa@strido.net`; development
 routes the corresponding `*-dev@strido.net` addresses. The current copy
-recipient is `pashalobaryev111@gmail.com`. The Resend webhook signing secret is
-endpoint-specific signing material and must remain in Secret Manager.
+recipients are `pashalobaryev111@gmail.com` and `h.mergel@gmail.com`. Commas and
+semicolons are both accepted by the application; workflows use a semicolon so
+the value remains one assignment inside `gcloud --set-env-vars`. The Resend
+webhook signing secret is endpoint-specific signing material and must remain in
+Secret Manager.
 
 ## Terraform Ownership
 

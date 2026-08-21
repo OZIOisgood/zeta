@@ -20,7 +20,7 @@ Added a permission-gated admin email client for social, support, and DSA message
 - `go test -tags=integration ./internal/inboundemail -run '^$' -count=1`: package compiles.
 - Full integration execution was attempted but the testcontainers PostgreSQL could not start because the local Docker daemon was unavailable.
 - Dashboard Prettier check: passed.
-- Dashboard full test suite: 52 files / 194 tests passed.
+- Dashboard full test suite after the dev follow-up: 53 files / 196 tests passed.
 - Dashboard production build: passed with existing bundle-size/CommonJS warnings.
 - Redocly OpenAPI lint: valid, with existing policy warnings plus the intentional attachment `302` redirect warning.
 - `git diff --check`: passed.
@@ -29,3 +29,9 @@ Added a permission-gated admin email client for social, support, and DSA message
 
 - Apply the new migration during normal deployment.
 - Rich text, assignment, canned replies, and full conversation grouping remain optional post-MVP improvements.
+
+## Dev follow-up
+
+- Added `PATCH` to the global CORS allowlist after the deployed inbox exposed the missing preflight method.
+- Versioned locale requests and configured Nginx revalidation so deployments cannot retain stale translation JSON.
+- Expanded dev and prod inbound copy recipients to `pashalobaryev111@gmail.com` and `h.mergel@gmail.com`.

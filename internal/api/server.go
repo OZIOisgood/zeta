@@ -69,14 +69,7 @@ func (s *Server) routes(ctx context.Context) {
 	s.Router.Use(middleware.Recoverer)
 	s.Router.Use(middleware.StripSlashes)
 
-	s.Router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   allowedOrigins(),
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Timezone"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
+	s.Router.Use(cors.Handler(corsOptions()))
 
 	// JWKS cache — WorkOS public keys, refreshed every hour
 	clientID := os.Getenv("WORKOS_CLIENT_ID")
@@ -333,6 +326,17 @@ func allowedOrigins() []string {
 	return origins
 }
 
+func corsOptions() cors.Options {
+	return cors.Options{
+		AllowedOrigins:   allowedOrigins(),
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Timezone"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}
+}
+
 func parseDurationOrDefault(s string, fallback time.Duration) time.Duration {
 	if s == "" {
 		return fallback
@@ -371,7 +375,7 @@ func splitCSV(s string) []string {
 	if s == "" {
 		return nil
 	}
-	parts := strings.Split(s, ",")
+	parts := strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ';' })
 	values := make([]string, 0, len(parts))
 	for _, part := range parts {
 		if value := strings.TrimSpace(part); value != "" {

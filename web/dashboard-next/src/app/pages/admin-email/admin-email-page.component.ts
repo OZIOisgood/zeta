@@ -405,15 +405,23 @@ export class AdminEmailPageComponent {
       const detail = await firstValueFrom(this.api.get(email.id));
       this.selectedEmail.set(detail);
       this.detailStatus.set('success');
-      if (!detail.read_at && this.canReply()) {
+    } catch {
+      this.detailStatus.set('error');
+      return;
+    }
+
+    const detail = this.selectedEmail();
+    if (!detail?.read_at && this.canReply()) {
+      try {
         const updated = await firstValueFrom(this.api.update(email.id, { mark_read: true }));
         this.replaceSummary(updated);
         this.selectedEmail.update((current) =>
           current ? { ...current, read_at: updated.read_at } : current,
         );
+      } catch {
+        // Reading the message succeeded. A transient read-receipt failure must
+        // not replace valid content with the detail error state.
       }
-    } catch {
-      this.detailStatus.set('error');
     }
   }
 

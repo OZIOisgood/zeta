@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { provideExitAnimationManager } from 'ng-primitives/internal';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import {
   AdminEmailApiClient,
   AdminEmailDetail,
@@ -41,11 +41,13 @@ describe('AdminEmailPageComponent', () => {
   let fixture: ComponentFixture<AdminEmailPageComponent>;
   let list: ReturnType<typeof vi.fn>;
   let get: ReturnType<typeof vi.fn>;
+  let update: ReturnType<typeof vi.fn>;
   let reply: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     list = vi.fn(() => of({ items: [summary], total: 1 }));
     get = vi.fn(() => of(detail));
+    update = vi.fn(() => of(summary));
     reply = vi.fn(() =>
       of({
         id: 'reply-1',
@@ -126,7 +128,7 @@ describe('AdminEmailPageComponent', () => {
           useValue: {
             list,
             get,
-            update: vi.fn(() => of(summary)),
+            update,
             reply,
             attachmentUrl: vi.fn(() => '/attachment'),
           },
@@ -176,5 +178,20 @@ describe('AdminEmailPageComponent', () => {
       'Thanks for contacting us.',
       expect.stringMatching(/^[0-9a-f-]{36}$/),
     );
+  });
+
+  it('keeps a loaded message visible when marking it read fails', async () => {
+    get.mockReturnValue(of({ ...detail, read_at: undefined }));
+    update.mockReturnValue(throwError(() => new Error('preflight failed')));
+
+    const message = fixture.nativeElement.querySelector(
+      'button[aria-current]',
+    ) as HTMLButtonElement;
+    message.click();
+    await vi.waitFor(() => expect(update).toHaveBeenCalledWith(summary.id, { mark_read: true }));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Hello Strido');
+    expect(fixture.nativeElement.textContent).not.toContain('Could not open this message');
   });
 });
